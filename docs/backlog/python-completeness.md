@@ -51,7 +51,7 @@ The two extra caller units come from the harness, so they must not be silently
 applied to the fresh-module `callFunction` boundary.
 
 This is not a complete recursion protocol. Nested container comparison,
-`repr`/`str`, closure frames, namedtuple construction, other
+`repr`/`str`, namedtuple construction, other
 callable sites, and configurable entry limits remain to be traced through the
 CPython C paths and either counted or refused. `heapEq`'s cycle detection is
 separate from the thread recursion counter. The fib totality hypothesis is now
@@ -69,6 +69,24 @@ The `generator_recursion.py` rows pin both boundaries and distinguish an early
 entry, which closes it. CPython 3.9 paths: `cfunction_vectorcall_FASTCALL` in
 `Objects/methodobject.c`, `builtin_next` in `Python/bltinmodule.c`, and
 `gen_send_ex` in `Objects/genobject.c`.
+
+Ordinary closures now enter and leave the same frame recursion unit as named
+functions. `closure_recursion.py` covers recursive closures, a closure called
+at the bottom of named recursion, normal and exceptional unwinding, and the
+separate generator-closure creation and resume paths. CPython 3.9 calls
+`_PyEval_EvalCode` from `Objects/call.c:_PyFunction_Vectorcall` and enters the
+unit in `Python/ceval.c:_PyEval_EvalFrameDefault`.
+
+Two further recursion boundaries remain wrong and need separate fixes. With
+the differential harness's entry base 2, `closure_recursion.py::bad_arity(996)`
+raises `RecursionError` on CPython 3.9.25 but the model answers `TypeError`:
+`Python/ceval.c:missing_arguments` invokes `PyObject_Repr` on parameter names,
+which enters a recursion unit in `Objects/object.c:PyObject_Repr`. Extra-argument
+errors use a different path. At the same entry base,
+`closure_recursion.py::raise_class_unwind(995)` raises `RecursionError` on
+CPython but the model returns 42; exception-class construction and raising
+still need their recursion paths traced. These two witness functions are not in
+the passing differential case table until their own fixes land.
 
 ## 2026-11-10-pyfoundation-5 — eager non-iterable genexp creation check
 

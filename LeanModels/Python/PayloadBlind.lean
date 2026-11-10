@@ -3607,8 +3607,11 @@ theorem pbCallClosure_succ (ih : PBAll pa o₀ o fuel) : PBCallClosure pa o₀ o
   refine PBW.ite (fun _ => PBW.unsupported) fun _ => ?_
   refine PBW.ite (fun _ => PBW.exn hslot _) fun _ => ?_
   refine PBW.ite (fun _ => PBW.push hslot) fun _ => ?_
+  refine PBW.ite (fun _ => PBW.exn hslot _) fun _ => ?_
+  refine PBW.leaveCallDepth ?_
   refine PBF.toWorld ?_
-  refine PBF.bind (ihSs m ⟨w, mkCallEnv params args ++ cap⟩ body.toList hslot)
+  refine PBF.bind (ihSs m ⟨{ w with callDepth := w.callDepth + 1 },
+    mkCallEnv params args ++ cap⟩ body.toList hslot)
     fun s flow _ hs => ?_
   cases flow with
   | ret v => exact PBF.ok hs _

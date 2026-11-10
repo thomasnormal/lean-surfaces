@@ -11386,9 +11386,15 @@ def callClosure (m : Module) (fuel : Nat) (w : World) (name : String)
         .generator s!"<closure:{name}>" (mkCallEnv params args ++ captured)
           [.block body.toList] .created
       .ok { w with heap := w.heap.push g } (.ref w.heap.size)
+    else if pythonRecursionFull w.callDepth then
+      .exn w .recursionError
     else
+      -- Objects/call.c:_PyFunction_Vectorcall evaluates an ordinary closure
+      -- in a Python frame; ceval.c:_PyEval_EvalFrameDefault enters the unit.
+      Run.leaveCallDepth <|
       Run.toWorld <|
-        execStmts m fuel ⟨w, mkCallEnv params args ++ captured⟩ body.toList ⤳ fun st flow =>
+        execStmts m fuel ⟨{ w with callDepth := w.callDepth + 1 },
+          mkCallEnv params args ++ captured⟩ body.toList ⤳ fun st flow =>
         match flow with
         | .ret v => .ok st v
         | .next => .ok st .none

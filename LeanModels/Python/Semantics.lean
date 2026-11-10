@@ -2417,6 +2417,17 @@ def evalFloatDivmod (zeroError : PyErr) (left right : RVal) : Res (Float64 × Fl
   | .error .nanPayload =>
     .unsupported "NaN payload/sign propagation requires an explicit floating-point oracle"
 
+/-! CPython's `float_pow` first converts both operands with
+`PyFloat_AsDouble`/`PyLong_AsDouble`, then calls platform `pow`.  The
+conversion is portable and shared; the libm result is deliberately left loud
+until it has an explicit platform oracle.  This ordering still decides the
+faithful conversion `OverflowError` for an integer too large to become a
+double. -/
+def evalFloatPow (left right : RVal) : Res RVal := do
+  let _ ← floatNumber left
+  let _ ← floatNumber right
+  .unsupported "floating ** requires the pinned platform pow oracle (conversion is modeled by floatNumber)"
+
 /-- Binary operator on already-evaluated operands. Integer/Boolean `+`, `-`
 and `*` return integers; true division returns binary64. Mixed arithmetic
 converts the integer before computing and preserves signed zero and rounding.
@@ -2535,6 +2546,7 @@ def evalBinOp (op : BinOp) (a b : RVal) : Res RVal :=
         | .error .nanPayload => .unsupported "NaN payload/sign propagation requires an explicit floating-point oracle"
     | .add, .str s, .str t => .ok (.str (s ++ t))
     | .mod, .bytes fmt, rhs => bytesFormat fmt rhs
+    | .pow, .float _, _ | .pow, _, .float _ => evalFloatPow a b
     | .add, .bytes xs, .bytes ys => .ok (.bytes (xs ++ ys))
     | .add, .bytes _, .ref _ => .unsupported "bytes concatenation with heap values requires the buffer protocol"
     | .add, .bytes _, value => .exn (.typeError s!"can't concat {typeNamePrefix value.typeName 100} to bytes")

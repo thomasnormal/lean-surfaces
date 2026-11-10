@@ -30,6 +30,10 @@ def int_pow_negative(base, exponent):
     return base ** (-exponent)
 
 
+def float_pow_conversion(base):
+    return base ** 1.0
+
+
 def list_insert_huge(index):
     values = [1, 2]
     values.insert(index, 0)

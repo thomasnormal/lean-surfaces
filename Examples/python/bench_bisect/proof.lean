@@ -217,7 +217,8 @@ theorem htestB (xs : List Int) (x : Int) :
 -- H1-proper: the heap-aware helper layers (indexValH/truthyH) deepen the
 -- symbolic terms; the body execution needs a larger heartbeat budget.
 set_option maxHeartbeats 800000 in
-theorem hbodyB (xs : List Int) (x : Int) :
+theorem hbodyB (xs : List Int) (x : Int)
+    (hsize : (xs.length : Int) ≤ pySsizeMax) :
     ∀ s : SB, InvB xs x s → ContB s = true →
       ∃ f₀, ∀ F, f₀ ≤ F →
         execStmts bench_bisect F ⟨pw, toEnvB xs x s⟩ blBody
@@ -229,6 +230,9 @@ theorem hbodyB (xs : List Int) (x : Int) :
     Int.fdiv_eq_ediv_of_nonneg (lo + hi) (by omega)
   have hm0 : 0 ≤ Int.fdiv (lo + hi) 2 := by omega
   have hmlt : Int.fdiv (lo + hi) 2 < (xs.length : Int) := by omega
+  have hfit : pySsizeFits (Int.fdiv (lo + hi) 2) = true := by
+    apply (pySsizeFits_iff _).mpr
+    constructor <;> (try simp only [pySsizeMin]) <;> omega
   have hnn : ¬ Int.fdiv (lo + hi) 2 < 0 := by omega
   have hmn : (Int.fdiv (lo + hi) 2).toNat < xs.length := by omega
   have hgd := arr_getD xs (Int.fdiv (lo + hi) 2).toNat hmn
@@ -237,7 +241,7 @@ theorem hbodyB (xs : List Int) (x : Int) :
     have hbrE' : xs[((Int.fdiv (lo + hi) 2).toNat)] < x := by
       simpa [List.getElem?_eq_getElem hmn] using hbrE
     rcases om with _ | mv <;>
-      py_threshold 32 [pw, blBody, toEnvB, midEnv, stepB, hgd, hm0, hmlt, hnn, hbr,
+      py_threshold 32 [normIndexRaising, pySsizeIndex, hfit, pw, blBody, toEnvB, midEnv, stepB, hgd, hm0, hmlt, hnn, hbr,
         hbrE, hbrE', evalBinOpH, PyVCGen.binOpBeqBitAnd, PyVCGen.binOpBeqMult,
         getD_eq_getElem, List.getElem?_eq_getElem] <;>
       (try py_simp []) <;> (try exact ⟨_, _, ⟨rfl, rfl⟩, rfl⟩)
@@ -245,7 +249,7 @@ theorem hbodyB (xs : List Int) (x : Int) :
     have hbrE' : ¬ xs[((Int.fdiv (lo + hi) 2).toNat)] < x := by
       simpa [List.getElem?_eq_getElem hmn] using hbrE
     rcases om with _ | mv <;>
-      py_threshold 32 [pw, blBody, toEnvB, midEnv, stepB, hgd, hm0, hmlt, hnn, hbr,
+      py_threshold 32 [normIndexRaising, pySsizeIndex, hfit, pw, blBody, toEnvB, midEnv, stepB, hgd, hm0, hmlt, hnn, hbr,
         hbrE, hbrE', evalBinOpH, PyVCGen.binOpBeqBitAnd, PyVCGen.binOpBeqMult,
         getD_eq_getElem, List.getElem?_eq_getElem] <;>
       (try py_simp []) <;> (try exact ⟨_, _, ⟨rfl, rfl⟩, rfl⟩)
@@ -299,6 +303,7 @@ theorem hinitB (xs : List Int) (x : Int) :
 post-loop invariant facts attached to the returned index. -/
 
 theorem bisect_left_core (xs : List Int) (x : Int)
+    (hsize : (xs.length : Int) ≤ pySsizeMax)
     (hs : List.Pairwise (· ≤ ·) xs) :
     ∃ i : Int,
       CallsTo bench_bisect "bisect_left" #[ToVal.toVal xs, ToVal.toVal x]
@@ -309,7 +314,7 @@ theorem bisect_left_core (xs : List Int) (x : Int)
   obtain ⟨⟨lo', hi', om'⟩, hInv', hcont', hex⟩ :=
     execWhile_total_of_invariant bench_bisect blTest blBody pw (toEnvB xs x)
       (InvB xs x) ContB (stepB xs x) μB tvB (htestB xs x) (htvB xs x)
-      (hbodyB xs x) (hinvB xs x hs) (hdecB xs x)
+      (hbodyB xs x hsize) (hinvB xs x hs) (hdecB xs x)
       ((0 : Int), (xs.length : Int), (Option.none : Option Int)) (hinitB xs x)
   obtain ⟨h0', hlh', hhl', hlow', hhigh'⟩ : MIB xs x lo' hi' := hInv'
   have hcont'' : ¬ lo' < hi' := by simpa [ContB] using hcont'
@@ -354,7 +359,8 @@ theorem htestT (xs : List Int) (x : Int) :
     py_threshold 8 [pw, blTest, toEnvB, midEnv, tvB, ContB, ite_ok_bool]
 
 set_option maxHeartbeats 1000000 in
-theorem hbodyT (xs : List Int) (x : Int) :
+theorem hbodyT (xs : List Int) (x : Int)
+    (hsize : (xs.length : Int) ≤ pySsizeMax) :
     ∀ s : SB, InvT xs s → ContB s = true →
       ∃ f₀, ∀ F, f₀ ≤ F →
         execStmts bench_bisect F ⟨pw, toEnvB xs x s⟩ blBody
@@ -366,6 +372,9 @@ theorem hbodyT (xs : List Int) (x : Int) :
     Int.fdiv_eq_ediv_of_nonneg (lo + hi) (by omega)
   have hm0 : 0 ≤ Int.fdiv (lo + hi) 2 := by omega
   have hmlt : Int.fdiv (lo + hi) 2 < (xs.length : Int) := by omega
+  have hfit : pySsizeFits (Int.fdiv (lo + hi) 2) = true := by
+    apply (pySsizeFits_iff _).mpr
+    constructor <;> (try simp only [pySsizeMin]) <;> omega
   have hnn : ¬ Int.fdiv (lo + hi) 2 < 0 := by omega
   have hmn : (Int.fdiv (lo + hi) 2).toNat < xs.length := by omega
   have hgd := arr_getD xs (Int.fdiv (lo + hi) 2).toNat hmn
@@ -374,7 +383,7 @@ theorem hbodyT (xs : List Int) (x : Int) :
     have hbrE' : xs[((Int.fdiv (lo + hi) 2).toNat)] < x := by
       simpa [List.getElem?_eq_getElem hmn] using hbrE
     rcases om with _ | mv <;>
-      py_threshold 32 [pw, blBody, toEnvB, midEnv, stepB, hgd, hm0, hmlt, hnn, hbr,
+      py_threshold 32 [normIndexRaising, pySsizeIndex, hfit, pw, blBody, toEnvB, midEnv, stepB, hgd, hm0, hmlt, hnn, hbr,
         hbrE, hbrE', evalBinOpH, PyVCGen.binOpBeqBitAnd, PyVCGen.binOpBeqMult,
         getD_eq_getElem, List.getElem?_eq_getElem] <;>
       (try py_simp []) <;> (try exact ⟨_, _, ⟨rfl, rfl⟩, rfl⟩)
@@ -382,7 +391,7 @@ theorem hbodyT (xs : List Int) (x : Int) :
     have hbrE' : ¬ xs[((Int.fdiv (lo + hi) 2).toNat)] < x := by
       simpa [List.getElem?_eq_getElem hmn] using hbrE
     rcases om with _ | mv <;>
-      py_threshold 32 [pw, blBody, toEnvB, midEnv, stepB, hgd, hm0, hmlt, hnn, hbr,
+      py_threshold 32 [normIndexRaising, pySsizeIndex, hfit, pw, blBody, toEnvB, midEnv, stepB, hgd, hm0, hmlt, hnn, hbr,
         hbrE, hbrE', evalBinOpH, PyVCGen.binOpBeqBitAnd, PyVCGen.binOpBeqMult,
         getD_eq_getElem, List.getElem?_eq_getElem] <;>
       (try py_simp []) <;> (try exact ⟨_, _, ⟨rfl, rfl⟩, rfl⟩)
@@ -421,16 +430,17 @@ end BL
 /-! ## `bisect_left` — the four public theorems -/
 
 open BL in
-/-- **Unconditional termination.** On EVERY list — sorted or not —
+/-- **Termination.** On every list within the pinned `Py_ssize_t` length — sorted or not —
 `bisect_left(xs, x)` terminates and returns an index in `[0, len(xs)]`.
-No hypothesis on `xs` at all. -/
-theorem bisect_left_terminates (xs : List PyInt) (x : PyInt) :
+No sortedness hypothesis on `xs` is needed. -/
+theorem bisect_left_terminates (xs : List PyInt) (x : PyInt)
+    (hsize : (xs.length : Int) ≤ pySsizeMax) :
     ∃ i : PyInt, bench_bisect.bisect_left(xs, x) ==> i ∧
       0 ≤ i ∧ i ≤ (xs.length : Int) := by
   obtain ⟨⟨lo', hi', om'⟩, hInv', hcont', hex⟩ :=
     execWhile_total_of_invariant bench_bisect blTest blBody pw (toEnvB xs x)
       (InvT xs) ContB (stepB xs x) μB tvB (htestT xs x) (htvT xs)
-      (hbodyT xs x) (hinvT xs x) (hdecT xs x)
+      (hbodyT xs x hsize) (hinvT xs x) (hdecT xs x)
       ((0 : Int), (xs.length : Int), (Option.none : Option Int)) (hinitT xs)
   obtain ⟨h0', hlh', hhl'⟩ : MIT xs lo' hi' := hInv'
   refine ⟨lo', ?_, h0', Int.le_trans hlh' hhl'⟩
@@ -452,15 +462,16 @@ theorem bisect_left_terminates (xs : List PyInt) (x : PyInt) :
      all_goals omega)
 
 open BL in
-/-- **Main theorem.** For every sorted list `xs` and every `x`, the real
+/-- **Main theorem.** For every size-bounded sorted list `xs` and every `x`, the real
 CPython `bisect_left(xs, x)` — run through the deep-embedded interpreter,
 with `lo`/`hi` taking their defaults — terminates and returns the length
 of the strict-lower prefix of `xs`: the leftmost insertion point for `x`. -/
 theorem bisect_left_sorted (xs : List PyInt) (x : PyInt)
+    (hsize : (xs.length : Int) ≤ pySsizeMax)
     (hs : List.Pairwise (· ≤ ·) xs) :
     bench_bisect.bisect_left(xs, x) ==>
       (xs.takeWhile (fun v => decide (v < x))).length := by
-  obtain ⟨i, hc, h0, hle, hlow, hhigh⟩ := bisect_left_core xs x hs
+  obtain ⟨i, hc, h0, hle, hlow, hhigh⟩ := bisect_left_core xs x hsize hs
   have hN : (xs.takeWhile (fun v => decide (v < x))).length = i.toNat :=
     takeWhile_length_eq xs i.toNat (by omega)
       (fun j hj => hlow j (by omega))
@@ -478,12 +489,13 @@ own docstring): on sorted input, the returned index `i` is in range, all of
 `a[:i]` is `< x`, and all of `a[i:]` is `≥ x`. Stated relationally against
 any observed run (`⇓`). -/
 theorem bisect_left_insertion_point (xs : List PyInt) (x : PyInt)
+    (hsize : (xs.length : Int) ≤ pySsizeMax)
     (hs : List.Pairwise (· ≤ ·) xs) {i : PyInt}
     (h : bench_bisect.bisect_left(xs, x) ⇓ i) :
     0 ≤ i ∧ i ≤ (xs.length : Int) ∧
     (∀ j : Nat, (j : Int) < i → xs.getD j 0 < x) ∧
     (∀ j : Nat, i ≤ (j : Int) → j < xs.length → x ≤ xs.getD j 0) := by
-  obtain ⟨i₀, hc, h0, hle, hlow, hhigh⟩ := bisect_left_core xs x hs
+  obtain ⟨i₀, hc, h0, hle, hlow, hhigh⟩ := bisect_left_core xs x hsize hs
   have heq : (ToVal.toVal i : Val) = Val.int i₀ :=
     CallsTo.eq_of_partialTo h hc.partialTo
   have hii : i = i₀ := by simpa using heq
@@ -495,10 +507,11 @@ theorem bisect_left_insertion_point (xs : List PyInt) (x : PyInt)
 returns exactly the insertion point — no exception, no `unsupported`, no
 other value. Free from totality via fuel determinism. -/
 theorem bisect_left_partial (xs : List PyInt) (x : PyInt)
+    (hsize : (xs.length : Int) ≤ pySsizeMax)
     (hs : List.Pairwise (· ≤ ·) xs) :
     bench_bisect.bisect_left(xs, x) ~~>
       (xs.takeWhile (fun v => decide (v < x))).length :=
-  (bisect_left_sorted xs x hs).partialTo
+  (bisect_left_sorted xs x hsize hs).partialTo
 
 /-! # Part 2 — `bisect_right` (cold prover 1, adapted; the ∃-form core is
 the prover's verbatim claim, the deterministic `takeWhile` forms are the
@@ -680,7 +693,8 @@ theorem BR.hinv_pf (a : List Int) (x : Int) (hsorted : a.Pairwise (· ≤ ·)) :
     · intro j hj0 hjlt; exact h5 j (by omega) hjlt
 
 set_option linter.unusedSimpArgs false in
-theorem BR.hbody_pf (a : List Int) (x : Int) :
+theorem BR.hbody_pf (a : List Int) (x : Int)
+    (hsize : (a.length : Int) ≤ pySsizeMax) :
     ∀ p : BR.State, BR.Inv a x p → BR.Cont p = true → ∃ f0, ∀ F, f0 ≤ F →
       execStmts bench_bisect F ⟨pw, BR.toEnv a x p⟩ BR.bodyE
         = .ok ⟨pw, BR.toEnv a x (BR.step a x p)⟩ .next := by
@@ -693,6 +707,9 @@ theorem BR.hbody_pf (a : List Int) (x : Int) :
   have hdnn := Int.fdiv_nonneg (show (0:Int) ≤ lo + hi by omega) (show (0:Int) ≤ 2 by omega)
   have hmid0 : (0:Int) ≤ (lo + hi) / 2 := by omega
   have hmidN : (lo + hi) / 2 < (a.length : Int) := by omega
+  have hfit : pySsizeFits ((lo + hi) / 2) = true := by
+    apply (pySsizeFits_iff _).mpr
+    constructor <;> (try simp only [pySsizeMin]) <;> omega
   have hmidNat : ((lo + hi) / 2).toNat < a.length := by omega
   have harr := arrVal_getD a ((lo + hi) / 2).toNat hmidNat
   have hmidToNat : (((lo + hi) / 2).toNat : Int) = (lo + hi) / 2 := by omega
@@ -708,7 +725,7 @@ theorem BR.hbody_pf (a : List Int) (x : Int) :
       obtain ⟨c, rfl⟩ := Nat.exists_eq_add_of_le hF
       rw [Nat.add_comm]
       simp only [hlt, if_true, if_false]
-      py_simp [pw, bench_bisect, hfe, harr, hmidToNat, hmid0, hmidN, hnn, hltE,
+      py_simp [normIndexRaising, pySsizeIndex, hfit, pw, bench_bisect, hfe, harr, hmidToNat, hmid0, hmidN, hnn, hltE,
         evalBinOpH, PyVCGen.binOpBeqBitAnd, PyVCGen.binOpBeqMult,
         getD_eq_getElem a ((lo + hi) / 2).toNat hmidNat, List.getElem?_eq_getElem hmidNat]
     · have hltE : ¬ x < a[((lo + hi) / 2).toNat] := by
@@ -718,7 +735,7 @@ theorem BR.hbody_pf (a : List Int) (x : Int) :
       obtain ⟨c, rfl⟩ := Nat.exists_eq_add_of_le hF
       rw [Nat.add_comm]
       simp only [hlt, if_true, if_false]
-      py_simp [pw, bench_bisect, hfe, harr, hmidToNat, hmid0, hmidN, hnn, hltE,
+      py_simp [normIndexRaising, pySsizeIndex, hfit, pw, bench_bisect, hfe, harr, hmidToNat, hmid0, hmidN, hnn, hltE,
         evalBinOpH, PyVCGen.binOpBeqBitAnd, PyVCGen.binOpBeqMult,
         getD_eq_getElem a ((lo + hi) / 2).toNat hmidNat, List.getElem?_eq_getElem hmidNat]
   · by_cases hlt : x < a.getD ((lo + hi) / 2).toNat 0
@@ -729,7 +746,7 @@ theorem BR.hbody_pf (a : List Int) (x : Int) :
       obtain ⟨c, rfl⟩ := Nat.exists_eq_add_of_le hF
       rw [Nat.add_comm]
       simp only [hlt, if_true, if_false]
-      py_simp [pw, bench_bisect, hfe, harr, hmidToNat, hmid0, hmidN, hnn, hltE,
+      py_simp [normIndexRaising, pySsizeIndex, hfit, pw, bench_bisect, hfe, harr, hmidToNat, hmid0, hmidN, hnn, hltE,
         evalBinOpH, PyVCGen.binOpBeqBitAnd, PyVCGen.binOpBeqMult,
         getD_eq_getElem a ((lo + hi) / 2).toNat hmidNat, List.getElem?_eq_getElem hmidNat]
     · have hltE : ¬ x < a[((lo + hi) / 2).toNat] := by
@@ -739,7 +756,7 @@ theorem BR.hbody_pf (a : List Int) (x : Int) :
       obtain ⟨c, rfl⟩ := Nat.exists_eq_add_of_le hF
       rw [Nat.add_comm]
       simp only [hlt, if_true, if_false]
-      py_simp [pw, bench_bisect, hfe, harr, hmidToNat, hmid0, hmidN, hnn, hltE,
+      py_simp [normIndexRaising, pySsizeIndex, hfit, pw, bench_bisect, hfe, harr, hmidToNat, hmid0, hmidN, hnn, hltE,
         evalBinOpH, PyVCGen.binOpBeqBitAnd, PyVCGen.binOpBeqMult,
         getD_eq_getElem a ((lo + hi) / 2).toNat hmidNat, List.getElem?_eq_getElem hmidNat]
 
@@ -765,7 +782,8 @@ theorem BR.htvT_pf (a : List Int) :
   intro p _; simp [BR.tv, BR.Cont, truthy]
 
 set_option linter.unusedSimpArgs false in
-theorem BR.hbodyT_pf (a : List Int) (x : Int) :
+theorem BR.hbodyT_pf (a : List Int) (x : Int)
+    (hsize : (a.length : Int) ≤ pySsizeMax) :
     ∀ p : BR.State, BR.InvT a p → BR.Cont p = true → ∃ f0, ∀ F, f0 ≤ F →
       execStmts bench_bisect F ⟨pw, BR.toEnv a x p⟩ BR.bodyE
         = .ok ⟨pw, BR.toEnv a x (BR.step a x p)⟩ .next := by
@@ -778,6 +796,9 @@ theorem BR.hbodyT_pf (a : List Int) (x : Int) :
   have hdnn := Int.fdiv_nonneg (show (0:Int) ≤ lo + hi by omega) (show (0:Int) ≤ 2 by omega)
   have hmid0 : (0:Int) ≤ (lo + hi) / 2 := by omega
   have hmidN : (lo + hi) / 2 < (a.length : Int) := by omega
+  have hfit : pySsizeFits ((lo + hi) / 2) = true := by
+    apply (pySsizeFits_iff _).mpr
+    constructor <;> (try simp only [pySsizeMin]) <;> omega
   have hmidNat : ((lo + hi) / 2).toNat < a.length := by omega
   have harr := arrVal_getD a ((lo + hi) / 2).toNat hmidNat
   have hmidToNat : (((lo + hi) / 2).toNat : Int) = (lo + hi) / 2 := by omega
@@ -793,7 +814,7 @@ theorem BR.hbodyT_pf (a : List Int) (x : Int) :
       obtain ⟨c, rfl⟩ := Nat.exists_eq_add_of_le hF
       rw [Nat.add_comm]
       simp only [hlt, if_true, if_false]
-      py_simp [pw, bench_bisect, hfe, harr, hmidToNat, hmid0, hmidN, hnn, hltE,
+      py_simp [normIndexRaising, pySsizeIndex, hfit, pw, bench_bisect, hfe, harr, hmidToNat, hmid0, hmidN, hnn, hltE,
         evalBinOpH, PyVCGen.binOpBeqBitAnd, PyVCGen.binOpBeqMult,
         getD_eq_getElem a ((lo + hi) / 2).toNat hmidNat, List.getElem?_eq_getElem hmidNat]
     · have hltE : ¬ x < a[((lo + hi) / 2).toNat] := by
@@ -803,7 +824,7 @@ theorem BR.hbodyT_pf (a : List Int) (x : Int) :
       obtain ⟨c, rfl⟩ := Nat.exists_eq_add_of_le hF
       rw [Nat.add_comm]
       simp only [hlt, if_true, if_false]
-      py_simp [pw, bench_bisect, hfe, harr, hmidToNat, hmid0, hmidN, hnn, hltE,
+      py_simp [normIndexRaising, pySsizeIndex, hfit, pw, bench_bisect, hfe, harr, hmidToNat, hmid0, hmidN, hnn, hltE,
         evalBinOpH, PyVCGen.binOpBeqBitAnd, PyVCGen.binOpBeqMult,
         getD_eq_getElem a ((lo + hi) / 2).toNat hmidNat, List.getElem?_eq_getElem hmidNat]
   · by_cases hlt : x < a.getD ((lo + hi) / 2).toNat 0
@@ -814,7 +835,7 @@ theorem BR.hbodyT_pf (a : List Int) (x : Int) :
       obtain ⟨c, rfl⟩ := Nat.exists_eq_add_of_le hF
       rw [Nat.add_comm]
       simp only [hlt, if_true, if_false]
-      py_simp [pw, bench_bisect, hfe, harr, hmidToNat, hmid0, hmidN, hnn, hltE,
+      py_simp [normIndexRaising, pySsizeIndex, hfit, pw, bench_bisect, hfe, harr, hmidToNat, hmid0, hmidN, hnn, hltE,
         evalBinOpH, PyVCGen.binOpBeqBitAnd, PyVCGen.binOpBeqMult,
         getD_eq_getElem a ((lo + hi) / 2).toNat hmidNat, List.getElem?_eq_getElem hmidNat]
     · have hltE : ¬ x < a[((lo + hi) / 2).toNat] := by
@@ -824,7 +845,7 @@ theorem BR.hbodyT_pf (a : List Int) (x : Int) :
       obtain ⟨c, rfl⟩ := Nat.exists_eq_add_of_le hF
       rw [Nat.add_comm]
       simp only [hlt, if_true, if_false]
-      py_simp [pw, bench_bisect, hfe, harr, hmidToNat, hmid0, hmidN, hnn, hltE,
+      py_simp [normIndexRaising, pySsizeIndex, hfit, pw, bench_bisect, hfe, harr, hmidToNat, hmid0, hmidN, hnn, hltE,
         evalBinOpH, PyVCGen.binOpBeqBitAnd, PyVCGen.binOpBeqMult,
         getD_eq_getElem a ((lo + hi) / 2).toNat hmidNat, List.getElem?_eq_getElem hmidNat]
 
@@ -867,13 +888,14 @@ theorem BR.hinitT_pf (a : List Int) : BR.InvT a (0, (a.length : Int), 0, false) 
 /-- The cold prover's verbatim total-correctness core, over unbranded
 `Int` (the shape the surface theorems below consume — `omega` reads
 `Int`-headed comparisons only). -/
-private theorem bisect_right_core (a : List Int) (x : Int) (hsorted : a.Pairwise (· ≤ ·)) :
+private theorem bisect_right_core (a : List Int) (x : Int)
+    (hsize : (a.length : Int) ≤ pySsizeMax) (hsorted : a.Pairwise (· ≤ ·)) :
     ∃ i : Int, bench_bisect.bisect_right(a, x) ==> i ∧
       0 ≤ i ∧ i ≤ (a.length : Int) ∧
       (∀ j : Int, 0 ≤ j → j < i → a.getD j.toNat 0 ≤ x) ∧
       (∀ j : Int, i ≤ j → j < (a.length : Int) → x < a.getD j.toNat 0) := by
   have key := BR.loop_lemma a x BR.testE BR.bodyE
-    (BR.htest_pf a x) (BR.htv_pf a x) (BR.hbody_pf a x) (BR.hinv_pf a x hsorted) (BR.hdec_pf a x)
+    (BR.htest_pf a x) (BR.htv_pf a x) (BR.hbody_pf a x hsize) (BR.hinv_pf a x hsorted) (BR.hdec_pf a x)
     (0, (a.length:Int), 0, false) (BR.hinit_pf a x)
   obtain ⟨p', hInv', hCont', Fl, hex⟩ := key
   obtain ⟨h1, h2, h3, h4, h5⟩ := hInv'
@@ -905,13 +927,14 @@ private theorem bisect_right_core (a : List Int) (x : Int) (hsorted : a.Pairwise
     cases grown' <;> py_simp
   · exact h5 j (by omega) hjlt
 
-/-- Bounds-only core: termination and range on EVERY list. -/
-private theorem bisect_right_terminates_core (a : List Int) (x : Int) :
+/-- Bounds-only core: termination and range for lists within the pinned size range. -/
+private theorem bisect_right_terminates_core (a : List Int) (x : Int)
+    (hsize : (a.length : Int) ≤ pySsizeMax) :
     ∃ i : Int, bench_bisect.bisect_right(a, x) ==> i ∧
       0 ≤ i ∧ i ≤ (a.length : Int) := by
   have key := execWhile_total_of_invariant bench_bisect BR.testE BR.bodyE pw (BR.toEnv a x)
     (BR.InvT a) BR.Cont (BR.step a x) BR.mu BR.tv
-    (BR.htestT_pf a x) (BR.htvT_pf a) (BR.hbodyT_pf a x) (BR.hinvT_pf a x) (BR.hdecT_pf a x)
+    (BR.htestT_pf a x) (BR.htvT_pf a) (BR.hbodyT_pf a x hsize) (BR.hinvT_pf a x) (BR.hdecT_pf a x)
     (0, (a.length:Int), 0, false) (BR.hinitT_pf a)
   obtain ⟨p', hInv', _hCont', Fl, hex⟩ := key
   obtain ⟨h1, h2, h3⟩ := hInv'
@@ -941,35 +964,38 @@ private theorem bisect_right_terminates_core (a : List Int) (x : Int) :
 
 /-! ## `bisect_right` — the five public theorems -/
 
-/-- **Unconditional termination.** On EVERY list — sorted or not —
+/-- **Termination.** On every list within the pinned `Py_ssize_t` length — sorted or not —
 `bisect_right(xs, x)` terminates and returns an index in `[0, len(xs)]`. -/
-theorem bisect_right_terminates (xs : List PyInt) (x : PyInt) :
+theorem bisect_right_terminates (xs : List PyInt) (x : PyInt)
+    (hsize : (xs.length : Int) ≤ pySsizeMax) :
     ∃ i : PyInt, bench_bisect.bisect_right(xs, x) ==> i ∧
       0 ≤ i ∧ i ≤ (xs.length : Int) :=
-  bisect_right_terminates_core xs x
+  bisect_right_terminates_core xs x hsize
 
 /-- **Total correctness, relational form** (the cold prover's verbatim
 claim): on sorted input the returned index `i` is in range, everything
 before `i` is `≤ x`, everything from `i` on is `> x` — CPython's own
 docstring contract for `bisect_right`. -/
 theorem bisect_right_total (xs : List PyInt) (x : PyInt)
+    (hsize : (xs.length : Int) ≤ pySsizeMax)
     (hs : List.Pairwise (· ≤ ·) xs) :
     ∃ i : PyInt, bench_bisect.bisect_right(xs, x) ==> i ∧
       0 ≤ i ∧ i ≤ (xs.length : Int) ∧
       (∀ j : Int, 0 ≤ j → j < i → xs.getD j.toNat 0 ≤ x) ∧
       (∀ j : Int, i ≤ j → j < (xs.length : Int) → x < xs.getD j.toNat 0) :=
-  bisect_right_core xs x hs
+  bisect_right_core xs x hsize hs
 
 open BL in
-/-- **Main theorem (deterministic form).** For every sorted list `xs` and
+/-- **Main theorem (deterministic form).** For every size-bounded sorted list `xs` and
 every `x`, `bisect_right(xs, x)` with `lo`/`hi` defaulted terminates and
 returns the length of the weak prefix `xs.takeWhile (· ≤ x)` — the
 rightmost insertion point (the count of elements `≤ x`). -/
 theorem bisect_right_sorted (xs : List PyInt) (x : PyInt)
+    (hsize : (xs.length : Int) ≤ pySsizeMax)
     (hs : List.Pairwise (· ≤ ·) xs) :
     bench_bisect.bisect_right(xs, x) ==>
       (xs.takeWhile (fun v => decide (v ≤ x))).length := by
-  obtain ⟨i, hc, h0, hle, hlow, hhigh⟩ := bisect_right_core xs x hs
+  obtain ⟨i, hc, h0, hle, hlow, hhigh⟩ := bisect_right_core xs x hsize hs
   -- NOTE: consume `hlow`/`hhigh` directly — they are `Int`-headed (the core
   -- is stated over unbranded `Int`), so `omega` ingests them; a restatement
   -- here would re-elaborate at the `PyInt` brand and be skipped (AGENTS.md
@@ -996,12 +1022,13 @@ theorem bisect_right_sorted (xs : List PyInt) (x : PyInt)
 `bisect_right(xs, x)` on sorted input is in range, with all of `a[:i]`
 `≤ x` and all of `a[i:]` `> x`. -/
 theorem bisect_right_insertion_point (xs : List PyInt) (x : PyInt)
+    (hsize : (xs.length : Int) ≤ pySsizeMax)
     (hs : List.Pairwise (· ≤ ·) xs) {i : PyInt}
     (h : bench_bisect.bisect_right(xs, x) ⇓ i) :
     0 ≤ i ∧ i ≤ (xs.length : Int) ∧
     (∀ j : Int, 0 ≤ j → j < i → xs.getD j.toNat 0 ≤ x) ∧
     (∀ j : Int, i ≤ j → j < (xs.length : Int) → x < xs.getD j.toNat 0) := by
-  obtain ⟨i₀, hc, h0, hle, hlow, hhigh⟩ := bisect_right_core xs x hs
+  obtain ⟨i₀, hc, h0, hle, hlow, hhigh⟩ := bisect_right_core xs x hsize hs
   have heq : (ToVal.toVal i : Val) = ToVal.toVal i₀ :=
     CallsTo.eq_of_partialTo h hc.partialTo
   have hii : i = i₀ := by simpa using heq
@@ -1011,9 +1038,10 @@ theorem bisect_right_insertion_point (xs : List PyInt) (x : PyInt)
 /-- **Strengthened partial correctness** (`~~>`): every run either times
 out or returns exactly the rightmost insertion point. -/
 theorem bisect_right_partial (xs : List PyInt) (x : PyInt)
+    (hsize : (xs.length : Int) ≤ pySsizeMax)
     (hs : List.Pairwise (· ≤ ·) xs) :
     bench_bisect.bisect_right(xs, x) ~~>
       (xs.takeWhile (fun v => decide (v ≤ x))).length :=
-  (bisect_right_sorted xs x hs).partialTo
+  (bisect_right_sorted xs x hsize hs).partialTo
 
 end Examples.python.bench_bisect.proof

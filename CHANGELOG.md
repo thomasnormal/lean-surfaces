@@ -29,6 +29,9 @@
   links redirect. The Lean library keeps the name `LeanModels` until a later,
   announced commit renames it to `Proglib`.
 
+- Corrected the bisect example specifications to require list lengths within
+  CPython's pinned `Py_ssize_t` range, and repaired their index proofs.
+
 - Corrected the median example specifications to require list lengths within
   CPython's pinned `Py_ssize_t` range, and repaired their index proofs.
 

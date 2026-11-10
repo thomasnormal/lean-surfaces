@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Revalidated set iteration-order admission: modeled nonnegative integer
+  insertion remains live, while negative hashes and table-rebuilding paths
+  refuse loudly instead of guessing CPython's hash-table order.
+
 - Count `max`/`min`'s builtin and rich-comparison recursion units after
   argument evaluation; arity and non-comparison errors retain their paths.
 

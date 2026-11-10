@@ -2741,12 +2741,14 @@ theorem ceEvalExpr_succ (ih : CE fuel) : CEEvalExpr (fuel + 1) := by
                                 exact .of_seed (fun tr => by first | rfl | simp) (by first | rfl | simp [FrameState.withClock_self hs4, hs4])
                     case babs =>
                       refine .bind (ClockErasedF.flattenStarRun (ihEs m st args.toList h)) fun s2 vs hs2 => ?_
+                      ce_norm
+                      refine .bind (.liftRes hs2 _) fun s3 _ hs3 => ?_
                       cases vs with
-                      | nil => exact .exn hs2 _
+                      | nil => exact .exn hs3 _
                       | cons v t =>
                         cases t with
-                        | nil => exact .liftRes hs2 _
-                        | cons d t2 => exact .exn hs2 _
+                        | nil => exact .liftRes hs3 _
+                        | cons d t2 => exact .exn hs3 _
                     case bround =>
                       refine .bind (ClockErasedF.flattenStarRun (ihEs m st args.toList h)) fun s2 vs hs2 => ?_
                       cases vs with
@@ -3450,9 +3452,10 @@ theorem ceEvalExpr_succ (ih : CE fuel) : CEEvalExpr (fuel + 1) := by
                       .bind (ihEs m s2 (kwargs.toList.map (·.2)) hs2) fun s3 kvs hs3 =>
                         .liftRes hs3 _
                   · simp only [hi, if_false]
-                    exact .bind (ClockErasedF.flattenStarRun (ihEs m st args.toList h)) fun s2 vs hs2 =>
-                      .bind (ihEs m s2 (kwargs.toList.map (·.2)) hs2) fun s3 kvs hs3 =>
-                        .exn hs3 _
+                    refine .bind (ClockErasedF.flattenStarRun (ihEs m st args.toList h)) fun s2 vs hs2 => ?_
+                    refine .bind (ihEs m s2 (kwargs.toList.map (·.2)) hs2) fun s3 kvs hs3 => ?_
+                    ce_norm
+                    exact .bind (.liftRes hs3 _) fun s4 _ hs4 => .exn hs4 _
                 case livekw =>
                   cases hlive : Env.lookup st.world.globals fname with
                   | some lv => exact .unsupported

@@ -593,7 +593,7 @@ def interpUnfolds : List Name :=
    ``RVal.freezeList, ``RVal.freezeB, ``RVal.freezeListB,
    ``valEq, ``valEqList,
    ``intCmp, ``strCmp, ``evalCompareOp, ``evalCompareOpH,
-   ``richCompareRecursionCheck, ``builtinLenRecursionCheck,
+   ``richCompareRecursionCheck, ``builtinMethORecursionCheck,
    ``pythonRecursionFull, ``pythonRecursionLimit,
    ``Run.withFrameRecursionUnit, ``Run.withRecursionUnit, ``Run.leaveCallDepth,
    ``nativeIteratorName, ``evalBinOp,

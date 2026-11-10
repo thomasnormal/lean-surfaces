@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Revalidated the bench-statistics proof target; its full 620-job target now
+  builds without the reported unsolved goals.
+
 - Revalidated the bench-bisect proof target after ssize-bounded bisect changes;
   its full 312-job target now builds without unsolved goals.
 

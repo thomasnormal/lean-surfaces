@@ -7600,6 +7600,13 @@ caller depth. Nested calls and arbitrary frame states use their actual depth. -/
 def entryBindingDepth (depth : Nat) : Nat :=
   if depth == pythonTopCallDepth then 0 else depth
 
+/-- CPython 3.9 constructs an exception class through the generic `tp_call`
+path, which enters one recursion unit (Objects/call.c: `_PyObject_MakeTpCall`).
+`do_raise` invokes it for a class, while an explicit constructor is called
+before `do_raise` (Python/ceval.c). Arguments have already been evaluated. -/
+def exceptionConstructError (depth : Nat) (e : PyErr) : PyErr :=
+  if pythonRecursionFull depth then .recursionError else e
+
 /-- CPython's `missing_arguments` renders each missing parameter with
 `PyObject_Repr`, which enters a recursion unit before a TypeError is built
 (Python/ceval.c and Objects/object.c). Extra positional arguments do not take
@@ -10581,14 +10588,14 @@ def execStmt (m : Module) (fuel : Nat) (st : FrameState) (s : Stmt) :
                else
                  (match findClass m id with
                   | some (ci, c) =>
-                    if c.isExc then .exn st (.user ci c.name)
+                    if c.isExc then .exn st (exceptionConstructError st.world.callDepth (.user ci c.name))
                     else
                       .unsupported s!"'raise {id}': only an admitted exception class (`class N(Exception): pass` or a measured direct builtin ancestor) can be raised — outside the tier (docs/memory-model.md §exceptions)"
                   | Option.none =>
                     if (findNamedTuple m id).isSome then
                       .exn st (.typeError "exceptions must derive from BaseException")
                     else if admittedBuiltinRaise.contains id then
-                      .exn st (.builtinException (builtinExceptionIdentity id))
+                      .exn st (exceptionConstructError st.world.callDepth (.builtinException (builtinExceptionIdentity id)))
                     else
                       .unsupported s!"'raise {id}': only an admitted exception class name can be raised — outside the tier (docs/memory-model.md §exceptions)")
          | some (.call (.name id _) args kwargs callUnsupported _) =>
@@ -10610,9 +10617,9 @@ def execStmt (m : Module) (fuel : Nat) (st : FrameState) (s : Stmt) :
              | some (ci, c) =>
                if c.isExc then
                  match args.toList with
-                 | [] => .exn st (.user ci c.name)
+                 | [] => .exn st (exceptionConstructError st.world.callDepth (.user ci c.name))
                  | [(.constant (.str msg) _)] =>
-                   .exn st (.userMessage ci c.name msg)
+                   .exn st (exceptionConstructError st.world.callDepth (.userMessage ci c.name msg))
                  | [_] =>
                    .unsupported s!"'raise {id}(…)': the measured constructor form requires one string argument — outside the tier (docs/memory-model.md §exceptions)"
                  | _ =>
@@ -10632,12 +10639,12 @@ def execStmt (m : Module) (fuel : Nat) (st : FrameState) (s : Stmt) :
              match args.toList with
              | [] =>
                if admittedBuiltinRaise.contains id then
-                 .exn st (.builtinException (builtinExceptionIdentity id))
+                 .exn st (exceptionConstructError st.world.callDepth (.builtinException (builtinExceptionIdentity id)))
                else
                  .unsupported s!"'raise {id}()': only an admitted builtin exception class can be constructed without arguments"
              | [(.constant (.str msg) _)] =>
                match builtinExcWithMessage id msg with
-               | some e => .exn st e
+               | some e => .exn st (exceptionConstructError st.world.callDepth e)
                | none =>
                  if admittedBuiltinRaise.contains id then
                    .unsupported s!"'raise {id}(…)': only the measured one-string builtin exception constructors are admitted — outside the tier (docs/memory-model.md §exceptions)"
@@ -10663,11 +10670,11 @@ def execStmt (m : Module) (fuel : Nat) (st : FrameState) (s : Stmt) :
        if b then .ok st .next
        else
          match msg with
-         | Option.none => .exn st (.assertionError Option.none)
+         | Option.none => .exn st (exceptionConstructError st.world.callDepth (.assertionError Option.none))
          | some e =>
            evalExpr m fuel st e ⤳ fun st v =>
            match printOne st.world.heap v with
-           | some rendered => .exn st (.assertionError (some rendered))
+           | some rendered => .exn st (exceptionConstructError st.world.callDepth (.assertionError (some rendered)))
            | Option.none =>
              .unsupported "assert message: the tier cannot render this value EXACTLY — a set (hash order), an instance/closure/generator (identity), or a structure deeper than the repr budget — docs/memory-model.md §the assert statement")
     | .delStmt names _ =>

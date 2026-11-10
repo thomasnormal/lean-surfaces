@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Count admitted exception construction and failing assertions against the
+  Python recursion limit, after evaluating constructor arguments.
+
 - Respect recursion limits during function argument binding and report
   keyword binding errors in CPython's call order.
 

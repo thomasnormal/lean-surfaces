@@ -710,8 +710,8 @@ only Python ≥ 3.9 stdlib; the differential oracle is pinned to CPython 3.9
 
 Anything outside the modelled tier is representable (it becomes an
 `Unsupported` node) but evaluates to a loud refusal, `Res.unsupported`, with
-a message naming the construct. It is never answered wrongly: the whole tier
-is differentially tested against CPython 3.9
+a message naming the construct. The admitted tier is differentially tested
+against CPython 3.9
 ([harness/diff_test.py](harness/diff_test.py)); the measured, per-construct
 table is [docs/python-coverage.md](docs/python-coverage.md). The main gaps:
 

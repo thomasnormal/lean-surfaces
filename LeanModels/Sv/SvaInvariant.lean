@@ -73,6 +73,36 @@ theorem reset_trace_safe {q : Bool} {us : List Bool}
   rfl
   exact hr
 
+/-! A bounded counter-shaped invariant witness.  This is still an abstract
+transition system; the later E elaborator will supply the concrete state and
+one-cycle step for an RTL target. -/
+
+def boundedCounter : SafetySystem where
+  State := Nat
+  Input := Bool
+  init q := q = 0
+  step q _ := if q = 3 then 0 else q + 1
+  invariant q := q ≤ 3
+  safe q := q ≤ 3
+
+theorem boundedCounter_init (q : Nat) (h : boundedCounter.init q) :
+    boundedCounter.invariant q := by
+  simp only [boundedCounter] at h ⊢
+  omega
+
+theorem boundedCounter_step (q : Nat) (u : Bool)
+    (h : boundedCounter.invariant q) :
+    boundedCounter.invariant (boundedCounter.step q u) := by
+  simp only [boundedCounter] at h ⊢
+  split <;> omega
+
+theorem boundedCounter_trace_safe {q : Nat} {us : List Bool}
+    (hr : SafetyTrace boundedCounter (0 : Nat) us q) : boundedCounter.safe q := by
+  apply safe_of_trace boundedCounter boundedCounter_init boundedCounter_step
+    (fun q h => h) (s₀ := (0 : Nat)) (s := q) (us := us)
+  exact rfl
+  exact hr
+
 end SafetySmoke
 
 end LeanModels.Sv

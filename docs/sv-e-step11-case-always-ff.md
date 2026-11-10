@@ -19,8 +19,9 @@ The E-core-1 rule in `LeanModels/Sv/Kernel/Core1Edge.lean` is: at an edge, evalu
 selector once from the pre-edge view, evaluate each case item's expressions in
 source order with four-state `caseHit`, run the first matching body (or the
 default), and return its NBA queue for the common commit step. An absent
-default is a no-op; an empty matching body still stops the arm walk. `casez`,
-`casex`, `case … inside`, blocking statements, dynamic targets, delays, and
+default is a no-op; an empty matching body still stops the arm walk. The
+same walk now handles [`casez`/`casex`](sv-e-step11-casez-casex-always-ff.md).
+`case … inside`, blocking statements, dynamic targets, delays, and
 multiple event controls remain loud until their own Step 11 items land.  A
 selector or data value containing `x`/`z` is retained; it is never coerced to a
 two-state Boolean. Qualified cases (`unique`, `unique0`, `priority`) also

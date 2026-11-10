@@ -159,6 +159,23 @@ loud frontier until the thawed heap-list argument path is wired.
 DECIDED: close `py-boundary-augrepeat-rewrite` on this branch and retain only
 the explicit boundary aliasing refusal.
 
+## 2026-11-10-pyfoundation-18 — revalidate dead yield-target handling
+
+The inbox finding `py-dead-yield-target-drop` is already closed by the
+structured declaration check. A global or nonlocal target in the narrow
+expression-yield lowering emits `YieldAssign:global-or-nonlocal` before the
+old dead-target path can drop the resumed store; the local dead-target slice
+remains separate.
+
+| Measurement | Result |
+|---|---|
+| Global target witness | `yield_global_target.py`: loud exit 3; CPython 3.9 runs and prints its result |
+| Source admission | structured declaration check precedes dead-target lowering |
+| Semantic change | none; audit confirmation only |
+
+DECIDED: close `py-dead-yield-target-drop` on this branch and retain the loud
+global/nonlocal boundary until a send-aware yield-expression frame exists.
+
 ## 2026-11-10-pyfoundation-10 — max/min recursion
 
 `max` and `min` now check the CPython builtin recursion unit after positional

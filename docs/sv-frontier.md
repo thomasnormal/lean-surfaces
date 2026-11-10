@@ -163,6 +163,10 @@ assignments for its outputs. It is deliberately outside the strict
 source-shaped drivers. Its four-cycle vector trace is pinned in
 `harness/sv/cases2.json` as `valid_chain_mixed_profile` and matches Icarus.
 
+### Signed comparison widening
+
+The clean-room `sem2/signed_compare_widen` fixture pins a signed 8-bit input compared with the unsized signed integer zero. The symbolic envelope retains the sign-extending conversion, and E evaluates the resulting signed comparison. The six input points, including x and z sign bits, agree with Icarus and Xcelium. This confirms that the earlier `ConversionExpression:width` frontend refusal for this fixed-width shape no longer occurs. Other signed conversion shapes retain their existing admission boundaries.
+
 ### Generated one-driver wire windows
 
 The clean-room `wire_generate/wire_generate.sv` witness now admits a

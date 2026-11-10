@@ -1142,6 +1142,7 @@ theorem fuelMono (fuel : Nat) :
                                       exact Run.le_refl _
                           -- any/all
                           · refine Run.le_bind (flattenStarRun_mono (ihEs m st cargs.toList k hk)) fun st vs => ?_
+                            refine Run.le_withFrameRecursionUnit fun st => ?_
                             cases vs with
                             | nil => exact Run.le_refl _
                             | cons v vtail =>

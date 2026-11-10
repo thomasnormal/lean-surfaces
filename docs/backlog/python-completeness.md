@@ -46,9 +46,16 @@ whose builtin module-name comparison enters a unit in `Objects/object.c`.
 
 `abs` uses the same `METH_O` recursion protocol; `abs_recursion.py` pins
 its valid, invalid, and effectful argument paths against CPython 3.9.25.
+`all` and `any` now keep the call unit active while consuming an iterable,
+including a generator frame, and reject keyword arguments after evaluating them.
+`anyall_recursion.py` pins ordinary calls, type/arity/keyword errors, argument
+effects, and generator state after a caught recursion error. CPython paths:
+`Objects/methodobject.c:cfunction_vectorcall_O`,
+`Python/bltinmodule.c:builtin_all`/`builtin_any`, and
+`Objects/genobject.c:gen_send_ex`.
 
 A boundary sweep against CPython 3.9.25 with harness recursion base 2 exposed
-more decided mismatches in both interpreters: calls to `sum`, `all`,
+more decided mismatches in both interpreters: calls to `sum`,
 `max`, `min`, `sorted`, `round`, `str`, `int`, list `append`, and dict `get`
 can reach `RecursionError` where the model returns normally. `max`, `min`,
 `sorted`, `round`, and `str` also have a deeper nested recursion site: they

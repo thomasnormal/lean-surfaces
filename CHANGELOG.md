@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Count `all` and `any` calls during recursion, including generator resumption,
+  and report their keyword-argument errors in CPython order.
+
 - Respect the CPython recursion limit for `abs` calls and their argument errors.
 
 - Respect the CPython recursion limit for `len` calls and their argument errors.

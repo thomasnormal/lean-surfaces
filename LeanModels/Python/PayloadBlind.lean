@@ -5391,6 +5391,7 @@ theorem pbEvalExpr_succ (htwin : PayloadTwin o₀ o) (ih : PBAll pa o₀ o fuel)
                                     -- any / all
                                     · refine PBF.bind (PBF.flattenStarRun (ihEs m st args.toList hslot))
                                         fun s1 vs _ hs1 => ?_
+                                      refine PBF.withFrameRecursionUnit hs1 fun s1 hs1 => ?_
                                       cases vs with
                                       | nil => exact PBF.exn hs1 _
                                       | cons v rest =>

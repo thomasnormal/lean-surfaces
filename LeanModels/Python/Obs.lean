@@ -1100,6 +1100,7 @@ theorem fuelMono (fuel : Nat) :
                                         Run.le_refl _
                           -- max
                           · refine Run.le_bind (flattenStarRun_mono (ihEs m st cargs.toList k hk)) fun st vs => ?_
+                            refine Run.le_bind (Run.le_refl _) fun st _ => ?_
                             cases vs with
                             | nil => exact Run.le_refl _
                             | cons v vtail =>
@@ -1121,6 +1122,7 @@ theorem fuelMono (fuel : Nat) :
                                       exact Run.le_refl _
                           -- min
                           · refine Run.le_bind (flattenStarRun_mono (ihEs m st cargs.toList k hk)) fun st vs => ?_
+                            refine Run.le_bind (Run.le_refl _) fun st _ => ?_
                             cases vs with
                             | nil => exact Run.le_refl _
                             | cons v vtail =>
@@ -3164,37 +3166,39 @@ theorem worldInv (m : Module) (hm : m.heapFree = true) (fuel : Nat) :
                       -- heap-free module discharges (`heapFree_genFree`)
                       -- — every other shape is the pure fold
                       refine .ite (.bind hargs fun st₁ vs h₁ => ?_) ?_
-                      · cases vs with
-                        | nil => exact .liftResF h₁ _
+                      · refine .bind (.liftResF h₁ _) fun st₂ _ h₂ => ?_
+                        cases vs with
+                        | nil => exact .liftResF h₂ _
                         | cons v vtail =>
-                          cases v <;> try exact .liftResF h₁ _
+                          cases v <;> try exact .liftResF h₂ _
                           case ref a =>
                             cases vtail with
-                            | cons _ _ => exact .liftResF h₁ _
+                            | cons _ _ => exact .liftResF h₂ _
                             | nil =>
                               dsimp only
-                              cases Heap.get? st₁.world.heap a with
-                              | none => exact .liftResF h₁ _
+                              cases Heap.get? st₂.world.heap a with
+                              | none => exact .liftResF h₂ _
                               | some obj =>
-                                cases obj <;> try exact .liftResF h₁ _
+                                cases obj <;> try exact .liftResF h₂ _
                                 case generator q l c stat =>
                                   simp only [Module.heapFree_genFree hm,
                                     eq_self_iff_true, if_true]
                                   exact .unsupported
                       refine .ite (.bind hargs fun st₁ vs h₁ => ?_) ?_
-                      · cases vs with
-                        | nil => exact .liftResF h₁ _
+                      · refine .bind (.liftResF h₁ _) fun st₂ _ h₂ => ?_
+                        cases vs with
+                        | nil => exact .liftResF h₂ _
                         | cons v vtail =>
-                          cases v <;> try exact .liftResF h₁ _
+                          cases v <;> try exact .liftResF h₂ _
                           case ref a =>
                             cases vtail with
-                            | cons _ _ => exact .liftResF h₁ _
+                            | cons _ _ => exact .liftResF h₂ _
                             | nil =>
                               dsimp only
-                              cases Heap.get? st₁.world.heap a with
-                              | none => exact .liftResF h₁ _
+                              cases Heap.get? st₂.world.heap a with
+                              | none => exact .liftResF h₂ _
                               | some obj =>
-                                cases obj <;> try exact .liftResF h₁ _
+                                cases obj <;> try exact .liftResF h₂ _
                                 case generator q l c stat =>
                                   simp only [Module.heapFree_genFree hm,
                                     eq_self_iff_true, if_true]

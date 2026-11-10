@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Count `max`/`min`'s builtin and rich-comparison recursion units after
+  argument evaluation; arity and non-comparison errors retain their paths.
+
 - Count `sum` calls against the CPython recursion limit after argument
   evaluation; unsupported keyword forms remain loud.
 

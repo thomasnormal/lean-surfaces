@@ -10,6 +10,8 @@
   the captured source and literal hashes and the recorded ABI and call binding.
   The harness relies on its caller's cgroup instead of imposing an address-space
   limit.
+- Respect the CPython recursion limit for `abs` calls and their argument errors.
+
 - Respect the CPython recursion limit for `len` calls and their argument errors.
 
 - Count admitted exception construction and failing assertions against the

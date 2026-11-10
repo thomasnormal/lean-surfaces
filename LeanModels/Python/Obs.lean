@@ -3198,11 +3198,12 @@ theorem worldInv (m : Module) (hm : m.heapFree = true) (fuel : Nat) :
                                     eq_self_iff_true, if_true]
                                   exact .unsupported
                       refine .ite (.bind hargs fun st₁ vs h₁ => ?_) ?_
-                      · cases vs with
+                      · refine .bind (.liftResF h₁ _) fun st₂ _ h₂ => ?_
+                        cases vs with
                         | nil => exact .exn
                         | cons v rest =>
                           cases rest with
-                          | nil => exact .liftResF h₁ _
+                          | nil => exact .liftResF h₂ _
                           | cons _ _ => exact .exn
                       · -- `round`, then `int`, then the pass-3 trio
                         -- `sum`/`tuple`/

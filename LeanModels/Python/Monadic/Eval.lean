@@ -435,7 +435,7 @@ def applyBuiltin (K : Kont) (m : Module) (fname : String) (vs : List RVal) :
     | _ => refuse "internal: <star-arg> expects one positional argument"
   else if fname == "len" then
     let st ← get
-    let _ ← liftRes (builtinLenRecursionCheck st.world.callDepth)
+    let _ ← liftRes (builtinMethORecursionCheck st.world.callDepth)
     match vs with
     | [v] => lenM v
     | _ => raisePy (.typeError s!"len() takes exactly one argument ({vs.length} given)")
@@ -449,6 +449,8 @@ def applyBuiltin (K : Kont) (m : Module) (fname : String) (vs : List RVal) :
     | [left, right] => lenMultM left right
     | _ => raisePy (.typeError s!"internal: {lenMultBuiltinName} expects two arguments")
   else if fname == "abs" then
+    let st ← get
+    let _ ← liftRes (builtinMethORecursionCheck st.world.callDepth)
     match vs with
     | [v] => liftRes (absVal v)
     | _ => raisePy (.typeError s!"abs() takes exactly one argument ({vs.length} given)")
@@ -1237,7 +1239,7 @@ def evalOpen (K : Kont) (m : Module) : Expr → SemF RVal
                     let _ ← K.kwArgs kwargs.toList
                     if name == "len" then
                       let st ← get
-                      let _ ← liftRes (builtinLenRecursionCheck st.world.callDepth)
+                      let _ ← liftRes (builtinMethORecursionCheck st.world.callDepth)
                       pure ()
                     raisePy (.typeError (if name == "float" then
                       "float() takes no keyword arguments"
@@ -1260,6 +1262,10 @@ def evalOpen (K : Kont) (m : Module) : Expr → SemF RVal
                     if name == "int" then
                       liftRes (intCastArgs vs kvs)
                     else
+                    if name == "abs" then
+                      let st ← get
+                      let _ ← liftRes (builtinMethORecursionCheck st.world.callDepth)
+                      pure ()
                     raisePy (.typeError (if name == "repr" then
                       "repr() takes no keyword arguments"
                     else if name == "abs" then

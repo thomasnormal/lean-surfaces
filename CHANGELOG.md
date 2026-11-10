@@ -88,6 +88,9 @@
 - Proved self-conversion preserves every valid integral value at any supported
   width and propagates invalid inputs.
 
+- Proved a symbolic parameter-expression agreement case for related value
+  arguments and object-frame reads.
+
 - Extended the value/object evaluator agreement battery with negative signed
   subtraction and native differential coverage.
 

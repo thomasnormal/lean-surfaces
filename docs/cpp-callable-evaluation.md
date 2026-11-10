@@ -68,6 +68,14 @@ reason. The result covers Boolean, signed and unsigned formats at every width;
 boundary shared by both callable evaluators. These results do not by themselves
 establish evaluator refinement.
 
+`callableParameterExpressionAgreement` is a symbolic expression-level case:
+for any profile, declaration, parameter list and valid value, if the list
+lookup and object-frame read identify that value and both selected types have
+its format, both evaluators return it and preserve their respective states.
+The concrete test initializes a frame and discharges those premises. Relating
+frame initialization, errors and the remaining expression and statement cases
+is still required for a whole-call refinement theorem.
+
 `callableBooleanIdentityAgreement` quantifies over both Boolean inputs to one
 identity callable and proves that each API returns the expected Boolean. It is
 a complete input-domain theorem for that callable, not a relation for arbitrary

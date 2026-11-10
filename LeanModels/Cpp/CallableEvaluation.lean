@@ -509,6 +509,35 @@ mutual
   termination_by structural fuel
 end
 
+/-- The value evaluator's expression boundary, including the updated
+parameter values. This is the same evaluator used inside callable bodies. -/
+def evaluateCallableExpression (fuel : Nat) (profile : TargetProfile)
+    (parameters : List CallableParameter) (arguments : List IntegralValue)
+    (expression : TypedCallableExpression) :
+    Except CallableEvaluationError (IntegralResult IntegralValue × List IntegralValue) :=
+  evaluateTyped fuel profile parameters arguments expression
+
+/-- Reading a valid parameter whose selected types have its format returns the
+value without changing the argument list. -/
+theorem evaluateCallableExpression_parameter (fuel : Nat) (profile : TargetProfile)
+    (parameters : List CallableParameter) (arguments : List IntegralValue)
+    (declaration : FrontendHandle) (index : Nat) (param : CallableParameter)
+    (value : IntegralValue) (sourceType resultType : CppTypeEvidence)
+    (hidx : parameters.findIdx? (fun p => p.declaration == declaration) = some index)
+    (hp : parameters[index]? = some param) (ha : arguments[index]? = some value)
+    (hparam : integralFormatOfEvidence profile param.type = .ok value.format)
+    (hresult : integralFormatOfEvidence profile resultType = .ok value.format)
+    (hvalid : value.invalid? = none) :
+    evaluateCallableExpression (fuel + 1) profile parameters arguments
+      {expression := .parameter declaration, sourceType := sourceType, type := resultType} =
+      .ok (.ok value, arguments) := by
+  have heq : (value.format == value.format) = true := by
+    cases value.format <;> simp [BEq.beq, instBEqIntegralFormat.beq]
+  simp [evaluateCallableExpression, evaluateTyped, evaluateParameter, hidx, hp, argumentAt, ha,
+    exactArgument, formatFor, hparam, convertTo, integralConvertOfEvidence, hresult,
+    Except.mapError, Except.map, Except.bind, Bind.bind, Pure.pure, Except.pure, heq,
+    integralConvert_same_of_valid, hvalid]
+
 def evaluateCallable (fuel : Nat) (profile : TargetProfile) (function : CallableFunction)
     (arguments : List IntegralValue) :
     Except CallableEvaluationError (IntegralResult IntegralValue) := do

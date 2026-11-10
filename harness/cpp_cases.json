@@ -20180,5 +20180,17 @@
     "cpp_expression": "callable_witness()",
     "expect": "match",
     "rung": 3
+  },
+  {
+    "id": "expression.callable-parameter-expression-agreement",
+    "kind": "expression",
+    "corpus": "callable refinement seam",
+    "lean_module": "LeanModels.Cpp.CallableRefinementTests",
+    "lean_namespace": "LeanModels.Cpp.CallableRefinementTests",
+    "lean_expression": "callableParameterExpressionAgreementWitness",
+    "cpp_source": "int identity(int x) { return x; } bool callable_witness() { return identity(-128) == -128 && identity(0) == 0 && identity(2147483647) == 2147483647; }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 3
   }
 ]

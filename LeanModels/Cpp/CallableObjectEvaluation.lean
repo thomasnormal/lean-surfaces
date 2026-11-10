@@ -242,6 +242,31 @@ private def evalExpression (fuel : Nat) (profile : TargetProfile)
       | .call _ _ => failure frame .unsupportedCall
 termination_by structural fuel
 
+/-- The object evaluator's expression boundary, retaining the resulting
+frame. This is the same evaluator used inside callable bodies. -/
+def evaluateCallableObjectExpression (fuel : Nat) (profile : TargetProfile)
+    (frame : IntegralObjectFrame) (expression : TypedCallableExpression) :
+    Outcome (IntegralResult IntegralValue) :=
+  evalExpression fuel profile frame expression
+
+/-- A parameter read that the frame resolves to a valid value of the selected
+format returns that value without changing the frame. -/
+theorem evaluateCallableObjectExpression_parameter (fuel : Nat) (profile : TargetProfile)
+    (frame : IntegralObjectFrame) (declaration : FrontendHandle) (value : IntegralValue)
+    (sourceType resultType : CppTypeEvidence)
+    (hread : frame.evaluate 1 (.read declaration) =
+      {frame := frame, result := .ok (.ok value)})
+    (hformat : integralFormatOfEvidence profile resultType = .ok value.format)
+    (hvalid : value.invalid? = none) :
+    evaluateCallableObjectExpression (fuel + 2) profile frame
+      {expression := .parameter declaration, sourceType := sourceType, type := resultType} =
+      {frame := frame, result := .ok (.ok value)} := by
+  have hread' : frame.evaluate (fuel + 1) (.read declaration) =
+      {frame := frame, result := .ok (.ok value)} := hread
+  simp [evaluateCallableObjectExpression, evalExpression, evalParameter, hread', success, convertTo,
+    integralConvertOfEvidence, hformat, bindIntegralResultValue, integralConvert_same_of_valid,
+    Bind.bind, Pure.pure, Except.bind, Except.pure, hvalid]
+
 /-- The callback already has smaller fuel; fallthrough itself descends the clause list. -/
 private def evalSwitch
     (evaluate : IntegralObjectFrame → CallableStatement → Outcome Execution)

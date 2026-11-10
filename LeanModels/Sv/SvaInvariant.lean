@@ -103,6 +103,45 @@ theorem boundedCounter_trace_safe {q : Nat} {us : List Bool}
   exact rfl
   exact hr
 
+/-! A small FIFO occupancy model, parameterized by its declared depth.  The
+  two input bits are `push` and `pop`; a lone push at a full FIFO and a lone
+  pop at an empty FIFO are no-ops.  This is the arithmetic shape that an E
+  elaborator can later connect to a concrete FIFO's sampled state. -/
+
+def fifoCounter (depth : Nat) : SafetySystem where
+  State := Nat
+  Input := Bool × Bool
+  init q := q = 0
+  step q input :=
+    if input.1 && !input.2 then
+      if q < depth then q + 1 else q
+    else if input.2 && !input.1 then
+      if 0 < q then q - 1 else q
+    else q
+  invariant q := q ≤ depth
+  safe q := q ≤ depth
+
+theorem fifoCounter_init (depth q : Nat) (h : (fifoCounter depth).init q) :
+    (fifoCounter depth).invariant q := by
+  simp only [fifoCounter] at h ⊢
+  omega
+
+theorem fifoCounter_step (depth q : Nat) (input : Bool × Bool)
+    (h : (fifoCounter depth).invariant q) :
+    (fifoCounter depth).invariant ((fifoCounter depth).step q input) := by
+  simp only [fifoCounter] at h ⊢
+  rcases input with ⟨push, pop⟩
+  cases push <;> cases pop <;> simp_all <;> split <;> omega
+
+theorem fifoCounter_trace_safe (depth q : Nat) {us : List (Bool × Bool)}
+    (hr : SafetyTrace (fifoCounter depth) (0 : Nat) us q) :
+    (fifoCounter depth).safe q := by
+  apply safe_of_trace (fifoCounter depth)
+    (fifoCounter_init depth) (fifoCounter_step depth)
+    (fun q h => h) (s₀ := (0 : Nat)) (s := q) (us := us)
+  rfl
+  exact hr
+
 end SafetySmoke
 
 end LeanModels.Sv

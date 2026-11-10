@@ -430,6 +430,14 @@ every finite `SafetyTrace`. The example sits beside the replay theorem; it is a
 proof-shape witness until an OpenTitan E elaborator supplies the concrete state
 and transition relation.
 
+The same seam now has a parameterized FIFO occupancy model,
+`SafetySmoke.fifoCounter`. Its reset base and one-cycle step prove
+`occupancy ≤ depth`, including the full/empty no-op cases for push/pop inputs.
+`sva_counterexample` checks the depth-4 specialization through the same trace
+rule. This is the arithmetic invariant shape to connect to `prim_fifo_sync`
+once its E state elaborator is admitted; it does not claim a property about
+the OpenTitan RTL yet.
+
 ### F3 — structural composition
 
 Use E-core-2's hierarchy and per-instance contracts. Prove a submodule once,

@@ -101,17 +101,20 @@ class is deliberately not vendored. The theorems below never touch it:
 /-! ## The theorems (statements duplicated from proof.lean BY DESIGN —
 `:= by proofs` typechecks the duplication) -/
 
-/-- **Main theorem (`median_low`).** For every nonempty int list, CPython's
+/-- **Main theorem (`median_low`).** For every nonempty int list whose length
+fits CPython's pinned 64-bit `Py_ssize_t`, CPython's
 `median_low` — run byte-verbatim through the deep-embedded interpreter —
 terminates and returns the element at sorted rank `⌊(n−1)/2⌋` (odd `n`:
 the middle; even `n`: the lower middle — one rank expression covers both
 vendored branches). -/
-theorem median_low_total (data : List PyInt) (hne : data ≠ []) :
+theorem median_low_total (data : List PyInt) (hne : data ≠ [])
+    (hsize : (data.length : Int) ≤ pySsizeMax) :
     bench_statistics.median_low(data) ==>
       (sortInts data).getD ((data.length - 1) / 2) 0 := by proofs
 
 /-- **Main theorem (`median_high`).** The element at sorted rank `⌊n/2⌋`. -/
-theorem median_high_total (data : List PyInt) (hne : data ≠ []) :
+theorem median_high_total (data : List PyInt) (hne : data ≠ [])
+    (hsize : (data.length : Int) ≤ pySsizeMax) :
     bench_statistics.median_high(data) ==>
       (sortInts data).getD (data.length / 2) 0 := by proofs
 
@@ -119,7 +122,8 @@ theorem median_high_total (data : List PyInt) (hne : data ≠ []) :
 result is an element of the data, with at least `⌊(n−1)/2⌋ + 1` data
 elements `≤` it and at least `n − ⌊(n−1)/2⌋` data elements `≥` it — the
 order-statistics contract over SYMBOLIC data, not "index into sorted()". -/
-theorem median_low_rank (data : List PyInt) (hne : data ≠ []) {r : PyInt}
+theorem median_low_rank (data : List PyInt) (hne : data ≠ [])
+    (hsize : (data.length : Int) ≤ pySsizeMax) {r : PyInt}
     (h : bench_statistics.median_low(data) ⇓ r) :
     r ∈ data ∧
       (data.length - 1) / 2 + 1 ≤ data.countP (fun v => decide (v ≤ r)) ∧
@@ -127,7 +131,8 @@ theorem median_low_rank (data : List PyInt) (hne : data ≠ []) {r : PyInt}
         ≤ data.countP (fun v => decide (r ≤ v)) := by proofs
 
 /-- **Rank characterization (`median_high`, `⇓`-relational)**. -/
-theorem median_high_rank (data : List PyInt) (hne : data ≠ []) {r : PyInt}
+theorem median_high_rank (data : List PyInt) (hne : data ≠ [])
+    (hsize : (data.length : Int) ≤ pySsizeMax) {r : PyInt}
     (h : bench_statistics.median_high(data) ⇓ r) :
     r ∈ data ∧
       data.length / 2 + 1 ≤ data.countP (fun v => decide (v ≤ r)) ∧
@@ -137,18 +142,21 @@ theorem median_high_rank (data : List PyInt) (hne : data ≠ []) {r : PyInt}
 /-- **Strengthened partial correctness (`median_low`, `~~>`)**: every run,
 at every fuel, either times out or returns exactly the low median — no
 exception, no `unsupported`, no other value. -/
-theorem median_low_partial (data : List PyInt) (hne : data ≠ []) :
+theorem median_low_partial (data : List PyInt) (hne : data ≠ [])
+    (hsize : (data.length : Int) ≤ pySsizeMax) :
     bench_statistics.median_low(data) ~~>
       (sortInts data).getD ((data.length - 1) / 2) 0 := by proofs
 
 /-- **Strengthened partial correctness (`median_high`, `~~>`)**. -/
-theorem median_high_partial (data : List PyInt) (hne : data ≠ []) :
+theorem median_high_partial (data : List PyInt) (hne : data ≠ [])
+    (hsize : (data.length : Int) ≤ pySsizeMax) :
     bench_statistics.median_high(data) ~~>
       (sortInts data).getD (data.length / 2) 0 := by proofs
 
 /-- **Low ≤ high**: on the same data, any observed `median_low` result is
 `≤` any observed `median_high` result. -/
 theorem median_low_le_median_high (data : List PyInt) (hne : data ≠ [])
+    (hsize : (data.length : Int) ≤ pySsizeMax)
     {lo hi : PyInt} (hlo : bench_statistics.median_low(data) ⇓ lo)
     (hhi : bench_statistics.median_high(data) ⇓ hi) :
     lo ≤ hi := by proofs
@@ -156,12 +164,14 @@ theorem median_low_le_median_high (data : List PyInt) (hne : data ≠ [])
 /-- **Pre-sorted input (`median_low`)**: on already-ascending data the low
 median is literally `data[(n−1)/2]` (`sortInts` fixpoint). -/
 theorem median_low_presorted (data : List PyInt) (hne : data ≠ [])
+    (hsize : (data.length : Int) ≤ pySsizeMax)
     (hs : data.Pairwise (· ≤ ·)) :
     bench_statistics.median_low(data) ==>
       data.getD ((data.length - 1) / 2) 0 := by proofs
 
 /-- **Pre-sorted input (`median_high`)**: `data[n/2]`. -/
 theorem median_high_presorted (data : List PyInt) (hne : data ≠ [])
+    (hsize : (data.length : Int) ≤ pySsizeMax)
     (hs : data.Pairwise (· ≤ ·)) :
     bench_statistics.median_high(data) ==>
       data.getD (data.length / 2) 0 := by proofs

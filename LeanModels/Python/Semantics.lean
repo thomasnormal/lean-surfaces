@@ -2442,17 +2442,36 @@ def evalFloatDivision (left right : RVal) : Res RVal := do
     .unsupported "NaN payload/sign propagation requires an explicit floating-point oracle"
 
 /-! CPython 3.9's `float_pow` (`Objects/floatobject.c`) first converts both
-operands, then handles zero exponents and finite zero-base powers before
-platform `pow`. The remaining libm-dependent cases stay loud. -/
+operands, then handles zeros, infinities, and unit bases before platform `pow`.
+NaN payload cases and the remaining libm-dependent cases stay loud. -/
 def evalFloatPow (left right : RVal) : Res RVal := do
   let base ← floatNumber left
   let exponent ← floatNumber right
+  let one := Float64.ofBits 0x3ff0000000000000
   if exponent.isZero then
-    .ok (.float (Float64.ofBits 0x3ff0000000000000))
-  else if base.isZero && exponent.exponent != 2047 then
+    .ok (.float one)
+  else if exponent.isNaN && base.eqv one then
+    .ok (.float one)
+  else if base.isNaN || exponent.isNaN then
+    .unsupported "floating ** with a NaN payload requires a floating-point oracle"
+  else if exponent.isInf then
+    let magnitude := base.abs
+    if magnitude.eqv one then .ok (.float one)
+    else if exponent.sign != (one.lt magnitude) then
+      .ok (.float (Float64.ofBits 0x7ff0000000000000))
+    else .ok (.float (Float64.ofBits 0))
+  else if base.isInf then
+    let sign := if base.sign && floatIsOddInteger exponent then 2 ^ 63 else 0
+    if exponent.sign then .ok (.float (Float64.ofBits sign))
+    else .ok (.float (Float64.ofBits (sign + 0x7ff0000000000000)))
+  else if base.isZero then
     if exponent.sign then .exn .zeroDivisionPow
     else .ok (.float (Float64.ofBits
       (if base.sign && floatIsOddInteger exponent then 2 ^ 63 else 0)))
+  else if base.abs.eqv one && (!base.sign || floatIsInteger exponent) then
+    .ok (.float (Float64.ofBits
+      (if base.sign && floatIsOddInteger exponent then 0xbff0000000000000
+       else 0x3ff0000000000000)))
   else
     .unsupported "floating ** requires the pinned platform pow oracle (conversion is modeled by floatNumber)"
 

@@ -1,4 +1,5 @@
-import LeanModels.Sv.Observe
+import LeanModels.Sv.ObserveE
+import LeanModels.Sv.Obs
 import LeanModels.Refine.Rvfi
 
 /-!

@@ -48,6 +48,11 @@ mixed-conversion checks. The legacy `Float64.divideFinite` helper name is
 retained; the NaN-aware wrapper shares its determined infinity cases without a
 second interpreter path.
 
+For `round(float, ndigits)`, non-finite inputs are returned before the decimal
+digit cutoffs; finite values below the negative cutoff round to signed zero.
+The `round_lab.round_float_general` boundary rows in `harness/cases.json`
+cover both behaviors.
+
 For mixed or floating-point `**`, CPython 3.9's `float_pow` converts both
 operands before handling zeros, infinities and unit bases. Those portable
 cases are decided, including `-0.0` raised to an odd integer and the zero-base

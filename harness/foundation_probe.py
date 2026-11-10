@@ -168,3 +168,11 @@ def mixed_div_right_overflow():
 
 def integer_div_huge_ratio():
     return (1 << 1100) / (1 << 1100)
+
+
+def float_power_special(base, exponent):
+    return base ** exponent
+
+
+def float_power_big_zero():
+    return (1 << 1100) ** 0.0

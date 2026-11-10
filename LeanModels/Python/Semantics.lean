@@ -2385,6 +2385,14 @@ def floatIsInteger (value : Float64) : Bool :=
   else if exponent >= 1075 then true
   else value.fraction % 2 ^ (1075 - exponent) == 0
 
+def floatIsOddInteger (value : Float64) : Bool :=
+  if floatIsInteger value then
+    match value.toRatio with
+    | some (numerator, denominator) =>
+      (numerator / (denominator : Int)) % 2 != 0
+    | none => false
+  else false
+
 def floatArithmeticInvalid (operator : Float64.ArithmeticOp)
     (left right : Float64) : Bool :=
   match operator with
@@ -2433,16 +2441,20 @@ def evalFloatDivision (left right : RVal) : Res RVal := do
   | .error .nanPayload =>
     .unsupported "NaN payload/sign propagation requires an explicit floating-point oracle"
 
-/-! CPython's `float_pow` first converts both operands with
-`PyFloat_AsDouble`/`PyLong_AsDouble`, then calls platform `pow`.  The
-conversion is portable and shared; the libm result is deliberately left loud
-until it has an explicit platform oracle.  This ordering still decides the
-faithful conversion `OverflowError` for an integer too large to become a
-double. -/
+/-! CPython 3.9's `float_pow` (`Objects/floatobject.c`) first converts both
+operands, then handles zero exponents and finite zero-base powers before
+platform `pow`. The remaining libm-dependent cases stay loud. -/
 def evalFloatPow (left right : RVal) : Res RVal := do
-  let _ ← floatNumber left
-  let _ ← floatNumber right
-  .unsupported "floating ** requires the pinned platform pow oracle (conversion is modeled by floatNumber)"
+  let base ← floatNumber left
+  let exponent ← floatNumber right
+  if exponent.isZero then
+    .ok (.float (Float64.ofBits 0x3ff0000000000000))
+  else if base.isZero && exponent.exponent != 2047 then
+    if exponent.sign then .exn .zeroDivisionPow
+    else .ok (.float (Float64.ofBits
+      (if base.sign && floatIsOddInteger exponent then 2 ^ 63 else 0)))
+  else
+    .unsupported "floating ** requires the pinned platform pow oracle (conversion is modeled by floatNumber)"
 
 /-- Binary operator on already-evaluated operands. Integer/Boolean `+`, `-`
 and `*` return integers; true division returns binary64. Mixed arithmetic

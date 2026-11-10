@@ -59,10 +59,41 @@ simulators agree on all five rows (columns `y_star`, `y_comb`,
 | change `a` to `xz01` | `xx00` | `xx00` | `xxxx` | `0110` |
 | change `b` to `zzzz` | `xxxx` | `xxxx` | `xxxx` | `0110` |
 
-Across the three sources, each simulator supplies 26 common rows and three
+Across those three sources, each simulator supplies 26 common rows and three
 separately reported startup observations. Xcelium passes the readiness gate;
 versions are printed. These are four-state simulator observations, not a
 proof over every resolution or an E trace.
+
+`always_star_generate_step11.sv` adds the implicit control inside both arms
+of a parameter-dependent `GenerateIf` and one `GenerateFor` body template
+(IEEE 1800-2023 §27). Its eleven source rows exercise three parameter points,
+both branches, two widths and two lane counts, with x/z on every data input.
+Every sample follows an explicit input change after startup. The envelope
+keeps both branches, the symbolic loop and each `AlwaysEvent` node; the
+generate-member parser forwards the latter to the existing process parser.
+This closes the retained PicoRV32 source's `GenerateIf: AlwaysEvent: unknown
+generate member kind "AlwaysEvent"` ingestion wall. It adds no E activation
+rule. Explicit event controls keep their existing unsupported image, and
+contradictory implicit-event metadata rejects even in an inactive generate
+branch.
+
+`always_event_generate_refusal_step11.sv` covers a generated explicit
+`SignalEventControl` (§9.4.2). Its four source rows observe 1, 0, x and z
+after explicit input events. The memory adapter must refuse that retained
+process kind at instantiation: its generic unsupported-process scheduler
+skip would otherwise silently ignore the newly forwarded process. The
+guard covers module-level events too; an inactive generate arm contributes
+no process. This is refusal maintenance, not event execution. The pre-existing
+generic scheduler skip remains separately reported migration debt.
+These checks establish the Res-valued `instantiateMem2` refusal. The unchecked
+`instantiateMemD2` sentinel also falls under that generic scheduler debt.
+With these generated fixtures, Icarus 13.0 and readiness-gated Xcelium
+26.09-s001 each supply 41 common source rows plus the three startup
+observations described above.
+
+The fixture checker also regenerates all five envelopes in the explicit
+retained-procedure mode and compares their bytes. The general round-trip
+driver still lacks that mode; no default-mode round-trip pass is claimed.
 
 ```sh
 lake build 'Examples.«system-verilog».sem2.always_star_step11.agree'

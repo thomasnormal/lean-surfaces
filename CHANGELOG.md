@@ -117,6 +117,9 @@
 - Added a structural derivation and soundness theorem for callable literal,
   parameter, conversion and conditional expression agreement.
 
+- Proved evaluator agreement for an automatically derivable pure-expression
+  fragment, including cast chains of arbitrary depth.
+
 - Extended the value/object evaluator agreement battery with negative signed
   subtraction and native differential coverage.
 

@@ -106,6 +106,14 @@ not yet cover other expression forms, outer evaluator errors, or establish that
 every admitted expression has a derivation. The tests build nested derivations
 and use the soundness theorem rather than assuming agreement of their operands.
 
+`CallablePureExpression.agreement` establishes agreement without assuming
+operand results for the effect-free fragment of literals, conversions and
+conditionals. Its structural admission requires resolved formats and a common
+fuel budget for the children; it covers arbitrary parameter lists, arguments
+and frames and proves both input states are preserved. A test proves this for
+cast chains of arbitrary depth. Parameter reads, other expression forms and
+whole-call initialization remain outside this automatic fragment.
+
 `callableBooleanIdentityAgreement` quantifies over both Boolean inputs to one
 identity callable and proves that each API returns the expected Boolean. It is
 a complete input-domain theorem for that callable, not a relation for arbitrary

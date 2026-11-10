@@ -206,4 +206,63 @@ theorem CallableExpressionDerivation.sound {profile : TargetProfile} {parameters
   | conditionalNonvalue fuel args mid frame fm cond yes no st rt result hn dc ih =>
       exact callableConditionalExpressionAgreement_nonvalue fuel profile parameters args mid frame fm cond yes no st rt result hn ih.1 ih.2
 
+/-- A statically described effect-free fragment with a shared depth budget. -/
+inductive CallablePureExpression (profile : TargetProfile) : Nat → TypedCallableExpression → Prop where
+  | literal (fuel : Nat) (n : Nat) (value : IntegralValue) (sourceType resultType : CppTypeEvidence)
+      (hsource : integralLiteralOfEvidence profile sourceType n = .ok value)
+      (hformat : integralFormatOfEvidence profile resultType = .ok value.format) :
+      CallablePureExpression profile (fuel + 1)
+        {expression := .integer n, sourceType := sourceType, type := resultType}
+  | convert (fuel : Nat) (operand : TypedCallableExpression) (sourceType resultType : CppTypeEvidence)
+      (fmt : IntegralFormat) (hoperand : CallablePureExpression profile fuel operand)
+      (hformat : integralFormatOfEvidence profile resultType = .ok fmt) :
+      CallablePureExpression profile (fuel + 1)
+        {expression := .convert operand, sourceType := sourceType, type := resultType}
+  | conditional (fuel : Nat) (condition whenTrue whenFalse : TypedCallableExpression)
+      (sourceType resultType : CppTypeEvidence) (hc : CallablePureExpression profile fuel condition)
+      (ht : CallablePureExpression profile fuel whenTrue) (hf : CallablePureExpression profile fuel whenFalse) :
+      CallablePureExpression profile (fuel + 1)
+        {expression := .conditional condition whenTrue whenFalse, sourceType := sourceType, type := resultType}
+
+theorem CallablePureExpression.derivable {profile : TargetProfile} {fuel : Nat}
+    {expression : TypedCallableExpression} (fragment : CallablePureExpression profile fuel expression)
+    (parameters : List CallableParameter) (arguments : List IntegralValue) (frame : IntegralObjectFrame) :
+    ∃ result, CallableExpressionDerivation profile parameters fuel arguments frame expression result arguments frame := by
+  induction fragment with
+  | literal fuel n value st rt hs hf =>
+      exact ⟨_, CallableExpressionDerivation.literal fuel arguments frame n value st rt hs hf⟩
+  | convert fuel operand st rt fmt ho hf ih =>
+      obtain ⟨result, dr⟩ := ih
+      exact ⟨_, CallableExpressionDerivation.convert fuel arguments arguments frame frame operand st rt fmt result dr hf⟩
+  | conditional fuel cond yes no st rt hc ht hf ihc iht ihf =>
+      obtain ⟨conditionResult, dc⟩ := ihc
+      cases conditionResult with
+      | ok value =>
+          by_cases hz : value.value = 0
+          · obtain ⟨result, db⟩ := ihf
+            refine ⟨result, CallableExpressionDerivation.conditional fuel arguments arguments arguments frame frame frame
+              cond yes no st rt value result dc ?_⟩
+            simpa [hz] using db
+          · obtain ⟨result, db⟩ := iht
+            refine ⟨result, CallableExpressionDerivation.conditional fuel arguments arguments arguments frame frame frame
+              cond yes no st rt value result dc ?_⟩
+            simpa [hz] using db
+      | invalid reason =>
+          exact ⟨_, CallableExpressionDerivation.conditionalNonvalue fuel arguments arguments frame frame
+            cond yes no st rt (.invalid reason) (by intro v h; cases h) dc⟩
+      | undefined reason =>
+          exact ⟨_, CallableExpressionDerivation.conditionalNonvalue fuel arguments arguments frame frame
+            cond yes no st rt (.undefined reason) (by intro v h; cases h) dc⟩
+      | unsupported reason =>
+          exact ⟨_, CallableExpressionDerivation.conditionalNonvalue fuel arguments arguments frame frame
+            cond yes no st rt (.unsupported reason) (by intro v h; cases h) dc⟩
+
+theorem CallablePureExpression.agreement {profile : TargetProfile} {fuel : Nat}
+    {expression : TypedCallableExpression} (fragment : CallablePureExpression profile fuel expression)
+    (parameters : List CallableParameter) (arguments : List IntegralValue) (frame : IntegralObjectFrame) :
+    ∃ result, evaluateCallableExpression fuel profile parameters arguments expression = .ok (result, arguments) ∧
+      evaluateCallableObjectExpression fuel profile frame expression = {frame := frame, result := .ok result} := by
+  obtain ⟨result, derivation⟩ := fragment.derivable parameters arguments frame
+  exact ⟨result, derivation.sound⟩
+
 end LeanModels.Cpp

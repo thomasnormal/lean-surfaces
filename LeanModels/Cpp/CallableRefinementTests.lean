@@ -267,4 +267,49 @@ def callableNestedDerivationWitness : Bool :=
 
 #guard callableNestedDerivationWitness
 
+/-- Both branches are described by the pure fragment, not by assumed
+evaluator outcomes. -/
+theorem nestedExpressionPure : CallablePureExpression .lp64 9 nestedExpression := by
+  apply CallablePureExpression.conditional 8 nestedCondition nestedTrue nestedFalse
+    unsignedCharType unsignedCharType
+  · exact CallablePureExpression.literal 7 1 (signed 1) intType intType rfl rfl
+  · exact CallablePureExpression.convert 7 nestedOperand intType unsignedCharType (.unsigned 8)
+      (CallablePureExpression.literal 6 257 (signed 257) intType intType rfl rfl) rfl
+  · exact CallablePureExpression.convert 7 seventeen intType unsignedCharType (.unsigned 8)
+      (CallablePureExpression.literal 6 17 (signed 17) intType intType rfl rfl) rfl
+
+theorem nestedPureAgreement :
+    ∃ result, evaluateCallableExpression 9 .lp64 [] [] nestedExpression = .ok (result, []) ∧
+      evaluateCallableObjectExpression 9 .lp64 sampleFrame nestedExpression =
+        {frame := sampleFrame, result := .ok result} :=
+  nestedExpressionPure.agreement [] [] sampleFrame
+
+private def castChain : Nat → TypedCallableExpression
+  | 0 => {expression := .integer 7, sourceType := intType, type := intType}
+  | n + 1 => {expression := .convert (castChain n), sourceType := intType, type := intType}
+
+/-- The fragment and its agreement theorem apply at arbitrary expression
+depth, rather than to a fixed list of examples. -/
+theorem castChainPure (n : Nat) : CallablePureExpression .lp64 (n + 1) (castChain n) := by
+  induction n with
+  | zero => exact CallablePureExpression.literal 0 7 (signed 7) intType intType rfl rfl
+  | succ n ih =>
+      exact CallablePureExpression.convert (n + 1) (castChain n) intType intType (.signed 32) ih rfl
+
+theorem castChainAgreement (n : Nat) (arguments : List IntegralValue) (frame : IntegralObjectFrame) :
+    ∃ result, evaluateCallableExpression (n + 1) .lp64 [] arguments (castChain n) =
+        .ok (result, arguments) ∧
+      evaluateCallableObjectExpression (n + 1) .lp64 frame (castChain n) =
+        {frame := frame, result := .ok result} :=
+  (castChainPure n).agreement [] arguments frame
+
+def callablePureCastChainWitness : Bool :=
+  let expression := castChain 4
+  let object := evaluateCallableObjectExpression 5 .lp64 sampleFrame expression
+  match evaluateCallableExpression 5 .lp64 [] [] expression, object.result with
+  | .ok (.ok a, []), .ok (.ok b) => a == signed 7 && b == signed 7 && object.frame == sampleFrame
+  | _, _ => false
+
+#guard callablePureCastChainWitness
+
 end LeanModels.Cpp.CallableRefinementTests

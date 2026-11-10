@@ -33,7 +33,7 @@ slang (`--ast-json`) → standardized envelope → `load_design counter from
 - **Oracles**: a run is a *deterministic* function of
   `(design, stimulus, σ : ScheduleOracle, ρ : RandOracle)` — σ resolves the LRM's
   deliberate same-region ordering freedom, ρ resolves `randomize()`/`$urandom`.
-  Quantify over σ ⇒ "for all legal schedules"; plug in a concrete σ ⇒ executable
+  Quantify over σ ⇒ "for all process-atomic legal schedules"; plug in a concrete σ ⇒ executable
   simulator (differentially tested against Xcelium).
 - **Trace** `tr` = the observable history: signal values over (time, delta) points,
   `$display` output, termination status.
@@ -46,9 +46,9 @@ slang (`--ast-json`) → standardized envelope → `load_design counter from
 | `m / stim ⇓[σ] tr` | design `m` under stimulus `stim` and schedule `σ` yields trace `tr` |
 | `m ⊨ P` | `∀ stim σ tr, m / stim ⇓[σ] tr → P stim tr` — for **all** inputs and **all** legal schedules |
 | `m ⊨sva p` | the design satisfies its extracted SVA property `p` (same ∀ stim σ) |
-| `Sv.Deterministic m` | all schedules give the same observable trace (race-freedom) |
+| `Sv.Deterministic m` | all process-atomic legal schedules give the same observable trace (race-freedom) |
 | `m ⊑@clk model` | cycle-accurate refinement of a Lean transition function (golden model); `⊑@clk[from rst]` starts at the first edge sampling `rst` = 1 |
-| `Sv.FinishesBy m t` | terminates (`$finish`) by time `t` for every schedule |
+| `Sv.FinishesBy m t` | terminates (`$finish`) by time `t` for every process-atomic legal schedule |
 
 **Implementation status.** The M0 slice is in progress per `docs/sv-design-m0.md`:
 a cycle-level scheduler core, five gallery examples (`adder`, `counter`,
@@ -242,7 +242,7 @@ example : handshake ⊨ Sv.onPosedgeIdx fun tr n =>
 
 The property text stays in the source where the simulator also checks it; the
 theorem upgrades it from "held on the schedules and stimuli we simulated" to "holds
-for every stimulus and every legal schedule". SVA sampling semantics (Preponed-
+for every stimulus and every process-atomic legal schedule". SVA sampling semantics (Preponed-
 region values) is part of the scheduler model, so `|->` and `##1` mean exactly what
 they mean in simulation — with one exemption the LRM itself makes: `disable iff`
 reads `rst` asynchronously, on *current* (not Preponed-sampled) values, at any point

@@ -12,7 +12,7 @@ extends E-core-0 with edge processes and the NBA region).
 
 * An edge process (`FF`) is `always_ff @(posedge clk)` or `@(posedge clk or negedge rst_n)` (an
   active-low asynchronous reset). Its body uses nonblocking assignments only (`if`/`begin-end`
-  and unqualified plain `case` around them); anything else refuses. It reads the store's view, which does not change while it
+  and unqualified `case`/`casez`/`casex` around them); anything else refuses. It reads the store's view, which does not change while it
   runs, and returns its NBA updates (`execFF`, the queue type `NbaQueue2` of `run2`).
 * `Config1` adds the NBA queue. `step1`: if the Active region is not empty, the Choice picks a
   ready process, which runs atomically and appends its updates (the store is unchanged). If
@@ -77,14 +77,14 @@ end
 mutual
 
 /-- The bodies E-core-1's edge fragment runs without refusing: nonblocking assignments with static
-targets and well-formed right-hand sides, under `if`, plain `case` and `begin-end`. -/
+targets and well-formed right-hand sides, under `if`, unqualified `case`/`casez`/`casex` and `begin-end`. -/
 def Stmt2.ffOkB (d : Design2) : Stmt2 → Bool
   | .nbaAssign t e => (t.windows? d).isSome && e.wfB d
   | .ifStmt c t e => c.wfB d && t.ffOkB d && Stmt2.optFfOkB d e
   | .block body => Stmt2.listFfOkB d body.toList
   | .caseStmt subj items dflt mode check =>
       subj.wfB d && CaseItem2.listFfOkB d items.toList && Stmt2.optFfOkB d dflt &&
-        decide (mode = .normal) && decide (check = .none)
+        decide (mode ≠ .inside) && decide (check = .none)
   | .blockingAssign _ _ | .unsupported _ _ => false
 termination_by structural s => s
 
@@ -175,12 +175,12 @@ def execFF (d : Design2) (st : SvState) : Stmt2 → Except String NbaQueue2
       | .timeout => .error "11: evaluation exhausted"
   | .block body => execFFList d st body.toList
   | .caseStmt subj items dflt mode check =>
-      if mode ≠ .normal ∨ check ≠ .none then
-        .error "12.5: only unqualified plain case is admitted in E-core-1"
+      if mode = .inside ∨ check ≠ .none then
+        .error "12.5: case inside and qualified case are outside E-core-1"
       else
         match evalPure2 st subj with
         | .ok sv =>
-            match execFFCase d st sv items.toList with
+            match execFFCase d st mode sv items.toList with
             | .ok (some q) => .ok q
             | .ok none => execFFOpt d st dflt
             | .error m => .error m
@@ -207,14 +207,15 @@ def execFFList (d : Design2) (st : SvState) : List Stmt2 → Except String NbaQu
       | .error m => .error m
 termination_by structural ss => ss
 
-/-- IEEE 1800-2023 §12.5: a matching item executes its body on the unchanged
+/-- IEEE 1800-2023 §§12.5, 12.5.1: the existing `caseHit` gives plain,
+z-wildcard or x/z-wildcard matching. A matching item executes its body on the unchanged
 sampled view. `some []` is a match whose body issues no NBA, distinct from a miss. -/
-def execFFArm (d : Design2) (st : SvState) (sv : LVec) :
+def execFFArm (d : Design2) (st : SvState) (mode : CaseMode) (sv : LVec) :
     CaseItem2 → Except String (Option NbaQueue2)
   | .mk pats body =>
       match evalPures2 st pats.toList with
       | .ok pvs =>
-          if pvs.any (caseHit .normal sv) then
+          if pvs.any (caseHit mode sv) then
             match execFF d st body with
             | .ok q => .ok (some q)
             | .error m => .error m
@@ -225,13 +226,13 @@ termination_by structural it => it
 
 /-- IEEE 1800-2023 §12.5: walk source-order items and stop at the first hit.
 The selector is already evaluated; the caller handles the default after a miss. -/
-def execFFCase (d : Design2) (st : SvState) (sv : LVec) :
+def execFFCase (d : Design2) (st : SvState) (mode : CaseMode) (sv : LVec) :
     List CaseItem2 → Except String (Option NbaQueue2)
   | [] => .ok none
   | it :: rest =>
-      match execFFArm d st sv it with
+      match execFFArm d st mode sv it with
       | .ok (some q) => .ok (some q)
-      | .ok none => execFFCase d st sv rest
+      | .ok none => execFFCase d st mode sv rest
       | .error m => .error m
 termination_by structural its => its
 
@@ -396,7 +397,7 @@ theorem execFF_mem {d : Design2} {st : SvState} : ∀ (s : Stmt2) {q : NbaQueue2
       · cases h
       · split at h
         · rename_i sv hsv
-          cases hc : execFFCase d st sv items.toList with
+          cases hc : execFFCase d st mode sv items.toList with
           | error m => simp [hc] at h
           | ok oq =>
               cases oq with
@@ -447,8 +448,8 @@ theorem execFFList_mem {d : Design2} {st : SvState} : ∀ (ss : List Stmt2) {q :
 termination_by structural ss => ss
 
 /-- A matching case item issues only its body's static NBA windows. -/
-theorem execFFArm_mem {d : Design2} {st : SvState} {sv : LVec} :
-    ∀ (it : CaseItem2) {q : NbaQueue2}, execFFArm d st sv it = .ok (some q) →
+theorem execFFArm_mem {d : Design2} {st : SvState} {mode : CaseMode} {sv : LVec} :
+    ∀ (it : CaseItem2) {q : NbaQueue2}, execFFArm d st mode sv it = .ok (some q) →
       ∀ u ∈ q, (u.1, u.2.1, u.2.2.width) ∈ it.nbaWins d
   | .mk pats body, q, h, u, hu => by
       simp only [execFFArm] at h
@@ -466,14 +467,14 @@ theorem execFFArm_mem {d : Design2} {st : SvState} {sv : LVec} :
 termination_by structural it => it
 
 /-- The first-match walk issues only windows of one of its source arms. -/
-theorem execFFCase_mem {d : Design2} {st : SvState} {sv : LVec} :
-    ∀ (its : List CaseItem2) {q : NbaQueue2}, execFFCase d st sv its = .ok (some q) →
+theorem execFFCase_mem {d : Design2} {st : SvState} {mode : CaseMode} {sv : LVec} :
+    ∀ (its : List CaseItem2) {q : NbaQueue2}, execFFCase d st mode sv its = .ok (some q) →
       ∀ u ∈ q, (u.1, u.2.1, u.2.2.width) ∈ CaseItem2.listNbaWins d its
   | [], _, h, _, _ => by simp [execFFCase] at h
   | it :: rest, q, h, u, hu => by
       simp only [execFFCase] at h
       simp only [CaseItem2.listNbaWins, List.mem_append]
-      cases ha : execFFArm d st sv it with
+      cases ha : execFFArm d st mode sv it with
       | error m => simp [ha] at h
       | ok oq =>
           cases oq with
@@ -518,15 +519,15 @@ theorem execFF_total {d : Design2} {st : SvState}
       exact ⟨q, by simp only [execFF]; exact hq⟩
   | .caseStmt subj items dflt mode check, h => by
       simp only [Stmt2.ffOkB, Bool.and_eq_true, decide_eq_true_eq] at h
-      obtain ⟨⟨⟨⟨hs, hi⟩, hd⟩, rfl⟩, rfl⟩ := h
+      obtain ⟨⟨⟨⟨hs, hi⟩, hd⟩, hm⟩, rfl⟩ := h
       obtain ⟨hu, hid⟩ := Expr2.wfB_spec hs
       obtain ⟨sv, hsv⟩ := evalPure2_ok_of_wf hu fun x hx => hb x (hid x hx)
-      obtain ⟨oq, hq⟩ := execFFCase_total hb sv items.toList hi
+      obtain ⟨oq, hq⟩ := execFFCase_total hb mode sv items.toList hi
       cases oq with
-      | some q => exact ⟨q, by simp [execFF, hsv, hq]⟩
+      | some q => exact ⟨q, by simp [execFF, hm, hsv, hq]⟩
       | none =>
           obtain ⟨q, hd⟩ := execFFOpt_total hb dflt hd
-          exact ⟨q, by simp [execFF, hsv, hq, hd]⟩
+          exact ⟨q, by simp [execFF, hm, hsv, hq, hd]⟩
   | .blockingAssign _ _, h => by simp [Stmt2.ffOkB] at h
   | .unsupported _ _, h => by simp [Stmt2.ffOkB] at h
 termination_by structural s => s
@@ -551,13 +552,14 @@ termination_by structural ss => ss
 
 /-- An admitted item decides either a miss or a successful NBA queue. -/
 theorem execFFArm_total {d : Design2} {st : SvState}
-    (hb : ∀ x ∈ d.symNames, ∃ v, SvState.lookup st x = some v) (sv : LVec) :
-    ∀ (it : CaseItem2), it.ffOkB d = true → ∃ oq, execFFArm d st sv it = .ok oq
+    (hb : ∀ x ∈ d.symNames, ∃ v, SvState.lookup st x = some v)
+    (mode : CaseMode) (sv : LVec) :
+    ∀ (it : CaseItem2), it.ffOkB d = true → ∃ oq, execFFArm d st mode sv it = .ok oq
   | .mk pats body, h => by
       simp only [CaseItem2.ffOkB, Bool.and_eq_true] at h
       obtain ⟨hu, hid⟩ := Expr2.listWfB_spec h.1
       obtain ⟨pvs, hpvs⟩ := evalPures2_ok_of_wf hu fun x hx => hb x (hid x hx)
-      by_cases hhit : pvs.any (caseHit .normal sv) = true
+      by_cases hhit : pvs.any (caseHit mode sv) = true
       · obtain ⟨q, hq⟩ := execFF_total hb body h.2
         exact ⟨some q, by simp [execFFArm, hpvs, hhit, hq]⟩
       · exact ⟨none, by simp [execFFArm, hpvs, hhit]⟩
@@ -565,17 +567,18 @@ termination_by structural it => it
 
 /-- The finite source-order walk is total on admitted case items. -/
 theorem execFFCase_total {d : Design2} {st : SvState}
-    (hb : ∀ x ∈ d.symNames, ∃ v, SvState.lookup st x = some v) (sv : LVec) :
+    (hb : ∀ x ∈ d.symNames, ∃ v, SvState.lookup st x = some v)
+    (mode : CaseMode) (sv : LVec) :
     ∀ (its : List CaseItem2), CaseItem2.listFfOkB d its = true →
-      ∃ oq, execFFCase d st sv its = .ok oq
+      ∃ oq, execFFCase d st mode sv its = .ok oq
   | [], _ => ⟨none, rfl⟩
   | it :: rest, h => by
       simp only [CaseItem2.listFfOkB, Bool.and_eq_true] at h
-      obtain ⟨oq, ha⟩ := execFFArm_total hb sv it h.1
+      obtain ⟨oq, ha⟩ := execFFArm_total hb mode sv it h.1
       cases oq with
       | some q => exact ⟨some q, by simp [execFFCase, ha]⟩
       | none =>
-          obtain ⟨oq, ht⟩ := execFFCase_total hb sv rest h.2
+          obtain ⟨oq, ht⟩ := execFFCase_total hb mode sv rest h.2
           exact ⟨oq, by simp [execFFCase, ha, ht]⟩
 termination_by structural its => its
 
@@ -960,10 +963,12 @@ private def negClock : FF :=
 #guard show1 ffCase ["clk"] (exec1 ffCase σ_src 10
     (openSlot ffCase [("clk", .ofNat 1 0)] [("clk", .ofNat 1 1)])) == some ["1"]
 #guard ffCase.okB
--- Wildcard and qualified cases retain their own loud boundaries.
-#guard !(.caseStmt (.ident "q") #[] none .casez .none : Stmt2).ffOkB cnt.design
+-- Wildcard cases share the walk; inside and qualified cases remain loud.
+#guard (.caseStmt (.ident "q") #[] none .casez .none : Stmt2).ffOkB cnt.design
+#guard (.caseStmt (.ident "q") #[] none .casex .none : Stmt2).ffOkB cnt.design
+#guard !(.caseStmt (.ident "q") #[] none .inside .none : Stmt2).ffOkB cnt.design
 #guard !(.caseStmt (.ident "q") #[] none .normal .unique : Stmt2).ffOkB cnt.design
-#guard match execFF cnt.design [] (.caseStmt (.lit (.ofNat 1 0)) #[] none .casex .none) with
+#guard match execFF cnt.design [] (.caseStmt (.lit (.ofNat 1 0)) #[] none .inside .none) with
   | .error msg => msg.startsWith "12.5:"
   | .ok _ => false
 #guard match execFF cnt.design [] (.caseStmt (.lit (.ofNat 1 0)) #[] none .normal .priority) with

@@ -1,0 +1,186 @@
+{
+  "schema_version": "sv-0.2",
+  "language": "systemverilog",
+  "frontend": {
+    "name": "pyslang",
+    "family": "pyslang-11"
+  },
+  "mode": "symbolic",
+  "top": "packed_enum_package",
+  "source_files": [
+    {
+      "path": "Examples/system-verilog/sem2/packed_enum_package/packed_enum_package.sv",
+      "sha256": "d384fb6d6353650e0059a0e0daad36b43815393aa65297aa7e1dee6e7a3138f6"
+    }
+  ],
+  "packages": [
+    "modes_pkg"
+  ],
+  "design": {
+    "kind": "Design",
+    "modules": [
+      {
+        "kind": "Module",
+        "span": {
+          "line": 7,
+          "col": 1,
+          "end_line": 9,
+          "end_col": 10
+        },
+        "name": "packed_enum_package",
+        "imports": [],
+        "params": [],
+        "types": [
+          {
+            "kind": "EnumType",
+            "span": {
+              "line": 5,
+              "col": 13,
+              "end_line": 5,
+              "end_col": 46
+            },
+            "name": "mode_t",
+            "from_package": "modes_pkg",
+            "base_width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 5,
+                      "col": 25,
+                      "end_line": 5,
+                      "end_col": 26
+                    },
+                    "value": 1,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 5,
+                      "col": 27,
+                      "end_line": 5,
+                      "end_col": 28
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 2
+            },
+            "members": [
+              {
+                "name": "MODE_A",
+                "value": 0
+              },
+              {
+                "name": "MODE_B",
+                "value": 1
+              }
+            ]
+          }
+        ],
+        "ports": [
+          {
+            "kind": "Port",
+            "span": {
+              "line": 7,
+              "col": 52,
+              "end_line": 7,
+              "end_col": 56
+            },
+            "name": "mode",
+            "dir": "in",
+            "width": {
+              "kind": "TypeRef",
+              "name": "mode_t",
+              "from_package": "modes_pkg",
+              "resolved": 2
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 7,
+              "col": 70,
+              "end_line": 7,
+              "end_col": 71
+            },
+            "name": "y",
+            "dir": "out",
+            "width": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            },
+            "net_as_variable": true
+          }
+        ],
+        "decls": [],
+        "processes": [
+          {
+            "kind": "Assign",
+            "span": {
+              "line": 8,
+              "col": 12,
+              "end_line": 8,
+              "end_col": 41
+            },
+            "target": {
+              "kind": "Ident",
+              "span": {
+                "line": 8,
+                "col": 12,
+                "end_line": 8,
+                "end_col": 13
+              },
+              "width": 1,
+              "name": "y"
+            },
+            "value": {
+              "kind": "Binary",
+              "span": {
+                "line": 8,
+                "col": 16,
+                "end_line": 8,
+                "end_col": 41
+              },
+              "width": 1,
+              "op": "==",
+              "left": {
+                "kind": "Ident",
+                "span": {
+                  "line": 8,
+                  "col": 16,
+                  "end_line": 8,
+                  "end_col": 20
+                },
+                "width": 2,
+                "name": "mode"
+              },
+              "right": {
+                "kind": "EnumRef",
+                "span": {
+                  "line": 8,
+                  "col": 24,
+                  "end_line": 8,
+                  "end_col": 41
+                },
+                "type": "mode_t",
+                "member": "MODE_B",
+                "from_package": "modes_pkg"
+              }
+            }
+          }
+        ],
+        "generates": [],
+        "others": []
+      }
+    ],
+    "others": []
+  },
+  "lean_blocks": []
+}

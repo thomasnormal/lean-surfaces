@@ -71288,6 +71288,20 @@
       ]
     },
     {
+      "name": "packed_enum_package",
+      "example": "sem2/packed_enum_package",
+      "top": "packed_enum_package",
+      "params": {},
+      "signals": ["mode", "y"],
+      "stimulus": [
+        {"mode": "00"},
+        {"mode": "01"},
+        {"mode": "10"},
+        {"mode": "xx"},
+        {"mode": "zz"}
+      ]
+    },
+    {
       "name": "inside_fixed",
       "example": "sem2/inside_fixed",
       "top": "inside_fixed",

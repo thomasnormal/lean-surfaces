@@ -192,6 +192,16 @@ theorem Run.le_leaveCallDepth {α : Type} {x x' : Run World α}
   · subst h; exact Or.inl rfl
   · subst h; exact Or.inr rfl
 
+/-- Recursion entry and unwind preserve the flat fuel order. -/
+theorem Run.le_withFrameRecursionUnit {α : Type} {st : FrameState}
+    {f g : FrameState → Run FrameState α} (h : ∀ s, f s ⊑ʳ g s) :
+    Run.withFrameRecursionUnit st f ⊑ʳ Run.withFrameRecursionUnit st g := by
+  unfold Run.withFrameRecursionUnit Run.withRecursionUnit
+  apply Run.le_withLocals
+  split
+  · exact Run.le_refl _
+  · exact Run.le_leaveCallDepth (Run.le_toWorld (h _))
+
 theorem Run.le_finishCallAt {α : Type} (depth : Nat) {x x' : Run World α}
     (h : x ⊑ʳ x') : Run.finishCallAt depth x ⊑ʳ Run.finishCallAt depth x' := by
   rcases h with h | h
@@ -1294,6 +1304,7 @@ theorem fuelMono (fuel : Nat) :
                                               Run.le_refl _
                           -- next
                           · refine Run.le_bind (flattenStarRun_mono (ihEs m st cargs.toList k hk)) fun st vs => ?_
+                            refine Run.le_withFrameRecursionUnit fun st => ?_
                             cases vs with
                             | nil => exact Run.le_refl _
                             | cons v rest =>
@@ -1996,45 +2007,47 @@ theorem fuelMono (fuel : Nat) :
               cases Heap.update w.heap a (.generator qn lo kk .running) with
               | none => exact Run.le_refl _
               | some h₁ =>
-                refine Run.le_toWorld (Run.le_bindE
-                  (ihGen m ⟨{ w with heap := h₁ }, lo⟩ kk k hk)
-                  (fun st r => ?_)
-                  (fun st e => ?_))
-                · cases r with
-                  | none =>
-                    dsimp only
-                    cases Heap.update st.world.heap a
+                refine Run.le_ite (Run.le_refl _) ?_
+                refine Run.le_ite ?_ ?_
+                all_goals
+                  first | apply Run.le_leaveCallDepth | skip
+                  refine Run.le_toWorld (Run.le_bindE (ihGen m _ kk k hk)
+                    (fun st r => ?_) (fun st e => ?_))
+                  · cases r with
+                    | none =>
+                      dsimp only
+                      cases Heap.update st.world.heap a
+                          (.generator qn st.locals [] .closed) <;> exact Run.le_refl _
+                    | some p =>
+                      obtain ⟨v, cont'⟩ := p
+                      dsimp only
+                      cases Heap.update st.world.heap a
+                          (.generator qn st.locals cont' .suspended) <;> exact Run.le_refl _
+                  · cases Heap.update st.world.heap a
                         (.generator qn st.locals [] .closed) <;> exact Run.le_refl _
-                  | some p =>
-                    obtain ⟨v, cont'⟩ := p
-                    dsimp only
-                    cases Heap.update st.world.heap a
-                        (.generator qn st.locals cont' .suspended) <;> exact Run.le_refl _
-                · -- the exceptions tier's close-on-exn arm: fuel-free
-                  cases Heap.update st.world.heap a
-                      (.generator qn st.locals [] .closed) <;> exact Run.le_refl _
             | suspended =>
               dsimp only
               cases Heap.update w.heap a (.generator qn lo kk .running) with
               | none => exact Run.le_refl _
               | some h₁ =>
-                refine Run.le_toWorld (Run.le_bindE
-                  (ihGen m ⟨{ w with heap := h₁ }, lo⟩ kk k hk)
-                  (fun st r => ?_)
-                  (fun st e => ?_))
-                · cases r with
-                  | none =>
-                    dsimp only
-                    cases Heap.update st.world.heap a
+                refine Run.le_ite (Run.le_refl _) ?_
+                refine Run.le_ite ?_ ?_
+                all_goals
+                  first | apply Run.le_leaveCallDepth | skip
+                  refine Run.le_toWorld (Run.le_bindE (ihGen m _ kk k hk)
+                    (fun st r => ?_) (fun st e => ?_))
+                  · cases r with
+                    | none =>
+                      dsimp only
+                      cases Heap.update st.world.heap a
+                          (.generator qn st.locals [] .closed) <;> exact Run.le_refl _
+                    | some p =>
+                      obtain ⟨v, cont'⟩ := p
+                      dsimp only
+                      cases Heap.update st.world.heap a
+                          (.generator qn st.locals cont' .suspended) <;> exact Run.le_refl _
+                  · cases Heap.update st.world.heap a
                         (.generator qn st.locals [] .closed) <;> exact Run.le_refl _
-                  | some p =>
-                    obtain ⟨v, cont'⟩ := p
-                    dsimp only
-                    cases Heap.update st.world.heap a
-                        (.generator qn st.locals cont' .suspended) <;> exact Run.le_refl _
-                · -- the exceptions tier's close-on-exn arm: fuel-free
-                  cases Heap.update st.world.heap a
-                      (.generator qn st.locals [] .closed) <;> exact Run.le_refl _
     -- execGen (H4: the continuation walker)
     · intro m st k fuel' hf
       cases fuel' with

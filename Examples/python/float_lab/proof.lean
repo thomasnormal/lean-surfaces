@@ -201,11 +201,13 @@ theorem infinite_zero_caught :
     float_lab.infinite_zero_caught() ==> (19 : PyInt) := by
   exact ⟨32, rfl⟩
 
+set_option maxHeartbeats 400000 in
 theorem count_nan_head :
     float_lab.count_head(Float64.ofBits 0x7ff8000000000000,
       Float64.ofBits 0x3ff0000000000000) ==> Float64.ofBits 0x7ff8000000000000 := by
   exact ⟨64, rfl⟩
 
+set_option maxHeartbeats 400000 in
 theorem count_infinity_head :
     float_lab.count_head(Float64.ofBits 0x7ff0000000000000,
       Float64.ofBits 0x3ff0000000000000) ==> Float64.ofBits 0x7ff0000000000000 := by

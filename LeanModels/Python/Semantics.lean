@@ -9566,20 +9566,23 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                     -- argument is the faithful `TypeError` (inside
                     -- `stepIter`, which owns the referent dispatch).
                     flattenStarRun (evalExprs m fuel st args.toList) ⤳ fun st vs =>
-                    (match vs with
-                     | [.ref a] =>
-                       Run.withLocals st.locals (stepIter m fuel st.world a) ⤳ fun st r =>
-                       (match r with
-                        | some v => .ok st v
-                        | Option.none => .exn st .stopIteration)
-                     | [.ref a, d] =>
-                       Run.withLocals st.locals (stepIter m fuel st.world a) ⤳ fun st r =>
-                       (match r with
-                        | some v => .ok st v
-                        | Option.none => .ok st d)
-                     | [] => .exn st (.typeError "next expected at least 1 argument, got 0")
-                     | v :: _ =>
-                       .exn st (.typeError s!"'{RVal.typeNameH st.world.heap v}' object is not an iterator"))
+                    -- C-function vectorcall enters before builtin_next checks
+                    -- its arguments (Objects/methodobject.c).
+                    Run.withFrameRecursionUnit st fun st =>
+                      (match vs with
+                       | [.ref a] =>
+                         Run.withLocals st.locals (stepIter m fuel st.world a) ⤳ fun st r =>
+                         (match r with
+                          | some v => .ok st v
+                          | Option.none => .exn st .stopIteration)
+                       | [.ref a, d] =>
+                         Run.withLocals st.locals (stepIter m fuel st.world a) ⤳ fun st r =>
+                         (match r with
+                          | some v => .ok st v
+                          | Option.none => .ok st d)
+                       | [] => .exn st (.typeError "next expected at least 1 argument, got 0")
+                       | v :: _ =>
+                         .exn st (.typeError s!"'{RVal.typeNameH st.world.heap v}' object is not an iterator"))
                   else if fname == "ord" then
                     flattenStarRun (evalExprs m fuel st args.toList) ⤳ fun st vs =>
                     match vs with
@@ -11031,6 +11034,12 @@ def callIn (m : Module) (fuel : Nat) (w : World) (fname : String)
             | .cont => .unsupported "'continue' outside loop"
   termination_by structural fuel
 
+/-- These heap-backed iterator cursors model C iterators rather than Python
+frames, so stepping them does not enter `_PyEval_EvalFrame`. The names are
+internal sentinels that cannot be Python identifiers. -/
+def nativeIteratorName (qname : String) : Bool :=
+  qname == "<enumerate>" || qname == "<iter>" || qname == "<count>"
+
 /-- **The generator stepper** (H4, docs/memory-model.md §generator
 semantics) — resume the generator at `a` until its next `yield`.
 `some v` is that yield; `none` is exhaustion (the object becomes
@@ -11058,8 +11067,17 @@ def stepIter (m : Module) (fuel : Nat) (w : World) (a : Addr) :
         match Heap.update w.heap a (.generator qname locals cont .running) with
         | Option.none => .unsupported danglingMsg
         | some h₁ =>
-          Run.toWorld <|
-            Run.bindE (execGen m fuel ⟨{ w with heap := h₁ }, locals⟩ cont)
+          -- gen_send_ex enters the frame only for Python generators. A
+          -- failed frame entry still closes that generator (genobject.c).
+          if !nativeIteratorName qname && pythonRecursionFull w.callDepth then
+            match Heap.update h₁ a (.generator qname locals [] .closed) with
+            | Option.none => .unsupported danglingMsg
+            | some h₂ => .exn { w with heap := h₂ } .recursionError
+          else
+            let entered := { { w with heap := h₁ } with
+              callDepth := if nativeIteratorName qname then w.callDepth else w.callDepth + 1 }
+            let result := Run.toWorld <|
+              Run.bindE (execGen m fuel ⟨entered, locals⟩ cont)
               (fun st r =>
                 match r with
                 | some (v, cont') =>
@@ -11087,6 +11105,7 @@ def stepIter (m : Module) (fuel : Nat) (w : World) (a : Addr) :
                 | Option.none => .unsupported danglingMsg
                 | some h₂ =>
                   .exn { st with world := { st.world with heap := h₂ } } (generatorEscape e))
+            if nativeIteratorName qname then result else Run.leaveCallDepth result
     | some _ =>
       .exn w (.typeError s!"'{RVal.typeNameH w.heap (.ref a)}' object is not an iterator")
     | Option.none => .unsupported danglingMsg

@@ -108,6 +108,9 @@
 - Proved literal-expression agreement for matching formats, including invalid
   results and preservation of both evaluator states.
 
+- Proved that resolved conversions preserve operand agreement and retain the
+  states produced by each evaluator.
+
 - Extended the value/object evaluator agreement battery with negative signed
   subtraction and native differential coverage.
 

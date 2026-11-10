@@ -82,6 +82,14 @@ formats agree. It preserves both states and covers invalid results as well as
 valid values. Invalid manually constructed literals used in the Lean test are
 not claimed to be admitted C++ programs.
 
+`callableConvertExpressionAgreement` is a compositional step: whenever the
+operand evaluations return the same integral result, a conversion with a
+resolved destination format returns the same converted result and retains the
+states produced by the operand. It includes propagation of invalid, undefined
+and unsupported integral results. A Lean test composes it with the literal
+theorem for `static_cast<unsigned char>(257)` and for an invalid constructed
+literal; the latter is not claimed as admitted C++.
+
 `callableBooleanIdentityAgreement` quantifies over both Boolean inputs to one
 identity callable and proves that each API returns the expected Boolean. It is
 a complete input-domain theorem for that callable, not a relation for arbitrary

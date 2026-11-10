@@ -5,6 +5,30 @@ namespace LeanModels.Cpp
 
 open CallableObjectEvaluation
 
+/-- Agreement is preserved by a conversion whose destination format resolves.
+The operand may update either state; conversion retains both updated states.
+Non-value integral results are propagated on both sides. -/
+theorem callableConvertExpressionAgreement (fuel : Nat) (profile : TargetProfile)
+    (parameters : List CallableParameter) (arguments arguments' : List IntegralValue)
+    (frame frame' : IntegralObjectFrame) (operand : TypedCallableExpression)
+    (sourceType resultType : CppTypeEvidence) (fmt : IntegralFormat)
+    (result : IntegralResult IntegralValue)
+    (hvalue : evaluateCallableExpression fuel profile parameters arguments operand =
+      .ok (result, arguments'))
+    (hobject : evaluateCallableObjectExpression fuel profile frame operand =
+      {frame := frame', result := .ok result})
+    (hformat : integralFormatOfEvidence profile resultType = .ok fmt) :
+    let expression : TypedCallableExpression :=
+      {expression := .convert operand, sourceType := sourceType, type := resultType}
+    evaluateCallableExpression (fuel + 1) profile parameters arguments expression =
+      .ok (bindIntegralResultValue result (integralConvert fmt), arguments') ∧
+    evaluateCallableObjectExpression (fuel + 1) profile frame expression =
+      {frame := frame', result := .ok (bindIntegralResultValue result (integralConvert fmt))} := by
+  exact ⟨evaluateCallableExpression_convert fuel profile parameters arguments arguments' operand
+    sourceType resultType fmt result hvalue hformat,
+    evaluateCallableObjectExpression_convert fuel profile frame frame' operand sourceType resultType
+      fmt result hobject hformat⟩
+
 /-- Related literal evaluations return the same integral result, including
 invalid values, and preserve the argument list and object frame. The source
 literal and result type must resolve to the stated common format. -/

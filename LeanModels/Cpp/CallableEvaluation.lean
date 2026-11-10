@@ -517,6 +517,24 @@ def evaluateCallableExpression (fuel : Nat) (profile : TargetProfile)
     Except CallableEvaluationError (IntegralResult IntegralValue × List IntegralValue) :=
   evaluateTyped fuel profile parameters arguments expression
 
+/-- A resolved conversion applies to an operand result and keeps the argument
+state produced by that operand. -/
+theorem evaluateCallableExpression_convert (fuel : Nat) (profile : TargetProfile)
+    (parameters : List CallableParameter) (arguments arguments' : List IntegralValue)
+    (operand : TypedCallableExpression) (sourceType resultType : CppTypeEvidence)
+    (fmt : IntegralFormat) (result : IntegralResult IntegralValue)
+    (hoperand : evaluateCallableExpression fuel profile parameters arguments operand =
+      .ok (result, arguments'))
+    (hformat : integralFormatOfEvidence profile resultType = .ok fmt) :
+    evaluateCallableExpression (fuel + 1) profile parameters arguments
+      {expression := .convert operand, sourceType := sourceType, type := resultType} =
+      .ok (bindIntegralResultValue result (integralConvert fmt), arguments') := by
+  simp only [evaluateCallableExpression] at hoperand
+  cases result <;>
+    simp [evaluateCallableExpression, evaluateTyped, hoperand, convertTo,
+      integralConvertOfEvidence, hformat, bindIntegralResultValue, Except.mapError,
+      Except.map, Except.bind, Bind.bind, Pure.pure, Except.pure]
+
 /-- A literal leaves arguments unchanged; self-conversion expresses both its
 valid result and its invalid-value result. -/
 theorem evaluateCallableExpression_literal (fuel : Nat) (profile : TargetProfile)

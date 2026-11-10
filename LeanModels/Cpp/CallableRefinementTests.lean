@@ -82,4 +82,53 @@ def callableLiteralExpressionAgreementWitness : Bool :=
 
 #guard callableLiteralExpressionAgreementWitness
 
+private def unsignedCharType : CppTypeEvidence := .builtin .unsignedChar
+
+/-- The conversion rule composes with literal agreement; 257 converts to 1. -/
+theorem sampleConvertExpressionAgreement :
+    let operand : TypedCallableExpression := {
+      expression := .integer 257, sourceType := intType, type := intType}
+    let converted : TypedCallableExpression := {
+      expression := .convert operand, sourceType := intType, type := unsignedCharType}
+    evaluateCallableExpression 9 .lp64 [] [] converted =
+      .ok (.ok ⟨.unsigned 8, 1⟩, []) ∧
+    evaluateCallableObjectExpression 9 .lp64 sampleFrame converted =
+      {frame := sampleFrame, result := .ok (.ok ⟨.unsigned 8, 1⟩)} := by
+  have hlit := callableLiteralExpressionAgreement 7 .lp64 [] [] sampleFrame 257
+    (signed 257) intType intType rfl rfl
+  exact callableConvertExpressionAgreement 8 .lp64 [] [] [] sampleFrame sampleFrame
+    {expression := .integer 257, sourceType := intType, type := intType}
+    intType unsignedCharType (.unsigned 8) (.ok (signed 257)) hlit.1 hlit.2 rfl
+
+/-- A malformed out-of-range literal's invalid result survives conversion. -/
+theorem invalidConvertExpressionAgreement :
+    let operand : TypedCallableExpression := {
+      expression := .integer 2147483648, sourceType := intType, type := intType}
+    let converted : TypedCallableExpression := {
+      expression := .convert operand, sourceType := intType, type := unsignedCharType}
+    evaluateCallableExpression 9 .lp64 [] [] converted = .ok (.invalid .outOfRange, []) ∧
+    evaluateCallableObjectExpression 9 .lp64 sampleFrame converted =
+      {frame := sampleFrame, result := .ok (.invalid .outOfRange)} := by
+  exact callableConvertExpressionAgreement 8 .lp64 [] [] [] sampleFrame sampleFrame
+    {expression := .integer 2147483648, sourceType := intType, type := intType}
+    intType unsignedCharType (.unsigned 8) (.invalid .outOfRange)
+    invalidLiteralExpressionAgreement.1 invalidLiteralExpressionAgreement.2 rfl
+
+private def conversionWitness (n : Nat) : Bool :=
+  let operand : TypedCallableExpression := {
+    expression := .integer n, sourceType := intType, type := intType}
+  let converted : TypedCallableExpression := {
+    expression := .convert operand, sourceType := intType, type := unsignedCharType}
+  let expected : IntegralValue := ⟨.unsigned 8, n % 256⟩
+  let object := evaluateCallableObjectExpression 9 .lp64 sampleFrame converted
+  match evaluateCallableExpression 9 .lp64 [] [] converted, object.result with
+  | .ok (.ok a, []), .ok (.ok b) =>
+      a == expected && b == expected && object.frame == sampleFrame
+  | _, _ => false
+
+def callableConvertExpressionAgreementWitness : Bool :=
+  [0, 255, 256, 257].all conversionWitness
+
+#guard callableConvertExpressionAgreementWitness
+
 end LeanModels.Cpp.CallableRefinementTests

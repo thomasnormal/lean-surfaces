@@ -20204,5 +20204,17 @@
     "cpp_expression": "callable_witness()",
     "expect": "match",
     "rung": 3
+  },
+  {
+    "id": "expression.callable-convert-expression-agreement",
+    "kind": "expression",
+    "corpus": "callable refinement seam",
+    "lean_module": "LeanModels.Cpp.CallableRefinementTests",
+    "lean_namespace": "LeanModels.Cpp.CallableRefinementTests",
+    "lean_expression": "callableConvertExpressionAgreementWitness",
+    "cpp_source": "unsigned char convert_0() { return static_cast<unsigned char>(0); } unsigned char convert_255() { return static_cast<unsigned char>(255); } unsigned char convert_256() { return static_cast<unsigned char>(256); } unsigned char convert_257() { return static_cast<unsigned char>(257); } bool callable_witness() { return convert_0() == 0 && convert_255() == 255 && convert_256() == 0 && convert_257() == 1; }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 3
   }
 ]

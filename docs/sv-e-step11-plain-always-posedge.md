@@ -26,5 +26,7 @@ en1_dxz     q=xz01 q_copy=xz01
 ```
 
 The retained-node Lean proof pins `Process2.alwaysPlain` and
-`ffOnlyProfileB = true`.  Plain always procedures with blocking bodies,
+`ffOnlyProfileB = true`. Its preparatory legacy cycle witness is retired;
+the source-oracle rows above are retained, and source-preserving E transport
+remains on its review branch. Plain always procedures with blocking bodies,
 multiple clocks, delays, or unsupported event controls remain loud.

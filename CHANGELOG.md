@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Retired three preparatory legacy-cycle witnesses for Step 11. Their source
+  oracle rows and current E boundary guards remain in place.
+
 - Removed private machine paths from published SV/RISC-V records. The SV
   divergence probe now requires `SV_YOSYS` to select its pinned executable.
 

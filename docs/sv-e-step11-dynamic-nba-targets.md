@@ -26,9 +26,11 @@ nba_idx_4_d1      q=0xx1
 nba_idx_1_disabled q=0xx1
 ```
 
-The legacy `run2` witness already gives the same no-op behavior for x/z and
-out-of-range indices.  E-core-1 currently requires every NBA target to have a
+The source-oracle rows remain in the testbench and differential harness;
+the preparatory legacy cycle witness has been retired. E-core-1 currently
+requires every NBA target to have a
 static write window (`Stmt2.ffOkB`/`execFF`), so the fixture's `agree.lean`
-pins that boundary.  Dynamic targets, nested unpacked targets, concatenated
+retains that boundary pending review of the native E rule. Dynamic targets,
+nested unpacked targets, concatenated
 targets, and multiple dynamic writes remain separate design decisions for the
 E edge route.

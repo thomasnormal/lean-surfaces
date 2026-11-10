@@ -25,8 +25,10 @@ sel_zzzz_d3        qz=0011 qx=0011
 sel_xxxx_d2        qz=0011 qx=0010
 ```
 
-The legacy `run2` witness pins the same trace.  E-core-1 currently refuses
-case bodies at its explicit 12.5 boundary (`execFF`), so `agree.lean` records
-that admission result.  A future E rule must preserve source-order first-hit
+The source-oracle rows remain in the testbench and differential harness.
+The preparatory legacy cycle witness has been retired. E-core-1 currently
+refuses case bodies at its explicit 12.5 boundary (`execFF`), so `agree.lean`
+retains that admission result pending review of the native E rule. The rule
+must preserve source-order first-hit
 matching, four-state wildcard distinctions, immediate NBA RHS sampling, and
 the default path; qualified/range/pattern case forms remain separate walls.

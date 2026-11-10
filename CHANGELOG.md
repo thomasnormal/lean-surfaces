@@ -108,6 +108,9 @@
   model, conditional on an order-indexed loaded-core invariant. Completion
   and retirement progress remain explicit proof obligations.
 
+- Corrected `round(float, ndigits)` to preserve infinities and NaNs before
+  applying the extreme negative-digit cutoff.
+
 - Added negative integer powers of unit bases beyond the power budget, using
   CPython's rounded binary64 exponent when deciding the sign.
 

@@ -834,6 +834,7 @@ theorem total_body_triple (w : World) (N : Nat) :
         rfl rfl rfl rfl uptoF_found rfl rfl rfl rfl
         (EvalsToList.cons (evals_name w (totalLocals N 0) "n" (.int (N : Int)) c₂ rfl)
           EvalsToList.nil)
+        rfl
       simpa [uptoWorld, genObj_upto] using hcall
     · -- exhaustion: nothing left, so the object must report `none`
       intro st hI
@@ -1113,6 +1114,7 @@ theorem two_phase_body_triple (w : World) (N : Nat) (hN : 2 ≤ N) :
       (EvalsToList.cons
         (evals_name w [("n", .int (N : Int))] "n" (.int (N : Int)) c₂ rfl)
         EvalsToList.nil)
+      rfl
     simpa [uptoWorld, genObj_upto] using hev
   -- `a = -1`
   refine PyTriple.run_seq (f := 8) (pre := [tpInitA])

@@ -228,6 +228,7 @@ theorem EvalsIn.genCallIn {m : Module} {st st₁ : FrameState} {fname : String}
     (hargsOk : f.argsOk = true) (hlocalsOk : f.localsOk = true)
     (harity : arityOk f.params vs.length = true) (hgen : f.isGenerator = true)
     (hargs : EvalsInList m st argEs.toList vs st₁)
+    (hcreate : genExpCreationRun fname (markUnboundLocals f.body.toList (mkCallEnv f.params vs.toArray)) = .ok ())
     (hstar : fname ≠ starArgBuiltinName := by decide)
     (hflat : flattenStarCallArgs vs = vs := by rfl)
     (hunbound : hasUnboundLocal st.locals fname = false := by rfl) :
@@ -240,7 +241,7 @@ theorem EvalsIn.genCallIn {m : Module} {st st₁ : FrameState} {fname : String}
   obtain ⟨F', rfl, hF'⟩ := succ_le_dest hF
   obtain ⟨F'', rfl, hF''⟩ := succ_le_dest hF'
   have hcall := callIn_genCall (m := m) (fuel := F'') (w := st₁.world) (fname := fname)
-    (args := vs.toArray) hf hargsOk hlocalsOk (by simpa using harity) hgen
+    (args := vs.toArray) hf hargsOk hlocalsOk (by simpa using harity) hgen hcreate
   rw [evalExpr]
   simp only [Array.isEmpty, Array.size_empty, hlocal, hglob, hcls, hnt, hf,
     ha (F'' + 1) (by omega), Run.ok_bind, Option.isSome_some, if_pos,
@@ -264,6 +265,7 @@ theorem EvalsIn.ntupleGenMethod {m : Module} {st st₀ st₁ : FrameState}
     (hf : findFunction m qname = some f)
     (hargsOk : f.argsOk = true) (hlocalsOk : f.localsOk = true)
     (harity : arityOk f.params (vs.length + 1) = true) (hgen : f.isGenerator = true)
+    (hcreate : genExpCreationRun qname (markUnboundLocals f.body.toList (mkCallEnv f.params (RVal.ntuple tn fs xs :: vs).toArray)) = .ok ())
     (hflat : flattenStarCallArgs vs = vs := by rfl) :
     EvalsIn m st (.call (.attribute recv attr sp) argEs #[] Option.none sp')
       (.ref st₁.world.heap.size)
@@ -278,7 +280,7 @@ theorem EvalsIn.ntupleGenMethod {m : Module} {st st₀ st₁ : FrameState}
   obtain ⟨F'', rfl, hF''⟩ := succ_le_dest hF'
   have hcall := callIn_genCall (m := m) (fuel := F'') (w := st₁.world) (fname := qname)
     (args := (RVal.ntuple tn fs xs :: vs).toArray) hf hargsOk hlocalsOk
-    (by simpa using harity) hgen
+    (by simpa using harity) hgen hcreate
   rw [evalExpr]
   simp only [Array.isEmpty, Array.size_empty, hclock, Bool.false_eq_true, if_neg,
     not_false_eq_true, hr (F'' + 1) (by omega), Run.ok_bind, hplan,
@@ -301,6 +303,7 @@ theorem EvalsIn.genCallDrains {m : Module} {st st₁ : FrameState} {fname : Stri
     (hargsOk : f.argsOk = true) (hlocalsOk : f.localsOk = true)
     (harity : arityOk f.params vs.length = true) (hgen : f.isGenerator = true)
     (hargs : EvalsInList m st argEs.toList vs st₁)
+    (hcreate : genExpCreationRun fname (markUnboundLocals f.body.toList (mkCallEnv f.params vs.toArray)) = .ok ())
     (hstar : fname ≠ starArgBuiltinName := by decide)
     (hflat : flattenStarCallArgs vs = vs := by rfl)
     (hunbound : hasUnboundLocal st.locals fname = false := by rfl)
@@ -328,7 +331,7 @@ theorem EvalsIn.genCallDrains {m : Module} {st st₁ : FrameState} {fname : Stri
       (Heap.get?_push_size st₁.world.heap (genObj fname f vs.toArray)))
     (Or.inl rfl) (Heap.update_push_size _ _ _) hy
   exact ⟨w', EvalsIn.genCallIn hlocal hglob hcls hnt hf hargsOk hlocalsOk harity
-    hgen hargs hstar hflat hunbound, hd⟩
+    hgen hargs hcreate hstar hflat hunbound, hd⟩
 
 /-! ## §2 The `forList` loop at `GenEmits` altitude — where a `break` lands
 

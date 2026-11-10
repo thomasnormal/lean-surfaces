@@ -1206,11 +1206,12 @@ theorem callIn_genCall {m : Module} {fuel : Nat} {w : World} {fname : String}
     {f : FunctionDefn} {args : Array RVal}
     (hf : findFunction m fname = some f) (hargsOk : f.argsOk = true)
     (hlocalsOk : f.localsOk = true)
-    (harity : arityOk f.params args.size = true) (hgen : f.isGenerator = true) :
+    (harity : arityOk f.params args.size = true) (hgen : f.isGenerator = true)
+    (hcreate : genExpCreationRun fname (markUnboundLocals f.body.toList (mkCallEnv f.params args)) = .ok ()) :
     callIn m (fuel + 1) w fname args
       = .ok { w with heap := w.heap.push (genObj fname f args) } (.ref w.heap.size) := by
   rw [callIn]
-  simp [hf, hargsOk, hlocalsOk, harity, hgen, genObj]
+  simp [hf, hargsOk, hlocalsOk, harity, hgen, hcreate, genObj]
 
 /-- **A generator call is a value with a specification** (the memo's
 `EvalsTo.genCall`, §2.1). The call expression `f(e₁, …, eₖ)` evaluates to a
@@ -1234,6 +1235,7 @@ theorem EvalsIn.genCall {m : Module} {st : FrameState} {fname : String}
     (hargsOk : f.argsOk = true) (hlocalsOk : f.localsOk = true)
     (harity : arityOk f.params vs.length = true) (hgen : f.isGenerator = true)
     (hargs : EvalsToList m st argEs.toList vs)
+    (hcreate : genExpCreationRun fname (markUnboundLocals f.body.toList (mkCallEnv f.params vs.toArray)) = .ok ())
     (hstar : fname ≠ starArgBuiltinName := by decide)
     (hflat : flattenStarCallArgs vs = vs := by rfl)
     (hunbound : hasUnboundLocal st.locals fname = false := by rfl) :
@@ -1246,7 +1248,7 @@ theorem EvalsIn.genCall {m : Module} {st : FrameState} {fname : String}
   obtain ⟨F', rfl, hF'⟩ := succ_le_dest hF
   obtain ⟨F'', rfl, hF''⟩ := succ_le_dest hF'
   have hcall := callIn_genCall (m := m) (fuel := F'') (w := st.world) (fname := fname)
-    (args := vs.toArray) hf hargsOk hlocalsOk (by simpa using harity) hgen
+    (args := vs.toArray) hf hargsOk hlocalsOk (by simpa using harity) hgen hcreate
   rw [evalExpr]
   simp only [Array.isEmpty, Array.size_empty, hlocal, hglob, hcls, hnt, hf,
     ha (F'' + 1) (by omega), Run.ok_bind, Option.isSome_some, if_pos,
@@ -1976,6 +1978,7 @@ theorem callIn_drains {m : Module} {w : World}
     (hf : findFunction m fname = some f) (hargsOk : f.argsOk = true)
     (hlocalsOk : f.localsOk = true) (harity : arityOk f.params args.size = true)
     (hgen : f.isGenerator = true)
+    (hcreate : genExpCreationRun fname (markUnboundLocals f.body.toList (mkCallEnv f.params args)) = .ok ())
     (hy : GenYields m
       ⟨{ w with heap := w.heap.push (.generator fname
           (markUnboundLocals f.body.toList (mkCallEnv f.params args))
@@ -1997,7 +2000,7 @@ theorem callIn_drains {m : Module} {w : World}
     (Heap.get?_push_size _ _) (Or.inl rfl) (Heap.update_push_size _ _ _) hy
   exact ⟨w', t + 1, fun F hF => by
     obtain ⟨F', rfl, hF'⟩ := succ_le_dest hF
-    exact ⟨callIn_genCall hf hargsOk hlocalsOk harity hgen,
+    exact ⟨callIn_genCall hf hargsOk hlocalsOk harity hgen hcreate,
       hdrain (F' + 1) (by omega)⟩⟩
 
 /-! ## Smoke tests

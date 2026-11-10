@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Fixed the theorem-facing Python interpreter's generator-expression creation
+  order: non-iterable outer values now raise `TypeError` before the generator
+  object is returned, matching CPython's `GET_ITER` protocol.
+
 - Extended the value/object evaluator agreement battery with negative signed
   division and native differential coverage.
 

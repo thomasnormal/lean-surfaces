@@ -17,6 +17,16 @@ before built. `harness/refusal_census.py` is the scoreboard and the acceptance
 battery in one — it exits nonzero on drift, so a landing that moves the tier
 must move the census in the same commit.
 
+## 2026-11-10-pyfoundation-5 — eager non-iterable genexp creation check
+
+The proof interpreter now checks a synthesized generator expression's outer
+iterable at creation, matching CPython's `GET_ITER` order for scalar
+non-iterables. `harness/foundation_probe.py::gen_iter_deferred(5)` is the
+regression row; the old proof answer `1` was a decided wrong answer, while the
+monadic interpreter already raised `TypeError`. The proof interpreter refuses
+heap receivers pending creation-time iterator support; the monadic interpreter
+retains its existing cursor behavior.
+
 ## 2026-10-30-pycomplete-184 — admit nested defs inside loops
 
 Nested function definitions in a function's loop, branch, context-manager, or

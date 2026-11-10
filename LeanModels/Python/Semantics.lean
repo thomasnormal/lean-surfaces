@@ -7795,6 +7795,29 @@ def genInitCont (h : Heap) (qname : String) (env : Env) (body : List Stmt) :
     | _ => [.block body]
   else [.block body]
 
+/-! PEP 289 creation order for the proof interpreter.  A synthesized
+`<genexpr@…>` receives the already-evaluated outer iterable as `.0`; CPython
+executes `GET_ITER` before returning the generator object.  The ordinary
+generator-function path must stay lazy, so this check is restricted to the
+synthetic name and only rejects receivers whose non-iterability is decided by
+the tier. -/
+def genExpCreationCheck : RVal → Res Unit
+  | .none => .exn (.typeError "'NoneType' object is not iterable")
+  | .bool _ => .exn (.typeError "'bool' object is not iterable")
+  | .int _ => .exn (.typeError "'int' object is not iterable")
+  | .float _ => .exn (.typeError "'float' object is not iterable")
+  | .ellipsis => .exn (.typeError "'ellipsis' object is not iterable")
+  | .callable _ => .exn (.typeError "'function' object is not iterable")
+  | .ref _ => .unsupported "generator expression over a heap receiver requires a creation-time iterator in the proof interpreter"
+  | _ => .ok ()
+
+def genExpCreationRun (fname : String) (env : Env) : Res Unit :=
+  if fname.startsWith genExpPrefix then
+    match Env.lookup env genExpArgName with
+    | some v => genExpCreationCheck v
+    | none => .unsupported "internal: synthesized genexp argument is unbound"
+  else .ok ()
+
 /-- `itertools.count()` / `count(start)` / `count(start, step)`. -/
 def countArgs : List RVal → Option (Int × Int)
   | [] => some (0, 1)
@@ -10915,11 +10938,15 @@ def callIn (m : Module) (fuel : Nat) (w : World) (fname : String)
         -- returns the object. Every effect in the body (sunfish's
         -- TT writes) therefore happens only as a consumer steps it,
         -- which is exactly the laziness the search depends on.
-        let g : Obj :=
-          .generator fname
-            (markUnboundLocals f.body.toList (mkCallEnv f.params args))
-            [.block f.body.toList] .created
-        .ok { w with heap := w.heap.push g } (.ref w.heap.size)
+        let env := markUnboundLocals f.body.toList (mkCallEnv f.params args)
+        let check := genExpCreationRun fname env
+        match check with
+        | .ok _ =>
+          let g : Obj := .generator fname env [.block f.body.toList] .created
+          .ok { w with heap := w.heap.push g } (.ref w.heap.size)
+        | .exn e => .exn w e
+        | .timeout => .timeout
+        | .unsupported msg => .unsupported msg
       else if w.callDepth == pythonTopCallDepth then
         Run.finishCallAt w.callDepth <|
           Run.toWorld <|

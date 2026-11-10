@@ -3586,33 +3586,48 @@ theorem pbCallIn_succ (ih : PBAll pa o₀ o fuel) : PBCallIn pa o₀ o (fuel + 1
       refine PBW.ite (fun _ => PBW.unsupported) fun _ => ?_
       refine PBW.ite (fun _ => PBW.unsupported) fun _ => ?_
       refine PBW.ite (fun _ => PBW.exn hslot _) fun _ => ?_
-      refine PBW.ite (fun _ => PBW.push hslot) fun _ => ?_
-      refine PBW.ite (fun _ => ?_) (fun _ => ?_)
-      · refine PBW.finishCallAt w.callDepth ?_
-        refine PBF.toWorld ?_
-        refine PBF.bind
-          (ihSs m ⟨{w with callDepth := 1},
-            markUnboundLocals f.body.toList (mkCallEnv f.params args)⟩
-            f.body.toList hslot)
-          fun s flow _ hs => ?_
-        cases flow with
-        | ret v => exact PBF.ok hs _
-        | next => exact PBF.ok hs _
-        | brk => exact PBF.unsupported
-        | cont => exact PBF.unsupported
-      · refine PBW.ite (fun _ => PBW.exn hslot _) (fun _ => ?_)
-        refine PBW.leaveCallDepth ?_
-        refine PBF.toWorld ?_
-        refine PBF.bind
-          (ihSs m ⟨{w with callDepth := w.callDepth + 1},
-            markUnboundLocals f.body.toList (mkCallEnv f.params args)⟩
-            f.body.toList hslot)
-          fun s flow _ hs => ?_
-        cases flow with
-        | ret v => exact PBF.ok hs _
-        | next => exact PBF.ok hs _
-        | brk => exact PBF.unsupported
-        | cont => exact PBF.unsupported
+      refine PBW.ite (fun _ => ?_) fun _ => ?_
+      ·
+        let env := markUnboundLocals f.body.toList (mkCallEnv f.params args)
+        cases hc : genExpCreationRun fname env with
+        | ok _ =>
+          simp only [hc]
+          exact PBW.push hslot
+        | exn e =>
+          simp only [hc]
+          exact PBW.exn hslot e
+        | timeout =>
+          simp only [hc]
+          exact PBW.timeout
+        | unsupported msg =>
+          simp only [hc]
+          exact PBW.unsupported
+      · refine PBW.ite (fun _ => ?_) (fun _ => ?_)
+        · refine PBW.finishCallAt w.callDepth ?_
+          refine PBF.toWorld ?_
+          refine PBF.bind
+            (ihSs m ⟨{w with callDepth := 1},
+              markUnboundLocals f.body.toList (mkCallEnv f.params args)⟩
+              f.body.toList hslot)
+            fun s flow _ hs => ?_
+          cases flow with
+          | ret v => exact PBF.ok hs _
+          | next => exact PBF.ok hs _
+          | brk => exact PBF.unsupported
+          | cont => exact PBF.unsupported
+        · refine PBW.ite (fun _ => PBW.exn hslot _) (fun _ => ?_)
+          refine PBW.leaveCallDepth ?_
+          refine PBF.toWorld ?_
+          refine PBF.bind
+            (ihSs m ⟨{w with callDepth := w.callDepth + 1},
+              markUnboundLocals f.body.toList (mkCallEnv f.params args)⟩
+              f.body.toList hslot)
+            fun s flow _ hs => ?_
+          cases flow with
+          | ret v => exact PBF.ok hs _
+          | next => exact PBF.ok hs _
+          | brk => exact PBF.unsupported
+          | cont => exact PBF.unsupported
 
 theorem pbStepIter_succ (htwin : PayloadTwin o₀ o) (ih : PBAll pa o₀ o fuel) :
     PBStepIter pa o₀ o (fuel + 1) := by

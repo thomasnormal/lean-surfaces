@@ -2143,6 +2143,15 @@ witness. This was `pyc-div-2` between §pycomplete-19 and §pycomplete-20 — th
 tier answered where CPython raised — and the row retired when its own guard
 began failing.
 
+The creation check also covers a scalar outer iterable. A lowered
+`(x for x in value)` now performs the same immediate non-iterability check as
+CPython before returning the generator object; `foundation_probe`'s
+`gen_iter_deferred(5)` is the regression row. The proof interpreter had been
+returning `1` from the later, unstepped generator; it now raises `TypeError`
+at creation. The proof interpreter refuses heap receivers until it can create
+their iterator at that point; the monadic runner retains its existing cursor
+paths.
+
 **IT IS A GENEXP RULE AND NOT A GENERATOR RULE, and the distinction is
 witnessed.** Calling a generator FUNCTION runs no code, so CPython has called
 no `iter()`: mutate the dict between `g = gen(d)` and the first `next(g)` and

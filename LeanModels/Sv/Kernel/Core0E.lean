@@ -141,6 +141,20 @@ def Elab.toDesign2 (E : Elab) : Design2 :=
   { name := E.name, decls := E.decls,
     processes := (E.procs.toList.map Proc0.toProcess2).toArray }
 
+/-! ## Design2 transport (the E-side elaboration entry point) -/
+
+def Proc0.ofProcess2 : Process2 → Proc0
+  | .assign t e => .assign t e
+  | .alwaysComb b => .comb b
+  | .unsupported k x => .comb (.unsupported k x)
+  | .alwaysFF _ _ | .alwaysPlain _ _ | .alwaysFFR _ _ _ _ =>
+      .comb (.unsupported "always_ff" "clocked processes are outside E-core-0")
+
+def Elab.ofDesign2 (d : Design2) : Elab :=
+  { decls := d.decls
+    procs := (d.processes.toList.map Proc0.ofProcess2).toArray
+    name := d.name }
+
 /-- The declaration a variable names (flat scope only). -/
 def Elab.declOf (E : Elab) (x : VarId) : Option Decl :=
   match x.path with

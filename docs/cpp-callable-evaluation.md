@@ -516,3 +516,6 @@ multiplication, with the same kernel reduction and native differential coverage.
 
 `callableEvaluatorRefinementDivide` carries the relation through pure integer
 division, with the same kernel reduction and native differential coverage.
+
+`callableEvaluatorRefinementModulo` carries the relation through pure integer
+modulo, with the same kernel reduction and native differential coverage.

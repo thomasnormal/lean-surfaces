@@ -42084,4 +42084,27 @@ def callableEvaluatorRefinementDivideWitness : Bool :=
 
 #guard callableEvaluatorRefinementDivideWitness
 
+private def callableEvaluatorRefinementModuloFunction : CallableFunction := {
+  occurrence := functionDeclaration
+  signature := {result := intType, parameters := [intType], variadic := false}
+  parameters := [parameter]
+  body := .return_ {
+    expression := .binary "%"
+      {expression := .parameter (handle "0x10"),
+        sourceType := intType, type := intType}
+      {expression := .integer 3,
+        sourceType := intType, type := intType}
+      , sourceType := intType, type := intType}}
+
+theorem callableEvaluatorRefinementModulo :
+    (evaluateCallable 32 .lp64 callableEvaluatorRefinementModuloFunction [signed 7]).toOption =
+      (evaluateCallableObject 32 .lp64 callableEvaluatorRefinementModuloFunction [signed 7]).toOption := by
+  rfl
+
+def callableEvaluatorRefinementModuloWitness : Bool :=
+  (evaluateCallable 32 .lp64 callableEvaluatorRefinementModuloFunction [signed 7]).toOption ==
+    (evaluateCallableObject 32 .lp64 callableEvaluatorRefinementModuloFunction [signed 7]).toOption
+
+#guard callableEvaluatorRefinementModuloWitness
+
 end LeanModels.Cpp.CallableObjectEvaluationTests

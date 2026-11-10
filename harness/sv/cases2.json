@@ -71858,6 +71858,23 @@
       ]
     },
     {
+      "name": "dynamic_nba_target_step11",
+      "example": "sem2/dynamic_nba_target_step11",
+      "top": "dynamic_nba_target_step11",
+      "clock": "clk",
+      "signals": ["idx", "d", "en", "q"],
+      "stimulus": [
+        {"idx": "xxx", "d": "x", "en": "x"},
+        {"idx": "000", "d": "1", "en": "1"},
+        {"idx": "011", "d": "0", "en": "1"},
+        {"idx": "x0x", "d": "1", "en": "1"},
+        {"idx": "z01", "d": "0", "en": "1"},
+        {"idx": "100", "d": "1", "en": "1"},
+        {"idx": "001", "d": "0", "en": "0"}
+      ],
+      "measured": "2026-11-10: an always_ff NBA to a runtime packed bit-select retains Lhs2.index; known in-range indices update one bit, x/z and out-of-range indices are no-ops, and Icarus 13.0 and Xcelium 24.03-s004 agree. E-core-1's static-window boundary remains pinned in the fixture proof."
+    },
+    {
       "name": "unpacked_dynamic_target",
       "example": "sem2/unpacked_dynamic_target",
       "top": "unpacked_dynamic_target",

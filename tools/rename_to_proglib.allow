@@ -1,0 +1,80 @@
+# tools/rename_to_proglib.allow -- the rules of tools/rename_to_proglib.py that are data.
+#
+# Read from next to the script, never from the tree it renames.  One entry per line, fields separated
+# by TABs, the last field `# <reason>`:
+#   path   <glob>              the file is KEPT: apply leaves every byte (fixup F2 excepted), --check
+#                              allows every old spelling in it (in a PDF, also those inside compressed streams)
+#   token  <glob>  <literal>   the literal is masked during apply and allowed by --check
+#   line   <glob>  <regex>     lines matching the regex are left as they are by apply and allowed by --check
+#   class  <name>              a class rule of the script: notebook-outputs, record-marker-paths
+# Globs are written in the OLD names and match a path before and after the move: `**/` is any number of
+# directories, `*` and `?` stay inside one path segment, [..] is a character class.
+# K-numbers are those of the rename plan (2026-11-10).  Every entry names its end.
+
+# K1 RECORDS: history keeps every byte (end: never).  A record is decided per FILE.
+path	CHANGELOG.md	# K1 append-only log; past entries keep the old names; fixup F2 adds one bullet
+path	docs/backlog/**	# K1 append-only lane logs (owner's rule: backlog entries are history)
+path	docs/backlog-archive.md	# K1 frozen archive ("FROZEN. DO NOT APPEND.")
+path	docs/sv-changelog.md	# K1 append-only log
+path	docs/cpp-changelog.md	# K1 append-only log
+path	docs/audits/**	# K1 dated audits
+path	docs/litreview/**	# K1 a dated (2026-07-30) internal synthesis of external literature
+path	docs/duplication-audit.md	# K1 measured 2026-08-22 against master at 76cd043
+path	docs/sv-xcelium-audit.md	# K1 a dated audit run
+path	docs/lean-order-census.md	# K1 dated census (2026-08-23)
+path	docs/sv-comb-census.md	# K1 dated census (2026-10-29)
+path	docs/python-monadic-rebuild.md	# K1 a dated plan and gate report (last edited 2026-08-24); its present-tense claims describe the tree of that date
+path	docs/python-refounding-plan.md	# K1 "a PLAN and a MEASUREMENT", ruling of 2026-08-22
+path	docs/*-20[0-9][0-9]-[0-9][0-9]-[0-9][0-9]*.md	# K1 documents dated in their file name
+path	docs/cpp-capture-pricing.md	# K1 dated measurement; line 16 pins the old loader's sha256
+path	docs/lean-export-manifest.json	# K1 export manifest (owner: never changes)
+path	docs/lean4export-pure-core.lean	# K1 vendored file
+path	docs/lean4lean-trproj-parametric.lean	# K1 vendored file
+
+# K2 a wire-format identifier whose producer is not in the repository (extractors/veriloga/openvaf_ast/ is
+# untracked), so the envelope cannot be regenerated; the loader rejects any other id.  End: the next schema
+# version, once the producer is tracked (decision D2).
+token	LeanModels/VerilogA/Envelope.lean	lean-models.veriloga.openvaf-ast.v1	# K2 the loader's schema id (envelopeSchema)
+token	Examples/verilog-a/resistor/resistor.json	lean-models.veriloga.openvaf-ast.v1	# K2 the envelope's schema id
+
+# K3 HDL sources: their bytes are pinned by envelopes (source sha256) and by Xcelium golden rows (the row hash
+# covers the whole DUT text); a comment edit would turn 29 oracle results into "nothing is claimed".  End: the
+# SV lane renames the comments together with its next Xcelium refresh (decision D3).
+path	**/*.sv	# K3 SystemVerilog sources (comments name Lean files)
+path	**/*.svh	# K3 SystemVerilog headers
+path	**/*.v	# K3 Verilog sources
+
+# K4 saved notebook outputs: produced by executing the notebook (needs Lean, timings change), so no replacement
+# equals regeneration.  End: the next notebook run that saves outputs.  Source cells follow the rename.
+class	notebook-outputs	# K4 saved cell outputs of notebooks/*.ipynb stay as recorded
+
+# K5 generated snapshots at toolchain v4.33.0-rc1, already behind the pin and compared by no gate; regenerating
+# now would mix a toolchain refresh into the rename.  End: their regeneration at the current toolchain.
+path	docs/lean-axiom-census.json	# K5 snapshot of harness/lean_axiom_census.py
+path	docs/softfloat-consumer-census.json	# K5 snapshot of harness/softfloat_consumer_census.py
+
+# K6 captured Lean output in a generated page (harness/sv_coverage_page.py needs the SV runner).  End: the next
+# regeneration, or a Lean-host sample showing the renamed runner prints exactly the replaced text.
+line	docs/sv-coverage.md	LeanModels\.Loud\.unsupported \(LeanModels\.RefusalCause\.	# K6 two captured refusal cells
+
+# K7 this tool spells the old names by necessity.  End: deleted once every live branch and svGolf have crossed.
+path	tools/rename_to_proglib.py	# K7 the rename script
+path	tools/rename_to_proglib.allow	# K7 this allowlist
+path	tools/test_rename_to_proglib.py	# K7 the script's test
+
+# K8 the README's rename note, written by fixup F1, names the old library on purpose.  End: never.
+line	README.md	formerly `LeanModels`	# K8 a pointer for readers of old records
+
+# K10 svGolf moves later, in its own pass, with its library pin.  Absent on master.
+path	svgolf/**	# K10 svGolf (its own rename pass, with the pin)
+
+# K12 a generated binary with no recorded generator: docs/sv-onboarding.pdf was built from docs/sv-onboarding.tex
+# on 2026-07-30 (3a7d130dc); the .tex has changed since (step 1) and the PDF was not rebuilt, so a rebuild now would
+# carry unrelated content.  Its 7 old spellings sit inside compressed streams.  End: rebuilt from the .tex (or
+# deleted) in its own commit.
+path	docs/sv-onboarding.pdf	# K12 stale generated PDF of docs/sv-onboarding.tex
+
+# NOT ENABLED (decision D5): the line `class<TAB>record-marker-paths<TAB># ...` would turn on fixup F5, which renames
+# the path token of the 4 docs_check marker lines inside records (docs/backlog-archive.md x3,
+# docs/backlog/softfloat.md x1).  Without it records keep every byte and docs_check reports those 4 blocks as
+# BROKEN until tools/docs_check.py stops checking blocks in records.

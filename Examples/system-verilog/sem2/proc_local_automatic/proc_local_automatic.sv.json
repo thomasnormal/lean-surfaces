@@ -161,7 +161,40 @@
                   "name": "t",
                   "width": 8,
                   "two_state": false,
-                  "init": null
+                  "init": null,
+                  "lifetime": "automatic",
+                  "lexical_path": "proc_local_automatic.t",
+                  "hierarchical_path": "proc_local_automatic.t",
+                  "decl_type": {
+                    "kind": "PackedType",
+                    "packed": [
+                      {
+                        "msb": {
+                          "kind": "Int",
+                          "span": {
+                            "line": 8,
+                            "col": 22,
+                            "end_line": 8,
+                            "end_col": 23
+                          },
+                          "value": 7,
+                          "resolved_width": null
+                        },
+                        "lsb": {
+                          "kind": "Int",
+                          "span": {
+                            "line": 8,
+                            "col": 24,
+                            "end_line": 8,
+                            "end_col": 25
+                          },
+                          "value": 0,
+                          "resolved_width": null
+                        }
+                      }
+                    ],
+                    "resolved": 8
+                  }
                 },
                 {
                   "kind": "BlockingAssign",
@@ -225,7 +258,13 @@
                     "name": "t"
                   }
                 }
-              ]
+              ],
+              "scope": {
+                "name": "",
+                "lexical_path": "proc_local_automatic",
+                "hierarchical_path": "proc_local_automatic",
+                "default_lifetime": "static"
+              }
             }
           }
         ],

@@ -210,7 +210,30 @@
                           }
                         }
                       },
-                      "signed": true
+                      "signed": true,
+                      "lifetime": "automatic",
+                      "lexical_path": "loop_mixed_signed_refuse.i",
+                      "hierarchical_path": "loop_mixed_signed_refuse.i",
+                      "decl_type": {
+                        "kind": "PackedType",
+                        "packed": [
+                          {
+                            "msb": {
+                              "kind": "Int",
+                              "span": null,
+                              "value": 31,
+                              "resolved_width": null
+                            },
+                            "lsb": {
+                              "kind": "Int",
+                              "span": null,
+                              "value": 0,
+                              "resolved_width": null
+                            }
+                          }
+                        ],
+                        "resolved": 32
+                      }
                     },
                     {
                       "kind": "Unsupported",
@@ -223,7 +246,13 @@
                       "sv_kind": "ForLoopStatement",
                       "text": "for (int i = -1; i < 2'd2; i++)\n      q[i + 1] = d[i + 1];"
                     }
-                  ]
+                  ],
+                  "scope": {
+                    "name": "",
+                    "lexical_path": "loop_mixed_signed_refuse",
+                    "hierarchical_path": "loop_mixed_signed_refuse",
+                    "default_lifetime": "static"
+                  }
                 }
               ]
             }

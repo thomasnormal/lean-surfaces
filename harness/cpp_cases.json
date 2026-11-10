@@ -20048,5 +20048,17 @@
     "cpp_expression": "callable_witness()",
     "expect": "match",
     "rung": 3
+  },
+  {
+    "id": "statement.callable-evaluator-refinement-not-equal",
+    "kind": "statement",
+    "corpus": "callable refinement seam",
+    "lean_module": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_namespace": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_expression": "callableEvaluatorRefinementNotEqualWitness",
+    "cpp_source": "bool not_equal_refinement_witness(int value) { return value != 7; } bool callable_witness() { return !not_equal_refinement_witness(7); }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 3
   }
 ]

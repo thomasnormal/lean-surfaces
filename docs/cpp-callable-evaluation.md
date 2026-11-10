@@ -540,3 +540,6 @@ less-than comparison, with the same kernel reduction and native differential cov
 
 `callableEvaluatorRefinementEqual` carries the relation through a pure equality
 comparison, with the same kernel reduction and native differential coverage.
+
+`callableEvaluatorRefinementNotEqual` carries the relation through a pure
+inequality comparison, with the same kernel reduction and native differential coverage.

@@ -304,7 +304,30 @@
                           "resolved_width": 32
                         }
                       },
-                      "signed": true
+                      "signed": true,
+                      "lifetime": "automatic",
+                      "lexical_path": "loop_name_capture_refuse.K",
+                      "hierarchical_path": "loop_name_capture_refuse.K",
+                      "decl_type": {
+                        "kind": "PackedType",
+                        "packed": [
+                          {
+                            "msb": {
+                              "kind": "Int",
+                              "span": null,
+                              "value": 31,
+                              "resolved_width": null
+                            },
+                            "lsb": {
+                              "kind": "Int",
+                              "span": null,
+                              "value": 0,
+                              "resolved_width": null
+                            }
+                          }
+                        ],
+                        "resolved": 32
+                      }
                     },
                     {
                       "kind": "Unsupported",
@@ -317,7 +340,13 @@
                       "sv_kind": "ForLoopStatement",
                       "text": "for (int K = 0; K < N; K++)\n      q[K] = f(1'b0);"
                     }
-                  ]
+                  ],
+                  "scope": {
+                    "name": "",
+                    "lexical_path": "loop_name_capture_refuse",
+                    "hierarchical_path": "loop_name_capture_refuse",
+                    "default_lifetime": "static"
+                  }
                 }
               ]
             }

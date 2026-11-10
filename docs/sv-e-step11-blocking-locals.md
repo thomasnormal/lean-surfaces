@@ -5,7 +5,9 @@ This clean-room fixture is
 One `always_ff @(posedge clk)` declares a four-state block-local `logic [3:0]
 t`, assigns it with blocking statements, and samples it into two nonblocking
 architectural outputs.  The envelope and source shape are checked by
-`agree.lean`; no core-specific rewrite or new run2 meaning is introduced.
+`agree.lean`. The frontend also retains Slang's scope and resolved lifetime
+metadata. This is frontend preservation and source-oracle evidence;
+blocking-local execution in E is still incomplete.
 
 IEEE 1800-2023 §9.2.2.4 gives the `always_ff` event and single-writer
 restrictions.  The local declaration and its blocking assignments are still in
@@ -47,12 +49,65 @@ executor's next explicit boundary is `9.2.2.4: blocking assignment in
 always_ff is outside E-core-1`; neither is silently reinterpreted by this
 fixture.
 
-## E-core review boundary
+## Static storage and scope evidence
 
-The fixture was reviewed against E-core-1 on 2026-11-10. Its parser envelope
-and five differential rows are accepted evidence, but the implementation stays
-parked. A correct admission needs a scoped edge frame with static lifetime,
-left-to-right blocking-local evaluation, and an NBA frame theorem; adding a
-local declaration by treating it as a module signal would change sensitivity,
-aliasing, and persistence. The existing flat `Elab1` store has no such scope,
-so the loud `LocalDecl` refusal remains the named boundary.
+[`static_local_lifetime_step11.sv`](../Examples/system-verilog/sem2/blocking_local_always_ff_step11/static_local_lifetime_step11.sv)
+adds a parameterized `W`-bit implicit-static local, a two-state local, an
+explicit-static signed local, and a nested block with another local named
+`t`. Its testbench distinguishes old and new NBA samples around blocking
+writes, re-entry without an assignment, partial reset, two-state x/z
+conversion, and signed widening. Static locals retain their value even when
+their block performs no write (§6.21). Four-state locals start at x and
+two-state locals at zero (§6.8, Table 6-7); the outputs start at x.
+
+The extractor retains the declaration inside its original Block. A
+storage-bearing Block carries its Slang name, lexical/hierarchical paths and
+default lifetime. A LocalDecl carries Slang's resolved lifetime, paths,
+signed/two-state metadata, symbolic declared type and its existing optional
+initializer. The resolved width is evidence for the default parameter point,
+not a substitute for the declaration's dimension AST. Slang's printed paths
+omit anonymous scopes and are not unique identities: the source spans and
+enclosing tree must also be preserved. Other blocks keep their existing
+envelope fields. No local is lifted to module storage by this change.
+
+The source rows below use `W=4`. Columns are `q_old`, `q_new`, `q_shadow`,
+`q_known`, `q_signed`. Icarus 13.0 and readiness-gated Xcelium 24.03-s004
+verify both tables. The repeated rows intentionally test static retention.
+
+| action | `q_old` | `q_new` | `q_shadow` | `q_known` | `q_signed` |
+| --- | --- | --- | --- | --- | --- |
+| before first edge | `xxxx` | `xxxx` | `xxxx` | `xxxx` | `xxxxxxxx` |
+| no write | `xxxx` | `xxxx` | `xxxx` | `0000` | `xxxxxxxx` |
+| load `1010` | `xxxx` | `1010` | `0101` | `0000` | `11111010` |
+| no write | `1010` | `1010` | `0101` | `1010` | `11111010` |
+| load `xz01` | `1010` | `xz01` | `xx10` | `1010` | `xxxxxz01` |
+| no write | `xz01` | `xz01` | `xx10` | `0001` | `xxxxxz01` |
+| load `zzzz` | `xz01` | `zzzz` | `xxxx` | `0001` | `zzzzzzzz` |
+| no write | `zzzz` | `zzzz` | `xxxx` | `0000` | `zzzzzzzz` |
+| partial reset | `0000` | `0000` | `xxxx` | `0000` | `00000000` |
+| no write | `0000` | `0000` | `xxxx` | `0000` | `00000000` |
+
+Run the source checks with
+`python3 Examples/system-verilog/sem2/blocking_local_always_ff_step11/check.py`.
+The checker prints simulator versions, readiness-gates Xcelium and verifies
+all fifteen source rows. It explicitly claims no E execution result.
+
+## Remaining E representation boundary
+
+`Stmt2` currently has neither a scoped declaration nor a scoped Block node;
+`Ingest2` therefore keeps LocalDecl loud. The E edge executor returns only
+NBA issues, and its Active-phase frame proof leaves the complete store
+unchanged. A persistent private-cell write cannot satisfy that frame.
+
+The shared-representation review keeps `Stmt2` frozen: new constructs stay
+in the envelope/PStmt frontend until the planned single `Sv.Ast` exists.
+This packet preserves the metadata in the envelope; the existing PStmt
+parser continues to mark execution unsupported. That future AST needs
+source-scoped declarations with lifetime/type/initializer, plus an activation
+result containing both private static-cell writes and NBA issues. E already provides typed stores
+and block segments in `VarId.path`; these can identify private cells without
+module-level hoisting. The one body engine must retain the fixed module
+sampling view while threading private writes left to right. Its NBA-only
+rule should be a proved special case. The rule, initialization/lifetime
+proofs, admission, loaded-source E traces and simulator agreement remain
+required before this Step 11 construct is complete.

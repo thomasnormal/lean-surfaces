@@ -55,6 +55,25 @@ DECIDED: close `py-no-recursion-limit` for this branch; keep the explicit
 depth hypothesis on universal recursive specifications and move to the next
 unresolved high-priority audit item.
 
+## 2026-11-10-pyfoundation-12 — revalidate module-definition ordering audit
+
+The inbox finding `py-def-table-position-independent` is already closed by
+the script admission's `defsReachableBefore` and duplicate-name guards. The
+current runner still refuses forward function reachability and module
+redefinition before execution, while safe interleaved definitions run in
+source order. This keeps the static function table from fabricating CPython's
+runtime binding behavior.
+
+| Measurement | Result |
+|---|---|
+| Forward witness | `def_table_forward.py`: loud exit 3; CPython 3.9 raises `NameError` |
+| Redefinition witness | `def_table_rebind.py`: loud exit 3; CPython 3.9 prints `1` then `2` |
+| Safe interleaving | `interleave_script.py`: MATCH, exit 0 |
+| Semantic change | none; audit confirmation only |
+
+DECIDED: close `py-def-table-position-independent` on this branch; retain the
+conservative loud guard until definitions become runtime-bound AST nodes.
+
 ## 2026-11-10-pyfoundation-10 — max/min recursion
 
 `max` and `min` now check the CPython builtin recursion unit after positional

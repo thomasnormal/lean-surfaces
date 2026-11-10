@@ -35,6 +35,14 @@ The CI quickstart installs CPython 3.9 and the README names `python3.9`.
 DECIDED: require CPython 3.9 for the frontend and default oracle; never fall
 back to an unpinned Python executable or count a frontend refusal as a
 comparison disagreement.
+## 2026-11-10-pyfoundation-9 — sum recursion
+
+`sum` now checks the CPython C-call recursion unit after evaluating its
+positional arguments. `sum_recursion.py` pins valid and start-value folds,
+wrong type/arity, argument effects, and generator/keyword boundaries; keyword
+forms remain loud because CPython's Argument Clinic diagnostics distinguish
+missing positional arguments from invalid keyword names. The proof interpreter
+shares the check and refuses only the recorded keyword cases.
 
 ## 2026-11-10-pyfoundation-7 — remaining builtin and method recursion sites
 

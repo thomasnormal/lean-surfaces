@@ -612,6 +612,8 @@ def applyBuiltin (K : Kont) (m : Module) (fname : String) (vs : List RVal) :
         heapPut hr.1; pure hr.2
     | _ => raisePy (.typeError s!"sorted expected 1 argument, got {vs.length}")
   else if fname == "sum" then
+    let st ← get
+    let _ ← liftRes (builtinMethORecursionCheck st.world.callDepth)
     -- The element fold IS `evalBinOp .add` (`sumFold`); a str START is
     -- CPython's own special-cased refusal, not a guess.
     match sumArgs vs with

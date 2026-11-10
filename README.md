@@ -70,7 +70,7 @@ and 67 include skips.
 
 ## Quickstart (Python tier)
 
-You need git, Python ≥ 3.9, and [elan](https://github.com/leanprover/elan)
+You need git, CPython 3.9 (`python3.9` on your PATH), and [elan](https://github.com/leanprover/elan)
 (the Lean toolchain manager). Linux and macOS.
 
 ```console

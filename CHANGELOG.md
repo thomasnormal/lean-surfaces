@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Require the pinned Python 3.9 frontend and default oracle for `leanpy`, and
+  report rejected script envelopes as refusals rather than comparisons.
+
 - Made the frame-backed C++ callable evaluator the single public semantics.
   `evaluateCallable` now projects `evaluateCallableObject`; the former list-state
   implementation is explicitly named `evaluateCallableValue` for compatibility

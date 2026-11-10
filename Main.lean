@@ -810,11 +810,11 @@ def main (argv : List String) : IO UInt32 := do
         match parseEnvelopeString contents with
         | .error e =>
             IO.eprintln s!"leanmodels-run --script: '{path}' is not a valid envelope: {e}"
-            return 1
+            return 3
         | .ok envl =>
             unless envl.language == "python" do
               IO.eprintln s!"leanmodels-run --script: '{path}' has language '{envl.language}', expected 'python'"
-              return 1
+              return 3
             runScriptMode envl.module (clock?.getD []) (fuel?.getD 1000000)
   | _ =>
   match parseCli argv with

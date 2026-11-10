@@ -49,12 +49,12 @@ retained; the NaN-aware wrapper shares its determined infinity cases without a
 second interpreter path.
 
 For mixed or floating-point `**`, CPython 3.9's `float_pow` converts both
-operands before handling a zero exponent or a finite power of zero. Those
-portable cases are decided, including `-0.0` raised to an odd integer and the
-zero-base negative-exponent error. `float_power_special` and
+operands before handling zeros, infinities and unit bases. Those portable
+cases are decided, including `-0.0` raised to an odd integer and the zero-base
+negative-exponent error. `float_power_special` and
 `float_power_big_zero` in `harness/cases.json` pin the cases and conversion
-order. Other floating powers remain loud until their special cases or the
-platform `pow` result are modeled.
+order. NaN payload results, complex results, and other floating powers remain
+loud until their special cases or the platform `pow` result are modeled.
 
 Addition, subtraction and multiplication compute with exact rational operands
 and round once to nearest-even binary64. Mixed integer/Boolean operands are

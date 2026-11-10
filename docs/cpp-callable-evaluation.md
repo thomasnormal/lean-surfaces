@@ -519,3 +519,6 @@ division, with the same kernel reduction and native differential coverage.
 
 `callableEvaluatorRefinementModulo` carries the relation through pure integer
 modulo, with the same kernel reduction and native differential coverage.
+
+`callableEvaluatorRefinementBitAnd` carries the relation through pure bitwise
+conjunction, with the same kernel reduction and native differential coverage.

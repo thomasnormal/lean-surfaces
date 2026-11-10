@@ -42406,4 +42406,25 @@ def callableEvaluatorRefinementLogicalOrWitness : Bool :=
 
 #guard callableEvaluatorRefinementLogicalOrWitness
 
+private def callableEvaluatorRefinementLogicalNotFunction : CallableFunction := {
+  occurrence := functionDeclaration
+  signature := {result := .builtin .boolean, parameters := [intType], variadic := false}
+  parameters := [parameter]
+  body := .return_ {
+    expression := .unary "!" {
+      expression := .parameter (handle "0x10"),
+      sourceType := intType, type := intType}
+      , sourceType := .builtin .boolean, type := .builtin .boolean}}
+
+theorem callableEvaluatorRefinementLogicalNot :
+    (evaluateCallable 32 .lp64 callableEvaluatorRefinementLogicalNotFunction [signed 7]).toOption =
+      (evaluateCallableObject 32 .lp64 callableEvaluatorRefinementLogicalNotFunction [signed 7]).toOption := by
+  rfl
+
+def callableEvaluatorRefinementLogicalNotWitness : Bool :=
+  (evaluateCallable 32 .lp64 callableEvaluatorRefinementLogicalNotFunction [signed 7]).toOption ==
+    (evaluateCallableObject 32 .lp64 callableEvaluatorRefinementLogicalNotFunction [signed 7]).toOption
+
+#guard callableEvaluatorRefinementLogicalNotWitness
+
 end LeanModels.Cpp.CallableObjectEvaluationTests

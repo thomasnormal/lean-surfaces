@@ -558,3 +558,6 @@ conjunction, with the same kernel reduction and native differential coverage.
 
 `callableEvaluatorRefinementLogicalOr` carries the relation through pure logical
 disjunction, with the same kernel reduction and native differential coverage.
+
+`callableEvaluatorRefinementLogicalNot` carries the relation through pure logical
+negation, with the same kernel reduction and native differential coverage.

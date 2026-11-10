@@ -20120,5 +20120,17 @@
     "cpp_expression": "callable_witness()",
     "expect": "match",
     "rung": 3
+  },
+  {
+    "id": "statement.callable-evaluator-refinement-logical-not",
+    "kind": "statement",
+    "corpus": "callable refinement seam",
+    "lean_module": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_namespace": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_expression": "callableEvaluatorRefinementLogicalNotWitness",
+    "cpp_source": "bool logical_not_refinement_witness(int value) { return !value; } bool callable_witness() { return !logical_not_refinement_witness(7); }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 3
   }
 ]

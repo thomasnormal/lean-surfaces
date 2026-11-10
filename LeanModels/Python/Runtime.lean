@@ -315,14 +315,20 @@ structure World where
   argumented call still raises the faithful arity `TypeError` without
   touching this trace. -/
   clock : List Int := []
-  /-- Active Python frame depth used by the script runner.  CPython 3.9's
-  default recursion limit is 1000; the module shell resets this counter after
-  each completed top-level statement. -/
+  /-- Normalized active CPython recursion units: the CPython thread's depth
+  minus the module boundary's unit. Function and modeled constructor entries
+  contribute units. The script shell resets this to zero after each completed
+  top-level statement. CPython 3.9's pinned default limit is 1000. -/
   callDepth : Nat := 0
 deriving Repr, Inhabited, BEq
 
 /-- CPython 3.9's pinned default `sys.getrecursionlimit()`. -/
 def pythonRecursionLimit : Nat := 1000
+
+/-- The entry check shared by Python recursion sites. `callDepth` is the
+CPython thread's active recursion count minus the module boundary's unit;
+entering a new unit would exceed the pinned limit at this boundary. -/
+abbrev pythonRecursionFull (depth : Nat) : Prop := depth + 1 >= pythonRecursionLimit
 
 /-- The script/monadic runner's module boundary contributes one virtual frame;
 the closed-function `callFunction` surface starts at ordinary depth zero so

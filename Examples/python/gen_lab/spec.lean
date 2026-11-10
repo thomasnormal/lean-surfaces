@@ -256,8 +256,8 @@ stack the interpreter actually builds: `uptoCont` is `callIn`'s
 
 /-- **The first generator theorem in this repo.** `upto(n)`, suspended
 exactly as `callIn` leaves it, yields `0, 1, …, n-1` and then finishes —
-for every `n`, in every world. -/
-theorem upto_yields (w : World) (c : Nat) :
+for every `n` in a world with room for a comparison. -/
+theorem upto_yields (w : World) (c : Nat) (hdepth : w.callDepth < 999) :
     GenYields gen_lab ⟨w, uptoEntry (c : Int)⟩ uptoCont (intsFrom 0 c)
       ⟨w, uptoEnv (c : Int) (c : Int)⟩ := by proofs
 
@@ -271,7 +271,7 @@ theorem naturals_prefix (w : World) (c : Nat) :
 
 /-- The generator behind the `total(5) = 10` row, as an instance of the
 symbolic theorem — no interpreter run is elaborated. -/
-theorem upto5_yields (w : World) :
+theorem upto5_yields (w : World) (hdepth : w.callDepth < 999) :
     GenYields gen_lab ⟨w, uptoEntry 5⟩ uptoCont
       [.int 0, .int 1, .int 2, .int 3, .int 4] ⟨w, uptoEnv 5 5⟩ := by proofs
 

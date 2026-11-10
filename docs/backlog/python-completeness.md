@@ -10919,7 +10919,7 @@ DECIDED: retain `pySsizeRaising` as the one raising conversion definition and
 model `_PyEval_SliceIndex`/index-error conversion separately before widening
 raw integer index sites.
 
-## FOUNDATION step 1d — withdraw the unbounded `_bisect` accelerator admission
+## 2026-11-10-pyfoundation-1d — withdraw the unbounded `_bisect` accelerator admission
 
 The registry's old `_bisect` entry claimed equivalence from 15 sampled calls
 without recording an argument domain. A pinned CPython 3.9.25 boundary breaks
@@ -10937,7 +10937,7 @@ measurement as a sampled slice and the new measured counterexample.
 DECIDED: keep the `_bisect` fallback loud until call-site domain analysis
 proves the C and pure paths equivalent on the complete admitted domain.
 
-## FOUNDATION step 3c — separate raising index overflow from slice clamping
+## 2026-11-10-pyfoundation-3c — separate raising index overflow from slice clamping
 
 The index protocol now has one shared worker for each CPython conversion kind.
 `pySsizeIndex` models `PyNumber_AsSsize_t(..., PyExc_IndexError)` and raises

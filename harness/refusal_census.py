@@ -944,6 +944,7 @@ WHITELIST_CLASS = {
     "str_lab::fmt_bad": "format.percent-minilanguage",
     "str_lab::fmt_trailing": "format.percent-minilanguage",
     "float_lab::constructor": "float.text-nan-or-unicode-repr",
+    "float_lab::nan_sort_still_loud": "float.nan-payload",
     "int_string::explicit_base": "builtin.int-of-str",
     "string_repeat::repeat_live_list": "op.Mult-repetition",
     "tuple_repeat::repeat_empty_length": "op.Mult-repetition",
@@ -1146,6 +1147,8 @@ SCRIPT_CLASS = {
 
 # Keep newly loud script witnesses in the same fail-closed taxonomy.
 SCRIPT_CLASS.update({
+    'import_bisect_fallback': 'accelerator.domain',
+    'import_insort_fallback': 'accelerator.domain',
     'def_table_forward': 'script.definition-order',
     'def_table_rebind': 'script.definition-order',
     'del_def_call': 'del.definition-binding',

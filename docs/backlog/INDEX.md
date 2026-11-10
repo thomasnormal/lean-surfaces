@@ -16,11 +16,27 @@ with ids `YYYY-MM-DD-<lane>-<n>` that need no reservation. Everything before
 the split is in [`docs/backlog-archive.md`](../backlog-archive.md), frozen,
 and every existing `§Lnn` reference still resolves there.
 
-**1297 entries across 18 lanes.** Regenerate with
+**1319 entries across 18 lanes.** Regenerate with
 `tools/backlog-index.sh`; check with `--check` (exit 1 on drift).
 
 | id | class | title | lane |
 | --- | --- | --- | --- |
+| `2026-11-10-pyfoundation-2` |  | protocol census | python-completeness |
+| `2026-11-09-pycomplete-487` |  | revalidate static definition-delete audit | python-completeness |
+| `2026-11-09-pycomplete-486` |  | revalidate shape-specific ingestion audit | python-completeness |
+| `2026-11-09-pycomplete-485` |  | revalidate signed set-order audit | python-completeness |
+| `2026-11-09-pycomplete-484` |  | revalidate length-only repetition audit | python-completeness |
+| `2026-11-09-pycomplete-483` |  | revalidate non-simple annotation ordering | python-completeness |
+| `2026-11-09-pycomplete-482` |  | revalidate dead yield-target audit | python-completeness |
+| `2026-11-09-pycomplete-481` |  | revalidate augmented-repeat audit | python-completeness |
+| `2026-11-09-pycomplete-480` |  | revalidate native ListComp shadow semantics | python-completeness |
+| `2026-11-09-pycomplete-479` |  | revalidate genexp creation-time iteration | python-completeness |
+| `2026-11-09-pycomplete-478` |  | revalidate generator capture census | python-completeness |
+| `2026-11-09-pycomplete-477` |  | revalidate structured global declarations | python-completeness |
+| `2026-11-09-pycomplete-476` |  | revalidate module-definition ordering audit | python-completeness |
+| `2026-11-09-pycomplete-475` |  | revalidate recursion-limit audit after root build | python-completeness |
+| `2026-11-09-pyfoundation-1` |  | stop NaN container identity wrong answers | python-completeness |
+| `2026-11-09-pyfoundation-0` |  | confirm the five protocol findings | python-completeness |
 | `2026-11-08-pycomplete-458` |  | retire stale depth-zero recursive proof fixture | python-completeness |
 | `2026-11-08-ls-sv2-407` |  | re-probe PicoRV32 after parametric x/z admission | ls-sv2 |
 | `2026-11-08-ls-sv2-403` |  | scout smaller real RV32I cores while PicoRV32 waits | ls-sv2 |
@@ -1317,6 +1333,12 @@ and every existing `§Lnn` reference still resolves there.
 | `G12` |  | THE LOOP INDUCTION CLOSES: `len = l + bitLenSpec v`, proved (2026-08-23) | go |
 | `G11` |  | THE WALKER IS PROVED THROUGH A MUTATION, and the blocker moved again (2026-08-23) | go |
 | `G10` |  | THE SEAM: one lemma opens the stack, and §G8's three "unprovable" lemmas are four lines each (2026-08-23) | go |
+| `2026-11-10-pyfoundation-3c` |  | separate raising index overflow from slice clamping | python-completeness |
+| `2026-11-10-pyfoundation-3b` |  | share the raising Py_ssize_t conversion | python-completeness |
+| `2026-11-10-pyfoundation-3a` |  | pin RichCompareBool observer sites | python-completeness |
+| `2026-11-10-pyfoundation-1d` |  | withdraw the unbounded `_bisect` accelerator admission | python-completeness |
+| `2026-11-10-pyfoundation-1c` |  | stop Py_ssize_t narrowing errors | python-completeness |
+| `2026-11-10-pyfoundation-1b` |  | stop platform-dependent integer powers | python-completeness |
 | `2026-08-26` |  | PARKED (indefinite). Read this first on resumption. | analog |
 
-**30 heading(s) do not use the §9.5 id scheme** and sort last.
+**36 heading(s) do not use the §9.5 id scheme** and sort last.

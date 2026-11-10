@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Retained plain `always @*` as its own parametric process node and parsed
+  body for E. Contradictory event metadata is rejected; frozen execution
+  routes keep the existing refusal. Native implicit-event execution is open.
+
 - Removed duplicate E core and observation definitions. Standalone E0,
   clocked E1 and the retirement bridge now share the same definitions and
   can be imported together; existing semantic rules and statements remain.

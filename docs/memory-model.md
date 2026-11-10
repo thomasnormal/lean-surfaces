@@ -2145,8 +2145,10 @@ began failing.
 
 The creation check also covers a scalar outer iterable. A lowered
 `(x for x in value)` now performs the same immediate non-iterability check as
-CPython before returning the generator object; `foundation_probe`'s
-`gen_iter_deferred(5)` is the regression row. The proof interpreter had been
+CPython before returning the generator object; `genexp_creation`'s
+`gen_iter_deferred(5)` and `gen_iter_deferred(NotImplemented)` in
+`harness/cases.json` are regression rows. Both interpreters use the same
+scalar creation check. The proof interpreter had been
 returning `1` from the later, unstepped generator; it now raises `TypeError`
 at creation. The proof interpreter refuses heap receivers until it can create
 their iterator at that point; the monadic runner retains its existing cursor

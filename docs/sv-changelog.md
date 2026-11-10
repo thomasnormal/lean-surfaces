@@ -1,5 +1,12 @@
 # [unreleased] — 2026-11-04 (an Sv landing builds the comb chain above it)
 
+## Guarded asynchronous reset events — 2026-11-10
+
+The symbolic loader now retains an explicit `AlwaysPosedge:reset-iff`
+unsupported process when an asynchronous reset event has an `iff` guard.
+Previously it discarded the guard and could execute a reset that the source
+disabled. Both reset polarities are covered; unguarded events are unchanged.
+
 ## Default §4.7 route guard — 2026-11-09
 
 The `Schedule:preemptive` guard now runs at the `runner`/`runner2` route

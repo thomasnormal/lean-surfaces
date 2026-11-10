@@ -588,6 +588,12 @@ def parsePProcess (j : Json) : Except String PProcess := do
           throw "AlwaysPosedge:edge — edge-qualified clock requires its retained event semantics"
         if (getOptField j "iff").isSome then
           throw "AlwaysPosedge:iff — event-control iff guard requires its retained event semantics"
+        -- The guard on the *reset* event is independent of the clock guard.
+        -- PProcess has no guarded event form; keep this process loud rather
+        -- than turning a disabled reset edge into an unconditional reset.
+        if (getOptField j "reset_iff").isSome then
+          return .unsupported "AlwaysPosedge:reset-iff"
+            "guarded asynchronous reset event requires retained event semantics"
         let body ← parsePStmt (← getField j "body")
         match getOptStr j "areset_n" with
         | some rn =>
@@ -1583,6 +1589,21 @@ private def unsupMemberText : String := r#"{
 #guard (Json.parse r#"{"kind": "CompoundAssign", "span": null, "target": {"kind": "Ident", "name": "v"}, "op": "+", "value": {"kind": "Int", "value": 1}}"# >>= parsePStmt).toOption
         == some (.unsupported "AssignmentExpression:compound"
           "source-level compound assignment is retained; a frozen Stmt2 compound node is not yet available")
+-- Reset-event guards cannot be dropped while the event AST is frozen.
+#guard match (Json.parse r#"{"kind":"AlwaysPosedge","style":"always_ff","clock":"clk",
+  "areset_n":"rst_n","reset_iff":{"kind":"Ident","name":"en"},"body":{"kind":"Empty"}}"#
+    >>= parsePProcess) with
+  | .ok (.unsupported "AlwaysPosedge:reset-iff" _) => true
+  | _ => false
+#guard match (Json.parse r#"{"kind":"AlwaysPosedge","style":"always_ff","clock":"clk",
+  "areset":"rst","reset_iff":{"kind":"Ident","name":"en"},"body":{"kind":"Empty"}}"#
+    >>= parsePProcess) with
+  | .ok (.unsupported "AlwaysPosedge:reset-iff" _) => true
+  | _ => false
+#guard match (Json.parse r#"{"kind":"AlwaysPosedge","style":"always_ff","clock":"clk",
+  "areset_n":"rst_n","body":{"kind":"Empty"}}"# >>= parsePProcess) with
+  | .ok (.alwaysFFR "clk" "rst_n" _ false) => true
+  | _ => false
 -- A `localparam` inside a generate block is a loud item, not a parse failure.
 #guard (Json.parse r#"{"kind": "LocalParam", "span": null, "name": "LL", "type": null,
     "expr": {"kind": "Int", "span": null, "value": 1, "resolved_width": 32}, "resolved": 1}"#

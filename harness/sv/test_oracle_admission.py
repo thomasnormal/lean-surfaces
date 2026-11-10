@@ -88,6 +88,12 @@ class VerificationAccountingTests(unittest.TestCase):
         self.addCleanup(directory.cleanup)
         self.directory = directory.name
         self.cases_path = os.path.join(self.directory, "cases.json")
+        # main scans the source directory for memory sidecars, even when the
+        # simulator is mocked. Keep that fixture inside the temporary repo.
+        source_dir = os.path.join(self.directory, "Examples", "system-verilog",
+                                  "admission_fixture")
+        os.makedirs(source_dir)
+        self.patch_runner("REPO", new=self.directory)
         self.trace = ["CYCLE 0 out=0", "CYCLE 1 out=1"]
         self.ports = [("out", "out", 1)]
         self.patch_runner("CASES_JSON", new=self.cases_path)

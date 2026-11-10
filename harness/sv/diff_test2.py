@@ -99,7 +99,7 @@ from oracle_disagreements import (HarnessError, SimulatorError, check_declaratio
                                  oracle_unavailability, xcelium_unavailability,
                                  report_annotation)  # noqa: E402
 
-# Dependency order matters: each may import the previous ones.
+# Lake owns dependency ordering and artifact traces for these runner imports.
 SV_LEAN_MODULES = ["Basic", "Ast", "Semantics", "Obs", "Sem2", "CombGuard2",
                    "Param", "Param2", "Hier2", "Probe2", "RangeGuard2", "CombAlias2",
                    "ClockGuard2", "Ingest2", "PreemptGuard2",
@@ -115,25 +115,13 @@ def run_cmd(cmd, cwd, timeout):
 
 
 def ensure_oleans(verbose):
-    libdir = os.path.join(REPO, ".lake", "build", "lib", "lean",
-                          "LeanModels", "Sv")
-    os.makedirs(libdir, exist_ok=True)
-    newest_dep = 0.0
-    for name in SV_LEAN_MODULES:
-        rel = name.replace("/", os.sep)
-        src = os.path.join(REPO, "LeanModels", "Sv", rel + ".lean")
-        olean = os.path.join(libdir, rel + ".olean")
-        os.makedirs(os.path.dirname(olean), exist_ok=True)
-        newest_dep = max(newest_dep, os.path.getmtime(src))
-        if not os.path.exists(olean) or os.path.getmtime(olean) < newest_dep:
-            if verbose:
-                print("  [olean] rebuilding LeanModels.Sv.%s" % name)
-            p = run_cmd(["lake", "env", "lean", "-o", olean, src],
-                        cwd=REPO, timeout=900)
-            if p.returncode != 0:
-                raise HarnessError("lake env lean -o failed for %s:\n%s\n%s"
-                                   % (src, p.stdout[-2000:], p.stderr[-2000:]))
-        newest_dep = max(newest_dep, os.path.getmtime(olean))
+    targets = ["LeanModels.Sv." + name.replace("/", ".") for name in SV_LEAN_MODULES]
+    if verbose:
+        print("  [olean] checking runner dependencies with Lake")
+    p = run_cmd(["lake", "build", *targets], cwd=REPO, timeout=900)
+    if p.returncode != 0:
+        raise HarnessError("lake build failed for SV runner dependencies:\n%s\n%s"
+                           % (p.stdout[-2000:], p.stderr[-2000:]))
 
 
 def cycle_lines(text):

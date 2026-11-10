@@ -174,6 +174,23 @@ skipped as required by CPython 3.9.
 DECIDED: close `py-annassign-nonsimple-order` on this branch and retain direct
 structured annotation semantics with its scope gate.
 
+## 2026-11-10-pyfoundation-20 — revalidate length-only repetition removal
+
+The inbox finding `py-lenmult-length-only` is already closed. Approved
+ingestion evaluates sequence multiplication and `len` as separate AST
+operations; the legacy synthetic length worker is unreachable from source
+envelopes. Products beyond the modeled allocation budget refuse loudly rather
+than returning a length CPython cannot produce.
+
+| Measurement | Result |
+|---|---|
+| Oversized witness | `len_repeat_oversize.py`: loud exit 3; CPython 3.9 raises `OverflowError` |
+| Source audit | no active `lowerLenRepeatPairs` ingestion definition or call |
+| Semantic change | none; audit confirmation only |
+
+DECIDED: close `py-lenmult-length-only` on this branch and retain the explicit
+allocation-budget refusal until memory outcomes are modeled.
+
 ## 2026-11-10-pyfoundation-10 — max/min recursion
 
 `max` and `min` now check the CPython builtin recursion unit after positional

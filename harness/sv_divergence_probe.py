@@ -73,7 +73,8 @@ change meaning, as §5.0a clause 3 asks:
     (the tools converged, or split differently) — a reason to revisit the
     refusal, reported, not fatal, since the row is retired.
 
-`sv_div_3_has_not_widened` needs `iverilog`/`vvp` and `yosys` on PATH;
+`sv_div_3_has_not_widened` needs `iverilog`/`vvp` on PATH and `SV_YOSYS`
+set to the pinned open-source Yosys executable's path;
 without them it reports COULD NOT VERIFY, which fails the probe like every
 unverified guard (the third close below). `sv_div_3_still_divergent` -- the
 alarm -- reads files only.
@@ -90,12 +91,9 @@ import tempfile
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 EXTERNAL_TIMEOUT = 600
 # PATH may contain a vendor wrapper (or a license-gated frontend) named
-# ``yosys``.  The probe is a measurement instrument, so default to the
-# pinned open-source executable and make an override explicit for other hosts.
-YOSYS = os.environ.get(
-    "SV_YOSYS",
-    "/scratch/thomas-ahle/tools/mamba/envs/mox/bin/yosys",
-)
+# ``yosys``. Select the pinned open-source executable explicitly, without a
+# machine-local fallback or an implicit PATH selection.
+YOSYS = os.environ.get("SV_YOSYS", "")
 
 # Pinned at DECLARED time; a change in either direction is a guard failure.
 #
@@ -484,6 +482,8 @@ def sv_div_3_has_not_widened():
     point; (4) the settle-theorem lowering still refuses both bodies. Not held
     = the split moved -- revisit the refusal (reported, not fatal: the row is
     retired)."""
+    if not YOSYS:
+        return None, "COULD NOT VERIFY: set SV_YOSYS to the pinned open-source Yosys executable"
     code = _lean_code(COMB2_EXAMPLE)
     if code is None:
         return None, "COULD NOT VERIFY: %s is not readable" % COMB2_EXAMPLE

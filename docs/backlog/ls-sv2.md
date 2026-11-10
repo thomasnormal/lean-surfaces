@@ -7235,7 +7235,7 @@ public master before attempting another core probe.  The inbox still requires
 the residual `Comb2Proc`, `CycleMachine`, signed `remainder`, and signed
 `division` repairs from item 378.
 
-**MEASURED:** `origin/fleet/vipng/sklansky-wip` remains at `7fbcb69ef`, and
+**MEASURED:** the historical owner branch remains at `7fbcb69ef`, and
 `origin/master` remains at the ls-sv2 publication `2cea454b0`; no owner repair
 has landed.  Therefore the previously measured target failures are still the
 latest evidence, and a fresh PicoRV32 load would only repeat a stale public

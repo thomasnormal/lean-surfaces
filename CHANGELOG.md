@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Removed private machine paths from published SV/RISC-V records. The SV
+  divergence probe now requires `SV_YOSYS` to select its pinned executable.
+
 - Added a retirement-safety bridge from E observations to the stateful RV32I
   model, conditional on an order-indexed loaded-core invariant. Completion
   and retirement progress remain explicit proof obligations.

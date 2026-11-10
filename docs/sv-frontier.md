@@ -96,7 +96,7 @@ is hoisted. Instance-free nodes use `run2`; instance-bearing nodes remain a
 named composition obligation until their cycle executor is wired.
 The general clean-room receipt is [`sem2/hierarchy_instance`](../Examples/system-verilog/sem2/hierarchy_instance/).
 
-The refreshed Carnot row for generated function calls is now covered too. The
+The refreshed consumer row for generated function calls is now covered too. The
 `sem2/function_generate_case` receipt accepts an automatic function with a
 local temporary and a statically safe qualified case even when the function
 body omits an explicit `begin`/`end` block. The inliner preserves the generated

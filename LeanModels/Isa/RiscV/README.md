@@ -31,7 +31,9 @@ The source pins used for this measurement are:
 | `lean-sail` Lake dependency | input tag `v4`, resolved commit `79b4d08505af29d88b3918f32d29840fae1fa191` |
 | RISC-V licence | BSD-2-Clause, upstream file `LICENCE` |
 
-The custom configuration was `/var/tmp/thomas-ahle/fleet2/work/rv32i.json`:
+Paths below use `$RV_SCOUT_ROOT` for the external measurement workspace;
+the measurements and source pins are unchanged. The custom configuration was
+`$RV_SCOUT_ROOT/rv32i.json`:
 `xlen = 32`, with only top-level `Zicsr` and `Zifencei` enabled; M, A, F, D,
 C, S, U, and all other extension families (including V) were disabled.  The
 generator was nevertheless invoked with `--all-modules`, so disabled extension
@@ -42,19 +44,19 @@ profile.
 ## Commands and measurements
 
 The CMake command below ran from the pinned upstream checkout
-`/var/tmp/thomas-ahle/fleet2/work/ls-sv2-sail-riscv`, using the pinned Sail
+`$RV_SCOUT_ROOT/ls-sv2-sail-riscv`, using the pinned Sail
 binary and the configuration above; it used downloaded GMP.  Sail commands
 ran from that checkout's `model` subdirectory, where `riscv.sail_project`
 lives.
 
 ```text
-cmake -S . -B /var/tmp/thomas-ahle/fleet2/work/ls-sv2-sail-riscv-build \
+cmake -S . -B "$RV_SCOUT_ROOT/ls-sv2-sail-riscv-build" \
   -DCMAKE_BUILD_TYPE=Release \
-  -DSAIL_BIN=/var/tmp/thomas-ahle/fleet2/work/sail-0.20.2/bin/sail/bin/sail \
+  -DSAIL_BIN="$RV_SCOUT_ROOT/sail-0.20.2/bin/sail/bin/sail" \
   -DSAIL_MODULES=--all-modules -DDOWNLOAD_GMP=ON
 
-/var/tmp/thomas-ahle/fleet2/work/sail-0.20.2/bin/sail/bin/sail \
-  --just-check --config /var/tmp/thomas-ahle/fleet2/work/rv32i.json \
+"$RV_SCOUT_ROOT/sail-0.20.2/bin/sail/bin/sail" \
+  --just-check --config "$RV_SCOUT_ROOT/rv32i.json" \
   --all-modules riscv.sail_project
 ```
 
@@ -64,10 +66,10 @@ was the `generated_lean` CMake rule expanded for `rv32i`; from `model`, its
 relevant command shape was:
 
 ```text
-/var/tmp/thomas-ahle/fleet2/work/sail-0.20.2/bin/sail/bin/sail \
-  --config /var/tmp/thomas-ahle/fleet2/work/rv32i.json \
+"$RV_SCOUT_ROOT/sail-0.20.2/bin/sail/bin/sail" \
+  --config "$RV_SCOUT_ROOT/rv32i.json" \
   --lean --memo-z3 --lean-output-dir \
-  /var/tmp/thomas-ahle/fleet2/work/r0-generated-rv32i-all \
+  "$RV_SCOUT_ROOT/r0-generated-rv32i-all" \
   --lean-force-output \
   --lean-non-beq-type instruction \
   --lean-non-beq-type ExecutionResult --lean-non-beq-type Step \
@@ -85,7 +87,7 @@ relevant command shape was:
 ```
 
 Generation succeeded in **823.955 s** (MEASURED), producing
-`/var/tmp/thomas-ahle/fleet2/work/r0-generated-rv32i-all/Lean_RV32I`:
+`$RV_SCOUT_ROOT/r0-generated-rv32i-all/Lean_RV32I`:
 
 * 165 `.lean` files;
 * 48,150,827 bytes (45.92 MiB) of Lean source;
@@ -105,7 +107,7 @@ count.
 The generated package was then tested as emitted:
 
 ```text
-cd /var/tmp/thomas-ahle/fleet2/work/r0-generated-rv32i-all/Lean_RV32I
+cd "$RV_SCOUT_ROOT/r0-generated-rv32i-all/Lean_RV32I"
 lake update
 lake build
 ```

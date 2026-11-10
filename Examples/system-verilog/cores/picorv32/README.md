@@ -43,8 +43,7 @@ memory cycle route does not yet admit generate members
 ```
 
 This packet therefore did not claim an R1 refinement theorem for PicoRV32.
-The historical memory wall was requested from the owner lane in
-`/var/tmp/thomas-ahle/fleet2/inbox/ls-sv.md`.
+The historical memory wall was requested through the owner lane's shared inbox.
 
 ## Re-probe after the generic memory route
 

@@ -19,4 +19,5 @@ remain at their existing boundaries.
 
 The fixture's Lean guard checks the retained marker, the concrete `N = 40`
 and `N = 8` expression values, and the memory-route traces.  Its Icarus rows
-match at both points; Xcelium is run through the refsim gate when available.
+match at both points; Xcelium uses the configured reference-simulator gate
+when available.

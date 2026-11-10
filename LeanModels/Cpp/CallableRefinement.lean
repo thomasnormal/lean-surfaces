@@ -324,4 +324,44 @@ theorem callableSingleParameterConvertedStartAgreement (fuel : Nat) (profile : T
   exact callableParameterExpressionAgreement fuel profile [parameter] [converted] callable.frame
     parameter.declaration 0 parameter converted sourceType parameter.type hidx rfl rfl hparam' hparam' hvalid hread
 
+
+/-- Whole-call agreement for a no-parameter callable returning a pure
+expression. Both APIs return the same integral result, including non-values. -/
+theorem callablePureReturnAgreement (fuel : Nat) (profile : TargetProfile) (function : CallableFunction)
+    (expression : TypedCallableExpression)
+    (hvalid : profile.valid = true) (hresult : (function.signature.result == .void) = false)
+    (hparams : function.parameters = []) (hbody : function.body = .return_ expression)
+    (fragment : CallablePureExpression profile fuel expression) :
+    ∃ result, evaluateCallable (fuel + 1) profile function [] = .ok result ∧
+      evaluateCallableObject (fuel + 1) profile function [] = .ok result := by
+  obtain ⟨frame, hempty, hstart⟩ := CallableObjectFrame.start_noParameters profile function hvalid hparams
+  let callable : CallableObjectFrame := {profile := profile, function := function, frame := frame.enterScope.frame}
+  have hclose : callable.frame.leaveFrame.result = .ok () :=
+    IntegralObjectFrame.empty_enterScope_leave profile frame hempty
+  obtain ⟨result, hvalue, hobject⟩ := fragment.agreement [] [] callable.frame
+  refine ⟨result, evaluateCallable_return_noParameters fuel profile function expression result
+    hvalid hresult hparams hbody hvalue, ?_⟩
+  exact evaluateCallableObject_return_noParameters fuel profile function callable expression result
+    hresult hstart rfl rfl hbody hobject hclose
+
+
+/-- Whole-call agreement for a no-parameter callable whose body is a block
+returning a pure expression. Both APIs return the same integral result, including non-values. -/
+theorem callablePureBlockReturnAgreement (fuel : Nat) (profile : TargetProfile) (function : CallableFunction)
+    (expression : TypedCallableExpression)
+    (hvalid : profile.valid = true) (hresult : (function.signature.result == .void) = false)
+    (hparams : function.parameters = []) (hbody : function.body = .block (.return_ expression))
+    (fragment : CallablePureExpression profile fuel expression) :
+    ∃ result, evaluateCallable (fuel + 2) profile function [] = .ok result ∧
+      evaluateCallableObject (fuel + 2) profile function [] = .ok result := by
+  obtain ⟨frame, hempty, hstart⟩ := CallableObjectFrame.start_noParameters profile function hvalid hparams
+  let callable : CallableObjectFrame := {profile := profile, function := function, frame := frame.enterScope.frame}
+  have hclose : callable.frame.leaveFrame.result = .ok () :=
+    IntegralObjectFrame.empty_enterScope_leave profile frame hempty
+  obtain ⟨result, hvalue, hobject⟩ := fragment.agreement [] [] callable.frame.enterScope.frame
+  refine ⟨result, evaluateCallable_blockReturn_noParameters fuel profile function expression result
+    hvalid hresult hparams hbody hvalue, ?_⟩
+  exact evaluateCallableObject_blockReturn_noParameters fuel profile function callable expression result
+    hresult hstart rfl rfl hbody hobject hclose
+
 end LeanModels.Cpp

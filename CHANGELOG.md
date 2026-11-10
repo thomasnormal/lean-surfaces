@@ -126,6 +126,9 @@
 - Extended single-parameter agreement to successful cross-format argument
   conversions and proved converted values have valid destination formats.
 
+- Proved whole-call evaluator agreement for no-parameter callables returning
+  the supported pure-expression fragment, including one enclosing block.
+
 - Extended the value/object evaluator agreement battery with negative signed
   subtraction and native differential coverage.
 

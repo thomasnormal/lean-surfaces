@@ -273,6 +273,21 @@ theorem start_singleParameter_read (profile : TargetProfile) (function : Callabl
   exact start_singleParameter_read_of_convert profile function argument argument parameter callable
     hparams (convertArgument_same profile parameter argument kind htype hformat hvalid) hstart
 
+
+/-- Starting a valid no-parameter callable creates an entered empty frame. -/
+theorem start_noParameters (profile : TargetProfile) (function : CallableFunction)
+    (hvalid : profile.valid = true) (hparams : function.parameters = []) :
+    ∃ frame, IntegralObjectFrame.empty profile = .ok frame ∧
+      start profile function [] = .ok {profile := profile, function := function, frame := frame.enterScope.frame} := by
+  let store : IntegralObjectStore := {profile := profile, objects := ObjectStore.empty, values := []}
+  let frame : IntegralObjectFrame := {store := store, scopes := [], staticBindings := [], threadBindings := []}
+  have hempty : IntegralObjectFrame.empty profile = .ok frame := by
+    simp [IntegralObjectFrame.empty, IntegralObjectStore.empty, hvalid, frame, store]
+  have hent : frame.enterScope.result = .ok () := rfl
+  refine ⟨frame, hempty, ?_⟩
+  simp [start, hvalid, hparams, convertArguments, hempty, hent, initializeParameters,
+    Bind.bind, Except.bind, Pure.pure, Except.pure, success]
+
 end CallableObjectFrame
 
 end LeanModels.Cpp

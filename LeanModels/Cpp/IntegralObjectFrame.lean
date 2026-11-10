@@ -971,6 +971,27 @@ theorem declareParameter_read (frame : IntegralObjectFrame) (declaration : Front
       rw [hframe]
       simp [evaluate, hlookup', hborrow, hread, success]
 
+
+/-- Entering and leaving an empty fresh frame succeeds. -/
+theorem empty_enterScope_leave (profile : TargetProfile) (frame : IntegralObjectFrame)
+    (h : empty profile = .ok frame) :
+    frame.enterScope.frame.leaveFrame.result = .ok () := by
+  cases hv : profile.valid with
+  | false => simp [empty, IntegralObjectStore.empty, hv] at h
+  | true =>
+    let store : IntegralObjectStore := {profile := profile, objects := ObjectStore.empty, values := []}
+    have hf : frame = {store := store, scopes := [], staticBindings := [], threadBindings := []} := by
+      simpa [empty, IntegralObjectStore.empty, hv, store] using h.symm
+    subst frame
+    rfl
+
+
+/-- An empty nested scope can be exited without changing the frame. -/
+theorem enterScope_exitScope (frame : IntegralObjectFrame) :
+    frame.enterScope.frame.exitScope = {frame := frame, result := .ok ()} := by
+  cases frame
+  rfl
+
 end IntegralObjectFrame
 
 end LeanModels.Cpp

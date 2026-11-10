@@ -129,6 +129,15 @@ and frames and proves both input states are preserved. A test proves this for
 cast chains of arbitrary depth. Parameter reads, other expression forms and
 whole-call initialization remain outside this automatic fragment.
 
+`callablePureReturnAgreement` lifts that expression result to both public call
+APIs for a valid no-parameter callable whose body directly returns the pure
+expression. `callablePureBlockReturnAgreement` additionally covers one
+enclosing compound block, including its scope exit. Both prove the same
+`IntegralResult`, including non-value results; they do not prove the result
+correct against C++ or cover parameters, calls, other statements or arbitrary
+admitted bodies. The cast-chain test uses constructed IR; its native row
+compiles corresponding C++ functions independently.
+
 `callableBooleanIdentityAgreement` quantifies over both Boolean inputs to one
 identity callable and proves that each API returns the expected Boolean. It is
 a complete input-domain theorem for that callable, not a relation for arbitrary

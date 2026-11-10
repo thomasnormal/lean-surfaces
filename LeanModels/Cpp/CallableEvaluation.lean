@@ -650,4 +650,28 @@ def evaluateCallable (fuel : Nat) (profile : TargetProfile) (function : Callable
   | .undefined reason => pure (.undefined reason)
   | .unsupported reason => pure (.unsupported reason)
 
+
+/-- A no-parameter return delegates to the value expression evaluator. -/
+theorem evaluateCallable_return_noParameters (fuel : Nat) (profile : TargetProfile) (function : CallableFunction)
+    (expression : TypedCallableExpression) (result : IntegralResult IntegralValue)
+    (hvalid : profile.valid = true) (hresult : (function.signature.result == .void) = false)
+    (hparams : function.parameters = []) (hbody : function.body = .return_ expression)
+    (hexpr : evaluateCallableExpression fuel profile [] [] expression = .ok (result, [])) :
+    evaluateCallable (fuel + 1) profile function [] = .ok result := by
+  simp only [evaluateCallableExpression] at hexpr
+  simp [evaluateCallable, hvalid, hresult, hparams, hbody, convertArguments,
+    evaluateCallableStatement, hexpr, Except.map, Except.bind, Bind.bind]
+
+
+/-- A no-parameter block return delegates to the value expression evaluator. -/
+theorem evaluateCallable_blockReturn_noParameters (fuel : Nat) (profile : TargetProfile) (function : CallableFunction)
+    (expression : TypedCallableExpression) (result : IntegralResult IntegralValue)
+    (hvalid : profile.valid = true) (hresult : (function.signature.result == .void) = false)
+    (hparams : function.parameters = []) (hbody : function.body = .block (.return_ expression))
+    (hexpr : evaluateCallableExpression fuel profile [] [] expression = .ok (result, [])) :
+    evaluateCallable (fuel + 2) profile function [] = .ok result := by
+  simp only [evaluateCallableExpression] at hexpr
+  simp [evaluateCallable, hvalid, hresult, hparams, hbody, convertArguments,
+    evaluateCallableStatement, hexpr, Except.map, Except.bind, Bind.bind]
+
 end LeanModels.Cpp

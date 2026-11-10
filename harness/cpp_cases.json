@@ -20276,5 +20276,17 @@
     "cpp_expression": "callable_witness()",
     "expect": "match",
     "rung": 3
+  },
+  {
+    "id": "statement.callable-pure-whole-call-agreement",
+    "kind": "statement",
+    "corpus": "callable refinement seam",
+    "lean_module": "LeanModels.Cpp.CallableRefinementTests",
+    "lean_namespace": "LeanModels.Cpp.CallableRefinementTests",
+    "lean_expression": "callablePureWholeCallWitness",
+    "cpp_source": "int cast0() { return 7; } int cast1() { return (int)7; } int cast4() { return (int)(int)(int)(int)7; } int cast8() { return (int)(int)(int)(int)(int)(int)(int)(int)7; } bool callable_witness() { return cast0() == 7 && cast1() == 7 && cast4() == 7 && cast8() == 7; }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 3
   }
 ]

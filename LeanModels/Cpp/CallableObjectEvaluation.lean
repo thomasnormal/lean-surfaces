@@ -701,6 +701,44 @@ theorem void_fallthrough_eq_return (fuel : Nat) (callable : CallableObjectFrame)
   simp only [evaluateCallableObjectResultInFrame, evalStatement, success, closeCallable, h]
   rfl
 
+/-- A return publishes the expression result when the frame closes cleanly. -/
+theorem evaluateCallableObject_return_noParameters (fuel : Nat) (profile : TargetProfile) (function : CallableFunction)
+    (callable : CallableObjectFrame) (expression : TypedCallableExpression)
+    (result : IntegralResult IntegralValue)
+    (hresult : (function.signature.result == .void) = false)
+    (hstart : CallableObjectFrame.start profile function [] = .ok callable)
+    (hfunction : callable.function = function) (hprofile : callable.profile = profile)
+    (hbody : function.body = .return_ expression)
+    (hexpr : evaluateCallableObjectExpression fuel profile callable.frame expression =
+      {frame := callable.frame, result := .ok result})
+    (hclose : callable.frame.leaveFrame.result = .ok ()) :
+    evaluateCallableObject (fuel + 1) profile function [] = .ok result := by
+  simp only [evaluateCallableObjectExpression] at hexpr
+  cases result <;>
+    simp [evaluateCallableObject, hresult, hstart, evaluateCallableObjectInFrame,
+      evaluateCallableObjectResultInFrame, hfunction, hprofile, hbody, evalStatement, hexpr,
+      closeCallable, closeResult, hclose, liftIntegralResult, integralOnly, success,
+      Except.mapError, Except.bind, Bind.bind]
+/-- A block return leaves its empty nested scope and closes the callable frame. -/
+theorem evaluateCallableObject_blockReturn_noParameters (fuel : Nat) (profile : TargetProfile) (function : CallableFunction)
+    (callable : CallableObjectFrame) (expression : TypedCallableExpression)
+    (result : IntegralResult IntegralValue)
+    (hresult : (function.signature.result == .void) = false)
+    (hstart : CallableObjectFrame.start profile function [] = .ok callable)
+    (hfunction : callable.function = function) (hprofile : callable.profile = profile)
+    (hbody : function.body = .block (.return_ expression))
+    (hexpr : evaluateCallableObjectExpression fuel profile callable.frame.enterScope.frame expression =
+      {frame := callable.frame.enterScope.frame, result := .ok result})
+    (hclose : callable.frame.leaveFrame.result = .ok ()) :
+    evaluateCallableObject (fuel + 2) profile function [] = .ok result := by
+  simp only [evaluateCallableObjectExpression] at hexpr
+  have hent : callable.frame.enterScope.result = .ok () := rfl
+  have hexit := IntegralObjectFrame.enterScope_exitScope callable.frame
+  cases result <;>
+    simp [evaluateCallableObject, hresult, hstart, evaluateCallableObjectInFrame,
+      evaluateCallableObjectResultInFrame, hfunction, hprofile, hbody, evalStatement, hexpr,
+      hent, hexit, closeCallable, closeResult, hclose, liftIntegralResult, integralOnly, success,
+      Except.mapError, Except.bind, Bind.bind]
 end CallableObjectEvaluation
 
 end LeanModels.Cpp

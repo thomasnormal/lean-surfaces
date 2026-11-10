@@ -240,7 +240,30 @@
                           "resolved_width": 32
                         }
                       },
-                      "signed": true
+                      "signed": true,
+                      "lifetime": "automatic",
+                      "lexical_path": "symbolic_for_signal_bound_refuse.i",
+                      "hierarchical_path": "symbolic_for_signal_bound_refuse.i",
+                      "decl_type": {
+                        "kind": "PackedType",
+                        "packed": [
+                          {
+                            "msb": {
+                              "kind": "Int",
+                              "span": null,
+                              "value": 31,
+                              "resolved_width": null
+                            },
+                            "lsb": {
+                              "kind": "Int",
+                              "span": null,
+                              "value": 0,
+                              "resolved_width": null
+                            }
+                          }
+                        ],
+                        "resolved": 32
+                      }
                     },
                     {
                       "kind": "Unsupported",
@@ -253,7 +276,13 @@
                       "sv_kind": "ForLoopStatement",
                       "text": "for (int i = 0; i < limit; i++)\n      y[i] = a[i];"
                     }
-                  ]
+                  ],
+                  "scope": {
+                    "name": "",
+                    "lexical_path": "symbolic_for_signal_bound_refuse",
+                    "hierarchical_path": "symbolic_for_signal_bound_refuse",
+                    "default_lifetime": "static"
+                  }
                 }
               ]
             }

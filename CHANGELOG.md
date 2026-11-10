@@ -16,6 +16,9 @@
   model, conditional on an order-indexed loaded-core invariant. Completion
   and retirement progress remain explicit proof obligations.
 
+- Restored `py_prove` automation for straight-line integer multiplication
+  after interpreter call-depth and operator changes.
+
 - Fixed Python notebook magics to use the pinned CPython 3.9 frontend and
   differential oracle independently of the notebook kernel's Python version.
 

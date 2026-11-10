@@ -17,6 +17,25 @@ before built. `harness/refusal_census.py` is the scoreboard and the acceptance
 battery in one — it exits nonzero on drift, so a landing that moves the tier
 must move the census in the same commit.
 
+## 2026-11-10-pyfoundation-23 — pin the leanpy quickstart admission
+
+The public quickstart's Python 3.9 pin is now enforced at the runner boundary.
+`tools/leanpy` refuses before extraction when the pinned frontend or default
+oracle is missing or the executable reports another implementation/version;
+`--compare` also classifies runner pre-execution failures as loud refusals.
+The CI quickstart installs CPython 3.9 and the README names `python3.9`.
+
+| Measurement | Result |
+|---|---|
+| Pinning regressions | 15 `tools/test_leanpy.py` tests passed on the backup patch |
+| Missing frontend/oracle | Python 3.12 with an empty `PATH`: exit 3, one refusal line, no cache |
+| Real compare | `gen_script.py --compare` MATCHES CPython 3.9.25, exit 0 |
+| Semantic change | runner/CLI boundary, CI, README, and tests |
+
+DECIDED: require CPython 3.9 for the frontend and default oracle; never fall
+back to an unpinned Python executable or count a frontend refusal as a
+comparison disagreement.
+
 ## 2026-11-10-pyfoundation-11 — revalidate recursion-limit audit
 
 The inbox finding `py-no-recursion-limit` is already closed by the active

@@ -10,6 +10,9 @@
   the captured source and literal hashes and the recorded ABI and call binding.
   The harness relies on its caller's cgroup instead of imposing an address-space
   limit.
+- Require the pinned Python 3.9 frontend and default oracle for `leanpy`, and
+  report rejected script envelopes as refusals rather than comparisons.
+
 - Revalidated removal of exact-shape ingestion rewrites; source AST statements
   remain structured, and unsupported callable, generator, active-exception,
   and allocation boundaries stay loud.

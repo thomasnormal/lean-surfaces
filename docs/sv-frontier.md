@@ -462,3 +462,20 @@ data-driven event controls before `edgePass2`; these shapes cannot be assigned
 one rising edge per stimulus entry. `clk_two` remains a `Clock:multiple`
 refusal, while `clk_two_instants` uses the exact `runMulti` instant route, and
 `clk_implicit` pins the `Clock:implicit` refusal.
+
+### E-core-0 differential transport
+
+The first E migration harness packet is now importable beside `Ingest2`:
+`harness/sv/runner_e0.lean` loads the same sv-0.2 envelope and case stimulus,
+constructs `Kernel.Elab.ofDesign2`, and runs the array-backed E-core-0 executor.
+The `diff_test2.py --backend e0` switch keeps the simulator comparison and
+source-shaped refusals unchanged while selecting E instead of the labelled
+run2 test executor. The prior import-clash report could not be reproduced on
+the current split: `ReadWin.overlaps` is defined once in `CombEBase`, and a
+runner importing both routes compiles and executes.
+
+The first E rows are `xnor_bin`, `xnor_bin_n1`, and `xnor_bin_n8`; each passed
+against Icarus with 7, 5, and 5 cycles respectively. This is an E transport
+smoke packet, not the 883-row migration claim: rows outside E-core-0 remain
+loud or continue through the labelled run2 backend until their E route and
+refinement evidence land.

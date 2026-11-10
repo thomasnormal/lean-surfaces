@@ -406,6 +406,21 @@ class EmptyFunctionCalls(unittest.TestCase):
         self.assertFalse(any(node.get("sv_kind") == "CallExpression"
                              for node in nodes(design)))
 
+    def test_symbolic_nested_block_local_case_function_is_inlined(self):
+        design = self.symbolic(
+            "module top(input logic [3:0] a, output logic [3:0] y); "
+            "function automatic logic [3:0] step(input logic [3:0] x); "
+            "begin logic [3:0] t; unique case (x) 4'h0: t = 4'h3; "
+            "4'h1: t = 4'h4; default: t = 4'hc; endcase return t; end "
+            "endfunction assign y = step(a); endmodule")
+        values = [node for node in nodes(design)
+                  if node.get("user_function_inline")]
+        self.assertEqual(len(values), 1)
+        self.assertEqual(values[0]["kind"], "Ternary")
+        self.assertEqual(values[0]["user_function_case_check"], "unique")
+        self.assertFalse(any(node.get("sv_kind") == "CallExpression"
+                             for node in nodes(design)))
+
     def test_symbolic_local_case_function_without_begin_is_inlined_in_generate(self):
         design = self.symbolic(
             "module top(input logic [19:0] a, output logic [19:0] y); "

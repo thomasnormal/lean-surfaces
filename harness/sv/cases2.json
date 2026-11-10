@@ -324,6 +324,27 @@
       "measured": "2026-11-09: an automatic local-temporary unique case without an explicit begin/end block is inlined inside a generated assignment; the generated family remains source-shaped and matches Icarus and Xcelium."
     },
     {
+      "name": "function_generated_large_case",
+      "example": "sem2/function_generated_large_case",
+      "top": "function_generated_large_case",
+      "signals": [
+        "a",
+        "y"
+      ],
+      "stimulus": [
+        {
+          "a": "00000000000000000000000000000000000000000000000000000000000000000"
+        },
+        {
+          "a": "00000000000000000000000000000000000000000000000000000000000000001"
+        },
+        {
+          "a": "11111111111111111111111111111111111111111111111111111111111111111"
+        }
+      ],
+      "measured": "2026-11-10: an explicit begin/end body around a local temporary and a complete distinct-label unique case is unwrapped and inlined in each generated part-select call; the source-shaped 13-slice family matches Icarus."
+    },
+    {
       "name": "function_case_return_name",
       "example": "seq_function_case_return_name",
       "top": "function_case_return_name",

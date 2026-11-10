@@ -11941,6 +11941,14 @@ def _sym_case_function_shape(subroutine):
     """
     try:
         body = getattr(subroutine, "body", None)
+        # Slang represents an explicit ``begin/end`` function body as a
+        # BlockStatement whose StatementList is one level below the body.
+        # The equivalent body without an explicit block is exposed directly
+        # as StatementList. Both are the same source-shaped straight-line
+        # function form; unwrap only this block shell so local declarations
+        # retain their ordinary case-function checks below.
+        if type(body).__name__ == "BlockStatement":
+            body = getattr(body, "body", None)
         if type(body).__name__ != "StatementList":
             return None
         statements = list(getattr(body, "list", ()))

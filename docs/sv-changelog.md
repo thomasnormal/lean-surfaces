@@ -1,5 +1,14 @@
 # [unreleased] — 2026-11-04 (an Sv landing builds the comb chain above it)
 
+## Generated function case with an explicit body block — 2026-11-10
+
+The symbolic extractor now unwraps an explicit `begin/end` shell around a
+function's local declaration and qualified case, so a complete distinct-label
+`unique case` can be inlined in generated part-select assignments. The
+source-shaped `function_generated_large_case` receipt proves the 13-slice
+family and its three-cycle Icarus differential row; unsafe qualified cases and
+effectful function bodies remain loud.
+
 ## Default §4.7 route guard — 2026-11-09
 
 The `Schedule:preemptive` guard now runs at the `runner`/`runner2` route

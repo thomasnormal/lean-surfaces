@@ -104,6 +104,14 @@ assignment family and its case-equality ternary expression; the row matches
 Icarus and Xcelium. Calls with effects, recursion, static storage, or unsafe
 qualified claims remain loud.
 
+The next Carnot function wall, `sem2/function_generated_large_case`, uses the
+same source shape with the local declaration inside an explicit `begin/end`
+body, a complete 32-arm `unique case`, and thirteen generated part-select
+calls. The extractor unwraps only that block shell and keeps the qualified-case
+proof check (distinct literal labels plus a default); the Lean receipt and the
+three-cycle Icarus row now agree. Calls with effects, recursion, static
+storage, or unsafe qualified claims remain loud.
+
 The memory route also admits the exact parametric x/z conversion marker on a
 retained cell driver. In `xz_conversion_memory`, the source `'bx` remains an
 unknown site and a 16-bit instantiated cell reads all x; the ordinary flat

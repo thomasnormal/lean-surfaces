@@ -1051,14 +1051,18 @@ theorem ceCallClosure_succ (ih : CE fuel) : CECallClosure (fuel + 1) := by
   refine .ite .unsupported (.ite .unsupported (.ite (.exn h _) (.ite ?_ ?_)))
   · exact .of_seed (fun tr => by simp [World.withClock])
       (by simp only [World.withClock_self h])
-  · refine ClockErasedF.toWorld
-      (.bind (ihSs m ⟨w, mkCallEnv params args ++ cap⟩ body.toList h)
-        fun s flow hs => ?_)
-    cases flow with
-    | ret v => exact .ok hs _
-    | next => exact .ok hs _
-    | brk => exact .unsupported
-    | cont => exact .unsupported
+  · by_cases hd : pythonRecursionFull w.callDepth
+    · simp [hd, World.withClock]; exact .exn h _
+    · simp [hd, World.withClock]
+      refine ClockErasedW.leaveCallDepth (ClockErasedF.toWorld
+        (.bind (ihSs m ⟨{ w with callDepth := w.callDepth + 1 },
+          mkCallEnv params args ++ cap⟩ body.toList h)
+          fun s flow hs => ?_))
+      cases flow with
+      | ret v => exact .ok hs _
+      | next => exact .ok hs _
+      | brk => exact .unsupported
+      | cont => exact .unsupported
 
 theorem ceStepIter_succ (ih : CE fuel) : CEStepIter (fuel + 1) := by
   obtain ⟨ihE, ihEs, ihB, ihC, ihS, ihSs, ihW, ihCall, ihFor, ihItems, ihForL,

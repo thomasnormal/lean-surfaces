@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Revalidated the dict-comprehension specification; its previously reported
+  `bad_pair` guards now build successfully.
+
 - Revalidated the bench-statistics proof target; its full 620-job target now
   builds without the reported unsolved goals.
 

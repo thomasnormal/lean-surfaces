@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Respect the CPython recursion limit for `abs` calls and their argument errors.
+
 - Respect the CPython recursion limit for `len` calls and their argument errors.
 
 - Count admitted exception construction and failing assertions against the

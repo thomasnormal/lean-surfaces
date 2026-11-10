@@ -243,7 +243,10 @@ Python integer through a raising C-index conversion refuse outside this range
 until the exact protocol messages are modeled. -/
 def pySsizeMax : Int := 9223372036854775807
 def pySsizeMin : Int := -9223372036854775808
-def pySsizeFits (i : Int) : Bool := pySsizeMin ≤ i && i ≤ pySsizeMax
+def pySsizeFits (i : Int) : Bool := decide (pySsizeMin ≤ i ∧ i ≤ pySsizeMax)
+theorem pySsizeFits_iff (i : Int) :
+    pySsizeFits i = true ↔ pySsizeMin ≤ i ∧ i ≤ pySsizeMax := by
+  simp [pySsizeFits]
 def pySsizeMaxNat : Nat := 9223372036854775807
 
 /-- CPython 3.9's raising `PyLong_AsSsize_t` conversion (the list Clinic

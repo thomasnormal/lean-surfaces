@@ -1712,10 +1712,18 @@ theorem heapInsert_swapAt (hslot : Heap.get? h pa = some o₀) (htwin : PayloadT
     | some obj =>
         cases obj with
         | list xs =>
-            simp only [heapInsert, Heap.get?_swapAt_ne hba, hget]
-            rw [Heap.update_swapAt_ne hba]
-            cases Heap.update h b (Obj.list ((xs.toList.take (if i < 0 then i + xs.size else i).toNat
-              ++ v :: xs.toList.drop (if i < 0 then i + xs.size else i).toNat).toArray)) <;> rfl
+            by_cases hfit : pySsizeMin ≤ i ∧ i ≤ pySsizeMax
+            · have hfitb : pySsizeFits i = true := (pySsizeFits_iff i).mpr hfit
+              simp only [heapInsert, Heap.get?_swapAt_ne hba, hget,
+                pySsizeRaising, hfitb, if_pos]
+              rw [Heap.update_swapAt_ne hba]
+              cases Heap.update h b (Obj.list ((xs.toList.take (if i < 0 then i + xs.size else i).toNat
+                ++ v :: xs.toList.drop (if i < 0 then i + xs.size else i).toNat).toArray)) <;> rfl
+            · have hfitb : ¬ pySsizeFits i = true := by
+                intro hb
+                exact hfit ((pySsizeFits_iff i).mp hb)
+              simp [heapInsert, Heap.get?_swapAt_ne hba, hget,
+                pySsizeRaising, hfitb, Res.mapOk]
         | _ => simp only [heapInsert, Heap.get?_swapAt_ne hba, hget] <;> rfl
 
 /-- `o.attr = v` is blind up to the swap (only an INSTANCE receiver
@@ -2402,15 +2410,26 @@ theorem heapPop_swapAt (hslot : Heap.get? h pa = some o₀) (htwin : PayloadTwin
     | some obj =>
         cases obj with
         | list xs =>
-            by_cases hempty : xs.isEmpty
-            · simp only [heapPop, Heap.get?_swapAt_ne hba, hget, hempty,
-                Bool.true_eq] <;> rfl
-            · cases hni : normIndex (i.getD (-1)) xs.size with
-              | none => simp only [heapPop, Heap.get?_swapAt_ne hba, hget, hempty, hni]; rfl
-              | some n =>
-                  simp only [heapPop, Heap.get?_swapAt_ne hba, hget, hempty, hni]
-                  rw [Heap.update_swapAt_ne hba]
-                  cases Heap.update h b (Obj.list ((xs.toList.eraseIdx n).toArray)) <;> rfl
+            by_cases hfit : pySsizeMin ≤ i.getD (-1) ∧ i.getD (-1) ≤ pySsizeMax
+            · have hfitb : pySsizeFits (i.getD (-1)) = true :=
+                (pySsizeFits_iff _).mpr hfit
+              by_cases hempty : xs.isEmpty
+              · simp only [heapPop, Heap.get?_swapAt_ne hba, hget,
+                  pySsizeRaising, hfitb, if_pos, hempty,
+                  Bool.true_eq] <;> rfl
+              · cases hni : normIndex (i.getD (-1)) xs.size with
+                | none => simp only [heapPop, Heap.get?_swapAt_ne hba, hget,
+                    pySsizeRaising, hfitb, if_pos, hempty, hni]; rfl
+                | some n =>
+                    simp only [heapPop, Heap.get?_swapAt_ne hba, hget,
+                      pySsizeRaising, hfitb, if_pos, hempty, hni]
+                    rw [Heap.update_swapAt_ne hba]
+                    cases Heap.update h b (Obj.list ((xs.toList.eraseIdx n).toArray)) <;> rfl
+            · have hfitb : ¬ pySsizeFits (i.getD (-1)) = true := by
+                intro hb
+                exact hfit ((pySsizeFits_iff _).mp hb)
+              simp [heapPop, Heap.get?_swapAt_ne hba, hget,
+                pySsizeRaising, hfitb, Res.mapOk]
         | _ => simp only [heapPop, Heap.get?_swapAt_ne hba, hget] <;> rfl
 
 /-- `o[k] = v` is blind up to the swap — the widest of the writers (dict
@@ -2446,12 +2465,21 @@ theorem heapStore_swapAt (hslot : Heap.get? h pa = some o₀) (htwin : PayloadTw
                   RVal.typeNameH_swapAt hslot htwin]
                 rfl
             | some j =>
-                cases hni : normIndex j xs.size with
-                | none => simp only [heapStore, Heap.get?_swapAt_ne hba, hget, hai, hni]; rfl
-                | some n =>
-                    simp only [heapStore, Heap.get?_swapAt_ne hba, hget, hai, hni]
-                    rw [Heap.update_swapAt_ne hba]
-                    cases Heap.update h b (Obj.list ((xs.toList.set n v).toArray)) <;> rfl
+                by_cases hfit : pySsizeMin ≤ j ∧ j ≤ pySsizeMax
+                · have hfitb : pySsizeFits j = true := (pySsizeFits_iff j).mpr hfit
+                  cases hni : normIndex j xs.size with
+                  | none => simp only [heapStore, Heap.get?_swapAt_ne hba, hget, hai,
+                      normIndexRaising, pySsizeIndex, hfitb, if_pos, hni]; rfl
+                  | some n =>
+                      simp only [heapStore, Heap.get?_swapAt_ne hba, hget, hai,
+                        normIndexRaising, pySsizeIndex, hfitb, if_pos, hni]
+                      rw [Heap.update_swapAt_ne hba]
+                      cases Heap.update h b (Obj.list ((xs.toList.set n v).toArray)) <;> rfl
+                · have hfitb : ¬ pySsizeFits j = true := by
+                    intro hb
+                    exact hfit ((pySsizeFits_iff j).mp hb)
+                  simp [heapStore, Heap.get?_swapAt_ne hba, hget, hai,
+                    normIndexRaising, pySsizeIndex, hfitb, Res.mapOk]
         | _ => simp only [heapStore, Heap.get?_swapAt_ne hba, hget] <;> rfl
 
 /-! ### Slot preservation across the writers
@@ -2515,15 +2543,21 @@ theorem heapInsert_slot (hslot : Heap.get? h pa = some o₀) (htwin : PayloadTwi
       cases obj with
       | list xs =>
           have hne : pa ≠ b := Heap.ne_slot_of_get? hslot hget (by simp)
-          simp [heapInsert, hget] at hw
-          cases hu : Heap.update h b (Obj.list ((xs.toList.take
-            (if i < 0 then i + xs.size else i).toNat
-              ++ v :: xs.toList.drop (if i < 0 then i + xs.size else i).toNat).toArray)) with
-          | none => simp [hu] at hw
-          | some h₁ =>
-              simp only [hu, Res.ok.injEq] at hw
-              subst hw
-              exact (Heap.get?_update_ne hu hne).trans hslot
+          by_cases hfit : pySsizeMin ≤ i ∧ i ≤ pySsizeMax
+          · have hfitb : pySsizeFits i = true := (pySsizeFits_iff i).mpr hfit
+            simp [heapInsert, hget, pySsizeRaising, hfitb] at hw
+            cases hu : Heap.update h b (Obj.list ((xs.toList.take
+              (if i < 0 then i + xs.size else i).toNat
+                ++ v :: xs.toList.drop (if i < 0 then i + xs.size else i).toNat).toArray)) with
+            | none => simp [hu] at hw
+            | some h₁ =>
+                simp only [hu, Res.ok.injEq] at hw
+                subst hw
+                exact (Heap.get?_update_ne hu hne).trans hslot
+          · have hfitb : ¬ pySsizeFits i = true := by
+              intro hb
+              exact hfit ((pySsizeFits_iff i).mp hb)
+            simp [heapInsert, hget, pySsizeRaising, hfitb] at hw
       | _ => simp [heapInsert, hget] at hw
 
 /-- `o.attr = v` pins the slot: the only deciding arm writes at an
@@ -2582,18 +2616,22 @@ theorem heapPop_slot (hslot : Heap.get? h pa = some o₀) (htwin : PayloadTwin o
       cases obj with
       | list xs =>
           have hne : pa ≠ b := Heap.ne_slot_of_get? hslot hget (by simp)
-          by_cases hempty : xs.isEmpty
-          · simp [heapPop, hget, hempty] at hw
-          · cases hni : normIndex (i.getD (-1)) xs.size with
-            | none => simp [heapPop, hget, hempty, hni] at hw
-            | some n =>
-                simp [heapPop, hget, hempty, hni] at hw
-                cases hu : Heap.update h b (Obj.list ((xs.toList.eraseIdx n).toArray)) with
-                | none => simp [hu] at hw
-                | some h₁ =>
-                    simp only [hu, Res.ok.injEq] at hw
-                    subst hw
-                    exact (Heap.get?_update_ne hu hne).trans hslot
+          by_cases hfit : pySsizeMin ≤ i.getD (-1) ∧ i.getD (-1) ≤ pySsizeMax
+          · by_cases hempty : xs.isEmpty
+            · simp [heapPop, hget, pySsizeRaising, pySsizeFits, hfit, hempty] at hw
+            · cases hni : normIndex (i.getD (-1)) xs.size with
+              | none => simp [heapPop, hget, pySsizeRaising, pySsizeFits, hfit,
+                  hempty, hni] at hw
+              | some n =>
+                  simp [heapPop, hget, pySsizeRaising, pySsizeFits, hfit,
+                    hempty, hni] at hw
+                  cases hu : Heap.update h b (Obj.list ((xs.toList.eraseIdx n).toArray)) with
+                  | none => simp [hu] at hw
+                  | some h₁ =>
+                      simp only [hu, Res.ok.injEq] at hw
+                      subst hw
+                      exact (Heap.get?_update_ne hu hne).trans hslot
+          · simp [heapPop, hget, pySsizeRaising, pySsizeFits, hfit] at hw
       | _ => simp [heapPop, hget] at hw
 
 /-- `o[k] = v` pins the slot: the dict and list arms are the only ones
@@ -2629,16 +2667,21 @@ theorem heapStore_slot (hslot : Heap.get? h pa = some o₀) (htwin : PayloadTwin
           cases hai : asInt k with
           | none => simp [heapStore, hget, hai] at hw
           | some j =>
-              cases hni : normIndex j xs.size with
-              | none => simp [heapStore, hget, hai, hni] at hw
-              | some n =>
-                  simp [heapStore, hget, hai, hni] at hw
-                  cases hu : Heap.update h b (Obj.list ((xs.toList.set n v).toArray)) with
-                  | none => simp [hu] at hw
-                  | some h₁ =>
-                      simp only [hu, Res.ok.injEq] at hw
-                      subst hw
-                      exact (Heap.get?_update_ne hu hne).trans hslot
+              by_cases hfit : pySsizeMin ≤ j ∧ j ≤ pySsizeMax
+              · cases hni : normIndex j xs.size with
+                | none => simp [heapStore, hget, hai, normIndexRaising,
+                    pySsizeIndex, pySsizeFits, hfit, hni] at hw
+                | some n =>
+                    simp [heapStore, hget, hai, normIndexRaising,
+                      pySsizeIndex, pySsizeFits, hfit, hni] at hw
+                    cases hu : Heap.update h b (Obj.list ((xs.toList.set n v).toArray)) with
+                    | none => simp [hu] at hw
+                    | some h₁ =>
+                        simp only [hu, Res.ok.injEq] at hw
+                        subst hw
+                        exact (Heap.get?_update_ne hu hne).trans hslot
+              · simp [heapStore, hget, hai, normIndexRaising,
+                  pySsizeIndex, pySsizeFits, hfit] at hw
       | _ => simp [heapStore, hget] at hw
 
 /-! ### The last three equations

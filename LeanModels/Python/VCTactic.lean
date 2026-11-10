@@ -302,10 +302,12 @@ theorem strLength_eq_toList (s : String) : s.length = s.toList.length :=
 condition is stated over `i`, so `captureDischarge`'s `omega` half proves
 it from a loop invariant exactly as it does for `arrVal_indexVal`. -/
 theorem strIndex_ok (s : String) (i : Int) (h0 : 0 ≤ i)
-    (hlt : i < (s.length : Int)) :
+    (hlt : i < (s.length : Int)) (hfit : pySsizeFits i = true) :
     indexVal (.str s) (.int i)
       = .ok (.str (String.singleton (s.toList.getD i.toNat ' '))) := by
-  simp only [indexVal, asInt, normIndex_of_nonneg i s.length h0 hlt]
+  have hfit' : pySsizeMin ≤ i ∧ i ≤ pySsizeMax := (pySsizeFits_iff i).mp hfit
+  simp [indexVal, asInt, normIndexRaising, pySsizeIndex, pySsizeFits, hfit,
+    hfit', normIndex_of_nonneg i s.length h0 hlt]
 
 /-- `strFindAux` for a ONE-character needle is list membership — the whole
 of the membership family, because the guards `gen_moves` writes

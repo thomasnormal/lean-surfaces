@@ -71875,6 +71875,24 @@
       "measured": "2026-11-10: an always_ff NBA to a runtime packed bit-select retains Lhs2.index; known in-range indices update one bit, x/z and out-of-range indices are no-ops, and Icarus 13.0 and Xcelium 24.03-s004 agree. E-core-1's static-window boundary remains pinned in the fixture proof."
     },
     {
+      "name": "casez_casex_always_ff_step11",
+      "example": "sem2/casez_casex_always_ff_step11",
+      "top": "casez_casex_always_ff_step11",
+      "clock": "clk",
+      "signals": ["sel", "d", "qz", "qx"],
+      "stimulus": [
+        {"sel": "0000", "d": "1001"},
+        {"sel": "0001", "d": "1000"},
+        {"sel": "00z1", "d": "0111"},
+        {"sel": "01xz", "d": "0110"},
+        {"sel": "1x00", "d": "0101"},
+        {"sel": "1z11", "d": "0100"},
+        {"sel": "zzzz", "d": "0011"},
+        {"sel": "xxxx", "d": "0010"}
+      ],
+      "measured": "2026-11-10: casez and casex in one always_ff retain source-order CaseStmt nodes; wildcard x/z selectors and defaults match Icarus 13.0 and Xcelium 24.03-s004. E-core-1's explicit case boundary remains pinned for review."
+    },
+    {
       "name": "unpacked_dynamic_target",
       "example": "sem2/unpacked_dynamic_target",
       "top": "unpacked_dynamic_target",

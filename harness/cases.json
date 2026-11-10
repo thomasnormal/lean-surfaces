@@ -1,4 +1,8 @@
 [
+  {"file": "Examples/python/float_lab/float_lab.py", "function": "divide", "args": [[9007199254740993, 2.0], [1.0, 9007199254740993], [-9007199254740993, 2.0], [0.0, 9007199254740993]], "expect": "match", "note": "Mixed true division rounds integer operands to binary64 before division on either side."},
+  {"file": "harness/foundation_probe.py", "function": "mixed_div_left_overflow", "args": [[]], "expect": "match", "note": "Mixed true division converts the left integer before checking the float zero divisor."},
+  {"file": "harness/foundation_probe.py", "function": "mixed_div_right_overflow", "args": [[]], "expect": "match", "note": "Mixed true division converts an oversized right integer."},
+  {"file": "harness/foundation_probe.py", "function": "integer_div_huge_ratio", "args": [[]], "expect": "match", "note": "Integer true division computes the ratio without first converting either operand to double."},
   {"file": "harness/foundation_probe.py", "function": "int_pow_negative", "args": [[0, 1], [1, 1], [-1, 2], [2, 1], [-2, 3]], "expect": "match", "note": "Convertible negative powers preserve zero-base errors and exact binary-base results."},
   {"file": "harness/foundation_probe.py", "function": "negative_pow_exponent_boundary", "args": [[1023], [1024]], "expect": "match", "note": "The finite/overflow conversion boundary is checked before the zero-base error."},
   {"file": "harness/foundation_probe.py", "function": "negative_pow_exponent_overflow", "args": [[0], [1], [-1], [2]], "expect": "match", "note": "Negative integer powers convert the exponent before zero checks or platform pow."},

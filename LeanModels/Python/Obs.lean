@@ -2256,9 +2256,12 @@ theorem fuelMono (fuel : Nat) :
         refine Run.le_ite (Run.le_refl _) (Run.le_ite (Run.le_refl _)
           (Run.le_ite (Run.le_refl _) ?_))
         refine Run.le_ite (Run.le_refl _) ?_
+        refine Run.le_ite (Run.le_refl _) ?_
+        refine Run.le_leaveCallDepth ?_
         refine Run.le_toWorld ?_
         refine Run.le_bind
-          (ihSs m ⟨w, mkCallEnv params args ++ cap⟩ body.toList k hk)
+          (ihSs m ⟨{ w with callDepth := w.callDepth + 1 },
+            mkCallEnv params args ++ cap⟩ body.toList k hk)
           fun st flow => ?_
         cases flow <;> exact Run.le_refl _
     -- proof-side ListComp filter walk

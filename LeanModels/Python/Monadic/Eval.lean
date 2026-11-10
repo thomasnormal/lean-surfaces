@@ -2477,12 +2477,14 @@ def callCloAt (K : Kont) (m : Module) (name : String) (params : Array Param)
     set { w with heap := w.heap.push g }
     pure (.ref w.heap.size)
   else do
-    let env := markUnboundLocals body.toList (mkCallEnv params args) ++ captured
-    match ← inWorld env (execOpenList K m body.toList) with
-    | .ret v => pure v
-    | .next  => pure .none
-    | .brk   => refuse "'break' outside loop"
-    | .cont  => refuse "'continue' outside loop"
+    -- Ordinary closures enter the same Python-frame unit as named functions.
+    withWorldRecursionUnit do
+      let env := markUnboundLocals body.toList (mkCallEnv params args) ++ captured
+      match ← inWorld env (execOpenList K m body.toList) with
+      | .ret v => pure v
+      | .next  => pure .none
+      | .brk   => refuse "'break' outside loop"
+      | .cont  => refuse "'continue' outside loop"
 
 /-! Restore the active-frame count when a module-level call returns or raises.
 The model's raise channel retains the world, so the exception handler must

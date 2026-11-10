@@ -10,6 +10,9 @@
   the captured source and literal hashes and the recorded ABI and call binding.
   The harness relies on its caller's cgroup instead of imposing an address-space
   limit.
+- Count ordinary closure calls against the Python recursion limit and unwind
+  their frame depth on returns and exceptions.
+
 - Count recursion units for `next` and Python generator resumption, preserving
   the generator's state when either entry reaches the recursion limit.
 

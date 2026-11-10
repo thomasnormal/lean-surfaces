@@ -91,6 +91,24 @@ and live module-global pipeline still match CPython.
 DECIDED: close `py-global-text-truncation` on this branch and keep lexical
 declarations structured from the approved AST through execution.
 
+## 2026-11-10-pyfoundation-14 — revalidate generator capture census
+
+The inbox generator-capture finding is already closed. Structured ingestion
+counts tuple-unpack and `del` targets through `bodyAssigns`, and walrus stores
+through `exprAssigns`, before admitting the by-value generator lowering.
+Unsafe captures stay loud, while the creation-time iterator check rejects a
+scalar outer source at the same point as CPython.
+
+| Measurement | Result |
+|---|---|
+| Capture witness | `genexp_capture_rebinding.py`: loud exit 3; CPython 3.9 raises the captured-name error |
+| Creation witness | `genexp_iter_creation.py`: MATCH with CPython 3.9.25 `TypeError` |
+| Semantic change | none; audit confirmation only |
+
+DECIDED: close `py-genexp-capture-census` on this branch and retain
+conservative loudness for uncertified captures until native generator-
+expression nodes replace the lowering.
+
 ## 2026-11-10-pyfoundation-10 — max/min recursion
 
 `max` and `min` now check the CPython builtin recursion unit after positional

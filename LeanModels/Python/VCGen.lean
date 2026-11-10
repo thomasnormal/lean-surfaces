@@ -1207,7 +1207,7 @@ theorem callIn_genCall {m : Module} {fuel : Nat} {w : World} {fname : String}
     (hf : findFunction m fname = some f) (hargsOk : f.argsOk = true)
     (hlocalsOk : f.localsOk = true)
     (harity : arityOk f.params args.size = true) (hgen : f.isGenerator = true)
-    (hcreate : genExpCreationRun fname (markUnboundLocals f.body.toList (mkCallEnv f.params args)) = .ok ()) :
+    (hcreate : genExpCreationRun w.heap fname (markUnboundLocals f.body.toList (mkCallEnv f.params args)) = .ok ()) :
     callIn m (fuel + 1) w fname args
       = .ok { w with heap := w.heap.push (genObj fname f args) } (.ref w.heap.size) := by
   rw [callIn]
@@ -1235,7 +1235,7 @@ theorem EvalsIn.genCall {m : Module} {st : FrameState} {fname : String}
     (hargsOk : f.argsOk = true) (hlocalsOk : f.localsOk = true)
     (harity : arityOk f.params vs.length = true) (hgen : f.isGenerator = true)
     (hargs : EvalsToList m st argEs.toList vs)
-    (hcreate : genExpCreationRun fname (markUnboundLocals f.body.toList (mkCallEnv f.params vs.toArray)) = .ok ())
+    (hcreate : genExpCreationRun st.world.heap fname (markUnboundLocals f.body.toList (mkCallEnv f.params vs.toArray)) = .ok ())
     (hstar : fname ≠ starArgBuiltinName := by decide)
     (hflat : flattenStarCallArgs vs = vs := by rfl)
     (hunbound : hasUnboundLocal st.locals fname = false := by rfl) :
@@ -1978,7 +1978,7 @@ theorem callIn_drains {m : Module} {w : World}
     (hf : findFunction m fname = some f) (hargsOk : f.argsOk = true)
     (hlocalsOk : f.localsOk = true) (harity : arityOk f.params args.size = true)
     (hgen : f.isGenerator = true)
-    (hcreate : genExpCreationRun fname (markUnboundLocals f.body.toList (mkCallEnv f.params args)) = .ok ())
+    (hcreate : genExpCreationRun w.heap fname (markUnboundLocals f.body.toList (mkCallEnv f.params args)) = .ok ())
     (hy : GenYields m
       ⟨{ w with heap := w.heap.push (.generator fname
           (markUnboundLocals f.body.toList (mkCallEnv f.params args))

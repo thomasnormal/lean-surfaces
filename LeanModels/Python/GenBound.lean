@@ -228,7 +228,7 @@ theorem EvalsIn.genCallIn {m : Module} {st st₁ : FrameState} {fname : String}
     (hargsOk : f.argsOk = true) (hlocalsOk : f.localsOk = true)
     (harity : arityOk f.params vs.length = true) (hgen : f.isGenerator = true)
     (hargs : EvalsInList m st argEs.toList vs st₁)
-    (hcreate : genExpCreationRun fname (markUnboundLocals f.body.toList (mkCallEnv f.params vs.toArray)) = .ok ())
+    (hcreate : genExpCreationRun st₁.world.heap fname (markUnboundLocals f.body.toList (mkCallEnv f.params vs.toArray)) = .ok ())
     (hstar : fname ≠ starArgBuiltinName := by decide)
     (hflat : flattenStarCallArgs vs = vs := by rfl)
     (hunbound : hasUnboundLocal st.locals fname = false := by rfl) :
@@ -265,7 +265,7 @@ theorem EvalsIn.ntupleGenMethod {m : Module} {st st₀ st₁ : FrameState}
     (hf : findFunction m qname = some f)
     (hargsOk : f.argsOk = true) (hlocalsOk : f.localsOk = true)
     (harity : arityOk f.params (vs.length + 1) = true) (hgen : f.isGenerator = true)
-    (hcreate : genExpCreationRun qname (markUnboundLocals f.body.toList (mkCallEnv f.params (RVal.ntuple tn fs xs :: vs).toArray)) = .ok ())
+    (hcreate : genExpCreationRun st₁.world.heap qname (markUnboundLocals f.body.toList (mkCallEnv f.params (RVal.ntuple tn fs xs :: vs).toArray)) = .ok ())
     (hflat : flattenStarCallArgs vs = vs := by rfl) :
     EvalsIn m st (.call (.attribute recv attr sp) argEs #[] Option.none sp')
       (.ref st₁.world.heap.size)
@@ -303,7 +303,7 @@ theorem EvalsIn.genCallDrains {m : Module} {st st₁ : FrameState} {fname : Stri
     (hargsOk : f.argsOk = true) (hlocalsOk : f.localsOk = true)
     (harity : arityOk f.params vs.length = true) (hgen : f.isGenerator = true)
     (hargs : EvalsInList m st argEs.toList vs st₁)
-    (hcreate : genExpCreationRun fname (markUnboundLocals f.body.toList (mkCallEnv f.params vs.toArray)) = .ok ())
+    (hcreate : genExpCreationRun st₁.world.heap fname (markUnboundLocals f.body.toList (mkCallEnv f.params vs.toArray)) = .ok ())
     (hstar : fname ≠ starArgBuiltinName := by decide)
     (hflat : flattenStarCallArgs vs = vs := by rfl)
     (hunbound : hasUnboundLocal st.locals fname = false := by rfl)

@@ -504,6 +504,9 @@ row exercises the same witness through the native oracle.
 binding and a parameter read; it also reduces by `rfl` and has its own native
 differential row.
 
+`callableEvaluatorRefinementUnary` carries the relation through unary negation,
+with the same kernel reduction and native differential coverage.
+
 `callableEvaluatorRefinementBinary` carries the relation through a pure
 parameter-plus-literal expression, again with a kernel `rfl` proof and a native
 differential row.

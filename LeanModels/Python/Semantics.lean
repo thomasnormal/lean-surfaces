@@ -7803,6 +7803,7 @@ synthetic name and only rejects receivers whose non-iterability is decided by
 the tier. -/
 def genExpCreationCheck : RVal → Res Unit
   | .none => .exn (.typeError "'NoneType' object is not iterable")
+  | .notImplemented => .exn (.typeError "'NotImplementedType' object is not iterable")
   | .bool _ => .exn (.typeError "'bool' object is not iterable")
   | .int _ => .exn (.typeError "'int' object is not iterable")
   | .float _ => .exn (.typeError "'float' object is not iterable")

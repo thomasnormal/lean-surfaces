@@ -1,0 +1,147 @@
+{
+  "schema_version": "0.1",
+  "language": "python",
+  "frontend": {
+    "name": "cpython-ast",
+    "version": "3.9.25"
+  },
+  "source_file": "harness/genexp_creation.py",
+  "source_sha256": "cc628f465dea0d7d0654ce454c2e171578e822d8b9daf4976ea8e5ac858ceba3",
+  "module": {
+    "kind": "Module",
+    "body": [
+      {
+        "kind": "Expr",
+        "span": {
+          "lineno": 1,
+          "col_offset": 0,
+          "end_lineno": 1,
+          "end_col_offset": 74
+        },
+        "value": {
+          "kind": "Constant",
+          "span": {
+            "lineno": 1,
+            "col_offset": 0,
+            "end_lineno": 1,
+            "end_col_offset": 74
+          },
+          "value": {
+            "type": "str",
+            "value": "Generator-expression creation checks run before the first iteration."
+          }
+        }
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 4,
+          "col_offset": 0,
+          "end_lineno": 6,
+          "end_col_offset": 12
+        },
+        "name": "gen_iter_deferred",
+        "args": [
+          {
+            "arg": "value",
+            "span": {
+              "lineno": 4,
+              "col_offset": 22,
+              "end_lineno": 4,
+              "end_col_offset": 27
+            }
+          }
+        ],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Assign",
+            "span": {
+              "lineno": 5,
+              "col_offset": 4,
+              "end_lineno": 5,
+              "end_col_offset": 26
+            },
+            "targets": [
+              {
+                "kind": "Name",
+                "span": {
+                  "lineno": 5,
+                  "col_offset": 4,
+                  "end_lineno": 5,
+                  "end_col_offset": 5
+                },
+                "id": "g"
+              }
+            ],
+            "value": {
+              "kind": "GeneratorExp",
+              "span": {
+                "lineno": 5,
+                "col_offset": 8,
+                "end_lineno": 5,
+                "end_col_offset": 26
+              },
+              "elt": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 5,
+                  "col_offset": 9,
+                  "end_lineno": 5,
+                  "end_col_offset": 10
+                },
+                "id": "x"
+              },
+              "target": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 5,
+                  "col_offset": 15,
+                  "end_lineno": 5,
+                  "end_col_offset": 16
+                },
+                "id": "x"
+              },
+              "iter": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 5,
+                  "col_offset": 20,
+                  "end_lineno": 5,
+                  "end_col_offset": 25
+                },
+                "id": "value"
+              },
+              "ifs": [],
+              "walrus": []
+            }
+          },
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 6,
+              "col_offset": 4,
+              "end_lineno": 6,
+              "end_col_offset": 12
+            },
+            "value": {
+              "kind": "Constant",
+              "span": {
+                "lineno": 6,
+                "col_offset": 11,
+                "end_lineno": 6,
+                "end_col_offset": 12
+              },
+              "value": {
+                "type": "int",
+                "repr": "1"
+              }
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "lean_blocks": []
+}

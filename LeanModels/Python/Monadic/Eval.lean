@@ -2498,15 +2498,13 @@ def callInM (K : Kont) (m : Module) (fname : String) (args : Array RVal) : SemW 
             -- value-sequence iterators remain represented by the original
             -- value and are stepped by the existing `for` arms.
             match v with
-            | .none | .bool _ | .int _ | .float _ | .ellipsis | .callable _ =>
-                raisePy (.typeError s!"'{v.typeName}' object is not iterable")
             | .ref a =>
                 match Heap.get? w.heap a with
                 | some (.instance _ _) | some (.closure ..) | some (.cell _) =>
                     raisePy (.typeError "'object' object is not iterable")
                 | some _ => pure ()
                 | none => refuse danglingMsg
-            | _ => pure ()
+            | v => liftRes (genExpCreationCheck v)
         | none => refuse "internal: synthesized genexp argument is unbound"
       else pure ()
       let g : Obj := .generator fname env (genInitCont w.heap fname env f.body.toList) .created

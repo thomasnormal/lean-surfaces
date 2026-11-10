@@ -555,3 +555,6 @@ less-than-or-equal comparison, with the same kernel reduction and native differe
 
 `callableEvaluatorRefinementLogicalAnd` carries the relation through pure logical
 conjunction, with the same kernel reduction and native differential coverage.
+
+`callableEvaluatorRefinementLogicalOr` carries the relation through pure logical
+disjunction, with the same kernel reduction and native differential coverage.

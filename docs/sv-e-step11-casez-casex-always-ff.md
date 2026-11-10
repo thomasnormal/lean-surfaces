@@ -7,11 +7,18 @@ wildcard patterns, a default, and a nonblocking target.  The extractor keeps
 both `CaseStmt` nodes and their source order.  No wildcard pattern is expanded
 into a collection of assignments.
 
-IEEE 1800-2023 §§9.2.2.4, 12.5.1, and 12.5.4 distinguish the match rules:
+IEEE 1800-2023 §§9.2.2.4 and 12.5.1 distinguish the match rules:
 `casez` treats z and `?` as wildcard bits, while `casex` treats x, z, and `?`
-as wildcard bits.  The rows cover the first x state, known selectors, a z
-pattern, x/z selectors, and all-wildcard selectors.  Icarus 13.0 and Xcelium
-24.03-s004 agree on all nine rows:
+as wildcard bits on either operand. E reuses the existing `caseHit` with the
+retained mode; `execFFCase` still stops at the first source-order hit and
+returns that body's NBA queue. A missing match selects the default. NBA
+values are sampled from the unchanged pre-edge view. No new matching
+definition or semantic fuel is introduced.
+
+The rows cover the first x state, known selectors, a z pattern, x/z selectors,
+all-wildcard selectors, and x/z data. The last row distinguishes the first
+overlapping match from the default. Icarus 13.0 and Xcelium 24.03-s004 agree
+with E on all thirteen rows:
 
 ```text
 first              qz=xxxx qx=xxxx
@@ -23,22 +30,28 @@ sel_1x00_d5        qz=0101 qx=0101
 sel_1z11_d4        qz=0100 qx=0100
 sel_zzzz_d3        qz=0011 qx=0011
 sel_xxxx_d2        qz=0011 qx=0010
+sel_1x00_dxz       qz=xz01 qx=xz01
+sel_1z11_dz        qz=zzzz qx=zzzz
+sel_1000_dx        qz=xxxx qx=xxxx
+sel_zzzz_da        qz=1010 qx=1010
 ```
 
-The source-oracle rows remain in the testbench and differential harness.
-The preparatory legacy cycle witness has been retired. E-core-1 currently
-refuses case bodies at its explicit 12.5 boundary (`execFF`), so `agree.lean`
-retains that admission result pending review of the native E rule. The rule
-must preserve source-order first-hit
-matching, four-state wildcard distinctions, immediate NBA RHS sampling, and
-the default path; qualified/range/pattern case forms remain separate walls.
+`agree.lean` checks that the loaded nodes retain `.casez` and `.casex`, proves
+their `EdgeProfile`, and proves their slot result for every typed store and
+every legal process-atomic schedule via R-EDGE. Its trace equality is kernel
+checked, including every original row and startup. The generalized arm/list
+frame and totality lemmas preserve the `execFF_mem`/`execFF_total` contract.
+Their axiom audits contain only the standard three axioms.
 
-## E-core review boundary
+Reproduce the direct E-to-source comparison after building the fixture:
 
-Reviewed against E-core-1 on 2026-11-10. The retained `casez`/`casex` modes,
-source order, and nine Icarus/Xcelium rows pass the focused agreement proof.
-The current refusal remains deliberate: wildcard matching needs a four-state
-`caseMode` arm walk and an NBA frame/totality proof, while `Stmt2.ffOkB` still
-requires plain static-window statements. `casez`, `casex`, wildcard `?`, and
-x/z selector handling therefore remain named at the explicit 12.5 boundary;
-no wildcard expansion or partial E evaluator was added.
+```sh
+lake build 'Examples.«system-verilog».sem2.casez_casex_always_ff_step11.agree'
+python3 Examples/system-verilog/sem2/casez_casex_always_ff_step11/check.py
+```
+
+The checker emits E's actual trace, prints both simulator versions and gates
+Xcelium through its readiness simulation. A refused or incomplete E trace
+fails. `case … inside` and qualified cases remain loud in this fragment.
+This four-state execution evidence keeps the existing resolution-aware
+observation boundary unchanged.

@@ -4,7 +4,7 @@ import LeanModels.Sv.Kernel.Core0Proc
 # R-COMB-1: the window rank (`LeanModels.Sv.Kernel`)
 
 Queue item R-COMB-1 of `svgolf/design/architecture/EXECUTION-PLAN.md`. **Status: derived from E**
-(`Core0.lean`). The same theorems as gates G-A/G-B (every legal schedule closes the slot; the
+(`Core0.lean`). The same theorems as gates G-A/G-B (every process-atomic legal schedule closes the slot; the
 closed store solves the equations; it is their unique solution, so it is schedule-independent),
 with the rank over WRITTEN WINDOWS instead of processes.
 
@@ -44,7 +44,7 @@ The process rank (`Settles.ranked`, `Acyclic` of the process-level lowering) fai
 * `WSettles.ofLowerWin`: the instance from the per-window lowering (hypotheses static, decided per
   design as for G-B's `Settles.ofLower`, the profile of the equation design by hand: debt D-X1e).
 * Fixture (`Core0Smoke.ibex`, an `always_comb` writing `a = x` and `c = b` beside
-  `assign b = a + 1`): `ibex_rcomb` (every legal schedule closes at the unique solution),
+  `assign b = a + 1`): `ibex_rcomb` (every process-atomic legal schedule closes at the unique solution),
   `ibex_schedule_independent`, `ibex_closed_eq_combSettle2`, and `ibexLow_not_acyclic` /
   `ibex_no_settles` (the process-level lowering is in the comb profile but fails `Acyclic`, so G-B's
   `Settles` has no instance for it).
@@ -722,7 +722,7 @@ theorem WSettles.step_decreases {E : Elab} {d : Design2} {own : ProcId → List 
     generalize dirtyW d rank pre * (E.procs.size + 1) = Y at hmul ⊢
     omega
 
-/-! ## The slot closes, under every legal schedule -/
+/-! ## The slot closes, under every process-atomic legal schedule -/
 
 theorem WSettles.exec_closes_of_lt {E : Elab} {d : Design2} {own : ProcId → List Nat}
     {rank : Nat → Nat} (hS : WSettles E d own rank) (ch : Choice) : ∀ (m : Nat) (c : Config),
@@ -738,14 +738,14 @@ theorem WSettles.exec_closes_of_lt {E : Elab} {d : Design2} {own : ProcId → Li
           obtain ⟨c', hc'⟩ := hS.exec_closes_of_lt ch m c₁ (by omega) hI₁
           exact ⟨c', by simp only [exec, hstep]; exact hc'⟩
 
-/-- **Every legal schedule closes the slot within `wpotential + 1` steps.** -/
+/-- **Every process-atomic legal schedule closes the slot within `wpotential + 1` steps.** -/
 theorem WSettles.exec_closes {E : Elab} {d : Design2} {own : ProcId → List Nat}
     {rank : Nat → Nat} (hS : WSettles E d own rank) (ch : Choice) {c : Config}
     (hI : WSettleInv E d own c) :
     ∃ c', exec E ch (wpotential E d rank c + 1) c = .closed c' :=
   hS.exec_closes_of_lt ch _ c (Nat.lt_succ_self _) hI
 
-/-- **The slot closes** under every legal schedule, and the invariant holds there. -/
+/-- **The slot closes** under every process-atomic legal schedule, and the invariant holds there. -/
 theorem WSettles.slot_closes {E : Elab} {d : Design2} {own : ProcId → List Nat}
     {rank : Nat → Nat} (hS : WSettles E d own rank) (ch : Choice) {c : Config}
     (hI : WSettleInv E d own c) : ∃ c', SlotCloses E ch c c' ∧ WSettleInv E d own c' := by
@@ -777,7 +777,7 @@ theorem WSettles.schedule_independent {E : Elab} {d : Design2} {own : ProcId →
   exact combEqs_unique hS.comb hS.acyclic hs₁ hs₂ he₁ he₂ (hf₁.symm.trans hf₂)
 
 /-- **R-COMB-1, generic** (derived from E): from every configuration satisfying the invariant,
-under every legal schedule, the slot closes; the closed store solves the window equations, keeps
+under every process-atomic legal schedule, the slot closes; the closed store solves the window equations, keeps
 the undriven bits, and is the ONLY shaped solution that does. -/
 theorem WSettles.rcomb {E : Elab} {d : Design2} {own : ProcId → List Nat} {rank : Nat → Nat}
     (hS : WSettles E d own rank) (ch : Choice) {c : Config} (hI : WSettleInv E d own c) :
@@ -1328,7 +1328,7 @@ theorem ibex_wsettles : WSettles ibex ibexEq (winOwn ibexW) ibexRank :=
     (acyclicBy_of_acyclicB rfl) (by decide)
 
 /-- **R-COMB-1 on the ibex_controller shape** (acceptance): from every typed store with every
-process ready, under every legal schedule, the slot closes at a store that solves the window
+process ready, under every process-atomic legal schedule, the slot closes at a store that solves the window
 equations and is their unique shaped solution with the start's undriven bits. -/
 theorem ibex_rcomb (ch : Choice) {s : Store} (hT : ibex.Typed s) :
     ∃ c', SlotCloses ibex ch (Config.init ibex s) c' ∧ CombEqs ibexEq (ibex.view c'.store) ∧
@@ -1337,7 +1337,7 @@ theorem ibex_rcomb (ch : Choice) {s : Store} (hT : ibex.Typed s) :
   obtain ⟨c', hcl, he, -, huniq⟩ := ibex_wsettles.rcomb ch (WSettleInv.init hT)
   exact ⟨c', hcl, he, huniq⟩
 
-/-- **Schedule independence on the ibex shape**: any two legal schedules close at the same store. -/
+/-- **Schedule independence on the ibex shape**: any two process-atomic legal schedules close at the same store. -/
 theorem ibex_schedule_independent {s : Store} (hT : ibex.Typed s) {c₁ c₂ : Config}
     {ch₁ ch₂ : Choice} (h₁ : SlotCloses ibex ch₁ (Config.init ibex s) c₁)
     (h₂ : SlotCloses ibex ch₂ (Config.init ibex s) c₂) : ibex.view c₁.store = ibex.view c₂.store :=

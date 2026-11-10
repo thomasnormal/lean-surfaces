@@ -26,7 +26,7 @@ column: measured in section 7. The class table, the per-row evidence and the app
    non-pipeline tool) differs, the construct is admissible and the Icarus behaviour is a declared departure
    (hash-bound `oracle_disagreement` row). Icarus is bad at this; it is an optional witness.
 3. LRM-legal nondeterminism is modelled in Lean. A golfer who uses such a construct proves that the circuit's final
-   output is the same in every legal run, unless the task does not need it. See
+   output is the same in every process-atomic legal run, unless the task does not need it. See
    `svgolf/design/nondeterminism/NOTE.md`. The audit distinguishes nondeterminism the LRM leaves open (4.7) from a
    simulator-versus-synthesizer mismatch whose LRM answer is deterministic; the ruling covers only the first.
 4. Classes (and the rest of the non-synthesizable subset) are out of scope while the scored frontend is Yosys

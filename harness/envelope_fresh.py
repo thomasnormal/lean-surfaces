@@ -233,6 +233,20 @@ def check_tier(man: dict, root: str, frontend: str) -> tuple[int, list]:
         recorded = _recorded_sources(env)
         if not recorded:
             rows.append(("NOT-LIVE", rel, "the envelope records no source")); continue
+        if man.get("mirror"):
+            # An absolute path cannot be reproduced inside the scratch tree;
+            # join(tmp, absolute) discards tmp entirely.  Missing external
+            # sources retain the documented NOT-LIVE treatment, but an
+            # existing one must not be copied over itself or extracted in place.
+            unsafe = [p for p in recorded if
+                      (os.path.isabs(p) and os.path.exists(p)) or
+                      (not os.path.isabs(p) and
+                       (os.path.normpath(p) == ".." or
+                        os.path.normpath(p).startswith(".." + os.sep)))]
+            if unsafe:
+                rows.append(("UNSAFE-SOURCE", rel,
+                             "cannot mirror recorded path: %s" % unsafe[0]))
+                continue
         resolved = [_resolve(r, envpath, root) for r in recorded]
         if all(r is None for r in resolved):
             rows.append(("NOT-LIVE", rel, "recorded sources are not in this tree")); continue
@@ -292,7 +306,7 @@ def check_tier(man: dict, root: str, frontend: str) -> tuple[int, list]:
         else:
             rows.append(("STALE", rel, "content differs from a re-extraction"))
     bad = sum(1 for v, _, _ in rows
-              if v in ("STALE", "EXTRACT-FAILED", "UNREADABLE", "SOURCES-MISSING", "NO-RECIPE"))
+              if v in ("STALE", "EXTRACT-FAILED", "UNREADABLE", "SOURCES-MISSING", "NO-RECIPE", "UNSAFE-SOURCE"))
     return bad, rows
 
 
@@ -503,6 +517,20 @@ def self_test() -> int:
         n, r = check_tier(man, t, resolve_frontend(man))
         check("a partially-present source set FAILS", r[0][0], "SOURCES-MISSING")
         check("  ...and is not excused", n, 1)
+
+    # A mirror must not escape its scratch tree, even when the recorded
+    # external source exists.  In particular, this used to copy a file onto
+    # itself and abort the entire gate with SameFileError.
+    with tempfile.TemporaryDirectory() as t:
+        source = os.path.join(t, "outside.py")
+        open(source, "w").write("outside\n")
+        for recorded in (source, "../outside.py"):
+            man = _fixture(t, dict(live, source_file=recorded))
+            man["mirror"] = True
+            n, rows = check_tier(man, t, resolve_frontend(man))
+            check("unsafe mirrored source is a hard failure", (rows[0][0], n),
+                  ("UNSAFE-SOURCE", 1))
+            check("  ...and leaves the external file alone", open(source).read(), "outside\n")
 
     print("self-test: %d ok, %d failed" % (ok, bad))
     return 1 if bad else 0

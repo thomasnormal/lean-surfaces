@@ -89,6 +89,7 @@ REPO = os.path.dirname(os.path.dirname(HARNESS_DIR))
 CASES_JSON = os.path.join(HARNESS_DIR, "cases2.json")
 RUNNER = os.path.join("harness", "sv", "runner2.lean")
 RUNNER_MEM = os.path.join("harness", "sv", "runner_mem2.lean")
+RUNNER_E0 = os.path.join("harness", "sv", "runner_e0.lean")
 
 sys.path.insert(0, HARNESS_DIR)
 import gen_tb2  # noqa: E402
@@ -119,8 +120,9 @@ def ensure_oleans(verbose):
     os.makedirs(libdir, exist_ok=True)
     newest_dep = 0.0
     for name in SV_LEAN_MODULES:
-        src = os.path.join(REPO, "LeanModels", "Sv", name + ".lean")
-        olean = os.path.join(libdir, name + ".olean")
+        rel = name.replace("/", os.sep)
+        src = os.path.join(REPO, "LeanModels", "Sv", rel + ".lean")
+        olean = os.path.join(libdir, rel + ".olean")
         os.makedirs(os.path.dirname(olean), exist_ok=True)
         newest_dep = max(newest_dep, os.path.getmtime(src))
         if not os.path.exists(olean) or os.path.getmtime(olean) < newest_dep:
@@ -434,6 +436,8 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--sim", choices=["auto", "xrun", "iverilog", "verilator", "both"],
                     default="auto")
+    ap.add_argument("--backend", choices=["run2", "e0"], default="run2",
+                    help="Lean semantics backend (run2 or E-core-0 array executor)")
     ap.add_argument("--case", default=None)
     ap.add_argument("--workdir", default=None)
     ap.add_argument("--keep", action="store_true")
@@ -522,7 +526,14 @@ def main():
             else:
                 xstatus = (st, info)
         xout = []
-        runner = RUNNER_MEM if case.get("memory") else RUNNER
+        if args.backend == "e0":
+            if case.get("memory"):
+                skipped += 1
+                print("%-24s SKIP (memory rows are outside E-core-0)" % name)
+                continue
+            runner = RUNNER_E0
+        else:
+            runner = RUNNER_MEM if case.get("memory") else RUNNER
         if "refusal" in case:
             ok, detail = check_refusal(case, envelope, sigmas[0], xprobe, xout, runner)
             xnote = ""

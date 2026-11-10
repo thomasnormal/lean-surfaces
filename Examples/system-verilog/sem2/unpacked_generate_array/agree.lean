@@ -1,5 +1,5 @@
 import LeanModels.Sv.Ingest2
-import LeanModels.Sv.Kernel.MemCycle
+import LeanModels.Sv.MemCycle
 
 /-! Clean-room F4 memory witness: a parameter-dependent unpacked array
 remains source-shaped in the memory E route. Fixed cell selections emitted as

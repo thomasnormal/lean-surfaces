@@ -29,9 +29,10 @@ or contract used by automation carries a refinement theorem back to the exact se
   - E-core-2: hierarchy.
   - The memory rung begins with `Kernel/CoreMem.lean` and
     `Kernel/MemElab.lean`: source-shaped, fuel-free array state, cell laws,
-    and one-rank retained-declaration elaboration. `Kernel/MemCycle.lean`
-    provides the provisional sequential view for direct one-rank cell NBAs;
-    nested and compound memory forms remain named boundaries.
+    and one-rank retained-declaration elaboration. `MemCycle.lean`,
+    `MemProc.lean` and `MemPreemptGuard.lean` are provisional run2 test
+    adapters outside the E kernel; nested and compound memory forms remain
+    named boundaries until the E memory step.
 - **Process-atomic execution** is a declared profile ruling on IEEE 1800-2023 §4.7: a process runs to its next suspension point
   without interleaving. Xcelium behaves this way (`docs/sv-oracle-disagreements.md`). The departure is a register row, see
   below. `LeanModels/Sv/PreemptGuard2.lean` provides the conservative

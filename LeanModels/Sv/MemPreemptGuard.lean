@@ -1,5 +1,5 @@
 import LeanModels.Sv.PreemptGuard2
-import LeanModels.Sv.Kernel.MemCycle
+import LeanModels.Sv.MemCycle
 
 /-!
 # IEEE §4.7 guard for the source-shaped memory route
@@ -32,28 +32,22 @@ def MemDesign2.preemptWidth? (d : MemDesign2) (name : String) : Option Nat :=
           | .ok (some shape) => some shape.elemWidth
           | _ => none
       | none =>
-          match parseFixedCellName? name with
+          match d.flatCellInfo? name with
           | some (base, _) =>
-              match d.decls.find? (fun dc => dc.name.startsWith (base ++ "[")) with
-              | some dc => some dc.width
-              | none =>
-                  match d.memDecls.find? (·.name == base) with
-                  | some pd =>
-                      match pd.memShape? d.env with
-                      | .ok (some shape) => some shape.elemWidth
-                      | _ => none
-                  | none => none
+              match d.flatCellWidth? base with
+              | some w => some w
+              | none => none
           | none => none
 
 def MemDesign2.preemptWd (d : MemDesign2) (name : String) : Option Nat :=
-  match parseFixedCellName? name with
+  match d.flatCellInfo? name with
   | some (base, _) => d.preemptWidth? base |>.orElse (fun _ => d.preemptWidth? name)
   | none => d.preemptWidth? name
 
 def memPreemptWhole (d : MemDesign2) (name : String) : List BWin :=
   match d.preemptWd name with
   | some w =>
-      match parseFixedCellName? name with
+      match d.flatCellInfo? name with
       | some (base, _) => [(base, 0, w)]
       | none => [(name, 0, w)]
   | none => []

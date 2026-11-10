@@ -1,5 +1,5 @@
 import LeanModels.Sv.Ingest2
-import LeanModels.Sv.Kernel.MemCycle
+import LeanModels.Sv.MemCycle
 import LeanModels.Sv.HierarchyNode2
 
 set_option maxRecDepth 100000 in

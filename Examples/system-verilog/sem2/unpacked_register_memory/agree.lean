@@ -1,7 +1,7 @@
 /- Clean-room R2 memory witness: a parameter-sized register file keeps its
    run-time read and write selectors as source-shaped memory operations. -/
 import LeanModels.Sv.Ingest2
-import LeanModels.Sv.Kernel.MemCycle
+import LeanModels.Sv.MemCycle
 
 namespace Examples.«system-verilog».sem2.unpacked_register_memory.agree
 

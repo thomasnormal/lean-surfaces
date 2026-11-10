@@ -154,6 +154,8 @@
               "resolved": 8
             },
             "two_state": false,
+            "flat_base": "rom",
+            "flat_index": 0,
             "init": null
           },
           {
@@ -196,6 +198,8 @@
               "resolved": 8
             },
             "two_state": false,
+            "flat_base": "rom",
+            "flat_index": 1,
             "init": null
           },
           {
@@ -238,6 +242,8 @@
               "resolved": 8
             },
             "two_state": false,
+            "flat_base": "rom",
+            "flat_index": 2,
             "init": null
           },
           {
@@ -280,6 +286,8 @@
               "resolved": 8
             },
             "two_state": false,
+            "flat_base": "rom",
+            "flat_index": 3,
             "init": null
           }
         ],
@@ -553,7 +561,19 @@
           }
         ],
         "generates": [],
-        "others": []
+        "others": [],
+        "readmemh": [
+          {
+            "file": "rom.hex",
+            "target": "rom",
+            "words": [
+              "00",
+              "11",
+              "22",
+              "33"
+            ]
+          }
+        ]
       }
     ],
     "others": []

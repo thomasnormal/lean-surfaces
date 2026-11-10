@@ -1,5 +1,5 @@
 import LeanModels.Sv.Gen2
-import LeanModels.Sv.Kernel.MemProc
+import LeanModels.Sv.MemProc
 import LeanModels.Sv.PreemptGuard2
 
 /-!
@@ -23,6 +23,7 @@ meaning parameter or a memory-size cap.
 namespace LeanModels.Sv.Kernel
 
 open LeanModels.Sv
+open LeanModels.Sv.CombGuard
 
 set_option autoImplicit false
 
@@ -30,12 +31,17 @@ structure MemDesign2 where
   name : String
   env : IEnv
   decls : List Decl
+  /-- Symbolic declaration metadata retained for flattened array cells. -/
+  flatDecls : List PDecl := []
   memDecls : List PDecl
   /-- Runtime declaration initializers, evaluated in source order before the
       first input sample. Literal initializers remain on `Decl`. -/
   initializers : List (String × Expr2)
   /-- The exact unsized x/z conversion marker retained by the extractor. -/
   xzUnsized : Bool
+  /-- Structured literal-file tasks retained by the symbolic frontend. -/
+  readmemh : List PReadmemh := []
+  cellRefs : List PCellRef := []
   processes : List PProcess
 deriving Repr, Inhabited
 
@@ -75,6 +81,32 @@ def MemDesign2.preemptionReport (d : MemDesign2) : Option (String × String) :=
       some ("Schedule:preemptive",
         s!"processes {i} and {j} may observe an intermediate write under IEEE 1800-2023 §4.7; the preemptive profile requires disjoint cross-process reads/writes")
 
+def firstMemOrderConflict : List ProcessAccess → Nat → Option (Nat × Nat)
+  | [], _ => none
+  | a :: rest, i =>
+      match rest.findIdx? (fun b => touches a.1 b.2) with
+      | some j => some (i, i + j + 1)
+      | none => firstMemOrderConflict rest (i + 1)
+
+/-- The memory adapter runs one source-order pass over continuous/comb
+processes.  A process that reads a signal written by a later comb process
+would need a second settle pass under IEEE 1800-2023 §10.3/§4.5, so refuse it
+before the provisional route can return a stale value. -/
+def MemDesign2.memoryOrderReport (d : MemDesign2) : Option (String × String) :=
+  let comb := d.processes.filter fun p =>
+    match p with
+    | .assign .. | .assignL .. | .alwaysComb .. => true
+    | _ => false
+  let wd := fun n => d.env.widths.lookup n
+  let accesses := comb.map fun p => Process2.preemptAccess wd (instProcess2 d.env d.elems p)
+  match firstMemOrderConflict accesses 0 with
+  | none => none
+  | some (i, j) =>
+      some ("Schedule:comb-source-order",
+        s!"comb process {i} reads a signal written by later comb process {j}; the source-order memory pass would need a second settle pass under IEEE 1800-2023 §10.3/§4.5")
+
+def MemDesign2.memoryOrderAdmits (d : MemDesign2) : Bool := d.memoryOrderReport.isNone
+
 
 /-! Some approved frontends elaborate a fixed unpacked array into scalar
 declarations named `a[0]`, `a[1]`, … while retaining a dynamic `a[index]`
@@ -83,11 +115,12 @@ adapter boundary: the finite declaration set is the frontend's AST, not a
 new unrolling performed here. -/
 
 def MemDesign2.flatCell? (d : MemDesign2) (base : String) (index : Int) : Option Decl :=
-  d.decls.find? (fun dc => dc.name == s!"{base}[{index}]")
+  d.flatDecls.find? (fun dc => dc.flatBase == some base && dc.flatIndex == some index) |>.bind
+    (fun pd => d.decls.find? (·.name == pd.name))
 
 def MemDesign2.flatCellWidth? (d : MemDesign2) (base : String) : Option Nat :=
-  match d.decls.find? (fun dc => dc.name.startsWith (base ++ "[")) with
-  | some dc => some dc.width
+  match d.flatDecls.find? (fun dc => dc.flatBase == some base) with
+  | some dc => dc.type.width d.env |>.toOption
   | none => none
 
 abbrev MemScalarNba := NbaQueue2
@@ -100,38 +133,37 @@ def memDeclOf? : List PDecl → String → Option PDecl
 def memDeclsOf (d : PDesign) : List PDecl :=
   d.decls.filter fun pd => !pd.unpackedDims.isEmpty
 
-def parseFixedCellName? (s : String) : Option (String × Int) :=
-  match s.splitOn "[" with
-  | [base, suffix] =>
-      if base.isEmpty || !suffix.endsWith "]" then none
-      else
-        let digits := String.ofList suffix.toList.dropLast
-        match digits.toInt? with
-        | some i => some (base, i)
-        | none => none
-  | _ => none
+def MemDesign2.flatCellInfo? (d : MemDesign2) (name : String) :
+    Option (String × Int) :=
+  match d.cellRefs.find? (·.name == name) with
+  | some ref => some (ref.base, ref.index)
+  | none => d.flatDecls.find? (·.name == name) |>.bind fun dc =>
+    match dc.flatBase, dc.flatIndex with
+    | some base, some index => some (base, index)
+    | _, _ => none
 
 /-- The symbolic extractor keeps a statically selected unpacked cell as an
 `Ident` such as `stage[0]`.  At the memory boundary this is the same source
 selection as `ArraySel(stage, 0)`; retain the cell name and route it through
 `MemState` instead of treating it as an undeclared scalar. -/
-def memCellExpr (mems : List PDecl) : PExpr → PExpr
+def memCellExpr (d : MemDesign2) : PExpr → PExpr
   | .ident n =>
-      match parseFixedCellName? n with
+      match d.flatCellInfo? n with
       | some (base, i) =>
-          if mems.any (·.name == base) then .arrayElem base [.int i] else .ident n
+          if d.memDecls.any fun pd => pd.name == base then .arrayElem base [.int i]
+          else .ident n
       | none => .ident n
   | e => e
 
-def memNormalizeProcess (mems : List PDecl) : PProcess → PProcess
+def memNormalizeProcess (d : MemDesign2) : PProcess → PProcess
   | .assign n e =>
-      match parseFixedCellName? n with
+      match d.flatCellInfo? n with
       | some (base, i) =>
-          if mems.any (·.name == base) then
-            .assignL (.arrayElem base [.int i]) (memCellExpr mems e)
-          else .assign n (memCellExpr mems e)
-      | none => .assign n (memCellExpr mems e)
-  | .assignL lhs e => .assignL lhs (memCellExpr mems e)
+          if d.memDecls.any fun pd => pd.name == base then
+            .assignL (.arrayElem base [.int i]) (memCellExpr d e)
+          else .assign n (memCellExpr d e)
+      | none => .assign n (memCellExpr d e)
+  | .assignL lhs e => .assignL lhs (memCellExpr d e)
   | p => p
 
 /-- Referenced empty input-only tasks are retained as source metadata by the
@@ -337,20 +369,22 @@ def instantiateMem2 (d : PDesign) (args : List Int)
   let generated ← memExpandList env iterFuel [] d.generates
   let memDecls := memDeclsOf d
   let envP := { env with widths := decls.map fun dc => (dc.name, dc.width) }
-  return { name := d.name, env := envP, decls, memDecls,
-           initializers,
-           xzUnsized := d.others.any fun (k, t) =>
-             k == "ConversionExpression:xz-literal-parametric" && t == "'bx",
-           processes := (d.processes.map (memNormalizeProcess memDecls)) ++ generated }
+  let base : MemDesign2 :=
+    { name := d.name, env := envP, decls, flatDecls := d.decls,
+      memDecls, initializers,
+      xzUnsized := d.others.any fun (k, t) =>
+        k == "ConversionExpression:xz-literal-parametric" && t == "'bx",
+      readmemh := d.readmemh, cellRefs := d.cellRefs, processes := [] }
+  return { base with processes := (d.processes.map (memNormalizeProcess base)) ++ generated }
 
 def instantiateMemD2 (d : PDesign) (args : List Int) : MemDesign2 :=
   match instantiateMem2 d args (PDesign.surfaceFuel args) with
   | .ok m => m
   | .timeout =>
-      { name := d.name, env := {}, decls := [], memDecls := [], initializers := [], xzUnsized := false, processes :=
+      { name := d.name, env := {}, decls := [], flatDecls := [], memDecls := [], initializers := [], xzUnsized := false, readmemh := [], cellRefs := [], processes :=
           [.unsupported "Instantiate" "memory cycle route exhausted executor fuel"] }
   | .unsupported msg =>
-      { name := d.name, env := {}, decls := [], memDecls := [], initializers := [], xzUnsized := false, processes :=
+      { name := d.name, env := {}, decls := [], flatDecls := [], memDecls := [], initializers := [], xzUnsized := false, readmemh := [], cellRefs := [], processes :=
           [.unsupported "Instantiate" msg] }
 
 def MemDesign2.initState (d : MemDesign2) : MemCycleState :=
@@ -774,12 +808,6 @@ def runMemFrom (d : MemDesign2) (fuel : Nat) (st : MemCycleState)
       let tr ← runMemFrom d fuel st' rest
       return st'.scalar :: tr
 
-def readmemhField (key text : String) : Option String :=
-  text.splitOn ";" |>.findSome? fun field =>
-    match field.splitOn "=" with
-    | [k, v] => if k == key then some v else none
-    | _ => none
-
 def readmemhDigit (c : Char) : Option Nat :=
   if c >= '0' && c <= '9' then some (c.toNat - '0'.toNat)
   else if c >= 'a' && c <= 'f' then some (10 + c.toNat - 'a'.toNat)
@@ -791,12 +819,9 @@ def readmemhNat (s : String) : Option Nat :=
     let d ← readmemhDigit c
     return n * 16 + d
 
-def runReadmemh (d : MemDesign2) (st : MemCycleState) (text : String) : Res MemCycleState := do
-  let some target := readmemhField "target" text
-    | .unsupported "SystemTask:readmemh:metadata"
-  let some data := readmemhField "data" text
-    | .unsupported "SystemTask:readmemh:metadata"
-  let words := data.splitOn ","
+def runReadmemh (d : MemDesign2) (st : MemCycleState) (task : PReadmemh) : Res MemCycleState := do
+  let target := task.target
+  let words := task.words
   match memDeclOf? d.memDecls target with
   | none =>
       -- slang's fixed one-rank elaboration may expose the cells as scalar
@@ -848,10 +873,13 @@ def runMemInitial (d : MemDesign2) (fuel : Nat) (st : MemCycleState) :
     match p with | .initial _ => true | _ => false)
   match initials with
   | [] => .ok st
-  | [.initial (.unsupported "SystemTask:readmemh" text)] => runReadmemh d st text
-  | [p] => do
-      let (st', q) ← runMemProcess d fuel st ([], []) p
-      commitMemPending d st' q
+  | [p] =>
+      match d.readmemh with
+      | [task] => runReadmemh d st task
+      | _ =>
+          do
+            let (st', q) ← runMemProcess d fuel st ([], []) p
+            commitMemPending d st' q
   | _ => .unsupported
       "memory cycle route does not yet admit multiple initial processes"
 

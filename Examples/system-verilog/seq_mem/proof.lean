@@ -1,5 +1,6 @@
 import LeanModels.Sv.Ingest2
 import LeanModels.Sv.Kernel
+import LeanModels.Sv.MemCycle
 
 namespace Examples.«system-verilog».seq_mem.proof
 

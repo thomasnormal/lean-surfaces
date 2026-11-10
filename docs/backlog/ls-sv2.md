@@ -5426,7 +5426,7 @@ unsupported "Instantiate"
   "decl 'cpuregs': unpacked array storage outside E (UnpackedDecl:memory)"
 ```
 
-After rebuilding `LeanModels.Sv.Kernel.MemCycle`, the memory route no longer
+After rebuilding `LeanModels.Sv.MemCycle`, the memory route no longer
 stops at generate members.  It reaches the top-level unsupported-member gate:
 
 ```text
@@ -7705,7 +7705,7 @@ counts, route results, source construct, and hashes.  Filed a new
 No RTL, extractor, generated envelope, ls-sv-owned semantics, or finite
 captured-window lemma was edited.
 
-**VALIDATION:** Rebuilt `LeanModels.Sv.Kernel.MemCycle`, then ran the official
+**VALIDATION:** Rebuilt `LeanModels.Sv.MemCycle`, then ran the official
 PicoRV32 wall probe and the external owner0050 probe; both passed.  The latter
 checks `load_design_sv2`, `instantiateD2`, `.sem`, `instantiateMemD2`, the
 parameter/module/process counts, and the exact refusal strings.  `git diff

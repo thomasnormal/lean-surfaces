@@ -1,5 +1,5 @@
 import LeanModels.Sv.Ingest2
-import LeanModels.Sv.Kernel.MemCycle
+import LeanModels.Sv.MemCycle
 
 set_option maxRecDepth 100000 in
 load_design_sv2 initial_memory_wall

@@ -174,9 +174,10 @@ The first E-side memory state is `LeanModels.Sv.Kernel.CoreMem`. Its
 `MemBlock` and `MemState` provide functional reads and writes with proved
 same-cell, other-cell, out-of-range, and unknown-name behavior.
 `Kernel/MemElab` maps one-rank retained declarations into this native state.
-This is a trusted, fuel-free state primitive. `Kernel/MemCycle` connects the
-retained source node for scalar conditions, direct cell reads, and scalar or
-cell NBA updates without expanding the array.
+This is a trusted, fuel-free state primitive. The provisional `MemCycle`,
+`MemProc` and `MemPreemptGuard` adapters live outside `Kernel/` as labelled
+run2 test routes; the E memory step will connect retained source nodes
+without expanding the array.
 
 The same bridge now resolves a one-rank `PLhs.arrayElem` against the source
 label range and delegates reads and writes to `MemState`. Out-of-range labels

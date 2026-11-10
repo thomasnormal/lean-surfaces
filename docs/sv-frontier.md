@@ -70,15 +70,16 @@ Read and write laws cover same-cell updates, other-cell preservation,
 out-of-range reads and writes, and unknown memory names. `Kernel/MemElab`
 now evaluates a retained one-rank `UnpackedDecl` at a parameter point and
 constructs its native memory state; nested ranks remain a named refusal. The
-`Kernel/MemCycle` view admits the clean one-rank FIFO shape with scalar
-conditions, direct cell RHSs, scalar or cell NBAs, and a continuous scalar
-assign from a cell. Its refinement target is the E memory state; the legacy
-`run2` route remains unchanged for scalar designs.
+`MemCycle` is a provisional `run2` test route, not an E meaning. It admits the
+clean one-rank FIFO shape with scalar conditions, direct cell RHSs, scalar or
+cell NBAs, and a continuous scalar assign from a cell. Its source-shaped
+adapter is retained only until the E memory step; the legacy `run2` route
+remains unchanged for scalar designs.
 
 `MemElab` now resolves one-rank `PLhs.arrayElem` targets against source labels
 and delegates their reads and writes to `MemState`, with guards for an updated
 cell and an out-of-range all-x/no-op access. Dynamic indices, partial array
-targets, and process scheduling remain explicit boundaries. `Kernel/MemProc`
+targets, and process scheduling remain explicit boundaries. `MemProc`
 now carries those targets through a source-shaped NBA queue and commits them
 through `MemState`; scalar RHS evaluation and direct cell reads are covered by
 kernel guards, while compound memory expressions remain loud. The

@@ -451,7 +451,9 @@ Expression-position call effects and the residual call census are recorded in
 The symbolic `sv-0.2` extractor uses the same flat cell representation for a
 one-dimensional fixed-unpacked integral array: it emits one ordinary symbolic
 `Var` for each declared index (`arr[0]`, `arr[1]`, ...), and a constant `arr[k]`
-read or write becomes an `Ident` naming that cell. Dynamic or out-of-range
+read or write becomes an `Ident` naming that cell. Each such declaration also
+carries `flat_base` and `flat_index` metadata; memory routes use those fields
+instead of parsing the display name. Dynamic or out-of-range
 indices and nested-unpacked arrays stay `Unsupported`; the symbolic tier adds
 no aggregate store or dynamic index executor.
 
@@ -464,9 +466,14 @@ route retains it as source-shaped array state. The first E memory primitive is
 `LeanModels.Sv.Kernel.CoreMem`; it retains the bounds as source labels and
 uses functional cell updates, with no finite array expansion.
 `Kernel/MemElab` evaluates one-rank retained declarations into this state, and
-`Kernel/MemCycle` wires constant and genvar cell reads/writes through the
+the provisional `MemCycle` route wires constant and genvar cell reads/writes through the
 plain/FF edge and asynchronous-reset process forms. Nested rank, dynamic
 runtime indexing, and partial targets remain loud.
+
+For the narrow literal-file ROM form, the module carries a structured
+`readmemh` list with `file`, `target`, and hexadecimal `words`; the ordinary
+process marker remains `Unsupported` so routes without a time-zero memory
+phase refuse it loudly.
 
 An untagged plain packed integral typedef is also compile-time metadata in this
 symbolic cell path. The extractor erases the alias, recovers the canonical

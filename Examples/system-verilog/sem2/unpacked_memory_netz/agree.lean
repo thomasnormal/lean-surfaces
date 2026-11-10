@@ -1,5 +1,5 @@
 import LeanModels.Sv.Ingest2
-import LeanModels.Sv.Kernel.MemCycle
+import LeanModels.Sv.MemCycle
 
 namespace Examples.«system-verilog».sem2.unpacked_memory_netz.agree
 

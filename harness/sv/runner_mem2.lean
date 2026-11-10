@@ -8,7 +8,7 @@ sigma and optional probe arguments are accepted for harness compatibility.
 
 import Lean
 import LeanModels.Sv.Ingest2
-import LeanModels.Sv.Kernel.MemPreemptGuard
+import LeanModels.Sv.MemPreemptGuard
 
 open Lean (Json)
 open LeanModels.Sv
@@ -117,6 +117,8 @@ def main (argv : List String) : IO UInt32 := do
         -- 1800-2023 §4.7 permits mid-process suspension.  Guard this route
         -- before executing it; `runMem2` remains the low-level executor.
         if let some (k, msg) := d.memoryPreemptionReport then
+          .error s!"{k}: {msg}"
+        if let some (k, msg) := d.memoryOrderReport then
           .error s!"{k}: {msg}"
         let stim0 ← (← getArr case "stimulus").toList.mapM (parseEntry d)
         let clock := (getOpt case "clock").bind (·.getStr?.toOption)

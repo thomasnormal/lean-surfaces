@@ -2359,6 +2359,7 @@ _LEGACY_NET_ALIASES = {}
 _LEGACY_NET_ALIAS_NODES = set()
 _LEGACY_NET_ALIAS_SYMBOLS = set()
 _M0_NET_PENDING = []
+_SYM_READMEMH_PENDING = []
 
 
 def _queue_m0_net_initializer(sm, symbol, width):
@@ -25400,6 +25401,11 @@ def _convert_syscall(sm, s, e):
             if len(words) != abs(left - right) + 1:
                 return unsupported(sm, s, "SystemTask:readmemh:short-file",
                                    f"literal file has {len(words)} words for {abs(left - right) + 1} ROM cells")
+            global _SYM_READMEMH_PENDING
+            if _SYM is not None:
+                _SYM_READMEMH_PENDING.append({
+                    "file": filename, "target": target, "words": words,
+                })
             marker = f"file={filename};target={target};data={','.join(words)}"
             return unsupported(sm, s, "SystemTask:readmemh", marker)
         except Exception as exc:
@@ -32301,6 +32307,8 @@ def convert_fixed_array_vars_sym(sm, m):
                     "kind": "Var", "span": sym_span(sm, m),
                     "name": m.name + "".join(f"[{position}]" for position in indexes),
                     "width": dtype, "two_state": two, "init": init,
+                    **({"flat_base": m.name, "flat_index": indexes[0]}
+                       if len(indexes) == 1 else {}),
                     **({"signed": True} if getattr(leaf_type, "isSigned", False) else {}),
                 })
             return decls
@@ -32425,6 +32433,8 @@ def convert_fixed_array_vars_sym(sm, m):
                 "name": f"{m.name}[{position}]",
                 "width": dtype,
                 "two_state": two,
+                "flat_base": m.name,
+                "flat_index": position,
                 **({"signed": True} if getattr(element_type, "isSigned", False) else {}),
                 "init": init,
             })
@@ -34586,8 +34596,9 @@ def _sym_package_params(sm):
 
 def convert_module_sym(sm, inst):
     """Top module -> symbolic Module node (schema sv-0.2)."""
-    global _SYM_PROPERTIES
+    global _SYM_PROPERTIES, _SYM_READMEMH_PENDING
     _SYM_PROPERTIES = []
+    _SYM_READMEMH_PENDING = []
     body = inst.body
     _SYM.scope = body
     lower_proc.begin_module(sys.modules[__name__], body)      # WP-PROC L1: hoisted block-local declarations
@@ -34709,6 +34720,28 @@ def convert_module_sym(sm, inst):
 
     package_params = _sym_package_params(sm)
     properties.extend(_SYM_PROPERTIES)
+    cell_refs = []
+    def collect_cell_refs(node):
+        if isinstance(node, dict):
+            if node.get("kind") == "Ident":
+                name = node.get("name", "")
+                match = re.fullmatch(r"(.+)\[(-?[0-9]+)\]", name)
+                if match:
+                    cell_refs.append({"name": name, "base": match.group(1),
+                                      "index": int(match.group(2))})
+            for value in node.values():
+                collect_cell_refs(value)
+        elif isinstance(node, list):
+            for value in node:
+                collect_cell_refs(value)
+    collect_cell_refs(processes)
+    unique_cell_refs = []
+    seen_cell_refs = set()
+    for ref in cell_refs:
+        key = (ref["name"], ref["base"], ref["index"])
+        if key not in seen_cell_refs:
+            seen_cell_refs.add(key)
+            unique_cell_refs.append(ref)
     return {
         "kind": "Module",
         "span": span,
@@ -34722,6 +34755,9 @@ def convert_module_sym(sm, inst):
         "processes": processes,
         "generates": generates,
         "others": others,
+        **({"readmemh": list(_SYM_READMEMH_PENDING)}
+           if _SYM_READMEMH_PENDING else {}),
+        **({"cell_refs": unique_cell_refs} if unique_cell_refs else {}),
         **({"properties": properties} if properties else {}),
     }
 

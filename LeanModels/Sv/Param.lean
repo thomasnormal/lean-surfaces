@@ -408,6 +408,9 @@ deriving Repr, BEq, Inhabited
 /-- A port / variable / net declaration with a symbolic type. Ports come
 first (port-list order), then module-body declarations — the M0 decl
 order. -/
+/- The symbolic frontend may flatten a fixed unpacked cell into a scalar
+declaration for a legacy store.  Keep the source cell identity as metadata so
+the memory route never has to recover it by parsing the display name. -/
 structure PDecl where
   name : String
   type : PType
@@ -423,6 +426,25 @@ structure PDecl where
   isOutput : Bool := false
   isNet : Bool := false
   init : Option PExpr := none
+  /-- Base array name when this declaration is one flattened cell. -/
+  flatBase : Option String := none
+  /-- Constant unpacked index of a flattened one-rank cell. -/
+  flatIndex : Option Int := none
+deriving Repr, BEq, Inhabited
+
+/-- A literal-file `$readmemh` task retained as module metadata.  The
+statement surface stays frozen; the memory adapter consumes this typed record
+instead of reparsing an Unsupported message. -/
+structure PReadmemh where
+  file : String
+  target : String
+  words : List String
+deriving Repr, BEq, Inhabited
+
+structure PCellRef where
+  name : String
+  base : String
+  index : Int
 deriving Repr, BEq, Inhabited
 
 /-- Assignment targets of the semantic tier: whole signal, bit/element
@@ -629,6 +651,10 @@ structure PDesign where
   others : List (String × String) := []
   /-- Concurrent assertions retained from the source envelope. -/
   properties : List PProperty := []
+  /-- Structured literal-file memory tasks (the process marker remains in
+  `processes` for the ordinary route's loud refusal). -/
+  readmemh : List PReadmemh := []
+  cellRefs : List PCellRef := []
 deriving Repr, BEq, Inhabited
 
 /-! ## The instantiation environment -/

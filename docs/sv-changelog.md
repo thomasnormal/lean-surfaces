@@ -381,7 +381,7 @@ cycles without an acyclic settle contract remain loud.
 
 The symbolic extractor now retains the shorthand `mem [N]` as a source-shaped
 `UnpackedDecl` with the `[0:N-1]` bound, and retains `mem[i]` as an `ArraySel`
-path rather than a default-point cell. `Kernel/MemCycle` connects that form to
+path rather than a default-point cell. `MemCycle` connects that form to
 the fuel-free `MemState` storage through a provisional cycle view: scalar
 conditions, direct cell reads, scalar or cell NBAs, asynchronous reset, and a
 continuous scalar read are covered by the `async_mem_fifo` clean-room fixture.

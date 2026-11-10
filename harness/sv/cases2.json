@@ -72681,6 +72681,19 @@
       "measured": "2026-11-09: a literal-file $readmemh is retained as a source-shaped initial task, loaded into the memory E state at time zero, and matches Icarus; missing files, short files, and x/z digits remain loud at extraction."
     },
     {
+      "name": "memory_comb_source_order_refuse",
+      "example": "sem2/mem_order",
+      "top": "mem_order",
+      "memory": true,
+      "refusal": "Schedule:comb-source-order",
+      "signals": ["a", "y"],
+      "stimulus": [
+        {"a": "00000101"},
+        {"a": "00000111"}
+      ],
+      "measured": "2026-11-09: IEEE 1800-2023 §10.3/§4.5 permits the later continuous driver to wake the earlier downstream driver; the source-order memory adapter cannot settle this chain in one pass and refuses it before returning a stale value."
+    },
+    {
       "name": "sva_property_retained",
       "example": "sem2/sva_property_retained",
       "top": "sva_property_retained",

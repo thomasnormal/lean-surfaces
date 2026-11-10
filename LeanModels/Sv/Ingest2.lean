@@ -89,6 +89,8 @@ deriving instance Lean.ToExpr for EnumVal
 deriving instance Lean.ToExpr for PEnumMember
 deriving instance Lean.ToExpr for PEnumType
 deriving instance Lean.ToExpr for PDecl
+deriving instance Lean.ToExpr for PReadmemh
+deriving instance Lean.ToExpr for PCellRef
 deriving instance Lean.ToExpr for PStmt
 deriving instance Lean.ToExpr for PProcess
 deriving instance Lean.ToExpr for PSvaValue
@@ -737,6 +739,8 @@ def parsePDecl (j : Json) : Except String PDecl := do
       let twoState := match getOptField j "two_state" with
         | none => false
         | some value => value.getBool?.toOption.getD false
+      let flatBase := getOptStr j "flat_base"
+      let flatIndex := getOptInt j "flat_index"
       match kind with
       | "Port" =>
           -- An OUTPUT variable port's declaration initializer (`output
@@ -751,21 +755,19 @@ def parsePDecl (j : Json) : Except String PDecl := do
           | "in" =>
               if init.isSome then throw "input port with an initializer (a port default) is outside the tier"
               return { name, type := ty, unpackedDims := unpacked, isSigned, twoState, isInput := true }
-          | "out" => return { name, type := ty, unpackedDims := unpacked, isSigned, twoState, isOutput := true, init }
+          | "out" => return { name := name, type := ty, unpackedDims := unpacked, isSigned := isSigned, twoState := twoState, isOutput := true, init := init, flatBase := flatBase, flatIndex := flatIndex }
           | d => throw s!"unknown port dir {d.quote}"
       | "UnpackedDecl" =>
           let init ← match getOptField j "init" with
             | none => pure none
             | some ji => pure (some (← withCtx "init" (parsePExpr ji)))
           let dir? := getOptStr j "dir"
-          return PDecl.mk name ty unpacked isSigned twoState
-            (dir? == some "in") (dir? == some "out")
-            (((getOptField j "net").bind (·.getBool?.toOption)).getD false) init
+          return { name := name, type := ty, unpackedDims := unpacked, isSigned := isSigned, twoState := twoState, isInput := dir? == some "in", isOutput := dir? == some "out", isNet := ((getOptField j "net").bind (·.getBool?.toOption)).getD false, init := init, flatBase := flatBase, flatIndex := flatIndex }
       | "Var" | "Net" =>
           let init ← match getOptField j "init" with
             | none => pure none
             | some ji => pure (some (← withCtx "init" (parsePExpr ji)))
-          return { name, type := ty, unpackedDims := unpacked, isSigned, twoState, isNet := kind == "Net", init }
+          return { name := name, type := ty, unpackedDims := unpacked, isSigned := isSigned, twoState := twoState, isNet := kind == "Net", init := init, flatBase := flatBase, flatIndex := flatIndex }
       | other => throw s!"unknown declaration kind {other.quote}"
 
 /-- The optional `signed` field of a `ParameterDecl`/`LocalParam` (the
@@ -796,6 +798,8 @@ def parseModule2 (j : Json) : Except String PDesign :=
     let mut generates : List GenItem := []
     let mut others : List (String × String) := []
     let mut properties : List PProperty := []
+    let mut readmemh : List PReadmemh := []
+    let mut cellRefs : List PCellRef := []
     let packageJson ← match getOptField j "package_params" with
       | none => pure #[]
       | some pj => pj.getArr? |>.mapError (fun _ => "field 'package_params' is not an array")
@@ -875,11 +879,28 @@ def parseModule2 (j : Json) : Except String PDesign :=
       properties := properties ++
         [{ name := qname, kind := qkind, clock := qclock, text := qtext,
            ast := qast, path := qpath }]
+    let readmemhJson ← match getOptField j "readmemh" with
+      | none => pure #[]
+      | some rj => rj.getArr? |>.mapError (fun _ => "field 'readmemh' is not an array")
+    for rj in readmemhJson do
+      let file ← getStrField rj "file"
+      let target ← getStrField rj "target"
+      let words ← (← (← getField rj "words").getArr?).toList.mapM fun w =>
+        w.getStr?.mapError (fun _ => "readmemh word is not a string")
+      readmemh := readmemh ++ [{ file := file, target := target, words := words }]
+    let cellRefsJson ← match getOptField j "cell_refs" with
+      | none => pure #[]
+      | some cj => cj.getArr? |>.mapError (fun _ => "field 'cell_refs' is not an array")
+    for cj in cellRefsJson do
+      let name ← getStrField cj "name"
+      let base ← getStrField cj "base"
+      let index ← getIntField cj "index"
+      cellRefs := cellRefs ++ [{ name := name, base := base, index := index }]
     for oj in (← (← getField j "others").getArr?) do
       match ← getKind oj with
       | "Unsupported" => others := others ++ [← parseUnsupportedFields oj]
       | other => throw s!"unknown module member kind {other.quote}"
-    return { name, params, localParams, packageParams, enums, decls, processes, generates, others, properties }
+    return { name := name, params := params, localParams := localParams, packageParams := packageParams, enums := enums, decls := decls, processes := processes, generates := generates, others := others, properties := properties, readmemh := readmemh, cellRefs := cellRefs }
 
 /-- An sv-0.2 envelope: parametric design + provenance metadata. -/
 structure Envelope2 where

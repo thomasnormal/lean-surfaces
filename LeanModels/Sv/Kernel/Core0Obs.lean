@@ -1,5 +1,6 @@
 import LeanModels.Sv.Kernel.Core0Comb
 import LeanModels.Sv.Kernel.Core0Proc
+import LeanModels.Sv.Kernel.Obs_E0
 import LeanModels.Sv.Mono2
 import LeanModels.Sv.Observe
 
@@ -49,34 +50,8 @@ open LeanModels.Sv.Observe
 
 set_option autoImplicit false
 
-/-! ## The backend -/
-
-/-- The entry of slot `t`: slot `2c` carries entry `c`, slot `2c + 1` none. -/
-def slotEntry (env : List SvState) (t : Nat) : SvState :=
-  if t % 2 = 0 then (env[t / 2]?).getD [] else []
-
-/-- **A behaviour of E-core-0** under an environment: slot `t` closes at `cfg t`, from time zero,
-each slot opened by its input events. -/
-def Behaves0 (E : Elab) (env : List SvState) (ch : Choice) (cfg : Nat → Config) : Prop :=
-  SlotCloses E ch (Config.start E (slotEntry env 0)) (cfg 0) ∧
-  ∀ t, SlotCloses E ch (Config.nextSlot E (cfg t) (slotEntry env (t + 1))) (cfg (t + 1))
-
-/-- **E-core-0 as an `ESig`** (agent P's signature): two slots per cycle, the sample slot odd. -/
-def E0 : ESig where
-  Elab := Elab
-  Choice := Choice
-  Env := List SvState
-  Config := SvState
-  iface e := ⟨inputSigs e.toDesign2, outputSigs e.toDesign2⟩
-  Disciplined _ _ := True
-  read := SvState.lookup
-  Behaves e env ch b := ∃ cfg, Behaves0 e env ch cfg ∧ ∀ t, b t = e.view (cfg t).store
-  preponed b t := b (t - 1)
-  cycles env := env.length
-  edgeSlot _ c := 2 * c + 1
-
-/-- **`Obs_E0`**: E-core-0 as an observation backend. -/
-abbrev Obs_E0 : ObservationModel := Obs_E E0
+/- The E0 backend (`slotEntry`, `Behaves0`, `E0`, `Obs_E0`) is defined
+once in `Obs_E0`; this module supplies its existing transport proofs. -/
 
 /-! ## Input events on the store -/
 
@@ -1062,19 +1037,8 @@ theorem not_included_run2_E0 {E : Elab} {rank : Nat → Nat} (hS : Settles E E.t
 
 /-! ## The elaboration of a `Design2` into E-core-0 (R-DESIGN2's `toE`) -/
 
-/-- A `Design2` process as an E-core-0 process. Clocked and loud processes become loud
-`always_comb` bodies: they are outside E-core-0 and refuse when run. -/
-def Proc0.ofProcess2 : Process2 → Proc0
-  | .assign t e => .assign t e
-  | .alwaysComb b => .comb b
-  | .unsupported k x => .comb (.unsupported k x)
-  | .alwaysFF _ _ | .alwaysPlain _ _ | .alwaysFFR _ _ _ _ =>
-      .comb (.unsupported "always_ff" "clocked processes are outside E-core-0")
-
-/-- **`toE`**: the E-core-0 design of a `Design2`: the same name and declarations, every process
-its E-core-0 image. -/
-def Elab.ofDesign2 (d : Design2) : Elab :=
-  { decls := d.decls, procs := (d.processes.toList.map Proc0.ofProcess2).toArray, name := d.name }
+/- The source-preserving entry points `Proc0.ofProcess2` and
+`Elab.ofDesign2` are defined once in `Core0E`. -/
 
 /-- The round trip: when every process is an assign or an `always_comb`, the corresponding
 Design2 of `toE d` is `d`. -/

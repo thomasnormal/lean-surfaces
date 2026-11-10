@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Removed duplicate E core and observation definitions. Standalone E0,
+  clocked E1 and the retirement bridge now share the same definitions and
+  can be imported together; existing semantic rules and statements remain.
+
 - Added an exact-width partial RV32 RVFI port adapter for E observations.
   Unknown valid bits and active trap/halt/handler-entry rows refuse; known
   invalid cycles remain explicit bubbles with irrelevant payloads.

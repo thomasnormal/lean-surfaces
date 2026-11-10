@@ -107,18 +107,26 @@ uses the chronological range and an order-indexed relation from the start.
 
 ## Observation-interface integration
 
-The bridge imports `Sv.Observe`, the interface currently imported by the
-clocked E backend `Kernel.Core1Obs`. Its theorem uses only E's signature and
-observations. That module still contains legacy interpreter transports;
-none is used as a meaning or as a proof premise here.
+The bridge imports the common `Sv.ObserveE` interface. `Sv.Observe` imports
+that same interface and adds the existing legacy transports. Both E0 and E1
+therefore use one `ESig`, port-sample type and observation relation.
 
-At this base, importing `Sv.ObserveE` beside `Kernel.Core1Obs` fails because
-both `Observe` and `ObserveE` define the same observation names. Similarly,
-`Kernel.Core0` and `Kernel.Core0E` still duplicate the same kernel
-definitions in separate import cones. These are migration handoff issues
-reported to the owner. This change neither adds another copy nor edits
-the shared interface. The E0-only cone cannot import this clocked-interface
-bridge until that duplication is removed.
+`Kernel.Core0E` holds the sole core definitions; `Kernel.Core0` re-exports
+them for existing proof imports. `Kernel.Obs_E0` defines the E0 backend once,
+and `Core0Obs` adds its existing transport proofs. The duplicate definitions
+were removed after their common source was checked for equality. The store,
+body evaluator, scheduler, configuration and behaviour definitions retain
+their existing meanings. Legacy proof dependencies remain explicit in
+their transport modules. The declaration audit preserves all 840 prior
+public names and types after erasing binder labels and metadata; every
+executable body is identical except E0's port-helper references, which the
+integration regression proves definitionally equal.
+
+[`e_shared_core/agree.lean`](../Examples/system-verilog/e_shared_core/agree.lean)
+imports both executors, the old transport proofs, and this retirement bridge
+together. It checks that the concrete RVFI decoder can be supplied to the
+safety theorem with either E0 or the actual clocked E1 backend. This is an
+integration regression, not a claim that a real core inhabits either profile.
 
 ```sh
 LEAN_NUM_THREADS=2 nice -n 19 lake build LeanModels.Refine.RvfiE

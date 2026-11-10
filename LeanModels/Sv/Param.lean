@@ -496,6 +496,10 @@ inductive PProcess where
   | alwaysFF (clock : String) (body : PStmt)
   | alwaysPlain (clock : String) (body : PStmt)
   | alwaysComb (body : PStmt)
+  /-- Plain `always @*`: the parser's implicit event control and original
+  body, retained for E. It first waits, unlike `always_comb` (§9.4.2.2).
+  The frozen cycle views have no corresponding process and stay loud. -/
+  | alwaysImplicit (body : PStmt)
   | assign (target : String) (value : PExpr)
   | assignL (target : PLhs) (value : PExpr)
   | alwaysFFR (clock rstn : String) (body : PStmt) (resetHigh : Bool)
@@ -2283,6 +2287,8 @@ def instProcess (env : IEnv) : PProcess → Process
   | .alwaysFF c b => .alwaysFF c (instStmt env b)
   | .alwaysPlain c b => .alwaysPlain c (instStmt env b)
   | .alwaysComb b => .alwaysComb (instStmt env b)
+  | .alwaysImplicit _ => .unsupported "ProceduralBlockSymbol:Always"
+      "source-level event-controlled always is retained; the frozen process AST has no event-list constructor"
   | .assign t v => .assign t (instExpr env (env.widths.lookup t) v)
   | .assignL .. => .unsupported "T2:AssignL" "select target outside the M0 tier"
   | .alwaysFFR .. => .unsupported "T2:AlwaysFFR" "async reset outside the M0 tier"

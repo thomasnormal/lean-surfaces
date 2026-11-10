@@ -1336,5 +1336,41 @@ cycles
 followed by 78 released cycles) with all external inputs zero, and returns ok
 for a 20-cycle reset/ADDI/EBREAK memory stimulus with mem_ready=1.  No new
 executable wall appears in either probe.  This is loader and concrete-cycle
-evidence only; the symbolic ADDI invariant and the ordinary cpuregs route
+evidence only.  The 80-cycle low-level result is now **UNVALIDATED**: the E
+Step 1 guarded runner refuses this design before execution; see the current
+re-probe below.  The symbolic ADDI invariant and the ordinary cpuregs route
 remain open.
+
+## 2026-11-10 re-probe after the E Step 1 schedule guard
+
+The unchanged pinned source was extracted again on public master
+`44335a37ab653a4e95566bee86b9a5b0217f6bca`.  The source SHA-256 remains
+`0836050971b3c6cdd28ac3b1e5719a67fb645161912bef1e472e63995ceb0622`; the
+fresh envelope is SHA-256
+`a46659cb43aa81338a045ebb70a1382335ade6ad0c0d7160fb0671471eeab3a7`.
+
+The ordinary route still refuses first at `picorv32.v:203`:
+
+```text
+unsupported "Instantiate"
+  "decl 'cpuregs': unpacked array storage outside E (UnpackedDecl:memory)"
+```
+
+The memory route constructs 223 scalar declarations, one unpacked memory
+declaration, no initializers, and 52 processes.  Its guarded runner refuses
+before executing the trace with the first admission report:
+
+```text
+Schedule:preemptive: processes 7 and 42 may observe an intermediate write under IEEE 1800-2023 §4.7; the memory route requires disjoint cross-process read/write windows
+```
+
+The next guard report, reached after bypassing that check, is also retained:
+
+```text
+Schedule:comb-source-order: comb process 9 reads a signal written by later comb process 25; the source-order memory pass would need a second settle pass under IEEE 1800-2023 §10.3/§4.5
+```
+
+The low-level executor still returns `ok states=80` when both guards are
+manually bypassed, but that result is **UNVALIDATED** and is not a usable
+PicoRV32 trace.  The symbolic ADDI invariant remains parked until the E
+memory route admits the design.

@@ -502,3 +502,16 @@ N=32. The doubling ratios are about 3.5x (roughly N^1.8 over these points)
 and remain above the run2 reference at larger widths; this is a measurement
 for executor planning, not a claim that the plain E-core-0 fold meets the 2x
 bar.
+
+The kernel profile explains the E-core-0 cost. On the same ripple full-carry
+shape at N = 2, E unfolded 113 declarations, including `List.casesOn` 18,596
+times, `Nat.casesOn` 15,942 times, `List.get`/`Fin.casesOn` 13,667 times,
+`Array.getInternal` 9,537 times, and `Option.getD` 7,932 times.
+`Elab.writeWin`/`writeWins`/`Store.set` each appeared about 206 times. The
+run2 row unfolded 60 declarations; its largest `List.rec` count was 2,047.
+The dominant cost is therefore repeated LVec and list-backed array
+construction and lookup along the function-valued store's read paths, rather
+than the number of E micro-steps or the store write closure itself. The N = 8
+kernel profile timed out at about 413 seconds wall time (306 seconds CPU), so a
+plain E-core-0 fold does not meet the 2x decision row. The array/VarId
+executor remains the route to optimize and prove against `exec`.

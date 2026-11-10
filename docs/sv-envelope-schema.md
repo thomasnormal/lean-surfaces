@@ -1368,17 +1368,12 @@ is refused at instantiation, 2026-10-28), in a READ position, the extractor emit
 `ArraySel` with `indices: []` and `part.left` an ordinary VALUE expression
 (converted outside the symbolic constant position, so its operators keep
 their value-tier meaning and self-determined width); `part.right` stays a
-symbolic constant. Lean (`dynPartPlan`, `dynBaseRead`) reads the base by
-its self-determined width: below 32 bits UNSIGNED (`dynPartRead`); at
-EXACTLY 32 bits as a two's-complement `int` (`dynPartRead32`, 2026-10-28 —
-Icarus 12.0 and Yosys 0.53 both read a 32-bit index that way, so
-`v[s - 2 +: 4]`, whose unsized `2` makes the base 32-bit unsigned, at
-`s = 0` is `v[1:-2]`: rows `dyn32`, verifier probe `pa.sv`). A base WIDER
-than 32 bits is `Unsupported` `RangeSelectExpression:dynamic-wide-base`
-(and `Expr2.unsupported "ArraySel:dynamic"` in Lean should one arrive):
-Icarus truncates such an index to its low 32 bits, Yosys does not — a 40-bit
-base `2^32 + 1` reads `v[4:1]` in Icarus and all x in Yosys. Either reading lowers the select to
-a shift of the x-padded vector: every selected bit outside the declared
+symbolic constant. Lean (`dynPartPlan`, `dynBaseRead`) reads each admitted
+unsigned base at its self-determined width, including 32 bits. For example,
+`s - 2` at `s = 0` wraps to `32'hfffffffe` and is out of range. A signed
+base and a base wider than 32 bits remain named Unsupported boundaries.
+The read lowers the select to a shift of the x-padded vector: every selected
+bit outside the declared
 range reads x, and an x/z base reads all x (rows `dyn32` and `partsel_dyn*`; the `partsel*`
 rows, which first pinned it, are loud-refusal rows since round 6 because
 their CONSTANT-base selects overhang the vector, and Xcelium reads this

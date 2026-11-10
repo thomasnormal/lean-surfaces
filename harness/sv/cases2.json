@@ -3,6 +3,61 @@
   "fuel": 2000,
   "cases": [
     {
+      "name": "unsigned_part_negative_range_refuse",
+      "example": "sem2/unsigned_part_base",
+      "top": "unsigned_part_negative_range",
+      "refusal": "ArraySel:dynamic",
+      "signals": [
+        "y"
+      ],
+      "stimulus": [
+        {
+          "w": "11010110",
+          "bu": "11111111111111111111111111111110"
+        }
+      ]
+    },
+    {
+      "name": "unsigned_part_base",
+      "example": "sem2/unsigned_part_base",
+      "top": "unsigned_part_base",
+      "signals": [
+        "by_sub",
+        "by_base"
+      ],
+      "stimulus": [
+        {
+          "v": "11010110",
+          "s": "0000",
+          "bu": "11111111111111111111111111111110"
+        },
+        {
+          "s": "0001",
+          "bu": "11111111111111111111111111111111"
+        },
+        {
+          "s": "0010",
+          "bu": "00000000000000000000000000000000"
+        },
+        {
+          "s": "0011",
+          "bu": "00000000000000000000000000000001"
+        },
+        {
+          "s": "0110",
+          "bu": "00000000000000000000000000000100"
+        },
+        {
+          "s": "x000",
+          "bu": "000000000000000000000000000000x0"
+        },
+        {
+          "s": "z000",
+          "bu": "000000000000000000000000000000z0"
+        }
+      ]
+    },
+    {
       "name": "reset_event_iff_refuse",
       "example": "sem2/reset_event_iff",
       "top": "reset_event_iff",

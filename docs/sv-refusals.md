@@ -540,7 +540,6 @@ A register of refusals cannot list what nobody refuses. These are the shapes the
 
 | hole | what | source |
 |---|---|---|
-| 32-bit unsigned run-time part-select base | read as signed by the model (dynPartRead32) while Xcelium and the typing rules read it unsigned (8 dyn32 cells). Options: change the value (forbidden in round 6) or refuse. | docs/sv-xcelium-audit.md 6.4 |
 | Shift counts wider than 32 bits | Xcelium truncates a shift count silently and nothing refuses it. (Bit-select indexes are refused, Select:wide-index, including the index of a run-time unpacked-array element where the extractor admits one (the lane-A verifier's probe wi_arr), and part-select bases are refused as RangeSelectExpression:dynamic-wide-base.) | docs/sv-xcelium-audit.md 6.4 |
 | PortConn:net-width narrower than the verified rule | full-range part-select or constant bit-select of a net actual, signed net, another instance's output net, tri1 formal, the net-collapse effect of a second mismatched connection and the OUTPUT-direction twin are still admitted. | LeanModels/Sv/Hier2.lean docstring; docs/sv-xcelium-audit.md 6.1 item 7 |
 | Self-read guard on the M0 family | PDesign.instantiateD (M0) is not covered by the self-read guard (reachable only at a non-default point of a parametric self-reading body). | docs/sv-charter.md WP4 Gaps |

@@ -481,11 +481,6 @@
  ],
  "holes": [
   {
-   "name": "32-bit unsigned run-time part-select base",
-   "text": "read as signed by the model (dynPartRead32) while Xcelium and the typing rules read it unsigned (8 dyn32 cells). Options: change the value (forbidden in round 6) or refuse.",
-   "source": "docs/sv-xcelium-audit.md 6.4"
-  },
-  {
    "name": "Shift counts wider than 32 bits",
    "text": "Xcelium truncates a shift count silently and nothing refuses it. (Bit-select indexes are refused, Select:wide-index, including the index of a run-time unpacked-array element where the extractor admits one (the lane-A verifier's probe wi_arr), and part-select bases are refused as RangeSelectExpression:dynamic-wide-base.)",
    "source": "docs/sv-xcelium-audit.md 6.4"

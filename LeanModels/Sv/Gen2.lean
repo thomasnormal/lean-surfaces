@@ -1382,7 +1382,8 @@ theorem instExpr2_arrayPart (ctx : Option Nat) {n : String} {is : List PExpr}
 
 /-- A part select with a RUN-TIME base (`v[sel +: 4]`) reads through
 `dynBaseRead`, its base instantiated at its own self-determined width `bw`
-(`dynPartRead` below 32 bits, `dynPartRead32` at 32, loud above). -/
+(`dynPartRead` below 32 bits, its unsigned `dynPartRead32` alias at 32,
+loud above). -/
 theorem instExpr2_arrayPart_dyn (ctx : Option Nat) {n : String} {is : List PExpr}
     {m : PartMode} {a b : PExpr} {w q c bw : Nat}
     (h : dynPartPlan env n is m a b = some (.ok (w, q, c)))
@@ -1396,8 +1397,7 @@ theorem dynBaseRead_lt32 {n : String} {w q c bw : Nat} {e : Expr2} (h : bw < 32)
     dynBaseRead n w q c bw e = dynPartRead n w q c e := by
   simp [dynBaseRead, h]
 
-/-- A run-time base of exactly 32 bits is read as a two's-complement `int`
-(`dynPartRead32`). -/
+/-- A run-time base of exactly 32 bits is read unsigned (`dynPartRead32`). -/
 @[simp] theorem dynBaseRead_32 {n : String} {w q c : Nat} {e : Expr2} :
     dynBaseRead n w q c 32 e = dynPartRead32 n w q c e := by
   simp [dynBaseRead]

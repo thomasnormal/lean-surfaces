@@ -1,5 +1,13 @@
 # [unreleased] — 2026-11-04 (an Sv landing builds the comb chain above it)
 
+## Unsigned indexed part-select bases — 2026-11-10
+
+The E frontend now reads an admitted 32-bit unsigned run-time part-select
+base as unsigned. Wrapped expressions such as `s - 2` at `s = 0` are out of
+range instead of being sign-extended into a negative index. The source
+fixture covers wrapped, in-range and x/z bases; signed dynamic bases and
+negative-right-bound geometry remain explicit refusals.
+
 ## Guarded asynchronous reset events — 2026-11-10
 
 The symbolic loader now retains an explicit `AlwaysPosedge:reset-iff`

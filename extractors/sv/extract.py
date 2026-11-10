@@ -14280,8 +14280,7 @@ def _sym_dynamic_part_select(sm, e, cname, symbol, part, part_node, indices, dim
     if part[1].type.isSigned:
         return unsupported(sm, e, cname + ":dynamic-signed-base")
     if int(part[1].type.bitWidth) > 32:
-        # Icarus 12.0 truncates a wider index to its low 32 bits, Yosys 0.53
-        # reads all of it (measured 2026-10-28): no consensus to model.
+        # Wider run-time bases are not yet modeled by this select tier.
         return unsupported(sm, e, cname + ":dynamic-wide-base")
     base = _convert_expr(sm, part[1])
     if not _sym_tree_supported(base):

@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Fixed the TinyXML-2 coverage caller's C++ runtime linkage so its
+  provenance-verified native calls can run when the system runtime is older.
+
 - Corrected C++ coverage reporting: independent handwritten fixtures are
   witnesses, not source-derived matches. TinyXML-2 callable matches require
   the captured source and literal hashes and the recorded ABI and call binding.

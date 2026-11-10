@@ -32,7 +32,7 @@ the active depth explicit; the public arrow below is obtained by instantiating
 it at depth zero and applying the ordinary boundary wrapper. -/
 set_option maxHeartbeats 1200000 in
 private theorem fib_depth (d n : Nat)
-    (hlim : d + fibBound n < pythonRecursionLimit) :
+    (hlim : d + fibBound n + 1 < pythonRecursionLimit) :
     ∃ f₀, ∀ F, f₀ ≤ F →
       callIn fib F ({heap := #[], globals := [], callDepth := d} : World)
         "fib" #[.int (n : Int)] =
@@ -57,16 +57,18 @@ private theorem fib_depth (d n : Nat)
           intro h; simp [pythonTopCallDepth, pythonRecursionLimit] at h hlim; omega
         have hguard : ¬ (999 ≤ d) := by
           simp [fibBound, pythonRecursionLimit] at hlim ⊢; omega
+        have hcompare : ¬ (998 ≤ d) := by
+          simp [fibBound, pythonRecursionLimit] at hlim; omega
         refine ⟨32, ?_⟩
         intro F hF
         obtain ⟨c, hc⟩ := Nat.exists_eq_add_of_le hF
         subst hc
         rw [Nat.add_comm, callIn.eq_2]
-        py_simp [fib, fibSpec, hz, hd, htop, hguard,
+        py_simp [fib, fibSpec, hz, hd, htop, hguard, hcompare,
           pythonTopCallDepth, pythonRecursionLimit, Run.finishCallAt,
           Run.leaveCallDepth, Run.toPublic, Run.toPublic_ok, RVal.freezeB]
     | n + 2 =>
-      have hstep : d + 1 + fibBound n < pythonRecursionLimit := by
+      have hstep : d + 1 + fibBound n + 1 < pythonRecursionLimit := by
         cases n with
         | zero => simp [fibBound] at hlim ⊢; omega
         | succ n => simp [fibBound] at hlim ⊢; omega
@@ -122,9 +124,13 @@ private theorem fib_depth (d n : Nat)
         have hguard : ¬ (999 ≤ d) := by
           have hd2 : d + 2 < pythonRecursionLimit := by
             cases n with
-            | zero => simpa [fibBound] using hlim
+            | zero => simp [fibBound] at hlim ⊢; omega
             | succ n => simp [fibBound] at hlim ⊢; omega
           simp [pythonRecursionLimit] at hd2 ⊢; omega
+        have hcompare : ¬ (998 ≤ d) := by
+          cases n with
+          | zero => simp [fibBound, pythonRecursionLimit] at hlim; omega
+          | succ n => simp [fibBound, pythonRecursionLimit] at hlim; omega
         refine ⟨f₁ + f₂ + 32, ?_⟩
         intro F hF
         obtain ⟨c, hc⟩ := Nat.exists_eq_add_of_le hF
@@ -148,7 +154,7 @@ private theorem fib_depth (d n : Nat)
             .ok ({heap := #[], globals := [], callDepth := d + 1} : World)
             (.int (fibSpec n)) := by simpa [fib] using h₂'
         simp only [fib] at h₁'' h₂''
-        py_simp [fib, fibSpec, hz, hd, htop, htopb, htop1001, hguard, hn1, hn2,
+        py_simp [fib, fibSpec, hz, hd, htop, htopb, htop1001, hguard, hcompare, hn1, hn2,
           show ¬((n : Int) + 2 < 2) by omega,
           pythonTopCallDepth, pythonRecursionLimit, Run.finishCallAt,
           Run.leaveCallDepth, Run.toPublic, Run.toPublic_ok, RVal.freezeB,
@@ -178,7 +184,7 @@ set_option warning.simp.varHead false in
 step case `py_lift` puts the two IH runs in fuel-threshold form
 (`CallsTo.at_least`, i.e. FuelMono), so a single symbolic execution of the
 body closes the goal by conditional rewriting. -/
-theorem fib_total (k : Nat) (hk : k < pythonRecursionLimit) : fib(k) ==> fibSpec k := by
+theorem fib_total (k : Nat) (hk : k + 1 < pythonRecursionLimit) : fib(k) ==> fibSpec k := by
   obtain ⟨f₀, hf⟩ := fib_depth 0 k (by
     cases k with
     | zero => simp [fibBound, pythonRecursionLimit]
@@ -197,7 +203,7 @@ set_option warning.simp.varHead false in
 (Surface.lean), instantiated at `n.toNat` (the total theorem is
 `Nat`-indexed). -/
 theorem fib_spec (n : Int) (hn : 0 ≤ n)
-    (hnDepth : n.toNat < pythonRecursionLimit) {fuel : Nat} {r : Val}
+    (hnDepth : n.toNat + 1 < pythonRecursionLimit) {fuel : Nat} {r : Val}
     (h : callFunction fib "fib" #[.int n] fuel = .ok r) :
     r = .int (fibSpec n.toNat) := by
   py_corollary [fib_total n.toNat hnDepth]
@@ -205,7 +211,7 @@ theorem fib_spec (n : Int) (hn : 0 ≤ n)
 set_option warning.simp.varHead false in
 /-- The typed surface form, another `py_corollary` of `fib_total`. -/
 theorem fib_correct (n r : PyInt) (hn : 0 ≤ n)
-    (hnDepth : n.toNat < pythonRecursionLimit) (h : fib(n) ⇓ r) :
+    (hnDepth : n.toNat + 1 < pythonRecursionLimit) (h : fib(n) ⇓ r) :
     r = fibSpec n.toNat := by
   py_corollary [fib_total n.toNat hnDepth]
 

@@ -550,6 +550,7 @@ structure BatchJob where
   args : Array Val
   fuel : Option Nat
   clock : Option (List Int)
+  recursionBase : Option Nat
 
 /-- Parse one jobs-file line. Every failure message carries the line, so
 a bad row in a 615-row file is findable without counting. -/
@@ -583,7 +584,15 @@ def parseJob (line : String) : Except String BatchJob := do
           | .error _ => throw s!"\"clock\" entries must be integers: {line}"
         pure (some readings.toList)
       | .error _ => throw s!"\"clock\" must be an array of integers: {line}"
-  return { path, fname, args, fuel := fuel?, clock := clock? }
+  let recursionBase? ← match j.getObjVal? "recursion_base" with
+    | .error _ => pure Option.none
+    | .ok d =>
+      match d.getNat? with
+      | .ok n =>
+        if n < pythonRecursionLimit then pure (some n)
+        else throw s!"\"recursion_base\" must be below the recursion limit: {line}"
+      | .error _ => throw s!"\"recursion_base\" must be a natural number: {line}"
+  return { path, fname, args, fuel := fuel?, clock := clock?, recursionBase := recursionBase? }
 
 /-- `--batch` driver: one canonical line per job, in order, flushed per
 line; envelopes cached by path; runner-level failures are per-row
@@ -626,12 +635,9 @@ def runBatchMode (jobsPath : String) (defaultFuel : Nat) (obs : Bool)
             IO.eprintln s!"leanmodels-run --batch: {e}"
             stdout.putStrLn ("{\"status\":\"runner-error\",\"msg\":" ++ jsonStr e ++ "}")
         | .ok (m, job) =>
-            -- `callIn` rather than `callFunction`, and it is the SAME run:
-            -- the public wrapper IS `Run.toPublic ∘ callIn ∘ thaw` over a
-            -- fresh world, and `callFunction m f args fuel` is definitionally
-            -- `callFunctionClock m f args [] fuel` (the `clock := []` default).
-            -- Unrolling it one step is what keeps the post-call WORLD, which
-            -- `Run.toPublic` erases and `batchObs` reports.
+            -- Execute `callIn` directly to retain the post-call world. With
+            -- no explicit recursion base this is the same fresh-world run as
+            -- `callFunctionClock`; an explicit base selects an entry context.
             let fuel := job.fuel.getD defaultFuel
             let thawed := RVal.thawArgs job.args
             -- THE INTERPRETER. `callInMono` had `callIn`'s type by construction
@@ -642,10 +648,11 @@ def runBatchMode (jobsPath : String) (defaultFuel : Nat) (obs : Bool)
             -- the theorem that `ofHalt raw` IS what this line used to compute
             -- -- so the class is bought without running the interpreter twice
             -- and without the two answers being able to drift.
-            let w0 := { initWorld m with clock := job.clock.getD [] }
+            let w0 := { { initWorld m with clock := job.clock.getD [] } with
+              callDepth := job.recursionBase.getD 0 }
             if trunk then
-              -- `--proof-interpreter`: the trunk `callIn`, same world, same
-              -- thawed arguments — so this line is `callFunctionClock`'s.
+              -- `--proof-interpreter`: the trunk `callIn`, with the same
+              -- explicit entry context and thawed arguments as the runner.
               if proofCellGeneratorUnsafe m job.fname then
                 stdout.putStrLn (resJson (.unsupported
                   "generator-expression walrus cell capture is outside the proof interpreter"))
@@ -653,7 +660,9 @@ def runBatchMode (jobsPath : String) (defaultFuel : Nat) (obs : Bool)
                 stdout.putStrLn
                   (resJson (Run.toPublic fuel (callIn m fuel w0 job.fname thawed)))
             else
-              let raw := Monadic.callInRaw m fuel w0 job.fname thawed
+              let raw := match job.recursionBase with
+                | some _ => Monadic.callInRawAt m fuel w0 job.fname thawed
+                | none => Monadic.callInRaw m fuel w0 job.fname thawed
               let run := Monadic.ofHalt raw
               stdout.putStrLn (if obs then
                                  batchResJson fuel job.args thawed

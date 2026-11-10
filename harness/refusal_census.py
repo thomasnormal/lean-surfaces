@@ -1321,7 +1321,8 @@ def whitelist_census(runner_cmd):
             continue
         env = os.path.splitext(case["file"])[0] + ".json"
         for args in case["args"]:
-            jobs.append(batch_job(env, case["function"], args, case.get("fuel")))
+            jobs.append(batch_job(env, case["function"], args, case.get("fuel"),
+                                  recursion_base=case.get("recursion_base")))
             keys.append(key)
     # `--observations` is what carries the model's OWN refusal class. Without
     # it the table below is a hand-maintained claim that nothing can falsify;

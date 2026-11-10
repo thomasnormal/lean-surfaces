@@ -36,6 +36,32 @@ DECIDED: require CPython 3.9 for the frontend and default oracle; never fall
 back to an unpinned Python executable or count a frontend refusal as a
 comparison disagreement.
 
+## 2026-11-10-pyfoundation-6 — finish CPython recursion units
+
+Ordinary user-class construction now enters a recursion unit around `type_call`,
+with the world restored on normal and exceptional exit; direct rich-comparison
+opcodes check their own unit. `World.callDepth` is the CPython thread count
+minus the module-frame unit, and a batch `recursion_base` supplies that count
+at entry. `construct_depth`, `truth_depth`, and the two catch-and-construct rows
+pin construction, comparison, and unwind; `fib_left` and `fib(999)` pin the
+comparison boundary. In the differential harness the explicitly recorded base
+is 2: CPython 3.9.25's thread state was measured at depth 4 inside the target,
+including the target frame, while the model increments the supplied base once.
+The two extra caller units come from the harness, so they must not be silently
+applied to the fresh-module `callFunction` boundary.
+
+This is not a complete recursion protocol. Nested container comparison,
+`repr`/`str`, generator and closure frames, namedtuple construction, other
+callable sites, and configurable entry limits remain to be traced through the
+CPython C paths and either counted or refused. `heapEq`'s cycle detection is
+separate from the thread recursion counter. The fib totality hypothesis is now
+`k + 1 < pythonRecursionLimit`: the previous `k < pythonRecursionLimit`
+claimed totality at `k = 999`, where CPython raises during a comparison.
+The generator comparison lemmas now require `w.callDepth < 999`: CPython 3.9
+also raises in a generator comparison at sufficiently deep resumption. The
+`depth_compare` differential row pins comparison failure at the boundary;
+modeling the extra recursion unit for generator resumption itself remains open.
+
 ## 2026-11-10-pyfoundation-5 — eager non-iterable genexp creation check
 
 The proof interpreter now checks a synthesized generator expression's outer

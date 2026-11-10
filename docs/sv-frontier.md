@@ -249,6 +249,12 @@ including an assertion and a cover property; the third covers `disable iff`
 with `$stable`. These are kernel acceptance rows over explicit pre/post
 traces; no Xcelium verdict is claimed by these source-shaped fixtures until
 the property-result harness is connected.
+
+The `sem2/sva_negedge` receipt extends that finite contract to a `negedge`
+clock and checks both `|=>` and a bare `req ##1 ack` cover sequence. Sequence
+concatenation now starts its right side at the left sequence's endpoint, so an
+explicit `##1` delay is counted once rather than receiving an accidental extra
+cycle. The E proof and the Verilator differential row agree over five cycles.
 Unbased unsized SVA literals (`'0`, `'1`, `'x`, and `'z`) are retained as
 width-directed fills in the expression tree. The clean-room
 `sem2/sva_unbased_literal` witness checks a passing and a failing sampled
@@ -372,7 +378,7 @@ the finite concurrent-property envelope, and `s_eventually` remains an
 unbounded liveness operator outside F1 by design. These boundaries preserve a
 named refusal until their E meaning and refinement rule exist.
 
-The current clean-room F1 proof battery contains 18 retained SVA fixtures,
+The current clean-room F1 proof battery contains 19 retained SVA fixtures,
 covering finite assertions, assumptions, disable conditions, bounded ranges,
 sampled values, boolean composition, reductions, selectors, temporal
 comparisons, and sampled-value predicates. A combined Lean 4.35 build of all

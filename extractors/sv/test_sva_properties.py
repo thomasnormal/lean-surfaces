@@ -42,6 +42,25 @@ endmodule
         self.assertFalse(any(n.get("sv_kind") == "ProceduralBlockSymbol:NoEventControl"
                              for n in module["others"]))
 
+    def test_negedge_and_nonoverlap_are_structured(self):
+        source = """module top(input logic clk, req, ack);
+  assert property (@(negedge clk) req |=> ack);
+  cover property (@(negedge clk) req ##1 ack);
+endmodule
+"""
+        with tempfile.TemporaryDirectory() as directory:
+            src = Path(directory) / "negedge.sv"
+            out = Path(directory) / "negedge.sv.json"
+            src.write_text(source)
+            extract.process_symbolic("top", [str(src)], [], str(out))
+            properties = json.loads(out.read_text())["design"]["modules"][0]["properties"]
+        self.assertEqual([p["ast"]["edge"] for p in properties],
+                         ["negedge", "negedge"])
+        self.assertEqual(properties[0]["ast"]["property"]["kind"],
+                         "SvaNonoverlap")
+        self.assertEqual(properties[1]["ast"]["property"]["body"]["kind"],
+                         "SvaConcat")
+
     def test_generate_scope_assertion_is_retained_at_module_level(self):
         source = """module top(input logic clk, a);
   if (1) begin : g

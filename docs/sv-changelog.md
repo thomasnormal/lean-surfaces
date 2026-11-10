@@ -1,5 +1,13 @@
 # [unreleased] — 2026-11-04 (an Sv landing builds the comb chain above it)
 
+## Finite SVA negedge sequences — 2026-11-10
+
+Finite SVA contracts now cover a structured `negedge` check and a bare
+`req ##1 ack` sequence. Sequence concatenation starts the right sequence at
+the left endpoint, so an explicit delay is counted exactly once. The
+`sva_negedge` E proof and Verilator differential row pass; unbounded and
+liveness operators remain loud.
+
 ## Generated function case with an explicit body block — 2026-11-10
 
 The symbolic extractor now unwraps an explicit `begin/end` shell around a

@@ -72837,6 +72837,24 @@
       "measured": "2026-11-04: retained SVA metadata fixture; Verilator is the available assertion-capable differential oracle, while Icarus cannot parse concurrent SVA."
     },
     {
+      "name": "sva_negedge",
+      "example": "sem2/sva_negedge",
+      "top": "sva_negedge",
+      "signals": [
+        "req",
+        "ack"
+      ],
+      "stimulus": [
+        {"req": "0", "ack": "0"},
+        {"req": "1", "ack": "0"},
+        {"req": "0", "ack": "1"},
+        {"req": "0", "ack": "0"},
+        {"req": "0", "ack": "0"}
+      ],
+      "verilator_only": true,
+      "measured": "2026-11-10: finite assert/cover properties sampled on negedge retain the structured edge and non-overlapped sequence; the E contract proof covers a req at one negedge and ack at the next. Verilator is the assertion-capable differential oracle."
+    },
+    {
       "name": "signed_literal_widen_w4",
       "example": "signed_literal_widen",
       "top": "signed_literal_widen",

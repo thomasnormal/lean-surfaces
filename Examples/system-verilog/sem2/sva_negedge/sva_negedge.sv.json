@@ -1,0 +1,184 @@
+{
+  "schema_version": "sv-0.2",
+  "language": "systemverilog",
+  "frontend": {
+    "name": "pyslang",
+    "family": "pyslang-11"
+  },
+  "mode": "symbolic",
+  "top": "sva_negedge",
+  "source_files": [
+    {
+      "path": "Examples/system-verilog/sem2/sva_negedge/sva_negedge.sv",
+      "sha256": "7dd3690b62aff000e339cb438bd3338936788a53c3c0033b8d3f0c8883f8a0b7"
+    }
+  ],
+  "packages": [],
+  "design": {
+    "kind": "Design",
+    "modules": [
+      {
+        "kind": "Module",
+        "span": {
+          "line": 2,
+          "col": 1,
+          "end_line": 5,
+          "end_col": 10
+        },
+        "name": "sva_negedge",
+        "imports": [],
+        "params": [],
+        "types": [],
+        "ports": [
+          {
+            "kind": "Port",
+            "span": {
+              "line": 2,
+              "col": 32,
+              "end_line": 2,
+              "end_col": 35
+            },
+            "name": "clk",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 2,
+              "col": 37,
+              "end_line": 2,
+              "end_col": 40
+            },
+            "name": "req",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 2,
+              "col": 42,
+              "end_line": 2,
+              "end_col": 45
+            },
+            "name": "ack",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            }
+          }
+        ],
+        "decls": [],
+        "processes": [],
+        "generates": [],
+        "others": [],
+        "properties": [
+          {
+            "kind": "SvaProperty",
+            "span": {
+              "line": 3,
+              "col": 3,
+              "end_line": 3,
+              "end_col": 48
+            },
+            "name": "",
+            "property_kind": "assert",
+            "clock": "clk",
+            "text": "assert property (@(negedge clk) req |=> ack);",
+            "ast": {
+              "kind": "SvaCheck",
+              "property_kind": "assert",
+              "edge": "negedge",
+              "clock": "clk",
+              "property": {
+                "kind": "SvaNonoverlap",
+                "antecedent": {
+                  "kind": "SvaAtom",
+                  "test": {
+                    "kind": "SvaExpr",
+                    "expr": {
+                      "kind": "Ident",
+                      "name": "req"
+                    }
+                  }
+                },
+                "consequent": {
+                  "kind": "SvaAtom",
+                  "test": {
+                    "kind": "SvaExpr",
+                    "expr": {
+                      "kind": "Ident",
+                      "name": "ack"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "kind": "SvaProperty",
+            "span": {
+              "line": 4,
+              "col": 3,
+              "end_line": 4,
+              "end_col": 47
+            },
+            "name": "",
+            "property_kind": "cover",
+            "clock": "clk",
+            "text": "cover property (@(negedge clk) req ##1 ack);",
+            "ast": {
+              "kind": "SvaCheck",
+              "property_kind": "cover",
+              "edge": "negedge",
+              "clock": "clk",
+              "property": {
+                "kind": "SvaAlways",
+                "body": {
+                  "kind": "SvaConcat",
+                  "left": {
+                    "kind": "SvaAtom",
+                    "test": {
+                      "kind": "SvaExpr",
+                      "expr": {
+                        "kind": "Ident",
+                        "name": "req"
+                      }
+                    }
+                  },
+                  "right": {
+                    "kind": "SvaDelay",
+                    "cycles": 1,
+                    "body": {
+                      "kind": "SvaAtom",
+                      "test": {
+                        "kind": "SvaExpr",
+                        "expr": {
+                          "kind": "Ident",
+                          "name": "ack"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    ],
+    "others": []
+  },
+  "lean_blocks": []
+}

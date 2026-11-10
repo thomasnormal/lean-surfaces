@@ -91,6 +91,15 @@ structure SvaCheck where
   property : SvaProp
 deriving Repr, Inhabited
 
+/-! The endpoint offset of a finite sequence. Ranges use their upper
+endpoint; the admitted fragment does not place another sequence after a
+range, while this definition keeps concatenation structural and fuel-free. -/
+def SvaSeq.endOffset : SvaSeq → Nat
+  | .atom _ => 0
+  | .delay cycles body => cycles + body.endOffset
+  | .range _ hi body => hi + body.endOffset
+  | .concat left right => left.endOffset + right.endOffset
+
 /-! ## Sampling -/
 
 /-- A missing signal is an error once a sample exists. A sample outside the
@@ -266,7 +275,12 @@ def SvaSeq.matches (trace : List SvState) (index : Nat) : SvaSeq → Except Stri
   | .atom test => test.evalChecked trace index
   | .delay cycles body => body.matches trace (index + cycles)
   | .concat left right => do
-      if ← left.matches trace index then right.matches trace (index + 1) else .ok false
+      -- A delayed sequence element already carries its `##n` offset.  Start
+      -- the right-hand sequence after the left sequence's endpoint, rather
+      -- than adding an unconditional extra cycle: `a ##1 b` is represented
+      -- as `concat a (delay 1 b)`, so the delay must be counted exactly once.
+      if ← left.matches trace index then
+        right.matches trace (index + left.endOffset) else .ok false
   | .range lo hi body =>
       if hi < lo then
         .error "SVA: descending ## range"
@@ -282,6 +296,7 @@ where
         else do
           let hit ← body.matches trace (index + hi + 1)
           if hit then .ok true else rangeMatches trace index lo body hi
+
 
 def allAt (trace : List SvState) (start : Nat)
     (test : Nat → Except String Bool) : List SvState → Except String Bool

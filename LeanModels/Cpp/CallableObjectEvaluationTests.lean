@@ -42464,4 +42464,30 @@ def callableEvaluatorDirectCallBoundaryWitness : Bool :=
 
 #guard callableEvaluatorDirectCallBoundaryWitness
 
+private def callableBooleanIdentityFunction : CallableFunction := {
+  occurrence := functionDeclaration
+  signature := {result := .builtin .boolean, parameters := [.builtin .boolean], variadic := false}
+  parameters := [{declaration := handle "0x10", name := some "value", type := .builtin .boolean}]
+  body := .return_ {
+    expression := .parameter (handle "0x10"),
+    sourceType := .builtin .boolean, type := .builtin .boolean}}
+
+/-- Both APIs return the expected value for every Boolean input to this
+identity callable. This theorem does not claim agreement for other bodies. -/
+theorem callableBooleanIdentityAgreement (value : Bool) :
+    evaluateCallable 8 .lp64 callableBooleanIdentityFunction [integralBoolean value] =
+      .ok (.ok (integralBoolean value)) ∧
+    evaluateCallableObject 8 .lp64 callableBooleanIdentityFunction [integralBoolean value] =
+      .ok (.ok (integralBoolean value)) := by
+  cases value <;> exact ⟨rfl, rfl⟩
+
+def callableBooleanIdentityAgreementWitness : Bool :=
+  [false, true].all fun value =>
+    match evaluateCallable 8 .lp64 callableBooleanIdentityFunction [integralBoolean value],
+        evaluateCallableObject 8 .lp64 callableBooleanIdentityFunction [integralBoolean value] with
+    | .ok (.ok a), .ok (.ok b) => a == integralBoolean value && b == integralBoolean value
+    | _, _ => false
+
+#guard callableBooleanIdentityAgreementWitness
+
 end LeanModels.Cpp.CallableObjectEvaluationTests

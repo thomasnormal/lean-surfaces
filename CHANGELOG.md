@@ -79,6 +79,9 @@
 - Pinned direct-call and invalid-argument boundaries of callable evaluator
   agreement with kernel-checked counterexamples.
 
+- Proved both callable evaluators return the expected Boolean for every input
+  to a Boolean identity function.
+
 - Extended the value/object evaluator agreement battery with negative signed
   subtraction and native differential coverage.
 

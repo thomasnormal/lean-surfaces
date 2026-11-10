@@ -61,6 +61,11 @@ argument error by the object evaluator. A general relation must state its
 supported fragment and relate the distinct error domains; `Except.toOption`
 alone does not do so.
 
+`callableBooleanIdentityAgreement` quantifies over both Boolean inputs to one
+identity callable and proves that each API returns the expected Boolean. It is
+a complete input-domain theorem for that callable, not a relation for arbitrary
+bodies or profiles.
+
 The value and object evaluator now also carry a kernel agreement witness for
 the same binary-arithmetic callable, extending the earlier logical agreement
 check.

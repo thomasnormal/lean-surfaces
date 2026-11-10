@@ -86,6 +86,21 @@ elaborate on this branch; the target requires no further change here.
 DECIDED: close this branch's dict-comprehension guard blocker and continue
 with the next rename-rehearsal failure.
 
+## 2026-11-10-pyfoundation-27 — revalidate generator specification guards
+
+The rename rehearsal reported four failing `squares_upto` guards in
+`Examples.python.gen_lab.spec` on an older master tip. The specification
+builds on this branch without errors; no semantic or proof change was needed.
+
+| Measurement | Result |
+|---|---|
+| Target | `Examples.python.gen_lab.spec` builds in 313 jobs |
+| Commit measured | `cb41ca7fe` |
+| Errors | none |
+
+DECIDED: close this branch's generator specification blocker and continue
+with the next rename-rehearsal failure.
+
 ## 2026-11-10-pyfoundation-11 — revalidate recursion-limit audit
 
 The inbox finding `py-no-recursion-limit` is already closed by the active

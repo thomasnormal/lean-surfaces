@@ -5634,56 +5634,57 @@ theorem pbEvalExpr_succ (htwin : PayloadTwin o₀ o) (ih : PBAll pa o₀ o fuel)
                                     -- sum
                                     · refine PBF.bind (PBF.flattenStarRun (ihEs m st args.toList hslot))
                                         fun s1 vs _ hs1 => ?_
+                                      refine PBF.bind (PBF.liftRes hs1 _) fun s2 _ _ hs2 => ?_
                                       cases sumArgs vs with
-                                      | none => exact PBF.exn hs1 _
+                                      | none => exact PBF.exn hs2 _
                                       | some vstart =>
                                           obtain ⟨v, start⟩ := vstart
                                           cases start with
                                           | str _ | bytes _ =>
                                               simp only [FrameState.swapAt_world, World.swapAt_heap,
-                                                sumRejectedStart_swapAt hs1 htwin]
-                                              exact PBF.liftRes hs1 _
+                                                sumRejectedStart_swapAt hs2 htwin]
+                                              exact PBF.liftRes hs2 _
                                           | _ =>
                                               simp only []
                                               cases v with
-                                              | tuple xs => exact PBF.liftRes hs1 _
-                                              | ntuple _ _ xs => exact PBF.liftRes hs1 _
-                                              | listV xs => exact PBF.liftRes hs1 _
-                                              | str t => exact PBF.liftRes hs1 _
-                                              | bytes values => exact PBF.liftRes hs1 _
-                                              | rangeV lo hi step => exact PBF.liftRes hs1 _
+                                              | tuple xs => exact PBF.liftRes hs2 _
+                                              | ntuple _ _ xs => exact PBF.liftRes hs2 _
+                                              | listV xs => exact PBF.liftRes hs2 _
+                                              | str t => exact PBF.liftRes hs2 _
+                                              | bytes values => exact PBF.liftRes hs2 _
+                                              | rangeV lo hi step => exact PBF.liftRes hs2 _
                                               | ref b =>
-                                                  rcases Heap.get?_swapAt_twin (b := b) hs1 htwin with
+                                                  rcases Heap.get?_swapAt_twin (b := b) hs2 htwin with
                                                     heq | ⟨_, _, _, _, _, h1, h2⟩
                                                   · simp only [FrameState.swapAt_world,
                                                       World.swapAt_heap, heq]
-                                                    cases hget : Heap.get? s1.world.heap b with
+                                                    cases hget : Heap.get? s2.world.heap b with
                                                     | none => exact PBF.unsupported
                                                     | some obj =>
                                                         cases obj with
-                                                        | list xs => exact PBF.liftRes hs1 _
+                                                        | list xs => exact PBF.liftRes hs2 _
                                                         -- §L53 rung 3b: the KEYS, at a slot the twin cannot be
-                                                        | dict es sv => exact PBF.liftRes hs1 _
+                                                        | dict es sv => exact PBF.liftRes hs2 _
                                                         | generator qn l cnt stt =>
                                                             refine PBF.ite
                                                               (fun _ => PBF.unsupported) fun _ => ?_
                                                             refine PBF.bind (PBW.withLocals
-                                                              (ihDrain m s1.world b hs1))
+                                                              (ihDrain m s2.world b hs2))
                                                               fun s2 vals _ hs2 => ?_
                                                             exact PBF.liftRes hs2 _
-                                                        | «instance» ci attrs => exact PBF.exn hs1 _
+                                                        | «instance» ci attrs => exact PBF.exn hs2 _
                                                         | closure _ _ _ _ _ _ _ _ =>
-                                                            exact PBF.exn hs1 _
+                                                            exact PBF.exn hs2 _
                                                         | _ => exact PBF.unsupported
                                                   · simp only [FrameState.swapAt_world,
                                                       World.swapAt_heap, h1, h2]
                                                     refine PBF.ite
                                                       (fun _ => PBF.unsupported) fun _ => ?_
                                                     refine PBF.bind (PBW.withLocals
-                                                      (ihDrain m s1.world b hs1))
+                                                      (ihDrain m s2.world b hs2))
                                                       fun s2 vals _ hs2 => ?_
                                                     exact PBF.liftRes hs2 _
-                                              | _ => exact PBF.exn hs1 _
+                                              | _ => exact PBF.exn hs2 _
                                     refine PBF.ite (fun _ => ?_) fun _ => ?_
                                     -- tuple
                                     · refine PBF.bind (PBF.flattenStarRun (ihEs m st args.toList hslot))

@@ -9400,6 +9400,7 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                     -- `moduleGenFree` (the `max`/`min` discipline), so
                     -- `sum` stays in the heap-free fragment
                     flattenStarRun (evalExprs m fuel st args.toList) ⤳ fun st vs =>
+                    Run.liftRes st (builtinMethORecursionCheck st.world.callDepth) ⤳ fun st _ =>
                     (match sumArgs vs with
                      | Option.none =>
                        .exn st (.typeError s!"sum() takes at most 2 arguments ({vs.length} given)")

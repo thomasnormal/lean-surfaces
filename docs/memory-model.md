@@ -2137,11 +2137,11 @@ refuses there.
 **AND THE CURSOR IS BUILT AT CONSTRUCTION, as PEP 289 requires.** The
 outermost iterable of a genexp is evaluated *and its iterator created* when the
 genexp OBJECT is made, so `g = (k for k in d)` / mutate `d` / `next(g)` raises
-here exactly as in CPython. `genInitCont` seeds a synthesized `<genexpr@n>`'s
-continuation with its cursor already pushed; `dict.genexp-bound-is-loud` is the
-witness. This was `pyc-div-2` between §pycomplete-19 and §pycomplete-20 — the
-tier answered where CPython raised — and the row retired when its own guard
-began failing.
+here exactly as in CPython in the monadic interpreter. `genInitCont` seeds a
+synthesized `<genexpr@n>`'s continuation with its cursor already pushed;
+`dict.genexp-bound-is-loud` is the witness. The proof interpreter refuses a
+dictionary receiver at creation. This was `pyc-div-2` between §pycomplete-19
+and §pycomplete-20 — the tier answered where CPython raised.
 
 The creation check also covers a scalar outer iterable. A lowered
 `(x for x in value)` now performs the same immediate non-iterability check as
@@ -2150,9 +2150,12 @@ CPython before returning the generator object; `genexp_creation`'s
 `harness/cases.json` are regression rows. Both interpreters use the same
 scalar creation check. The proof interpreter had been
 returning `1` from the later, unstepped generator; it now raises `TypeError`
-at creation. The proof interpreter refuses heap receivers until it can create
-their iterator at that point; the monadic runner retains its existing cursor
-paths.
+at creation. The proof interpreter admits heap lists and generators: a list
+iterator observes a live index, and `iter(generator)` is the generator itself.
+It refuses other heap receivers until their creation-time iterators are
+represented. The monadic runner retains its existing cursor paths. The
+`gen_iter_live_list`, `gen_iter_generator`, and `gen_iter_dict` rows in
+`harness/cases.json` pin these cases.
 
 **IT IS A GENEXP RULE AND NOT A GENERATOR RULE, and the distinction is
 witnessed.** Calling a generator FUNCTION runs no code, so CPython has called
@@ -2160,9 +2163,9 @@ no `iter()`: mutate the dict between `g = gen(d)` and the first `next(g)` and
 CPython answers `1`, then drains `[3]` — it walks the GROWN dict. That deferred
 behaviour is CORRECT and the tier keeps it; `dict.genfun-mutate-after-create`
 is the row that fails if a later change makes every generator eager. Only the
-OUTERMOST clause is eager (inner `for` clauses stay lazy), and only a DICT
-receiver can show the difference at all — `forList` re-reads live, value
-sequences are immutable, `forGen` holds no counts.
+OUTERMOST clause is eager (inner `for` clauses stay lazy). The dict cursor
+observes mutation between creation and resumption; scalar non-iterables also
+expose the ordering through the creation-time `TypeError`.
 
 ### The tier this forces
 

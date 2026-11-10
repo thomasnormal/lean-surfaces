@@ -652,6 +652,24 @@ theorem Heap.get?_swapAt_twin {h : Heap} {pa b : Addr} {o₀ o : Obj}
       Heap.get?_swapAt_self (Heap.lt_size_of_get? hslot) _⟩
   · exact Or.inl (Heap.get?_swapAt_ne hba)
 
+/-- Genexp creation observes the receiver's kind, not a generator payload. -/
+theorem genExpCreationRun_swapAt {h : Heap} {pa : Addr} {o₀ o : Obj}
+    (hslot : Heap.get? h pa = some o₀) (htwin : PayloadTwin o₀ o)
+    (fname : String) (env : Env) :
+    genExpCreationRun (Heap.swapAt h pa o) fname env = genExpCreationRun h fname env := by
+  unfold genExpCreationRun
+  split
+  · cases Env.lookup env genExpArgName with
+    | none => rfl
+    | some v =>
+      cases v with
+      | ref a =>
+        rcases Heap.get?_swapAt_twin (b := a) hslot htwin with heq | ⟨_, _, _, _, _, h₀, h₁⟩
+        · simp only [heq]
+        · simp only [h₀, h₁]
+      | _ => rfl
+  · rfl
+
 /-- **The read, resolved the OTHER way**: an answer that is not the slot's
 own object is at a different address, so the swap does not move it. The
 functional-induction case hypothesis of a recursive reader
@@ -3576,7 +3594,7 @@ theorem pbCallClosure_succ (ih : PBAll pa o₀ o fuel) : PBCallClosure pa o₀ o
   | brk => exact PBF.unsupported
   | cont => exact PBF.unsupported
 
-theorem pbCallIn_succ (ih : PBAll pa o₀ o fuel) : PBCallIn pa o₀ o (fuel + 1) := by
+theorem pbCallIn_succ (htwin : PayloadTwin o₀ o) (ih : PBAll pa o₀ o fuel) : PBCallIn pa o₀ o (fuel + 1) := by
   obtain ⟨-, -, -, -, -, ihSs, -⟩ := ih
   intro m w fname args hslot
   simp only [callIn]
@@ -3589,18 +3607,20 @@ theorem pbCallIn_succ (ih : PBAll pa o₀ o fuel) : PBCallIn pa o₀ o (fuel + 1
       refine PBW.ite (fun _ => ?_) fun _ => ?_
       ·
         let env := markUnboundLocals f.body.toList (mkCallEnv f.params args)
-        cases hc : genExpCreationRun fname env with
+        cases hc : genExpCreationRun w.heap fname env with
         | ok _ =>
-          simp only [hc]
+          simp only [env] at hc
+          simp only [World.swapAt_heap, genExpCreationRun_swapAt hslot htwin, hc]
           exact PBW.push hslot
         | exn e =>
-          simp only [hc]
+          simp only [env] at hc
+          simp only [World.swapAt_heap, genExpCreationRun_swapAt hslot htwin, hc]
           exact PBW.exn hslot e
         | timeout =>
-          simp only [hc]
+          simp only [World.swapAt_heap, genExpCreationRun_swapAt hslot htwin, hc]
           exact PBW.timeout
         | unsupported msg =>
-          simp only [hc]
+          simp only [World.swapAt_heap, genExpCreationRun_swapAt hslot htwin, hc]
           exact PBW.unsupported
       · refine PBW.ite (fun _ => ?_) (fun _ => ?_)
         · refine PBW.finishCallAt w.callDepth ?_
@@ -6436,7 +6456,7 @@ theorem pbAll (htwin : PayloadTwin o₀ o) : ∀ (fuel : Nat), PBAll pa o₀ o f
       exact ⟨pbEvalExpr_succ htwin ihn, pbEvalExprs_succ ihn,
         pbEvalBoolChain_succ htwin ihn, pbEvalCompareChain_succ htwin ihn,
         pbExecStmt_succ htwin ihn, pbExecStmts_succ ihn,
-        pbExecWhile_succ htwin ihn, pbCallIn_succ ihn,
+        pbExecWhile_succ htwin ihn, pbCallIn_succ htwin ihn,
         pbExecFor_succ htwin ihn, pbEvalDictItems_succ ihn,
         pbExecForList_succ htwin ihn, pbExecAttrCall_succ htwin ihn,
         pbStepIter_succ htwin ihn, pbExecGen_succ htwin ihn,

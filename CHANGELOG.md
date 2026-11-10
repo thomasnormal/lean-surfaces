@@ -16,6 +16,9 @@
   model, conditional on an order-indexed loaded-core invariant. Completion
   and retirement progress remain explicit proof obligations.
 
+- Added CPython floating-power zero-exponent and finite zero-base special
+  cases, including signed zero and conversion-before-special-case errors.
+
 - Routed mixed floating true division through the shared ordered numeric
   conversion worker while preserving the separate integer-ratio path.
 

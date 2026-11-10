@@ -3,6 +3,7 @@
 
 import json
 import os
+import shutil
 import subprocess
 import tempfile
 import unittest
@@ -236,6 +237,32 @@ class HeaderWiringTests(unittest.TestCase):
         self.assertEqual(self.magics._rebuild_header(report=False), "empty")
         self.assertFalse(self.magics._header_ok)
         self.magics._header_key.assert_not_called()
+
+    @unittest.skipUnless(shutil.which("python3.9"), "requires the pinned frontend")
+    def test_pyfile_uses_the_pinned_frontend_from_a_newer_kernel(self):
+        work = self.root / "notebooks" / "work"
+        work.mkdir(parents=True)
+        with patch.object(self.magic_module, "WORK_DIR", work), \
+                patch.dict(os.environ, {"LEANPY_FRONTEND": ""}), \
+                patch.object(self.magics, "_rebuild_header"):
+            self.magics.pyfile("example.py", "def square(x):\n    return x * x\n")
+        envelope = json.loads((work / "example.json").read_text())
+        self.assertEqual(envelope["frontend"]["name"], "cpython-ast")
+        self.assertTrue(envelope["frontend"]["version"].startswith("3.9."))
+
+    def test_missing_frontend_does_not_fall_back_to_kernel_python(self):
+        with patch.dict(os.environ, {"LEANPY_FRONTEND": "missing-python-for-test"}):
+            with self.assertRaises(self.magic_module.UsageDisplayed):
+                self.magic_module._python_executable("LEANPY_FRONTEND")
+
+    @unittest.skipUnless(shutil.which("python3.9"), "requires the pinned oracle")
+    def test_pydiff_uses_the_pinned_oracle_from_a_newer_kernel(self):
+        (self.work / "version.py").write_text(
+            "import sys\ndef minor():\n    return sys.version_info.minor\n")
+        self.magics._find_function = Mock(return_value=("version", self.work / "version.json"))
+        self.magics._runner = Mock(return_value=({"status": "ok", "value": {"t": "int", "v": "9"}}, 0.0))
+        with patch.dict(os.environ, {"LEANPY_CPYTHON": ""}):
+            self.magics.pydiff("minor")
 
 
 if __name__ == "__main__":

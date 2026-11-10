@@ -1543,6 +1543,13 @@ def execGlobal (names : Array String) : SemF RFlow := do
 
 /-! ## §2 THE FUEL-FREE STATEMENT HALF — structural on `Stmt` -/
 
+/-- Raise the result of an admitted exception constructor after its arguments
+have run. The generic type-call recursion check is shared with the proof
+interpreter. -/
+def raiseConstructed {α : Type} (e : PyErr) : SemF α := do
+  let st ← get
+  raisePy (exceptionConstructError st.world.callDepth e)
+
 mutual
 
 /-- Execute one statement. Structural on `Stmt`; `while` and the `for` cursors
@@ -1813,13 +1820,13 @@ def execOpen (K : Kont) (m : Module) : Stmt → SemF RFlow
                   else
                     match findClass m id with
                     | some (ci, c) =>
-                        if c.isExc then raisePy (.user ci c.name)
+                        if c.isExc then raiseConstructed (.user ci c.name)
                         else refuse s!"'raise {id}': only an admitted exception class (`class N(Exception): pass` or a measured direct builtin ancestor) can be raised — outside the tier (docs/memory-model.md §exceptions)"
                     | Option.none =>
                         if (findNamedTuple m id).isSome then
                           raisePy (.typeError "exceptions must derive from BaseException")
                         else if admittedBuiltinRaise.contains id then
-                          raisePy (.builtinException (builtinExceptionIdentity id))
+                          raiseConstructed (.builtinException (builtinExceptionIdentity id))
                         else
                           refuse s!"'raise {id}': only an admitted exception class name can be raised — outside the tier (docs/memory-model.md §exceptions)"
         | some (.call (.name id _) args kwargs callUnsupported _) => do
@@ -1840,11 +1847,11 @@ def execOpen (K : Kont) (m : Module) : Stmt → SemF RFlow
               | some (ci, c) =>
                   if c.isExc then
                     match args.toList with
-                    | [] => raisePy (.user ci c.name)
+                    | [] => raiseConstructed (.user ci c.name)
                     | [arg] => do
                         let v ← evalOpen K m arg
                         match v with
-                        | .str msg => raisePy (.userMessage ci c.name msg)
+                        | .str msg => raiseConstructed (.userMessage ci c.name msg)
                         | _ => refuse s!"'raise {id}(…)': the measured constructor form requires one string argument — outside the tier (docs/memory-model.md §exceptions)"
                     | _ => refuse s!"'raise {id}(…)': the measured constructor form requires exactly one positional string argument — outside the tier (docs/memory-model.md §exceptions)"
                   else
@@ -1860,7 +1867,7 @@ def execOpen (K : Kont) (m : Module) : Stmt → SemF RFlow
               match args.toList with
               | [] =>
                   if admittedBuiltinRaise.contains id then
-                    raisePy (.builtinException (builtinExceptionIdentity id))
+                    raiseConstructed (.builtinException (builtinExceptionIdentity id))
                   else
                     refuse s!"'raise {id}()': only an admitted builtin exception class can be constructed without arguments"
               | [arg] => do
@@ -1868,7 +1875,7 @@ def execOpen (K : Kont) (m : Module) : Stmt → SemF RFlow
                   match v with
                   | .str msg =>
                       match builtinExcWithMessage id msg with
-                      | some e => raisePy e
+                      | some e => raiseConstructed e
                       | none =>
                           if admittedBuiltinRaise.contains id then
                             refuse s!"'raise {id}(…)': only the measured one-string builtin exception constructors are admitted — outside the tier (docs/memory-model.md §exceptions)"
@@ -1891,11 +1898,11 @@ def execOpen (K : Kont) (m : Module) : Stmt → SemF RFlow
       if b then pure .next
       else
         match msg with
-        | Option.none => raisePy (.assertionError Option.none)
+        | Option.none => raiseConstructed (.assertionError Option.none)
         | some e => do
             let v ← evalOpen K m e
             match printOne (← frameHeap) v with
-            | some rendered => raisePy (.assertionError (some rendered))
+            | some rendered => raiseConstructed (.assertionError (some rendered))
             | Option.none =>
                 refuseOrder "assert message: the tier cannot render this value EXACTLY — a set (hash order), an instance/closure/generator (identity), a non-ASCII string (Unicode printability is never guessed), or a structure deeper than the repr budget — docs/memory-model.md §the assert statement"
   | .delStmt names _ => do

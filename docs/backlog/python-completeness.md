@@ -71,11 +71,17 @@ keywords are checked in call order before excess positionals, as in
 are interned by `Parser/pegen/pegen.c:_PyPegen_new_identifier`; the
 `arity_identity.py` rows pin matching ASCII and Unicode names at the boundary.
 
-One further recursion boundary remains wrong. With the differential harness's
-entry base 2, `closure_recursion.py::raise_class_unwind(995)` raises
-`RecursionError` on CPython 3.9.25 but the model returns 42; exception-class
-construction and raising still need their recursion paths traced. This witness
-is not in the passing differential case table until its own fix lands.
+Admitted exception-class construction now checks a call unit after evaluating
+constructor arguments, including the class raised by a failed assertion.
+`exception_recursion.py` covers bare builtin and user classes, explicit
+constructors, assertions, argument failure order, catching a recursion error,
+and a subsequent call. At harness base 2, all seven original forms at depth
+995 previously returned 42 instead of raising `RecursionError`. CPython 3.9's
+`Python/ceval.c:do_raise` calls `_PyObject_CallNoArg` for an exception class;
+`Objects/call.c:_PyObject_MakeTpCall` enters the unit before `type_call`.
+An already constructed exception instance goes straight through `do_raise`;
+this change only checks the admitted class construction sites. Assertion
+messages that cannot be rendered remain a loud refusal.
 
 ## 2026-11-10-pyfoundation-5 — eager non-iterable genexp creation check
 

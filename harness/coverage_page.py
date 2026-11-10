@@ -152,8 +152,9 @@ def render(diff, proof, grammar, tables):
     L.append("")
     L.append("What the Lean model of Python runs, measured. Everything outside "
              "the modelled tier is **refused loudly** (`Res.unsupported`, with "
-             "a message naming the construct); it is never answered with a "
-             "wrong value. The pass rate and the grammar table come from runs "
+             "a message naming the construct). The pass rate and the grammar "
+             "table report the tested rows; they do not prove agreement on "
+             "untested inputs. They come from runs "
              "against the pinned CPython oracle; the builtin lists are the "
              "interpreter's own name tables. CI fails if this page goes stale "
              "(`harness/coverage_page.py --check`).")

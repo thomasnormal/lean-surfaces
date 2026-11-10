@@ -32,3 +32,13 @@ static write window (`Stmt2.ffOkB`/`execFF`), so the fixture's `agree.lean`
 pins that boundary.  Dynamic targets, nested unpacked targets, concatenated
 targets, and multiple dynamic writes remain separate design decisions for the
 E edge route.
+
+## E-core review boundary
+
+Reviewed against E-core-1 on 2026-11-10. The retained `Lhs2.index` shape and
+all seven simulator rows are accepted evidence. The E refusal remains
+deliberate: admitting it requires a fuel-free index evaluator, an x/z and
+out-of-range no-op rule in the NBA issue step, and a dynamic-write frame
+theorem in place of the current static `Win` contract. Treating the index as a
+default-point window would fabricate a target, so no partial E implementation
+was landed.

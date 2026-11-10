@@ -124,6 +124,23 @@ behavior.
 DECIDED: close `py-listcomp-list-shadow` on this branch and retain the explicit
 loud boundaries for walrus filters and unsupported comprehension sources.
 
+## 2026-11-10-pyfoundation-17 — revalidate augmented-repeat semantics
+
+The inbox finding `py-boundary-augrepeat-rewrite` is already closed. The
+shape-specific ingestion rewrite is absent, so ordinary `AugAssign` reaches
+the in-place sequence semantics and preserves alias-visible heap-list mutation
+and the `*=` error path. Public boundary list mutation remains the documented
+loud frontier until the thawed heap-list argument path is wired.
+
+| Measurement | Result |
+|---|---|
+| Module alias witness | `list_aug_repeat_script.py`: `True [1, 2, 1, 2]`, MATCH |
+| Source audit | no `lowerBoundaryAugRepeat` path remains |
+| Semantic change | none; audit confirmation only |
+
+DECIDED: close `py-boundary-augrepeat-rewrite` on this branch and retain only
+the explicit boundary aliasing refusal.
+
 ## 2026-11-10-pyfoundation-10 — max/min recursion
 
 `max` and `min` now check the CPython builtin recursion unit after positional

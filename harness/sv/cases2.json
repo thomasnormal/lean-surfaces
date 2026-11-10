@@ -3,6 +3,14 @@
   "fuel": 2000,
   "cases": [
     {
+      "name": "reset_event_iff_refuse",
+      "example": "sem2/reset_event_iff",
+      "top": "reset_event_iff",
+      "refusal": "AlwaysPosedge:reset-iff",
+      "signals": ["guarded_n", "guarded_p", "plain_n", "plain_p"],
+      "stimulus": [{"rn": "1", "rp": "0", "en": "0", "d": "1"}]
+    },
+    {
       "name": "signed_compare_widen",
       "example": "sem2/signed_compare_widen",
       "top": "signed_compare_widen",

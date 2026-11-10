@@ -22,7 +22,28 @@ and every existing `§Lnn` reference still resolves there.
 | id | class | title | lane |
 | --- | --- | --- | --- |
 | `2026-11-11-ls-sv2-477` |  | unify the E-core-0 and observation cones | ls-sv2 |
+| `2026-11-10-pyfoundation-30` |  | refresh the generated backlog index | python-completeness |
+| `2026-11-10-pyfoundation-29` |  | revalidate clock erasure | python-completeness |
+| `2026-11-10-pyfoundation-28` |  | revalidate string specification guard | python-completeness |
+| `2026-11-10-pyfoundation-27` |  | revalidate generator specification guards | python-completeness |
+| `2026-11-10-pyfoundation-26` |  | revalidate dict-comprehension guards | python-completeness |
+| `2026-11-10-pyfoundation-25` |  | revalidate the bench-statistics proof blocker | python-completeness |
+| `2026-11-10-pyfoundation-24` |  | revalidate the bench-bisect proof blocker | python-completeness |
 | `2026-11-10-pyfoundation-23` |  | pin the leanpy quickstart admission | python-completeness |
+| `2026-11-10-pyfoundation-22` |  | revalidate shape-specific ingestion rewrites | python-completeness |
+| `2026-11-10-pyfoundation-21` |  | revalidate set iteration-order admission | python-completeness |
+| `2026-11-10-pyfoundation-20` |  | revalidate length-only repetition removal | python-completeness |
+| `2026-11-10-pyfoundation-19` |  | revalidate non-simple annotation order | python-completeness |
+| `2026-11-10-pyfoundation-18` |  | revalidate dead yield-target handling | python-completeness |
+| `2026-11-10-pyfoundation-17` |  | revalidate augmented-repeat semantics | python-completeness |
+| `2026-11-10-pyfoundation-16` |  | revalidate ListComp shadow semantics | python-completeness |
+| `2026-11-10-pyfoundation-15` |  | revalidate genexp creation-time iteration | python-completeness |
+| `2026-11-10-pyfoundation-14` |  | revalidate generator capture census | python-completeness |
+| `2026-11-10-pyfoundation-13` |  | revalidate structured global declarations | python-completeness |
+| `2026-11-10-pyfoundation-12` |  | revalidate module-definition ordering audit | python-completeness |
+| `2026-11-10-pyfoundation-11` |  | revalidate recursion-limit audit | python-completeness |
+| `2026-11-10-pyfoundation-10` |  | max/min recursion | python-completeness |
+| `2026-11-10-pyfoundation-9` |  | sum recursion | python-completeness |
 | `2026-11-10-pyfoundation-7` |  | remaining builtin and method recursion sites | python-completeness |
 | `2026-11-10-pyfoundation-6` |  | finish CPython recursion units | python-completeness |
 | `2026-11-10-pyfoundation-5` |  | eager non-iterable genexp creation check | python-completeness |

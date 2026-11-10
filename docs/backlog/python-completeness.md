@@ -131,6 +131,23 @@ on this branch without errors; no semantic or proof change was needed.
 DECIDED: close this branch's clock-erasure blocker and continue with the
 coverage and index checks requested in the rename rehearsal.
 
+## 2026-11-10-pyfoundation-30 — refresh the generated backlog index
+
+The rename rehearsal identified stale generated Python coverage and backlog
+index files on an older master tip. At the current branch tip the coverage
+page is fresh against the rebuilt runner; the backlog index was stale by 21
+entries and has been regenerated from the lane records.
+
+| Measurement | Result |
+|---|---|
+| Coverage | `coverage_page.py --check`: fresh against `leanmodels-run` |
+| Backlog index | regenerated from the current records |
+| Commit measured | `bcde53eb8` |
+| Semantic change | none; generated index and documentation only |
+
+DECIDED: keep both generated-document checks in the release gate and
+regenerate the index whenever lane records change.
+
 ## 2026-11-10-pyfoundation-11 — revalidate recursion-limit audit
 
 The inbox finding `py-no-recursion-limit` is already closed by the active

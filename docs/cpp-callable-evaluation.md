@@ -549,3 +549,6 @@ greater-than comparison, with the same kernel reduction and native differential 
 
 `callableEvaluatorRefinementGreaterEqual` carries the relation through a pure
 greater-than-or-equal comparison, with the same kernel reduction and native differential coverage.
+
+`callableEvaluatorRefinementLessEqual` carries the relation through a pure
+less-than-or-equal comparison, with the same kernel reduction and native differential coverage.

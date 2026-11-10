@@ -770,6 +770,9 @@ inductive PyErr where
   | zeroDivisionPow
   /-- Out-of-range list indexing (the dominant IndexError text). -/
   | indexError
+  /-- `PyNumber_AsSsize_t(..., PyExc_IndexError)` overflow before a
+  sequence's ordinary out-of-range check. -/
+  | indexErrorSize
   /-- Out-of-range tuple/namedtuple indexing. -/
   | indexErrorTuple
   /-- Out-of-range string indexing. -/
@@ -929,6 +932,7 @@ def builtinExcCatches : String → PyErr → Bool
   | "ArithmeticError",   .floatDivmodZeroDivisionError => true
   | "ArithmeticError",   .overflowError _     => true
   | "LookupError",       .indexError         => true
+  | "LookupError",       .indexErrorSize    => true
   | "LookupError",       .indexErrorTuple   => true
   | "LookupError",       .indexErrorString  => true
   | "LookupError",       .indexErrorRange   => true
@@ -950,6 +954,7 @@ def builtinExcCatches : String → PyErr → Bool
   | "ZeroDivisionError", .floatDivmodZeroDivisionError => true
   | "OverflowError",     .overflowError _     => true
   | "IndexError",        .indexError         => true
+  | "IndexError",        .indexErrorSize    => true
   | "IndexError",        .indexErrorTuple   => true
   | "IndexError",        .indexErrorString  => true
   | "IndexError",        .indexErrorRange   => true

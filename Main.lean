@@ -145,7 +145,7 @@ def errName : PyErr → String
   | .overflowError _ => "OverflowError"
   -- the same CLASS as the above; only the message differs
   | .zeroDivisionPow => "ZeroDivisionError"
-  | .indexError | .indexErrorTuple | .indexErrorString | .indexErrorRange
+  | .indexError | .indexErrorSize | .indexErrorTuple | .indexErrorString | .indexErrorRange
   | .indexErrorBytes | .indexErrorAssign | .indexErrorPopEmpty | .indexErrorPop =>
       "IndexError"
   | .valueError _ => "ValueError"
@@ -208,6 +208,7 @@ def errMessage : PyErr → Option String
   -- sibling nullary constructors can answer them without carrying runtime
   -- data. RecursionError remains absent because CPython names the C site.
   | .indexError => some "list index out of range"
+  | .indexErrorSize => some "cannot fit 'int' into an index-sized integer"
   | .indexErrorTuple => some "tuple index out of range"
   | .indexErrorString => some "string index out of range"
   | .indexErrorRange => some "range object index out of range"

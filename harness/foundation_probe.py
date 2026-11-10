@@ -57,6 +57,34 @@ def list_pop_empty_huge(index):
     return values.pop(index)
 
 
+def list_subscript_huge(index):
+    return [1][index]
+
+
+def tuple_subscript_huge(index):
+    return (1,)[index]
+
+
+def string_subscript_huge(index):
+    return "a"[index]
+
+
+def bytes_subscript_huge(index):
+    return b"a"[index]
+
+
+def range_subscript_huge(index):
+    return range(1)[index]
+
+
+def list_slice_huge(index):
+    return [1][index:]
+
+
+def string_slice_huge(index):
+    return "a"[:index]
+
+
 def range_len_huge():
     return len(range(2 ** 64))
 

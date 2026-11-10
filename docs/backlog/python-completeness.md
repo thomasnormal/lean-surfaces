@@ -10937,6 +10937,32 @@ measurement as a sampled slice and the new measured counterexample.
 DECIDED: keep the `_bisect` fallback loud until call-site domain analysis
 proves the C and pure paths equivalent on the complete admitted domain.
 
+## FOUNDATION step 3c — separate raising index overflow from slice clamping
+
+The index protocol now has one shared worker for each CPython conversion kind.
+`pySsizeIndex` models `PyNumber_AsSsize_t(..., PyExc_IndexError)` and raises
+the exact `IndexError: cannot fit 'int' into an index-sized integer` before
+ordinary list/tuple/string/bytes bounds checks. `pySsizeClamping` models the
+`_PyEval_SliceIndex` clipping path used by slice bounds; it clips to the
+pinned signed 64-bit range before `sliceAdj` applies sequence-length
+clamping. Range subscripting remains separate: CPython's `range_subscript`
+uses `PyNumber_Index` and computes its ordinary range `IndexError` without a
+`Py_ssize_t` narrowing step.
+
+| Boundary | CPython 3.9.25 | Model |
+|---|---|---|
+| `[][2**63]` | `IndexError: cannot fit 'int' into an index-sized integer` | exact MATCH |
+| `(1,)[2**63]`, `'a'[2**63]`, `b'a'[2**63]` | same class/message | exact MATCH |
+| `range(1)[2**63]` | `IndexError: range object index out of range` | distinct exact MATCH |
+
+The 26-row foundation battery remains clean in both interpreter modes after
+adding these controls; slice clipping is covered by the shared worker and
+the existing sequence-slice rows.
+
+DECIDED: retain the three named conversion workers and keep raw integer
+indices out of the sequence subscript paths; the remaining index sites are
+audited against this split.
+
 ## 2026-11-10-pyfoundation-2 — protocol census
 
 Foundation step 2 records the protocol census in

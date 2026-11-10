@@ -121,6 +121,9 @@
   `hi=-1` C-versus-pure fallback divergence; guarded imports now refuse until
   call-site argument domains are proved.
 
+- Split index conversion into raising `IndexError` and clamping slice workers,
+  including CPython's exact index-sized message for sequence subscripting.
+
 - Added the foundation protocol census covering comparison, hashing, index,
   float conversion, iteration, sizing, rendering, recursion, operator, builtin,
   and method dispatch across both Python interpreter surfaces.

@@ -254,6 +254,22 @@ def pySsizeRaising (i : Int) : Res Int :=
   if pySsizeFits i then .ok i
   else .exn (.overflowError "Python int too large to convert to C ssize_t")
 
+/-! The sequence-subscript callers pass `PyExc_IndexError` to the same C
+conversion.  Keep that exception choice in a separate named worker so an
+index overflow cannot be confused with an ordinary out-of-range element. -/
+def pySsizeIndex (i : Int) : Res Int :=
+  if pySsizeFits i then .ok i
+  else .exn .indexErrorSize
+
+/-! `_PyEval_SliceIndex` clips instead of raising.  Slice normalization later
+clamps against the actual sequence length; clipping here is still required to
+model the protocol and prevents a raw arbitrary Python integer from bypassing
+the C boundary. -/
+def pySsizeClamping (i : Int) : Int :=
+  if i < pySsizeMin then pySsizeMin
+  else if i > pySsizeMax then pySsizeMax
+  else i
+
 /-- The left-shift budget: the largest shift COUNT `<<` will build, so the
 widest result is about a million bits (128 KB). Its own constant rather
 than a reuse of `seqBudget` — they bound different resources and the
@@ -3668,6 +3684,13 @@ def normIndex (i : Int) (len : Nat) : Option Nat :=
   let j := if i < 0 then i + (len : Int) else i
   if 0 ≤ j ∧ j < (len : Int) then some j.toNat else Option.none
 
+def normIndexRaising (i : Int) (len : Nat) : Res (Option Nat) :=
+  match pySsizeIndex i with
+  | .ok j => .ok (normIndex j len)
+  | .exn e => .exn e
+  | .timeout => .timeout
+  | .unsupported msg => .unsupported msg
+
 def rangeIndex (lo hi step : Int) (index : RVal) : Res RVal :=
   match asInt index with
   | some i =>
@@ -3693,25 +3716,34 @@ def indexVal (container index : RVal) : Res RVal :=
   | .listV xs, index =>
     match asInt index with
     | some i =>
-      match normIndex i xs.size with
-      | some n => .ok (xs.getD n .none)
-      | Option.none => .exn .indexError
+      match normIndexRaising i xs.size with
+      | .ok (some n) => .ok (xs.getD n .none)
+      | .ok Option.none => .exn .indexError
+      | .exn e => .exn e
+      | .timeout => .timeout
+      | .unsupported msg => .unsupported msg
     | Option.none =>
       .exn (.typeError s!"list indices must be integers, not {index.typeName}")
   | .bytes xs, index =>
     match asInt index with
     | some integer =>
-      match normIndex integer xs.size with
-      | some position => .ok (.int (xs.getD position 0).toNat)
-      | Option.none => .exn .indexErrorBytes
+      match normIndexRaising integer xs.size with
+      | .ok (some position) => .ok (.int (xs.getD position 0).toNat)
+      | .ok Option.none => .exn .indexErrorBytes
+      | .exn e => .exn e
+      | .timeout => .timeout
+      | .unsupported msg => .unsupported msg
     | Option.none =>
       .exn (.typeError s!"byte indices must be integers or slices, not {typeNamePrefix index.typeName 200}")
   | .tuple xs, index =>
     match asInt index with
     | some i =>
-      match normIndex i xs.size with
-      | some n => .ok (xs.getD n .none)
-      | Option.none => .exn .indexErrorTuple
+      match normIndexRaising i xs.size with
+      | .ok (some n) => .ok (xs.getD n .none)
+      | .ok Option.none => .exn .indexErrorTuple
+      | .exn e => .exn e
+      | .timeout => .timeout
+      | .unsupported msg => .unsupported msg
     | Option.none =>
       .exn (.typeError s!"tuple indices must be integers, not {index.typeName}")
   | .ntuple _ _ xs, index =>
@@ -3719,17 +3751,23 @@ def indexVal (container index : RVal) : Res RVal :=
     -- the error message names 'tuple', exactly as CPython's does)
     match asInt index with
     | some i =>
-      match normIndex i xs.size with
-      | some n => .ok (xs.getD n .none)
-      | Option.none => .exn .indexErrorTuple
+      match normIndexRaising i xs.size with
+      | .ok (some n) => .ok (xs.getD n .none)
+      | .ok Option.none => .exn .indexErrorTuple
+      | .exn e => .exn e
+      | .timeout => .timeout
+      | .unsupported msg => .unsupported msg
     | Option.none =>
       .exn (.typeError s!"tuple indices must be integers, not {index.typeName}")
   | .str s, index =>
     match asInt index with
     | some i =>
-      match normIndex i s.length with
-      | some n => .ok (.str (String.singleton (s.toList.getD n ' ')))
-      | Option.none => .exn .indexErrorString
+      match normIndexRaising i s.length with
+      | .ok (some n) => .ok (.str (String.singleton (s.toList.getD n ' ')))
+      | .ok Option.none => .exn .indexErrorString
+      | .exn e => .exn e
+      | .timeout => .timeout
+      | .unsupported msg => .unsupported msg
     | Option.none =>
       .exn (.typeError s!"string indices must be integers, not {index.typeName}")
   | v, _ => .exn (.typeError s!"'{v.typeName}' object is not subscriptable")
@@ -3909,7 +3947,7 @@ type, and no in-tier value or heap referent can carry `__index__` — the
 dunder guard included — so the arm is faithful for refs too). -/
 def asSliceIdx : RVal → Option (Option Int)
   | .none => some Option.none
-  | v => (asInt v).map some
+  | v => (asInt v).map (fun i => some (pySsizeClamping i))
 
 /-- Search at most `limit` positions in a string.  The returned index is
 relative to the supplied list; callers add the normalized start bound. -/
@@ -4558,9 +4596,12 @@ def heapIndex (h : Heap) (a : Addr) (k : RVal) : Res RVal :=
   | some (.list xs) =>
     match asInt k with
     | some i =>
-      match normIndex i xs.size with
-      | some n => .ok (xs.getD n .none)
-      | Option.none => .exn .indexError
+      match normIndexRaising i xs.size with
+      | .ok (some n) => .ok (xs.getD n .none)
+      | .ok Option.none => .exn .indexError
+      | .exn e => .exn e
+      | .timeout => .timeout
+      | .unsupported msg => .unsupported msg
     | Option.none =>
       .exn (.typeError s!"list indices must be integers, not {RVal.typeNameH h k}")
   -- H3: no `__getitem__` can exist (dunder guard), so the default
@@ -4602,12 +4643,15 @@ def heapDelete (h : Heap) (a : Addr) (k : RVal) : Option (Res Heap) :=
   | some (.list xs) =>
     some (match asInt k with
       | some i =>
-        match normIndex i xs.size with
-        | some n =>
+        match normIndexRaising i xs.size with
+        | .ok (some n) =>
           match Heap.update h a (.list ((xs.toList.eraseIdx n).toArray)) with
           | some h' => .ok h'
           | Option.none => .unsupported danglingMsg
-        | Option.none => .exn .indexErrorAssign
+        | .ok Option.none => .exn .indexErrorAssign
+        | .exn e => .exn e
+        | .timeout => .timeout
+        | .unsupported msg => .unsupported msg
       | Option.none =>
         .exn (.typeError
           s!"list indices must be integers or slices, not {RVal.typeNameH h k}"))
@@ -4631,12 +4675,15 @@ def heapStore (h : Heap) (a : Addr) (k v : RVal) : Res Heap :=
   | some (.list xs) =>
     match asInt k with
     | some i =>
-      match normIndex i xs.size with
-      | some n =>
+      match normIndexRaising i xs.size with
+      | .ok (some n) =>
         match Heap.update h a (.list ((xs.toList.set n v).toArray)) with
         | some h' => .ok h'
         | Option.none => .unsupported danglingMsg
-      | Option.none => .exn .indexErrorAssign
+      | .ok Option.none => .exn .indexErrorAssign
+      | .exn e => .exn e
+      | .timeout => .timeout
+      | .unsupported msg => .unsupported msg
     | Option.none =>
       .exn (.typeError s!"list indices must be integers, not {RVal.typeNameH h k}")
   -- H3: no `__setitem__` can exist (dunder guard) — faithful refusal.

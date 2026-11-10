@@ -11,8 +11,8 @@ marks a control/transport wrapper that still needs an adequacy theorem.
 | `PyObject_IsTrue` | `truthyH` | `truthyM` → `truthyH` | shared |
 | `PyObject_Hash` | `hashableKey`, `setHashNat`, dict/set key gates | same workers through `liftRes` / evaluator arms | finite numeric and tuple key slice; identity-hashed objects and unmodeled set construction refuse |
 | `PyNumber_Index` | `asInt`, `asRangeBound` | shared through `asInt` in builtin/method arms | the raising `Py_ssize_t` conversion is now a separate pinned boundary for list/range-length sites; full messages remain owed |
-| `PyLong_AsSsize_t` (after `PyNumber_Index` in list Clinic wrappers) | `pySsizeRaising` at `heapInsert`, `heapPop`, `lenVal` | same workers | shared raising conversion with CPython's exact `OverflowError`; sequence subscripting's `PyExc_IndexError` replacement and clamping remain separate protocols |
-| `_PyEval_SliceIndex` | `normIndex`, slice workers | shared | slice clamping is represented; index-site census remains to split raising vs clamping calls |
+| `PyLong_AsSsize_t` (after `PyNumber_Index` in list Clinic wrappers) | `pySsizeRaising` at `heapInsert`, `heapPop`, `lenVal` | same workers | shared raising conversion with CPython's exact `OverflowError`; sequence subscripting's `PyExc_IndexError` replacement is `pySsizeIndex` and `indexErrorSize` |
+| `_PyEval_SliceIndex` | `pySsizeClamping`, `asSliceIdx`, `normIndex` | shared | slice bounds clip to the pinned `Py_ssize_t` range before ordinary sequence clamping |
 | `PyFloat_AsDouble` / `PyLong_AsDouble` | `Float64.divideInt`, `Float64` arithmetic workers | shared through `evalBinOp` | negative integer power now refuses outside exact binary bases; platform `pow` oracle remains future work |
 | `PyObject_GetIter` / `iternext` | `rangeVals`, `heapContains`, `execFor*`, generator steppers | `iterValues`, `Kont` cursors, `exec*` shells | shared value workers; live generator/dict mutation has explicit stateful arms |
 | `PyObject_Size` | `lenVal`, `lenValH`, `heapLen` | `lenM`, `liftRes` | `len(range(...))` applies `pySsizeRaising` to the `PyLong_AsSsize_t` result |

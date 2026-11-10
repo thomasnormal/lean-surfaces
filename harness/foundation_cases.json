@@ -92,6 +92,55 @@
   },
   {
     "file": "harness/foundation_probe.py",
+    "function": "list_subscript_huge",
+    "args": [[9223372036854775808], [-9223372036854775809]],
+    "expect": "match",
+    "note": "PyExc_IndexError conversion: list subscripting raises the exact index-sized IndexError before ordinary bounds."
+  },
+  {
+    "file": "harness/foundation_probe.py",
+    "function": "tuple_subscript_huge",
+    "args": [[9223372036854775808]],
+    "expect": "match",
+    "note": "PyExc_IndexError conversion: tuple subscripting uses the same raising index conversion."
+  },
+  {
+    "file": "harness/foundation_probe.py",
+    "function": "string_subscript_huge",
+    "args": [[9223372036854775808]],
+    "expect": "match",
+    "note": "PyExc_IndexError conversion: string subscripting carries the exact index-sized IndexError."
+  },
+  {
+    "file": "harness/foundation_probe.py",
+    "function": "bytes_subscript_huge",
+    "args": [[9223372036854775808]],
+    "expect": "match",
+    "note": "PyExc_IndexError conversion: bytes subscripting carries the exact index-sized IndexError."
+  },
+  {
+    "file": "harness/foundation_probe.py",
+    "function": "range_subscript_huge",
+    "args": [[9223372036854775808]],
+    "expect": "match",
+    "note": "Range's mapping subscript uses PyNumber_Index without Py_ssize_t narrowing; its ordinary range IndexError remains distinct."
+  },
+  {
+    "file": "harness/foundation_probe.py",
+    "function": "list_slice_huge",
+    "args": [[9223372036854775808], [-9223372036854775809]],
+    "expect": "match",
+    "note": "_PyEval_SliceIndex clamping control: huge slice bounds clip before list-length normalization."
+  },
+  {
+    "file": "harness/foundation_probe.py",
+    "function": "string_slice_huge",
+    "args": [[9223372036854775808], [-9223372036854775809]],
+    "expect": "match",
+    "note": "_PyEval_SliceIndex clamping control on immutable strings."
+  },
+  {
+    "file": "harness/foundation_probe.py",
     "function": "range_len_huge",
     "args": [[]],
     "expect": "match",

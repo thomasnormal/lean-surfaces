@@ -107,6 +107,7 @@ open LeanModels.Sv.CombView
 -- the others at the goal. A lemma added to one list belongs in its siblings unless the difference is intended and
 -- stated here. The multi-window copies `svL_eq_norm_multi_at` and `svL_eq_norm_multi` (CombProcTactic.lean) are
 -- `svL_eq_norm_at` and `svL_eq_norm` plus the skeleton vocabulary; they name this note and each other.
+set_option maxRecDepth 4096 in
 /-- The normalization of the netlist view (a hypothesis `at`), extending `sv_norm_core`'s set with
 the equation vocabulary. -/
 macro "sv_eq_norm_at" h:ident : tactic =>
@@ -114,9 +115,9 @@ macro "sv_eq_norm_at" h:ident : tactic =>
       LeanModels.Sv.CombView.Summary.AutoObl, LeanModels.Sv.CombView.Summary.lsites, LeanModels.Sv.CombView.Aff.add,
       LeanModels.Sv.CombView.Aff.var, LeanModels.Sv.CombView.Aff.const, List.append_nil,
       Int.zero_add, LeanModels.Sv.CombView.Aff.sub, LeanModels.Sv.CombView.Aff.neg,
-      LeanModels.Sv.CombView.Aff.negTerms, Int.reduceNeg, Int.reduceAdd,
+      LeanModels.Sv.CombView.Aff.negTerms, LeanModels.Sv.CombView.Aff.negQs, Int.reduceNeg, Int.reduceAdd,
       List.nil_append, Nat.zero_add, Nat.reduceAdd,
-      LeanModels.Sv.CombView.Aff.scale, LeanModels.Sv.CombView.Aff.scaleTerms, Int.mul_one,
+      LeanModels.Sv.CombView.Aff.scale, LeanModels.Sv.CombView.Aff.scaleTerms, LeanModels.Sv.CombView.Aff.scaleQs, Int.mul_one,
       Int.mul_zero, List.map_cons, List.map_nil,
       List.cons_append, List.flatMap_cons, LeanModels.Sv.CombView.TFam.lsites,
       LeanModels.Sv.CombView.TFam.itemLs, LeanModels.Sv.CombView.Hdr.name, Option.getD_some,
@@ -125,7 +126,7 @@ macro "sv_eq_norm_at" h:ident : tactic =>
       List.zip_nil_right, LeanModels.Sv.CombView.Summary.InR, LeanModels.Sv.CombView.Aff.eval,
       LeanModels.Sv.CombView.Summary.dm, LeanModels.Sv.CombView.Summary.find, LeanModels.Sv.CombView.findDecl,
       forall_eq_or_imp, LeanModels.Sv.CombView.Loops.all, forall_eq,
-      LeanModels.Sv.CombView.Aff.evalTerms, Int.add_zero, Std.le_refl,
+      LeanModels.Sv.CombView.Aff.evalTerms, LeanModels.Sv.CombView.Aff.evalQs, Int.add_zero, Std.le_refl,
       String.reduceBEq, Bool.false_eq_true, not_false_eq_true,
       List.find?_cons_of_neg, BEq.rfl, List.find?_cons_of_pos,
       List.length_cons, List.length_nil, Nat.zero_lt_succ,
@@ -187,15 +188,16 @@ macro "sv_eq_norm_at" h:ident : tactic =>
 -- the others at the goal. A lemma added to one list belongs in its siblings unless the difference is intended and
 -- stated here. The multi-window copies `svL_eq_norm_multi_at` and `svL_eq_norm_multi` (CombProcTactic.lean) are
 -- `svL_eq_norm_at` and `svL_eq_norm` plus the skeleton vocabulary; they name this note and each other.
+set_option maxRecDepth 4096 in
 /-- … on the goal (for the obligations that mention the new vocabulary). -/
 macro "sv_eq_norm" : tactic =>
   `(tactic| (simp (config := { maxSteps := 4000000 }) only [LeanModels.Sv.CombView.Summary.val, LeanModels.Sv.CombView.lpEnv, List.lookup_cons, List.lookup_nil, LeanModels.Sv.CombView.CE.eval,
       LeanModels.Sv.CombView.Summary.AutoObl, LeanModels.Sv.CombView.Summary.lsites, LeanModels.Sv.CombView.Aff.add,
       LeanModels.Sv.CombView.Aff.var, LeanModels.Sv.CombView.Aff.const, List.append_nil,
       Int.zero_add, LeanModels.Sv.CombView.Aff.sub, LeanModels.Sv.CombView.Aff.neg,
-      LeanModels.Sv.CombView.Aff.negTerms, Int.reduceNeg, Int.reduceAdd,
+      LeanModels.Sv.CombView.Aff.negTerms, LeanModels.Sv.CombView.Aff.negQs, Int.reduceNeg, Int.reduceAdd,
       List.nil_append, Nat.zero_add, Nat.reduceAdd,
-      LeanModels.Sv.CombView.Aff.scale, LeanModels.Sv.CombView.Aff.scaleTerms, Int.mul_one,
+      LeanModels.Sv.CombView.Aff.scale, LeanModels.Sv.CombView.Aff.scaleTerms, LeanModels.Sv.CombView.Aff.scaleQs, Int.mul_one,
       Int.mul_zero, List.map_cons, List.map_nil,
       List.cons_append, List.flatMap_cons, LeanModels.Sv.CombView.TFam.lsites,
       LeanModels.Sv.CombView.TFam.itemLs, LeanModels.Sv.CombView.Hdr.name, Option.getD_some,
@@ -204,7 +206,7 @@ macro "sv_eq_norm" : tactic =>
       List.zip_nil_right, LeanModels.Sv.CombView.Summary.InR, LeanModels.Sv.CombView.Aff.eval,
       LeanModels.Sv.CombView.Summary.dm, LeanModels.Sv.CombView.Summary.find, LeanModels.Sv.CombView.findDecl,
       forall_eq_or_imp, LeanModels.Sv.CombView.Loops.all, forall_eq,
-      LeanModels.Sv.CombView.Aff.evalTerms, Int.add_zero, Std.le_refl,
+      LeanModels.Sv.CombView.Aff.evalTerms, LeanModels.Sv.CombView.Aff.evalQs, Int.add_zero, Std.le_refl,
       String.reduceBEq, Bool.false_eq_true, not_false_eq_true,
       List.find?_cons_of_neg, BEq.rfl, List.find?_cons_of_pos,
       List.length_cons, List.length_nil, Nat.zero_lt_succ,
@@ -535,7 +537,14 @@ unsafe def runSvEquationsCore (hintOnly : Bool) : TacticM Unit := do
     let signed ← if hier?.isSome then pure false else hasSignedReads pd
     let pdS := if signed then mkApp (mkConst ``LeanModels.Sv.PDesign.unsign) pd else pd
     match ← evalSummary pdS with
-    | .error msg => throwError "sv_equations: outside the supported fragment — {msg}"
+    | .error msg =>
+        let loc ← match hier? with
+          | some (pdH, lib, _, _, _, _, _) => do
+              let o ← evalExpr String (mkConst ``String)
+                (mkApp2 (mkConst ``LeanModels.Sv.CombHier.twinRefusedOrigin) pdH lib)
+              pure (if o.isEmpty then "" else s!" (in the flat twin of this design: {o})")
+          | none => pure ""
+        throwError "sv_equations: outside the supported fragment — {msg}{loc}"
     | .ok s =>
       let probs := s.structProblems
       unless probs.isEmpty do
@@ -919,10 +928,11 @@ unsafe def signedStructureDesign? : TacticM (Option Name) := do
 bridge's goals (the twin's own, the fragment, and the width obligation normalized as for a design with signed reads). -/
 unsafe def hierHook (pd lib args : Lean.Expr) : MetaM SignedHook := do
   let (twinE, plE, pnames, pl) ← mkHierTwin "sv_structure" pd lib
+  let origin ← evalExpr String (mkConst ``String) (mkApp2 (mkConst ``LeanModels.Sv.CombHier.twinRefusedOrigin) pd lib)
   return {
     twin? := some {
       design := twinE, args := args, restate := hierRestate pd lib args, wrap := hierWrap pd lib args twinE plE,
-      what := "a design with module instances (its summary is its flat twin's, `CombHier.lean`)" }
+      what := "a design with module instances (its summary is its flat twin's, `CombHier.lean`)", origin }
     extra := fun find s => do
       let hasRepl := s.hasRepl
       let replL ← if hasRepl then replSimpLemmas else pure #[]

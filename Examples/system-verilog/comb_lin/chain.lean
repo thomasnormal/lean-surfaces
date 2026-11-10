@@ -22,7 +22,10 @@ lemma (or to the tactic's way of applying it) that sends the tactic back to the 
 * `add_proc_m` (the cell as ONE `always_comb` body writing two windows, `comb_multi`): the cover obligation of a body of
   several windows (`CoverOblM`).
 
-Default heartbeats. Build: `lake build Examples.«system-verilog».comb_lin.chain`.
+Default heartbeats, but for `pm_settled` (300000): the quotient atoms of the affine forms (`CombView.Aff.qs`, 2026-11-10)
+put three more names in each of the tactics' normalization lists and one more summand in every affine value; measured
+on that tree, this proof fails at the default 200000 and passes at 210000. Build:
+`lake build Examples.«system-verilog».comb_lin.chain`.
 -/
 
 open LeanModels.Sv LeanModels.Sv.CombView LeanModels.Sv.CombLib LeanModels.Sv.CombEq
@@ -69,6 +72,7 @@ info: sv_comb group: CoverOblM, 9 reads with 8 writers of 4 sites
 -/
 #guard_msgs (whitespace := lax) in
 set_option sv_comb.group_report true in
+set_option maxHeartbeats 300000 in
 theorem pm_settled (N : Nat) (hN : 1 ≤ N) (hR : (N : Int) < 2147483648)
     {d' : Design2} (_hl : (add_proc_m.sem N).lowerComb = some d')
     (_hc : CombDesign d') (_ha : Acyclic d') (st : SvState) (_heqs : CombEqs d' st) (_hsh : StateShape d' st)

@@ -12,6 +12,9 @@ assignments), and the equations are those of the twin's eight sites, named after
 leaf `lo`'s `y`, `eq_y_1`/`eq_y_2` for the two halves of the output).
 
 * `halves_correct`: in every settled state at `W = 2 * K`, `y = a ^ b`.
+* `wire_out_correct`: the halves with `wire` ports, the parent's output tiled by the instances' output ports: `y = ~a`.
+* `hier_param_correct`: the halves selected by `W/2` itself (`hier_param.sv`, the clean-room repro verbatim), the
+  windows' bounds read with the quotient atom `W/2`: `y = a`.
 -/
 
 open LeanModels.Sv LeanModels.Sv.CombView LeanModels.Sv.CombEq
@@ -85,5 +88,106 @@ theorem halves_correct (K : Nat) (hK : 1 ≤ K) (hR : (2 * K : Int) < 2147483648
 /-- info: 'Examples.«system-verilog».comb_hier.comb_proof.halves_correct' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms halves_correct
+
+/-- **The halves with `wire` ports compute the complement of the word**, at every even width `W = 2 * K` in the `int`
+range: the parent's output net `y` is driven by the two instances' output ports, one window each. -/
+theorem wire_out_correct (K : Nat) (hK : 1 ≤ K) (hR : (2 * K : Int) < 2147483648) :
+    wire_out.sem (2 * K) ⊨₂ spec2 fun _ tr => ∀ (c : Nat) (st : SvState), tr[c]? = some st →
+      ∀ (u : BitVec (2 * K)), SvState.lookup st "a" = some (LVec.ofBitVec u) →
+        SvState.lookup st "y" = some (LVec.ofBitVec (~~~u)) := by
+  obtain ⟨hc, ha⟩ : CombDesign (wire_out.sem (2 * K)) ∧ Acyclic (wire_out.sem (2 * K)) := by
+    sv_structure (rank := rippleRank (fun p => if p % 3 = 1 then 2 else if p % 3 = 2 then 1 else 0)
+      (fun _ _ _ => 0))
+    all_goals (intros; omega)
+  refine Models2.of_comb_pointwise hc (fun st heqs hsh => ?_)
+  intro u hA
+  sv_equations
+  · -- the widths: each half is `K` bits, the word `2 * K`
+    have e1 : ((↑(2 * K) : Int) / 2 + -1).natAbs + 1 = K := by omega
+    have e2 : ((↑(2 * K) : Int) / 2 + -1 + 1).toNat = K := by omega
+    have e3 : ((↑(2 * K) : Int) / 2).toNat = K := by omega
+    have e4 : ((↑(2 * K) : Int) + -1 - ↑(2 * K) / 2 + 1).toNat = K := by omega
+    have e5 : ((↑(2 * K) : Int) + -1).natAbs + 1 = 2 * K := by omega
+    rw [e1] at eq_lo_a_1 eq_lo_y_1 eq_hi_a_1 eq_hi_y_1
+    rw [e3] at eq_hi_a_1 eq_y_2 known_y_2
+    rw [e2] at eq_y_1 known_y_1
+    rw [e4] at eq_y_2 known_y_2
+    rw [e5] at known_y_1 known_y_2
+    have hk : ∀ k, k < 2 * K → (∃ w, SvState.lookup st "y" = some w ∧ w.width = 2 * K) ∧ KnownBit st "y" k := by
+      intro k hk
+      by_cases h : k < K
+      · exact known_y_1 k h
+      · have := known_y_2 (k - K) (by omega)
+        rwa [Nat.add_sub_cancel' (by omega)] at this
+    rw [lookup_bv hk (by omega)]
+    congr 2
+    apply BitVec.eq_of_getLsbD_eq
+    intro i hi
+    rw [XF.getLsbD_bv hi, BitVec.getLsbD_not]
+    by_cases h : i < K
+    · -- the low half, through the leaf `lo`
+      rw [eq_y_1 i h, eq_lo_y_1 i h, eq_lo_a_1 i h, SvState.boolAt_ofBitVec hA hi]
+      simp [hi]
+    · -- the high half, through the leaf `hi`
+      obtain ⟨j, rfl⟩ : ∃ j, i = K + j := ⟨i - K, by omega⟩
+      rw [eq_y_2 j (by omega), eq_hi_y_1 j (by omega), eq_hi_a_1 j (by omega), SvState.boolAt_ofBitVec hA hi]
+      simp [hi]
+  all_goals first
+    | (intros; omega)
+    | (refine inKnown_ofBitVec hA ?_; omega)
+
+/-- info: 'Examples.«system-verilog».comb_hier.comb_proof.wire_out_correct' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms wire_out_correct
+
+/-- **The halves selected by `W/2` pass the word through**, at every even width `W = 2 * K` in the `int` range. The
+windows `a[W/2-1:0]`, `y[W-1:W/2]` are read with the quotient atom `W/2` (`Aff.qs`); in the equations it is the floor
+`↑(2 * K) / 2`, which `omega` reads. -/
+theorem hier_param_correct (K : Nat) (hK : 1 ≤ K) (hR : (2 * K : Int) < 2147483648) :
+    hier_param.sem (2 * K) ⊨₂ spec2 fun _ tr => ∀ (c : Nat) (st : SvState), tr[c]? = some st →
+      ∀ (u : BitVec (2 * K)), SvState.lookup st "a" = some (LVec.ofBitVec u) →
+        SvState.lookup st "y" = some (LVec.ofBitVec u) := by
+  obtain ⟨hc, ha⟩ : CombDesign (hier_param.sem (2 * K)) ∧ Acyclic (hier_param.sem (2 * K)) := by
+    sv_structure (rank := rippleRank (fun p => if p % 3 = 1 then 2 else if p % 3 = 2 then 1 else 0)
+      (fun _ _ _ => 0))
+    all_goals (intros; omega)
+  refine Models2.of_comb_pointwise hc (fun st heqs hsh => ?_)
+  intro u hA
+  sv_equations
+  · -- the widths: each half is `K` bits, the word `2 * K`
+    have e1 : ((↑(2 * K) : Int) / 2 + -1).natAbs + 1 = K := by omega
+    have e2 : (-1 + (↑(2 * K) : Int) / 2 + 1).toNat = K := by omega
+    have e3 : ((↑(2 * K) : Int) / 2).toNat = K := by omega
+    have e4 : ((↑(2 * K) : Int) + -1 - ↑(2 * K) / 2 + 1).toNat = K := by omega
+    have e5 : ((↑(2 * K) : Int) + -1).natAbs + 1 = 2 * K := by omega
+    rw [e1] at eq_lo_a_1 eq_lo_y_1 eq_hi_a_1 eq_hi_y_1
+    rw [e3] at eq_hi_a_1 eq_y_2 known_y_2
+    rw [e2] at eq_y_1 known_y_1
+    rw [e4] at eq_y_2 known_y_2
+    rw [e5] at known_y_1 known_y_2
+    have hk : ∀ k, k < 2 * K → (∃ w, SvState.lookup st "y" = some w ∧ w.width = 2 * K) ∧ KnownBit st "y" k := by
+      intro k hk
+      by_cases h : k < K
+      · exact known_y_1 k h
+      · have := known_y_2 (k - K) (by omega)
+        rwa [Nat.add_sub_cancel' (by omega)] at this
+    rw [lookup_bv hk (by omega)]
+    congr 2
+    apply BitVec.eq_of_getLsbD_eq
+    intro i hi
+    rw [XF.getLsbD_bv hi]
+    by_cases h : i < K
+    · -- the low half, through the leaf `lo`
+      rw [eq_y_1 i h, eq_lo_y_1 i h, eq_lo_a_1 i h, SvState.boolAt_ofBitVec hA hi]
+    · -- the high half, through the leaf `hi`
+      obtain ⟨j, rfl⟩ : ∃ j, i = K + j := ⟨i - K, by omega⟩
+      rw [eq_y_2 j (by omega), eq_hi_y_1 j (by omega), eq_hi_a_1 j (by omega), SvState.boolAt_ofBitVec hA hi]
+  all_goals first
+    | (intros; omega)
+    | (refine inKnown_ofBitVec hA ?_; omega)
+
+/-- info: 'Examples.«system-verilog».comb_hier.comb_proof.hier_param_correct' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms hier_param_correct
 
 end Examples.«system-verilog».comb_hier.comb_proof

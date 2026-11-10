@@ -1792,20 +1792,20 @@ def carryPT : PT :=
 /-- The declarations of the design: `a`, `b`, `p`, `s` are `[N-1:0]`, `c` is `[N:0]`, as `PDesign.summary` reads them.
 All seven are unsigned `logic` in `add_proc.sv` (variables, not nets), so `isNet` and `isSigned` are `false` in each. -/
 def apDecls : List DeclT :=
-  let nm1 : Aff := ⟨[("N", 1)], -1⟩
+  let nm1 : Aff := ⟨[("N", 1)], -1, []⟩
   let dm1 : PDim := ⟨.binary (.m0 .sub) (.paramRef "N" none) (.int 1), .int 0⟩
   [⟨"a", true, false, false, false, [(dm1, nm1, Aff.const 0)]⟩, ⟨"b", true, false, false, false, [(dm1, nm1, Aff.const 0)]⟩,
    ⟨"cin", true, false, false, false, []⟩, ⟨"s", false, true, false, false, [(dm1, nm1, Aff.const 0)]⟩,
    ⟨"cout", false, true, false, false, []⟩,
-   ⟨"c", false, false, false, false, [(⟨.paramRef "N" none, .int 0⟩, ⟨[("N", 1)], 0⟩, Aff.const 0)]⟩,
+   ⟨"c", false, false, false, false, [(⟨.paramRef "N" none, .int 0⟩, ⟨[("N", 1)], 0, []⟩, Aff.const 0)]⟩,
    ⟨"p", false, false, false, false, [(dm1, nm1, Aff.const 0)]⟩]
 
 -- The recognizer accepts the carry cell, reads the access `c[i+1]` as its target and finds the three reads
 -- (the condition `p[i]`, then `c[i]`, then `a[i]`).
 #guard match procTree? apDecls (carryPT.toProc) with
   | .ok (tg, ptr) =>
-      tg == .bit "c" ⟨[("i", 1)], 1⟩ &&
-        ptr.rds == [.bit "p" ⟨[("i", 1)], 0⟩, .bit "c" ⟨[("i", 1)], 0⟩, .bit "a" ⟨[("i", 1)], 0⟩]
+      tg == .bit "c" ⟨[("i", 1)], 1, []⟩ &&
+        ptr.rds == [.bit "p" ⟨[("i", 1)], 0, []⟩, .bit "c" ⟨[("i", 1)], 0, []⟩, .bit "a" ⟨[("i", 1)], 0, []⟩]
   | .error _ => false
 
 #guard match procTree? apDecls (carryPT.toProc) with
@@ -1880,8 +1880,8 @@ private def pp : PExpr := .bitSel (.ident "p") (.genvarRef "i")
 #guard match procTree? apDecls (.alwaysComb (.block [.ifStmt (.unary (.m0 .lnot) pp)
     (.blockingAssignL carryLhs (.ternary pp cc aa)) (some (.blockingAssignL carryLhs aa))])) with
   | .ok (_, ptr) =>
-      ptr.rds == [.bit "p" ⟨[("i", 1)], 0⟩, .bit "p" ⟨[("i", 1)], 0⟩, .bit "c" ⟨[("i", 1)], 0⟩,
-        .bit "a" ⟨[("i", 1)], 0⟩, .bit "a" ⟨[("i", 1)], 0⟩]
+      ptr.rds == [.bit "p" ⟨[("i", 1)], 0, []⟩, .bit "p" ⟨[("i", 1)], 0, []⟩, .bit "c" ⟨[("i", 1)], 0, []⟩,
+        .bit "a" ⟨[("i", 1)], 0, []⟩, .bit "a" ⟨[("i", 1)], 0, []⟩]
   | .error _ => false
 -- arithmetic and ordering operators stay outside the fragment
 #guard (refusal (.alwaysComb (.block [.ifStmt (.binary (.m0 .add) pp aa) (.blockingAssignL carryLhs cc)
@@ -1920,9 +1920,9 @@ theorem carry_lowers (N k : Nat) (hk : k < N) (E : IEnv) (elems : List (String �
           (.resize 1 (.slice (.ident "c") k 1)) (.resize 1 (.slice (.ident "a") k 1))])) := by
   have hev1 : evalInt E (.binary (.m0 .add) (.genvarRef "i") (.int 1)) = .ok ((k : Int) + 1) := by
     have := (affOf?_sound (E := E) (σ := fun n => if n = "i" then (k : Int) else 0)
-      (.binary (.m0 .add) (.genvarRef "i") (.int 1)) ⟨[("i", 1)], 1⟩
+      (.binary (.m0 .add) (.genvarRef "i") (.int 1)) ⟨[("i", 1)], 1, []⟩
       (by simp [affOf?, affBin, Aff.add, Aff.var, Aff.const])
-      (by intro n hn; simp [Aff.names] at hn; subst hn; simp [IEnv.intVal?, hi])).2
+      (by intro n hn; simp [Aff.names_eq] at hn; subst hn; simp [IEnv.intVal?, hi])).2
     simpa [Aff.eval, Aff.evalTerms, Int.add_comm] using this
   have hev0 : evalInt E (.genvarRef "i") = .ok (k : Int) := evalInt_genvarRef_of hi
   have hlhs : instLhs2 E elems carryLhs = .ok (Win.lhs ("c", k + 1, 1), 1) := by

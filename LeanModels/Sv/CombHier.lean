@@ -41,6 +41,12 @@ decidable side condition on the summaries (`HierOk`), which the tactics decide.
   would be a generate family whose names carry the loop index);
 * the parent has no generate block besides its instances; a child has no instance and no generate block;
 * every port is connected; no connection is loud.
+
+A parent's `wire` output tiled by the instances' output ports (`.y(y[W/2-1:0])`, `.y(y[W-1:W/2])`) is read like a
+variable port: the extractor checks that each instance output targets the net and that the windows cover it without
+overlap at the default point, and marks it a net-as-variable; the loader reads it as an output declaration, so the twin's
+assignments `target = p ++ y` are the instantiation's (`conn_out_eq`), and the one-driver rule at each parameter point is
+the twin's disjointness obligation, decided like any other.
 -/
 
 namespace LeanModels.Sv
@@ -127,7 +133,7 @@ namespace CombView
 
 /-- An affine form over the child's names, under the prefix. -/
 def Aff.hren (pfx : String) (a : Aff) : Aff :=
-  { terms := a.terms.map (fun p => (pfx ++ p.1, p.2)), c := a.c }
+  { terms := a.terms.map (fun p => (pfx ++ p.1, p.2)), c := a.c, qs := a.qs.map (fun p => (pfx ++ p.1, p.2)) }
 
 /-- An access of the child's scope under the prefix. -/
 def Acc.hren (pfx : String) : Acc → Acc
@@ -246,9 +252,14 @@ theorem Aff.evalTerms_hren (σ : String → Int) (pfx : String) : ∀ ts : List 
   | [] => rfl
   | (n, k) :: ts => by simp [Aff.evalTerms, Aff.evalTerms_hren σ pfx ts]
 
+theorem Aff.evalQs_hren (σ : String → Int) (pfx : String) : ∀ qs : List (String × Int × Int),
+    Aff.evalQs σ (qs.map fun p => (pfx ++ p.1, p.2)) = Aff.evalQs (fun n => σ (pfx ++ n)) qs
+  | [] => rfl
+  | (n, k, d) :: qs => by simp [Aff.evalQs, Aff.evalQs_hren σ pfx qs]
+
 @[simp] theorem Aff.eval_hren (σ : String → Int) (pfx : String) (a : Aff) :
     (a.hren pfx).eval σ = a.eval (fun n => σ (pfx ++ n)) := by
-  simp [Aff.hren, Aff.eval, Aff.evalTerms_hren]
+  simp only [Aff.hren, Aff.eval, Aff.evalTerms_hren, Aff.evalQs_hren]
 
 @[simp] theorem Acc.name_hren (pfx : String) (a : Acc) : (a.hren pfx).name = pfx ++ a.name := by
   cases a <;> rfl
@@ -354,6 +365,16 @@ open CombView CombEq
 theorem Aff.hren_add (pfx : String) (a b : Aff) : (a.add b).hren pfx = (a.hren pfx).add (b.hren pfx) := by
   simp [Aff.hren, Aff.add]
 
+theorem Aff.negQs_hren (pfx : String) : ∀ qs : List (String × Int × Int),
+    Aff.negQs (qs.map fun p => (pfx ++ p.1, p.2)) = (Aff.negQs qs).map fun p => (pfx ++ p.1, p.2)
+  | [] => rfl
+  | (n, k, d) :: qs => by simp [Aff.negQs, Aff.negQs_hren pfx qs]
+
+theorem Aff.scaleQs_hren (pfx : String) (k : Int) : ∀ qs : List (String × Int × Int),
+    Aff.scaleQs k (qs.map fun p => (pfx ++ p.1, p.2)) = (Aff.scaleQs k qs).map fun p => (pfx ++ p.1, p.2)
+  | [] => rfl
+  | (n, m, d) :: qs => by simp [Aff.scaleQs, Aff.scaleQs_hren pfx k qs]
+
 theorem Aff.negTerms_hren (pfx : String) : ∀ ts : List (String × Int),
     Aff.negTerms (ts.map fun p => (pfx ++ p.1, p.2)) = (Aff.negTerms ts).map fun p => (pfx ++ p.1, p.2)
   | [] => rfl
@@ -367,12 +388,22 @@ theorem Aff.scaleTerms_hren (pfx : String) (k : Int) : ∀ ts : List (String × 
 theorem affMul_hren {a b c : Aff} (pfx : String) (h : affMul a b = some c) :
     affMul (a.hren pfx) (b.hren pfx) = some (c.hren pfx) := by
   unfold affMul at h ⊢
-  have e1 : (a.hren pfx).terms.isEmpty = a.terms.isEmpty := by simp [Aff.hren]
-  have e2 : (b.hren pfx).terms.isEmpty = b.terms.isEmpty := by simp [Aff.hren]
+  have e1 : ((a.hren pfx).terms.isEmpty && (a.hren pfx).qs.isEmpty) = (a.terms.isEmpty && a.qs.isEmpty) := by
+    simp [Aff.hren]
+  have e2 : ((b.hren pfx).terms.isEmpty && (b.hren pfx).qs.isEmpty) = (b.terms.isEmpty && b.qs.isEmpty) := by
+    simp [Aff.hren]
   rw [e1, e2]
-  cases ha : a.terms.isEmpty <;> cases hb : b.terms.isEmpty <;>
+  cases ha : (a.terms.isEmpty && a.qs.isEmpty) <;> cases hb : (b.terms.isEmpty && b.qs.isEmpty) <;>
     simp only [ha, hb, if_true, if_false, Bool.false_eq_true, Option.some.injEq, reduceCtorEq] at h ⊢ <;>
-    subst h <;> simp [Aff.scale, Aff.hren, Aff.scaleTerms_hren]
+    subst h <;> simp [Aff.scale, Aff.hren, Aff.scaleTerms_hren, Aff.scaleQs_hren]
+
+theorem affDiv_hren {a b c : Aff} (pfx : String) (h : affDiv a b = some c) :
+    affDiv (a.hren pfx) (b.hren pfx) = some (c.hren pfx) := by
+  obtain ⟨n, rfl, hbt, hbq, hbc, rfl⟩ := affDiv_cases h
+  have hb' : b.hren pfx = { c := b.c } := by
+    cases b; simp only at hbt hbq; subst hbt; subst hbq; rfl
+  rw [hb']
+  simp [affDiv, Aff.var, Aff.hren, hbc]
 
 theorem affBin_hren {op : SymBinOp} {a b c : Aff} (pfx : String) (h : affBin op a b = some c) :
     affBin op (a.hren pfx) (b.hren pfx) = some (c.hren pfx) := by
@@ -380,9 +411,10 @@ theorem affBin_hren {op : SymBinOp} {a b c : Aff} (pfx : String) (h : affBin op 
   split at h
   · simp only [Option.some.injEq] at h; subst h; simp [Aff.hren_add]
   · simp only [Option.some.injEq] at h; subst h
-    simp [Aff.sub, Aff.add, Aff.neg, Aff.hren, Aff.negTerms_hren]
+    simp [Aff.sub, Aff.add, Aff.neg, Aff.hren, Aff.negTerms_hren, Aff.negQs_hren]
   · exact affMul_hren pfx h
   · exact affMul_hren pfx h
+  · exact affDiv_hren pfx h
   · simp at h
 
 theorem affOf?_hren (pfx : String) : ∀ {e : PExpr} {a : Aff}, affOf? e = some a →
@@ -816,6 +848,34 @@ def hierTwin (d : PDesign) (lib : List PDesign) : Except String (PDesign × List
   let pl ← hierInsts d lib
   let parts ← pl.mapM fun x => instPart x.1 x.2
   return (twinOf d parts, pl)
+
+/-- Where process `k` of the flat twin comes from in the design as written: one of the parent's own processes, or, per
+instance in source order, the connection of one port (in the child's port order) or one of the child's processes. -/
+def twinOrigin (d : PDesign) (pl : List (PInst × PDesign)) (k : Nat) : String :=
+  if k < d.processes.length then s!"process #{k} of module `{d.name}`" else go pl (k - d.processes.length)
+where
+  go : List (PInst × PDesign) → Nat → String
+    | [], _ => "a process of the twin"
+    | (i, c) :: rest, k =>
+        match (childPorts c)[k]? with
+        | some pd => s!"instance `{i.name}`, the connection of port `{pd.name}`"
+        | none =>
+            let j := k - (childPorts c).length
+            if j < c.processes.length then s!"instance `{i.name}`, process #{j} of module `{c.name}`"
+            else go rest (j - c.processes.length)
+
+/-- The origin of the first process of the flat twin that the site recognizer refuses (`""` when there is none, or
+when the twin's declarations are refused first): for the refusal, whose site names are the twin's. -/
+def twinRefusedOrigin (d : PDesign) (lib : List PDesign) : String :=
+  match hierTwin d lib with
+  | .error _ => ""
+  | .ok (dF, pl) =>
+      match declsOf? dF.decls with
+      | .error _ => ""
+      | .ok ds =>
+          match (dF.processes.zipIdx.find? fun (p, k) => (siteOf? ds k p).toOption.isNone) with
+          | some (_, k) => twinOrigin d pl k
+          | none => ""
 
 /-- **The hierarchy summary**: the summary of the flat twin (module docstring). -/
 def summaryH (d : PDesign) (lib : List PDesign) : Except String Summary := do
@@ -1932,6 +1992,27 @@ theorem instantiateHDAlias2_twin {d : PDesign} {lib : List PDesign} {args : List
 /-- info: 'LeanModels.Sv.CombHier.inst_step' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms inst_step
+
+-- The affine reader with its quotient atoms (`CombView.Aff.qs`), and their renaming under an instance prefix.
+/-- info: 'LeanModels.Sv.CombView.affOf?_sound' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms CombView.affOf?_sound
+
+/-- info: 'LeanModels.Sv.CombView.evalInt_div_of' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms CombView.evalInt_div_of
+
+/-- info: 'LeanModels.Sv.CombView.affDiv_cases' depends on axioms: [propext] -/
+#guard_msgs (whitespace := lax) in
+#print axioms CombView.affDiv_cases
+
+/-- info: 'LeanModels.Sv.affDiv_hren' depends on axioms: [propext] -/
+#guard_msgs (whitespace := lax) in
+#print axioms affDiv_hren
+
+/-- info: 'LeanModels.Sv.Aff.eval_hren' depends on axioms: [propext] -/
+#guard_msgs (whitespace := lax) in
+#print axioms Aff.eval_hren
 
 end CombHier
 end LeanModels.Sv

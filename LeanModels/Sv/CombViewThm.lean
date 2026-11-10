@@ -772,7 +772,8 @@ theorem constW_eval (σ : String → Int) : ∀ {ps : List (Aff × Aff)} {w : Na
         · simp [hr] at h
         · simp only [hr, Option.map_some, Option.some.injEq] at h
           subst h
-          simp [affPairsW, constW_eval σ hr, Aff.eval_of_terms_nil σ m hc.1, Aff.eval_of_terms_nil σ l hc.2]
+          simp [affPairsW, constW_eval σ hr, Aff.eval_of_terms_nil σ m hc.1.1.1 hc.1.2,
+            Aff.eval_of_terms_nil σ l hc.1.1.2 hc.2]
       · simp at h
 
 /-- **The width fact of a signed comparison the recognizer accepts holds at every valuation** (`scmpPairs_dims`): the

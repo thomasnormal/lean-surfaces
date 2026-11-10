@@ -18,14 +18,14 @@ namespace Examples.«system-verilog».comb_multi.cell_site
 
 /-- The two segments of the cell, as the recognizer reads them. -/
 def cellSegs : List (Acc × PTR) :=
-  [(.bit "c" ⟨[("i", 1)], 1⟩,
-      .ite (.bitSel (.ident "p") (.genvarRef "i")) [.bit "p" ⟨[("i", 1)], 0⟩]
-        (.leafL carryLhs (.bitSel (.ident "c") (.genvarRef "i")) [.bit "c" ⟨[("i", 1)], 0⟩])
-        (.leafL carryLhs (.bitSel (.ident "a") (.genvarRef "i")) [.bit "a" ⟨[("i", 1)], 0⟩])),
-    (.bit "s" ⟨[("i", 1)], 0⟩,
+  [(.bit "c" ⟨[("i", 1)], 1, []⟩,
+      .ite (.bitSel (.ident "p") (.genvarRef "i")) [.bit "p" ⟨[("i", 1)], 0, []⟩]
+        (.leafL carryLhs (.bitSel (.ident "c") (.genvarRef "i")) [.bit "c" ⟨[("i", 1)], 0, []⟩])
+        (.leafL carryLhs (.bitSel (.ident "a") (.genvarRef "i")) [.bit "a" ⟨[("i", 1)], 0, []⟩])),
+    (.bit "s" ⟨[("i", 1)], 0, []⟩,
       .leafL sumLhs
         (.binary (.m0 .xor) (.bitSel (.ident "p") (.genvarRef "i")) (.bitSel (.ident "c") (.genvarRef "i")))
-        [.bit "p" ⟨[("i", 1)], 0⟩, .bit "c" ⟨[("i", 1)], 0⟩])]
+        [.bit "p" ⟨[("i", 1)], 0, []⟩, .bit "c" ⟨[("i", 1)], 0, []⟩])]
 
 /-- The recognizer reads `cellBody` as exactly these two segments (evaluated by the kernel). -/
 theorem cellSegs_ok : multiSegs? apDecls cellBody = .ok cellSegs := by
@@ -49,12 +49,12 @@ theorem ap_declWidth_s (N : Nat) : (apDesign N).declWidth "s" = some N := by sim
 
 /-- A bit access `n[i + c]` of the cell at `i = k`: its window is `(n, k + c, 1)`. -/
 theorem win_cellBit (k : Nat) (dw : String → Nat) (n : String) (c : Int) :
-    (Acc.bit n ⟨[("i", 1)], c⟩).win (cellσ k) dw = (n, ((k : Int) + c).toNat, 1) := by
+    (Acc.bit n ⟨[("i", 1)], c, []⟩).win (cellσ k) dw = (n, ((k : Int) + c).toNat, 1) := by
   simp [Acc.win, Acc.lo, Aff.eval, Aff.evalTerms, cellσ]
 
 theorem accOK_cellBit (N k : Nat) (n : String) (c : Int) (hn : ((apDesign N).declWidth n).isSome = true)
     (he : n = "a" ∨ n = "c" ∨ n = "p" ∨ n = "s") (hc : 0 ≤ (k : Int) + c) :
-    AccOK (cellσ k) (apDesign N).declWidth (fun _ => none) cellEW ["i"] (.bit n ⟨[("i", 1)], c⟩) := by
+    AccOK (cellσ k) (apDesign N).declWidth (fun _ => none) cellEW ["i"] (.bit n ⟨[("i", 1)], c, []⟩) := by
   refine ⟨hn, ⟨?_, ?_⟩, ?_⟩
   · simpa [Aff.eval, Aff.evalTerms, cellσ] using hc
   · simp [cellEW, he]

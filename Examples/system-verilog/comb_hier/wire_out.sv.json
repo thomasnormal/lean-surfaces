@@ -9,7 +9,7 @@
   "top": "wire_out",
   "source_files": [
     {
-      "path": "Examples/system-verilog/comb_hier/neg/wire_out.sv",
+      "path": "Examples/system-verilog/comb_hier/wire_out.sv",
       "sha256": "cc9725443746a93cda8f7cfca43d4f88659317b1e27506244b5095f7f5f385eb"
     }
   ],
@@ -219,15 +219,67 @@
             }
           },
           {
-            "kind": "Unsupported",
+            "kind": "Port",
             "span": {
               "line": 6,
               "col": 87,
               "end_line": 6,
               "end_col": 88
             },
-            "sv_kind": "PortSymbol:net-z",
-            "text": "y"
+            "name": "y",
+            "dir": "out",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Binary",
+                    "span": {
+                      "line": 6,
+                      "col": 80,
+                      "end_line": 6,
+                      "end_col": 83
+                    },
+                    "width": null,
+                    "op": "-",
+                    "left": {
+                      "kind": "ParamRef",
+                      "span": {
+                        "line": 6,
+                        "col": 80,
+                        "end_line": 6,
+                        "end_col": 81
+                      },
+                      "name": "W"
+                    },
+                    "right": {
+                      "kind": "Int",
+                      "span": {
+                        "line": 6,
+                        "col": 82,
+                        "end_line": 6,
+                        "end_col": 83
+                      },
+                      "value": 1,
+                      "resolved_width": null
+                    }
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 6,
+                      "col": 84,
+                      "end_line": 6,
+                      "end_col": 85
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 8
+            },
+            "net_as_variable": true
           }
         ],
         "decls": [],

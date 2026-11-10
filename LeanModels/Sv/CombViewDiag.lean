@@ -20,6 +20,8 @@ namespace CombView
 /-- Print an affine form, renaming variables (the second loop index is shown as `i'`). -/
 def Aff.showR (a : Aff) (rn : String → String) : String :=
   let ts := a.terms.map fun (n, k) => if k == 1 then rn n else s!"{k}*{rn n}"
+  let qs := a.qs.map fun (n, k, d) => if k == 1 then s!"{rn n}/{d}" else s!"{k}*({rn n}/{d})"
+  let ts := ts ++ qs
   let parts := ts ++ (if a.c != 0 || ts.isEmpty then [toString a.c] else [])
   (" + ".intercalate parts).replace "+ -" "- "
 

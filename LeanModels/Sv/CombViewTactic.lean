@@ -234,15 +234,16 @@ private def headConst? (e : Expr) : Option Name :=
 -- the others at the goal. A lemma added to one list belongs in its siblings unless the difference is intended and
 -- stated here. The multi-window copies `svL_eq_norm_multi_at` and `svL_eq_norm_multi` (CombProcTactic.lean) are
 -- `svL_eq_norm_at` and `svL_eq_norm` plus the skeleton vocabulary; they name this note and each other.
+set_option maxRecDepth 4096 in
 /-- The normalization of the obligation `Prop`s: unfold the summary functions, evaluate the
 affine forms, name the windows. -/
 macro "sv_norm_core" : tactic =>
   `(tactic| (simp (config := { maxSteps := 4000000 }) only [LeanModels.Sv.CombView.Summary.AutoObl, LeanModels.Sv.CombView.Summary.lsites, LeanModels.Sv.CombView.Aff.add,
       LeanModels.Sv.CombView.Aff.var, LeanModels.Sv.CombView.Aff.const, List.append_nil,
       Int.zero_add, LeanModels.Sv.CombView.Aff.sub, LeanModels.Sv.CombView.Aff.neg,
-      LeanModels.Sv.CombView.Aff.negTerms, Int.reduceNeg, Int.reduceAdd,
+      LeanModels.Sv.CombView.Aff.negTerms, LeanModels.Sv.CombView.Aff.negQs, Int.reduceNeg, Int.reduceAdd,
       List.nil_append, Nat.zero_add, Nat.reduceAdd,
-      LeanModels.Sv.CombView.Aff.scale, LeanModels.Sv.CombView.Aff.scaleTerms, Int.mul_one,
+      LeanModels.Sv.CombView.Aff.scale, LeanModels.Sv.CombView.Aff.scaleTerms, LeanModels.Sv.CombView.Aff.scaleQs, Int.mul_one,
       Int.mul_zero, List.map_cons, List.map_nil,
       List.cons_append, List.flatMap_cons, LeanModels.Sv.CombView.TFam.lsites,
       LeanModels.Sv.CombView.TFam.itemLs, LeanModels.Sv.CombView.Hdr.name, Option.getD_some,
@@ -251,7 +252,7 @@ macro "sv_norm_core" : tactic =>
       List.zip_nil_right, LeanModels.Sv.CombView.Summary.InR, LeanModels.Sv.CombView.Aff.eval,
       LeanModels.Sv.CombView.Summary.dm, LeanModels.Sv.CombView.Summary.find, LeanModels.Sv.CombView.findDecl,
       forall_eq_or_imp, LeanModels.Sv.CombView.Loops.all, forall_eq,
-      LeanModels.Sv.CombView.Aff.evalTerms, Int.add_zero, Std.le_refl,
+      LeanModels.Sv.CombView.Aff.evalTerms, LeanModels.Sv.CombView.Aff.evalQs, Int.add_zero, Std.le_refl,
       String.reduceBEq, Bool.false_eq_true, not_false_eq_true,
       List.find?_cons_of_neg, BEq.rfl, List.find?_cons_of_pos,
       List.length_cons, List.length_nil, Nat.zero_lt_succ,
@@ -310,6 +311,7 @@ macro_rules
   | `(tactic| sv_norm [$ids,*]) =>
       `(tactic| (sv_norm_core; sv_lp_norm; (try simp (config := { maxSteps := 4000000 }) only [$ids,*]); try sv_simp))
 
+set_option maxRecDepth 4096 in
 /-- **Row-major bookkeeping, explicitly.** The 2-D windows of a packed array `x[R-1:0][W-1:0]` are
 flat offsets `rmN W r c = r * W + c`, and every obligation about two of them (disjointness of two
 cells, a cell inside a row or a part of a row, the overlap of a read with a write) is a comparison of
@@ -773,6 +775,7 @@ def replSimpLemmas {m : Type → Type} [Monad m] [MonadQuotation m] :
     ← `(Lean.Parser.Tactic.simpLemma| LeanModels.Sv.CombView.affOf?),
     ← `(Lean.Parser.Tactic.simpLemma| LeanModels.Sv.CombView.affBin),
     ← `(Lean.Parser.Tactic.simpLemma| LeanModels.Sv.CombView.affMul),
+    ← `(Lean.Parser.Tactic.simpLemma| LeanModels.Sv.CombView.affDiv),
     ← `(Lean.Parser.Tactic.simpLemma| List.isEmpty_nil),
     ← `(Lean.Parser.Tactic.simpLemma| List.isEmpty_cons)]
 
@@ -799,6 +802,9 @@ structure TwinInfo where
   wrap : TSyntax `term → TacticM (TSyntax `term)
   /-- What the twin is the twin of, for the refusals. -/
   what : String
+  /-- Where the first process the site recognizer refuses comes from in the design as written (`""`: no such process),
+  for the refusal of a twin outside the fragment, whose site names are the twin's. -/
+  origin : String := ""
 
 structure SignedHook where
   extra : (Name → TacticM MVarId) → Summary → TacticM (List MVarId)
@@ -888,7 +894,10 @@ unsafe def runSvStructure (rankStx? lexStx? usingStx? : Option Syntax) (hintOnly
       throwError "sv_structure: the shared obligations `SharedObl X.pdesign [N]` are not available for {twinWhat}; prove `CombDesign (X.sem N) ∧ Acyclic (X.sem N)` and let `sv_equations` normalize its obligations"
     match ← evalSummary pdS with
     | .error msg =>
-        throwError "sv_structure: outside the supported fragment — {msg}"
+        let loc := match twin? with
+          | some tw => if tw.origin.isEmpty then "" else s!" (in the flat twin of this design: {tw.origin})"
+          | none => ""
+        throwError "sv_structure: outside the supported fragment — {msg}{loc}"
     | .ok s =>
       if hintOnly then
         logInfo m!"{s.describe}"
@@ -1256,11 +1265,11 @@ unsafe def runSvInterface : TacticM Unit := do
         evalTactic (← `(tactic|
           sv_simp [LeanModels.Sv.CombView.DeclT.toDecl, LeanModels.Sv.CombView.DeclT.width,
             LeanModels.Sv.CombView.dimsW, LeanModels.Sv.CombView.Aff.eval,
-            LeanModels.Sv.CombView.Aff.evalTerms, LeanModels.Sv.CombView.Aff.sub,
-            LeanModels.Sv.CombView.Aff.neg, LeanModels.Sv.CombView.Aff.negTerms,
+            LeanModels.Sv.CombView.Aff.evalTerms, LeanModels.Sv.CombView.Aff.evalQs, LeanModels.Sv.CombView.Aff.sub,
+            LeanModels.Sv.CombView.Aff.neg, LeanModels.Sv.CombView.Aff.negTerms, LeanModels.Sv.CombView.Aff.negQs,
             LeanModels.Sv.CombView.Aff.add, LeanModels.Sv.CombView.Aff.var,
             LeanModels.Sv.CombView.Aff.const, LeanModels.Sv.CombView.Aff.scale,
-            LeanModels.Sv.CombView.Aff.scaleTerms, LeanModels.Sv.CombView.σL,
+            LeanModels.Sv.CombView.Aff.scaleTerms, LeanModels.Sv.CombView.Aff.scaleQs, LeanModels.Sv.CombView.σL,
             LeanModels.Sv.CombView.Summary.val, LeanModels.Sv.CombView.lpEnv,
             LeanModels.Sv.CombView.CE.eval, List.lookup_cons, List.lookup_nil, $pdId:ident,
             List.zip_cons_cons, List.zip_nil_right, List.lookup_cons_self, Option.getD_some,

@@ -393,7 +393,7 @@ private def refusal2 (p : PStmt) : String :=
 
 -- the cell is two segments: the carry window `c[i+1]` and the sum window `s[i]`, in source order
 #guard match multiSegs? apDecls cellBody with
-  | .ok segs => segs.map Prod.fst == [.bit "c" ⟨[("i", 1)], 1⟩, .bit "s" ⟨[("i", 1)], 0⟩] &&
+  | .ok segs => segs.map Prod.fst == [.bit "c" ⟨[("i", 1)], 1, []⟩, .bit "s" ⟨[("i", 1)], 0, []⟩] &&
       segs.map (fun s => s.2.rds.length) == [3, 2]
   | .error _ => false
 

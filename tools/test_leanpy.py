@@ -325,6 +325,68 @@ class PinningTests(unittest.TestCase):
         self.assertIn("WARNING pinned oracle 'python3.9'", output.getvalue())
 
 
+class MissingPinnedPythonTests(unittest.TestCase):
+    def test_missing_frontend_refuses_without_fallback_or_cache(self):
+        # A non-3.9 executable and an empty PATH make the absence real; no
+        # alias on the host can accidentally satisfy the lookup.
+        if sys.version_info[:2] == (3, 9):
+            self.skipTest("run this regression under a non-3.9 Python")
+        with tempfile.TemporaryDirectory(prefix="leanpy-no39-") as root:
+            source = os.path.join(root, "source.py")
+            with open(source, "w", encoding="utf-8") as f:
+                f.write("print('must not run')\n")
+            env = os.environ.copy()
+            for key in ("LEANPY_CPYTHON", "LEANPY_FRONTEND", "LEANPY_NO_REEXEC"):
+                env.pop(key, None)
+            env["PATH"] = root
+            cache = os.path.join(root, "cache")
+            result = subprocess.run(
+                [sys.executable, os.path.join(REPO_ROOT, "tools", "leanpy"),
+                 source, "--compare", "--cache", cache],
+                cwd=REPO_ROOT, env=env, capture_output=True, text=True)
+            self.assertEqual(result.returncode, 3, result.stderr)
+            self.assertEqual(result.stdout, "")
+            self.assertIn("needs python3.9 as the frontend and oracle", result.stderr)
+            self.assertEqual(len(result.stderr.splitlines()), 1)
+            self.assertFalse(os.path.exists(cache))
+            self.assertNotIn("MISMATCH", result.stderr)
+
+    def test_misnamed_default_oracle_refuses_before_running_the_model(self):
+        with tempfile.TemporaryDirectory(prefix="leanpy-wrong-oracle-") as root:
+            fake = os.path.join(root, "python3.9")
+            with open(fake, "w", encoding="utf-8") as f:
+                f.write("#!/bin/sh\nprintf 'cpython 3.12\\n'\n")
+            os.chmod(fake, 0o755)
+            output = io.StringIO()
+            with patch.dict(os.environ, {"PATH": root}, clear=True), \
+                    patch.object(leanpy, "envelope_for") as extractor, \
+                    redirect_stderr(output):
+                code = leanpy.main(["unused.py", "--compare", "--cache", root])
+            self.assertEqual(code, 3)
+            extractor.assert_not_called()
+            self.assertIn("found cpython 3.12", output.getvalue())
+            self.assertEqual(len(output.getvalue().splitlines()), 1)
+
+    def test_missing_oracle_refuses_without_running_the_model(self):
+        with tempfile.TemporaryDirectory(prefix="leanpy-no-oracle-") as root:
+            source = os.path.join(root, "source.py")
+            with open(source, "w", encoding="utf-8") as f:
+                f.write("print('must not run')\n")
+            env = {"PATH": root}
+            output = io.StringIO()
+            with patch.dict(os.environ, env, clear=True), \
+                    patch.object(leanpy, "envelope_for") as extractor, \
+                    patch.object(leanpy, "runner_command") as runner, \
+                    redirect_stderr(output):
+                code = leanpy.main([source, "--compare", "--cache", os.path.join(root, "cache")])
+            self.assertEqual(code, 3)
+            extractor.assert_not_called()
+            runner.assert_not_called()
+            self.assertIn("needs python3.9 as the frontend and oracle", output.getvalue())
+            self.assertEqual(len(output.getvalue().splitlines()), 1)
+            self.assertNotIn("MISMATCH", output.getvalue())
+
+
 class FrontendAdmissionTests(unittest.TestCase):
     def test_runner_rejects_a_foreign_frontend_before_execution(self):
         """A stale 3.12 envelope cannot reach the script interpreter."""
@@ -341,7 +403,7 @@ class FrontendAdmissionTests(unittest.TestCase):
             result = subprocess.run(
                 [leanpy.BIN, "--script", path.name], cwd=REPO_ROOT,
                 capture_output=True, text=True, timeout=60)
-            self.assertEqual(result.returncode, 1, result.stderr)
+            self.assertEqual(result.returncode, 3, result.stderr)
             self.assertIn("unsupported Python frontend cpython-ast 3.12.14",
                           result.stderr)
             self.assertEqual(result.stdout, "")
@@ -350,6 +412,32 @@ class FrontendAdmissionTests(unittest.TestCase):
                 os.unlink(path.name)
             except OSError:
                 pass
+
+
+    def test_compare_preserves_foreign_envelope_refusal(self):
+        source = os.path.join(REPO_ROOT, "Examples/python/add/add.json")
+        with open(source, encoding="utf-8") as f:
+            envelope = json.load(f)
+        envelope["frontend"]["version"] = "3.12.14"
+        with tempfile.TemporaryDirectory(prefix="leanpy-rejected-envelope-") as root:
+            path = os.path.join(root, "foreign.json")
+            with open(path, "w", encoding="utf-8") as f:
+                json.dump(envelope, f)
+            oracle = os.path.join(root, "oracle")
+            with open(oracle, "w", encoding="utf-8") as f:
+                f.write("#!/bin/sh\ntouch %s\n" % os.path.join(root, "ran"))
+            os.chmod(oracle, 0o755)
+            output = io.StringIO()
+            with patch.dict(os.environ, {"LEANPY_CPYTHON": oracle}), \
+                    patch.object(leanpy, "envelope_for", return_value=path), \
+                    patch.object(leanpy, "runner_command", return_value=[leanpy.BIN]), \
+                    redirect_stderr(output):
+                code = leanpy.main(["unused.py", "--compare", "--cache", root])
+            self.assertEqual(code, 3, output.getvalue())
+            self.assertIn("unsupported Python frontend", output.getvalue())
+            self.assertIn("LOUD", output.getvalue())
+            self.assertNotIn("MISMATCH", output.getvalue())
+            self.assertFalse(os.path.exists(os.path.join(root, "ran")))
 
 
 class CompareExceptionTests(unittest.TestCase):

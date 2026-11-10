@@ -53,6 +53,7 @@ Python 3.9 compatible.
 import argparse
 import hashlib
 import os
+import platform
 import re
 import subprocess
 import sys
@@ -66,21 +67,26 @@ PINNED_FRONTEND = "python3.9"
 
 def _reexec_under_pinned_frontend():
     """Parse envelopes with the pinned CPython 3.9 AST frontend."""
-    if os.environ.get("LEANPY_NO_REEXEC"):
-        return
     want = os.environ.get("LEANPY_FRONTEND") or PINNED_FRONTEND
-    if sys.version_info[:2] == (3, 9) and not os.environ.get("LEANPY_FRONTEND"):
-        return
-    exe = which(want)
-    if exe is None:
-        sys.stderr.write("leanpy: WARNING pinned frontend %r is not installed; "
-                         "extracting with %s instead\n" %
-                         (want, sys.version.split()[0]))
-        return
-    if os.path.realpath(exe) == os.path.realpath(sys.executable):
-        return
-    os.environ["LEANPY_NO_REEXEC"] = "1"
-    os.execv(exe, [exe, os.path.abspath(__file__)] + sys.argv[1:])
+    pinned = (platform.python_implementation() == "CPython" and
+              sys.version_info[:2] == (3, 9))
+    if not os.environ.get("LEANPY_NO_REEXEC"):
+        if pinned and not os.environ.get("LEANPY_FRONTEND"):
+            return
+        exe = which(want)
+        if exe is not None and os.path.realpath(exe) != os.path.realpath(sys.executable):
+            os.environ["LEANPY_NO_REEXEC"] = "1"
+            os.execv(exe, [exe, os.path.abspath(__file__)] + sys.argv[1:])
+        if exe is None:
+            sys.stderr.write("leanpy: needs python3.9 as the frontend and oracle; "
+                             "found %s %s (%s unavailable)\n" %
+                             (platform.python_implementation(), sys.version.split()[0], want))
+            raise SystemExit(3)
+    if not pinned:
+        sys.stderr.write("leanpy: needs python3.9 as the frontend and oracle; "
+                         "found %s %s\n" %
+                         (platform.python_implementation(), sys.version.split()[0]))
+        raise SystemExit(3)
 
 
 if __name__ == "__main__":
@@ -213,7 +219,7 @@ def exception_class(stderr):
         line = line.strip()
         if not line or line.startswith("Traceback"):
             continue
-        match = re.match(r"^([A-Za-z_][A-Za-z0-9_.]*)", line)
+        match = re.match(r"^([A-Za-z_][A-Za-z0-9_.]*)(?::.*)?$", line)
         if match:
             return match.group(1).rsplit(".", 1)[-1]
     return None
@@ -322,6 +328,26 @@ def main(argv=None):
                         help="re-extract even when the cached envelope is current")
     opts = parser.parse_args(argv)
 
+    cpython = os.environ.get("LEANPY_CPYTHON") or PINNED_FRONTEND
+    if opts.compare and which(cpython) is None:
+        sys.stderr.write("leanpy: needs python3.9 as the frontend and oracle; "
+                         "found %s %s (%s unavailable)\n" %
+                         (platform.python_implementation(), sys.version.split()[0], cpython))
+        return 3
+    # An explicitly selected alternate oracle is a deliberate experiment. The
+    # default named python3.9 must actually be CPython 3.9, not a misleading
+    # executable or symlink to a different frontend family.
+    if opts.compare and not os.environ.get("LEANPY_CPYTHON"):
+        probe = subprocess.run(
+            [cpython, "-c", "import sys; print(sys.implementation.name, "
+             "str(sys.version_info[0])+'.'+str(sys.version_info[1]))"],
+            capture_output=True, text=True)
+        found = probe.stdout.strip()
+        if probe.returncode != 0 or found != "cpython 3.9":
+            sys.stderr.write("leanpy: needs python3.9 as the frontend and oracle; "
+                             "found %s\n" % (found or "an unusable oracle"))
+            return 3
+
     cache_dir = opts.cache or default_cache()
     os.makedirs(cache_dir, exist_ok=True)
 
@@ -344,15 +370,17 @@ def main(argv=None):
     lean = subprocess.run(cmd, cwd=REPO_ROOT, capture_output=True, text=True)
     sys.stdout.write(lean.stdout)
     sys.stderr.write(lean.stderr)
-    cpython = os.environ.get("LEANPY_CPYTHON") or PINNED_FRONTEND
-    if which(cpython) is None:
-        fallback = which("python3")
-        if fallback is None:
-            sys.stderr.write("leanpy: no CPython oracle is installed\n")
-            return 2
-        sys.stderr.write("leanpy: WARNING pinned oracle %r is not installed; "
-                         "using %s instead\n" % (cpython, fallback))
-        cpython = fallback
+    if lean.returncode in (3, 4):
+        sys.stderr.write("leanpy: LOUD (model did not produce a comparison result)\n")
+        return lean.returncode
+    if lean.returncode == 1 and (lean.stderr.startswith("leanmodels-run --script:")
+                                  or exception_class(lean.stderr) is None):
+        sys.stderr.write("leanpy: LOUD (runner failed before a Python exception)\n")
+        return 3
+    if lean.returncode not in (0, 1):
+        sys.stderr.write("leanpy: runner failed with exit %d; comparison not run\n"
+                         % lean.returncode)
+        return lean.returncode
     oracle_version = subprocess.run([cpython, "-VV"], capture_output=True,
                                     text=True)
     sys.stderr.write("leanpy: frontend %s; oracle %s\n" %
@@ -360,10 +388,6 @@ def main(argv=None):
                       (oracle_version.stdout or oracle_version.stderr).strip()))
     ref = subprocess.run([cpython, os.path.abspath(opts.file)],
                          cwd=REPO_ROOT, capture_output=True, text=True)
-    if lean.returncode in (3, 4):
-        sys.stderr.write("leanpy: LOUD (cpython: exit %d, %d stdout bytes)\n"
-                         % (ref.returncode, len(ref.stdout)))
-        return lean.returncode
     lean_class = exception_class(lean.stderr) if lean.returncode == 1 else None
     ref_class = exception_class(ref.stderr) if ref.returncode == 1 else None
     classes_agree = (lean.returncode != 1 or ref.returncode != 1 or

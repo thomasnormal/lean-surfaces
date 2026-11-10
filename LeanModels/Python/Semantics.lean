@@ -2420,6 +2420,19 @@ def evalFloatDivmod (zeroError : PyErr) (left right : RVal) : Res (Float64 × Fl
   | .error .nanPayload =>
     .unsupported "NaN payload/sign propagation requires an explicit floating-point oracle"
 
+/-- `float_div` converts its operands left to right before testing the
+denominator (CPython 3.9, Objects/floatobject.c). Integer true division has a
+separate path and must not be converted through binary64 first. -/
+def evalFloatDivision (left right : RVal) : Res RVal := do
+  let leftNumber ← floatNumber left
+  let rightNumber ← floatNumber right
+  match Float64.divideFiniteWithNaN leftNumber rightNumber with
+  | .ok value => return .float value
+  | .error .zeroDivision => .exn .floatZeroDivisionError
+  | .error .conversionOverflow => .exn (.overflowError "int too large to convert to float")
+  | .error .nanPayload =>
+    .unsupported "NaN payload/sign propagation requires an explicit floating-point oracle"
+
 /-! CPython's `float_pow` first converts both operands with
 `PyFloat_AsDouble`/`PyLong_AsDouble`, then calls platform `pow`.  The
 conversion is portable and shared; the libm result is deliberately left loud
@@ -2522,36 +2535,8 @@ def evalBinOp (op : BinOp) (a b : RVal) : Res RVal :=
           s!"unsupported operand type(s) for @: '{a.typeName}' and '{b.typeName}'")
   | _, _ =>
     match op, a, b with
-    | .div, .float left, .float right =>
-        match Float64.divideFiniteWithNaN left right with
-        | .ok value => .ok (.float value)
-        | .error .zeroDivision => .exn .floatZeroDivisionError
-        | .error .conversionOverflow => .exn (.overflowError "int too large to convert to float")
-        | .error .nanPayload => .unsupported "NaN payload/sign propagation requires an explicit floating-point oracle"
-    | .div, .int left, .float right =>
-        match Float64.divideIntFloatWithNaN left right with
-        | .ok value => .ok (.float value)
-        | .error .zeroDivision => .exn .floatZeroDivisionError
-        | .error .conversionOverflow => .exn (.overflowError "int too large to convert to float")
-        | .error .nanPayload => .unsupported "NaN payload/sign propagation requires an explicit floating-point oracle"
-    | .div, .float left, .int right =>
-        match Float64.divideFloatIntWithNaN left right with
-        | .ok value => .ok (.float value)
-        | .error .zeroDivision => .exn .floatZeroDivisionError
-        | .error .conversionOverflow => .exn (.overflowError "int too large to convert to float")
-        | .error .nanPayload => .unsupported "NaN payload/sign propagation requires an explicit floating-point oracle"
-    | .div, .bool left, .float right =>
-        match Float64.divideIntFloatWithNaN (if left then 1 else 0) right with
-        | .ok value => .ok (.float value)
-        | .error .zeroDivision => .exn .floatZeroDivisionError
-        | .error .conversionOverflow => .exn (.overflowError "int too large to convert to float")
-        | .error .nanPayload => .unsupported "NaN payload/sign propagation requires an explicit floating-point oracle"
-    | .div, .float left, .bool right =>
-        match Float64.divideFloatIntWithNaN left (if right then 1 else 0) with
-        | .ok value => .ok (.float value)
-        | .error .zeroDivision => .exn .floatZeroDivisionError
-        | .error .conversionOverflow => .exn (.overflowError "int too large to convert to float")
-        | .error .nanPayload => .unsupported "NaN payload/sign propagation requires an explicit floating-point oracle"
+    | .div, .float _, .float _ | .div, .int _, .float _ | .div, .float _, .int _
+    | .div, .bool _, .float _ | .div, .float _, .bool _ => evalFloatDivision a b
     | .add, .str s, .str t => .ok (.str (s ++ t))
     | .mod, .bytes fmt, rhs => bytesFormat fmt rhs
     | .pow, .float _, _ | .pow, _, .float _ => evalFloatPow a b

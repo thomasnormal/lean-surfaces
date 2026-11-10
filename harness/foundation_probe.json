@@ -6,7 +6,7 @@
     "version": "3.9.25"
   },
   "source_file": "harness/foundation_probe.py",
-  "source_sha256": "8756a876d6b303f97f63b37af496bdfa7a1483314cc460c0877b684c8092c498",
+  "source_sha256": "76b618efe797b2788d8519cb02d9be187c6760a1cc92957b76ca021b79700f3a",
   "module": {
     "kind": "Module",
     "body": [
@@ -3893,6 +3893,278 @@
                       "type": "int",
                       "repr": "1100"
                     }
+                  }
+                }
+              }
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 161,
+          "col_offset": 0,
+          "end_lineno": 162,
+          "end_col_offset": 28
+        },
+        "name": "mixed_div_left_overflow",
+        "args": [],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 162,
+              "col_offset": 4,
+              "end_lineno": 162,
+              "end_col_offset": 28
+            },
+            "value": {
+              "kind": "BinOp",
+              "span": {
+                "lineno": 162,
+                "col_offset": 11,
+                "end_lineno": 162,
+                "end_col_offset": 28
+              },
+              "left": {
+                "kind": "BinOp",
+                "span": {
+                  "lineno": 162,
+                  "col_offset": 12,
+                  "end_lineno": 162,
+                  "end_col_offset": 21
+                },
+                "left": {
+                  "kind": "Constant",
+                  "span": {
+                    "lineno": 162,
+                    "col_offset": 12,
+                    "end_lineno": 162,
+                    "end_col_offset": 13
+                  },
+                  "value": {
+                    "type": "int",
+                    "repr": "1"
+                  }
+                },
+                "op": "LShift",
+                "right": {
+                  "kind": "Constant",
+                  "span": {
+                    "lineno": 162,
+                    "col_offset": 17,
+                    "end_lineno": 162,
+                    "end_col_offset": 21
+                  },
+                  "value": {
+                    "type": "int",
+                    "repr": "1100"
+                  }
+                }
+              },
+              "op": "Div",
+              "right": {
+                "kind": "Constant",
+                "span": {
+                  "lineno": 162,
+                  "col_offset": 25,
+                  "end_lineno": 162,
+                  "end_col_offset": 28
+                },
+                "value": {
+                  "type": "float",
+                  "bits": "0"
+                }
+              }
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 165,
+          "col_offset": 0,
+          "end_lineno": 166,
+          "end_col_offset": 28
+        },
+        "name": "mixed_div_right_overflow",
+        "args": [],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 166,
+              "col_offset": 4,
+              "end_lineno": 166,
+              "end_col_offset": 28
+            },
+            "value": {
+              "kind": "BinOp",
+              "span": {
+                "lineno": 166,
+                "col_offset": 11,
+                "end_lineno": 166,
+                "end_col_offset": 28
+              },
+              "left": {
+                "kind": "Constant",
+                "span": {
+                  "lineno": 166,
+                  "col_offset": 11,
+                  "end_lineno": 166,
+                  "end_col_offset": 14
+                },
+                "value": {
+                  "type": "float",
+                  "bits": "4607182418800017408"
+                }
+              },
+              "op": "Div",
+              "right": {
+                "kind": "BinOp",
+                "span": {
+                  "lineno": 166,
+                  "col_offset": 18,
+                  "end_lineno": 166,
+                  "end_col_offset": 27
+                },
+                "left": {
+                  "kind": "Constant",
+                  "span": {
+                    "lineno": 166,
+                    "col_offset": 18,
+                    "end_lineno": 166,
+                    "end_col_offset": 19
+                  },
+                  "value": {
+                    "type": "int",
+                    "repr": "1"
+                  }
+                },
+                "op": "LShift",
+                "right": {
+                  "kind": "Constant",
+                  "span": {
+                    "lineno": 166,
+                    "col_offset": 23,
+                    "end_lineno": 166,
+                    "end_col_offset": 27
+                  },
+                  "value": {
+                    "type": "int",
+                    "repr": "1100"
+                  }
+                }
+              }
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 169,
+          "col_offset": 0,
+          "end_lineno": 170,
+          "end_col_offset": 36
+        },
+        "name": "integer_div_huge_ratio",
+        "args": [],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 170,
+              "col_offset": 4,
+              "end_lineno": 170,
+              "end_col_offset": 36
+            },
+            "value": {
+              "kind": "BinOp",
+              "span": {
+                "lineno": 170,
+                "col_offset": 11,
+                "end_lineno": 170,
+                "end_col_offset": 36
+              },
+              "left": {
+                "kind": "BinOp",
+                "span": {
+                  "lineno": 170,
+                  "col_offset": 12,
+                  "end_lineno": 170,
+                  "end_col_offset": 21
+                },
+                "left": {
+                  "kind": "Constant",
+                  "span": {
+                    "lineno": 170,
+                    "col_offset": 12,
+                    "end_lineno": 170,
+                    "end_col_offset": 13
+                  },
+                  "value": {
+                    "type": "int",
+                    "repr": "1"
+                  }
+                },
+                "op": "LShift",
+                "right": {
+                  "kind": "Constant",
+                  "span": {
+                    "lineno": 170,
+                    "col_offset": 17,
+                    "end_lineno": 170,
+                    "end_col_offset": 21
+                  },
+                  "value": {
+                    "type": "int",
+                    "repr": "1100"
+                  }
+                }
+              },
+              "op": "Div",
+              "right": {
+                "kind": "BinOp",
+                "span": {
+                  "lineno": 170,
+                  "col_offset": 26,
+                  "end_lineno": 170,
+                  "end_col_offset": 35
+                },
+                "left": {
+                  "kind": "Constant",
+                  "span": {
+                    "lineno": 170,
+                    "col_offset": 26,
+                    "end_lineno": 170,
+                    "end_col_offset": 27
+                  },
+                  "value": {
+                    "type": "int",
+                    "repr": "1"
+                  }
+                },
+                "op": "LShift",
+                "right": {
+                  "kind": "Constant",
+                  "span": {
+                    "lineno": 170,
+                    "col_offset": 31,
+                    "end_lineno": 170,
+                    "end_col_offset": 35
+                  },
+                  "value": {
+                    "type": "int",
+                    "repr": "1100"
                   }
                 }
               }

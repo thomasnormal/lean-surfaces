@@ -27,10 +27,13 @@ converting either operand alone overflows. `Float64.divideInt` distinguishes
 division by zero from a ratio whose rounded result overflows. Interpreter
 adapters must retain their distinct Python exception classes and messages.
 
-Mixed integer/float division is different: CPython first converts the integer,
-then divides the two floats. `10**400 / 0.0` therefore raises the conversion
-`OverflowError`, not `ZeroDivisionError`. The core provides conversion plus
-float division separately, and retains that evaluation order. A
+Mixed integer/float division is different: CPython converts the operands from
+left to right, then divides the two floats. `10**400 / 0.0` therefore raises the
+conversion `OverflowError`, not `ZeroDivisionError`. Both interpreters use the
+shared `floatNumber` conversion before the division worker; the
+`mixed_div_left_overflow`, `mixed_div_right_overflow` and
+`integer_div_huge_ratio` rows in `harness/cases.json` pin the distinction;
+the `float_lab.divide` rows also cover integer rounding at 2**53. A
 finite float quotient can overflow to infinity without raising the integer
 division overflow exception. A nonzero finite denominator and infinite
 numerator produce signed infinity; a finite numerator and infinite denominator

@@ -25,6 +25,9 @@
   model, conditional on an order-indexed loaded-core invariant. Completion
   and retirement progress remain explicit proof obligations.
 
+- Routed mixed floating true division through the shared ordered numeric
+  conversion worker while preserving the separate integer-ratio path.
+
 - Corrected negative integer power to convert both operands before checking
   for a zero base, preserving CPython's conversion `OverflowError`.
 

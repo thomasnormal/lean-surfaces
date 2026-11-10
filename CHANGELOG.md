@@ -117,6 +117,10 @@
   float conversion, iteration, sizing, rendering, recursion, operator, builtin,
   and method dispatch across both Python interpreter surfaces.
 
+- Expanded the RichCompareBool foundation battery across tuple ordering,
+  `sorted`, `max`, and NaN dictionary-key probes; all remain explicit loud
+  boundaries in both interpreters.
+
 - Extended the value/object evaluator agreement battery with a continue body
   state update and native differential coverage.
 

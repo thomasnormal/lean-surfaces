@@ -9,6 +9,23 @@ def nan_list_equal(value):
     return [value] == [value]
 
 
+def nan_tuple_order(value):
+    return (value,) < (value,)
+
+
+def nan_sorted(value):
+    return sorted([value, 1.0])
+
+
+def nan_max(value):
+    return max([value, 1.0])
+
+
+def nan_dict_key(value):
+    values = {value: 1}
+    return values[value]
+
+
 def int_pow_negative(base, exponent):
     return base ** (-exponent)
 

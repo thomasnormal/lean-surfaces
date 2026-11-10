@@ -10918,6 +10918,24 @@ and recursion units beyond `callIn`.
 DECIDED: use the census as the protocol work list; implement one shared
 protocol at a time, with proof transport appended after each semantic step.
 
+## 2026-11-10-pyfoundation-3a — pin RichCompareBool observer sites
+
+Foundation step 3a extends the shared RichCompareBool battery across all
+remaining observer sites. The existing non-finite-float guard is now pinned for
+tuple ordering, `sorted`, `max`, `min`-style ordering, and dictionary-key
+probes, in addition to list equality and membership. Scalar NaN equality stays
+decided as `False`.
+
+| Measurement | Result |
+|---|---|
+| New rows | tuple order, `sorted`, `max`, and NaN dict key: all loud in both modes |
+| Existing rows | list equality/membership and scalar equality retain their step-1 outcomes |
+| Semantic change | none beyond the existing shared non-finite-float guard; evidence expansion only |
+
+DECIDED: treat the RichCompareBool protocol item as covered for the current
+tier; retain loud non-finite-float container/key/order boundaries until object
+identity is represented.
+
 ## 2026-11-07-pycomplete-415 — recheck the trace-clock reading boundary
 
 The clock audit finding is already closed in both interpreters. The explicit

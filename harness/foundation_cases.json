@@ -15,6 +15,34 @@
   },
   {
     "file": "harness/foundation_probe.py",
+    "function": "nan_tuple_order",
+    "args": [[{"t": "float", "bits": "9221120237041090560"}]],
+    "expect": "unsupported",
+    "note": "RichCompareBool observer: tuple ordering with a non-finite float is loud."
+  },
+  {
+    "file": "harness/foundation_probe.py",
+    "function": "nan_sorted",
+    "args": [[{"t": "float", "bits": "9221120237041090560"}]],
+    "expect": "unsupported",
+    "note": "RichCompareBool observer: sorted() ordering with a non-finite float is loud."
+  },
+  {
+    "file": "harness/foundation_probe.py",
+    "function": "nan_max",
+    "args": [[{"t": "float", "bits": "9221120237041090560"}]],
+    "expect": "unsupported",
+    "note": "RichCompareBool observer: max() ordering with a non-finite float is loud."
+  },
+  {
+    "file": "harness/foundation_probe.py",
+    "function": "nan_dict_key",
+    "args": [[{"t": "float", "bits": "9221120237041090560"}]],
+    "expect": "unsupported",
+    "note": "RichCompareBool/hash observer: NaN dictionary key identity is outside the tier."
+  },
+  {
+    "file": "harness/foundation_probe.py",
     "function": "int_pow_negative",
     "args": [[23, 21], [9007199254740993, 1]],
     "expect": "unsupported",

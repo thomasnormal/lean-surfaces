@@ -7,7 +7,7 @@ marks a control/transport wrapper that still needs an adequacy theorem.
 
 | CPython 3.9 protocol | Trunk (`Semantics.lean`) | Runner (`Monadic/`) | Current observation / gap |
 |---|---|---|---|
-| `PyObject_RichCompare` / `PyObject_RichCompareBool` | `valEq`, `heapEq`, `keyEq`, `heapContainsScan`, `rvalLt` | `evalCompareOpH` and shared workers through `Monadic.Prim` | Shared value equality; container identity for non-finite floats now refuses; identity is still absent for other immediate objects. |
+| `PyObject_RichCompare` / `PyObject_RichCompareBool` | `valEq`, `heapEq`, `keyEq`, `heapContainsScan`, `rvalLt` | `evalCompareOpH` and shared workers through `Monadic.Prim` | Shared value equality; container identity for non-finite floats now refuses at equality, membership, tuple/list ordering, `sorted`, `max`, `min`, and key probes. |
 | `PyObject_IsTrue` | `truthyH` | `truthyM` → `truthyH` | shared |
 | `PyObject_Hash` | `hashableKey`, `setHashNat`, dict/set key gates | same workers through `liftRes` / evaluator arms | finite numeric and tuple key slice; identity-hashed objects and unmodeled set construction refuse |
 | `PyNumber_Index` | `asInt`, `asRangeBound` | shared through `asInt` in builtin/method arms | the raising `Py_ssize_t` conversion is now a separate pinned boundary for list/range-length sites; full messages remain owed |

@@ -32,3 +32,13 @@ retains that admission result pending review of the native E rule. The rule
 must preserve source-order first-hit
 matching, four-state wildcard distinctions, immediate NBA RHS sampling, and
 the default path; qualified/range/pattern case forms remain separate walls.
+
+## E-core review boundary
+
+Reviewed against E-core-1 on 2026-11-10. The retained `casez`/`casex` modes,
+source order, and nine Icarus/Xcelium rows pass the focused agreement proof.
+The current refusal remains deliberate: wildcard matching needs a four-state
+`caseMode` arm walk and an NBA frame/totality proof, while `Stmt2.ffOkB` still
+requires plain static-window statements. `casez`, `casex`, wildcard `?`, and
+x/z selector handling therefore remain named at the explicit 12.5 boundary;
+no wildcard expansion or partial E evaluator was added.

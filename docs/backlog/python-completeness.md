@@ -210,6 +210,25 @@ their CPython table sizing and probing are not represented.
 DECIDED: close `py-set-iteration-order` on this branch; retain loud refusal
 for unmodeled hash-table construction and iteration paths.
 
+## 2026-11-10-pyfoundation-22 — revalidate shape-specific ingestion rewrites
+
+The inbox finding `py-shape-specific-ingestion-rewrites` remains closed. The
+reported builtin-alias, dead-value, immediate-generator-drain,
+length-only-repetition, and direct-bare-reraise helper passes have no active
+definitions or call sites in `Json.lean`; source statements retain their AST
+shape and reach the ordinary evaluator or an explicit loud boundary.
+
+| Measurement | Result |
+|---|---|
+| Source audit | all five reported helper names absent from active ingestion |
+| Runner differential | 78 cases: 75 MATCH, 3 documented refusals, 0 failures |
+| Proof differential | 78 cases: 73 MATCH, 5 documented refusals, 0 failures |
+| Script witnesses | list augmented-repeat MATCH; generator capture and oversized repetition LOUD |
+| Semantic change | none; audit confirmation only |
+
+DECIDED: close `py-shape-specific-ingestion-rewrites`; retain loud boundaries
+for unsupported callable, generator, active-exception, and allocation cases.
+
 ## 2026-11-10-pyfoundation-10 — max/min recursion
 
 `max` and `min` now check the CPython builtin recursion unit after positional

@@ -187,3 +187,18 @@ LEANCPP_TINYXML2_PROBE=/outside/the/repo/tinyxml2-probe.json \\
 The gate fails when the probe is missing, an exporter fails, a literal differs,
 or a `literal_sha256` pin is stale. It never substitutes default structure
 values for a missing capture.
+
+To recreate the canonical probe itself, build `extractors/cpp/canonical_probe.cpp`
+against the matching Clang/LLVM 21.1.8 development headers and libraries, then
+run the plugin over the pinned `tinyxml2.cpp` in one frontend action:
+
+```sh
+"$LEANCPP_CLANG" --no-default-config -std=c++17 -fPIC -shared -fno-rtti \\
+  -I"$LEANCPP_HEADERS/include" extractors/cpp/canonical_probe.cpp \\
+  -L"$LEANCPP_LIBS" -Wl,-rpath,"$LEANCPP_LIBS" -Wl,--no-undefined \\
+  -l:libclang-cpp.so.21.1 -l:libLLVM.so.21.1 -o "$LEANCPP_PROBE_LIBRARY"
+(cd "$LEANCPP_TINYXML2_DIR" && "$LEANCPP_CLANG" --no-default-config -std=c++23 \\
+  -pedantic-errors -fsyntax-only tinyxml2.cpp -Xclang -load -Xclang \\
+  "$LEANCPP_PROBE_LIBRARY" -Xclang -plugin -Xclang leancpp-canonical-probe) \\
+  > "$LEANCPP_TINYXML2_PROBE"
+```

@@ -29,7 +29,7 @@ theorem below depends on it, because no edge process may write a clock or a rese
 ## R-EDGE
 
 `rEdge`: in a slot whose ready set is any duplicate-free set of edge processes, from a store `s`
-with an empty queue, EVERY legal schedule closes the slot, at the store whose view is
+with an empty queue, EVERY process-atomic legal schedule closes the slot, at the store whose view is
 `commitNba2 (view s) (queue s act)`: the updates of every ready process, computed on `s`, committed
 in index order. The closed store does not depend on the schedule. Hypotheses (`EdgeProfile`, all
 decided on the bodies' static NBA windows by `EdgeProfile.ofChecks`): bodies execute; one edge
@@ -608,7 +608,7 @@ theorem isNegedge_self (b : Logic) : isNegedge b b = false := by cases b <;> rfl
 
 /-- **R-EDGE, edge fragment** (derived from E). In a slot whose ready set `act` is any set of edge
 processes (an edge of their clock, or of their reset, fired them), from a store `s` with an empty
-queue: EVERY legal schedule closes the slot, and the closed store's view is the commit of every
+queue: EVERY process-atomic legal schedule closes the slot, and the closed store's view is the commit of every
 ready process's updates computed on `s`, in index order. The result does not mention the
 schedule: it is schedule-independent. -/
 theorem rEdge {E : Elab1} (hP : EdgeProfile E) (ch : Choice) {s : Store} (hT : E.base.Typed s)
@@ -719,7 +719,7 @@ theorem cnt_profile : EdgeProfile cnt :=
 theorem nbaSwap_profile : EdgeProfile nbaSwap :=
   EdgeProfile.ofChecks (by unfold AllFour; decide) (by decide) rfl rfl rfl
 
-/-- **R-EDGE on the NBA swap** (non-vacuity): with both processes ready, every legal schedule
+/-- **R-EDGE on the NBA swap** (non-vacuity): with both processes ready, every process-atomic legal schedule
 closes the slot at the same store, the commit of both updates computed on the pre-state. -/
 theorem nbaSwap_rEdge (ch : Choice) {s : Store} (hT : nbaSwap.base.Typed s) (k : Nat) :
     ∃ c', SlotCloses1 nbaSwap ch { store := s, active := [0, 1], nba := [], k := k } c' ∧

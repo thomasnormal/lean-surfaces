@@ -9,7 +9,7 @@ as hypothesis, so it is not derived from E. Imported by no existing module.
 
 `combSettle2_terminates_win`: under `WSettles E dW (winOwn ps) rank` (the window rank of the
 per-window lowering `dW`), `combSettle2` on the design itself returns from every shaped state,
-under every schedule. The process-level lowering `d'` may be cyclic (`ibexLow_not_acyclic`).
+under every process-atomic legal schedule. The process-level lowering `d'` may be cyclic (`ibexLow_not_acyclic`).
 
 Route (the plan accepted for D-X1f2):
 1. One process of `d'` and the equations it owns in `dW` write the same state: both are
@@ -22,7 +22,7 @@ Route (the plan accepted for D-X1f2):
 3. `CombSim.of_lowerComb'` carries the settle from `d'` to the design.
 
 Fixture: `Core0Smoke.ibex_terminates` (MEASURED before: `combSettle2 ibex.toDesign2` completes
-from fuel 8 under both orders; now proved for every schedule and every shaped start).
+from fuel 8 under both orders; now proved for every process-atomic legal schedule and every shaped start).
 -/
 
 namespace LeanModels.Sv.Kernel
@@ -265,7 +265,7 @@ theorem nodup_flatMap_own {own : Nat → List Nat} (hnd : ∀ p, (own p).Nodup)
       exact (List.nodup_cons.mp h).1 (hdisj p q a ha hbq ▸ hq)
 
 /-- **D-X1f2: `combSettle2` terminates on a window-acyclic design**, from every state shaped for
-its process-level lowering, under every schedule (the existence half of `rcomb1`, window rank). -/
+its process-level lowering, under every process-atomic legal schedule (the existence half of `rcomb1`, window rank). -/
 theorem combSettle2_terminates_win {E : Elab} {d' : Design2} {ps : List (Nat × Process2)}
     {rank : Nat → Nat} (hl : E.toDesign2.lowerComb = some d') (hd' : CombDesign d')
     (hw : E.toDesign2.lowerWin = some ps)

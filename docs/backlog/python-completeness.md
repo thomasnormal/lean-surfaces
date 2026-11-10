@@ -70,6 +70,22 @@ interpreter change was needed in this item.
 DECIDED: close the bench-statistics proof blocker at the current tip and
 continue with the next rename-rehearsal failure.
 
+## 2026-11-10-pyfoundation-26 — revalidate dict-comprehension guards
+
+The rename rehearsal reported two failing `bad_pair` guards in
+`Examples.python.dictcomp_lab.spec` on an older master tip. Both guards now
+elaborate on this branch; the target requires no further change here.
+
+| Measurement | Result |
+|---|---|
+| Target | `Examples.python.dictcomp_lab.spec` builds in 30 jobs |
+| Commit measured | `6492b6fbe` |
+| Errors | none |
+| Semantic change | none; revalidation only |
+
+DECIDED: close this branch's dict-comprehension guard blocker and continue
+with the next rename-rehearsal failure.
+
 ## 2026-11-10-pyfoundation-11 — revalidate recursion-limit audit
 
 The inbox finding `py-no-recursion-limit` is already closed by the active

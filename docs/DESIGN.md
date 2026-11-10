@@ -1,4 +1,4 @@
-# lean_models — Design (v0: Python vertical slice)
+# proglib — Design (v0: Python vertical slice)
 
 This document is the **authoritative interface contract** for v0. Components built
 against it must match it exactly (names, signatures, formats). If you find a genuine

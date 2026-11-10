@@ -1,4 +1,4 @@
-# CI for lean_models. Mirrors tools/ci.sh (the local entry point — keep in sync).
+# CI for proglib. Mirrors tools/ci.sh (the local entry point — keep in sync).
 # The SV differential harness runs against Xcelium (`xrun`) where it exists
 # (self-hosted) and otherwise against Icarus Verilog (`iverilog`, installed
 # below via apt); tools/ci.sh auto-skips it only when neither simulator is

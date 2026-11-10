@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# tools/ci.sh — the full local CI for lean_models. Run from anywhere; exits
+# tools/ci.sh — the full local CI for proglib. Run from anywhere; exits
 # nonzero if any present component fails. Components that are not yet built
 # (docs checker, notebooks, SV harness) are reported as SKIP, not silently
 # omitted — so the summary always states what was and wasn't verified.

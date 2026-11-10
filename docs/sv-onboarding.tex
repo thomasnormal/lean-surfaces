@@ -12,16 +12,16 @@
 \usepackage{hyperref}
 \lstset{basicstyle=\ttfamily\small, breaklines=true, columns=fullflexible, keepspaces=true}
 \newcommand{\code}[1]{\texttt{#1}}
-\title{\vspace{-1.2em}Formalizing Hardware in \textsf{lean-surfaces}\\[2pt]
+\title{\vspace{-1.2em}Formalizing Hardware in \textsf{proglib}\\[2pt]
 \large An onboarding brief: digital RTL, analog circuits, and the road to a verified RISC-V core}
-\author{lean-surfaces project}
-\date{July 2026 \quad(\small repo: \code{github.com/thomasnormal/lean-surfaces})}
+\author{proglib project}
+\date{July 2026 \quad(\small repo: \code{github.com/thomasnormal/proglib})}
 \begin{document}
 \maketitle
 \vspace{-2.2em}
 
 \section{What the project is}
-\textsf{lean-surfaces} proves correctness of \emph{real} programs --- Python, SystemVerilog,
+\textsf{proglib} proves correctness of \emph{real} programs --- Python, SystemVerilog,
 and analog circuits (SPICE) --- in Lean~4, via \textbf{deep embeddings}: each language's own
 frontend (CPython \code{ast}, slang/pyslang, a native SPICE parser) dumps the program's real
 AST into a standardized JSON envelope; Lean ingests it as a literal term; an

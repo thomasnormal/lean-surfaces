@@ -1,5 +1,5 @@
 # Area B — Processor-correctness methodology
-Literature review for the lean-surfaces project / CV32E40P program.
+Literature review for the proglib project / CV32E40P program.
 Read-the-source claims are marked **[primary]** (paper text or actual proof-assistant
 source fetched and inspected); everything else is marked **[secondary]** (search-engine
 summaries / secondary write-ups I did not verify against the primary text).

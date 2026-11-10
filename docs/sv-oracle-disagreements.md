@@ -75,7 +75,7 @@ digest recipe it uses is the checker's own (`binding_digests`).
 ## Unary plus
 
 `unary_plus_directed` differs under Icarus 12.0-2build2 in hosted run
-[39272617564](https://github.com/thomasnormal/lean-surfaces/actions/runs/39272617564),
+[39272617564](https://github.com/thomasnormal/proglib/actions/runs/39272617564),
 and under Icarus 12.0 on Debian 13. The two known input cycles agree.
 For `10xz` and `zzzz`, Icarus preserves the operand; Lean returns `xxxx`.
 

@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Renamed the repository from `lean-surfaces` to `proglib` (2026-11-10). Old
+  links redirect. The Lean library keeps the name `LeanModels` until a later,
+  announced commit renames it to `Proglib`.
+
 - Fixed the theorem-facing Python interpreter's generator-expression creation
   order: non-iterable outer values now raise `TypeError` before the generator
   object is returned, matching CPython's `GET_ITER` protocol.

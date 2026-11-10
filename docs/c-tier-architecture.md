@@ -26,7 +26,7 @@ sentence is this memo's premise.
 **The precondition the 2026-08-07 backlog entry named has been MET.**
 `docs/backlog.md` §"A C surface" recorded the direction and attached a
 scope decision: *"No sunfish deliverable attached … The C tier stays a
-generic lean-surfaces growth direction unless a classic C sunfish ever
+generic proglib growth direction unless a classic C sunfish ever
 exists (none is planned)."* One now exists:
 `tools/ctwin/sunfish.c` in the sunfish-packed checkout — 1310 lines,
 sha256 `66c569c147c5e6224adc413d3209d983dd38b240180979c3a1ebb10ef69d14f4`

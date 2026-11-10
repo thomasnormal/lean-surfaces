@@ -2,7 +2,7 @@
  "version": 1,
  "scope": "the sv-0.2 SYMBOLIC tier: `extractors/sv/extract.py` in symbolic mode (the `load_design_sv2` path), the Lean side (`LeanModels/Sv`: Param2, Hier2, Ingest2, Probe2, RangeGuard2, CombGuard2, CombAlias2, Sem2, Comb2Proc, the `sv_structure` recognizer), and the loader gates. The svGolf checker's own restrictions are in `svgolf/REFUSALS.md` (the svGolf project, golf branch), generated from the same data",
  "snapshot": "working tree of branch `svgolf-prep` on 2026-10-29, including the uncommitted round-6 work (`PortConn:net-width`, `ArraySel:partial-overhang`, `Select:partial-overhang`, `Select:wide-index`, `AlwaysComb:alias-read`); regenerate after the in-flight jobs land",
- "intro": "This file answers three questions about the SystemVerilog tier of lean-surfaces (ls-sv): **what does it refuse today**,\n**what is meant to be allowed later (and what has to exist first)**, and **what will never be allowed (and which principle says so)**.\n\nIt is generated from [`docs/sv-refusals.json`](sv-refusals.json) by `tools/gen_sv_refusals.py` and checked against the code by\n`python3 tools/gen_sv_refusals.py --check`: a tagged refusal in the extractor or the Lean code that is missing from the data, or a\nlisted tag that has disappeared from the code, fails the check. The svGolf-facing twin, for contestants and task authors, is\n`svgolf/REFUSALS.md`, generated from the same data. It lives with the svGolf project (the golf branch), so the paths under `svgolf/`\ncited in this file are absent from a checkout without it.\n\nA refusal is a LOUD `Unsupported` node (extractor) or a loud process / expression / elaboration error (Lean) or a loader gate: the\ndesign either loads with a defined meaning or it does not load. Nothing here is silently approximated. The long reasons live in the\nper-topic documents linked at the end (`docs/sv-*.md`); this register is the index and the classification.",
+ "intro": "This file answers three questions about the SystemVerilog tier of proglib (ls-sv): **what does it refuse today**,\n**what is meant to be allowed later (and what has to exist first)**, and **what will never be allowed (and which principle says so)**.\n\nIt is generated from [`docs/sv-refusals.json`](sv-refusals.json) by `tools/gen_sv_refusals.py` and checked against the code by\n`python3 tools/gen_sv_refusals.py --check`: a tagged refusal in the extractor or the Lean code that is missing from the data, or a\nlisted tag that has disappeared from the code, fails the check. The svGolf-facing twin, for contestants and task authors, is\n`svgolf/REFUSALS.md`, generated from the same data. It lives with the svGolf project (the golf branch), so the paths under `svgolf/`\ncited in this file are absent from a checkout without it.\n\nA refusal is a LOUD `Unsupported` node (extractor) or a loud process / expression / elaboration error (Lean) or a loader gate: the\ndesign either loads with a defined meaning or it does not load. Nothing here is silently approximated. The long reasons live in the\nper-topic documents linked at the end (`docs/sv-*.md`); this register is the index and the classification.",
  "scope_note": "The register classifies each refusal for the **ls-sv semantics tier** (the `category` of the row). The charter rules the tier's endgame to be\nthe whole specification, including the verification tier (classes, constrained randomization, assertions) and the full clause-4 scheduler\n([docs/sv-charter.md](sv-charter.md) sections 6.3, 6.4, 6.6), so a construct can be `later` for ls-sv and still be unacceptable in a\n**svGolf submission**, whose scored artifact is a combinational Yosys netlist. Where the two differ the row carries a second line\n`svGolf: ...` (the field `svgolf` in the data). Delays, randomness, classes, strings and reals are the typical cases: `later` in the\nsemantics, `never` for a golf submission (principles `P-NO-TIME`, `P-SYNTHESIZABLE`).",
  "categories": {
   "refused-now": "refused loudly today and this is the intended behaviour at this version; no future is recorded",
@@ -91,12 +91,12 @@
    "decided_by_thomas": true
   },
   {
-   "policy": "Proofs are symbolic and parametric (for all N); bv_decide is not supported for now (it runs an external SAT solver: Thomas 2026-11-01); only the task's allowed axioms; native_decide is banned in svGolf submissions (the lean-surfaces proof lanes follow the separate 2026-08-22 ruling: discouraged, not banned).",
+   "policy": "Proofs are symbolic and parametric (for all N); bv_decide is not supported for now (it runs an external SAT solver: Thomas 2026-11-01); only the task's allowed axioms; native_decide is banned in svGolf submissions (the proglib proof lanes follow the separate 2026-08-22 ruling: discouraged, not banned).",
    "source": "memory svgolf-project (2026-10-27); svgolf/README.md Rules; AGENTS.md Never",
    "decided_by_thomas": true
   },
   {
-   "policy": "svGolf stays separate from lean-surfaces (no svGolf entries in lakefile.toml or LeanModels.lean); general ls-sv work goes to LeanModels/Sv and is merged to main.",
+   "policy": "svGolf stays separate from proglib (no svGolf entries in lakefile.toml or LeanModels.lean); general ls-sv work goes to LeanModels/Sv and is merged to main.",
    "source": "memory svgolf-project (2026-10-28); svgolf/PLAN.md",
    "decided_by_thomas": true
   },
@@ -7440,7 +7440,7 @@
   }
  ],
  "svgolf": {
-  "intro": "svGolf asks for two things about each design you submit: a Lean proof that it meets the task's trusted statement under the ls-sv\nsemantics, and a score from a pinned Yosys flow. The checker refuses a design or a proof when the proof and the score could be about\ndifferent circuits, or when the evidence could be forged. This document lists every refusal the checker makes, why, and what you\ncan write instead, then says which refusals are meant to go away and which never will.\n\nIt has two halves that are easy to confuse. **The checker's own stages** (source gate, banlist, fourstate, statement, axioms, score,\npost-synthesis check) are described below stage by stage. **The language tier** (`ls-sv`, the semantics your proof is about) refuses\nmore constructs than the checker does; those show up as `extract` or `design` failures and are summarised near the end and listed in\nfull in `docs/sv-refusals.md` of the lean-surfaces repository.\n\nThis file is generated from `docs/sv-refusals.json` of lean-surfaces by `tools/gen_sv_refusals.py` and is written to be read without\nthe rest of that repository: links to lean-surfaces documents are given as repository paths.",
+  "intro": "svGolf asks for two things about each design you submit: a Lean proof that it meets the task's trusted statement under the ls-sv\nsemantics, and a score from a pinned Yosys flow. The checker refuses a design or a proof when the proof and the score could be about\ndifferent circuits, or when the evidence could be forged. This document lists every refusal the checker makes, why, and what you\ncan write instead, then says which refusals are meant to go away and which never will.\n\nIt has two halves that are easy to confuse. **The checker's own stages** (source gate, banlist, fourstate, statement, axioms, score,\npost-synthesis check) are described below stage by stage. **The language tier** (`ls-sv`, the semantics your proof is about) refuses\nmore constructs than the checker does; those show up as `extract` or `design` failures and are summarised near the end and listed in\nfull in `docs/sv-refusals.md` of the proglib repository.\n\nThis file is generated from `docs/sv-refusals.json` of proglib by `tools/gen_sv_refusals.py` and is written to be read without\nthe rest of that repository: links to proglib documents are given as repository paths.",
   "stages": [
    {
     "id": "task",
@@ -7459,7 +7459,7 @@
    },
    {
     "id": "extract",
-    "what": "the pinned lean-surfaces extractor reads the canonical text",
+    "what": "the pinned proglib extractor reads the canonical text",
     "refuses": "whatever the extractor refuses (the language tier), a wrong top module, a parameter list that differs from the task's"
    },
    {
@@ -7607,9 +7607,9 @@
   ],
   "lifting": [
    "Every refusal above has a state. `refused-now` means no change is planned. `later` names the prerequisite that has to exist first; when it exists, the refusal is lifted by a pull request.",
-   "**How to propose it.** Open a pull request against lean-surfaces that adds the feature to ls-sv (extractor, `LeanModels/Sv`), with differential cases against independent oracles (Xcelium pinned data, Icarus, Verilator, Yosys): a disagreement is fixed or declared, never ignored. The maintainers approve every such PR.",
+   "**How to propose it.** Open a pull request against proglib that adds the feature to ls-sv (extractor, `LeanModels/Sv`), with differential cases against independent oracles (Xcelium pinned data, Icarus, Verilator, Yosys): a disagreement is fixed or declared, never ignored. The maintainers approve every such PR.",
    "**If the construct brings an x source** (a function local read before assignment, a latch that is never loaded, `always @*`), a rule in `score/fourstate.py` must land first or in the same PR; the post-synthesis check is the backstop, not the plan.",
-   "**For the checker's own rules** (the source gate, the banlist, the statement), changing a refusal changes what every earlier submission means: the PR must say so, and leaderboard entries record the lean-surfaces revision they were checked against.",
+   "**For the checker's own rules** (the source gate, the banlist, the statement), changing a refusal changes what every earlier submission means: the PR must say so, and leaderboard entries record the proglib revision they were checked against.",
    "**Update the register.** Add or edit the row in `docs/sv-refusals.json`, run `python3 tools/gen_sv_refusals.py --write`, and `--check` must pass."
   ],
   "limits": [
@@ -7654,23 +7654,23 @@
    },
    {
     "path": "docs/sv-refusals.md",
-    "what": "(lean-surfaces) the register of the language tier's refusals"
+    "what": "(proglib) the register of the language tier's refusals"
    },
    {
     "path": "docs/sv-oracle-disagreements.md",
-    "what": "(lean-surfaces) where the oracles split and what is refused or declared"
+    "what": "(proglib) where the oracles split and what is refused or declared"
    },
    {
     "path": "docs/sv-xcelium-audit.md",
-    "what": "(lean-surfaces) the Xcelium reference audit behind the round-6 refusals"
+    "what": "(proglib) the Xcelium reference audit behind the round-6 refusals"
    },
    {
     "path": "docs/sv-envelope-schema.md",
-    "what": "(lean-surfaces) the envelope contract and the Unsupported vocabulary"
+    "what": "(proglib) the envelope contract and the Unsupported vocabulary"
    },
    {
     "path": "docs/sv-tools-split-audit.md",
-    "what": "(lean-surfaces) the tools-split audit behind the 2026-10-31 category changes"
+    "what": "(proglib) the tools-split audit behind the 2026-10-31 category changes"
    }
   ],
   "entries": [
@@ -8920,7 +8920,7 @@
      "svgolf-checker"
     ],
     "trigger": "import LeanModels.Python.Semantics;  import Examples.python.tri.proof;  import Mathlib2.Tactic;  import Lake",
-    "why": "The checker builds only SvGolf, tasks and svgolf-eval, so a module outside the allowlist is code nobody audited and stays outside the trusted base. Mathlib and the packages its import closure reaches (Batteries, Aesop, Qq, ProofWidgets, Plausible, ImportGraph, LeanSearchClient: the module roots, pinned by lean-surfaces' lake-manifest.json) ARE admitted since 2026-10-31: a proof that uses them is accepted on the same terms as any other, by the kernel from the task's allowed axioms alone. The comparator walks the dependency closure for axioms (a `native_decide` behind a Mathlib lemma is rejected like one in the file) and REPLAYS that closure, minus the toolchain and the submission's own modules, through the kernel, so a package olean whose declaration was added without kernel checking is rejected; toolchain modules must resolve into the toolchain; the integrity tripwire watches the Lean search path (`.olean` files of the packages, entries that do not exist) for every solution; the imports Lean recorded in the compiled solution are compared with the header the checker read.",
+    "why": "The checker builds only SvGolf, tasks and svgolf-eval, so a module outside the allowlist is code nobody audited and stays outside the trusted base. Mathlib and the packages its import closure reaches (Batteries, Aesop, Qq, ProofWidgets, Plausible, ImportGraph, LeanSearchClient: the module roots, pinned by proglib' lake-manifest.json) ARE admitted since 2026-10-31: a proof that uses them is accepted on the same terms as any other, by the kernel from the task's allowed axioms alone. The comparator walks the dependency closure for axioms (a `native_decide` behind a Mathlib lemma is rejected like one in the file) and REPLAYS that closure, minus the toolchain and the submission's own modules, through the kernel, so a package olean whose declaration was added without kernel checking is rejected; toolchain modules must resolve into the toolchain; the integrity tripwire watches the Lean search path (`.olean` files of the packages, entries that do not exist) for every solution; the imports Lean recorded in the compiled solution are compared with the header the checker read.",
     "category": "never",
     "proposed": true,
     "principle": "P-TRUSTED-BASE",
@@ -9421,7 +9421,7 @@
     ],
     "unverified": true,
     "verified_by_run": false,
-    "notes": "TENSION to confirm: AGENTS.md records Thomas's 2026-08-22 ruling that native_decide / bv_decide are not banned, only discouraged, for the lean-surfaces proof lanes; svGolf has no per-task escape."
+    "notes": "TENSION to confirm: AGENTS.md records Thomas's 2026-08-22 ruling that native_decide / bv_decide are not banned, only discouraged, for the proglib proof lanes; svGolf has no per-task escape."
    },
    {
     "id": "sg-bv-decide",

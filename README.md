@@ -1,6 +1,15 @@
-# lean_models
+# proglib
 
 Prove real Python / C++ / Rust / SystemVerilog programs correct in Lean 4.
+
+proglib is to programs what Mathlib is to mathematics: the definitions and
+scaffolding you need to state and prove theorems about programs written in real
+languages. Each language's semantics follows that language's reference and is
+tested differentially against a reference implementation.
+
+*Renamed 2026-11-10: this repository was `lean-surfaces`, and old links redirect.
+The Lean library is still imported as `LeanModels`; a later, announced commit
+renames it to `Proglib`.*
 
 Each language gets a **deep embedding**: the program's real AST becomes a Lean
 value, and a definitional interpreter gives it meaning. Programs stay
@@ -23,7 +32,7 @@ These bars use each tier's checked-in differential corpus: `MATCH` rows divided 
 | SystemVerilog | <progress value="96.4" max="100" aria-label="96.4% complete">96.4%</progress> **96.4%** | 616 / 639 differential self-check rows ([coverage](docs/sv-coverage.md)) |
 <!-- LANGUAGE_PROGRESS:END -->
 
-**Unvalidated lanes.** The Go, ES (JavaScript), Ada, SPICE and Verilog-A lanes are unvalidated: an audit against the [engineering rules](AGENTS.md#engineering-rules-every-lane) on 2026-11-05 found silent wrong answers in each ([issue #11](https://github.com/thomasnormal/lean-surfaces/issues/11)). Do not rely on their results until that issue is closed.
+**Unvalidated lanes.** The Go, ES (JavaScript), Ada, SPICE and Verilog-A lanes are unvalidated: an audit against the [engineering rules](AGENTS.md#engineering-rules-every-lane) on 2026-11-05 found silent wrong answers in each ([issue #11](https://github.com/thomasnormal/proglib/issues/11)). Do not rely on their results until that issue is closed.
 
 ## C++ tier status
 
@@ -66,7 +75,7 @@ You need git, Python ≥ 3.9, and [elan](https://github.com/leanprover/elan)
 
 ```console
 $ curl -sSfL https://elan.lean-lang.org/elan-init.sh | sh -s -- -y --default-toolchain none
-$ git clone https://github.com/thomasnormal/lean-surfaces && cd lean-surfaces
+$ git clone https://github.com/thomasnormal/proglib && cd proglib
 $ MATHLIB_NO_CACHE_ON_UPDATE=1 lake build Examples.python.tri.spec
 ```
 
@@ -77,7 +86,7 @@ variable skips Mathlib's automatic cache download: Mathlib is a declared package
 dependency, but these first Python proofs use only Lean's core tactics.
 Fresh-workspace CI at source revision `4aec7f8` (included in v0.1.10) has no
 Lake build-cache step: the quickstart jobs in
-[run 38245607413](https://github.com/thomasnormal/lean-surfaces/actions/runs/38245607413)
+[run 38245607413](https://github.com/thomasnormal/proglib/actions/runs/38245607413)
 pass in **4 minutes 27 seconds on Linux** and **5 minutes 44 seconds on macOS**;
 the full check job also passes after a transient toolchain-download retry.
 (whole-job elapsed time, including installation, proof build, and script comparison).
@@ -426,7 +435,7 @@ through every pre-reset edge, because `x + 1 = x`) is LRM truth that
 
 ## Analog circuits: physical laws as definitions, contracts as interfaces
 
-> **Unvalidated (2026-11-05):** the SPICE and Verilog-A lanes have known wrong answers ([issue #11](https://github.com/thomasnormal/lean-surfaces/issues/11)).
+> **Unvalidated (2026-11-05):** the SPICE and Verilog-A lanes have known wrong answers ([issue #11](https://github.com/thomasnormal/proglib/issues/11)).
 
 The third lane (`LeanModels/Spice/**`) takes SPICE netlists. No new
 axioms enter: Kirchhoff's laws and the device laws are the *definition* of

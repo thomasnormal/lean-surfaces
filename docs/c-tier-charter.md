@@ -940,7 +940,7 @@ thing still open.
 
 1. **ANSWERED — the 2026-08-07 "no sunfish deliverable" scope decision
    is amended.** That entry conditioned itself precisely: *"The C tier
-   stays a generic lean-surfaces growth direction unless a classic C
+   stays a generic proglib growth direction unless a classic C
    sunfish ever exists (none is planned)."* One exists, it is on sunfish
    MASTER, and the owner chartered the workstream on 2026-08-21. Recorded
    as answered by the charter itself.

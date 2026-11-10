@@ -1,6 +1,6 @@
 # SPICE M0 design status
 
-> **Unvalidated (2026-11-05).** An audit against the engineering rules in [AGENTS.md](../AGENTS.md#engineering-rules-every-lane) found silent wrong answers in the SPICE lane ([issue #11](https://github.com/thomasnormal/lean-surfaces/issues/11)). Do not rely on its results until that issue is closed.
+> **Unvalidated (2026-11-05).** An audit against the engineering rules in [AGENTS.md](../AGENTS.md#engineering-rules-every-lane) found silent wrong answers in the SPICE lane ([issue #11](https://github.com/thomasnormal/proglib/issues/11)). Do not rely on its results until that issue is closed.
 
 This document used to specify the JSON-backed `LeanModels.Spice.Netlist`
 prototype. That prototype was removed during the shared-circuit cutover.

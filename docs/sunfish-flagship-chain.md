@@ -35,7 +35,7 @@ stated against **the docstring's `s*`**, in which the per-move futility bound an
 the reduction bound are DEFINITIONAL, because the docstring defines `s*` to
 include "null moves, QS, futility and the reductions". `formal/`'s `CapInBand`
 carries the unreduced-negamax gap as a recorded axiom. The split is clean:
-*lean-surfaces proves the code keeps its own documented promise; `formal/` proves
+*proglib proves the code keeps its own documented promise; `formal/` proves
 the promise is worth having.*
 
 **The scope is ruled REAL-PLAY** (2026-08-23): the theorem covers the table

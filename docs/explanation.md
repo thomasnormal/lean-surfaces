@@ -1,4 +1,4 @@
-# Why lean_models is built this way
+# Why proglib is built this way
 
 This is the understanding-oriented piece: the design arguments behind the
 framework, with pointers into the tree where each one is load-bearing. The
@@ -11,7 +11,7 @@ lookup tables are in [reference.md](reference.md); the prover's manual is
 ## Deep embedding, because the prover has to read the program
 
 You could connect Python to Lean by *translation*: compile each function to a
-Lean function and prove things about that. lean_models instead does a **deep
+Lean function and prove things about that. proglib instead does a **deep
 embedding**: the program's real AST becomes a Lean value
 (`load_program` in [LeanModels/Python/Logic.lean](../LeanModels/Python/Logic.lean)
 defines it as a literal term), and a definitional interpreter

@@ -10860,6 +10860,25 @@ value-only answer.
 DECIDED: keep non-finite float container and ordering operations loud until
 RichCompareBool identity is represented; retain scalar NaN equality.
 
+## 2026-11-10-pyfoundation-1b — stop platform-dependent integer powers
+
+Foundation step 1b stops the two confirmed integer negative-power mismatches.
+The exact binary-base slice (`-2 ≤ base ≤ 2`) remains live, preserving the
+existing `2 ** -1`, `(-2) ** -3`, and zero-division rows. Larger integer bases
+now refuse before the model's exact reciprocal can disagree with CPython's
+binary64 conversion plus platform `pow` path.
+
+| Measurement | Result |
+|---|---|
+| `23 ** -21` | now loud in both interpreter modes; CPython 3.9.25 value retained in the probe |
+| `(2**53 + 1) ** -1` | now loud in both interpreter modes; CPython 3.9.25 value retained in the probe |
+| `2 ** -1` control | MATCH in both interpreter modes |
+| Semantic change | integer negative powers narrowed to exact binary bases |
+
+DECIDED: keep the exact `-2 ≤ base ≤ 2` negative-power slice; refuse larger
+integer bases until conversion-to-double and platform `pow` are modeled as an
+explicit protocol/oracle.
+
 ## 2026-11-07-pycomplete-415 — recheck the trace-clock reading boundary
 
 The clock audit finding is already closed in both interpreters. The explicit

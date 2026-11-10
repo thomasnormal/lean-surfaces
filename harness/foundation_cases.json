@@ -16,9 +16,16 @@
   {
     "file": "harness/foundation_probe.py",
     "function": "int_pow_negative",
-    "args": [[23, 21], [2, 1], [9007199254740993, 1]],
+    "args": [[23, 21], [9007199254740993, 1]],
+    "expect": "unsupported",
+    "note": "Finding 2 stopped: platform pow conversion is outside the exact binary-base slice."
+  },
+  {
+    "file": "harness/foundation_probe.py",
+    "function": "int_pow_negative",
+    "args": [[2, 1]],
     "expect": "match",
-    "note": "Finding 2: CPython converts integer operands to binary64 before libm pow."
+    "note": "Finding 2 control: exact binary-base negative power remains live."
   },
   {
     "file": "harness/foundation_probe.py",

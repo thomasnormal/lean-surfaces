@@ -106,6 +106,10 @@
   comparisons where CPython's `PyObject_RichCompareBool` identity shortcut is
   observable; scalar NaN equality remains exact.
 
+- Stopped platform-dependent integer negative-power mismatches by narrowing the
+  decided path to exact binary bases (`-2` through `2`); larger integer bases
+  now refuse loudly.
+
 - Extended the value/object evaluator agreement battery with a continue body
   state update and native differential coverage.
 

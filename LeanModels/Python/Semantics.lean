@@ -2389,8 +2389,10 @@ def evalFloatDivmod (zeroError : PyErr) (left right : RVal) : Res (Float64 × Fl
 and `*` return integers; true division returns binary64. Mixed arithmetic
 converts the integer before computing and preserves signed zero and rounding.
 `//`/`%` floor (`Int.fdiv`/`Int.fmod`); divisor 0 → `ZeroDivisionError`.
-`**` with a negative integer exponent returns a binary64 reciprocal when the
-exponent is within `floatPowBudget`; larger exponents remain unsupported.
+`**` with a negative integer exponent returns a binary64 reciprocal for the
+small bases whose conversion and libm result are exact across the pinned
+platforms (`-2 ≤ base ≤ 2`); larger integer bases remain unsupported because
+CPython converts both operands to binary64 and calls platform `pow`.
 `+` concatenates matching sequence types; `%` on a str is the format operator
 (`strFormat`, §`%`-formatting above). Unresolved protocols and NaN payloads
 remain loud. A `.ref` operand is refused before a fabricated type-name error. -/
@@ -2413,6 +2415,8 @@ def evalBinOp (op : BinOp) (a b : RVal) : Res RVal :=
     | .pow =>
         if y < 0 then
           if x = 0 then .exn .zeroDivisionPow
+          else if x < -2 || x > 2 then
+            .unsupported "integer ** with a negative exponent outside the exact binary-base slice is outside the tier (CPython converts to binary64 and calls platform pow)"
           else if y.natAbs > floatPowBudget then
             .unsupported "'**' with a negative exponent beyond floatPowBudget is outside the tier (docs/memory-model.md §power)"
           else

@@ -479,3 +479,11 @@ against Icarus with 7, 5, and 5 cycles respectively. This is an E transport
 smoke packet, not the 883-row migration claim: rows outside E-core-0 remain
 loud or continue through the labelled run2 backend until their E route and
 refinement evidence land.
+
+The array executor's follow-up probe also passed the N=8 ripple row with
+`decide +kernel` and the `execArray_sound` bridge. Native evaluation of the
+same one-settle full-carry shape took 7 ms at N=8, 24 ms at N=16, and 84 ms at
+N=32. The doubling ratios are about 3.5x (roughly N^1.8 over these points)
+and remain above the run2 reference at larger widths; this is a measurement
+for executor planning, not a claim that the plain E-core-0 fold meets the 2x
+bar.

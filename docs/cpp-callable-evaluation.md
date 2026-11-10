@@ -52,6 +52,15 @@ The object evaluator's direct-call boundary now reports its dedicated
 `unsupportedCall` cause; the differential harness records that refusal without
 discarding the diagnostic in the Lean witness.
 
+The concrete agreement witnesses below are individual examples, not a general
+refinement theorem. `callableEvaluatorDirectCallBoundary` proves that the
+value evaluator returns 1 for a direct call that the object evaluator refuses.
+`callableEvaluatorInvalidArgumentBoundary` also shows that an out-of-range
+argument is returned as an invalid result by the value evaluator but as an
+argument error by the object evaluator. A general relation must state its
+supported fragment and relate the distinct error domains; `Except.toOption`
+alone does not do so.
+
 The value and object evaluator now also carry a kernel agreement witness for
 the same binary-arithmetic callable, extending the earlier logical agreement
 check.

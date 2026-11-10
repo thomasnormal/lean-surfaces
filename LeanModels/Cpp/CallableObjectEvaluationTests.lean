@@ -42427,4 +42427,41 @@ def callableEvaluatorRefinementLogicalNotWitness : Bool :=
 
 #guard callableEvaluatorRefinementLogicalNotWitness
 
+private def callableRefinementCallBoundaryFunction : CallableFunction := {
+  occurrence := functionDeclaration
+  signature := {result := intType, parameters := [], variadic := false}
+  parameters := []
+  body := .return_ {
+    expression := .call {
+      signature := {result := intType, parameters := [], variadic := false}
+      parameters := []
+      body := .return_ {
+        expression := .integer 1, sourceType := intType, type := intType}} [],
+    sourceType := intType, type := intType}}
+
+/-- Direct calls show why the concrete agreement examples are not a general
+refinement theorem: the value evaluator executes this call and the object
+evaluator refuses it. -/
+theorem callableEvaluatorDirectCallBoundary :
+    evaluateCallable 32 .lp64 callableRefinementCallBoundaryFunction [] = .ok (.ok (signed 1)) ∧
+    evaluateCallableObject 32 .lp64 callableRefinementCallBoundaryFunction [] = .error .unsupportedCall := by
+  exact ⟨rfl, rfl⟩
+
+/-- Argument validation also has different error shapes, even on the identity
+function; projecting errors to `Option` alone does not relate these results. -/
+theorem callableEvaluatorInvalidArgumentBoundary :
+    evaluateCallable 32 .lp64 callableEvaluatorRefinementParameterFunction [signed 2147483648] =
+      .ok (.invalid .outOfRange) ∧
+    evaluateCallableObject 32 .lp64 callableEvaluatorRefinementParameterFunction [signed 2147483648] =
+      .error (.invalidArgument .outOfRange) := by
+  exact ⟨rfl, rfl⟩
+
+def callableEvaluatorDirectCallBoundaryWitness : Bool :=
+  match evaluateCallable 32 .lp64 callableRefinementCallBoundaryFunction [],
+      evaluateCallableObject 32 .lp64 callableRefinementCallBoundaryFunction [] with
+  | .ok (.ok value), .error .unsupportedCall => value == signed 1
+  | _, _ => false
+
+#guard callableEvaluatorDirectCallBoundaryWitness
+
 end LeanModels.Cpp.CallableObjectEvaluationTests

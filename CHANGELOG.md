@@ -72,6 +72,9 @@
 - Added a kernel refinement theorem tying the value and object callable
   evaluators together through pure logical negation.
 
+- Pinned direct-call and invalid-argument boundaries of callable evaluator
+  agreement with kernel-checked counterexamples.
+
 - Extended the value/object evaluator agreement battery with negative signed
   subtraction and native differential coverage.
 

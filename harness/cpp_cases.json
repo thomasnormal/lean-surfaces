@@ -20132,5 +20132,17 @@
     "cpp_expression": "callable_witness()",
     "expect": "match",
     "rung": 3
+  },
+  {
+    "id": "statement.callable-evaluator-direct-call-boundary",
+    "kind": "statement",
+    "corpus": "callable refinement boundary",
+    "lean_module": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_namespace": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_expression": "callableEvaluatorDirectCallBoundaryWitness",
+    "cpp_source": "int helper_call() { return 1; } int call_witness() { return helper_call(); } bool callable_witness() { return call_witness() == 1; }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 3
   }
 ]

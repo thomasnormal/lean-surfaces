@@ -1279,15 +1279,17 @@ def const_literal(sm, e):
 
 
 def _sym_signed_literal(e, node):
-    """Symbolic CONSTANT positions only (`_SymPos`: parameter defaults,
-    localparams, generate headers, select labels, part bounds, case
-    patterns): mark a Literal whose frontend type is SIGNED (`4'sd3`, or a
-    constant slang typed `int` and folded to 32 bits) with `signed: true`.
-    The Lean constant tier evaluates sized operands at their width and
-    signedness (Param.lean `evalSized`); an unmarked signed literal would make
-    its whole operand cluster unsigned. Value positions carry signedness in
-    their operators already and are unchanged, as are legacy envelopes."""
-    if _SYM is not None and _SYM.symctx:
+    """Retain the frontend signed type on a literal.
+
+    A sized signed literal is a signed operand in every context, not only in
+    a constant position.  In particular, §11.8.1/§11.6.1 requires its sign
+    bit to be replicated when a context-determined arithmetic expression
+    widens it.  The value tier already preserves signed declarations and
+    casts; omitting this bit here made a value-position ``8'sb1000_0000``
+    indistinguishable from an unsigned literal and silently zero-extended it
+    at a parameter point wider than the default.  Legacy envelopes remain
+    unchanged because this hook is symbolic-only."""
+    if _SYM is not None:
         try:
             if e.type.isSigned:
                 node["signed"] = True
@@ -8312,6 +8314,10 @@ def _convert_conversion_expr(sm, e):
         if node is not None:
             return node
     if ow == tw:
+        if _SYM is not None:
+            marker = _sym_signed_literal_conversion(sm, e, e.operand, tw)
+            if marker is not None:
+                return marker
         marker = _sym_unsigned_simple_operand(sm, e, kind)
         if marker is not None:
             return marker
@@ -10368,6 +10374,19 @@ def _convert_binary_core(sm, e, sym):
     else:
         left = _convert_expr(sm, e.left)
         right = _convert_expr(sm, e.right)
+    # Slang's propagated conversion node for a literal retains the literal's
+    # own signed type even when the *binary expression* is mixed signed/
+    # unsigned.  IEEE 1800-2023 §11.8.1 makes the common operand type
+    # unsigned in that case, so the conversion must zero-extend at every
+    # parameter point.  Retype only an actual implicit/propagated conversion
+    # at this parser node; explicit casts and already-lowered expressions keep
+    # their own semantics.  This is the source-shaped equivalent of the
+    # operator's existing signedness test below and avoids threading a new
+    # signedness argument through Param2's frozen lowering API.
+    if _SYM is not None:
+        common_signed = bool(e.left.type.isSigned and e.right.type.isSigned)
+        left = _sym_retype_conversion(left, e.left, common_signed)
+        right = _sym_retype_conversion(right, e.right, common_signed)
     if sym in ("==", "!=", "===", "!=="):
         span = node_span(sm, e)
         left = _size_assoc_exists_operand(left, right, span)
@@ -10409,6 +10428,29 @@ def _convert_binary_core(sm, e, sym):
         "left": left,
         "right": right,
     }
+
+
+def _sym_retype_conversion(node, source, signed):
+    """Retype one parser-provided implicit conversion at its consuming op.
+
+    Slang's ``ConversionExpression.type`` describes the source literal's
+    signed type, while §11.8.1 determines extension from the consuming
+    expression's common type.  The distinction matters when a signed literal
+    is paired with an unsigned signal.  Keep this helper at the parser-node
+    boundary: it changes only a root ``Resize``/``SignedResize`` produced for
+    an implicit or propagated conversion, never an explicit cast or an
+    already-lowered arithmetic subtree.
+    """
+    if not isinstance(node, dict) or node.get("kind") not in ("Resize", "SignedResize"):
+        return node
+    if type(source).__name__ != "ConversionExpression":
+        return node
+    if getattr(source, "conversionKind", None) not in (
+            ConversionKind.Implicit, ConversionKind.Propagated):
+        return node
+    result = dict(node)
+    result["kind"] = "SignedResize" if signed else "Resize"
+    return result
 
 
 def _convert_xnor_expr(sm, e):
@@ -30705,6 +30747,12 @@ def _sym_conversion(sm, e, ow, tw, state_squash):
         literal = _sym_signed_literal_conversion(sm, e, op, tw, inner)
         if literal is not None:
             return literal
+        # A plain run-time signed signal has an exact parser-node conversion
+        # in the value route.  Keep this before the constant-fold refusal
+        # below; explicit signing calls are filtered inside the helper.
+        widening = _sym_runtime_signed_widening(sm, e, op, inner, tw)
+        if widening is not None:
+            return widening
     if (not resizable and not _has_sym_refs(inner) and _sym_tree_static(inner)
             and _SYM.symctx and _sym_family_point_dependent()):
         # Round 3 repair: the symbolic-position twin of the refusal below.
@@ -30875,6 +30923,34 @@ def _sym_signed_widening(sm, e, op, inner, tw):
         return None
     return {"kind": "SignedResize", "span": node_span(sm, e), "width": tw,
             "operand": inner}
+
+
+def _sym_runtime_signed_widening(sm, e, op, inner, tw):
+    """Value-tier conversion for a plain signed run-time signal.
+
+    A signed signal widened by a context-determined operator is sign-extended
+    under IEEE 1800-2023 §11.8.2.  Keep explicit signing calls loud (the
+    historical ``signed_operand`` compatibility row); only the parser's
+    implicit/propagated conversion around a non-static source is admitted.
+    Narrowing retains the low bits and therefore uses ``Resize``.
+    """
+    if _SYM is None or _SYM.symctx:
+        return None
+    try:
+        if not (op.type.isIntegral and e.type.isIntegral
+                and op.type.isSigned and e.type.isSigned):
+            return None
+        if type(op).__name__ == "CallExpression":
+            return None
+        if e.conversionKind not in (ConversionKind.Implicit, ConversionKind.Propagated):
+            return None
+        if _sym_tree_static(inner):
+            return None
+        source_width = int(op.type.bitWidth)
+    except Exception:
+        return None
+    return {"kind": "SignedResize" if source_width < int(tw) else "Resize",
+            "span": node_span(sm, e), "width": tw, "operand": inner}
 
 
 def _sym_expr_syscall(sm, e):

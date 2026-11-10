@@ -72708,6 +72708,78 @@
       ],
       "verilator_only": true,
       "measured": "2026-11-04: retained SVA metadata fixture; Verilator is the available assertion-capable differential oracle, while Icarus cannot parse concurrent SVA."
+    },
+    {
+      "name": "signed_literal_widen_w4",
+      "example": "signed_literal_widen",
+      "top": "signed_literal_widen",
+      "params": {
+        "W": 4
+      },
+      "signals": [
+        "y",
+        "mixed",
+        "ge"
+      ],
+      "stimulus": [
+        {
+          "x": "1000",
+          "u": "1000"
+        },
+        {
+          "x": "0111",
+          "u": "0111"
+        }
+      ],
+      "measured": "2026-11-09: a signed 8-bit literal is sign-extended for the signed expression and narrowed by the signed 4-bit destination; Icarus agrees with the symbolic route under IEEE 1800-2023 §11.8.1–11.8.2."
+    },
+    {
+      "name": "signed_literal_widen_w8",
+      "example": "signed_literal_widen",
+      "top": "signed_literal_widen",
+      "params": {
+        "W": 8
+      },
+      "signals": [
+        "y",
+        "mixed",
+        "ge"
+      ],
+      "stimulus": [
+        {
+          "x": "10000000",
+          "u": "10000000"
+        },
+        {
+          "x": "01111111",
+          "u": "01111111"
+        }
+      ],
+      "measured": "2026-11-09: same-width signed literal and signed input rows; Icarus agrees with the symbolic route under IEEE 1800-2023 §11.8.1–11.8.2."
+    },
+    {
+      "name": "signed_literal_widen_w16",
+      "example": "signed_literal_widen",
+      "top": "signed_literal_widen",
+      "params": {
+        "W": 16
+      },
+      "signals": [
+        "y",
+        "mixed",
+        "ge"
+      ],
+      "stimulus": [
+        {
+          "x": "1000000000000000",
+          "u": "1000000000000000"
+        },
+        {
+          "x": "0000000001111111",
+          "u": "0000000001111111"
+        }
+      ],
+      "measured": "2026-11-09: signed literal widening into a 16-bit signed expression and mixed unsigned expression; Icarus agrees with the symbolic route under IEEE 1800-2023 §11.8.1–11.8.2."
     }
   ]
 }

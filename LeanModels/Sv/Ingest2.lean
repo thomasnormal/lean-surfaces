@@ -221,12 +221,14 @@ partial def parsePExpr (j : Json) : Except String PExpr := do
         let bits ← getStrField j "bits"
         match LVec.ofBinLit? width bits with
         | some v =>
-            -- A SIGNED literal (`4'sd3`, or a constant slang typed `int`;
-            -- optional `signed: true`) is the cast `$signed(lit)`: the same
-            -- bits, signed for every consuming operator — the value tier
-            -- passes casts through, the constant tier reads them signed.
+            -- A SIGNED literal (`signed: true`) is a parser-provided
+            -- declaration/type conversion.  Keep it distinct from an
+            -- explicit `$signed(...)` Cast: the former may widen under the
+            -- consuming expression's context (§11.8.1/§11.8.2), while the
+            -- latter remains the historical loud boundary when its width is
+            -- parameter-dependent.
             match getOptField j "signed" with
-            | some (Json.bool true) => return .cast true (.lit v)
+            | some (Json.bool true) => return .signedResize width (.lit v)
             | none | some (Json.bool false) => return .lit v
             | some _ => throw "field 'signed' is not a bool"
         | none => throw s!"invalid 4-state digit string {bits.quote}"
@@ -234,7 +236,8 @@ partial def parsePExpr (j : Json) : Except String PExpr := do
         let e := .ident (← getStrField j "name")
         match getOptField j "signed" with
         | none | some (Json.bool false) => return e
-        | some (Json.bool true) => return .cast true e
+        | some (Json.bool true) =>
+            return .signedResize (← getNatField j "width") e
         | some _ => throw "field 'signed' is not a bool"
     | "ParamRef" => return .paramRef (← getStrField j "name") (getOptStr j "from_package")
     | "GenvarRef" => return .genvarRef (← getStrField j "name")
@@ -499,7 +502,7 @@ partial def parseTargetL (j : Json) : Except String (Except String PLhs) := do
       -- `signed: true`, which `parsePExpr` retains as a root cast marker.
       -- Signedness is irrelevant to the destination name; unwrap that
       -- marker here so a whole-signal assignment remains a valid target.
-      | .cast _ (.ident n) => return .ok (.ident n)
+      | .cast _ (.ident n) | .signedResize _ (.ident n) => return .ok (.ident n)
       | .bitSel (.ident n) idx => return .ok (.bitSel n idx)
       | .partSel (.ident n) msb lsb => return .ok (.partSel n msb lsb)
       | .arrayElem n is => return .ok (.arrayElem n is)
@@ -1568,10 +1571,10 @@ private def unsupMemberText : String := r#"{
     "expr": {"kind": "Int", "span": null, "value": 1, "resolved_width": 32}, "resolved": 1}"#
     >>= parseGenItem).toOption
         == some (.unsupported "GenerateDecl:LocalParam" "generate-local declaration 'LL'")
--- A signed literal (`signed: true`, symbolic constant positions) is
--- `$signed` of its bits; the optional typed-parameter `signed` field parses.
+-- A signed literal's parser metadata is a context conversion; explicit
+-- `$signed` remains the separate `Cast` node.
 #guard (Json.parse r#"{"kind": "Literal", "span": null, "width": 4, "bits": "1111", "signed": true}"#
-    >>= parsePExpr).toOption == some (.cast true (.lit (LVec.ofNat 4 15)))
+    >>= parsePExpr).toOption == some (.signedResize 4 (.lit (LVec.ofNat 4 15)))
 #guard (Json.parse r#"{"kind": "Literal", "span": null, "width": 4, "bits": "1111"}"#
     >>= parsePExpr).toOption == some (.lit (LVec.ofNat 4 15))
 

@@ -37,7 +37,9 @@ def main(here=HERE, fixtures=(("plain", "case_always_ff_step11", 8),
     lean = run(["lake", "env", "lean", "--run", str(here / "oracle.lean")])
     expected = {tag: [] for tag, _, _ in fixtures}
     for line in lean.splitlines():
-        if line.startswith("ROW "):
+        if line.startswith("E "):
+            print(line)
+        elif line.startswith("ROW "):
             _, tag, *values = line.split()
             expected[tag].append(values)
     if any(len(expected[tag]) != count for tag, _, count in fixtures):

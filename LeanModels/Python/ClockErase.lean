@@ -2603,44 +2603,46 @@ theorem ceEvalExpr_succ (ih : CE fuel) : CEEvalExpr (fuel + 1) := by
                               exact .of_seed (fun tr => by first | rfl | simp) (by first | rfl | simp [FrameState.withClock_self hs3, hs3])
                     case bmax =>
                       refine .bind (ClockErasedF.flattenStarRun (ihEs m st args.toList h)) fun s2 vs hs2 => ?_
+                      refine .bind (.liftRes hs2 _) fun s3 _ hs3 => ?_
                       cases vs with
-                      | nil => ce_norm; exact .liftRes hs2 _
+                      | nil => ce_norm; exact .liftRes hs3 _
                       | cons v t =>
                         cases t with
-                        | cons d t2 => ce_norm; exact .liftRes hs2 _
+                        | cons d t2 => ce_norm; exact .liftRes hs3 _
                         | nil =>
-                          cases v <;> try (ce_norm; exact .liftRes hs2 _)
+                          cases v <;> try (ce_norm; exact .liftRes hs3 _)
                           case ref a =>
                             ce_norm
-                            cases hh : Heap.get? s2.world.heap a with
-                            | none => ce_norm; exact .liftRes hs2 _
+                            cases hh : Heap.get? s3.world.heap a with
+                            | none => ce_norm; exact .liftRes hs3 _
                             | some obj =>
-                              cases obj <;> try (ce_norm; exact .liftRes hs2 _)
+                              cases obj <;> try (ce_norm; exact .liftRes hs3 _)
                               case generator qn l k stat =>
                                 refine .ite .unsupported ?_
                                 refine .bind
-                                  (ClockErasedW.withLocals (ihDrain m s2.world a hs2))
+                                  (ClockErasedW.withLocals (ihDrain m s3.world a hs3))
                                   fun s3 vals hs3 => ?_
                                 exact .liftRes hs3 _
                     case bmin =>
                       refine .bind (ClockErasedF.flattenStarRun (ihEs m st args.toList h)) fun s2 vs hs2 => ?_
+                      refine .bind (.liftRes hs2 _) fun s3 _ hs3 => ?_
                       cases vs with
-                      | nil => ce_norm; exact .liftRes hs2 _
+                      | nil => ce_norm; exact .liftRes hs3 _
                       | cons v t =>
                         cases t with
-                        | cons d t2 => ce_norm; exact .liftRes hs2 _
+                        | cons d t2 => ce_norm; exact .liftRes hs3 _
                         | nil =>
-                          cases v <;> try (ce_norm; exact .liftRes hs2 _)
+                          cases v <;> try (ce_norm; exact .liftRes hs3 _)
                           case ref a =>
                             ce_norm
-                            cases hh : Heap.get? s2.world.heap a with
-                            | none => ce_norm; exact .liftRes hs2 _
+                            cases hh : Heap.get? s3.world.heap a with
+                            | none => ce_norm; exact .liftRes hs3 _
                             | some obj =>
-                              cases obj <;> try (ce_norm; exact .liftRes hs2 _)
+                              cases obj <;> try (ce_norm; exact .liftRes hs3 _)
                               case generator qn l k stat =>
                                 refine .ite .unsupported ?_
                                 refine .bind
-                                  (ClockErasedW.withLocals (ihDrain m s2.world a hs2))
+                                  (ClockErasedW.withLocals (ihDrain m s3.world a hs3))
                                   fun s3 vals hs3 => ?_
                                 exact .liftRes hs3 _
                     case banyall =>

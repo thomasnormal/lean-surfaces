@@ -35,6 +35,17 @@ The CI quickstart installs CPython 3.9 and the README names `python3.9`.
 DECIDED: require CPython 3.9 for the frontend and default oracle; never fall
 back to an unpinned Python executable or count a frontend refusal as a
 comparison disagreement.
+## 2026-11-10-pyfoundation-10 — max/min recursion
+
+`max` and `min` now check the CPython builtin recursion unit after positional
+argument evaluation, and the additional `PyObject_RichCompareBool` unit when
+the admitted input actually has multiple items to compare. Arity, non-iterable,
+and empty-sequence errors do not fabricate a comparison unit. The
+`maxmin_recursion.py` battery pins both builtins, valid sequence and positional
+forms, argument effects, and type/arity/empty errors; keyword forms remain
+loud until their Argument Clinic diagnostics are admitted exactly. The proof
+interpreter shares the same pure check.
+
 ## 2026-11-10-pyfoundation-9 — sum recursion
 
 `sum` now checks the CPython C-call recursion unit after evaluating its

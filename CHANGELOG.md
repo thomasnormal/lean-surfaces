@@ -93,6 +93,9 @@
   the captured source and literal hashes and the recorded ABI and call binding.
   The harness relies on its caller's cgroup instead of imposing an address-space
   limit.
+- Count `max`/`min`'s builtin and rich-comparison recursion units after
+  argument evaluation; arity and non-comparison errors retain their paths.
+
 - Count `sum` calls against the CPython recursion limit after argument
   evaluation; unsupported keyword forms remain loud.
 

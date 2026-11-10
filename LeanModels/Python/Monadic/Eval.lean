@@ -581,6 +581,8 @@ def applyBuiltin (K : Kont) (m : Module) (fname : String) (vs : List RVal) :
   else if fname == "range" then
     liftRes (rangeMake (← frameHeap) vs)
   else if fname == "max" || fname == "min" then
+    let st ← get
+    let _ ← liftRes (builtinExtremumRecursionCheck st.world.callDepth (← frameHeap) vs)
     match vs with
     | [.ref a] => do
         match Heap.get? (← frameHeap) a with

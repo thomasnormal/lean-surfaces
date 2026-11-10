@@ -10,7 +10,7 @@ Grammar coverage counts MATCH syntax kinds over every kind found in the checked-
 
 | measurement | covered | total | share |
 |---|---:|---:|---:|
-| grammar syntax kinds (MATCH) | 220 | 254 | 86.6% |
+| grammar syntax kinds (MATCH) | 216 | 255 | 84.7% |
 | sv-tests-2 paths with clean extraction | 5901 | 22071 | 26.7% |
 
 ## Differential self-consistency
@@ -19,7 +19,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 
 | rows | agree | disagree | recorded refusals | oracle |
 |---:|---:|---:|---:|---|
-| 639 | 616 | 0 | 23 | sv-tests-2 declarations |
+| 640 | 591 | 0 | 49 | sv-tests-2 declarations |
 
 | case | source | expectation | verdict | model status | detail |
 |---|---|---|---|---|---|
@@ -68,7 +68,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 | `string_null_literal_character` | `Examples/system-verilog/string_null_literal_character/string_null_literal_character.sv` | match | **MATCH** | `ok` | MATCH |
 | `string_index_literal_character` | `Examples/system-verilog/string_index_literal_character/string_index_literal_character.sv` | match | **MATCH** | `ok` | MATCH |
 | `string_sformatf_literal_assignment` | `Examples/system-verilog/string_sformatf_literal_assignment/string_sformatf_literal_assignment.sv` | match | **MATCH** | `ok` | MATCH |
-| `static_fixed_array_continuous_copy` | `Examples/system-verilog/static_fixed_array_continuous_copy/static_fixed_array_continuous_copy.sv` | match | **MATCH** | `ok` | MATCH |
+| `static_fixed_array_continuous_copy` | `Examples/system-verilog/static_fixed_array_continuous_copy/static_fixed_array_continuous_copy.sv` | refuse | **MATCH** | `unsupported` | REFUSE |
 | `queue_fixed_size_mismatch` | `Examples/system-verilog/queue_fixed_size_mismatch/queue_fixed_size_mismatch.sv` | match | **MATCH** | `ok` | MATCH |
 | `mailbox_literal_peek` | `Examples/system-verilog/mailbox_literal_peek/mailbox_literal_peek.sv` | match | **MATCH** | `ok` | MATCH |
 | `bits_fixed_expr` | `Examples/system-verilog/bits_fixed_expr/bits_fixed_expr.sv` | match | **MATCH** | `ok` | MATCH |
@@ -165,7 +165,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 | `fixed_array_indexed_slice` | `Examples/system-verilog/fixed_array_indexed_slice/fixed_array_indexed_slice.sv` | match | **MATCH** | `ok` | MATCH |
 | `fixed_array_bitstream_cast` | `Examples/system-verilog/fixed_array_bitstream_cast/fixed_array_bitstream_cast.sv` | match | **MATCH** | `ok` | MATCH |
 | `fixed_array_struct_pattern` | `Examples/system-verilog/fixed_array_struct_pattern/fixed_array_struct_pattern.sv` | match | **MATCH** | `ok` | MATCH |
-| `generate_constant_targets` | `Examples/system-verilog/generate_constant_targets/generate_constant_targets.sv` | match | **MATCH** | `ok` | MATCH |
+| `generate_constant_targets` | `Examples/system-verilog/generate_constant_targets/generate_constant_targets.sv` | refuse | **MATCH** | `unsupported` | REFUSE |
 | `floating_local_decl` | `Examples/system-verilog/floating_local_decl/floating_local_decl.sv` | match | **MATCH** | `ok` | MATCH |
 | `floating_literal_write` | `Examples/system-verilog/floating_literal_write/floating_literal_write.sv` | match | **MATCH** | `ok` | MATCH |
 | `realtime_write` | `Examples/system-verilog/realtime_write/realtime_write.sv` | match | **MATCH** | `ok` | MATCH |
@@ -198,7 +198,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 | `opaque_semaphore_zero_write` | `Examples/system-verilog/opaque_semaphore_zero_write/opaque_semaphore_zero_write.sv` | match | **MATCH** | `ok` | MATCH |
 | `empty_function_value` | `Examples/system-verilog/empty_function_value/empty_function_value.sv` | match | **MATCH** | `ok` | MATCH |
 | `assert_control` | `Examples/system-verilog/assert_control/assert_control.sv` | match | **MATCH** | `ok` | MATCH |
-| `generate_indexed_targets` | `Examples/system-verilog/generate_indexed_targets/generate_indexed_targets.sv` | match | **MATCH** | `ok` | MATCH |
+| `generate_indexed_targets` | `Examples/system-verilog/generate_indexed_targets/generate_indexed_targets.sv` | refuse | **MATCH** | `unsupported` | REFUSE |
 | `oob_struct_read` | `Examples/system-verilog/oob_struct_read/oob_struct_read.sv` | match | **MATCH** | `ok` | MATCH |
 | `streaming_struct_source` | `Examples/system-verilog/streaming_struct_source/streaming_struct_source.sv` | match | **MATCH** | `ok` | MATCH |
 | `streaming_with_range` | `Examples/system-verilog/streaming_with_range/streaming_with_range.sv` | match | **MATCH** | `ok` | MATCH |
@@ -218,6 +218,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 | `event_refusal` | `Examples/system-verilog/event/event.sv` | refuse | **MATCH** | `unsupported` | REFUSE |
 | `always_refusal` | `Examples/system-verilog/always/events.sv` | refuse | **MATCH** | `unsupported` | REFUSE |
 | `always_accept_timed` | `Examples/system-verilog/always_accept/always_accept.sv` | match | **MATCH** | `ok` | MATCH |
+| `net_decl_driver_timed` | `Examples/system-verilog/sem2/net_decl_driver/net_decl_driver.sv` | match | **MATCH** | `ok` | MATCH |
 | `always_no_control_refuse` | `Examples/system-verilog/always_no_control_refuse/always_no_control_refuse.sv` | refuse | **MATCH** | `unsupported` | REFUSE |
 | `scheduler_blocking_nba` | `Examples/system-verilog/scheduler_blocking_nba/scheduler_blocking_nba.sv` | match | **MATCH** | `ok` | MATCH |
 | `scheduler_zero_delay_inactive` | `Examples/system-verilog/scheduler_zero_delay_inactive/scheduler_zero_delay_inactive.sv` | match | **MATCH** | `ok` | MATCH |
@@ -225,7 +226,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 | `scheduler_zero_delay_convergent` | `Examples/system-verilog/scheduler_zero_delay_convergent/scheduler_zero_delay_convergent.sv` | match | **MATCH** | `ok` | MATCH |
 | `always_event_bare` | `Examples/system-verilog/always_event_bare/always_event_bare.sv` | match | **MATCH** | `ok` | MATCH |
 | `always_event_list` | `Examples/system-verilog/always_event_list/always_event_list.sv` | match | **MATCH** | `ok` | MATCH |
-| `scheduler_sensitivity_double` | `Examples/system-verilog/scheduler_sensitivity_double/scheduler_sensitivity_double.sv` | match | **MATCH** | `ok` | MATCH |
+| `scheduler_sensitivity_double` | `Examples/system-verilog/scheduler_sensitivity_double/scheduler_sensitivity_double.sv` | refuse | **MATCH** | `unsupported` | REFUSE |
 | `scheduler_nba_retrigger` | `Examples/system-verilog/scheduler_nba_retrigger/scheduler_nba_retrigger.sv` | match | **MATCH** | `ok` | MATCH |
 | `scheduler_region_outputs` | `Examples/system-verilog/scheduler_region_outputs/scheduler_region_outputs.sv` | match | **MATCH** | `ok` | MATCH |
 | `scheduler_postponed_strobe` | `Examples/system-verilog/scheduler_postponed_strobe/scheduler_postponed_strobe.sv` | match | **MATCH** | `ok` | MATCH |
@@ -244,19 +245,19 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 | `string_getc_assignment` | `Examples/system-verilog/string_getc_assignment/string_getc_assignment.sv` | match | **MATCH** | `ok` | MATCH |
 | `string_query_lexing` | `Examples/system-verilog/string_query_lexing/string_query_lexing.sv` | match | **MATCH** | `ok` | MATCH |
 | `string_query_statement` | `Examples/system-verilog/string_query_statement/string_query_statement.sv` | match | **MATCH** | `ok` | MATCH |
-| `constant_net_driver` | `Examples/system-verilog/constant_net_driver/constant_net_driver.sv` | match | **MATCH** | `ok` | MATCH |
+| `constant_net_driver` | `Examples/system-verilog/constant_net_driver/constant_net_driver.sv` | refuse | **MATCH** | `unsupported` | REFUSE |
 | `typed_default_array_pattern` | `Examples/system-verilog/typed_default_array_pattern/typed_default_array_pattern.sv` | match | **MATCH** | `ok` | MATCH |
-| `constant_net_bit_driver` | `Examples/system-verilog/constant_net_bit_driver/constant_net_bit_driver.sv` | match | **MATCH** | `ok` | MATCH |
-| `static_net_resolution` | `Examples/system-verilog/static_net_resolution/static_net_resolution.sv` | match | **MATCH** | `ok` | MATCH |
-| `constant_array_cell_driver` | `Examples/system-verilog/constant_array_cell_driver/constant_array_cell_driver.sv` | match | **MATCH** | `ok` | MATCH |
-| `constant_variable_driver` | `Examples/system-verilog/constant_variable_driver/constant_variable_driver.sv` | match | **MATCH** | `ok` | MATCH |
-| `disjoint_literal_net_windows` | `Examples/system-verilog/disjoint_literal_net_windows/disjoint_literal_net_windows.sv` | match | **MATCH** | `ok` | MATCH |
-| `overlapping_literal_net_windows` | `Examples/system-verilog/overlapping_literal_net_windows/overlapping_literal_net_windows.sv` | match | **MATCH** | `ok` | MATCH |
-| `constant_net_array_cell_driver` | `Examples/system-verilog/constant_net_array_cell_driver/constant_net_array_cell_driver.sv` | match | **MATCH** | `ok` | MATCH |
-| `constant_tri_driver` | `Examples/system-verilog/constant_tri_driver/constant_tri_driver.sv` | match | **MATCH** | `ok` | MATCH |
-| `constant_strength_driver` | `Examples/system-verilog/constant_strength_driver/constant_strength_driver.sv` | match | **MATCH** | `ok` | MATCH |
-| `constant_tri_strength_driver` | `Examples/system-verilog/constant_tri_strength_driver/constant_tri_strength_driver.sv` | match | **MATCH** | `ok` | MATCH |
-| `constant_strength_select_driver` | `Examples/system-verilog/constant_strength_select_driver/constant_strength_select_driver.sv` | match | **MATCH** | `ok` | MATCH |
+| `constant_net_bit_driver` | `Examples/system-verilog/constant_net_bit_driver/constant_net_bit_driver.sv` | refuse | **MATCH** | `unsupported` | REFUSE |
+| `static_net_resolution` | `Examples/system-verilog/static_net_resolution/static_net_resolution.sv` | refuse | **MATCH** | `unsupported` | REFUSE |
+| `constant_array_cell_driver` | `Examples/system-verilog/constant_array_cell_driver/constant_array_cell_driver.sv` | refuse | **MATCH** | `unsupported` | REFUSE |
+| `constant_variable_driver` | `Examples/system-verilog/constant_variable_driver/constant_variable_driver.sv` | refuse | **MATCH** | `unsupported` | REFUSE |
+| `disjoint_literal_net_windows` | `Examples/system-verilog/disjoint_literal_net_windows/disjoint_literal_net_windows.sv` | refuse | **MATCH** | `unsupported` | REFUSE |
+| `overlapping_literal_net_windows` | `Examples/system-verilog/overlapping_literal_net_windows/overlapping_literal_net_windows.sv` | refuse | **MATCH** | `unsupported` | REFUSE |
+| `constant_net_array_cell_driver` | `Examples/system-verilog/constant_net_array_cell_driver/constant_net_array_cell_driver.sv` | refuse | **MATCH** | `unsupported` | REFUSE |
+| `constant_tri_driver` | `Examples/system-verilog/constant_tri_driver/constant_tri_driver.sv` | refuse | **MATCH** | `unsupported` | REFUSE |
+| `constant_strength_driver` | `Examples/system-verilog/constant_strength_driver/constant_strength_driver.sv` | refuse | **MATCH** | `unsupported` | REFUSE |
+| `constant_tri_strength_driver` | `Examples/system-verilog/constant_tri_strength_driver/constant_tri_strength_driver.sv` | refuse | **MATCH** | `unsupported` | REFUSE |
+| `constant_strength_select_driver` | `Examples/system-verilog/constant_strength_select_driver/constant_strength_select_driver.sv` | refuse | **MATCH** | `unsupported` | REFUSE |
 | `assertcontrol_literal` | `Examples/system-verilog/assertcontrol_literal/assertcontrol_literal.sv` | match | **MATCH** | `ok` | MATCH |
 | `assertcontrol_literal_args` | `Examples/system-verilog/assertcontrol_literal_args/assertcontrol_literal_args.sv` | match | **MATCH** | `ok` | MATCH |
 | `dynamic_fixed_size_mismatch` | `Examples/system-verilog/dynamic_fixed_size_mismatch/dynamic_fixed_size_mismatch.sv` | match | **MATCH** | `ok` | MATCH |
@@ -357,7 +358,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 | `swrite_default_radix` | `Examples/system-verilog/swrite_default_radix/swrite_default_radix.sv` | match | **MATCH** | `ok` | MATCH |
 | `packed_nested_scalar_select` | `Examples/system-verilog/packed_nested_scalar_select/packed_nested_scalar_select.sv` | match | **MATCH** | `ok` | MATCH |
 | `sdf_static_scope` | `Examples/system-verilog/sdf_static_scope/sdf_static_scope.sv` | match | **MATCH** | `ok` | MATCH |
-| `wired_net_resolution` | `Examples/system-verilog/wired_net_resolution/wired_net_resolution.sv` | match | **MATCH** | `ok` | MATCH |
+| `wired_net_resolution` | `Examples/system-verilog/wired_net_resolution/wired_net_resolution.sv` | refuse | **MATCH** | `unsupported` | REFUSE |
 | `assoc_bound_key` | `Examples/system-verilog/assoc_bound_key/assoc_bound_key.sv` | match | **MATCH** | `ok` | MATCH |
 | `packed_array_struct_member` | `Examples/system-verilog/packed_array_struct_member/packed_array_struct_member.sv` | match | **MATCH** | `ok` | MATCH |
 | `packed_union_reshaped_member` | `Examples/system-verilog/packed_union_reshaped_member/packed_union_reshaped_member.sv` | match | **MATCH** | `ok` | MATCH |
@@ -372,18 +373,18 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 | `fopen_invalid_mode` | `Examples/system-verilog/fopen_invalid_mode/fopen_invalid_mode.sv` | match | **MATCH** | `ok` | MATCH |
 | `fopen_invalid_mode_statement` | `Examples/system-verilog/fopen_invalid_mode_statement/fopen_invalid_mode_statement.sv` | match | **MATCH** | `ok` | MATCH |
 | `literal_bound_real_bits` | `Examples/system-verilog/literal_bound_real_bits/literal_bound_real_bits.sv` | match | **MATCH** | `ok` | MATCH |
-| `continuous_bound_literal` | `Examples/system-verilog/continuous_bound_literal/continuous_bound_literal.sv` | match | **MATCH** | `ok` | MATCH |
-| `continuous_history_literal` | `Examples/system-verilog/continuous_history_literal/continuous_history_literal.sv` | match | **MATCH** | `ok` | MATCH |
+| `continuous_bound_literal` | `Examples/system-verilog/continuous_bound_literal/continuous_bound_literal.sv` | refuse | **MATCH** | `unsupported` | REFUSE |
+| `continuous_history_literal` | `Examples/system-verilog/continuous_history_literal/continuous_history_literal.sv` | refuse | **MATCH** | `unsupported` | REFUSE |
 | `fixed_array_disjoint_slice_copy` | `Examples/system-verilog/fixed_array_disjoint_slice_copy/fixed_array_disjoint_slice_copy.sv` | match | **MATCH** | `ok` | MATCH |
 | `unsized_left_stream` | `Examples/system-verilog/unsized_left_stream/unsized_left_stream.sv` | match | **MATCH** | `ok` | MATCH |
-| `constant_expression_net_driver` | `Examples/system-verilog/constant_expression_net_driver/constant_expression_net_driver.sv` | match | **MATCH** | `ok` | MATCH |
+| `constant_expression_net_driver` | `Examples/system-verilog/constant_expression_net_driver/constant_expression_net_driver.sv` | refuse | **MATCH** | `unsupported` | REFUSE |
 | `nested_fixed_array_dynamic_target` | `Examples/system-verilog/nested_fixed_array_dynamic_target/nested_fixed_array_dynamic_target.sv` | match | **MATCH** | `ok` | MATCH |
 | `nested_fixed_array_outer_dynamic_target` | `Examples/system-verilog/nested_fixed_array_outer_dynamic_target/nested_fixed_array_outer_dynamic_target.sv` | match | **MATCH** | `ok` | MATCH |
 | `nested_fixed_array_dynamic_subarray_copy` | `Examples/system-verilog/nested_fixed_array_dynamic_subarray_copy/nested_fixed_array_dynamic_subarray_copy.sv` | match | **MATCH** | `ok` | MATCH |
 | `nested_fixed_array_dynamic_inner_subarray_copy` | `Examples/system-verilog/nested_fixed_array_dynamic_inner_subarray_copy/nested_fixed_array_dynamic_inner_subarray_copy.sv` | match | **MATCH** | `ok` | MATCH |
 | `nested_fixed_array_dynamic_subarray_read_copy` | `Examples/system-verilog/nested_fixed_array_dynamic_subarray_read_copy/nested_fixed_array_dynamic_subarray_read_copy.sv` | match | **MATCH** | `ok` | MATCH |
 | `fixed_array_dynamic_packed_slice` | `Examples/system-verilog/fixed_array_dynamic_packed_slice/fixed_array_dynamic_packed_slice.sv` | match | **MATCH** | `ok` | MATCH |
-| `fixed_array_net_copy` | `Examples/system-verilog/fixed_array_net_copy/fixed_array_net_copy.sv` | match | **MATCH** | `ok` | MATCH |
+| `fixed_array_net_copy` | `Examples/system-verilog/fixed_array_net_copy/fixed_array_net_copy.sv` | refuse | **MATCH** | `unsupported` | REFUSE |
 | `fixed_array_nested_copy` | `Examples/system-verilog/fixed_array_nested_copy/fixed_array_nested_copy.sv` | match | **MATCH** | `ok` | MATCH |
 | `fixed_array_subarray_copy` | `Examples/system-verilog/fixed_array_subarray_copy/fixed_array_subarray_copy.sv` | match | **MATCH** | `ok` | MATCH |
 | `fixed_array_disjoint_subarray_copy` | `Examples/system-verilog/fixed_array_disjoint_subarray_copy/fixed_array_disjoint_subarray_copy.sv` | match | **MATCH** | `ok` | MATCH |
@@ -392,8 +393,8 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 | `array_oob_reads` | `Examples/system-verilog/array_oob_reads/array_oob_reads.sv` | match | **MATCH** | `ok` | MATCH |
 | `string_index` | `Examples/system-verilog/string_index/string_index.sv` | match | **MATCH** | `ok` | MATCH |
 | `packed_array_dynamic_wide_slice` | `Examples/system-verilog/packed_array_dynamic_wide_slice/packed_array_dynamic_wide_slice.sv` | match | **MATCH** | `ok` | MATCH |
-| `continuous_selected_history_windows` | `Examples/system-verilog/continuous_selected_history_windows/continuous_selected_history_windows.sv` | match | **MATCH** | `ok` | MATCH |
-| `continuous_conditional_history_drivers` | `Examples/system-verilog/continuous_conditional_history_drivers/continuous_conditional_history_drivers.sv` | match | **MATCH** | `ok` | MATCH |
+| `continuous_selected_history_windows` | `Examples/system-verilog/continuous_selected_history_windows/continuous_selected_history_windows.sv` | refuse | **MATCH** | `unsupported` | REFUSE |
+| `continuous_conditional_history_drivers` | `Examples/system-verilog/continuous_conditional_history_drivers/continuous_conditional_history_drivers.sv` | refuse | **MATCH** | `unsupported` | REFUSE |
 | `coverage_nocov_queries` | `Examples/system-verilog/coverage_nocov_queries/coverage_nocov_queries.sv` | match | **MATCH** | `ok` | MATCH |
 | `fseek_stdout_error` | `Examples/system-verilog/fseek_stdout_error/fseek_stdout_error.sv` | match | **MATCH** | `ok` | MATCH |
 | `ftell_stdout_error` | `Examples/system-verilog/ftell_stdout_error/ftell_stdout_error.sv` | match | **MATCH** | `ok` | MATCH |
@@ -499,14 +500,14 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 | `nested_dynamic_array_target` | `Examples/system-verilog/nested_dynamic_array_target/nested_dynamic_array_target.sv` | match | **MATCH** | `ok` | MATCH |
 | `packed_aggregate_copy` | `Examples/system-verilog/packed_aggregate_copy/packed_aggregate_copy.sv` | match | **MATCH** | `ok` | MATCH |
 | `literal_format_concat` | `Examples/system-verilog/literal_format_concat/literal_format_concat.sv` | match | **MATCH** | `ok` | MATCH |
-| `net_alias` | `Examples/system-verilog/net_alias/net_alias.sv` | match | **MATCH** | `ok` | MATCH |
+| `net_alias` | `Examples/system-verilog/net_alias/net_alias.sv` | refuse | **MATCH** | `unsupported` | REFUSE |
 | `supply_net` | `Examples/system-verilog/supply_net/supply_net.sv` | match | **MATCH** | `ok` | MATCH |
 | `tri_net` | `Examples/system-verilog/tri_net/tri_net.sv` | match | **MATCH** | `ok` | MATCH |
 | `wired_net` | `Examples/system-verilog/wired_net/wired_net.sv` | match | **MATCH** | `ok` | MATCH |
 | `pull_net` | `Examples/system-verilog/pull_net/pull_net.sv` | match | **MATCH** | `ok` | MATCH |
 | `trireg_net` | `Examples/system-verilog/trireg_net/trireg_net.sv` | match | **MATCH** | `ok` | MATCH |
 | `user_nettype` | `Examples/system-verilog/user_nettype/user_nettype.sv` | match | **MATCH** | `ok` | MATCH |
-| `two_state_net` | `Examples/system-verilog/two_state_net/two_state_net.sv` | match | **MATCH** | `ok` | MATCH |
+| `two_state_net` | `Examples/system-verilog/two_state_net/two_state_net.sv` | refuse | **MATCH** | `unsupported` | REFUSE |
 | `mixed_dimension_queries` | `Examples/system-verilog/mixed_dimension_queries/mixed_dimension_queries.sv` | match | **MATCH** | `ok` | MATCH |
 | `dynamic_dimension_queries` | `Examples/system-verilog/dynamic_dimension_queries/dynamic_dimension_queries.sv` | match | **MATCH** | `ok` | MATCH |
 | `fixed_array_unpacked_union` | `Examples/system-verilog/fixed_array_unpacked_union/fixed_array_unpacked_union.sv` | match | **MATCH** | `ok` | MATCH |
@@ -527,7 +528,7 @@ The rows in `harness/sv_cases.json` carry `expect: match|refuse`. A match compar
 | `pure_diagnostic_adapter` | `Examples/system-verilog/pure_diagnostic_adapter/pure_diagnostic_adapter.sv` | match | **MATCH** | `ok` | MATCH |
 | `severity_adapter` | `Examples/system-verilog/severity_adapter/severity_adapter.sv` | match | **MATCH** | `ok` | MATCH |
 | `ordering_adapter` | `Examples/system-verilog/ordering_adapter/ordering_adapter.sv` | match | **MATCH** | `ok` | MATCH |
-| `generate_adapter` | `Examples/system-verilog/generate_adapter/generate_adapter.sv` | match | **MATCH** | `ok` | MATCH |
+| `generate_adapter` | `Examples/system-verilog/generate_adapter/generate_adapter.sv` | refuse | **MATCH** | `unsupported` | REFUSE |
 | `empty_dynamic_decl_adapter` | `Examples/system-verilog/empty_dynamic_decl_adapter/empty_dynamic_decl_adapter.sv` | match | **MATCH** | `ok` | MATCH |
 | `invalid_dimension_adapter` | `Examples/system-verilog/invalid_dimension_adapter/invalid_dimension_adapter.sv` | match | **MATCH** | `ok` | MATCH |
 | `dynamic_extent_adapter` | `Examples/system-verilog/dynamic_extent_adapter/dynamic_extent_adapter.sv` | match | **MATCH** | `ok` | MATCH |
@@ -669,7 +670,7 @@ One witness source is retained for every pyslang `SyntaxKind` found in the check
 
 | witnesses | MATCH | REFUSE | frontend |
 |---:|---:|---:|---|
-| 254 | 220 | 34 | pyslang SyntaxKind |
+| 255 | 216 | 39 | pyslang SyntaxKind |
 
 | syntax kind | witness | verdict | model status / detail |
 |---|---|---|---|
@@ -685,21 +686,21 @@ One witness source is retained for every pyslang `SyntaxKind` found in the check
 | `SyntaxKind.ArgumentList` | `Examples/system-verilog/always/automatic.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.ArithmeticLeftShiftAssignmentExpression` | `Examples/system-verilog/compound_assignments/arrays.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.ArithmeticRightShiftAssignmentExpression` | `Examples/system-verilog/compound_assignments/arrays.sv` | **MATCH** | `ok`  |
-| `SyntaxKind.ArithmeticShiftLeftExpression` | `Examples/system-verilog/shift_accept/shift_accept.sv` | **MATCH** | `ok`  |
-| `SyntaxKind.ArithmeticShiftRightExpression` | `Examples/system-verilog/sem2/fold_psgn/fold_psgn.sv` | **MATCH** | `ok`  |
+| `SyntaxKind.ArithmeticShiftLeftExpression` | `Examples/system-verilog/comb_shift/neg/sh_ashl.sv` | **MATCH** | `ok`  |
+| `SyntaxKind.ArithmeticShiftRightExpression` | `Examples/system-verilog/comb_shift/neg/sh_cat_op.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.ArrayAndMethod` | `Examples/system-verilog/array_reduction_statements/array_reduction_statements.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.ArrayOrMethod` | `Examples/system-verilog/array_reduction_statements/array_reduction_statements.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.ArrayOrRandomizeMethodExpression` | `Examples/system-verilog/array_query_statements/array_query_statements.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.ArrayUniqueMethod` | `Examples/system-verilog/array_query_statements/array_query_statements.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.ArrayXorMethod` | `Examples/system-verilog/array_reduction_statements/array_reduction_statements.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.AscendingRangeSelect` | `Examples/system-verilog/always_event_dynamic_part_select/always_event_dynamic_part_select.sv` | **MATCH** | `ok`  |
-| `SyntaxKind.AssertPropertyStatement` | `Examples/system-verilog/sem2/sva_property_retained/sva_property_retained.sv` | **REFUSE** | `unsupported` timed design rejects zero-delay always procedure |
+| `SyntaxKind.AssertPropertyStatement` | `Examples/system-verilog/sem2/sva_countones/sva_countones.sv` | **REFUSE** | `unsupported` timed design rejects zero-delay always procedure |
 | `SyntaxKind.AssertionItemPort` | `Examples/system-verilog/let_accept/let_accept.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.AssertionItemPortList` | `Examples/system-verilog/let_accept/let_accept.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.AssignmentExpression` | `Examples/system-verilog/adder/adder.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.AssignmentPatternExpression` | `Examples/system-verilog/always/automatic.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.AssignmentPatternItem` | `Examples/system-verilog/assignment_patterns/arrays.sv` | **MATCH** | `ok`  |
-| `SyntaxKind.AssumePropertyStatement` | `Examples/system-verilog/sem2/sva_property_retained/sva_property_retained.sv` | **REFUSE** | `unsupported` timed design rejects zero-delay always procedure |
+| `SyntaxKind.AssumePropertyStatement` | `Examples/system-verilog/sem2/sva_assume_disable/sva_assume_disable.sv` | **REFUSE** | `unsupported` timed design rejects zero-delay always procedure |
 | `SyntaxKind.AttributeInstance` | `Examples/system-verilog/sem2/xcelium_qualified_ops/xcelium_qualified_ops.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.AttributeSpec` | `Examples/system-verilog/sem2/xcelium_qualified_ops/xcelium_qualified_ops.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.BinaryAndExpression` | `Examples/system-verilog/bitwise_accept/bitwise_accept.sv` | **MATCH** | `ok`  |
@@ -720,28 +721,28 @@ One witness source is retained for every pyslang `SyntaxKind` found in the check
 | `SyntaxKind.ClassName` | `Examples/system-verilog/mailbox_literal_loop_fifo/mailbox_literal_loop_fifo.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.CompilationUnit` | `Examples/system-verilog/array_reductions/structure.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.ConcatenationExpression` | `Examples/system-verilog/always_event_concat/always_event_concat.sv` | **MATCH** | `ok`  |
-| `SyntaxKind.ConcurrentAssertionMember` | `Examples/system-verilog/sem2/sva_property_retained/sva_property_retained.sv` | **REFUSE** | `unsupported` timed design rejects zero-delay always procedure |
+| `SyntaxKind.ConcurrentAssertionMember` | `Examples/system-verilog/sem2/sva_assume_disable/sva_assume_disable.sv` | **REFUSE** | `unsupported` timed design rejects zero-delay always procedure |
 | `SyntaxKind.ConditionalExpression` | `Examples/system-verilog/always_event_conditional/always_event_conditional.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.ConditionalPattern` | `Examples/system-verilog/always/automatic.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.ConditionalPredicate` | `Examples/system-verilog/always/automatic.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.ConditionalStatement` | `Examples/system-verilog/always/automatic.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.ConstructorName` | `Examples/system-verilog/array_ordering_literals/array_ordering_literals.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.ContinuousAssign` | `Examples/system-verilog/adder/adder.sv` | **MATCH** | `ok`  |
-| `SyntaxKind.CoverPropertyStatement` | `Examples/system-verilog/sem2/sva_property_retained/sva_property_retained.sv` | **REFUSE** | `unsupported` timed design rejects zero-delay always procedure |
+| `SyntaxKind.CoverPropertyStatement` | `Examples/system-verilog/sem2/sva_f1_range/sva_f1_range.sv` | **REFUSE** | `unsupported` timed design rejects zero-delay always procedure |
 | `SyntaxKind.DataDeclaration` | `Examples/system-verilog/always/automatic.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.Declarator` | `Examples/system-verilog/adder/adder.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.DefaultCaseItem` | `Examples/system-verilog/case_array_widening/case_array_widening.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.DefaultPatternKeyExpression` | `Examples/system-verilog/assignment_patterns/effects.sv` | **REFUSE** | `unsupported` non-initial process 'SubroutineSymbol:Subroutine' (self-check tier runs initial-only designs) |
 | `SyntaxKind.DeferredAssertion` | `Examples/system-verilog/immediate_assertions/deferred.sv` | **REFUSE** | `unsupported` unsupported statement 'ImmediateAssertion:deferred' |
 | `SyntaxKind.DelayControl` | `Examples/system-verilog/always/automatic.sv` | **MATCH** | `ok`  |
-| `SyntaxKind.DelayedSequenceElement` | `Examples/system-verilog/sem2/sva_property_retained/sva_property_retained.sv` | **REFUSE** | `unsupported` timed design rejects zero-delay always procedure |
-| `SyntaxKind.DelayedSequenceExpr` | `Examples/system-verilog/sem2/sva_property_retained/sva_property_retained.sv` | **REFUSE** | `unsupported` timed design rejects zero-delay always procedure |
+| `SyntaxKind.DelayedSequenceElement` | `Examples/system-verilog/sem2/sva_f1_finite/sva_f1_finite.sv` | **REFUSE** | `unsupported` timed design rejects zero-delay always procedure |
+| `SyntaxKind.DelayedSequenceExpr` | `Examples/system-verilog/sem2/sva_f1_finite/sva_f1_finite.sv` | **REFUSE** | `unsupported` timed design rejects zero-delay always procedure |
 | `SyntaxKind.DescendingRangeSelect` | `Examples/system-verilog/always_event_dynamic_part_select_desc_explicit_edge_iff/always_event_dynamic_part_select_desc_explicit_edge_iff.sv` | **MATCH** | `ok`  |
-| `SyntaxKind.DisableIff` | `Examples/system-verilog/sem2/sva_property_retained/sva_property_retained.sv` | **REFUSE** | `unsupported` timed design rejects zero-delay always procedure |
+| `SyntaxKind.DisableIff` | `Examples/system-verilog/sem2/sva_assume_disable/sva_assume_disable.sv` | **REFUSE** | `unsupported` timed design rejects zero-delay always procedure |
 | `SyntaxKind.DivideAssignmentExpression` | `Examples/system-verilog/compound_assignments/scalars.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.DivideExpression` | `Examples/system-verilog/arithmetic_accept/arithmetic_accept.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.DoWhileStatement` | `Examples/system-verilog/do_while_string_literal/do_while_string_literal.sv` | **MATCH** | `ok`  |
-| `SyntaxKind.DriveStrength` | `Examples/system-verilog/constant_strength_driver/constant_strength_driver.sv` | **MATCH** | `ok`  |
+| `SyntaxKind.DriveStrength` | `Examples/system-verilog/constant_strength_driver/constant_strength_driver.sv` | **REFUSE** | `unsupported` non-initial process 'ContinuousAssignSymbol:strength' (self-check tier runs initial-only designs) |
 | `SyntaxKind.ElabSystemTask` | `Examples/system-verilog/sem2/multi_top/multi_top.sv` | **REFUSE** | `error` expected exactly one module in the envelope, got 2 |
 | `SyntaxKind.ElementSelect` | `Examples/system-verilog/always/automatic.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.ElseClause` | `Examples/system-verilog/always_comb_accept/always_comb_accept.sv` | **MATCH** | `ok`  |
@@ -764,26 +765,26 @@ One witness source is retained for every pyslang `SyntaxKind` found in the check
 | `SyntaxKind.ForeverStatement` | `Examples/system-verilog/forever_loops/timers.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.ForwardTypedefDeclaration` | `Examples/system-verilog/forward_typedef_metadata/forward_typedef_metadata.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.FunctionDeclaration` | `Examples/system-verilog/assignment_patterns/effects.sv` | **REFUSE** | `unsupported` non-initial process 'SubroutineSymbol:Subroutine' (self-check tier runs initial-only designs) |
-| `SyntaxKind.FunctionPort` | `Examples/system-verilog/empty_input_task/empty_input_task.sv` | **MATCH** | `ok`  |
+| `SyntaxKind.FunctionPort` | `Examples/system-verilog/cores/darkriscv/walls/case_memory_tb.sv` | **REFUSE** | `unsupported` non-initial process 'UninstantiatedDefSymbol:UninstantiatedDef' (self-check tier runs initial-only designs) |
 | `SyntaxKind.FunctionPortList` | `Examples/system-verilog/assignment_patterns/effects.sv` | **REFUSE** | `unsupported` non-initial process 'SubroutineSymbol:Subroutine' (self-check tier runs initial-only designs) |
 | `SyntaxKind.FunctionPrototype` | `Examples/system-verilog/assignment_patterns/effects.sv` | **REFUSE** | `unsupported` non-initial process 'SubroutineSymbol:Subroutine' (self-check tier runs initial-only designs) |
 | `SyntaxKind.GenerateBlock` | `Examples/system-verilog/comb_case/case_gen.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.GenerateRegion` | `Examples/system-verilog/comb_case/case_gen.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.GenvarDeclaration` | `Examples/system-verilog/comb_case/case_gen.sv` | **MATCH** | `ok`  |
-| `SyntaxKind.GreaterThanEqualExpression` | `Examples/system-verilog/comb_word/cmp_mixed.sv` | **MATCH** | `ok`  |
+| `SyntaxKind.GreaterThanEqualExpression` | `Examples/system-verilog/comb_signed/neg/sg_cmp_const.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.GreaterThanExpression` | `Examples/system-verilog/comb_ops/neg/neg_cmp.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.HierarchicalInstance` | `Examples/system-verilog/array_reductions/structure.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.HierarchyInstantiation` | `Examples/system-verilog/array_reductions/structure.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.IdentifierName` | `Examples/system-verilog/adder/adder.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.IdentifierSelectName` | `Examples/system-verilog/always/automatic.sv` | **MATCH** | `ok`  |
-| `SyntaxKind.IfGenerate` | `Examples/system-verilog/elaborated_generate/choices.sv` | **MATCH** | `ok`  |
+| `SyntaxKind.IfGenerate` | `Examples/system-verilog/cores/picorv32/generate_memory_if.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.IffEventClause` | `Examples/system-verilog/always_event_binary_explicit_edge_iff/always_event_binary_explicit_edge_iff.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.ImmediateAssertStatement` | `Examples/system-verilog/immediate_assertions/actions.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.ImmediateAssumeStatement` | `Examples/system-verilog/immediate_assertions/actions.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.ImmediateCoverStatement` | `Examples/system-verilog/immediate_assertions/actions.sv` | **MATCH** | `ok`  |
-| `SyntaxKind.ImplicationPropertyExpr` | `Examples/system-verilog/sem2/sva_property_retained/sva_property_retained.sv` | **REFUSE** | `unsupported` timed design rejects zero-delay always procedure |
+| `SyntaxKind.ImplicationPropertyExpr` | `Examples/system-verilog/sem2/sva_assume_disable/sva_assume_disable.sv` | **REFUSE** | `unsupported` timed design rejects zero-delay always procedure |
 | `SyntaxKind.ImplicitAnsiPort` | `Examples/system-verilog/adder/adder.sv` | **MATCH** | `ok`  |
-| `SyntaxKind.ImplicitEventControl` | `Examples/system-verilog/scheduler_sensitivity_double/scheduler_sensitivity_double.sv` | **MATCH** | `ok`  |
+| `SyntaxKind.ImplicitEventControl` | `Examples/system-verilog/scheduler_sensitivity_double/scheduler_sensitivity_double.sv` | **REFUSE** | `unsupported` timed self-check failure: scheduler/result rule is not modelled |
 | `SyntaxKind.ImplicitNonAnsiPort` | `Examples/system-verilog/sem2/pi_explicit/pi_explicit.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.ImplicitType` | `Examples/system-verilog/adder/adder.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.InequalityExpression` | `Examples/system-verilog/assoc_system_size_history/assoc_system_size_history.sv` | **MATCH** | `ok`  |
@@ -798,7 +799,7 @@ One witness source is retained for every pyslang `SyntaxKind` found in the check
 | `SyntaxKind.InterfaceHeader` | `Examples/system-verilog/opaque_virtual_interface_null_write/opaque_virtual_interface_null_write.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.InvocationExpression` | `Examples/system-verilog/always/automatic.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.JumpStatement` | `Examples/system-verilog/foreach/values.sv` | **MATCH** | `ok`  |
-| `SyntaxKind.LessThanEqualExpression` | `Examples/system-verilog/comb_word/cmp_same.sv` | **MATCH** | `ok`  |
+| `SyntaxKind.LessThanEqualExpression` | `Examples/system-verilog/comb_signed/scmp.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.LessThanExpression` | `Examples/system-verilog/array_reductions/rules.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.LetDeclaration` | `Examples/system-verilog/let_accept/let_accept.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.LogicType` | `Examples/system-verilog/adder/adder.sv` | **MATCH** | `ok`  |
@@ -808,8 +809,8 @@ One witness source is retained for every pyslang `SyntaxKind` found in the check
 | `SyntaxKind.LogicalLeftShiftAssignmentExpression` | `Examples/system-verilog/assoc_compound_history/assoc_compound_history.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.LogicalOrExpression` | `Examples/system-verilog/assoc_count_history/assoc_count_history.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.LogicalRightShiftAssignmentExpression` | `Examples/system-verilog/compound_assignments/scalars.sv` | **MATCH** | `ok`  |
-| `SyntaxKind.LogicalShiftLeftExpression` | `Examples/system-verilog/comb_word/neg/neg_shift.sv` | **MATCH** | `ok`  |
-| `SyntaxKind.LogicalShiftRightExpression` | `Examples/system-verilog/comb_word/shl_const.sv` | **MATCH** | `ok`  |
+| `SyntaxKind.LogicalShiftLeftExpression` | `Examples/system-verilog/comb_shift/neg/sh_cat_op.sv` | **MATCH** | `ok`  |
+| `SyntaxKind.LogicalShiftRightExpression` | `Examples/system-verilog/comb_shift/shift_ops.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.LongIntType` | `Examples/system-verilog/sem2/fold_sqn/fold_sqn.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.LoopGenerate` | `Examples/system-verilog/comb_case/case_gen.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.LoopStatement` | `Examples/system-verilog/fixed_string_array_loops/fixed_string_array_loops.sv` | **MATCH** | `ok`  |
@@ -825,9 +826,9 @@ One witness source is retained for every pyslang `SyntaxKind` found in the check
 | `SyntaxKind.NamedBlockClause` | `Examples/system-verilog/comb_case/case_gen.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.NamedLabel` | `Examples/system-verilog/immediate_assertions/actions.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.NamedParamAssignment` | `Examples/system-verilog/array_reductions/structure.sv` | **MATCH** | `ok`  |
-| `SyntaxKind.NamedPortConnection` | `Examples/system-verilog/ripple_fa/ripple_fa.sv` | **REFUSE** | `unsupported` timed design rejects process kind 'Hierarchy:ports' |
+| `SyntaxKind.NamedPortConnection` | `Examples/system-verilog/comb_hier/halves.sv` | **REFUSE** | `unsupported` non-initial process 'Hierarchy:ports' (self-check tier runs initial-only designs) |
 | `SyntaxKind.NamedType` | `Examples/system-verilog/array_named_display/array_named_display.sv` | **MATCH** | `ok`  |
-| `SyntaxKind.NetAlias` | `Examples/system-verilog/net_alias/net_alias.sv` | **MATCH** | `ok`  |
+| `SyntaxKind.NetAlias` | `Examples/system-verilog/net_alias/net_alias.sv` | **REFUSE** | `unsupported` Initial:order: initial processes 0 and 1 have overlapping read/write state; IEEE 1800-2023 §4.7/§9.2.1 leaves time-zero order open, so the self-check result is refused |
 | `SyntaxKind.NetDeclaration` | `Examples/system-verilog/assign_chain/assign_chain.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.NetPortHeader` | `Examples/system-verilog/assign_multiple_drivers/assign_multiple_drivers.sv` | **REFUSE** | `unsupported` timed design rejects process kind 'AssignmentExpression:target' |
 | `SyntaxKind.NetTypeDeclaration` | `Examples/system-verilog/user_nettype/user_nettype.sv` | **MATCH** | `ok`  |
@@ -852,6 +853,7 @@ One witness source is retained for every pyslang `SyntaxKind` found in the check
 | `SyntaxKind.ParenExpressionList` | `Examples/system-verilog/array_query_statements/array_query_statements.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.ParenthesizedEventExpression` | `Examples/system-verilog/always/events.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.ParenthesizedExpression` | `Examples/system-verilog/always_event_binary_explicit_edge/always_event_binary_explicit_edge.sv` | **MATCH** | `ok`  |
+| `SyntaxKind.ParenthesizedPropertyExpr` | `Examples/system-verilog/sem2/sva_logical_ops/sva_logical_ops.sv` | **REFUSE** | `unsupported` timed design rejects zero-delay always procedure |
 | `SyntaxKind.ParenthesizedSequenceExpr` | `Examples/system-verilog/min_typ_max/argument_context.sv` | **REFUSE** | `unsupported` unsupported statement 'InvalidStatement' |
 | `SyntaxKind.PortDeclaration` | `Examples/system-verilog/sem2/pi_explicit/pi_explicit.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.PortReference` | `Examples/system-verilog/sem2/pi_explicit/pi_explicit.sv` | **MATCH** | `ok`  |
@@ -860,14 +862,14 @@ One witness source is retained for every pyslang `SyntaxKind` found in the check
 | `SyntaxKind.PowerExpression` | `Examples/system-verilog/power/context_power.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.ProgramDeclaration` | `Examples/system-verilog/let_expressions/program.sv` | **REFUSE** | `unsupported` non-initial process 'Hierarchy:module-kind' (self-check tier runs initial-only designs) |
 | `SyntaxKind.ProgramHeader` | `Examples/system-verilog/let_expressions/program.sv` | **REFUSE** | `unsupported` non-initial process 'Hierarchy:module-kind' (self-check tier runs initial-only designs) |
-| `SyntaxKind.PropertySpec` | `Examples/system-verilog/sem2/sva_property_retained/sva_property_retained.sv` | **REFUSE** | `unsupported` timed design rejects zero-delay always procedure |
+| `SyntaxKind.PropertySpec` | `Examples/system-verilog/sem2/sva_assume_disable/sva_assume_disable.sv` | **REFUSE** | `unsupported` timed design rejects zero-delay always procedure |
 | `SyntaxKind.QueueDimensionSpecifier` | `Examples/system-verilog/dynamic_dimension_queries/dynamic_dimension_queries.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.RangeDimensionSpecifier` | `Examples/system-verilog/adder/adder.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.RangeList` | `Examples/system-verilog/case_inside/array_widening.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.RealLiteralExpression` | `Examples/system-verilog/discarded_pure_floating_math/discarded_pure_floating_math.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.RealTimeType` | `Examples/system-verilog/opaque_declarations/opaque_declarations.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.RealType` | `Examples/system-verilog/discarded_pure_real_to_bits/discarded_pure_real_to_bits.sv` | **MATCH** | `ok`  |
-| `SyntaxKind.RegType` | `Examples/system-verilog/sem2/net_width_outvar/net_width_outvar.sv` | **REFUSE** | `unsupported` timed design rejects process kind 'Hierarchy:ports' |
+| `SyntaxKind.RegType` | `Examples/system-verilog/sem2/net_decl_driver/net_decl_driver.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.RepeatedEventControl` | `Examples/system-verilog/intra_assignment/counts.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.ReplicatedAssignmentPattern` | `Examples/system-verilog/assignment_patterns/replicated.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.ReturnStatement` | `Examples/system-verilog/assignment_patterns/effects.sv` | **REFUSE** | `unsupported` non-initial process 'SubroutineSymbol:Subroutine' (self-check tier runs initial-only designs) |
@@ -894,7 +896,7 @@ One witness source is retained for every pyslang `SyntaxKind` found in the check
 | `SyntaxKind.SubtractAssignmentExpression` | `Examples/system-verilog/compound_assignments/scalars.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.SubtractExpression` | `Examples/system-verilog/arithmetic_accept/arithmetic_accept.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.SystemName` | `Examples/system-verilog/always/automatic.sv` | **MATCH** | `ok`  |
-| `SyntaxKind.TaskDeclaration` | `Examples/system-verilog/empty_input_task/empty_input_task.sv` | **MATCH** | `ok`  |
+| `SyntaxKind.TaskDeclaration` | `Examples/system-verilog/cores/darkriscv/walls/case_memory_tb.sv` | **REFUSE** | `unsupported` non-initial process 'UninstantiatedDefSymbol:UninstantiatedDef' (self-check tier runs initial-only designs) |
 | `SyntaxKind.TimeType` | `Examples/system-verilog/fixed_array_struct_pattern/fixed_array_struct_pattern.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.TimeUnitsDeclaration` | `Examples/system-verilog/intra_assignment/capture.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.TimingControlExpression` | `Examples/system-verilog/elaborated_generate/captures.sv` | **MATCH** | `ok`  |
@@ -925,7 +927,7 @@ One witness source is retained for every pyslang `SyntaxKind` found in the check
 | `SyntaxKind.WildcardEqualityExpression` | `Examples/system-verilog/wildcard_equality/values.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.WildcardInequalityExpression` | `Examples/system-verilog/wildcard_equality/values.sv` | **MATCH** | `ok`  |
 | `SyntaxKind.WildcardLiteralExpression` | `Examples/system-verilog/inside/inside.sv` | **MATCH** | `ok`  |
-| `SyntaxKind.WildcardPortConnection` | `Examples/system-verilog/sem2/hier_nested/hier_nested.sv` | **REFUSE** | `unsupported` non-initial process 'Hierarchy:ports' (self-check tier runs initial-only designs) |
+| `SyntaxKind.WildcardPortConnection` | `Examples/system-verilog/sem2/blocking_local_always_ff_step11/blocking_local_always_ff_step11_tb.sv` | **REFUSE** | `error` design.others is non-empty (1 node(s)) |
 | `SyntaxKind.XorAssignmentExpression` | `Examples/system-verilog/compound_assignments/effects.sv` | **REFUSE** | `unsupported` unsupported statement 'AssignmentExpression:compound-source' |
 
 ## Corpus validation

@@ -154,7 +154,7 @@ ModuleNotFoundError: No module named 'pyslang'
 an SV envelope it fails at parse:
 
 ```
-leanmodels-run: 'Examples/system-verilog/adder/adder.sv.json' is not a valid envelope: envelope: field 'module': property not found: module
+leanmodels-run: 'Examples/system-verilog/adder/adder.sv.json' is not a valid envelope: envelope: field 'version': property not found: version
 ```
 
 There is no SV lake exe in M0 — the harness drives

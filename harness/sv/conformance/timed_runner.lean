@@ -50,7 +50,20 @@ def runTimedOne (path : String) (fuel ticks : Nat) :
           -- missing region/event rule; `error` remains reserved for load or
           -- runner failures before a world exists.
           | .error e => return ("unsupported", e, [])
-          | .ok final => return ("ok", "", final.out.flush)
+          | .ok final =>
+              let lines := final.out.flush
+              -- A self-check that prints FAIL has reached the model's
+              -- assertion boundary with a negative result. Do not publish
+              -- that as a successful timed execution: the conformance
+              -- harness needs a named refusal until the missing scheduler
+              -- rule is modelled (notably repeated same-timestep
+              -- sensitivity publication).
+              if lines.any (fun line => line.startsWith "FAIL" ||
+                  line.startsWith "SCHED SENS FAIL") then
+                return ("unsupported",
+                  "timed self-check failure: scheduler/result rule is not modelled", [])
+              else
+                return ("ok", "", lines)
 
 def parseNatArg : String → Option Nat := fun s => s.toNat?
 

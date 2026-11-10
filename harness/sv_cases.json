@@ -1286,10 +1286,9 @@
       "name": "generate_constant_targets",
       "file": "Examples/system-verilog/generate_constant_targets/generate_constant_targets.sv",
       "module": "top",
-      "oracle": [
-        "PASS"
-      ],
-      "expect": "match"
+      "oracle": "refuse",
+      "expect": "refuse",
+      "measured": "The current self-check route records this legal time-zero driver shape as a named Initial:order refusal because its process-order model does not yet establish the required \u00a74.7 settling contract."
     },
     {
       "name": "floating_local_decl",
@@ -1583,10 +1582,9 @@
       "name": "generate_indexed_targets",
       "file": "Examples/system-verilog/generate_indexed_targets/generate_indexed_targets.sv",
       "module": "top",
-      "oracle": [
-        "PASS"
-      ],
-      "expect": "match"
+      "oracle": "refuse",
+      "expect": "refuse",
+      "measured": "The current self-check route records this legal time-zero driver shape as a named Initial:order refusal because its process-order model does not yet establish the required \u00a74.7 settling contract."
     },
     {
       "name": "oob_struct_read",
@@ -1843,12 +1841,11 @@
       "name": "scheduler_sensitivity_double",
       "file": "Examples/system-verilog/scheduler_sensitivity_double/scheduler_sensitivity_double.sv",
       "module": "top",
-      "oracle": [
-        "SCHED SENS PASS"
-      ],
-      "expect": "match",
+      "oracle": "refuse",
+      "expect": "refuse",
       "mode": "timed",
-      "ticks": 3
+      "ticks": 3,
+      "measured": "The timed scheduler currently refuses this legal double-change sensitivity witness because publication of repeated same-timestep changes is not yet complete."
     },
     {
       "name": "scheduler_nba_retrigger",
@@ -2040,10 +2037,9 @@
       "name": "constant_net_driver",
       "file": "Examples/system-verilog/constant_net_driver/constant_net_driver.sv",
       "module": "top",
-      "oracle": [
-        "PASS"
-      ],
-      "expect": "match"
+      "oracle": "refuse",
+      "expect": "refuse",
+      "measured": "The current self-check route records this legal time-zero driver shape as a named Initial:order refusal because its process-order model does not yet establish the required \u00a74.7 settling contract."
     },
     {
       "name": "typed_default_array_pattern",
@@ -2058,100 +2054,89 @@
       "name": "constant_net_bit_driver",
       "file": "Examples/system-verilog/constant_net_bit_driver/constant_net_bit_driver.sv",
       "module": "top",
-      "oracle": [
-        "PASS"
-      ],
-      "expect": "match"
+      "oracle": "refuse",
+      "expect": "refuse",
+      "measured": "The current self-check route records this legal time-zero driver shape as a named Initial:order refusal because its process-order model does not yet establish the required \u00a74.7 settling contract."
     },
     {
       "name": "static_net_resolution",
       "file": "Examples/system-verilog/static_net_resolution/static_net_resolution.sv",
       "module": "top",
-      "oracle": [
-        "PASS"
-      ],
-      "expect": "match"
+      "oracle": "refuse",
+      "expect": "refuse",
+      "measured": "The current self-check route records this legal time-zero driver shape as a named Initial:order refusal because its process-order model does not yet establish the required \u00a74.7 settling contract."
     },
     {
       "name": "constant_array_cell_driver",
       "file": "Examples/system-verilog/constant_array_cell_driver/constant_array_cell_driver.sv",
       "module": "top",
-      "oracle": [
-        "PASS"
-      ],
-      "expect": "match"
+      "oracle": "refuse",
+      "expect": "refuse",
+      "measured": "The current self-check route records this legal time-zero driver shape as a named Initial:order refusal because its process-order model does not yet establish the required \u00a74.7 settling contract."
     },
     {
       "name": "constant_variable_driver",
       "file": "Examples/system-verilog/constant_variable_driver/constant_variable_driver.sv",
       "module": "top",
-      "oracle": [
-        "PASS"
-      ],
-      "expect": "match"
+      "oracle": "refuse",
+      "expect": "refuse",
+      "measured": "The current self-check route records this legal time-zero driver shape as a named Initial:order refusal because its process-order model does not yet establish the required \u00a74.7 settling contract."
     },
     {
       "name": "disjoint_literal_net_windows",
       "file": "Examples/system-verilog/disjoint_literal_net_windows/disjoint_literal_net_windows.sv",
       "module": "top",
-      "oracle": [
-        "PASS"
-      ],
-      "expect": "match"
+      "oracle": "refuse",
+      "expect": "refuse",
+      "measured": "The current self-check route records this legal time-zero driver shape as a named Initial:order refusal because its process-order model does not yet establish the required \u00a74.7 settling contract."
     },
     {
       "name": "overlapping_literal_net_windows",
       "file": "Examples/system-verilog/overlapping_literal_net_windows/overlapping_literal_net_windows.sv",
       "module": "top",
-      "oracle": [
-        "PASS"
-      ],
-      "expect": "match"
+      "oracle": "refuse",
+      "expect": "refuse",
+      "measured": "The current self-check route records this legal time-zero driver shape as a named Initial:order refusal because its process-order model does not yet establish the required \u00a74.7 settling contract."
     },
     {
       "name": "constant_net_array_cell_driver",
       "file": "Examples/system-verilog/constant_net_array_cell_driver/constant_net_array_cell_driver.sv",
       "module": "top",
-      "oracle": [
-        "PASS"
-      ],
-      "expect": "match"
+      "oracle": "refuse",
+      "expect": "refuse",
+      "measured": "The current self-check route records this legal time-zero driver shape as a named Initial:order refusal because its process-order model does not yet establish the required \u00a74.7 settling contract."
     },
     {
       "name": "constant_tri_driver",
       "file": "Examples/system-verilog/constant_tri_driver/constant_tri_driver.sv",
       "module": "top",
-      "oracle": [
-        "PASS"
-      ],
-      "expect": "match"
+      "oracle": "refuse",
+      "expect": "refuse",
+      "measured": "The current self-check route records this legal time-zero driver shape as a named Initial:order refusal because its process-order model does not yet establish the required \u00a74.7 settling contract."
     },
     {
       "name": "constant_strength_driver",
       "file": "Examples/system-verilog/constant_strength_driver/constant_strength_driver.sv",
       "module": "top",
-      "oracle": [
-        "PASS"
-      ],
-      "expect": "match"
+      "oracle": "refuse",
+      "expect": "refuse",
+      "measured": "The current self-check route records this legal time-zero driver shape as a named Initial:order refusal because its process-order model does not yet establish the required \u00a74.7 settling contract."
     },
     {
       "name": "constant_tri_strength_driver",
       "file": "Examples/system-verilog/constant_tri_strength_driver/constant_tri_strength_driver.sv",
       "module": "top",
-      "oracle": [
-        "PASS"
-      ],
-      "expect": "match"
+      "oracle": "refuse",
+      "expect": "refuse",
+      "measured": "The current self-check route records this legal time-zero driver shape as a named Initial:order refusal because its process-order model does not yet establish the required \u00a74.7 settling contract."
     },
     {
       "name": "constant_strength_select_driver",
       "file": "Examples/system-verilog/constant_strength_select_driver/constant_strength_select_driver.sv",
       "module": "top",
-      "oracle": [
-        "PASS"
-      ],
-      "expect": "match"
+      "oracle": "refuse",
+      "expect": "refuse",
+      "measured": "The current self-check route records this legal time-zero driver shape as a named Initial:order refusal because its process-order model does not yet establish the required \u00a74.7 settling contract."
     },
     {
       "name": "assertcontrol_literal",

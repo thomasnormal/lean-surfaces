@@ -25,6 +25,13 @@ DEFAULT_ROOT = REPO / "Examples" / "system-verilog"
 TIMED_RUNNER = REPO / "harness" / "sv" / "conformance" / "timed_runner.lean"
 def load_extractor():
     path = REPO / "extractors" / "sv" / "extract.py"
+    # `extract.py` imports the sibling WP-PROC helper (`lower_proc`).  Loading
+    # it by filename does not put that directory on `sys.path`, so the
+    # shipped census failed before it could count a single SyntaxKind unless
+    # callers happened to export `PYTHONPATH=extractors/sv`.
+    sibling = str(path.parent)
+    if sibling not in sys.path:
+        sys.path.insert(0, sibling)
     spec = importlib.util.spec_from_file_location("sv_extractor", path)
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)

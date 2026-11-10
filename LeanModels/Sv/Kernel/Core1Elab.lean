@@ -7,10 +7,12 @@ IEEE 1800-2023 §§9.2.2.1, 9.2.2.4, 9.4.2: transport the retained positive-edge
 `always` and `always_ff` nodes into E's edge processes. The event and body are
 unchanged; the source style stays in `FF.style`. No clocked body is lowered.
 
-This narrow entry point admits scalar input clocks, the existing active-low
-reset event, and `ffOkB` bodies. Other events, mixed comb/edge designs and
-active-high resets remain loud. Step 9's general elaborator can reuse the
-node transport; this file does not define `Elab1.ofDesign2`.
+This narrow entry point admits scalar input clocks and `ffOkB` bodies.
+Async-reset Process2 nodes have already lost source style and event-guard
+metadata in the legacy loader, so every reset form remains loud here.
+Other events and mixed comb/edge designs remain loud. Step 9's general
+elaborator can reuse the node transport; this file does not define
+`Elab1.ofDesign2`.
 -/
 
 namespace LeanModels.Sv.Kernel
@@ -23,9 +25,8 @@ def FF.ofProcess2 : Process2 → Except String FF
   | .alwaysFF clk body => .ok { clk := clk, rstn := none, body := body }
   | .alwaysPlain clk body =>
       .ok { clk := clk, rstn := none, body := body, style := .alwaysPlain }
-  | .alwaysFFR clk rstn body false =>
-      .ok { clk := clk, rstn := some rstn, body := body }
-  | .alwaysFFR _ _ _ true => .error "9.4.2: active-high reset is outside this E edge elaborator"
+  | .alwaysFFR .. =>
+      .error "9.4.2: asynchronous-reset source metadata is outside this E edge elaborator"
   | .alwaysComb _ | .assign _ _ => .error "9.2: mixed comb/edge design is outside this E edge elaborator"
   | .unsupported k msg => .error s!"{k}: {msg}"
 
@@ -80,10 +81,7 @@ theorem FF.ofProcess2_preserves {p : Process2} {f : FF}
   cases p with
   | alwaysFF clk body => cases h; rfl
   | alwaysPlain clk body => cases h; rfl
-  | alwaysFFR clk r body high =>
-      cases high with
-      | false => cases h; rfl
-      | true => cases h
+  | alwaysFFR clk r body high => cases h
   | alwaysComb body => cases h
   | assign t e => cases h
   | unsupported k msg => cases h

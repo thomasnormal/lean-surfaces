@@ -36,6 +36,26 @@ DECIDED: require CPython 3.9 for the frontend and default oracle; never fall
 back to an unpinned Python executable or count a frontend refusal as a
 comparison disagreement.
 
+## 2026-11-10-pyfoundation-7 — remaining builtin and method recursion sites
+
+`len` now checks its C-call recursion boundary after evaluating arguments;
+`len_recursion.py` pins valid calls, wrong type/arity/keywords, error order,
+and argument side effects. `Objects/methodobject.c:cfunction_vectorcall_O`
+enters the call unit; wrong arity or keywords call `_PyObject_FunctionStr`,
+whose builtin module-name comparison enters a unit in `Objects/object.c`.
+
+A boundary sweep against CPython 3.9.25 with harness recursion base 2 exposed
+more decided mismatches in both interpreters: calls to `abs`, `sum`, `all`,
+`max`, `min`, `sorted`, `round`, `str`, `int`, list `append`, and dict `get`
+can reach `RecursionError` where the model returns normally. `max`, `min`,
+`sorted`, `round`, and `str` also have a deeper nested recursion site: they
+mismatch at two consecutive depths in the probe. The measured source and row
+logs are retained outside the tree at `/tmp/ls_python_builtin_rec_probe.py`,
+`/tmp/ls_python_builtin_rec_cases.json`, `/tmp/ls-python-builtin-rec-probe.log`,
+and `/tmp/ls-python-builtin-rec-proof.log`. `iter` itself refused and is not a
+decided mismatch in this sweep. These are unclosed audit findings; each call
+path needs its own source trace, argument-order controls, and a passing CI row.
+
 ## 2026-11-10-pyfoundation-6 — finish CPython recursion units
 
 Ordinary user-class construction now enters a recursion unit around `type_call`,

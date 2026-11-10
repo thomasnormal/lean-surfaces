@@ -206,7 +206,7 @@ macro (name := pySimpTactic) "py_simp" "[" args:(simpStar <|> simpErase <|> simp
             Const.toVal, Const.toRVal, truthy, truthyH, asInt, RVal.isNone,
             valEq, valEqList, intCmp,
             strCmp, evalCompareOp, evalCompareOpH, richCompareRecursionCheck,
-            pythonRecursionFull, pythonRecursionLimit, Run.withFrameRecursionUnit,
+            builtinLenRecursionCheck, pythonRecursionFull, pythonRecursionLimit, Run.withFrameRecursionUnit,
             Run.withRecursionUnit, Run.leaveCallDepth, nativeIteratorName, evalBinOp,
             evalBinOpMultH, heapListRepeatOperandH, heapListRepeatOperandRightH,
             strFormat,

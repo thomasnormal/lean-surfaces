@@ -1,6 +1,4 @@
-import LeanModels.Sv.Kernel.Core0Comb
-import LeanModels.Sv.Comb2Proc
-import LeanModels.Sv.NbaCommit
+import LeanModels.Sv.Kernel.Core1Targets
 
 /-!
 # E-core-1, the edge fragment, and R-EDGE (X4 spike) (`LeanModels.Sv.Kernel`)
@@ -13,8 +11,9 @@ extends E-core-0 with edge processes and the NBA region).
 * An edge process (`FF`) is `always_ff @(posedge clk)`, plain `always @(posedge clk)`,
   or `@(posedge clk or negedge rst_n)` (an active-low asynchronous reset). The source style
   is retained. Its body uses nonblocking assignments only (`if`/`begin-end`
-  and unqualified `case`/`casez`/`casex` around them); anything else refuses. It reads the store's view, which does not change while it
-  runs, and returns its NBA updates (`execFF`, the queue type `NbaQueue2` of `run2`).
+  and unqualified `case`/`casez`/`casex` around them), with static or runtime packed-select
+  targets; anything else refuses. It reads the store's view, which does not change while it
+  runs, and returns its NBA updates (`execFF`, queue type `NbaQueue2`).
 * `Config1` adds the NBA queue. `step1`: if the Active region is not empty, the Choice picks a
   ready process, which runs atomically and appends its updates (the store is unchanged). If
   Active is empty and the queue is not, the NBA region commits the whole queue in issue order
@@ -33,7 +32,7 @@ theorem below depends on it, because no edge process may write a clock or a rese
 with an empty queue, EVERY process-atomic legal schedule closes the slot, at the store whose view is
 `commitNba2 (view s) (queue s act)`: the updates of every ready process, computed on `s`, committed
 in index order. The closed store does not depend on the schedule. Hypotheses (`EdgeProfile`, all
-decided on the bodies' static NBA windows by `EdgeProfile.ofChecks`): bodies execute; one edge
+decided on the bodies' static NBA footprints by `EdgeProfile.ofChecks`): bodies execute; one edge
 writer per slice; no process writes a clock or a reset.
 
 The clocking discipline and its audit of `clockExpand` are in `Core1Disc.lean`.
@@ -41,46 +40,47 @@ The clocking discipline and its audit of `clockExpand` are in `Core1Disc.lean`.
 
 namespace LeanModels.Sv
 
-/-! ## Static NBA windows of a body -/
+/-! ## NBA footprints of a body -/
 
 mutual
 
-/-- Every window a nonblocking assignment of the body may write. -/
-def Stmt2.nbaWins (d : Design2) : Stmt2 → List Win
-  | .nbaAssign t _ => t.wins d
-  | .ifStmt _ t e => t.nbaWins d ++ Stmt2.optNbaWins d e
-  | .block body => Stmt2.listNbaWins d body.toList
-  | .caseStmt _ items dflt _ _ => CaseItem2.listNbaWins d items.toList ++ Stmt2.optNbaWins d dflt
+/-- Static footprints covering every update the body may issue. -/
+def Stmt2.nbaBounds (d : Design2) : Stmt2 → List Win
+  | .nbaAssign t _ => t.nbaBounds d
+  | .ifStmt _ t e => t.nbaBounds d ++ Stmt2.optNbaBounds d e
+  | .block body => Stmt2.listNbaBounds d body.toList
+  | .caseStmt _ items dflt _ _ => CaseItem2.listNbaBounds d items.toList ++ Stmt2.optNbaBounds d dflt
   | .blockingAssign _ _ | .unsupported _ _ => []
 termination_by structural s => s
 
-def Stmt2.optNbaWins (d : Design2) : Option Stmt2 → List Win
+def Stmt2.optNbaBounds (d : Design2) : Option Stmt2 → List Win
   | none => []
-  | some s => s.nbaWins d
+  | some s => s.nbaBounds d
 termination_by structural o => o
 
-def Stmt2.listNbaWins (d : Design2) : List Stmt2 → List Win
+def Stmt2.listNbaBounds (d : Design2) : List Stmt2 → List Win
   | [] => []
-  | s :: ss => s.nbaWins d ++ Stmt2.listNbaWins d ss
+  | s :: ss => s.nbaBounds d ++ Stmt2.listNbaBounds d ss
 termination_by structural ss => ss
 
-def CaseItem2.nbaWins (d : Design2) : CaseItem2 → List Win
-  | .mk _ body => body.nbaWins d
+def CaseItem2.nbaBounds (d : Design2) : CaseItem2 → List Win
+  | .mk _ body => body.nbaBounds d
 termination_by structural it => it
 
-def CaseItem2.listNbaWins (d : Design2) : List CaseItem2 → List Win
+def CaseItem2.listNbaBounds (d : Design2) : List CaseItem2 → List Win
   | [] => []
-  | it :: rest => it.nbaWins d ++ CaseItem2.listNbaWins d rest
+  | it :: rest => it.nbaBounds d ++ CaseItem2.listNbaBounds d rest
 termination_by structural its => its
 
 end
 
 mutual
 
-/-- The bodies E-core-1's edge fragment runs without refusing: nonblocking assignments with static
-targets and well-formed right-hand sides, under `if`, unqualified `case`/`casez`/`casex` and `begin-end`. -/
+/-- The bodies E-core-1's edge fragment runs without refusing: nonblocking assignments with admitted
+targets and well-formed index expressions and right-hand sides, under `if`,
+unqualified `case`/`casez`/`casex` and `begin-end`. -/
 def Stmt2.ffOkB (d : Design2) : Stmt2 → Bool
-  | .nbaAssign t e => (t.windows? d).isSome && e.wfB d
+  | .nbaAssign t e => t.edgeOkB d && e.wfB d
   | .ifStmt c t e => c.wfB d && t.ffOkB d && Stmt2.optFfOkB d e
   | .block body => Stmt2.listFfOkB d body.toList
   | .caseStmt subj items dflt mode check =>
@@ -169,15 +169,15 @@ nonblocking updates, in issue order. A refusal is loud and cites its clause:
 `"<clause>: <message>"` (`Core0`'s `refuse0` form). -/
 def execFF (d : Design2) (st : SvState) : Stmt2 → Except String NbaQueue2
   | .nbaAssign t e =>
-      match t.windows? d with
-      | some ws =>
+      match t.edgeWindows d st with
+      | .ok ws =>
           match evalPure2 st e with
           | .ok v =>
               .ok ((Win.placed ws).map fun x =>
                 (x.1.1, x.1.2.1, (v.resizeU (Win.sumWidth ws)).extract x.2 x.1.2.2))
           | .unsupported m => .error s!"11: {m}"
           | .timeout => .error "11: evaluation exhausted"
-      | none => .error "10.4.2: nonblocking assignment target is not a static window"
+      | .error m => .error m
   | .ifStmt c t e =>
       match evalPure2 st c with
       | .ok cv => if cv.condTrue then execFF d st t else execFFOpt d st e
@@ -371,9 +371,9 @@ theorem exec1_sound {E : Elab1} {ch : Choice} :
 
 mutual
 
-/-- Every update an edge body issues writes one of its static NBA windows. -/
-theorem execFF_mem {d : Design2} {st : SvState} : ∀ (s : Stmt2) {q : NbaQueue2},
-    execFF d st s = .ok q → ∀ u ∈ q, (u.1, u.2.1, u.2.2.width) ∈ s.nbaWins d
+/-- Every issued update is contained in a static NBA footprint, including runtime selects. -/
+theorem execFF_covered {d : Design2} {st : SvState} : ∀ (s : Stmt2) {q : NbaQueue2},
+    execFF d st s = .ok q → ∀ u ∈ q, ∃ W ∈ s.nbaBounds d, Win.contains W (u.1, u.2.1, u.2.2.width) = true
   | .nbaAssign t e, q, h, u, hu => by
       simp only [execFF] at h
       split at h
@@ -382,27 +382,27 @@ theorem execFF_mem {d : Design2} {st : SvState} : ∀ (s : Stmt2) {q : NbaQueue2
         · simp only [Except.ok.injEq] at h
           subst h
           obtain ⟨x, hx, rfl⟩ := List.mem_map.mp hu
-          simp only [Stmt2.nbaWins, Lhs2.wins_of_windows? hws, LVec.width_extract]
-          exact Win.mem_of_mem_placed (wn := x.1) (off := x.2) hx
+          simp only [Stmt2.nbaBounds, LVec.width_extract]
+          exact Lhs2.edgeWindows_covered hws _ (Win.mem_of_mem_placed (wn := x.1) (off := x.2) hx)
         · cases h
         · cases h
       · cases h
   | .ifStmt c t e, q, h, u, hu => by
       simp only [execFF] at h
       split at h
-      · simp only [Stmt2.nbaWins, List.mem_append]
+      · simp only [Stmt2.nbaBounds, List.mem_append, or_and_right, exists_or]
         split at h
-        · exact Or.inl (execFF_mem t h u hu)
-        · exact Or.inr (execFFOpt_mem e h u hu)
+        · exact Or.inl (execFF_covered t h u hu)
+        · exact Or.inr (execFFOpt_covered e h u hu)
       · cases h
       · cases h
   | .block body, q, h, u, hu => by
       simp only [execFF] at h
-      simp only [Stmt2.nbaWins]
-      exact execFFList_mem body.toList h u hu
+      simp only [Stmt2.nbaBounds]
+      exact execFFList_covered body.toList h u hu
   | .caseStmt subj items dflt mode check, q, h, u, hu => by
       simp only [execFF] at h
-      simp only [Stmt2.nbaWins, List.mem_append]
+      simp only [Stmt2.nbaBounds, List.mem_append, or_and_right, exists_or]
       split at h
       · cases h
       · split at h
@@ -413,28 +413,28 @@ theorem execFF_mem {d : Design2} {st : SvState} : ∀ (s : Stmt2) {q : NbaQueue2
               cases oq with
               | none =>
                   simp only [hc] at h
-                  exact Or.inr (execFFOpt_mem dflt h u hu)
+                  exact Or.inr (execFFOpt_covered dflt h u hu)
               | some qs =>
                   simp only [hc, Except.ok.injEq] at h
                   subst q
-                  exact Or.inl (execFFCase_mem items.toList hc u hu)
+                  exact Or.inl (execFFCase_covered items.toList hc u hu)
         · cases h
         · cases h
   | .blockingAssign _ _, _, h, _, _ => by simp [execFF] at h
   | .unsupported _ _, _, h, _, _ => by simp [execFF] at h
 termination_by structural s => s
 
-theorem execFFOpt_mem {d : Design2} {st : SvState} : ∀ (o : Option Stmt2) {q : NbaQueue2},
-    execFFOpt d st o = .ok q → ∀ u ∈ q, (u.1, u.2.1, u.2.2.width) ∈ Stmt2.optNbaWins d o
+theorem execFFOpt_covered {d : Design2} {st : SvState} : ∀ (o : Option Stmt2) {q : NbaQueue2},
+    execFFOpt d st o = .ok q → ∀ u ∈ q, ∃ W ∈ Stmt2.optNbaBounds d o, Win.contains W (u.1, u.2.1, u.2.2.width) = true
   | none, q, h, u, hu => by
       simp only [execFFOpt, Except.ok.injEq] at h
       subst h
       exact absurd hu List.not_mem_nil
-  | some s, q, h, u, hu => execFF_mem s h u hu
+  | some s, q, h, u, hu => execFF_covered s h u hu
 termination_by structural o => o
 
-theorem execFFList_mem {d : Design2} {st : SvState} : ∀ (ss : List Stmt2) {q : NbaQueue2},
-    execFFList d st ss = .ok q → ∀ u ∈ q, (u.1, u.2.1, u.2.2.width) ∈ Stmt2.listNbaWins d ss
+theorem execFFList_covered {d : Design2} {st : SvState} : ∀ (ss : List Stmt2) {q : NbaQueue2},
+    execFFList d st ss = .ok q → ∀ u ∈ q, ∃ W ∈ Stmt2.listNbaBounds d ss, Win.contains W (u.1, u.2.1, u.2.2.width) = true
   | [], q, h, u, hu => by
       simp only [execFFList, Except.ok.injEq] at h
       subst h
@@ -451,16 +451,17 @@ theorem execFFList_mem {d : Design2} {st : SvState} : ∀ (ss : List Stmt2) {q :
             exact ⟨q₁, h₁, q₂, h₂, h.symm⟩
           · cases h
         · cases h
-      simp only [Stmt2.listNbaWins, List.mem_append] at hu ⊢
+      simp only [List.mem_append] at hu
+      simp only [Stmt2.listNbaBounds, List.mem_append, or_and_right, exists_or]
       rcases hu with hu | hu
-      · exact Or.inl (execFF_mem s h₁ u hu)
-      · exact Or.inr (execFFList_mem ss h₂ u hu)
+      · exact Or.inl (execFF_covered s h₁ u hu)
+      · exact Or.inr (execFFList_covered ss h₂ u hu)
 termination_by structural ss => ss
 
-/-- A matching case item issues only its body's static NBA windows. -/
-theorem execFFArm_mem {d : Design2} {st : SvState} {mode : CaseMode} {sv : LVec} :
+/-- A matching case item issues only updates inside its body's footprints. -/
+theorem execFFArm_covered {d : Design2} {st : SvState} {mode : CaseMode} {sv : LVec} :
     ∀ (it : CaseItem2) {q : NbaQueue2}, execFFArm d st mode sv it = .ok (some q) →
-      ∀ u ∈ q, (u.1, u.2.1, u.2.2.width) ∈ it.nbaWins d
+      ∀ u ∈ q, ∃ W ∈ it.nbaBounds d, Win.contains W (u.1, u.2.1, u.2.2.width) = true
   | .mk pats body, q, h, u, hu => by
       simp only [execFFArm] at h
       split at h
@@ -469,32 +470,32 @@ theorem execFFArm_mem {d : Design2} {st : SvState} {mode : CaseMode} {sv : LVec}
           · rename_i qs hqs
             simp only [Except.ok.injEq, Option.some.injEq] at h
             subst q
-            exact execFF_mem body hqs u hu
+            exact execFF_covered body hqs u hu
           · cases h
         · cases h
       · cases h
       · cases h
 termination_by structural it => it
 
-/-- The first-match walk issues only windows of one of its source arms. -/
-theorem execFFCase_mem {d : Design2} {st : SvState} {mode : CaseMode} {sv : LVec} :
+/-- The first-match walk issues only updates covered by its source arms. -/
+theorem execFFCase_covered {d : Design2} {st : SvState} {mode : CaseMode} {sv : LVec} :
     ∀ (its : List CaseItem2) {q : NbaQueue2}, execFFCase d st mode sv its = .ok (some q) →
-      ∀ u ∈ q, (u.1, u.2.1, u.2.2.width) ∈ CaseItem2.listNbaWins d its
+      ∀ u ∈ q, ∃ W ∈ CaseItem2.listNbaBounds d its, Win.contains W (u.1, u.2.1, u.2.2.width) = true
   | [], _, h, _, _ => by simp [execFFCase] at h
   | it :: rest, q, h, u, hu => by
       simp only [execFFCase] at h
-      simp only [CaseItem2.listNbaWins, List.mem_append]
+      simp only [CaseItem2.listNbaBounds, List.mem_append, or_and_right, exists_or]
       cases ha : execFFArm d st mode sv it with
       | error m => simp [ha] at h
       | ok oq =>
           cases oq with
           | none =>
               simp only [ha] at h
-              exact Or.inr (execFFCase_mem rest h u hu)
+              exact Or.inr (execFFCase_covered rest h u hu)
           | some qs =>
               simp only [ha, Except.ok.injEq, Option.some.injEq] at h
               subst q
-              exact Or.inl (execFFArm_mem it ha u hu)
+              exact Or.inl (execFFArm_covered it ha u hu)
 termination_by structural its => its
 
 end
@@ -506,8 +507,9 @@ theorem execFF_total {d : Design2} {st : SvState}
     (hb : ∀ x ∈ d.symNames, ∃ v, SvState.lookup st x = some v) :
     ∀ (s : Stmt2), s.ffOkB d = true → ∃ q, execFF d st s = .ok q
   | .nbaAssign t e, h => by
-      simp only [Stmt2.ffOkB, Bool.and_eq_true, Option.isSome_iff_exists] at h
-      obtain ⟨⟨ws, hws⟩, he⟩ := h
+      simp only [Stmt2.ffOkB, Bool.and_eq_true] at h
+      obtain ⟨ht, he⟩ := h
+      obtain ⟨ws, hws⟩ := Lhs2.edgeWindows_total hb t ht
       obtain ⟨hu, hid⟩ := Expr2.wfB_spec he
       obtain ⟨v, hv⟩ := evalPure2_ok_of_wf hu fun x hx => hb x (hid x hx)
       exact ⟨(Win.placed ws).map fun x =>
@@ -627,18 +629,18 @@ structure EdgeProfile (E : Elab1) : Prop where
 /-- Every body is in the edge profile, decided. -/
 def Elab1.okB (E : Elab1) : Bool := E.procs.toList.all fun f => f.body.ffOkB E.design
 
-/-- One edge writer per slice, decided on the static NBA windows. -/
+/-- One edge writer per slice, decided on the static NBA footprints. -/
 def Elab1.oneWriterB (E : Elab1) : Bool :=
   (List.range E.procs.size).all fun p => (List.range E.procs.size).all fun p' =>
     p == p' ||
       match E.procs[p]?, E.procs[p']? with
-      | some f, some f' => (f.body.nbaWins E.design).all fun W =>
-          (f'.body.nbaWins E.design).all fun W' => !Win.overlaps W W'
+      | some f, some f' => (f.body.nbaBounds E.design).all fun W =>
+          (f'.body.nbaBounds E.design).all fun W' => !Win.overlaps W W'
       | _, _ => true
 
 /-- No NBA window is a clock or a reset, decided. -/
 def Elab1.noEdgeB (E : Elab1) : Bool :=
-  E.procs.toList.all fun f => (f.body.nbaWins E.design).all fun W =>
+  E.procs.toList.all fun f => (f.body.nbaBounds E.design).all fun W =>
     E.procs.toList.all fun g => W.1 != g.clk && g.rstn != some W.1
 
 theorem Elab1.next_some {E : Elab1} {s : Store} {p : ProcId} {q : NbaQueue2}
@@ -673,8 +675,8 @@ theorem EdgeProfile.ofChecks {E : Elab1} (h4 : AllFour E.base)
   oneWriter := fun s p p' q q' hne hq hq' u hu u' hu' => by
     obtain ⟨f, hf, hx⟩ := Elab1.next_some hq
     obtain ⟨f', hf', hx'⟩ := Elab1.next_some hq'
-    have hw := execFF_mem f.body hx u hu
-    have hw' := execFF_mem f'.body hx' u' hu'
+    obtain ⟨W, hw, hc⟩ := execFF_covered f.body hx u hu
+    obtain ⟨W', hw', hc'⟩ := execFF_covered f'.body hx' u' hu'
     have hpn : p < E.procs.size := (Array.getElem?_eq_some_iff.mp hf).1
     have hpn' : p' < E.procs.size := (Array.getElem?_eq_some_iff.mp hf').1
     simp only [Elab1.oneWriterB, List.all_eq_true, List.mem_range] at h1
@@ -682,19 +684,22 @@ theorem EdgeProfile.ofChecks {E : Elab1} (h4 : AllFour E.base)
     simp only [Bool.or_eq_true, beq_iff_eq, hne, false_or, hf, hf', List.all_eq_true] at h
     have hov := h _ hw _ hw'
     simp only [Bool.not_eq_true'] at hov
-    obtain ⟨n, lo, v⟩ := u
-    obtain ⟨n', lo', v'⟩ := u'
+    obtain ⟨n, lo, w⟩ := W
+    obtain ⟨n', lo', w'⟩ := W'
     rw [Win.overlaps_eq_false] at hov
+    rw [Win.contains_iff] at hc hc'
+    simp only [Prod.fst, Prod.snd] at hc hc'
     simp only [NbaDisj]
     rcases hov with h | h | h
-    · exact Or.inl h
-    · exact Or.inr (Or.inr h)
-    · exact Or.inr (Or.inl h)
+    · exact Or.inl (fun he => h (hc.1.trans (he.trans hc'.1.symm)))
+    · exact Or.inr (Or.inr (by omega))
+    · exact Or.inr (Or.inl (by omega))
   noEdge := fun s p q hq u hu g hg => by
     obtain ⟨f, hf, hx⟩ := Elab1.next_some hq
-    have hw := execFF_mem f.body hx u hu
+    obtain ⟨W, hw, hc⟩ := execFF_covered f.body hx u hu
     simp only [Elab1.noEdgeB, List.all_eq_true, Bool.and_eq_true, bne_iff_ne, ne_eq] at h2
-    exact h2 f (Elab1.mem_procs hf) _ hw g hg
+    have hn := (Win.contains_iff.mp hc).1
+    simpa only [hn] using h2 f (Elab1.mem_procs hf) _ hw g hg
 
 /-! ## R-EDGE -/
 
@@ -993,10 +998,14 @@ end Core1Smoke
 
 #print axioms nbaStep_comm
 #print axioms commitNba2_perm
-#print axioms execFF_mem
+#print axioms execFF_covered
+#print axioms execFFOpt_covered
+#print axioms execFFList_covered
 #print axioms execFF_total
-#print axioms execFFArm_mem
-#print axioms execFFCase_mem
+#print axioms execFFOpt_total
+#print axioms execFFList_total
+#print axioms execFFArm_covered
+#print axioms execFFCase_covered
 #print axioms execFFArm_total
 #print axioms execFFCase_total
 #print axioms Elab1.view_commit

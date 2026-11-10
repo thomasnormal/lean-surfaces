@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Respect recursion limits during function argument binding and report
+  keyword binding errors in CPython's call order.
+
 - Count ordinary closure calls against the Python recursion limit and unwind
   their frame depth on returns and exceptions.
 

@@ -25,6 +25,9 @@
   model, conditional on an order-indexed loaded-core invariant. Completion
   and retirement progress remain explicit proof obligations.
 
+- Restored `py_loop`'s entry and exit automation after the call-depth change,
+  so loop proofs finish with their stated invariant and measure.
+
 - Restored `py_prove` automation for straight-line integer multiplication
   after interpreter call-depth and operator changes.
 

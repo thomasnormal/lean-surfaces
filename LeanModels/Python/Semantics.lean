@@ -7595,6 +7595,22 @@ def arityErrorMsg (callee : String) (ps : List (String × Bool)) («given» : Na
 def paramArity (params : Array Param) : List (String × Bool) :=
   params.toList.map fun p => (p.arg, p.default.isSome)
 
+/-- The public named-function boundary uses a sentinel in place of its fresh
+caller depth. Nested calls and arbitrary frame states use their actual depth. -/
+def entryBindingDepth (depth : Nat) : Nat :=
+  if depth == pythonTopCallDepth then 0 else depth
+
+/-- CPython's `missing_arguments` renders each missing parameter with
+`PyObject_Repr`, which enters a recursion unit before a TypeError is built
+(Python/ceval.c and Objects/object.c). Extra positional arguments do not take
+this path. -/
+def positionalArityError (depth : Nat) (fname : String) (params : Array Param)
+    (nGiven : Nat) : PyErr :=
+  if nGiven ≤ params.size then
+    if pythonRecursionFull depth then .recursionError
+    else .typeError (arityErrorMsg fname (paramArity params) nGiven)
+  else .typeError (arityErrorMsg fname (paramArity params) nGiven)
+
 /-- `arityErrorMsg` for a NAMEDTUPLE constructor, and the two corrections
 it carries are both measured. CPython 3.9's `namedtuple` builds `__new__`
 by `eval`ing a LAMBDA, so the callee it names is `<lambda>` and not the
@@ -7679,6 +7695,19 @@ def fillKwSlots (fname : String) (kws : List (String × RVal))
       (s!"{fname}() missing {missing.length} required positional argument"
         ++ (if missing.length == 1 then "" else "s") ++ ": " ++ quoteNames missing))
 
+/-- The first keyword binding error in call order. The Boolean distinguishes
+an unknown keyword from a parameter already supplied positionally. CPython
+checks keywords in this order before checking extra positional arguments
+(`Python/ceval.c:_PyEval_EvalCode`). -/
+def kwFirstBindingError (names : List String) (nGiven : Nat) :
+    List (String × RVal) → Option (String × Bool)
+  | [] => none
+  | (key, _) :: rest =>
+    if names.contains key then
+      if (names.take nGiven).contains key then some (key, false)
+      else kwFirstBindingError names nGiven rest
+    else some (key, true)
+
 /-- H6 keyword merge (docs/memory-model.md §call-site keyword arguments):
 resolve already-evaluated positional + keyword arguments against `params`
 into ONE complete positional array, so `callIn`'s covenant signature never
@@ -7695,17 +7724,33 @@ def mergeKwArgs (fname : String) (params : Array Param)
   | some k =>
     .unsupported s!"duplicate keyword argument '{k}' (unreachable through ingestion — CPython rejects it at compile time)"
   | Option.none =>
-  if pos.length > params.size then
-    .exn (.typeError (arityErrorMsg fname (paramArity params) pos.length))
-  else match kws.find? (fun kv => !names.contains kv.1) with
-  | some (k, _) =>
+  match kwFirstBindingError names pos.length kws with
+  | some (k, true) =>
     .exn (.typeError s!"{fname}() got an unexpected keyword argument '{k}'")
-  | Option.none =>
-  match kws.find? (fun kv => (names.take pos.length).contains kv.1) with
-  | some (k, _) =>
+  | some (k, false) =>
     .exn (.typeError s!"{fname}() got multiple values for argument '{k}'")
-  | Option.none => do
-    return (pos ++ (← fillKwSlots fname kws (params.toList.drop pos.length))).toArray
+  | Option.none =>
+    if pos.length > params.size then
+      .exn (.typeError (arityErrorMsg fname (paramArity params) pos.length))
+    else do
+      return (pos ++ (← fillKwSlots fname kws (params.toList.drop pos.length))).toArray
+
+/-- Add the recursion-unit checks made during CPython argument binding to
+the existing keyword merge. The duplicate-keyword refusal stays first. -/
+def mergeKwArgsAt (depth : Nat) (fname : String) (params : Array Param)
+    (pos : List RVal) (kws : List (String × RVal)) : Res (Array RVal) :=
+  if (kwFindDup kws).isNone then
+    if pythonRecursionFull depth then
+      match kwFirstBindingError (params.toList.map Param.arg) pos.length kws with
+      | some (_, true) =>
+        if params.isEmpty then mergeKwArgs fname params pos kws else .exn .recursionError
+      | some (_, false) => mergeKwArgs fname params pos kws
+      | none =>
+        if pos.length ≤ params.size && !(kwUnfilled kws (params.toList.drop pos.length)).isEmpty then
+          .exn .recursionError
+        else mergeKwArgs fname params pos kws
+    else mergeKwArgs fname params pos kws
+  else mergeKwArgs fname params pos kws
 
 /-- `enumerate`'s optional `start` argument: `none` = the argument list
 is not an in-tier `enumerate(x)` / `enumerate(x, i)` shape. -/
@@ -9840,7 +9885,7 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                       flattenStarRun (evalExprs m fuel st args.toList) ⤳ fun st vs =>
                       evalExprs m fuel st (kwargs.toList.map (·.2)) ⤳ fun st kvs =>
                       Run.liftRes st
-                        (mergeKwArgs fname fdefn.params vs
+                        (mergeKwArgsAt st.world.callDepth fname fdefn.params vs
                           ((kwargs.toList.map (·.1)).zip kvs)) ⤳ fun st full =>
                       Run.withLocals st.locals (callIn m fuel st.world fname full)
                   | Option.none =>
@@ -9994,7 +10039,7 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                         flattenStarRun (evalExprs m fuel st args.toList) ⤳ fun st vs =>
                         evalExprs m fuel st (kwargs.toList.map (·.2)) ⤳ fun st kvs =>
                         Run.liftRes st
-                          (mergeKwArgs qname fdefn.params (RVal.ref a :: vs)
+                          (mergeKwArgsAt st.world.callDepth qname fdefn.params (RVal.ref a :: vs)
                             ((kwargs.toList.map (·.1)).zip kvs)) ⤳ fun st full =>
                         Run.withLocals st.locals (callIn m fuel st.world qname full)
                     | Option.none =>
@@ -10027,7 +10072,7 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                         flattenStarRun (evalExprs m fuel st args.toList) ⤳ fun st vs =>
                         evalExprs m fuel st (kwargs.toList.map (·.2)) ⤳ fun st kvs =>
                         Run.liftRes st
-                          (mergeKwArgs qname fdefn.params
+                          (mergeKwArgsAt st.world.callDepth qname fdefn.params
                             (RVal.ntuple tn fs xs :: vs)
                             ((kwargs.toList.map (·.1)).zip kvs)) ⤳ fun st full =>
                         Run.withLocals st.locals (callIn m fuel st.world qname full)
@@ -10989,7 +11034,7 @@ def callIn (m : Module) (fuel : Nat) (w : World) (fname : String)
         .unsupported
           s!"function '{fname}' calls a name it also assigns (CPython static-locals rule) — outside the v0 tier"
       else if !arityOk f.params args.size then
-        .exn w (.typeError (arityErrorMsg fname (paramArity f.params) args.size))
+        .exn w (positionalArityError (entryBindingDepth w.callDepth) fname f.params args.size)
       else if f.isGenerator then
         -- H4 CREATION: calling a generator function runs NO code. It
         -- allocates the suspended frame — arguments bound into its
@@ -11380,7 +11425,7 @@ def callClosure (m : Module) (fuel : Nat) (w : World) (name : String)
     else if !localsOk then
       .unsupported s!"nested function '{name}' calls a name it also assigns (CPython static-locals rule) — outside the tier"
     else if !arityOk params args.size then
-      .exn w (.typeError (arityErrorMsg name (paramArity params) args.size))
+      .exn w (positionalArityError w.callDepth name params args.size)
     else if isGenerator then
       let g : Obj :=
         .generator s!"<closure:{name}>" (mkCallEnv params args ++ captured)

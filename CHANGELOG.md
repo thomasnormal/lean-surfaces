@@ -10,6 +10,9 @@
   the captured source and literal hashes and the recorded ABI and call binding.
   The harness relies on its caller's cgroup instead of imposing an address-space
   limit.
+- Respect recursion limits during function argument binding and report
+  keyword binding errors in CPython's call order.
+
 - Count ordinary closure calls against the Python recursion limit and unwind
   their frame depth on returns and exceptions.
 

@@ -58,16 +58,24 @@ separate generator-closure creation and resume paths. CPython 3.9 calls
 `_PyEval_EvalCode` from `Objects/call.c:_PyFunction_Vectorcall` and enters the
 unit in `Python/ceval.c:_PyEval_EvalFrameDefault`.
 
-Two further recursion boundaries remain wrong and need separate fixes. With
-the differential harness's entry base 2, `closure_recursion.py::bad_arity(996)`
-raises `RecursionError` on CPython 3.9.25 but the model answers `TypeError`:
-`Python/ceval.c:missing_arguments` invokes `PyObject_Repr` on parameter names,
-which enters a recursion unit in `Objects/object.c:PyObject_Repr`. Extra-argument
-errors use a different path. At the same entry base,
-`closure_recursion.py::raise_class_unwind(995)` raises `RecursionError` on
-CPython but the model returns 42; exception-class construction and raising
-still need their recursion paths traced. These two witness functions are not in
-the passing differential case table until their own fixes land.
+Argument binding now checks the units CPython uses for missing parameter-name
+repr and, on a non-identical keyword, rich comparison. `arity_recursion.py`
+pins positional, keyword, closure and generator call boundaries, including
+extra arguments, duplicate versus unknown keyword order, and zero-parameter
+functions. `closure_recursion.py::bad_arity` pins the original mismatch. The
+two `arity_keyword_*_first.py` script rows also compare the full error message:
+keywords are checked in call order before excess positionals, as in
+`Python/ceval.c:_PyEval_EvalCode`. Missing names use `missing_arguments` and
+`Objects/object.c:PyObject_Repr`; exact Unicode keyword strings use
+`PyObject_Str`'s no-recursion fast path. Parsed keyword and parameter names
+are interned by `Parser/pegen/pegen.c:_PyPegen_new_identifier`; the
+`arity_identity.py` rows pin matching ASCII and Unicode names at the boundary.
+
+One further recursion boundary remains wrong. With the differential harness's
+entry base 2, `closure_recursion.py::raise_class_unwind(995)` raises
+`RecursionError` on CPython 3.9.25 but the model returns 42; exception-class
+construction and raising still need their recursion paths traced. This witness
+is not in the passing differential case table until its own fix lands.
 
 ## 2026-11-10-pyfoundation-5 — eager non-iterable genexp creation check
 

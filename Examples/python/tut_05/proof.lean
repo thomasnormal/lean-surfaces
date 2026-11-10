@@ -32,9 +32,7 @@ theorem countdown_total (n : PyInt) (hn : 0 ≤ n) : tut_05.countdown(n) ==> (0 
   py_loop (state := [n])
           (inv := fun (k : Int) => 0 ≤ k)
           (dec := fun (k : Int) => k.toNat)
-  · py_simp [pythonTopCallDepth, pythonRecursionLimit, Run.finishCallAt,
-      Run.leaveCallDepth, Run.toPublic, Run.toPublic_ok, RVal.freezeB]
-    omega
+  · omega
   all_goals grind
 
 /-- The strengthened partial arrow, free from `countdown_total` by

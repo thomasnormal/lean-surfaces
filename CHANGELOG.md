@@ -102,6 +102,10 @@
   integer power, Py_ssize_t narrowing, bisect fallback control, and recursion
   accounting; no interpreter semantics changed.
 
+- Stopped NaN container and ordering mismatches by refusing non-finite float
+  comparisons where CPython's `PyObject_RichCompareBool` identity shortcut is
+  observable; scalar NaN equality remains exact.
+
 - Extended the value/object evaluator agreement battery with a continue body
   state update and native differential coverage.
 

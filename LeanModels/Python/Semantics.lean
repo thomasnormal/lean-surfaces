@@ -631,8 +631,11 @@ mutual
   def valEqList : List RVal → List RVal → Res Bool
     | [], [] => .ok true
     | a :: as, b :: bs => do
-        let e ← valEq a b
-        if e then valEqList as bs else return false
+        if a.hasNonFiniteFloat || b.hasNonFiniteFloat then
+          .unsupported "container equality involving a non-finite float is outside the tier (CPython RichCompareBool tests object identity before value equality)"
+        else
+          let e ← valEq a b
+          if e then valEqList as bs else return false
     | _, _ => .ok false
 end
 
@@ -716,15 +719,25 @@ mutual
         -- NaN: `<` simply returns False.  The stable sort consumes this same
         -- relation, so NaNs retain their input position without a fabricated
         -- total-order key.
-        if left.isNaN || right.isNaN then .ok false else .ok (left.lt right)
+        if left.isNaN || right.isNaN then
+          .unsupported "ordering involving a non-finite float is outside the tier (CPython RichCompareBool identity is not represented)"
+        else .ok (left.lt right)
     | .float left, .int right =>
-        if left.isNaN then .ok false else .ok (left.ltInt right)
+        if left.isNaN then
+          .unsupported "ordering involving a non-finite float is outside the tier (CPython RichCompareBool identity is not represented)"
+        else .ok (left.ltInt right)
     | .int left, .float right =>
-        if right.isNaN then .ok false else .ok (Float64.intLt left right)
+        if right.isNaN then
+          .unsupported "ordering involving a non-finite float is outside the tier (CPython RichCompareBool identity is not represented)"
+        else .ok (Float64.intLt left right)
     | .float left, .bool right =>
-        if left.isNaN then .ok false else .ok (left.ltInt (if right then 1 else 0))
+        if left.isNaN then
+          .unsupported "ordering involving a non-finite float is outside the tier (CPython RichCompareBool identity is not represented)"
+        else .ok (left.ltInt (if right then 1 else 0))
     | .bool left, .float right =>
-        if right.isNaN then .ok false else .ok (Float64.intLt (if left then 1 else 0) right)
+        if right.isNaN then
+          .unsupported "ordering involving a non-finite float is outside the tier (CPython RichCompareBool identity is not represented)"
+        else .ok (Float64.intLt (if left then 1 else 0) right)
     | .str s, .str t => .ok (strCmp .lt s t)
     | .str _, .int _ => .exn (.typeError "'<' not supported between instances of 'str' and 'int'")
     | .str _, .bool _ => .exn (.typeError "'<' not supported between instances of 'str' and 'bool'")
@@ -750,8 +763,11 @@ mutual
     | [], _ :: _ => .ok true
     | _ :: _, [] => .ok false
     | a :: as, b :: bs => do
-        let e ← valEq a b
-        if e then rvalLtList as bs else rvalLt a b
+        if a.hasNonFiniteFloat || b.hasNonFiniteFloat then
+          .unsupported "container ordering involving a non-finite float is outside the tier (CPython RichCompareBool tests object identity before value comparison)"
+        else
+          let e ← valEq a b
+          if e then rvalLtList as bs else rvalLt a b
 end
 
 /-- The four ordering operators derived from strict `<` — exact within
@@ -5039,8 +5055,11 @@ mutual
       match as, bs with
       | [], [] => .ok true
       | a :: as, b :: bs => do
-        let e ← heapEq h fuel active a b
-        if e then heapEqList h fuel active as bs else return false
+        if a.hasNonFiniteFloat || b.hasNonFiniteFloat then
+          .unsupported "container equality involving a non-finite float is outside the tier (CPython RichCompareBool tests object identity before value equality)"
+        else
+          let e ← heapEq h fuel active a b
+          if e then heapEqList h fuel active as bs else return false
       | _, _ => .ok false
 
   /-- Left-dict traversal of the ref/ref case: each stored key looked up in
@@ -5067,8 +5086,11 @@ elements may be refs, so each comparison is the fueled `heapEq`
 def heapContainsScan (h : Heap) (fuel : Nat) (x : RVal) : List RVal → Res Bool
   | [] => .ok false
   | v :: vs => do
-    let e ← heapEq h fuel [] v x
-    if e then return true else heapContainsScan h fuel x vs
+    if v.hasNonFiniteFloat || x.hasNonFiniteFloat then
+      .unsupported "container membership involving a non-finite float is outside the tier (CPython RichCompareBool tests object identity before value equality)"
+    else
+      let e ← heapEq h fuel [] v x
+      if e then return true else heapContainsScan h fuel x vs
 
 /-! ### CPython's bounded integer-set order
 

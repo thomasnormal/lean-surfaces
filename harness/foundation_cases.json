@@ -3,15 +3,15 @@
     "file": "harness/foundation_probe.py",
     "function": "nan_contains",
     "args": [[{"t": "float", "bits": "9221120237041090560"}]],
-    "expect": "match",
-    "note": "Finding 1: PyObject_RichCompareBool identity shortcut for the same NaN object."
+    "expect": "unsupported",
+    "note": "Finding 1 stopped: container membership with a non-finite float is loud until RichCompareBool identity is represented."
   },
   {
     "file": "harness/foundation_probe.py",
     "function": "nan_list_equal",
     "args": [[{"t": "float", "bits": "9221120237041090560"}]],
-    "expect": "match",
-    "note": "Finding 1: NaN nested in a list equality comparison."
+    "expect": "unsupported",
+    "note": "Finding 1 stopped: container equality with a non-finite float is loud until RichCompareBool identity is represented."
   },
   {
     "file": "harness/foundation_probe.py",

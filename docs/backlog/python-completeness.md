@@ -10841,6 +10841,25 @@ DECIDED: keep the probe rows as the foundation baseline, stop the eight wrong
 answers in step 1, and make the accelerator admission domain explicit before
 claiming equivalence outside the measured fallback slice.
 
+## 2026-11-09-pyfoundation-1 — stop NaN container identity wrong answers
+
+Foundation step 1 makes the confirmed NaN container mismatches loud. Scalar
+`nan == nan` remains the exact CPython value comparison (`False`); tuple/list
+equality, heap-list equality, container membership, and `<`-based ordering now
+refuse when a compared element contains a non-finite float. This records the
+missing `PyObject_RichCompareBool` identity observer instead of returning a
+value-only answer.
+
+| Measurement | Result |
+|---|---|
+| Foundation rows | `nan_contains` and `nan_list_equal`: both now documented refusals in both interpreter modes |
+| Existing scalar row | `nan_equality_still_loud`: remains a MATCH (`False`) |
+| Sorting row | `nan_sort_still_loud`: changed from a value claim to an explicit refusal |
+| Semantic change | container equality/membership/ordering loud boundary only |
+
+DECIDED: keep non-finite float container and ordering operations loud until
+RichCompareBool identity is represented; retain scalar NaN equality.
+
 ## 2026-11-07-pycomplete-415 — recheck the trace-clock reading boundary
 
 The clock audit finding is already closed in both interpreters. The explicit

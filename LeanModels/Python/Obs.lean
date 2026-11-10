@@ -312,8 +312,12 @@ theorem heapEqMono (fuel : Nat) :
           | nil => simp only [heapEqList]; exact Res.le_refl _
           | cons b bs' =>
             simp only [heapEqList]
-            exact Res.le_bind (ihE h active a b k hk) fun e =>
-              Res.le_ite (ihL h active as' bs' k hk) (Res.le_refl _)
+            by_cases hnf : a.hasNonFiniteFloat || b.hasNonFiniteFloat
+            · simp [hnf]
+              exact Res.le_refl _
+            · simp only [hnf, Bool.false_eq_true, if_false]
+              exact Res.le_bind (ihE h active a b k hk) fun e =>
+                Res.le_ite (ihL h active as' bs' k hk) (Res.le_refl _)
     · intro h active l r fuel' hf
       cases fuel' with
       | zero => exact absurd hf (Nat.not_succ_le_zero fuel)
@@ -339,8 +343,12 @@ theorem heapContainsScan_mono {h : Heap} {fuel : Nat} {x : RVal}
   | nil => exact Res.le_refl _
   | cons v vs ih =>
     simp only [heapContainsScan]
-    exact Res.le_bind ((heapEqMono fuel).1 h [] v x fuel' hf)
-      fun e => Res.le_ite (Res.le_refl _) ih
+    by_cases hnf : v.hasNonFiniteFloat || x.hasNonFiniteFloat
+    · simp [hnf]
+      exact Res.le_refl _
+    · simp only [hnf, Bool.false_eq_true, if_false]
+      exact Res.le_bind ((heapEqMono fuel).1 h [] v x fuel' hf)
+        fun e => Res.le_ite (Res.le_refl _) ih
 
 /-- Fuel monotonicity of membership in a live `dict_items` view. -/
 theorem dictItemContainsList_mono {h : Heap} {fuel : Nat}

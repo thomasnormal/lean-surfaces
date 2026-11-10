@@ -711,7 +711,8 @@ partial def parseGenItem (j : Json) : Except String GenItem := do
           | none => pure []
           | some je => (← je.getArr?).toList.mapM parseGenItem
         return .genIf cond thenB elseB
-    | "AlwaysPosedge" | "AlwaysComb" | "Assign" => return .process (← parsePProcess j)
+    | "AlwaysPosedge" | "AlwaysComb" | "AlwaysEvent" | "Assign" =>
+        return .process (← parsePProcess j)
     | "Instance" => return .inst (← parsePInst j)
     | "Var" | "Net" | "LocalParam" | "ParameterDecl" =>
         -- Generate-local declarations — including a `localparam` in a

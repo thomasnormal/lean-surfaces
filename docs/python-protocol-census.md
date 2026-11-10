@@ -18,7 +18,7 @@ marks a control/transport wrapper that still needs an adequacy theorem.
 | `PyObject_Size` | `lenVal`, `lenValH`, `heapLen` | `lenM`, `liftRes` | `len(range(...))` applies `pySsizeRaising` to the `PyLong_AsSsize_t` result |
 | `PyObject_GetItem` / `PyObject_SetItem` | `indexValH`, `heapIndex`, `assignToH` | `indexM`, `assignM` | shared; receiver-specific heap paths |
 | `PyObject_Str` / `PyObject_Repr` | `strOfVal`, `reprVal`, `printOne` | `strOfVal`/rendering through `applyBuiltin` | shared rendering workers; sets and identity objects remain loud |
-| `Py_EnterRecursiveCall` | `callIn` `callDepth` guard; `heapEq` active-pair recursion | `callInM` `callDepth` guard; `Kont` generator frames | call-depth limit modeled; comparison/repr C recursion units remain a ledger item |
+| `Py_EnterRecursiveCall` | `pythonRecursionFull`, `callIn`, ordinary-class construction and direct rich comparison | same predicate through `callInM`, `withTypeCallDepth` and `richCompareRecursionCheck` | Function frames and ordinary `type_call` are counted, and direct rich comparisons check a unit; `construct_depth`, `truth_depth`, `fib_left` and `fib(999)` pin the boundary. Nested container comparison, rendering, generator/closure frames and other protocol entry sites still need accounting; this is not a complete recursion protocol. `World.callDepth` carries the normalized entry depth. |
 | guarded accelerator admission | extractor `ACCELERATOR_ADMISSIONS` | extraction shared by both surfaces | `_bisect` is domain-guarded after `hi=-1` diverges (`ImportFrom:accelerator-outside-domain`); `_stat`/`_opcode` are measured or inspected divergences, and unmeasured entries refuse |
 
 ## Operator dispatch
@@ -64,6 +64,6 @@ is in `Monadic.Eval.applyBuiltin`, while the trunk dispatch is in its
 The census identifies the next protocol work precisely: replace raw `Int`
 arguments at every C-index site with typed raising/clamping conversions;
 separate `PyFloat_AsDouble` + platform `pow` from exact reciprocal arithmetic;
-and add recursion-unit accounting at comparison/rendering sites. The runner
+and complete recursion-unit accounting at nested comparison, rendering, generator and closure sites. The runner
 and trunk share the workers listed above, but their control/transport wrappers
 remain separate and are not a refinement theorem.

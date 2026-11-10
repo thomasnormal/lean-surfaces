@@ -1,0 +1,357 @@
+{
+  "schema_version": "0.1",
+  "language": "python",
+  "frontend": {
+    "name": "cpython-ast",
+    "version": "3.9.25"
+  },
+  "source_file": "harness/recursion_limit_probe.py",
+  "source_sha256": "583d2a640e5b0025351da8d79f2f40f0730b2d3d24f3d7b2b2d2563a2fe90dfe",
+  "module": {
+    "kind": "Module",
+    "body": [
+      {
+        "kind": "Expr",
+        "span": {
+          "lineno": 1,
+          "col_offset": 0,
+          "end_lineno": 1,
+          "end_col_offset": 78
+        },
+        "value": {
+          "kind": "Constant",
+          "span": {
+            "lineno": 1,
+            "col_offset": 0,
+            "end_lineno": 1,
+            "end_col_offset": 78
+          },
+          "value": {
+            "type": "str",
+            "value": "A linear version of fib's first descent, for recursion boundary testing."
+          }
+        }
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 4,
+          "col_offset": 0,
+          "end_lineno": 7,
+          "end_col_offset": 26
+        },
+        "name": "fib_left",
+        "args": [
+          {
+            "arg": "n",
+            "span": {
+              "lineno": 4,
+              "col_offset": 13,
+              "end_lineno": 4,
+              "end_col_offset": 14
+            }
+          }
+        ],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "If",
+            "span": {
+              "lineno": 5,
+              "col_offset": 4,
+              "end_lineno": 6,
+              "end_col_offset": 16
+            },
+            "test": {
+              "kind": "Compare",
+              "span": {
+                "lineno": 5,
+                "col_offset": 7,
+                "end_lineno": 5,
+                "end_col_offset": 12
+              },
+              "left": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 5,
+                  "col_offset": 7,
+                  "end_lineno": 5,
+                  "end_col_offset": 8
+                },
+                "id": "n"
+              },
+              "ops": [
+                "Lt"
+              ],
+              "comparators": [
+                {
+                  "kind": "Constant",
+                  "span": {
+                    "lineno": 5,
+                    "col_offset": 11,
+                    "end_lineno": 5,
+                    "end_col_offset": 12
+                  },
+                  "value": {
+                    "type": "int",
+                    "repr": "2"
+                  }
+                }
+              ]
+            },
+            "body": [
+              {
+                "kind": "Return",
+                "span": {
+                  "lineno": 6,
+                  "col_offset": 8,
+                  "end_lineno": 6,
+                  "end_col_offset": 16
+                },
+                "value": {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 6,
+                    "col_offset": 15,
+                    "end_lineno": 6,
+                    "end_col_offset": 16
+                  },
+                  "id": "n"
+                }
+              }
+            ],
+            "orelse": []
+          },
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 7,
+              "col_offset": 4,
+              "end_lineno": 7,
+              "end_col_offset": 26
+            },
+            "value": {
+              "kind": "Call",
+              "span": {
+                "lineno": 7,
+                "col_offset": 11,
+                "end_lineno": 7,
+                "end_col_offset": 26
+              },
+              "func": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 7,
+                  "col_offset": 11,
+                  "end_lineno": 7,
+                  "end_col_offset": 19
+                },
+                "id": "fib_left"
+              },
+              "args": [
+                {
+                  "kind": "BinOp",
+                  "span": {
+                    "lineno": 7,
+                    "col_offset": 20,
+                    "end_lineno": 7,
+                    "end_col_offset": 25
+                  },
+                  "left": {
+                    "kind": "Name",
+                    "span": {
+                      "lineno": 7,
+                      "col_offset": 20,
+                      "end_lineno": 7,
+                      "end_col_offset": 21
+                    },
+                    "id": "n"
+                  },
+                  "op": "Sub",
+                  "right": {
+                    "kind": "Constant",
+                    "span": {
+                      "lineno": 7,
+                      "col_offset": 24,
+                      "end_lineno": 7,
+                      "end_col_offset": 25
+                    },
+                    "value": {
+                      "type": "int",
+                      "repr": "1"
+                    }
+                  }
+                }
+              ],
+              "keywords": [],
+              "call_unsupported": null
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 10,
+          "col_offset": 0,
+          "end_lineno": 13,
+          "end_col_offset": 16
+        },
+        "name": "depth_compare",
+        "args": [
+          {
+            "arg": "n",
+            "span": {
+              "lineno": 10,
+              "col_offset": 18,
+              "end_lineno": 10,
+              "end_col_offset": 19
+            }
+          }
+        ],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "If",
+            "span": {
+              "lineno": 11,
+              "col_offset": 4,
+              "end_lineno": 12,
+              "end_col_offset": 35
+            },
+            "test": {
+              "kind": "Name",
+              "span": {
+                "lineno": 11,
+                "col_offset": 7,
+                "end_lineno": 11,
+                "end_col_offset": 8
+              },
+              "id": "n"
+            },
+            "body": [
+              {
+                "kind": "Return",
+                "span": {
+                  "lineno": 12,
+                  "col_offset": 8,
+                  "end_lineno": 12,
+                  "end_col_offset": 35
+                },
+                "value": {
+                  "kind": "Call",
+                  "span": {
+                    "lineno": 12,
+                    "col_offset": 15,
+                    "end_lineno": 12,
+                    "end_col_offset": 35
+                  },
+                  "func": {
+                    "kind": "Name",
+                    "span": {
+                      "lineno": 12,
+                      "col_offset": 15,
+                      "end_lineno": 12,
+                      "end_col_offset": 28
+                    },
+                    "id": "depth_compare"
+                  },
+                  "args": [
+                    {
+                      "kind": "BinOp",
+                      "span": {
+                        "lineno": 12,
+                        "col_offset": 29,
+                        "end_lineno": 12,
+                        "end_col_offset": 34
+                      },
+                      "left": {
+                        "kind": "Name",
+                        "span": {
+                          "lineno": 12,
+                          "col_offset": 29,
+                          "end_lineno": 12,
+                          "end_col_offset": 30
+                        },
+                        "id": "n"
+                      },
+                      "op": "Sub",
+                      "right": {
+                        "kind": "Constant",
+                        "span": {
+                          "lineno": 12,
+                          "col_offset": 33,
+                          "end_lineno": 12,
+                          "end_col_offset": 34
+                        },
+                        "value": {
+                          "type": "int",
+                          "repr": "1"
+                        }
+                      }
+                    }
+                  ],
+                  "keywords": [],
+                  "call_unsupported": null
+                }
+              }
+            ],
+            "orelse": []
+          },
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 13,
+              "col_offset": 4,
+              "end_lineno": 13,
+              "end_col_offset": 16
+            },
+            "value": {
+              "kind": "Compare",
+              "span": {
+                "lineno": 13,
+                "col_offset": 11,
+                "end_lineno": 13,
+                "end_col_offset": 16
+              },
+              "left": {
+                "kind": "Constant",
+                "span": {
+                  "lineno": 13,
+                  "col_offset": 11,
+                  "end_lineno": 13,
+                  "end_col_offset": 12
+                },
+                "value": {
+                  "type": "int",
+                  "repr": "1"
+                }
+              },
+              "ops": [
+                "Lt"
+              ],
+              "comparators": [
+                {
+                  "kind": "Constant",
+                  "span": {
+                    "lineno": 13,
+                    "col_offset": 15,
+                    "end_lineno": 13,
+                    "end_col_offset": 16
+                  },
+                  "value": {
+                    "type": "int",
+                    "repr": "2"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "lean_blocks": []
+}

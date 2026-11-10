@@ -988,6 +988,8 @@ theorem fuelMono (fuel : Nat) :
                         | none =>
                           refine Run.le_ite (Run.le_refl _) (Run.le_ite (Run.le_refl _) ?_)
                           refine Run.le_bind (flattenStarRun_mono (ihEs m st cargs.toList k hk)) fun st vs => ?_
+                          refine Run.le_ite (Run.le_refl _) ?_
+                          refine Run.le_withLocals (Run.le_leaveCallDepth (Run.le_toWorld ?_))
                           cases classMethodQname m ci "__init__" with
                           | some initName =>
                             refine Run.le_bind (Run.le_withLocals
@@ -1435,6 +1437,7 @@ theorem fuelMono (fuel : Nat) :
           | cons e rest =>
             simp only [evalCompareChain]
             exact Run.le_bind (ihE m st e k hk) fun st rhs =>
+              Run.le_bind (Run.le_refl _) fun st _ =>
               Run.le_bind (Run.le_refl _) fun st _ =>
               Run.le_bind (Run.le_liftRes (evalCompareOpH_mono hk)) fun st b =>
                 Run.le_ite (ihC m st rhs ops' rest k hk) (Run.le_refl _)
@@ -3450,7 +3453,8 @@ theorem worldInv (m : Module) (hm : m.heapFree = true) (fuel : Nat) :
           simp only [evalCompareChain]
           refine .bind (ihE st e hfree.1) fun st₁ rhs h₁ => ?_
           refine .bind (.liftResF h₁ _) fun stChecked _ hChecked => ?_
-          refine .bind (.liftResF hChecked _) fun st₂ b h₂ => ?_
+          refine .bind (.liftResF hChecked _) fun stGuard _ hGuard => ?_
+          refine .bind (.liftResF hGuard _) fun st₂ b h₂ => ?_
           exact .ite ((ihC st₂ rhs ops' rest hfree.2).mono (wtrans st st₂ h₂))
             (.okF h₂ _)
     -- execStmt

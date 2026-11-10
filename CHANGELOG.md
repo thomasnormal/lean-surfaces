@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Added a retirement-safety bridge from E observations to the stateful RV32I
+  model, conditional on an order-indexed loaded-core invariant. Completion
+  and retirement progress remain explicit proof obligations.
+
 - Renamed the repository from `lean-surfaces` to `proglib` (2026-11-10). Old
   links redirect. The Lean library keeps the name `LeanModels` until a later,
   announced commit renames it to `Proglib`.

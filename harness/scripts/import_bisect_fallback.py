@@ -50,3 +50,7 @@ print(bisect_right(a, 9))      # above the range: len(a)
 print(bisect_left([], 3))      # empty sequence: 0
 print(bisect_left(a, 4, 1, 3)) # explicit lo/hi window
 print(bisect_right(a, 1, 0, 1))
+# The C accelerator's `hi=-1` means "use len(a)" after Clinic conversion;
+# the pure fallback treats it as an already-exhausted window. This boundary
+# is why the module-wide accelerator admission is now domain-guarded.
+print(bisect_left([1, 2, 3], 5, 0, -1))

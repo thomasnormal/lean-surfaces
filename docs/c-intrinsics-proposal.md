@@ -93,8 +93,10 @@ Their strict C sets, smallest first:
 | `pipes` | 14 modules | Out of range. |
 
 Greedy over this bucket: **1 module (`_contextvars`) flips 1 file; 2
-(`+_struct`) flip 2; 4 (`+sys,_locale`) flip 3.** That — plus `bisect`
-for free — is the entire direct sweep payoff of the intrinsic idea.
+(`+_struct`) flip 2; 4 (`+sys,_locale`) flip 3.** `_bisect` is not a free
+flip: its measured `hi=-1` divergence keeps the guarded fallback
+domain-refused until call-site analysis exists. That is the current direct
+sweep payoff of the intrinsic idea.
 
 ### 1.4 The compound with the designed tail
 
@@ -225,7 +227,10 @@ by the module's full API.
 
 **Pass 0 — no intrinsics at all: the import forms.** `from X import
 names`/`*` under `try/except ImportError` with the §2.5 obligation
-admits `bisect` — the census's one program-mode flip — and is a
+admits the guarded import form, but `_bisect`'s accelerator equivalence is
+currently domain-guarded: a measured `hi=-1` boundary diverges between the
+C wrapper and the pure fallback. `bisect` therefore remains loud until
+call-site argument domains are modeled. This import form is still a
 prerequisite of everything below. Build first regardless of the gate.
 
 **Pass 1 — `_contextvars` and `_struct`, name-only (RECOMMENDED).**

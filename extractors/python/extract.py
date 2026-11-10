@@ -289,16 +289,26 @@ def benign_import_from(module, aliases, star):
 # numerator and denominator, and cite the run.
 ACCELERATOR_ADMISSIONS = {
     "_bisect": {
-        "equivalent": True,
+        # The old 15-call claim had no argument domain.  CPython's C wrapper
+        # and bisect.py disagree immediately outside it (`hi=-1`: C uses
+        # PySequence_Size and returns 3, the fallback returns 0).  Import
+        # admission is module-wide and cannot prove every later call stays in
+        # a measured domain, so the sound domain guard is to withdraw this
+        # admission until call-site domain analysis exists.
+        "equivalent": False,
+        "domain_admitted": False,
         "fallback": "bisect.py (`from _bisect import *`, 3.9.19 lines 73-76)",
-        "evidence": "library mode 2026-08-16 (docs/backlog.md 'THE BASELINE "
-                    "SCOREBOARD'): 15 of 15 comparable battery calls agree, 0 "
-                    "diverge, against the real `_bisect`. The remainder of the "
-                    "battery is loud refusals (`<` across mixed types; the "
-                    "designed, unbuilt `list.insert`), never silent agreement.",
+        "evidence": "library mode 2026-08-16 measured 15 of 15 comparable "
+                    "calls agree inside the sampled safe slice, but the slice "
+                    "had no stated domain. Re-measured CPython 3.9.25: "
+                    "`bisect_left([1, 2, 3], 5, 0, -1)` returns 3 through "
+                    "the C accelerator while the pure fallback returns 0. "
+                    "The module-wide import admission therefore remains loud "
+                    "until a call-site domain guard is implemented.",
     },
     "_stat": {
         "equivalent": False,
+        "domain_admitted": True,
         "fallback": "stat.py (`from _stat import *`, 3.9.19 lines 192-195)",
         "evidence": "library mode 2026-08-16: 21 of 104 battery calls DIVERGE. "
                     "C `_stat` converts its argument to an unsigned int, so "
@@ -311,6 +321,7 @@ ACCELERATOR_ADMISSIONS = {
     },
     "_opcode": {
         "equivalent": False,
+        "domain_admitted": True,
         "fallback": "opcode.py (`from _opcode import stack_effect` + "
                     "`__all__.append('stack_effect')`, 3.9.19 lines 18-21)",
         "evidence": "NO BATTERY NEEDED -- the two branches differ in the NAMES "
@@ -2482,6 +2493,8 @@ def convert_stmt(node, enclosing=None, module_scope=False,
                 record = ACCELERATOR_ADMISSIONS.get(node.module)
                 if record is None:
                     return unsupported(node, "ImportFrom:accelerator-unmeasured")
+                if not record.get("domain_admitted", True):
+                    return unsupported(node, "ImportFrom:accelerator-outside-domain")
                 if not record["equivalent"]:
                     return unsupported(node, "ImportFrom:accelerator-diverges")
                 admitted = True

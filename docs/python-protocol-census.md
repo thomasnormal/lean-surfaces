@@ -19,6 +19,7 @@ marks a control/transport wrapper that still needs an adequacy theorem.
 | `PyObject_GetItem` / `PyObject_SetItem` | `indexValH`, `heapIndex`, `assignToH` | `indexM`, `assignM` | shared; receiver-specific heap paths |
 | `PyObject_Str` / `PyObject_Repr` | `strOfVal`, `reprVal`, `printOne` | `strOfVal`/rendering through `applyBuiltin` | shared rendering workers; sets and identity objects remain loud |
 | `Py_EnterRecursiveCall` | `callIn` `callDepth` guard; `heapEq` active-pair recursion | `callInM` `callDepth` guard; `Kont` generator frames | call-depth limit modeled; comparison/repr C recursion units remain a ledger item |
+| guarded accelerator admission | extractor `ACCELERATOR_ADMISSIONS` | extraction shared by both surfaces | `_bisect` is domain-guarded after `hi=-1` diverges (`ImportFrom:accelerator-outside-domain`); `_stat`/`_opcode` are measured or inspected divergences, and unmeasured entries refuse |
 
 ## Operator dispatch
 

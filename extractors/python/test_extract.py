@@ -1440,30 +1440,30 @@ class ImportFromTests(unittest.TestCase):
         """The converted DIRECT body of a module-level try statement."""
         return self._module_body(source)[0]["body"]
 
-    def test_guarded_star_of_admitted_accelerator_is_structured(self):
-        # bisect.py 73-76, the census's one program-mode flip -- and the
-        # ONE accelerator whose equivalence has been measured (15/15)
+    def test_guarded_star_of_bisect_accelerator_is_domain_guarded(self):
+        # bisect.py 73-76: the old 15/15 battery had no argument domain.
+        # The C wrapper and pure fallback disagree at hi=-1, so module-wide
+        # admission is now loud until call-site domain analysis exists.
         s = self._try_body(
             "try:\n"
             "    from _bisect import *\n"
             "except ImportError:\n"
             "    pass\n")[0]
-        self.assertEqual(s["kind"], "ImportFrom")
-        self.assertEqual(s["module"], "_bisect")
-        self.assertEqual(s["names"], [])
-        self.assertIs(s["star"], True)
+        self.assertEqual(s["kind"], "Unsupported")
+        self.assertEqual(s["py_kind"], "ImportFrom:accelerator-outside-domain")
 
-    def test_second_try_body_statement_is_also_guarded(self):
-        # guard position is "direct body statement", never "sole
-        # statement" (opcode.py 18-21 is the shape; _bisect is used here
-        # because the shape question is separate from the registry one)
+    def test_second_try_body_statement_retains_domain_refusal(self):
+        # Guard position is "direct body statement", never "sole
+        # statement". The accelerator domain guard fires on the import while
+        # the following ordinary statement remains represented.
         body = self._try_body(
             "try:\n"
             "    from _bisect import *\n"
             "    x = 1\n"
             "except ImportError:\n"
             "    pass\n")
-        self.assertEqual(body[0]["kind"], "ImportFrom")
+        self.assertEqual(body[0]["kind"], "Unsupported")
+        self.assertEqual(body[0]["py_kind"], "ImportFrom:accelerator-outside-domain")
         self.assertEqual(body[1]["kind"], "Assign")
 
     # -- The 2.5 ACCELERATOR-EQUIVALENCE REGISTRY (2026-08-16). Guard
@@ -1526,6 +1526,7 @@ class ImportFromTests(unittest.TestCase):
             self.assertTrue(rec["fallback"].strip(), mod)
             self.assertGreater(len(rec["evidence"].strip()), 40, mod)
             self.assertIn(mod, extract.platform_inventory())
+            self.assertIn("domain_admitted", rec, mod)
 
     def test_unguarded_absent_module_is_structured(self):
         # CPython's own ModuleNotFoundError -- admitted anywhere at top
@@ -1688,7 +1689,8 @@ class ImportFromTests(unittest.TestCase):
             "        from _bisect import *\n"
             "    except ImportError:\n"
             "        pass\n")[0]["body"][0]["body"][0]
-        self.assertEqual(s["kind"], "ImportFrom")
+        self.assertEqual(s["kind"], "Unsupported")
+        self.assertEqual(s["py_kind"], "ImportFrom:accelerator-outside-domain")
 
     def test_inventory_probes(self):
         inv = extract.platform_inventory()

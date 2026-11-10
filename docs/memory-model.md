@@ -4307,10 +4307,14 @@ wrong":
 
 Entries today, and nothing else is admitted:
 
-* **`_bisect` — ADMITTED.** Library mode 2026-08-16: 15 of 15 comparable
-  battery calls agree, 0 diverge, against the real `_bisect`. The rest
-  of that battery is loud refusals (`<` across mixed types; the
-  designed, unbuilt `list.insert`), never silent agreement.
+* **`_bisect` — DOMAIN-GUARDED / WITHDRAWN.** Library mode 2026-08-16
+  measured 15 of 15 comparable battery calls in a sampled safe slice, but
+  that slice had no stated argument domain. Re-measured against CPython
+  3.9.25, `bisect_left([1, 2, 3], 5, 0, -1)` returns `3` through the C
+  accelerator while the pure fallback returns `0`. Since import admission is
+  module-wide and cannot prove every later call stays in the measured slice,
+  `_bisect` now refuses as `ImportFrom:accelerator-outside-domain` until a
+  call-site domain guard exists.
 * **`_stat` — REFUSED, measured.** 21 of 104 calls diverge: C `_stat`
   converts to an unsigned int, so `S_IFMT(-1)` raises `OverflowError`
   and `S_ISDOOR('a')` raises `TypeError`, where the pure fallback
@@ -4438,12 +4442,11 @@ site moves.
 
 ### What breaks (named now, re-measured at landing)
 
-* Survey headline: 167 seeds / 162 REFUSE → `bisect` flips
-  REFUSE→MATCH; the census's program-mode flip set is exactly
-  {`bisect`}, so 161 is the predicted count and anything else is a
-  finding. The `import`-wall population (154) DROPS by the files whose
-  admitted-shape from-imports were their only import walls — to be
-  MEASURED, not predicted; the file-flip claim is the measured one.
+* Survey headline: the old 167-seed prediction that `bisect` flips
+  REFUSE→MATCH is withdrawn. The accelerator admission is now
+  domain-guarded, so the file remains loud until call-site argument domains
+  are modeled. The `import`-wall population therefore does not drop on this
+  item; any later flip must be re-measured, not predicted.
 * Envelopes: every re-extracted envelope containing an admitted-shape
   from-import changes — including sunfish's benign `from itertools
   import count` / `from collections import namedtuple`, structured in
@@ -4461,12 +4464,10 @@ site moves.
 
 ### What it buys — the measured claim
 
-`bisect` flips on this alone (the census's one program-mode flip).
-`quopri`/`stat`/`opcode` become import-clean but still refuse on their
-other walls — `del`, bytes literals, all tail constructs
-already designed/staged — and land only as that tail lands. NOTHING
-else moves; no import+other file flips on this design. Honest total:
-+1 sweep file now, +3 more with the designed tail.
+No file flips on this alone. `quopri`/`stat`/`opcode` remain refused by
+their measured or unmeasured accelerator admissions, and `_bisect` now
+joins them until a call-site domain guard exists. Any future sweep change
+must be measured after that guard lands.
 
 Battery — a NEW `Examples/python/import_lab` plus one script (the
 star_lab discipline: a fresh directory whose rows are registered WITH
@@ -4483,11 +4484,12 @@ the implementation, measured against the pinned CPython first):
   inventory-absent module: `ModuleNotFoundError`, CPython-identical.
 * `rebind_after_fallback` — the quopri shape: handler binds the names
   to `None`, later code tests them (differential MATCH).
-* the §2.5 rows — `bisect`'s pure fallback (`bisect`, `insort`,
-  edge cases) differentially against CPython running the real
-  `_bisect` accelerator: the equivalence obligation that ADMITS the
-  guarded arm, a divergence a blocker, not a footnote.
-* acceptance: the sweep's `bisect` row REFUSE→MATCH.
+* the §2.5 rows — `bisect`'s pure fallback (`bisect`, `insort`, and the
+  `hi=-1` edge) differentially against CPython running the real `_bisect`
+  accelerator. The edge divergence is the reason the guarded arm is now
+  domain-refused rather than admitted.
+* acceptance: the sweep's `bisect` row remains REFUSED until call-site
+  domain analysis exists.
 
 ### Landing plan — ONE rebuild, shared with the staged f-strings tail
 
@@ -4649,10 +4651,9 @@ exactly under the census below: before any later ordinary shadow, every
 admissible observation of the alias is a CALL, and the copy makes calls
 literally identical. (CPython note, recorded: after
 `from _bisect import *` succeeds, CPython's alias points at the C
-accelerator where the model's copy is the pure fallback — that is the
-standing §2.5 accelerator-equivalence obligation of the guarded import
-arm, differentially tested by the `import_lab` fallback rows; the alias
-adds no new instance of it.)
+accelerator where the model's copy would be the pure fallback. That
+accelerator import is now domain-guarded: the measured `hi=-1` boundary
+diverges, so the alias path remains loud until call-site domains are proved.)
 
 **No theorem moves.** The interpreter, the mutual block, and every
 induction (`fuelMono`/`worldInv`/`clockErase`) are untouched — there is
@@ -4743,13 +4744,10 @@ seeds CONTAIN the pattern at top level (asyncore, bisect, cgi, dis,
 gettext, locale, operator, ssl, threading, warnings — operator.py alone
 has 47 alias statements), but the other nine sit behind earlier walls
 (class-creation effects, mostly), so they cannot flip on this design.
-Predicted: wild sweep 6→7 MATCH / 160→159 REFUSE, flip set exactly
-{`bisect`}; in-repo corpus no flips (plus the new lab rows); anything
-else is a finding. The honest chain for bisect: the FILE flips to MATCH
-(its post-alias top level is empty — nothing calls `insort` at import
-time), while `insort` CONSUMERS still refuse at `a.insert(lo, x)` —
-`list.insert` is not in tier, the recorded §2.5 residue
-(`import_insort_fallback` stays UNSUPPORTED until it lands).
+That earlier sweep prediction is withdrawn: `_bisect`'s domain guard keeps
+the file loud, and the alias path cannot claim a flip. `insort` consumers
+also remain loud at `a.insert(lo, x)` until their own tier and the
+accelerator domain are established.
 
 ### Battery
 
@@ -4764,7 +4762,8 @@ both sides raise the runtime `NameError` before the target definition),
 `alias_rebound.py` (MATCH — an ordinary later assignment shadows the alias),
 `alias_bisect_shape.py` (the bisect shape verbatim: defs, guarded
 `from _zzz_nomod import *` fallback, aliases, alias calls printing —
-MATCH). Acceptance: the sweep's `bisect` row REFUSE→MATCH.
+MATCH). The `_bisect` guarded-import shape remains loud under the
+accelerator domain guard; the absent-module alias shape still matches.
 
 ## `list.insert` — the §2.5 residue (DESIGN, 2026-08-14)
 

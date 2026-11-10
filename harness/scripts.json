@@ -247,13 +247,13 @@
   },
   {
     "file": "harness/scripts/import_bisect_fallback.py",
-    "expect": "match",
-    "note": "REBUILD-WINDOW (Pass 0, memo 2.5): accelerator-fallback equivalence for bisect_left/right -- a divergence is a blocker"
+    "expect": "unsupported",
+    "note": "The `_bisect` fallback has a measured domain gap (`hi=-1`: C returns len(a), pure fallback returns lo); module-wide accelerator admission is guarded until call-site domains are modeled."
   },
   {
     "file": "harness/scripts/import_insort_fallback.py",
-    "expect": "match",
-    "note": "memo 2.5 DISCHARGED: pure insort through the list.insert tier vs CPython's C accelerator -- a divergence is a blocker"
+    "expect": "unsupported",
+    "note": "The `_bisect` import is outside the admitted accelerator domain; the pure insort fallback remains available as a separate no-import shape."
   },
   {
     "file": "harness/scripts/insort_alias_script.py",

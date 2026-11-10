@@ -10919,6 +10919,24 @@ DECIDED: retain `pySsizeRaising` as the one raising conversion definition and
 model `_PyEval_SliceIndex`/index-error conversion separately before widening
 raw integer index sites.
 
+## FOUNDATION step 1d — withdraw the unbounded `_bisect` accelerator admission
+
+The registry's old `_bisect` entry claimed equivalence from 15 sampled calls
+without recording an argument domain. A pinned CPython 3.9.25 boundary breaks
+that claim: `bisect_left([1, 2, 3], 5, 0, -1)` returns `3` through the C
+accelerator (`_bisect` treats `hi=-1` as the default), while the pure
+`bisect.py` fallback returns `0`. Since the import admission is module-wide,
+it cannot safely assert that every later call stays in the sampled slice.
+
+The extractor now marks `_bisect` as `domain_admitted: false` and emits
+`ImportFrom:accelerator-outside-domain` for the guarded import. The boundary
+is pinned in `harness/scripts/import_bisect_fallback.py`; the two bisect script
+rows now expect a loud refusal. The registry evidence records the old 15/15
+measurement as a sampled slice and the new measured counterexample.
+
+DECIDED: keep the `_bisect` fallback loud until call-site domain analysis
+proves the C and pure paths equivalent on the complete admitted domain.
+
 ## 2026-11-10-pyfoundation-2 — protocol census
 
 Foundation step 2 records the protocol census in

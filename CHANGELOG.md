@@ -117,6 +117,10 @@
   returns CPython's exact `OverflowError` for huge list indices and range
   lengths.
 
+- Withdrew the unbounded `_bisect` accelerator admission after measuring its
+  `hi=-1` C-versus-pure fallback divergence; guarded imports now refuse until
+  call-site argument domains are proved.
+
 - Added the foundation protocol census covering comparison, hashing, index,
   float conversion, iteration, sizing, rendering, recursion, operator, builtin,
   and method dispatch across both Python interpreter surfaces.

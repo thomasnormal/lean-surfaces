@@ -43,3 +43,14 @@ The old E edge executor reports `12.5: case statement in always_ff is outside
 E-core-1`; this is the intended Step 11 input to the later implementation and
 review.  `casez`/`casex` are separate fixtures and are not silently covered by
 these rows.
+
+## E-core review boundary
+
+The fixture was reviewed against the current E-core-1 proof surface on
+2026-11-10. The refusal remains deliberate. Supporting this construct requires
+the first-match arm walk, NBA queue construction, and totality/frame lemmas to
+be added together. The existing `execFF_mem` and `execFF_total` theorems cover
+the accepted statement fragment and reject a partial arm evaluator; a local
+implementation that only handled direct NBA arm bodies therefore was not
+landed. The source-shaped parser envelope and all eight simulator rows remain
+the acceptance target for the later E packet.

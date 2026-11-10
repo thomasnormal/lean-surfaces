@@ -258,6 +258,139 @@ def releaseStorage (store : IntegralObjectStore) (object : ObjectId) :
   let objects ← (store.objects.releaseStorage object).mapError IntegralObjectError.lifetime
   pure {store with objects, values := store.values.modify object (fun _ => none)}
 
+
+private theorem metadata_bound (store : IntegralObjectStore) (object : ObjectId) (entry : CppObject)
+    (h : store.metadata object = .ok entry) : object < store.values.length := by
+  unfold metadata at h
+  cases hs : store.checkShape with
+  | error reason => simp [hs, Bind.bind, Except.bind] at h
+  | ok shapeUnit =>
+      cases ho : store.objects.object? object with
+      | none => simp [hs, ho, Bind.bind, Except.bind] at h
+      | some obj =>
+          have hlen : store.values.length = store.objects.objects.length := by
+            by_cases heq : store.values.length = store.objects.objects.length
+            · exact heq
+            · by_cases hv : store.profile.valid = true <;>
+                simp [checkShape, hv, heq, Bind.bind, Except.bind] at hs
+          have hob : object < store.objects.objects.length := by
+            have := (List.getElem?_eq_some_iff.mp ho).1
+            exact this
+          simpa [hlen] using hob
+
+/-- Successful initialization writes the value into its object slot. -/
+theorem initializeValue_value (store : IntegralObjectStore) (object : ObjectId) (value : IntegralValue)
+    (out : IntegralObjectStore) (h : store.initializeValue object value = .ok out) :
+    out.values[object]? = some (some value) := by
+  cases hm : store.metadata object with
+  | error reason => simp [initializeValue, hm, Bind.bind, Except.bind] at h
+  | ok entry =>
+    have hbound := metadata_bound store object entry hm
+    cases hv : checkValue store.profile entry.type value with
+    | error reason => simp [initializeValue, hm, hv, Bind.bind, Except.bind] at h
+    | ok u =>
+      cases hs : store.objects.beginLifetime object with
+      | error reason => simp [initializeValue, hm, hv, hs, Bind.bind, Except.bind, Except.mapError] at h
+      | ok started =>
+        cases hi : started.initializeObject object with
+        | error reason => simp [initializeValue, hm, hv, hs, hi, Bind.bind, Except.bind, Except.mapError] at h
+        | ok objects =>
+          simp [initializeValue, hm, hv, hs, hi, Bind.bind, Except.bind, Except.mapError, Pure.pure, Except.pure] at h
+          subst out
+          simp [List.getElem?_eq_getElem hbound]
+
+private theorem metadata_spec (store : IntegralObjectStore) (object : ObjectId) (entry : CppObject)
+    (h : store.metadata object = .ok entry) :
+    ∃ format, store.checkShape = .ok () ∧ store.objects.object? object = some entry ∧
+      formatFor store.profile entry.type = .ok format := by
+  cases hs : store.checkShape with
+  | error reason => simp [metadata, hs, Bind.bind, Except.bind] at h
+  | ok u =>
+    cases u
+    cases ho : store.objects.object? object with
+    | none => simp [metadata, hs, ho, Bind.bind, Except.bind] at h
+    | some obj =>
+      cases hf : formatFor store.profile obj.type with
+      | error reason => simp [metadata, hs, ho, hf, Bind.bind, Except.bind] at h
+      | ok format =>
+        have he : obj = entry := by
+          simpa [metadata, hs, ho, hf, Bind.bind, Except.bind, Pure.pure, Except.pure] using h
+        subst entry
+        exact ⟨format, rfl, rfl, hf⟩
+
+/-- After successful initialization, borrowing the same object and reading it
+returns the initialized value. The original object type is retained. -/
+theorem initializeValue_read (store : IntegralObjectStore) (object : ObjectId) (value : IntegralValue)
+    (out : IntegralObjectStore) (h : store.initializeValue object value = .ok out) :
+    ∃ previous, store.objects.object? object = some previous ∧
+      out.borrow object = .ok {object := object, type := previous.type} ∧
+      out.read {object := object, type := previous.type} = .ok value := by
+  cases hm : store.metadata object with
+  | error reason => simp [initializeValue, hm, Bind.bind, Except.bind] at h
+  | ok entry =>
+    obtain ⟨fmt, hshape, hobject, hfmt⟩ := metadata_spec store object entry hm
+    have hbound := metadata_bound store object entry hm
+    cases hv : checkValue store.profile entry.type value with
+    | error reason => simp [initializeValue, hm, hv, Bind.bind, Except.bind] at h
+    | ok u =>
+      cases u
+      cases hs : store.objects.beginLifetime object with
+      | error reason => simp [initializeValue, hm, hv, hs, Bind.bind, Except.bind, Except.mapError] at h
+      | ok started =>
+        cases hi : started.initializeObject object with
+        | error reason => simp [initializeValue, hm, hv, hs, hi, Bind.bind, Except.bind, Except.mapError] at h
+        | ok objects =>
+          obtain ⟨old, hold, hphase, hstartobj, hstartlen⟩ := ObjectStore.beginLifetime_object store.objects object started hs
+          have holdEq : old = entry := by simpa [hobject] using hold.symm
+          subst old
+          obtain ⟨mid, hmid, hmidphase, hnewobj, hnewlen⟩ := ObjectStore.initializeObject_object started object objects hi
+          have hmidEq : mid = {entry with phase := .aliveUninitialized} := by simpa [hstartobj] using hmid.symm
+          subst mid
+          simp [initializeValue, hm, hv, hs, hi, Bind.bind, Except.bind, Except.mapError, Pure.pure, Except.pure] at h
+          subst out
+          have hvlen : (store.values.modify object (fun _ => some value)).length = objects.objects.length := by
+            have hlen : store.values.length = store.objects.objects.length := by
+              by_cases heq : store.values.length = store.objects.objects.length
+              · exact heq
+              · by_cases hp : store.profile.valid = true <;>
+                  simp [checkShape, hp, heq, Bind.bind, Except.bind] at hshape
+            simpa [hnewlen, hstartlen] using hlen
+          have hlen' : store.values.length = store.objects.objects.length := by
+            simpa [hnewlen, hstartlen] using hvlen
+          have houtshape : ({store with objects := objects, values := store.values.modify object (fun _ => some value)} : IntegralObjectStore).checkShape = .ok () := by
+            simpa [checkShape, hvlen, hlen'] using hshape
+          have houtmeta : ({store with objects := objects, values := store.values.modify object (fun _ => some value)} : IntegralObjectStore).metadata object =
+              .ok {entry with phase := .aliveInitialized} := by
+            simp [metadata, houtshape, hnewobj, hfmt, Bind.bind, Except.bind, Pure.pure, Except.pure]
+          have hvalues : (store.values.modify object (fun _ => some value))[object]? = some (some value) := by
+            simp [List.getElem?_eq_getElem hbound]
+          have hreadtype : objects.readType object = .ok entry.type := by
+            simp [ObjectStore.readType, hnewobj]
+          cases hd : descriptor entry.type with
+          | error reason => simp [formatFor, hd, Bind.bind, Except.bind] at hfmt
+          | ok desc =>
+            rcases desc with ⟨kind, isConst⟩
+            have hkind : (kind == kind) = true := by cases kind <;> rfl
+            refine ⟨entry, hobject, ?_, ?_⟩
+            · simp [borrow, houtmeta, requireAlive, Bind.bind, Except.bind, Pure.pure, Except.pure]
+            · simp [read, validateAccess, houtmeta, hd, hkind, requireAlive, hreadtype, hvalues, hv,
+                Bind.bind, Except.bind, Pure.pure, Except.pure, Except.mapError]
+
+
+/-- Successful allocation exposes fresh storage with the requested type. -/
+theorem allocate_object (store : IntegralObjectStore) (duration : StorageDuration) (type : CppTypeEvidence)
+    (out : IntegralObjectStore) (object : ObjectId) (h : store.allocate duration type = .ok (out, object)) :
+    out.objects.object? object = some {duration := duration, type := type, phase := .storageOnly} := by
+  cases hc : store.checkShape with
+  | error reason => simp [allocate, hc, Bind.bind, Except.bind] at h
+  | ok u =>
+    cases hf : formatFor store.profile type with
+    | error reason => simp [allocate, hc, hf, Bind.bind, Except.bind] at h
+    | ok fmt =>
+      simp [allocate, hc, hf, Bind.bind, Except.bind, Pure.pure, Except.pure, ObjectStore.allocate] at h
+      rcases h with ⟨rfl, rfl⟩
+      simp [ObjectStore.object?]
+
 end IntegralObjectStore
 
 end LeanModels.Cpp

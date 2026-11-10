@@ -76,6 +76,13 @@ The concrete test initializes a frame and discharges those premises. Relating
 frame initialization, errors and the remaining expression and statement cases
 is still required for a whole-call refinement theorem.
 
+`callableSingleParameterStartAgreement` establishes the frame-read premise for
+a successful callable start with one builtin parameter and a valid argument
+already in that parameter's format. The proof uses read-after-initialization
+lemmas for object storage and parameter declarations. Multiple parameters,
+argument conversions to a different format and whole-call execution remain
+outside this theorem.
+
 `callableLiteralExpressionAgreement` relates literal expressions for any
 profile, parameter list, arguments and object frame when source and result
 formats agree. It preserves both states and covers invalid results as well as

@@ -235,6 +235,55 @@ def readType (store : ObjectStore) (object : ObjectId) : Except ObjectError CppT
       | .ended => .error .lifetimeEnded
       | .released => .error .storageReleased
 
+
+/-- A successful lifetime start preserves the object identity and type and
+marks the object alive but uninitialized. -/
+theorem beginLifetime_object (store : ObjectStore) (object : ObjectId) (out : ObjectStore)
+    (h : store.beginLifetime object = .ok out) :
+    ∃ previous, store.object? object = some previous ∧ previous.phase = .storageOnly ∧
+      out.object? object = some {previous with phase := .aliveUninitialized} ∧
+      out.objects.length = store.objects.length := by
+  cases ho : store.object? object with
+  | none => simp [beginLifetime, ho] at h
+  | some previous =>
+    cases hp : previous.phase with
+    | storageOnly =>
+        have hout : out = {objects := store.objects.modify object (fun current =>
+            {current with phase := .aliveUninitialized})} := by
+          simpa [beginLifetime, ho, hp, update] using h.symm
+        subst out
+        refine ⟨previous, rfl, hp, ?_, ?_⟩
+        · simp [object?, List.getElem?_modify_eq, show store.objects[object]? = some previous from ho]
+        · simp
+    | aliveUninitialized => simp [beginLifetime, ho, hp] at h
+    | aliveInitialized => simp [beginLifetime, ho, hp] at h
+    | ended => simp [beginLifetime, ho, hp] at h
+    | released => simp [beginLifetime, ho, hp] at h
+
+/-- Successful initialization preserves the object identity and type and
+marks it initialized. -/
+theorem initializeObject_object (store : ObjectStore) (object : ObjectId) (out : ObjectStore)
+    (h : store.initializeObject object = .ok out) :
+    ∃ previous, store.object? object = some previous ∧ previous.phase = .aliveUninitialized ∧
+      out.object? object = some {previous with phase := .aliveInitialized} ∧
+      out.objects.length = store.objects.length := by
+  cases ho : store.object? object with
+  | none => simp [initializeObject, ho] at h
+  | some previous =>
+    cases hp : previous.phase with
+    | storageOnly => simp [initializeObject, ho, hp] at h
+    | aliveUninitialized =>
+        have hout : out = {objects := store.objects.modify object (fun current =>
+            {current with phase := .aliveInitialized})} := by
+          simpa [initializeObject, ho, hp, update] using h.symm
+        subst out
+        refine ⟨previous, rfl, hp, ?_, ?_⟩
+        · simp [object?, List.getElem?_modify_eq, show store.objects[object]? = some previous from ho]
+        · simp
+    | aliveInitialized => simp [initializeObject, ho, hp] at h
+    | ended => simp [initializeObject, ho, hp] at h
+    | released => simp [initializeObject, ho, hp] at h
+
 end ObjectStore
 
 end LeanModels.Cpp

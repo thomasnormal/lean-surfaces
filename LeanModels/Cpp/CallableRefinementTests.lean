@@ -55,6 +55,34 @@ def callableParameterExpressionAgreementWitness : Bool :=
 
 #guard callableParameterExpressionAgreementWitness
 
+/-- A successful single-int-parameter start supplies the frame relation for
+every valid symbolic argument; callers do not need to assume a frame read. -/
+theorem startedIntParameterAgreement (fuel : Nat) (n : Int) (callable : CallableObjectFrame)
+    (hvalid : (signed n).invalid? = none)
+    (hstart : CallableObjectFrame.start .lp64 function [signed n] = .ok callable) :
+    evaluateCallableExpression (fuel + 2) .lp64 [parameter] [signed n] expression =
+      .ok (.ok (signed n), [signed n]) ∧
+    evaluateCallableObjectExpression (fuel + 2) .lp64 callable.frame expression =
+      {frame := callable.frame, result := .ok (.ok (signed n))} :=
+  callableSingleParameterStartAgreement fuel .lp64 function (signed n) parameter callable
+    .int intType rfl rfl rfl hvalid hstart
+
+private def startedParameterWitness (n : Int) : Bool :=
+  match CallableObjectFrame.start .lp64 function [signed n] with
+  | .error _ => false
+  | .ok callable =>
+      let object := evaluateCallableObjectExpression 9 .lp64 callable.frame expression
+      match evaluateCallableExpression 9 .lp64 [parameter] [signed n] expression, object.result with
+      | .ok (.ok value, arguments), .ok (.ok objectValue) =>
+          value == signed n && objectValue == signed n && arguments == [signed n] &&
+            object.frame == callable.frame
+      | _, _ => false
+
+def callableSingleParameterStartAgreementWitness : Bool :=
+  [-2147483648, -128, 0, 2147483647].all startedParameterWitness
+
+#guard callableSingleParameterStartAgreementWitness
+
 /-- Even an out-of-range literal has the same invalid result in both
 expression evaluators; this constructed IR is not an admitted C++ literal. -/
 theorem invalidLiteralExpressionAgreement :

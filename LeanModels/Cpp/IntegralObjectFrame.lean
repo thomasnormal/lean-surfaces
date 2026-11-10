@@ -873,6 +873,104 @@ def executeOpen (fuel : Nat) (frame : IntegralObjectFrame)
       | .ok .break_ => failure result.frame .breakOutsideLoop
       | .ok .continue_ => failure result.frame .continueOutsideLoop
 
+
+private theorem handle_beq_self (handle : FrontendHandle) : (handle == handle) = true := by
+  cases handle with
+  | mk value => simp [BEq.beq, instBEqFrontendHandle.beq]
+
+private theorem addBinding_lookup (frame : IntegralObjectFrame) (binding : FrameBinding)
+    (h : (addBinding frame binding).result = .ok binding.object) :
+    (addBinding frame binding).frame.lookup binding.declaration = .ok binding := by
+  cases hs : frame.scopes with
+  | nil => simp [addBinding, hs, binding?, failure] at h
+  | cons scope rest =>
+      cases hb : (binding? frame.scopes binding.declaration).isSome with
+      | true => simp [addBinding, hb, failure] at h
+      | false =>
+          unfold addBinding
+          rw [hb]
+          simp only [Bool.false_eq_true, ↓reduceIte, hs, success]
+          simp [lookup, binding?, handle_beq_self]
+
+
+private theorem addBinding_object (frame : IntegralObjectFrame) (binding : FrameBinding)
+    (object : ObjectId) (h : (addBinding frame binding).result = .ok object) :
+    object = binding.object := by
+  cases hs : frame.scopes with
+  | nil => simp [addBinding, hs, binding?, failure] at h
+  | cons scope rest =>
+    cases hb : (binding? frame.scopes binding.declaration).isSome with
+    | true => simp [addBinding, hb, failure] at h
+    | false =>
+      unfold addBinding at h
+      rw [hb] at h
+      simpa [hs, success] using h.symm
+
+private theorem reserve_spec (frame : IntegralObjectFrame) (declaration : FrontendHandle)
+    (type : CppTypeEvidence) (role : FrameBindingRole) (object : ObjectId)
+    (h : (reserve frame declaration type role).result = .ok object) :
+    (reserve frame declaration type role).frame.lookup declaration =
+      .ok {declaration := declaration, object := object, type := type, role := role} ∧
+    (reserve frame declaration type role).frame.store.objects.object? object =
+      some {duration := .automatic, type := type, phase := .storageOnly} := by
+  cases hb : frame.bound declaration with
+  | true => simp [reserve, hb, failure] at h
+  | false =>
+    cases hs : frame.scopes with
+    | nil => simp [reserve, hb, hs, failure] at h
+    | cons scope rest =>
+      cases ha : frame.store.allocate .automatic type with
+      | error reason => simp [reserve, hb, hs, ha, failure] at h
+      | ok pair =>
+        rcases pair with ⟨store, allocated⟩
+        let f := {frame with store := store}
+        let b : FrameBinding := {declaration := declaration, object := allocated, type := type, role := role}
+        have heval : reserve frame declaration type role = addBinding f b := by
+          unfold reserve
+          rw [hb]
+          simp [hs, ha, f, b]
+        rw [heval] at h ⊢
+        have heq : object = allocated := addBinding_object f b object h
+        subst object
+        constructor
+        · exact addBinding_lookup f b h
+        · rw [addBinding_store]
+          exact IntegralObjectStore.allocate_object frame.store .automatic type store allocated ha
+
+/-- A successfully declared parameter can immediately be read from the
+resulting frame, with the value that was initialized. -/
+theorem declareParameter_read (frame : IntegralObjectFrame) (declaration : FrontendHandle)
+    (type : CppTypeEvidence) (value : IntegralValue) (object : ObjectId)
+    (h : (frame.declareParameter declaration type value).result = .ok object) :
+    let out := (frame.declareParameter declaration type value).frame
+    out.evaluate 1 (.read declaration) = {frame := out, result := .ok (.ok value)} := by
+  cases hr : (reserve frame declaration type .parameter).result with
+  | error reason => simp [declareParameter, reserveInitialized, hr, failure] at h
+  | ok allocated =>
+    have hreserve : (reserve frame declaration type .parameter).result = .ok allocated := hr
+    obtain ⟨hlookup, hobject⟩ := reserve_spec frame declaration type .parameter allocated hreserve
+    cases hi : (reserve frame declaration type .parameter).frame.store.initializeValue allocated value with
+    | error reason => simp [declareParameter, reserveInitialized, hr, hi, failure] at h
+    | ok store =>
+      have heq : object = allocated := by
+        simpa [declareParameter, reserveInitialized, hr, hi, success] using h.symm
+      subst object
+      have hframe : (frame.declareParameter declaration type value).frame =
+          {(reserve frame declaration type .parameter).frame with store := store} := by
+        simp [declareParameter, reserveInitialized, hr, hi, success]
+      obtain ⟨previous, hp, hborrow, hread⟩ :=
+        IntegralObjectStore.initializeValue_read (reserve frame declaration type .parameter).frame.store
+          allocated value store hi
+      have hprev : previous = {duration := .automatic, type := type, phase := .storageOnly} := by
+        simpa [hobject] using hp.symm
+      subst previous
+      have hlookup' : ({(reserve frame declaration type .parameter).frame with store := store} :
+          IntegralObjectFrame).lookup declaration =
+          .ok {declaration := declaration, object := allocated, type := type, role := .parameter} := by
+        simpa [lookup] using hlookup
+      rw [hframe]
+      simp [evaluate, hlookup', hborrow, hread, success]
+
 end IntegralObjectFrame
 
 end LeanModels.Cpp

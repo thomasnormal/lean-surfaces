@@ -265,4 +265,31 @@ theorem CallablePureExpression.agreement {profile : TargetProfile} {fuel : Nat}
   obtain ⟨result, derivation⟩ := fragment.derivable parameters arguments frame
   exact ⟨result, derivation.sound⟩
 
+
+/-- A successful single-parameter callable start establishes the frame-read
+premise needed for symbolic parameter-expression agreement. -/
+theorem callableSingleParameterStartAgreement (fuel : Nat) (profile : TargetProfile) (function : CallableFunction)
+    (argument : IntegralValue) (parameter : CallableParameter) (callable : CallableObjectFrame)
+    (kind : CppIntType) (sourceType : CppTypeEvidence)
+    (hparams : function.parameters = [parameter]) (htype : parameter.type = .builtin kind)
+    (hformat : profile.format kind = .ok argument.format) (hvalid : argument.invalid? = none)
+    (hstart : CallableObjectFrame.start profile function [argument] = .ok callable) :
+    let expression : TypedCallableExpression := {
+      expression := .parameter parameter.declaration, sourceType := sourceType, type := parameter.type}
+    evaluateCallableExpression (fuel + 2) profile [parameter] [argument] expression =
+      .ok (.ok argument, [argument]) ∧
+    evaluateCallableObjectExpression (fuel + 2) profile callable.frame expression =
+      {frame := callable.frame, result := .ok (.ok argument)} := by
+  have hread := CallableObjectFrame.start_singleParameter_read profile function argument parameter
+    callable kind hparams htype hformat hvalid hstart
+  have hparam : integralFormatOfEvidence profile parameter.type = .ok argument.format := by
+    simp [integralFormatOfEvidence, integralTypeOfEvidence, htype, hformat]
+  have heq : (parameter.declaration == parameter.declaration) = true := by
+    cases parameter.declaration with
+    | mk v => simp [BEq.beq, instBEqFrontendHandle.beq]
+  have hidx : [parameter].findIdx? (fun p => p.declaration == parameter.declaration) = some 0 := by
+    simp only [List.findIdx?_singleton, heq, ↓reduceIte]
+  exact callableParameterExpressionAgreement fuel profile [parameter] [argument] callable.frame
+    parameter.declaration 0 parameter argument sourceType parameter.type hidx rfl rfl hparam hparam hvalid hread
+
 end LeanModels.Cpp

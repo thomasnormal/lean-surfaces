@@ -196,6 +196,49 @@ def executeDeclStmtInScope (fuel : Nat) (callable : CallableObjectFrame)
     FrameOutcome (Option IntegralValue) :=
   callable.frame.executeOpen fuel statement.statement
 
+
+private theorem convertArgument_same (profile : TargetProfile) (parameter : CallableParameter)
+    (argument : IntegralValue) (kind : CppIntType)
+    (htype : parameter.type = .builtin kind) (hformat : profile.format kind = .ok argument.format)
+    (hvalid : argument.invalid? = none) : convertArgument profile parameter argument = .ok argument := by
+  simp [convertArgument, formatFor, builtinIntegralType, htype, hformat, hvalid,
+    integralConvert_same_of_valid, Except.bind, Bind.bind, Pure.pure, Except.pure]
+
+/-- If a single builtin parameter starts successfully with a valid value
+already in its selected format, reading it returns that value. -/
+theorem start_singleParameter_read (profile : TargetProfile) (function : CallableFunction) (argument : IntegralValue)
+    (parameter : CallableParameter) (callable : CallableObjectFrame) (kind : CppIntType)
+    (hparams : function.parameters = [parameter]) (htype : parameter.type = .builtin kind)
+    (hformat : profile.format kind = .ok argument.format) (hvalid : argument.invalid? = none)
+    (hstart : start profile function [argument] = .ok callable) :
+    callable.frame.evaluate 1 (.read parameter.declaration) =
+      {frame := callable.frame, result := .ok (.ok argument)} := by
+  have hconv := convertArgument_same profile parameter argument kind htype hformat hvalid
+  cases hp : profile.valid with
+  | false => simp [start, hp, Bind.bind, Except.bind, Pure.pure, Except.pure] at hstart
+  | true =>
+    cases he : IntegralObjectFrame.empty profile with
+    | error reason =>
+      simp [start, hp, hparams, convertArguments, hconv, he, Bind.bind, Except.bind,
+        Pure.pure, Except.pure] at hstart
+    | ok frame =>
+      let entered := frame.enterScope.frame
+      have hent : frame.enterScope.result = .ok () := rfl
+      cases hd : (entered.declareParameter parameter.declaration parameter.type argument).result with
+      | error reason =>
+        change (frame.enterScope.frame.declareParameter parameter.declaration parameter.type argument).result = .error reason at hd
+        simp [start, hp, hparams, convertArguments, hconv, he, hent, initializeParameters, hd,
+          Bind.bind, Except.bind, Pure.pure, Except.pure, failure] at hstart
+      | ok object =>
+        have hread := IntegralObjectFrame.declareParameter_read entered parameter.declaration parameter.type argument object hd
+        have hd' : (frame.enterScope.frame.declareParameter parameter.declaration parameter.type argument).result = .ok object := hd
+        have hframe : callable.frame = (entered.declareParameter parameter.declaration parameter.type argument).frame := by
+          simp [start, hp, hparams, convertArguments, hconv, he, hent, initializeParameters, hd',
+            Bind.bind, Except.bind, Pure.pure, Except.pure, success] at hstart
+          exact (congrArg CallableObjectFrame.frame hstart).symm
+        rw [hframe]
+        exact hread
+
 end CallableObjectFrame
 
 end LeanModels.Cpp

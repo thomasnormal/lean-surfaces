@@ -120,6 +120,9 @@
 - Proved evaluator agreement for an automatically derivable pure-expression
   fragment, including cast chains of arbitrary depth.
 
+- Proved read-after-initialization and used it to establish parameter
+  expression agreement after a successful single-parameter callable start.
+
 - Extended the value/object evaluator agreement battery with negative signed
   subtraction and native differential coverage.
 

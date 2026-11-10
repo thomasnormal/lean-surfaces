@@ -2459,7 +2459,12 @@ def evalBinOp (op : BinOp) (a b : RVal) : Res RVal :=
     | .mod =>
         if y = 0 then .exn .zeroDivisionError else .ok (.int (Int.fmod x y))
     | .pow =>
-        if y < 0 then
+        if y < 0 then do
+          -- long_pow delegates negative exponents to float_pow (CPython 3.9,
+          -- Objects/longobject.c); float_pow converts both operands, in order,
+          -- before checking for zero or reaching platform pow.
+          let _ ← floatNumber (.int x)
+          let _ ← floatNumber (.int y)
           if x = 0 then .exn .zeroDivisionPow
           else if x < -2 || x > 2 then
             .unsupported "integer ** with a negative exponent outside the exact binary-base slice is outside the tier (CPython converts to binary64 and calls platform pow)"

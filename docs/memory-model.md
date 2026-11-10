@@ -1971,10 +1971,13 @@ guaranteed to be short by however many `cases` sites exist.
 
 `x ** -n` for integer `x` returns the exact binary64 reciprocal only for the
 small binary bases `-2 ≤ x ≤ 2`, using `Float64.divideInt` after `x ^ n`.
-Larger integer bases refuse because CPython converts both operands to binary64
-and calls platform `pow`, whose result is not a portable kernel value. The zero
-base keeps CPython's distinct `ZeroDivisionError` message. `floatPowBudget =
-1024` is a fixed admission bound: larger negative exponents refuse before an
+As in CPython 3.9's `long_pow` and `float_pow`, the base and exponent are first
+converted to binary64 in that order; an unconvertible operand raises
+`OverflowError` even if the base is zero (`negative_pow_exponent_overflow` and
+`negative_pow_base_overflow` in `harness/cases.json`). Larger convertible integer
+bases refuse because platform `pow` is not a portable kernel value. The zero
+base otherwise keeps CPython's distinct `ZeroDivisionError` message. `floatPowBudget =
+1024` is a fixed admission bound: larger convertible negative exponents refuse before an
 unbounded kernel `Int.pow`, rather than risking an internal abort or inventing
 floating result. The builtin `pow(x, n)` shares this path. The three-argument
 `pow(x, n, m)` form admits integer arguments with a

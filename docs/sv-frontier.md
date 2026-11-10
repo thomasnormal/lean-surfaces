@@ -423,6 +423,13 @@ its kernel-checked `counterexample_eval` evaluates a concrete sampled trace to
 satisfy the assertion. This is the finite replay seam that the unbounded
 invariant route will reuse for OpenTitan counterexamples.
 
+The invariant seam also carries a kernel-checked bounded-counter witness:
+`SafetySmoke.boundedCounter` establishes the reset base, preserves `q ≤ 3`
+across every Boolean input with `omega`, and derives the safety predicate for
+every finite `SafetyTrace`. The example sits beside the replay theorem; it is a
+proof-shape witness until an OpenTitan E elaborator supplies the concrete state
+and transition relation.
+
 ### F3 — structural composition
 
 Use E-core-2's hierarchy and per-instance contracts. Prove a submodule once,

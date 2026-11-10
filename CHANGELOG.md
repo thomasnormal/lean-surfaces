@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Revalidated the explicit Python clock-erasure proof target; it builds
+  successfully without the reported unsolved goal.
+
 - Revalidated the string specification; its reported `join_generator` guard
   now builds successfully.
 

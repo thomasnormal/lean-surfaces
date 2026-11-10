@@ -116,6 +116,21 @@ builds on this branch without errors; no semantic or proof change was needed.
 DECIDED: close this branch's string specification blocker and continue
 with the next rename-rehearsal failure.
 
+## 2026-11-10-pyfoundation-29 — revalidate clock erasure
+
+The rename rehearsal reported an unsolved goal in `ClockErase.lean` on an
+older master tip. The explicit `LeanModels.Python.ClockErase` target builds
+on this branch without errors; no semantic or proof change was needed.
+
+| Measurement | Result |
+|---|---|
+| Target | `LeanModels.Python.ClockErase` builds in 12 jobs |
+| Commit measured | `e4fc85f81` |
+| Errors | none |
+
+DECIDED: close this branch's clock-erasure blocker and continue with the
+coverage and index checks requested in the rename rehearsal.
+
 ## 2026-11-10-pyfoundation-11 — revalidate recursion-limit audit
 
 The inbox finding `py-no-recursion-limit` is already closed by the active

@@ -1458,6 +1458,8 @@ def instProcess2 (env : IEnv) (elems : List (String × Nat)) : PProcess → Proc
   -- WP4 (2026-10-28): a body that reads a bit before writing it and writes
   -- it later on the same path is refused, loudly (`CombGuard2.lean`).
   | .alwaysComb b => combGuardProc (fun n => env.widths.lookup n) (instStmt2 env elems b)
+  | .alwaysImplicit _ => .unsupported "ProceduralBlockSymbol:Always"
+      "source-level event-controlled always is retained; the frozen process AST has no event-list constructor"
   | .alwaysFFR c rn b resetHigh =>
       @Process2.alwaysFFR c rn (instStmt2 env elems b) resetHigh
   | .initial _ =>

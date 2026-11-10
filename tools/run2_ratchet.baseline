@@ -32,12 +32,9 @@
 18	Examples/system-verilog/ripple_add/spec.lean
 1	Examples/system-verilog/ripple_fa/gen.lean
 1	Examples/system-verilog/ripple_step/comb_proof.lean
-1	Examples/system-verilog/sem2/casez_casex_always_ff_step11/agree.lean
 1	Examples/system-verilog/sem2/clk_implicit/agree.lean
 2	Examples/system-verilog/sem2/clk_two/agree.lean
-1	Examples/system-verilog/sem2/dynamic_nba_target_step11/agree.lean
 1	Examples/system-verilog/sem2/function_generate_case/proof.lean
-1	Examples/system-verilog/sem2/plain_always_posedge_step11/agree.lean
 2	Examples/system-verilog/sem2/qualified_case_timing/proof.lean
 4	Examples/system-verilog/sem2/signed_index/proof.lean
 2	Examples/system-verilog/seq_async_comb/proof.lean

@@ -71893,6 +71893,21 @@
       "measured": "2026-11-10: casez and casex in one always_ff retain source-order CaseStmt nodes; wildcard x/z selectors and defaults match Icarus 13.0 and Xcelium 24.03-s004. E-core-1's explicit case boundary remains pinned for review."
     },
     {
+      "name": "plain_always_posedge_step11",
+      "example": "sem2/plain_always_posedge_step11",
+      "top": "plain_always_posedge_step11",
+      "clock": "clk",
+      "signals": ["en", "d", "q", "q_copy"],
+      "stimulus": [
+        {"en": "0", "d": "1001"},
+        {"en": "1", "d": "0110"},
+        {"en": "x", "d": "0011"},
+        {"en": "z", "d": "zzzz"},
+        {"en": "1", "d": "xz01"}
+      ],
+      "measured": "2026-11-10: source-shaped plain always @(posedge clk) retains Process2.alwaysPlain and its NBA-only body; x/z enable/data and the default branch agree between Icarus 13.0 and Xcelium 24.03-s004."
+    },
+    {
       "name": "unpacked_dynamic_target",
       "example": "sem2/unpacked_dynamic_target",
       "top": "unpacked_dynamic_target",

@@ -537,3 +537,6 @@ shift, with the same kernel reduction and native differential coverage.
 
 `callableEvaluatorRefinementLessThan` carries the relation through a pure
 less-than comparison, with the same kernel reduction and native differential coverage.
+
+`callableEvaluatorRefinementEqual` carries the relation through a pure equality
+comparison, with the same kernel reduction and native differential coverage.

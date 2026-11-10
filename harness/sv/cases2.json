@@ -3,6 +3,34 @@
   "fuel": 2000,
   "cases": [
     {
+      "name": "signed_compare_widen",
+      "example": "sem2/signed_compare_widen",
+      "top": "signed_compare_widen",
+      "signals": [
+        "y"
+      ],
+      "stimulus": [
+        {
+          "x": "00000000"
+        },
+        {
+          "x": "01111111"
+        },
+        {
+          "x": "10000000"
+        },
+        {
+          "x": "11111111"
+        },
+        {
+          "x": "x0000000"
+        },
+        {
+          "x": "z0000000"
+        }
+      ]
+    },
+    {
       "name": "preemptive_profile_cross_process_nba",
       "example": "sem2/preempt_profile",
       "top": "preempt_profile",

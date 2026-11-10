@@ -1,5 +1,15 @@
 [
   {
+    "file": "harness/scripts/arity_keyword_unknown_first.py",
+    "expect": "match",
+    "note": "An unexpected keyword is reported before extra positional arguments."
+  },
+  {
+    "file": "harness/scripts/arity_keyword_duplicate_first.py",
+    "expect": "match",
+    "note": "A duplicate parameter is reported before extra positional arguments."
+  },
+  {
     "file": "harness/scripts/hello.py",
     "expect": "match"
   },

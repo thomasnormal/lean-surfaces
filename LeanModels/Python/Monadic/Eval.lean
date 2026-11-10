@@ -1289,7 +1289,8 @@ def evalOpen (K : Kont) (m : Module) : Expr → SemF RVal
                       else do
                         let vs ← evalOpenCallList (K, m, args.toList)
                         let kvs ← K.kwArgs kwargs.toList
-                        let full ← liftRes (mergeKwArgs qname fdefn.params vs kvs)
+                        let st ← get
+                        let full ← liftRes (mergeKwArgsAt st.world.callDepth qname fdefn.params vs kvs)
                         inFrame (K.call qname full)
           | .attribute recv attr _ => do
               let r ← evalOpen K m recv
@@ -1306,7 +1307,8 @@ def evalOpen (K : Kont) (m : Module) : Expr → SemF RVal
                           else do
                             let vs ← evalOpenCallList (K, m, args.toList)
                             let kvs ← K.kwArgs kwargs.toList
-                            let full ← liftRes (mergeKwArgs qname fdefn.params (RVal.ref a :: vs) kvs)
+                            let st ← get
+                            let full ← liftRes (mergeKwArgsAt st.world.callDepth qname fdefn.params (RVal.ref a :: vs) kvs)
                             inFrame (K.call qname full)
                   | .instAttrValue =>
                       refuse s!"calling an instance ATTRIBUTE value ('.{attr}' is data on this instance, not a method) is outside the H3 tier"
@@ -1331,8 +1333,9 @@ def evalOpen (K : Kont) (m : Module) : Expr → SemF RVal
                           else do
                             let vs ← evalOpenCallList (K, m, args.toList)
                             let kvs ← K.kwArgs kwargs.toList
+                            let st ← get
                             let full ← liftRes
-                              (mergeKwArgs qname fdefn.params (RVal.ntuple tn fs xs :: vs) kvs)
+                              (mergeKwArgsAt st.world.callDepth qname fdefn.params (RVal.ntuple tn fs xs :: vs) kvs)
                             inFrame (K.call qname full)
                   | .attrMissing => raisePy .attributeError
                   | .refuse msg => refuse msg
@@ -2467,8 +2470,9 @@ def callCloAt (K : Kont) (m : Module) (name : String) (params : Array Param)
     refuse s!"nested function '{name}' uses unsupported parameter features (non-literal defaults/varargs/kwargs/decorators)"
   else if !localsOk then
     refuse s!"nested function '{name}' calls a name it also assigns (CPython static-locals rule) — outside the tier"
-  else if !arityOk params args.size then
-    raisePy (.typeError (arityErrorMsg name (paramArity params) args.size))
+  else if !arityOk params args.size then do
+    let w ← get
+    raisePy (positionalArityError w.callDepth name params args.size)
   else if isGenerator then do
     let w ← get
     let env := markUnboundLocals body.toList (mkCallEnv params args) ++ captured
@@ -2525,8 +2529,9 @@ def callInM (K : Kont) (m : Module) (fname : String) (args : Array RVal) : SemW 
       refuse s!"function '{fname}' uses unsupported parameter features (non-literal defaults/varargs/kwargs/decorators)"
     else if !f.localsOk then
       refuse s!"function '{fname}' calls a name it also assigns (CPython static-locals rule) — outside the v0 tier"
-    else if !arityOk f.params args.size then
-      raisePy (.typeError (arityErrorMsg fname (paramArity f.params) args.size))
+    else if !arityOk f.params args.size then do
+      let w ← get
+      raisePy (positionalArityError (entryBindingDepth w.callDepth) fname f.params args.size)
     else if f.isGenerator then do
       -- H4 CREATION: calling a generator function runs NO code. It allocates the
       -- suspended frame — arguments bound into its locals, the whole body as the

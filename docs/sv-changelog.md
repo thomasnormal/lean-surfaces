@@ -1,5 +1,14 @@
 # [unreleased] — 2026-11-04 (an Sv landing builds the comb chain above it)
 
+## Guarded asynchronous reset events — 2026-11-10
+
+The symbolic loader now keeps an explicit `AlwaysPosedge:reset-iff`
+unsupported process when an asynchronous reset event has an `iff` guard.
+Dropping that guard could execute a reset that the source disabled; unguarded
+reset events remain unchanged. The clean-room source rows match Xcelium
+24.03-s004; Icarus 13.0 rejects the guarded event syntax with its exact
+unsupported diagnostic.
+
 ## Finite SVA negedge sequences — 2026-11-10
 
 Finite SVA contracts now cover a structured `negedge` check and a bare

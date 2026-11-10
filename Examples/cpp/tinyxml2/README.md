@@ -29,7 +29,7 @@ pointwise theorem also lists the standard Lean axioms `Classical.choice` and
 `Quot.sound`. No native decision or new axiom declaration is used.
 
 ```sh
-LEAN_NUM_THREADS=1 prlimit --as=17179869184 -- \
+systemd-run --user --scope -p MemoryMax=24G env LEAN_NUM_THREADS=1 \
   lake build Examples.cpp.tinyxml2.proof
 ```
 
@@ -41,7 +41,7 @@ The test verifies the pinned source and literal hashes before running.
 ```sh
 export LEANCPP_TINYXML2_DIR=/absolute/path/to/pinned/tinyxml2
 export LEANCPP_CLANG=/path/to/matching/clang++
-LEAN_NUM_THREADS=1 prlimit --as=17179869184 -- \
+systemd-run --user --scope -p MemoryMax=24G env LEAN_NUM_THREADS=1 \
   python3 extractors/cpp/test_tinyxml2.py
 ```
 
@@ -58,7 +58,7 @@ export CPP_AST_PATH=122,14,10
   -std=c++23 -pedantic-errors -fsyntax-only tinyxml2.cpp \
   -Xclang -load -Xclang "$LEANCPP_PROBE_LIBRARY" \
   -Xclang -plugin -Xclang leancpp-canonical-probe) > "$CPP_PROBE"
-LEAN_NUM_THREADS=1 prlimit --as=17179869184 -- \
+systemd-run --user --scope -p MemoryMax=24G env LEAN_NUM_THREADS=1 \
   lake env lean -j 1 --run extractors/cpp/export_callable.lean \
   "$CPP_PROBE" "$CPP_AST_PATH" Examples.cpp.tinyxml2.IsUTF8Continuation \
   > Examples/cpp/tinyxml2/IsUTF8Continuation.lean
@@ -112,9 +112,9 @@ existing-object projection: it supplies ownership rather than inferring layout
 or running constructors. These methods do not use the aggregate schema API.
 
 ```sh
-LEAN_NUM_THREADS=1 prlimit --as=17179869184 -- \
+systemd-run --user --scope -p MemoryMax=24G env LEAN_NUM_THREADS=1 \
   lake build Examples.cpp.tinyxml2.member_getters_proof
-LEAN_NUM_THREADS=1 prlimit --as=17179869184 -- \
+systemd-run --user --scope -p MemoryMax=24G env LEAN_NUM_THREADS=1 \
   python3 extractors/cpp/test_member_getters.py
 ```
 
@@ -163,9 +163,9 @@ element and document objects, using the standard access waiver described above.
 Native construction, parsing and destruction remain oracle setup.
 
 ```sh
-LEAN_NUM_THREADS=1 prlimit --as=17179869184 -- \
+systemd-run --user --scope -p MemoryMax=24G env LEAN_NUM_THREADS=1 \
   lake build Examples.cpp.tinyxml2.class_subobjects_proof
-LEAN_NUM_THREADS=1 prlimit --as=17179869184 -- \
+systemd-run --user --scope -p MemoryMax=24G env LEAN_NUM_THREADS=1 \
   python3 extractors/cpp/test_class_subobjects.py
 ```
 

@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- Corrected C++ coverage reporting: independent handwritten fixtures are
+  witnesses, not source-derived matches. TinyXML-2 callable matches require
+  the captured source and literal hashes and the recorded ABI and call binding.
+  The harness relies on its caller's cgroup instead of imposing an address-space
+  limit.
+
 - Added an exact-width partial RV32 RVFI port adapter for E observations.
   Unknown valid bits and active trap/halt/handler-entry rows refuse; known
   invalid cycles remain explicit bubbles with irrelevant payloads.

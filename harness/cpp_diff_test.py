@@ -3,14 +3,13 @@
 
 The native side is deliberately narrow: Clang/LLVM 21.1.8 compiles the
 unchanged TinyXML-2 source and a generated caller invokes the original
-declaration.  The Lean side evaluates the checked-in literal exported from
-that same source.  Missing compiler/source inputs are reported as ORACLE;
-they are never converted into matches.
+declaration. Most Lean rows evaluate handwritten IR or admission fixtures.
+These and the native checks are independent witnesses, not evidence that the
+model evaluated the native source's AST. Missing inputs are reported as ORACLE.
 
-This first driver also owns the C++ grammar census.  A witness is compiled
-with ``-ast-dump=json`` and its node kind is checked, while the translation
-surface is asked to execute it.  Translation execution currently refuses by
-design, so the page records those loud refusals until a rung admits them.
+This driver also owns the C++ grammar census. A witness is compiled with
+``-ast-dump=json`` and its node kind is checked. Its execution verdict is a
+recorded refusal boundary; the model is not run on each grammar source.
 
 Usage::
 
@@ -20,12 +19,13 @@ Usage::
 
 The process has no implicit corpus download.  Set ``LEANCPP_CLANG`` and
 ``LEANCPP_TINYXML2_DIR`` to run the native rows.  Every Lean invocation is
-under the lane's 16 GiB address-space cap and one worker.
+one worker. Run this harness inside the lane's memory-limited cgroup.
 """
 
 from __future__ import print_function
 
 import argparse
+import hashlib
 import json
 import os
 import pathlib
@@ -40,7 +40,6 @@ CASES = ROOT / "harness" / "cpp_cases.json"
 GRAMMAR = ROOT / "harness" / "cpp_grammar.json"
 COVERAGE_PAGE = ROOT / "docs" / "cpp-coverage.md"
 RUNG_PAGE = ROOT / "docs" / "cpp-rung-status.md"
-ADDRESS_CAP = "17179869184"
 PINNED_CLANG = "21.1.8"
 
 
@@ -94,17 +93,13 @@ CORPORA = [
 
 def run(command, cwd=ROOT, timeout=180):
     """Run a command with text pipes and return the completed process."""
+    environment = dict(os.environ)
+    environment.pop("CCC_OVERRIDE_OPTIONS", None)
+    environment.pop("CCC_ADD_ARGS", None)
+    environment["SOURCE_DATE_EPOCH"] = "0"
     return subprocess.run(command, cwd=str(cwd), stdout=subprocess.PIPE,
-                          stderr=subprocess.PIPE, universal_newlines=True,
+                          stderr=subprocess.PIPE, universal_newlines=True, env=environment,
                           timeout=timeout)
-
-
-def capped(command, cwd=ROOT, timeout=180):
-    """Run one Lean process under the mandatory 16 GiB cap."""
-    prlimit = shutil.which("prlimit")
-    if prlimit:
-        command = [prlimit, "--as=" + ADDRESS_CAP, "--"] + list(command)
-    return run(command, cwd=cwd, timeout=timeout)
 
 
 def stable_diagnostic(text, directory):
@@ -160,10 +155,14 @@ def render_lean(cases):
 
 def model_rows(cases):
     """Evaluate all checked-in literal rows with one Lean process."""
+    if any(row.get("lean_module") == "Examples.cpp.tinyxml2.proof" for row in cases):
+        built = run(["lake", "build", "Examples.cpp.tinyxml2.proof"], timeout=900)
+        if built.returncode != 0:
+            raise RuntimeError("Lean captured callable build failed:\n%s" % (built.stdout + built.stderr)[-6000:])
     with tempfile.TemporaryDirectory(prefix="cpp-diff-model-") as directory:
         source = pathlib.Path(directory) / "Rows.lean"
         source.write_text(render_lean(cases), encoding="utf-8")
-        result = capped(["lake", "env", "lean", "-j", "1", str(source)], timeout=300)
+        result = run(["lake", "env", "lean", "-j", "1", str(source)], timeout=300)
     if result.returncode != 0:
         raise RuntimeError("Lean model failed:\n%s" % (result.stdout + result.stderr)[-6000:])
     values = {}
@@ -187,9 +186,51 @@ def clang_info():
     version = (result.stdout + result.stderr).strip()
     if result.returncode != 0:
         return None, "Clang version probe failed: %s" % version[-500:]
-    if PINNED_CLANG not in version:
+    version_line = version.splitlines()[0] if version else ""
+    expected_prefix = "clang version " + PINNED_CLANG
+    if version_line != expected_prefix and not version_line.startswith(expected_prefix + " "):
         return None, "Clang is not pinned to %s: %s" % (PINNED_CLANG, version.splitlines()[0] if version else "unknown")
     return executable, version.splitlines()[0] if version else PINNED_CLANG
+
+
+def tinyxml_capture_verified(row, root):
+    """Check the recorded capture and the exact model/native call binding.
+
+    The manifest and source-to-IR exporter remain in the trusted boundary.
+    An arbitrary handwritten row cannot opt into MATCH by setting a flag.
+    """
+    args = row.get("args")
+    if not isinstance(args, list) or len(args) != 1 or type(args[0]) is not int:
+        return False
+    arg = args[0]
+    if not -128 <= arg < 128:
+        return False
+    expression_arg = "(%d)" % arg if arg < 0 else str(arg)
+    if (row.get("kind", "callable") != "callable" or
+        row.get("corpus") != "TinyXML-2" or
+        row.get("lean_module") != "Examples.cpp.tinyxml2.proof" or
+        row.get("lean_namespace") != "Examples.cpp.tinyxml2.IsUTF8Continuation" or
+        row.get("lean_expression") != "observed " + expression_arg or
+        row.get("cpp_expression") != "tinyxml2::XMLUtil::IsUTF8Continuation(static_cast<char>({arg}))"):
+        return False
+    example = ROOT / "Examples" / "cpp" / "tinyxml2"
+    try:
+        manifest = json.loads((example / "provenance.json").read_text(encoding="utf-8"))
+        if (not isinstance(manifest, dict) or
+            manifest.get("format") != "cpp-original-callable-1" or
+            manifest.get("source_revision") != "321ea883b7190d4e85cae5512a12e5eaa8f8731f" or
+            manifest.get("frontend") != "Clang/LLVM 21.1.8" or
+            manifest.get("source_declaration") != "tinyxml2::XMLUtil::IsUTF8Continuation"):
+            return False
+        sources = manifest["source_sha256"]
+        if set(sources) != {"tinyxml2.cpp", "tinyxml2.h"}:
+            return False
+        for name in ("tinyxml2.cpp", "tinyxml2.h"):
+            if hashlib.sha256((root / name).read_bytes()).hexdigest() != sources[name]:
+                return False
+        return hashlib.sha256((example / "IsUTF8Continuation.lean").read_bytes()).hexdigest() == manifest["literal_sha256"]
+    except (OSError, ValueError, KeyError, TypeError):
+        return False
 
 
 def native_rows(cases, clang):
@@ -246,8 +287,16 @@ def native_rows(cases, clang):
         result.update({row["id"]: ("ORACLE", "LEANCPP_TINYXML2_DIR must contain tinyxml2.cpp and tinyxml2.h") for row in callable_cases})
         return result
     with tempfile.TemporaryDirectory(prefix="cpp-diff-native-") as directory:
+        snapshot = pathlib.Path(directory) / "source"
+        snapshot.mkdir()
+        shutil.copyfile(implementation, snapshot / "tinyxml2.cpp")
+        shutil.copyfile(header, snapshot / "tinyxml2.h")
+        implementation = snapshot / "tinyxml2.cpp"
         wrapper = pathlib.Path(directory) / "caller.cpp"
-        body = ["#include <iostream>", "#include <cstdlib>", '#include "tinyxml2.h"', "int main() {"]
+        body = ["#include <iostream>", "#include <cstdlib>", "#include <climits>",
+                '#include "tinyxml2.h"',
+                "static_assert(CHAR_BIT == 8 && CHAR_MIN == -128 && sizeof(short) == 2 && sizeof(int) == 4 && sizeof(long) == 8 && sizeof(long long) == 8 && sizeof(void*) == 8);",
+                "int main() {"]
         for row in callable_cases:
             arg = row["args"][0]
             expression = row["cpp_expression"].format(arg=arg)
@@ -255,7 +304,7 @@ def native_rows(cases, clang):
         body.append("  return 0;\n}")
         wrapper.write_text("\n".join(body) + "\n", encoding="utf-8")
         binary = pathlib.Path(directory) / "caller"
-        compile_result = run([clang, "-std=c++23", "-pedantic-errors", "-I", str(root),
+        compile_result = run([clang, "--no-default-config", "-std=c++23", "-O0", "-pedantic-errors", "-I", str(snapshot),
                               str(wrapper), str(implementation), "-o", str(binary)], timeout=180)
         if compile_result.returncode != 0:
             reason = "native compile failed: %s" % stable_diagnostic((compile_result.stdout + compile_result.stderr)[-1200:], directory)
@@ -275,8 +324,11 @@ def native_rows(cases, clang):
             reason = "native caller emitted %d rows, expected %d" % (len(outputs), len(callable_cases))
             result.update({row["id"]: ("ORACLE", reason) for row in callable_cases})
             return result
-        result.update({row["id"]: ("NATIVE", outputs[index].strip())
-                       for index, row in enumerate(callable_cases)})
+        for index, row in enumerate(callable_cases):
+            if tinyxml_capture_verified(row, snapshot):
+                result[row["id"]] = ("NATIVE_CAPTURED", outputs[index].strip())
+            else:
+                result[row["id"]] = ("ORACLE", "TinyXML-2 capture provenance or call binding did not verify")
         return result
 
 
@@ -288,16 +340,18 @@ def differential(cases, model, native):
         if native_status in ("ORACLE", "TIMEOUT"):
             verdict = native_status
             detail = native_value
-        elif native_status == "NATIVE":
+        elif native_status in ("NATIVE", "NATIVE_CAPTURED"):
             if row.get("expect") == "refuse":
                 if model_value == "refuse":
                     verdict, detail = "REFUSE", "recorded refusal; native witness compiles"
                 else:
                     verdict, detail = "DIVERGE", "model answered a recorded refusal"
             elif row.get("kind") in ("translation", "lifetime", "scalar", "expression", "statement") and model_value == native_value:
-                verdict, detail = "MATCH", "Lean admission and Clang compilation agree"
+                verdict, detail = "WITNESS", "independent Lean fixture and native check passed; no source-to-IR correspondence established"
+            elif native_status == "NATIVE_CAPTURED" and model_value == "ok " + native_value:
+                verdict, detail = "MATCH", "pinned source and generated literal hashes verified; model and native call agree"
             elif row.get("kind", "callable") == "callable" and model_value == "ok " + native_value:
-                verdict, detail = "MATCH", "Lean and Clang agree"
+                verdict, detail = "WITNESS", "checked-in exported callable and native result agree; native source identity is not verified here"
             else:
                 verdict, detail = "DIVERGE", "model=%s native=%s" % (model_value, native_value)
         elif native_status == "DIVERGE":
@@ -376,7 +430,7 @@ def render_rung_page(diff_rows, grammar_rows_value):
         "",
         "<!-- GENERATED by harness/cpp_diff_test.py --check -->",
         "",
-        "Measured against the C++ charter's N4950 clause ladder. `executable` means a bounded Lean definition and tests run; it does not claim complete ISO coverage. `MATCH` requires the unchanged source compiled by pinned Clang/LLVM 21.1.8. Missing frontend or corpus inputs are reported as `ORACLE`/`EXTRACT`, never as matches.",
+        "Measured against the C++ charter's N4950 clause ladder. `executable` means a bounded Lean definition and tests run; it does not claim complete ISO coverage. `MATCH` requires running the model on the same captured source compiled by pinned Clang/LLVM 21.1.8. Independent fixtures are `WITNESS`. Missing frontend or corpus inputs are reported as `ORACLE`/`EXTRACT`, never as matches.",
         "",
         "## Clause ladder",
         "",
@@ -402,18 +456,20 @@ def render_rung_page(diff_rows, grammar_rows_value):
         lines.append("*%s:* %s" % (corpus["name"], corpus["note"]))
         lines.append("")
     lines += ["## This run's grammar and differential measurements", "",
-              "The grammar census uses one source witness per listed Clang AST node kind. The root-shape admission is executable, while declaration and body execution remain loud refusals; therefore a successfully compiled declaration witness is a `REFUSE` until its rung is admitted.",
+              "The grammar census checks one source witness per listed Clang AST node kind. Its `REFUSE` verdict is a recorded execution boundary, not a separate Lean run of that source.",
               "",
-              "| measurement | rows | MATCH | DIVERGE | REFUSE | TIMEOUT | ORACLE |",
-              "|---|---:|---:|---:|---:|---:|---:|"]
+              "| measurement | rows | MATCH | WITNESS | DIVERGE | REFUSE | TIMEOUT | ORACLE |",
+              "|---|---:|---:|---:|---:|---:|---:|---:|"]
     grammar_count = counts(grammar_rows_value)
     diff_count = counts(diff_rows)
-    lines.append("| grammar witnesses | %d | %d | %d | %d | %d | %d |" %
+    lines.append("| grammar witnesses | %d | %d | %d | %d | %d | %d | %d |" %
                  (len(grammar_rows_value), grammar_count.get("MATCH", 0),
+                  grammar_count.get("WITNESS", 0),
                   grammar_count.get("DIVERGE", 0), grammar_count.get("REFUSE", 0),
                   grammar_count.get("TIMEOUT", 0), grammar_count.get("ORACLE", 0)))
-    lines.append("| differential calls | %d | %d | %d | %d | %d | %d |" %
-                 (len(diff_rows), diff_count.get("MATCH", 0), diff_count.get("DIVERGE", 0),
+    lines.append("| differential and independent witnesses | %d | %d | %d | %d | %d | %d | %d |" %
+                 (len(diff_rows), diff_count.get("MATCH", 0), diff_count.get("WITNESS", 0),
+                  diff_count.get("DIVERGE", 0),
                   diff_count.get("REFUSE", 0), diff_count.get("TIMEOUT", 0),
                   diff_count.get("ORACLE", 0)))
     translation_count = sum(1 for row in diff_rows if row["rung"] == 0)
@@ -426,7 +482,7 @@ def render_rung_page(diff_rows, grammar_rows_value):
     statement_count = sum(1 for row in diff_rows if row["kind"] == "statement")
     callable_count = (len(diff_rows) - translation_count - lifetime_count - scalar_count -
                       expression_count - statement_count - member_expression_count)
-    lines += ["", "The differential rows include %d compile-only translation witness, %d rung-1 lifetime witnesses, %d rung-2 scalar checks, %d rung-3 expression checks, %d rung-4 statement checks, %d rung-7 member-expression checks, and %d callable rows across the retained callable witness set; set `LEANCPP_TINYXML2_DIR` and `LEANCPP_CLANG` to replace the explicit ORACLE rows with compiled calls." % (translation_count, lifetime_count, scalar_count, expression_count, statement_count, member_expression_count, callable_count), ""]
+    lines += ["", "The cases include %d compile-only translation witnesses, %d rung-1 lifetime witnesses, %d rung-2 scalar checks, %d rung-3 expression checks, %d rung-4 statement checks, %d rung-7 member-expression checks, and %d callable rows; set `LEANCPP_TINYXML2_DIR` and `LEANCPP_CLANG` to run the available native calls." % (translation_count, lifetime_count, scalar_count, expression_count, statement_count, member_expression_count, callable_count), ""]
     return "\n".join(lines)
 
 
@@ -436,23 +492,24 @@ def render_coverage(diff_rows, grammar_rows_value):
         "",
         "<!-- GENERATED by harness/cpp_diff_test.py --check -->",
         "",
-        "This page is generated from `harness/cpp_cases.json` and `harness/cpp_grammar.json`. The native oracle is the unchanged source compiled and called by Clang/LLVM 21.1.8. The Lean side is the literal artifact and evaluator in `Examples/cpp`; unavailable inputs are counted as `ORACLE`.",
+        "This page is generated from `harness/cpp_cases.json` and `harness/cpp_grammar.json`. Clang/LLVM 21.1.8 compiles the native source. Most Lean inputs are handwritten fixtures; passing both independent checks is a `WITNESS`, not a source-derived differential match. TinyXML-2 callable rows count as `MATCH` only when their source, literal, and call bindings match the recorded capture. Unavailable inputs are counted as `ORACLE`.",
         "",
         "## Differential table",
         "",
-        "| rows | MATCH | DIVERGE | REFUSE | TIMEOUT | ORACLE |",
-        "|---:|---:|---:|---:|---:|---:|",
+        "| rows | MATCH | WITNESS | DIVERGE | REFUSE | TIMEOUT | ORACLE |",
+        "|---:|---:|---:|---:|---:|---:|---:|",
     ]
     diff_count = counts(diff_rows)
-    lines.append("| %d | %d | %d | %d | %d | %d |" %
-                 (len(diff_rows), diff_count.get("MATCH", 0), diff_count.get("DIVERGE", 0),
+    lines.append("| %d | %d | %d | %d | %d | %d | %d |" %
+                 (len(diff_rows), diff_count.get("MATCH", 0), diff_count.get("WITNESS", 0),
+                  diff_count.get("DIVERGE", 0),
                   diff_count.get("REFUSE", 0), diff_count.get("TIMEOUT", 0),
                   diff_count.get("ORACLE", 0)))
-    lines += ["", "Each row compares a Lean result with the native call. `ORACLE` is an environment or compilation boundary, not agreement.", "", "| case | rung | Lean | native | verdict | detail |", "|---|---:|---|---|---|---|"]
+    lines += ["", "`WITNESS` records independent passing checks, without claiming source-to-IR correspondence. `DIVERGE` includes failures of either independent check and does not itself prove a source-derived mismatch. `ORACLE` is an environment or compilation boundary. Neither `WITNESS` nor `ORACLE` is a differential match.", "", "| case | rung | Lean | native | verdict | detail |", "|---|---:|---|---|---|---|"]
     for row in diff_rows:
         lines.append("| `%s` | %d | `%s` | `%s` | **%s** | %s |" %
                      (row["id"], row["rung"], row["model"], row["native"], row["verdict"], markdown_cell(row["detail"])))
-    lines += ["", "## Grammar census", "", "One witness per listed Clang AST node kind, mapped to the charter rung. `frontend` records whether the pinned Clang AST contained the requested node; `verdict` is the Lean execution result.", "", "| node kind | rung | frontend | verdict | detail |", "|---|---:|---|---|---|"]
+    lines += ["", "## Grammar census", "", "One witness per listed Clang AST node kind, mapped to the charter rung. `frontend` records whether the pinned Clang AST contained the requested node. A `REFUSE` verdict records the current execution boundary; the harness does not run the model on each grammar source.", "", "| node kind | rung | frontend | verdict | detail |", "|---|---:|---|---|---|"]
     for row in grammar_rows_value:
         lines.append("| `%s` | %d | %s | **%s** | %s |" %
                      (row["id"], row["rung"], row["frontend"], row["verdict"], markdown_cell(row["detail"])))
@@ -516,8 +573,9 @@ def main(argv=None):
         write_or_check(RUNG_PAGE, rung, False)
         print("cpp_diff_test: wrote %s and %s" % (COVERAGE_PAGE, RUNG_PAGE))
     counts_text = counts(diff_rows)
-    print("%d differential rows: %d MATCH, %d DIVERGE, %d REFUSE, %d TIMEOUT, %d ORACLE" %
-          (len(diff_rows), counts_text.get("MATCH", 0), counts_text.get("DIVERGE", 0),
+    print("%d rows: %d MATCH, %d WITNESS, %d DIVERGE, %d REFUSE, %d TIMEOUT, %d ORACLE" %
+          (len(diff_rows), counts_text.get("MATCH", 0), counts_text.get("WITNESS", 0),
+           counts_text.get("DIVERGE", 0),
            counts_text.get("REFUSE", 0), counts_text.get("TIMEOUT", 0), counts_text.get("ORACLE", 0)))
     grammar_text = counts(grammar_result)
     print("%d grammar witnesses: %d MATCH, %d DIVERGE, %d REFUSE, %d TIMEOUT, %d ORACLE" %

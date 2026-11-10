@@ -42199,4 +42199,27 @@ def callableEvaluatorRefinementShiftLeftWitness : Bool :=
 
 #guard callableEvaluatorRefinementShiftLeftWitness
 
+private def callableEvaluatorRefinementShiftRightFunction : CallableFunction := {
+  occurrence := functionDeclaration
+  signature := {result := intType, parameters := [intType], variadic := false}
+  parameters := [parameter]
+  body := .return_ {
+    expression := .binary ">>"
+      {expression := .parameter (handle "0x10"),
+        sourceType := intType, type := intType}
+      {expression := .integer 2,
+        sourceType := intType, type := intType}
+      , sourceType := intType, type := intType}}
+
+theorem callableEvaluatorRefinementShiftRight :
+    (evaluateCallable 32 .lp64 callableEvaluatorRefinementShiftRightFunction [signed 28]).toOption =
+      (evaluateCallableObject 32 .lp64 callableEvaluatorRefinementShiftRightFunction [signed 28]).toOption := by
+  rfl
+
+def callableEvaluatorRefinementShiftRightWitness : Bool :=
+  (evaluateCallable 32 .lp64 callableEvaluatorRefinementShiftRightFunction [signed 28]).toOption ==
+    (evaluateCallableObject 32 .lp64 callableEvaluatorRefinementShiftRightFunction [signed 28]).toOption
+
+#guard callableEvaluatorRefinementShiftRightWitness
+
 end LeanModels.Cpp.CallableObjectEvaluationTests

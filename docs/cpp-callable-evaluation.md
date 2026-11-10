@@ -531,3 +531,6 @@ exclusive-or, with the same kernel reduction and native differential coverage.
 
 `callableEvaluatorRefinementShiftLeft` carries the relation through pure left
 shift, with the same kernel reduction and native differential coverage.
+
+`callableEvaluatorRefinementShiftRight` carries the relation through pure right
+shift, with the same kernel reduction and native differential coverage.

@@ -500,7 +500,7 @@ theorem runFromObs2_of_behaves0 {E : Elab} {rank : Nat → Nat} (hS : Settles E 
 
 /-- **Every E-core-0 behaviour is a `run2` behaviour** (the run form): an `Obs_E0` run `r` is the
 `runObs2` run of the stimulus that re-drives every input to its value in `r`'s pre samples, under
-every schedule, at the explicit fuel. -/
+every process-atomic legal schedule, at the explicit fuel. -/
 theorem runObs2_of_runs_E0 {E : Elab} {rank : Nat → Nat} (hS : Settles E E.toDesign2 rank)
     (hinit : InitTyped E.toDesign2) {ch : Choice} {env : List SvState} {r : List (CycleObs SvState)}
     (hr : Obs_E0.Runs E ch env r) (σ : ScheduleOracle) :

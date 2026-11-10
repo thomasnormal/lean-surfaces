@@ -37,7 +37,7 @@ correction left visible rather than silently patched.
 **ONE REFINEMENT BACK TO THE SURVEY, because adopting its phrasing
 verbatim would have been vacuous.** It asked for `RaceFree → determinism`.
 But in this tier `Deterministic d` **IS** race-freedom — the same
-predicate, *"all legal schedules agree on the trace"* — so
+predicate, *"all process-atomic legal schedules agree on the trace"* — so
 `RaceFree d → Deterministic d` would be a tautology. The correct
 restatement is that the predicate is a **premise or a per-design theorem,
 never a tier-wide conclusion**.

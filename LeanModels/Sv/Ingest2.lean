@@ -223,12 +223,9 @@ partial def parsePExpr (j : Json) : Except String PExpr := do
         let bits ← getStrField j "bits"
         match LVec.ofBinLit? width bits with
         | some v =>
-            -- A SIGNED literal (`signed: true`) is a parser-provided
-            -- declaration/type conversion.  Keep it distinct from an
-            -- explicit `$signed(...)` Cast: the former may widen under the
-            -- consuming expression's context (§11.8.1/§11.8.2), while the
-            -- latter remains the historical loud boundary when its width is
-            -- parameter-dependent.
+            -- A SIGNED literal's parser metadata is a context conversion;
+            -- keep it distinct from an explicit `$signed(...)` Cast so a
+            -- context-determined operator can apply §11.8.1/§11.8.2.
             match getOptField j "signed" with
             | some (Json.bool true) => return .signedResize width (.lit v)
             | none | some (Json.bool false) => return .lit v
@@ -238,8 +235,7 @@ partial def parsePExpr (j : Json) : Except String PExpr := do
         let e := .ident (← getStrField j "name")
         match getOptField j "signed" with
         | none | some (Json.bool false) => return e
-        | some (Json.bool true) =>
-            return .signedResize (← getNatField j "width") e
+        | some (Json.bool true) => return .cast true e
         | some _ => throw "field 'signed' is not a bool"
     | "ParamRef" => return .paramRef (← getStrField j "name") (getOptStr j "from_package")
     | "GenvarRef" => return .genvarRef (← getStrField j "name")
@@ -504,7 +500,7 @@ partial def parseTargetL (j : Json) : Except String (Except String PLhs) := do
       -- `signed: true`, which `parsePExpr` retains as a root cast marker.
       -- Signedness is irrelevant to the destination name; unwrap that
       -- marker here so a whole-signal assignment remains a valid target.
-      | .cast _ (.ident n) | .signedResize _ (.ident n) => return .ok (.ident n)
+      | .cast _ (.ident n) => return .ok (.ident n)
       | .bitSel (.ident n) idx => return .ok (.bitSel n idx)
       | .partSel (.ident n) msb lsb => return .ok (.partSel n msb lsb)
       | .arrayElem n is => return .ok (.arrayElem n is)

@@ -72729,6 +72729,7 @@
       "params": {
         "W": 4
       },
+      "refusal": "Resize:signed",
       "signals": [
         "y",
         "mixed",
@@ -72744,7 +72745,7 @@
           "u": "0111"
         }
       ],
-      "measured": "2026-11-09: a signed 8-bit literal is sign-extended for the signed expression and narrowed by the signed 4-bit destination; Icarus agrees with the symbolic route under IEEE 1800-2023 §11.8.1–11.8.2."
+      "measured": "2026-11-10: MEASURED regression from the prior W=4 MATCH: this parameter point now refuses Resize:signed (signed operand widened 4 → 8 at these parameters) after signed identifiers retain the established Cast node; the W=4 source-shaped point remains pinned as a loud refusal."
     },
     {
       "name": "signed_literal_widen_w8",

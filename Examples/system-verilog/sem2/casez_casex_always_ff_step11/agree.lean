@@ -1,21 +1,29 @@
 /-
 Step 11 clean-room evidence for casez and casex in `always_ff`.
 
-The semantic tier retains both parser-shaped CaseStmt nodes and the legacy
-cycle witness matches the four-state oracle.  E-core-1's edge executor still
-keeps case bodies at its explicit 12.5 boundary; this file does not alter the
-shared Kernel definitions.
+The unchanged loaded CaseStmt nodes execute in E. The kernel checks all
+Icarus/Xcelium rows, and R-EDGE covers every legal process-atomic schedule.
 -/
-import LeanModels.Sv.Ingest2
-import LeanModels.Sv.Kernel.Core1Edge
+import Examples.«system-verilog».sem2.case_always_ff_step11.agree
 
 namespace Examples.«system-verilog».sem2.casez_casex_always_ff_step11.agree
 
-open LeanModels.Sv
-open LeanModels.Sv.Kernel
+open LeanModels.Sv LeanModels.Sv.Kernel
+open Examples.«system-verilog».sem2.case_always_ff_step11.agree
+
+set_option maxRecDepth 4096
+set_option maxHeartbeats 800000
 
 load_design_sv2 casezCasexAlwaysFfStep11
   from "Examples/system-verilog/sem2/casez_casex_always_ff_step11/casez_casex_always_ff_step11.sv.json"
+
+local macro "normalize_wildcard_fixture" : tactic => `(tactic|
+  simp only [casezCasexAlwaysFfStep11.sem,
+    PDesign.instantiateGDAlias2, PDesign.instantiateGD2, PDesign.instantiateG2,
+    PDesign.instantiate2, PDesign.instantiate2From,
+    casezCasexAlwaysFfStep11.pdesign, expandList2, List.map, instProcess2,
+    instStmt2, instStmts2, instItems2, instPats2, fitExpr2.eq_def, instExpr2,
+    caseWidth2, List.foldl, selfWidth2, Design2.aliasGuard, Array.toList_map])
 
 private def hasCaseModes : Bool :=
   match casezCasexAlwaysFfStep11.sem.processes.toList with
@@ -30,43 +38,64 @@ private def hasCaseModes : Bool :=
 #guard !casezCasexAlwaysFfStep11.sem.hasUnsupported
 #guard hasCaseModes
 
-private def stimulus (sel d : String) : SvState :=
-  [("clk", LVec.ofNat 1 1), ("sel", LVec.lit sel), ("d", LVec.lit d)]
+def wildcardEdge : Elab1 := fromAlwaysFF casezCasexAlwaysFfStep11.sem
 
-private def trace : Res (List SvState) :=
-  run2 casezCasexAlwaysFfStep11.sem σ_src 256 [
-    stimulus "0000" "1001",
-    stimulus "0001" "1000",
-    stimulus "00z1" "0111",
-    stimulus "01xz" "0110",
-    stimulus "1x00" "0101",
-    stimulus "1z11" "0100",
-    stimulus "zzzz" "0011",
-    stimulus "xxxx" "0010"]
+#guard wildcardEdge.okB
+#guard wildcardEdge.oneWriterB
+#guard wildcardEdge.noEdgeB
 
-#guard match trace with
-  | .ok [s0, s1, s2, s3, s4, s5, s6, s7] =>
-      SvState.showSignal s0 "qz" == "0011" && SvState.showSignal s0 "qx" == "0110" &&
-      SvState.showSignal s1 "qz" == "0010" && SvState.showSignal s1 "qx" == "0101" &&
-      SvState.showSignal s2 "qz" == "0010" && SvState.showSignal s2 "qx" == "0101" &&
-      SvState.showSignal s3 "qz" == "0001" && SvState.showSignal s3 "qx" == "0100" &&
-      SvState.showSignal s4 "qz" == "0101" && SvState.showSignal s4 "qx" == "0101" &&
-      SvState.showSignal s5 "qz" == "0100" && SvState.showSignal s5 "qx" == "0100" &&
-      SvState.showSignal s6 "qz" == "0011" && SvState.showSignal s6 "qx" == "0011" &&
-      SvState.showSignal s7 "qz" == "0011" && SvState.showSignal s7 "qx" == "0010"
-  | _ => false
+theorem wildcard_profile : EdgeProfile wildcardEdge := by
+  apply EdgeProfile.ofChecks
+  all_goals
+    try unfold AllFour
+    unfold wildcardEdge fromAlwaysFF
+    normalize_wildcard_fixture
+    decide +kernel
 
--- E-core-1 currently refuses all case bodies at the explicit 12.5 boundary.
-private def edgeBody : Stmt2 :=
-  match casezCasexAlwaysFfStep11.sem.processes[0]? with
-  | some (LeanModels.Sv.Process2.alwaysFF _ body) => body
-  | _ => .unsupported "fixture" "unexpected process"
+theorem wildcard_all_schedules (ch : Choice) {s : Store}
+    (hT : wildcardEdge.base.Typed s) (k : Nat) :
+    ∃ c', SlotCloses1 wildcardEdge ch { store := s, active := [0], nba := [], k := k } c' ∧
+      wildcardEdge.base.view c'.store =
+        commitNba2 (wildcardEdge.base.view s) (wildcardEdge.queue s [0]) :=
+  rEdge wildcard_profile ch hT (by decide) (by
+    unfold wildcardEdge fromAlwaysFF
+    normalize_wildcard_fixture
+    decide +kernel) k
 
-private def edge : Elab1 :=
-  { decls := casezCasexAlwaysFfStep11.sem.decls
-    procs := #[{ clk := "clk", rstn := none, body := edgeBody }] }
+def wildcardInputs : List SvState :=
+  [[("sel", .ofNat 4 0), ("d", .ofNat 4 9)],
+   [("sel", .ofNat 4 1), ("d", .ofNat 4 8)],
+   [("sel", ⟨#[.l1, .lz, .l0, .l0]⟩), ("d", .ofNat 4 7)],
+   [("sel", ⟨#[.lz, .lx, .l1, .l0]⟩), ("d", .ofNat 4 6)],
+   [("sel", ⟨#[.l0, .l0, .lx, .l1]⟩), ("d", .ofNat 4 5)],
+   [("sel", ⟨#[.l1, .l1, .lz, .l1]⟩), ("d", .ofNat 4 4)],
+   [("sel", ⟨#[.lz, .lz, .lz, .lz]⟩), ("d", .ofNat 4 3)],
+   [("sel", ⟨#[.lx, .lx, .lx, .lx]⟩), ("d", .ofNat 4 2)],
+   [("sel", ⟨#[.l0, .l0, .lx, .l1]⟩), ("d", ⟨#[.l1, .l0, .lz, .lx]⟩)],
+   [("sel", ⟨#[.l1, .l1, .lz, .l1]⟩), ("d", ⟨#[.lz, .lz, .lz, .lz]⟩)],
+   [("sel", .ofNat 4 8), ("d", ⟨#[.lx, .lx, .lx, .lx]⟩)],
+   [("sel", ⟨#[.lz, .lz, .lz, .lz]⟩), ("d", .ofNat 4 10)]]
 
-#guard edge.okB == false
-#guard edgeBody.ffOkB edge.design == false
+def wildcardNames : List String := ["qz", "qx"]
+
+def wildcardSimulatorRows : List (List String) :=
+  [["xxxx", "xxxx"], ["0011", "0110"], ["0010", "0101"],
+   ["0010", "0101"], ["0001", "0100"], ["0101", "0101"],
+   ["0100", "0100"], ["0011", "0011"], ["0011", "0010"],
+   ["xz01", "xz01"], ["zzzz", "zzzz"], ["xxxx", "xxxx"], ["1010", "1010"]]
+
+/-- Kernel computation checks startup, every original row, and the added
+x/z data and overlapping-wildcard first-match rows against E. -/
+theorem wildcard_agrees :
+    (trace wildcardEdge wildcardNames (Config1.init wildcardEdge) wildcardInputs).map
+      (showRow wildcardEdge wildcardNames (Config1.init wildcardEdge) :: ·) =
+      some wildcardSimulatorRows := by
+  unfold wildcardEdge fromAlwaysFF
+  normalize_wildcard_fixture
+  decide +kernel
+
+#print axioms wildcard_profile
+#print axioms wildcard_all_schedules
+#print axioms wildcard_agrees
 
 end Examples.«system-verilog».sem2.casez_casex_always_ff_step11.agree

@@ -125,6 +125,23 @@ DECIDED: close `py-genexp-iter-deferred` on this branch and retain the
 genexp-only creation guard until native generator-expression nodes replace the
 lowering.
 
+## 2026-11-10-pyfoundation-16 — revalidate ListComp shadow semantics
+
+The inbox finding `py-listcomp-list-shadow` is already closed. List
+comprehensions remain source-level AST nodes evaluated directly by both
+interpreter surfaces; no user-visible `list` name is synthesized or resolved.
+Module and local bindings named `list` therefore cannot alter comprehension
+behavior.
+
+| Measurement | Result |
+|---|---|
+| Shadow witness | `listcomp_shadow.py`: `[1, 2]`, exit 0, MATCH CPython 3.9.25 |
+| Source audit | no active ListComp-to-`list` call lowering |
+| Semantic change | none; audit confirmation only |
+
+DECIDED: close `py-listcomp-list-shadow` on this branch and retain the explicit
+loud boundaries for walrus filters and unsupported comprehension sources.
+
 ## 2026-11-10-pyfoundation-10 — max/min recursion
 
 `max` and `min` now check the CPython builtin recursion unit after positional

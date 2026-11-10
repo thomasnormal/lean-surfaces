@@ -113,6 +113,10 @@
 - Added a pinned 64-bit `Py_ssize_t` narrowing boundary for huge list indices
   and oversized range lengths; those operations now refuse loudly.
 
+- Replaced the broad Py_ssize_t refusal with a shared raising conversion that
+  returns CPython's exact `OverflowError` for huge list indices and range
+  lengths.
+
 - Added the foundation protocol census covering comparison, hashing, index,
   float conversion, iteration, sizing, rendering, recursion, operator, builtin,
   and method dispatch across both Python interpreter surfaces.

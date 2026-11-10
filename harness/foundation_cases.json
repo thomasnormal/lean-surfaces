@@ -59,22 +59,43 @@
     "file": "harness/foundation_probe.py",
     "function": "list_insert_huge",
     "args": [[9223372036854775808], [-9223372036854775809]],
-    "expect": "unsupported",
-    "note": "Finding 3 stopped: list.insert narrowing outside pinned Py_ssize_t is loud."
+    "expect": "match",
+    "note": "Finding 3 stopped: list.insert uses the shared raising Py_ssize_t conversion and exact OverflowError."
+  },
+  {
+    "file": "harness/foundation_probe.py",
+    "function": "list_insert_boundary",
+    "args": [[9223372036854775807], [-9223372036854775808]],
+    "expect": "match",
+    "note": "Py_ssize_t controls: both signed 64-bit endpoints are accepted by list.insert; clamping remains list semantics."
   },
   {
     "file": "harness/foundation_probe.py",
     "function": "list_pop_huge",
     "args": [[9223372036854775808]],
-    "expect": "unsupported",
-    "note": "Finding 3 stopped: list.pop narrowing outside pinned Py_ssize_t is loud."
+    "expect": "match",
+    "note": "Finding 3 stopped: list.pop uses the shared raising Py_ssize_t conversion and exact OverflowError."
+  },
+  {
+    "file": "harness/foundation_probe.py",
+    "function": "list_pop_boundary",
+    "args": [[9223372036854775807], [-9223372036854775808]],
+    "expect": "match",
+    "note": "Py_ssize_t controls: in-range endpoints reach list.pop's ordinary IndexError path."
+  },
+  {
+    "file": "harness/foundation_probe.py",
+    "function": "list_pop_empty_huge",
+    "args": [[9223372036854775808]],
+    "expect": "match",
+    "note": "Wrapper ordering control: list.pop converts an oversized index before the empty-list check."
   },
   {
     "file": "harness/foundation_probe.py",
     "function": "range_len_huge",
     "args": [[]],
-    "expect": "unsupported",
-    "note": "Finding 3 stopped: len(range(...)) beyond Py_ssize_t is loud."
+    "expect": "match",
+    "note": "Finding 3 stopped: len(range(...)) uses the shared raising Py_ssize_t conversion and exact OverflowError."
   },
   {
     "file": "harness/foundation_probe.py",

@@ -246,6 +246,14 @@ def pySsizeMin : Int := -9223372036854775808
 def pySsizeFits (i : Int) : Bool := pySsizeMin ≤ i && i ≤ pySsizeMax
 def pySsizeMaxNat : Nat := 9223372036854775807
 
+/-- CPython 3.9's raising `PyLong_AsSsize_t` conversion (the list Clinic
+wrappers first call `PyNumber_Index`; `range_length` calls it directly).
+The `PyExc_IndexError` replacement path used by sequence subscripting is a
+separate protocol because it carries a different exception message. -/
+def pySsizeRaising (i : Int) : Res Int :=
+  if pySsizeFits i then .ok i
+  else .exn (.overflowError "Python int too large to convert to C ssize_t")
+
 /-- The left-shift budget: the largest shift COUNT `<<` will build, so the
 widest result is about a million bits (128 KB). Its own constant rather
 than a reuse of `seqBudget` — they bound different resources and the
@@ -2649,9 +2657,11 @@ def lenVal : RVal → Res RVal
   | .ntuple _ _ xs => .ok (.int xs.size)
   | .rangeV lo hi step =>
       let n := rangeLen lo.toInt hi.toInt step.toInt
-      if n > pySsizeMaxNat then
-        .unsupported "len() result does not fit CPython's Py_ssize_t (index-sized narrowing is outside the tier)"
-      else .ok (.int n)
+      match pySsizeRaising (n : Int) with
+      | .ok _ => .ok (.int n)
+      | .exn e => .exn e
+      | .timeout => .timeout
+      | .unsupported msg => .unsupported msg
   | .ref _ =>
       .unsupported "len() of a heap object lives in the heap (`heapLen` via `lenValH` decides it)"
   | v => .exn (.typeError s!"object of type '{v.typeName}' has no len()")
@@ -4703,16 +4713,19 @@ empty pop is a faithful `IndexError`. `dict.pop` is a REAL CPython method
 def heapPop (h : Heap) (a : Addr) (i : Option Int) : Res (Heap × RVal) :=
   match Heap.get? h a with
   | some (.list xs) =>
-    if xs.isEmpty then .exn .indexErrorPopEmpty else
     let index := i.getD (-1)
-    if !pySsizeFits index then
-      .unsupported "list.pop() index outside CPython's Py_ssize_t range is outside the tier"
-    else match normIndex index xs.size with
-    | some n =>
-      match Heap.update h a (.list ((xs.toList.eraseIdx n).toArray)) with
-      | some h' => .ok (h', xs.getD n .none)
-      | Option.none => .unsupported danglingMsg
-    | Option.none => .exn .indexErrorPop
+    match pySsizeRaising index with
+    | .exn e => .exn e
+    | .timeout => .timeout
+    | .unsupported msg => .unsupported msg
+    | .ok index =>
+      if xs.isEmpty then .exn .indexErrorPopEmpty else
+      match normIndex index xs.size with
+      | some n =>
+        match Heap.update h a (.list ((xs.toList.eraseIdx n).toArray)) with
+        | some h' => .ok (h', xs.getD n .none)
+        | Option.none => .unsupported danglingMsg
+      | Option.none => .exn .indexErrorPop
   | some (.dict _ _) =>
     .unsupported "'.pop' on a dict is outside the tier (dict.pop lands with the dict-method tier)"
   | some (.dictView ..) => .unsupported "dictionary view operation is outside the tier"
@@ -4738,9 +4751,11 @@ single-step materialization). -/
 def heapInsert (h : Heap) (a : Addr) (i : Int) (v : RVal) : Res Heap :=
   match Heap.get? h a with
   | some (.list xs) =>
-    if !pySsizeFits i then
-      .unsupported "list.insert() index outside CPython's Py_ssize_t range is outside the tier"
-    else
+    match pySsizeRaising i with
+    | .exn e => .exn e
+    | .timeout => .timeout
+    | .unsupported msg => .unsupported msg
+    | .ok i =>
       let n : Nat := (if i < 0 then i + xs.size else i).toNat
       match Heap.update h a (.list ((xs.toList.take n ++ v :: xs.toList.drop n).toArray)) with
     | some h' => .ok h'

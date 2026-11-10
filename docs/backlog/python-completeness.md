@@ -10897,6 +10897,28 @@ or length operations.
 DECIDED: keep the 64-bit narrowing refusal until the complete
 `PyNumber_AsSsize_t`/`_PyEval_SliceIndex` protocol and messages are modeled.
 
+## 2026-11-10-pyfoundation-3b — share the raising Py_ssize_t conversion
+
+Foundation step 3b replaces the broad narrowing refusal with one shared
+`pySsizeRaising` worker modeled on CPython 3.9's raising `PyLong_AsSsize_t`
+(after `PyNumber_Index` in the list Clinic wrappers). The worker
+returns the exact `OverflowError: Python int too large to convert to C ssize_t`
+for out-of-range values and is used by `list.insert`, `list.pop`, and
+`len(range(...))` in both interpreter surfaces.
+
+| Measurement | Result |
+|---|---|
+| Huge `list.insert` indices | exact CPython `OverflowError` MATCH |
+| Huge `list.pop` index | exact CPython `OverflowError` MATCH |
+| Empty `list.pop(2**63)` | conversion still precedes the empty-list check, exact `OverflowError` MATCH |
+| Signed endpoints | `2**63 - 1` and `-2**63` are accepted and reach ordinary list behavior |
+| `len(range(2**64))` | exact CPython `OverflowError` MATCH |
+| Semantic change | shared raising conversion; clamping/index-error conversion remains next |
+
+DECIDED: retain `pySsizeRaising` as the one raising conversion definition and
+model `_PyEval_SliceIndex`/index-error conversion separately before widening
+raw integer index sites.
+
 ## 2026-11-10-pyfoundation-2 — protocol census
 
 Foundation step 2 records the protocol census in

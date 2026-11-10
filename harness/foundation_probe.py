@@ -36,8 +36,24 @@ def list_insert_huge(index):
     return values
 
 
+def list_insert_boundary(index):
+    values = [1, 2]
+    values.insert(index, 0)
+    return values
+
+
 def list_pop_huge(index):
     values = [1]
+    return values.pop(index)
+
+
+def list_pop_boundary(index):
+    values = [1, 2]
+    return values.pop(index)
+
+
+def list_pop_empty_huge(index):
+    values = []
     return values.pop(index)
 
 

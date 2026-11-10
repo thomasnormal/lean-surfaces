@@ -11,11 +11,11 @@ marks a control/transport wrapper that still needs an adequacy theorem.
 | `PyObject_IsTrue` | `truthyH` | `truthyM` → `truthyH` | shared |
 | `PyObject_Hash` | `hashableKey`, `setHashNat`, dict/set key gates | same workers through `liftRes` / evaluator arms | finite numeric and tuple key slice; identity-hashed objects and unmodeled set construction refuse |
 | `PyNumber_Index` | `asInt`, `asRangeBound` | shared through `asInt` in builtin/method arms | the raising `Py_ssize_t` conversion is now a separate pinned boundary for list/range-length sites; full messages remain owed |
-| `PyNumber_AsSsize_t` | `pySsizeFits` at `heapInsert`, `heapPop`, `lenVal` | same workers | 64-bit pinned refusal outside range; clamping and raising conversions are not yet separate typed APIs |
+| `PyLong_AsSsize_t` (after `PyNumber_Index` in list Clinic wrappers) | `pySsizeRaising` at `heapInsert`, `heapPop`, `lenVal` | same workers | shared raising conversion with CPython's exact `OverflowError`; sequence subscripting's `PyExc_IndexError` replacement and clamping remain separate protocols |
 | `_PyEval_SliceIndex` | `normIndex`, slice workers | shared | slice clamping is represented; index-site census remains to split raising vs clamping calls |
 | `PyFloat_AsDouble` / `PyLong_AsDouble` | `Float64.divideInt`, `Float64` arithmetic workers | shared through `evalBinOp` | negative integer power now refuses outside exact binary bases; platform `pow` oracle remains future work |
 | `PyObject_GetIter` / `iternext` | `rangeVals`, `heapContains`, `execFor*`, generator steppers | `iterValues`, `Kont` cursors, `exec*` shells | shared value workers; live generator/dict mutation has explicit stateful arms |
-| `PyObject_Size` | `lenVal`, `lenValH`, `heapLen` | `lenM`, `liftRes` | range result narrowing now refuses above pinned `Py_ssize_t` |
+| `PyObject_Size` | `lenVal`, `lenValH`, `heapLen` | `lenM`, `liftRes` | `len(range(...))` applies `pySsizeRaising` to the `PyLong_AsSsize_t` result |
 | `PyObject_GetItem` / `PyObject_SetItem` | `indexValH`, `heapIndex`, `assignToH` | `indexM`, `assignM` | shared; receiver-specific heap paths |
 | `PyObject_Str` / `PyObject_Repr` | `strOfVal`, `reprVal`, `printOne` | `strOfVal`/rendering through `applyBuiltin` | shared rendering workers; sets and identity objects remain loud |
 | `Py_EnterRecursiveCall` | `callIn` `callDepth` guard; `heapEq` active-pair recursion | `callInM` `callDepth` guard; `Kont` generator frames | call-depth limit modeled; comparison/repr C recursion units remain a ledger item |

@@ -82,6 +82,9 @@
 - Proved both callable evaluators return the expected Boolean for every input
   to a Boolean identity function.
 
+- Proved the callable evaluators agree on effect-free `noexcept` operands
+  for all sufficient fuel budgets.
+
 - Extended the value/object evaluator agreement battery with negative signed
   subtraction and native differential coverage.
 

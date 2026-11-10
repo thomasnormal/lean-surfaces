@@ -42490,4 +42490,36 @@ def callableBooleanIdentityAgreementWitness : Bool :=
 
 #guard callableBooleanIdentityAgreementWitness
 
+private def callableNoexceptFunction (operand : TypedCallableExpression) : CallableFunction := {
+  occurrence := functionDeclaration
+  signature := {result := .builtin .boolean, parameters := [], variadic := false}
+  parameters := []
+  body := .return_ {
+    expression := .noexceptExpr operand,
+    sourceType := .builtin .boolean, type := .builtin .boolean}}
+
+/-- Model agreement for every effect-free operand and every sufficient fuel
+budget. Admission imposes further conditions; this is not a C++ correctness
+theorem for arbitrary manually constructed operands. -/
+theorem callableNoexceptEvaluatorAgreement (fuel : Nat) (operand : TypedCallableExpression)
+    (_effectFree : operand.hasEffects = false) :
+    evaluateCallable (fuel + 8) .lp64 (callableNoexceptFunction operand) [] =
+      .ok (.ok (integralBoolean true)) ∧
+    evaluateCallableObject (fuel + 8) .lp64 (callableNoexceptFunction operand) [] =
+      .ok (.ok (integralBoolean true)) := by
+  exact ⟨rfl, rfl⟩
+
+def callableNoexceptEvaluatorAgreementWitness : Bool :=
+  let operand : TypedCallableExpression := {
+    expression := .binary "/"
+      {expression := .integer 1, sourceType := intType, type := intType}
+      {expression := .integer 0, sourceType := intType, type := intType},
+    sourceType := intType, type := intType}
+  match evaluateCallable 8 .lp64 (callableNoexceptFunction operand) [],
+      evaluateCallableObject 8 .lp64 (callableNoexceptFunction operand) [] with
+  | .ok (.ok a), .ok (.ok b) => a == integralBoolean true && b == integralBoolean true
+  | _, _ => false
+
+#guard callableNoexceptEvaluatorAgreementWitness
+
 end LeanModels.Cpp.CallableObjectEvaluationTests

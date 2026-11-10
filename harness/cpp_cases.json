@@ -20156,5 +20156,17 @@
     "cpp_expression": "callable_witness()",
     "expect": "match",
     "rung": 3
+  },
+  {
+    "id": "expression.callable-noexcept-evaluator-agreement-unevaluated",
+    "kind": "expression",
+    "corpus": "callable refinement seam",
+    "lean_module": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_namespace": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_expression": "callableNoexceptEvaluatorAgreementWitness",
+    "cpp_source": "bool callable_witness() { return noexcept(1 / 0); }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 3
   }
 ]

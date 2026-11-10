@@ -66,6 +66,12 @@ identity callable and proves that each API returns the expected Boolean. It is
 a complete input-domain theorem for that callable, not a relation for arbitrary
 bodies or profiles.
 
+`callableNoexceptEvaluatorAgreement` covers every effect-free operand in the
+IR and every fuel budget of at least eight for a Boolean `noexcept` return.
+It states agreement between the current evaluators, which both ignore the
+operand. It is not a correctness theorem for arbitrary constructed operands:
+frontend admission imposes additional conditions.
+
 The value and object evaluator now also carry a kernel agreement witness for
 the same binary-arithmetic callable, extending the earlier logical agreement
 check.

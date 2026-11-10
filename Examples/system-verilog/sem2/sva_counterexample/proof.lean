@@ -53,4 +53,9 @@ theorem bounded_counter_invariant_route {q : Nat} {us : List Bool}
     SafetySmoke.boundedCounter.safe q :=
   SafetySmoke.boundedCounter_trace_safe hr
 
+theorem fifo_counter_invariant_route {q : Nat} {us : List (Bool × Bool)}
+    (hr : SafetyTrace (SafetySmoke.fifoCounter 4) (0 : Nat) us q) :
+    (SafetySmoke.fifoCounter 4).safe q :=
+  SafetySmoke.fifoCounter_trace_safe 4 q hr
+
 end Examples.«system-verilog».sem2.sva_counterexample.proof

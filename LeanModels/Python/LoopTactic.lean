@@ -298,7 +298,8 @@ elab "py_begin" "[" prog:ident "]" : tactic => do
     setGoals [entryG.mvarId!]
     let progT : Term := ⟨prog.raw⟩
     evalTactic (← `(tactic|
-      (intro F; simp only [$progT:term]; py_simp [callIn.eq_2])))
+      (intro F; simp only [$progT:term];
+       py_simp [callIn.eq_2, pythonTopCallDepth, pythonRecursionLimit])))
     let [g2] ← getGoals
       | throwError "py_begin: expected exactly one residual entry goal"
     g2.withContext do
@@ -457,7 +458,8 @@ def runPyLoop (stateNames? : Option (Array Name)) (inv dec : Term) : TacticM Uni
        rw [$hlId:term]
        rotate_left
        · omega
-       py_simp
+       py_simp [Run.finishCallAt, Run.leaveCallDepth, Run.toPublic,
+         Run.toPublic_ok, RVal.freezeB, evalBinOpH, setLikeRefH]
        all_goals try clear $hlId $flId $hentryId)))
     let mut mainLeft : List MVarId := []
     for g in ← getGoals do

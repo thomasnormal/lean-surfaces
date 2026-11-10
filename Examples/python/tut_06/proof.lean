@@ -23,9 +23,7 @@ theorem count_up_total (n : PyInt) (hn : 0 ≤ n) : tut_06.count_up(n) ==> n := 
   py_begin [tut_06]
   py_loop (inv := fun (i : Int) => 0 ≤ i ∧ i ≤ n)
           (dec := fun (i : Int) => (n - i).toNat)
-  · py_simp [pythonTopCallDepth, pythonRecursionLimit, Run.finishCallAt,
-      Run.leaveCallDepth, Run.toPublic, Run.toPublic_ok, RVal.freezeB]
-    omega
+  · omega
   all_goals grind
 
 end Examples.python.tut_06.proof

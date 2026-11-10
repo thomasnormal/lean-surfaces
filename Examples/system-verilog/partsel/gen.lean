@@ -343,8 +343,7 @@ private def combTargetAt (N W k : Nat) : Option Lhs2 :=
   | _ => false
 #guard assignAt 2 5 2 == some (.ident "ov_lo", .slice (.ident "a") 0 4)
 -- `dyn_lane = a[sel*W +: W]`: the run-time base keeps its 32-bit product,
--- read as a two's-complement `int` (what Icarus and Yosys do with a 32-bit
--- index: `dynPartRead32`).
+-- read as unsigned at its self-determined width (`dynPartRead32`).
 #guard assignAt 4 3 6 == some (.ident "dyn_lane",
   dynPartRead32 "a" 3 0 12 (.binary .mul (.resize 32 (.ident "sel")) (.lit (LVec.ofInt 32 3))))
 /-- The second statement of always_comb process `k`, whatever it is. -/

@@ -524,6 +524,12 @@ the model, Icarus and Xcelium agree except where a declaration says otherwise.
 
 ### 6.4 Open items found by the verifiers, NOT acted on in round 6
 
+The entries below record the round-6 state. Item 1 was corrected on
+2026-11-10: the model now reads admitted 32-bit unsigned run-time bases as
+unsigned. The source-bound `unsigned_part_base` witness and its current
+simulator results are in `docs/sv-oracle-disagreements.md`; the negative
+declared-range geometry remains outside the modeled dynamic-select tier.
+
 1. **A 32-bit unsigned run-time part-select base is read as signed by the model** (item 5 above; 8 cells
    of `dyn32`): Xcelium and the typing rules of 11.8.1 read it unsigned, so the model is the outlier
    among the reference and the LRM and agrees only with Icarus, Yosys and Verilator. Changing

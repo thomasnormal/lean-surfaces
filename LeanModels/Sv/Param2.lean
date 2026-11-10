@@ -156,10 +156,9 @@ An indexed part-select whose BASE reads a signal (`v[sel +: 4]`, §11.5.1:
 only the width must be constant) is a READ-only tier over a 1-D vector
 with a descending range: `dynPartPlan` and `dynBaseRead` lower it to a
 shift of the x-padded vector, exact in every out-of-range bit and on an x/z
-base. The base's self-determined width picks the reading: unsigned below 32
-bits (`dynPartRead`), a two's-complement `int` at exactly 32 (`dynPartRead32`
-— Icarus 12.0 and Yosys 0.53 both read a 32-bit index that way; measured
-2026-10-28), loud above (they disagree). A dynamic base on a target, on an
+base. Admitted bases are unsigned at their self-determined width, including
+32 bits; wider bases remain outside the current dynamic-select tier. A dynamic
+base on a target, on an
 ascending range, or after an element select is loud (`ArraySel:dynamic`).
 A constant label far outside its dimension (`partOffsetsWild`: a 32-bit
 unsigned wrap such as `UI - 1` at 0) is loud too — the two tools read it
@@ -297,9 +296,8 @@ x pad `q` below the vector (`r` for `+:`, `r + w - 1` for `-:` over a range
 `[l:r]` — chosen so the shift amount in `dynPartRead` IS the base value),
 vector width `c`. `some (.error _)` = dynamic but outside the tier (loud):
 the tier is a 1-D vector with a DESCENDING declared range, no element path
-in front, and a non-negative pad. How the base VALUE is read (unsigned,
-or 32-bit two's complement) is `dynBaseRead`'s choice, by the base's width;
-a base whose type is signed is refused by the extractor
+in front, and a non-negative pad. The admitted base value is unsigned at its
+self-determined width; a base whose type is signed is refused by the extractor
 (`RangeSelectExpression:dynamic-signed-base`). -/
 def dynPartPlan (env : IEnv) (n : String) (is : List PExpr) (mode : PartMode)
     (a b : PExpr) : Option (Except String (Nat × Nat × Nat)) :=
@@ -405,37 +403,19 @@ def dynPartRead (n : String) (w q c : Nat) (e : Expr2) : Expr2 :=
           ++ (if q = 0 then #[] else #[.lit (LVec.xVec q)]))) e) 0 w)
     (.lit (LVec.xVec w))
 
-/-- Read lowering of a DYNAMIC indexed part-select whose base `e` is
-EXACTLY 32 bits wide (`v[s - 2 +: 4]` — an unsized `2` makes the base
-32-bit unsigned — or `a[sel*W +: W]`). Icarus 12.0 and Yosys 0.53 both read
-such a base as a two's-complement `int` (measured 2026-10-28: `v[s-2 +: 4]`
-at `s = 0` is `v[1:-2]`, its low two bits in range, the rest x; LRM §11.5.1
-leaves negative bases to the index rules), so the model does too. The
-shift amount is the base sign-extended to 34 bits plus `w - 1`, over the
-vector padded with `w` x bits above and `q + w - 1` below: a base down to
-`-(w-1)` still reaches the vector's low bits, and the single UNSIGNED
-34-bit guard `t ≤ c + q + w - 1` rejects both ends at once (a base below
-`-(w-1)` is negative, so `t` has its top bit set). Every out-of-range bit
-reads x; an x/z base reads all x (it poisons `t`, the guard and the shift). -/
+/-- Compatibility name for a 32-bit unsigned dynamic part-select base.
+The operand keeps its unsigned value (§§11.5.1, 11.8.1); the high bit is
+not a sign bit. -/
 def dynPartRead32 (n : String) (w q c : Nat) (e : Expr2) : Expr2 :=
-  let t : Expr2 := .binary .add (.resizeSigned 34 e) (.lit (LVec.ofNat 34 (w - 1)))
-  .ternary (.binary .le t (.lit (LVec.ofNat 34 (c + q + w - 1))))
-    (.slice (.binary (.shr false)
-        (.concat (#[.lit (LVec.xVec w), .ident n]
-          ++ (if q + w - 1 = 0 then #[] else #[.lit (LVec.xVec (q + w - 1))]))) t) 0 w)
-    (.lit (LVec.xVec w))
+  dynPartRead n w q c e
 
-/-- The reading of a run-time part-select base by its self-determined width
-`bw` (the base lowered to `e` at that width): unsigned below 32 bits
-(`dynPartRead` — every tool agrees), two's complement at exactly 32
-(`dynPartRead32`), loud above (Icarus truncates a wider index to its low 32
-bits, Yosys does not — measured: a 40-bit base `2^32 + 1` reads `v[4:1]` in
-Icarus and all x in Yosys). -/
+/-- Read an admitted unsigned run-time base at its self-determined width.
+Bases wider than 32 bits remain outside this dynamic-select tier. -/
 def dynBaseRead (n : String) (w q c bw : Nat) (e : Expr2) : Expr2 :=
   if bw < 32 then dynPartRead n w q c e
   else if bw = 32 then dynPartRead32 n w q c e
   else .unsupported "ArraySel:dynamic"
-    s!"run-time part-select base of {bw} bits (wider than 32: Icarus truncates it, Yosys does not)"
+    s!"run-time part-select base of {bw} bits exceeds the modelled width"
 
 /-- Target lowering of an element-select path: `(window, RHS context
 width)`; out of range is the zero-width (no-op) window. -/
@@ -1059,9 +1039,8 @@ def instExpr2 (env : IEnv) (elems : List (String × Nat)) (ctx : Option Nat) :
   | .arrayPart n is mode a b =>
       -- A run-time base (`v[sel +: 4]`) is lowered at its own
       -- self-determined width (§11.5.1); every other base is static. The
-      -- width picks the reading (`dynBaseRead`): below 32 bits unsigned, at
-      -- 32 bits two's complement (what Icarus and Yosys both do), above 32
-      -- loud (they disagree).
+      -- Admitted bases are unsigned at their self-determined width; bases
+      -- wider than 32 bits remain loud (`dynBaseRead`).
       match dynPartPlan env n is mode a b with
       | some (.ok (w, q, c)) =>
           match selfWidth2 env elems a with
@@ -1976,8 +1955,7 @@ private def dynPlanLoud (r : Option (Except String (Nat × Nat × Nat))) : Bool 
   | _ => false
 #guard (arrayPartTarget arrEnv "v" [] .up (.ident "sel") (.int 4)).toOption.isNone
 #guard selfWidth2 arrEnv [] (.arrayPart "v" [] .down (.ident "sel") (.int 4)) == some 4
--- The base's width picks the reading: a 32-bit base is two's complement
--- (`dynPartRead32`), a wider one is loud (Icarus and Yosys disagree).
+-- A 32-bit unsigned base uses the unsigned reader; a wider base is loud.
 #guard instExpr2 arrEnv [] none (.arrayPart "v" [] .up (.ident "s32") (.int 4))
   == dynPartRead32 "v" 4 0 8 (.ident "s32")
 #guard match instExpr2 arrEnv [] none (.arrayPart "v" [] .up (.ident "s40") (.int 4)) with
@@ -2056,9 +2034,8 @@ private def pDynPartOv : PDesign :=
                ("xxxx", "xxxx", "xx", "00010110")]
 
 /-- `dyn32`: 32-bit run-time bases (`v[s - 2 +: 4]` and `v[s - 2 -: 4]`, `s`
-4 bits: the unsized `2` makes the base `Resize32(s) - 2`, 32-bit unsigned)
-read as two's complement, as Icarus 12.0 and Yosys 0.53 both do (verifier
-probe `pa.sv`, `v = 10110111`: `s = 0` gives `11xx`). Envelope twin: rows
+4 bits: the unsized `2` makes the base `Resize32(s) - 2`, 32-bit unsigned).
+At `s = 0` and `1` the wrapped base is out of range. Envelope twin: rows
 `dyn32_*`. -/
 private def pDyn32 : PDesign :=
   { name := "dyn32"
@@ -2083,7 +2060,7 @@ private def pDyn32 : PDesign :=
          [("s", LVec.ofNat 4 1)], [("s", LVec.ofNat 4 2)], [("s", LVec.ofNat 4 9)],
          [("s", LVec.ofNat 4 15)], [("s", LVec.lit "x001")]])).map
         (fun tr => tr.map fun st => (SvState.showSignal st "du", SvState.showSignal st "dd"))
-      == some [("11xx", "xxxx"), ("111x", "xxxx"), ("0111", "1xxx"), ("xxx1", "1011"),
+      == some [("xxxx", "xxxx"), ("xxxx", "xxxx"), ("0111", "1xxx"), ("xxx1", "1011"),
                ("xxxx", "xxxx"), ("xxxx", "xxxx")]
 
 /-! ## Width and typing at non-default parameter points (2026-10-28)

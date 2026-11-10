@@ -381,17 +381,32 @@ stage refuses a run-time select whose index can leave its declared range
 all x), so no flag choice removes the declaration (docs/sv-xcelium-reference.md,
 section 6).
 
-**What is NOT declared.** Row `dyn32` keeps its 22 differing cells and is not declared:
-8 of them are a different cause. Xcelium reads a 32-bit UNSIGNED base as unsigned
-(`s - 2` at `s = 0, 1` is `32'hFFFFFFFE` and `32'hFFFFFFFF`, wholly out of range, all x;
-`b32 = 32'hFFFFFFFE`, `32'hFFFFFFFF`), as the typing rules of 11.8.1 imply, and the
-model, Icarus and Yosys read it as a two's-complement `int` (`Param2.lean`
-`dynPartRead32`, the header of `dyn32.sv`). On a vector with a negative range the
-difference is visible without the partial rule: `w[3:-4]` with an unsigned 32-bit
-`bu = 32'hFFFFFFFE` gives `w[bu +: 4] = xxxx` in Xcelium and `1101` in Icarus, and a
-signed `bi = -2` gives `1101` in both. That is the model's recorded decision
-against the reference, not a departure of the reference from the standard, and round 6
-is refusal-only, so it is an open item (docs/sv-xcelium-audit.md, 6.4).
+**Unsigned 32-bit bases (corrected 2026-11-10).** The source type of
+`s - 2` in `v[s - 2 +: 4]` is unsigned: at `s = 0, 1`, its 32-bit value
+is `fffffffe` or `ffffffff`, and the whole selected window is out of range.
+The E frontend now retains that unsigned interpretation instead of treating
+the high bit as a sign. The `unsigned_part_base` row covers those cases,
+bare 32-bit bases, in-range controls and x/z bases against the reference.
+A dynamic select over a negative declared right bound remains loud; the
+separate partial-overhang disagreement above is unchanged. Historical `dyn32`
+source comments describe the old model and do not define the current rule.
+
+The self-checking `sem2/unsigned_part_base` reference witness was run with
+Xcelium 26.09-s001. The source SHA-256 is
+`6fcbcf41d1fb29622be0876df1503937d501b1a7a00e8990c8be824f4eb6045f` and
+the testbench SHA-256 is
+`37566674d1b939233a610a31d8a01caee9b6784fd34d6920c62c423fc2be7154`.
+Both outputs were, in order, `xxxx`, `xxxx`, `0110`, `1011`, `1101`,
+`xxxx`, `xxxx`. The separate negative-range reference witness reads `xxxx`,
+`xxxx`, `1101`; its source SHA-256 is
+`28c994bb5f6939e4412dce8cba41d1b5582f0c40a38aa94eb16440757fcbd28d`
+and testbench SHA-256 is
+`66789818ddee1654450f6a1f260743bc219456b53aab619748c3eef9ae16e787`.
+Icarus 13.0 (s20250103-64-gdad78d525) returned those same seven rows.
+For the same source at `v = 8'b11010110`, Yosys 0.69+ (9f09efcdb-dirty)
+`prep; eval` returned `10xx` for `s = 0, bu = fffffffe` and `110x` for
+`s = 1, bu = ffffffff` on both outputs; at zero base it returned `0110`.
+These observations do not determine the source semantics.
 
 ## String literal escapes `\a \v \f`: Xcelium reads the plain letter (2026-11-01)
 
@@ -498,10 +513,10 @@ range). The model computes the label width-exactly (`Param.lean`,
 RUN-TIME part-select base wider than 32 bits: Icarus truncates it to its low
 32 bits (a 40-bit `2^32 + 1` reads `v[4:1]`), Yosys reads the whole value
 (all x) — refused (extractor `RangeSelectExpression:dynamic-wide-base`, Lean
-`dynBaseRead`). Both tools read an EXACTLY 32-bit base as
-a two's-complement `int`, and so does the model (rows `dyn32`). Measured on
-the verifier probes `pa.sv`/`pb.sv`/`pc.sv`; a post-synthesis check would
-otherwise surface these as model/netlist mismatches.
+`dynBaseRead`). The historical verifier probes `pa.sv`/`pb.sv`/`pc.sv`
+measured signed readings for exactly 32-bit unsigned bases in the then-pinned
+tools. The model now reads them unsigned; current fixture-specific tool
+results are recorded under "Unsigned 32-bit bases" above.
 
 (3) (Round 3 folds, 2026-10-28.) A NEGATIVE genvar used as a simple operand
 in an unsigned context wider than 32 bits: `a ^ g` with `g = -1` and a

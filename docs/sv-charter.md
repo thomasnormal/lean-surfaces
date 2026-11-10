@@ -14400,6 +14400,12 @@ below an element select.
 
 ## Width-exact constant labels and 32-bit run-time bases — 2026-10-28
 
+**Correction, 2026-11-10:** the 32-bit run-time base rule described in this
+historical entry was wrong for unsigned operands. Admitted unsigned bases now
+retain their unsigned value, including after wrapping arithmetic; signed bases
+and negative-right-bound dynamic geometry remain loud. See
+`sem2/unsigned_part_base` for the current reference witness.
+
 An independent review of the entry above found four silent disagreements
 with Icarus 12.0 and Yosys 0.53, all now fixed or refused. (1) The constant
 tier (`evalInt`, `LeanModels/Sv/Param.lean`) evaluated select labels and
@@ -17882,6 +17888,9 @@ false header comments are corrected.
    unsigned base, which Xcelium reads unsigned (an open item, audit 6.4). svGolf's
    `fourstate` stage refuses run-time selects that can leave their range, so a scored design
    never reaches the shape.
+   This paragraph records the earlier audit: the unsigned-base reading was
+   corrected on 2026-11-10, as described in the current entry above and
+   `docs/sv-oracle-disagreements.md`.
 3. **Row splits** (the fixtures keep the coverage of the admitted halves; every split row is
    model = Icarus = Xcelium except where a declaration says otherwise, checked row by row):
    `array_oob_asc` (the one confirmed shape of `array_oob_part`, `q[0][4]`: a declared Icarus

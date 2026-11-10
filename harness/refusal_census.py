@@ -927,6 +927,7 @@ w("op.Or", "print(0 or 2)\n", "MATCH", "")
 SEC52_CLASSES = ("unsupported", "undefined", "environment", "order-dependence")
 
 WHITELIST_CLASS = {
+    "foundation_probe::float_power_special": "float.power-special-cases",
     "bytes_lab::numeric_int_still_loud": "bytes.numeric-parsing",
     "bytes_lab::numeric_float_still_loud": "bytes.numeric-parsing",
     "float_lab::constructor_heap": "float.constructor-protocols",

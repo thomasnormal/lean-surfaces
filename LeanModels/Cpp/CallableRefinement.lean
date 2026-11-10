@@ -5,6 +5,60 @@ namespace LeanModels.Cpp
 
 open CallableObjectEvaluation
 
+/-- Agreement on a successful condition and its selected branch carries
+through a conditional expression, retaining each computation's final state. -/
+theorem callableConditionalExpressionAgreement (fuel : Nat) (profile : TargetProfile)
+    (parameters : List CallableParameter) (arguments afterCondition afterBranch : List IntegralValue)
+    (frame frameAfterCondition frameAfterBranch : IntegralObjectFrame)
+    (condition whenTrue whenFalse : TypedCallableExpression)
+    (sourceType resultType : CppTypeEvidence) (value : IntegralValue)
+    (result : IntegralResult IntegralValue)
+    (hvalueCondition : evaluateCallableExpression fuel profile parameters arguments condition =
+      .ok (.ok value, afterCondition))
+    (hobjectCondition : evaluateCallableObjectExpression fuel profile frame condition =
+      {frame := frameAfterCondition, result := .ok (.ok value)})
+    (hvalueBranch : evaluateCallableExpression fuel profile parameters afterCondition
+      (if value.value == 0 then whenFalse else whenTrue) = .ok (result, afterBranch))
+    (hobjectBranch : evaluateCallableObjectExpression fuel profile frameAfterCondition
+      (if value.value == 0 then whenFalse else whenTrue) =
+      {frame := frameAfterBranch, result := .ok result}) :
+    let expression : TypedCallableExpression := {
+      expression := .conditional condition whenTrue whenFalse,
+      sourceType := sourceType, type := resultType}
+    evaluateCallableExpression (fuel + 1) profile parameters arguments expression =
+      .ok (result, afterBranch) ∧
+    evaluateCallableObjectExpression (fuel + 1) profile frame expression =
+      {frame := frameAfterBranch, result := .ok result} := by
+  exact ⟨evaluateCallableExpression_conditional fuel profile parameters arguments afterCondition
+    afterBranch condition whenTrue whenFalse sourceType resultType value result
+    hvalueCondition hvalueBranch,
+    evaluateCallableObjectExpression_conditional fuel profile frame frameAfterCondition
+      frameAfterBranch condition whenTrue whenFalse sourceType resultType value result
+      hobjectCondition hobjectBranch⟩
+
+/-- Agreement on a non-value condition propagates without entering a branch. -/
+theorem callableConditionalExpressionAgreement_nonvalue (fuel : Nat) (profile : TargetProfile)
+    (parameters : List CallableParameter) (arguments afterCondition : List IntegralValue)
+    (frame frameAfterCondition : IntegralObjectFrame)
+    (condition whenTrue whenFalse : TypedCallableExpression)
+    (sourceType resultType : CppTypeEvidence) (result : IntegralResult IntegralValue)
+    (hnonvalue : ∀ v, result ≠ .ok v)
+    (hvalue : evaluateCallableExpression fuel profile parameters arguments condition =
+      .ok (result, afterCondition))
+    (hobject : evaluateCallableObjectExpression fuel profile frame condition =
+      {frame := frameAfterCondition, result := .ok result}) :
+    let expression : TypedCallableExpression := {
+      expression := .conditional condition whenTrue whenFalse,
+      sourceType := sourceType, type := resultType}
+    evaluateCallableExpression (fuel + 1) profile parameters arguments expression =
+      .ok (result, afterCondition) ∧
+    evaluateCallableObjectExpression (fuel + 1) profile frame expression =
+      {frame := frameAfterCondition, result := .ok result} := by
+  exact ⟨evaluateCallableExpression_conditional_nonvalue fuel profile parameters arguments
+    afterCondition condition whenTrue whenFalse sourceType resultType result hnonvalue hvalue,
+    evaluateCallableObjectExpression_conditional_nonvalue fuel profile frame frameAfterCondition
+      condition whenTrue whenFalse sourceType resultType result hnonvalue hobject⟩
+
 /-- Agreement is preserved by a conversion whose destination format resolves.
 The operand may update either state; conversion retains both updated states.
 Non-value integral results are propagated on both sides. -/

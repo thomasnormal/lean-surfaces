@@ -111,6 +111,9 @@
 - Proved that resolved conversions preserve operand agreement and retain the
   states produced by each evaluator.
 
+- Proved conditional-expression agreement through the selected branch and
+  propagation of non-value conditions.
+
 - Extended the value/object evaluator agreement battery with negative signed
   subtraction and native differential coverage.
 

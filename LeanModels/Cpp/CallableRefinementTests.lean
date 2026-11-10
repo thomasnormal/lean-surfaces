@@ -131,4 +131,67 @@ def callableConvertExpressionAgreementWitness : Bool :=
 
 #guard callableConvertExpressionAgreementWitness
 
+private def increment : TypedCallableExpression := {
+  expression := .increment "++" false handle, sourceType := intType, type := intType}
+private def seventeen : TypedCallableExpression := {
+  expression := .integer 17, sourceType := intType, type := intType}
+private def conditional : TypedCallableExpression := {
+  expression := .conditional expression increment seventeen, sourceType := intType, type := intType}
+private def frameAfterIncrement : IntegralObjectFrame :=
+  (evaluateCallableObjectExpression 8 .lp64 sampleFrame increment).frame
+
+/-- The conditional theorem composes parameter agreement with a branch that
+mutates the parameter in both representations. -/
+theorem sampleConditionalExpressionAgreement :
+    evaluateCallableExpression 9 .lp64 [parameter] [signed (-128)] conditional =
+      .ok (.ok (signed (-127)), [signed (-127)]) ∧
+    evaluateCallableObjectExpression 9 .lp64 sampleFrame conditional =
+      {frame := frameAfterIncrement, result := .ok (.ok (signed (-127)))} := by
+  have hcond := callableParameterExpressionAgreement 6 .lp64 [parameter] [signed (-128)]
+    sampleFrame handle 0 parameter (signed (-128)) intType intType
+    rfl rfl rfl rfl rfl rfl rfl
+  exact callableConditionalExpressionAgreement 8 .lp64 [parameter] [signed (-128)]
+    [signed (-128)] [signed (-127)] sampleFrame sampleFrame frameAfterIncrement
+    expression increment seventeen intType intType (signed (-128)) (.ok (signed (-127)))
+    hcond.1 hcond.2 rfl rfl
+
+private def missingParameter : TypedCallableExpression := {
+  expression := .parameter {value := "missing"}, sourceType := intType, type := intType}
+
+/-- A non-value condition bypasses both branches, even when either would fail. -/
+theorem invalidConditionalExpressionAgreement :
+    let condition : TypedCallableExpression := {
+      expression := .integer 2147483648, sourceType := intType, type := intType}
+    let conditional : TypedCallableExpression := {
+      expression := .conditional condition missingParameter missingParameter,
+      sourceType := intType, type := intType}
+    evaluateCallableExpression 9 .lp64 [] [] conditional = .ok (.invalid .outOfRange, []) ∧
+    evaluateCallableObjectExpression 9 .lp64 sampleFrame conditional =
+      {frame := sampleFrame, result := .ok (.invalid .outOfRange)} := by
+  exact callableConditionalExpressionAgreement_nonvalue 8 .lp64 [] [] [] sampleFrame sampleFrame
+    {expression := .integer 2147483648, sourceType := intType, type := intType}
+    missingParameter missingParameter intType intType (.invalid .outOfRange)
+    (by intro v h; cases h) invalidLiteralExpressionAgreement.1 invalidLiteralExpressionAgreement.2
+
+private def conditionalWitness (n : Int) : Bool :=
+  let value := signed n
+  match CallableObjectFrame.start .lp64 function [value] with
+  | .error _ => false
+  | .ok callable =>
+      let expectedArgument := signed (if n == 0 then 0 else n + 1)
+      let expectedResult := signed (if n == 0 then 17 else n + 1)
+      let object := evaluateCallableObjectExpression 9 .lp64 callable.frame conditional
+      let after := object.frame.evaluate 1 (.read handle)
+      match evaluateCallableExpression 9 .lp64 [parameter] [value] conditional,
+          object.result, after.result with
+      | .ok (.ok a, arguments), .ok (.ok b), .ok (.ok finalValue) =>
+          a == expectedResult && b == expectedResult && arguments == [expectedArgument] &&
+            finalValue == expectedArgument
+      | _, _, _ => false
+
+def callableConditionalExpressionAgreementWitness : Bool :=
+  [-128, 0, 5].all conditionalWitness
+
+#guard callableConditionalExpressionAgreementWitness
+
 end LeanModels.Cpp.CallableRefinementTests

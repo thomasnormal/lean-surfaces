@@ -249,6 +249,44 @@ def evaluateCallableObjectExpression (fuel : Nat) (profile : TargetProfile)
     Outcome (IntegralResult IntegralValue) :=
   evalExpression fuel profile frame expression
 
+/-- A successful condition selects one branch after retaining its effects. -/
+theorem evaluateCallableObjectExpression_conditional (fuel : Nat) (profile : TargetProfile)
+    (frame afterCondition afterBranch : IntegralObjectFrame)
+    (condition whenTrue whenFalse : TypedCallableExpression)
+    (sourceType resultType : CppTypeEvidence) (value : IntegralValue)
+    (result : IntegralResult IntegralValue)
+    (hcond : evaluateCallableObjectExpression fuel profile frame condition =
+      {frame := afterCondition, result := .ok (.ok value)})
+    (hbranch : evaluateCallableObjectExpression fuel profile afterCondition
+      (if value.value == 0 then whenFalse else whenTrue) =
+      {frame := afterBranch, result := .ok result}) :
+    evaluateCallableObjectExpression (fuel + 1) profile frame
+      {expression := .conditional condition whenTrue whenFalse,
+       sourceType := sourceType, type := resultType} =
+      {frame := afterBranch, result := .ok result} := by
+  simp only [evaluateCallableObjectExpression] at hcond hbranch
+  by_cases hz : value.value = 0 <;>
+    simpa [evaluateCallableObjectExpression, evalExpression, hcond, hz] using hbranch
+
+/-- A non-value condition propagates without evaluating either branch. -/
+theorem evaluateCallableObjectExpression_conditional_nonvalue (fuel : Nat) (profile : TargetProfile)
+    (frame afterCondition : IntegralObjectFrame)
+    (condition whenTrue whenFalse : TypedCallableExpression)
+    (sourceType resultType : CppTypeEvidence) (result : IntegralResult IntegralValue)
+    (hnonvalue : ∀ v, result ≠ .ok v)
+    (hcond : evaluateCallableObjectExpression fuel profile frame condition =
+      {frame := afterCondition, result := .ok result}) :
+    evaluateCallableObjectExpression (fuel + 1) profile frame
+      {expression := .conditional condition whenTrue whenFalse,
+       sourceType := sourceType, type := resultType} =
+      {frame := afterCondition, result := .ok result} := by
+  simp only [evaluateCallableObjectExpression] at hcond
+  cases result with
+  | ok v => exact False.elim (hnonvalue v rfl)
+  | invalid reason => simp [evaluateCallableObjectExpression, evalExpression, hcond, success]
+  | undefined reason => simp [evaluateCallableObjectExpression, evalExpression, hcond, success]
+  | unsupported reason => simp [evaluateCallableObjectExpression, evalExpression, hcond, success]
+
 /-- A resolved conversion applies to an operand result and keeps the frame
 produced by that operand. -/
 theorem evaluateCallableObjectExpression_convert (fuel : Nat) (profile : TargetProfile)

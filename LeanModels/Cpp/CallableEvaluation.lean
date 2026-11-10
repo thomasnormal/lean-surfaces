@@ -517,6 +517,45 @@ def evaluateCallableExpression (fuel : Nat) (profile : TargetProfile)
     Except CallableEvaluationError (IntegralResult IntegralValue × List IntegralValue) :=
   evaluateTyped fuel profile parameters arguments expression
 
+/-- A successful condition selects one branch after retaining its effects. -/
+theorem evaluateCallableExpression_conditional (fuel : Nat) (profile : TargetProfile)
+    (parameters : List CallableParameter) (arguments afterCondition afterBranch : List IntegralValue)
+    (condition whenTrue whenFalse : TypedCallableExpression)
+    (sourceType resultType : CppTypeEvidence) (value : IntegralValue)
+    (result : IntegralResult IntegralValue)
+    (hcond : evaluateCallableExpression fuel profile parameters arguments condition =
+      .ok (.ok value, afterCondition))
+    (hbranch : evaluateCallableExpression fuel profile parameters afterCondition
+      (if value.value == 0 then whenFalse else whenTrue) = .ok (result, afterBranch)) :
+    evaluateCallableExpression (fuel + 1) profile parameters arguments
+      {expression := .conditional condition whenTrue whenFalse,
+       sourceType := sourceType, type := resultType} = .ok (result, afterBranch) := by
+  simp only [evaluateCallableExpression] at hcond hbranch
+  by_cases hz : value.value = 0 <;>
+    simpa [evaluateCallableExpression, evaluateTyped, hcond, hz,
+      Except.bind, Bind.bind] using hbranch
+
+/-- A non-value condition propagates without evaluating either branch. -/
+theorem evaluateCallableExpression_conditional_nonvalue (fuel : Nat) (profile : TargetProfile)
+    (parameters : List CallableParameter) (arguments afterCondition : List IntegralValue)
+    (condition whenTrue whenFalse : TypedCallableExpression)
+    (sourceType resultType : CppTypeEvidence) (result : IntegralResult IntegralValue)
+    (hnonvalue : ∀ v, result ≠ .ok v)
+    (hcond : evaluateCallableExpression fuel profile parameters arguments condition =
+      .ok (result, afterCondition)) :
+    evaluateCallableExpression (fuel + 1) profile parameters arguments
+      {expression := .conditional condition whenTrue whenFalse,
+       sourceType := sourceType, type := resultType} = .ok (result, afterCondition) := by
+  simp only [evaluateCallableExpression] at hcond
+  cases result with
+  | ok v => exact False.elim (hnonvalue v rfl)
+  | invalid reason =>
+      simp [evaluateCallableExpression, evaluateTyped, hcond, Except.bind, Bind.bind, Pure.pure, Except.pure]
+  | undefined reason =>
+      simp [evaluateCallableExpression, evaluateTyped, hcond, Except.bind, Bind.bind, Pure.pure, Except.pure]
+  | unsupported reason =>
+      simp [evaluateCallableExpression, evaluateTyped, hcond, Except.bind, Bind.bind, Pure.pure, Except.pure]
+
 /-- A resolved conversion applies to an operand result and keeps the argument
 state produced by that operand. -/
 theorem evaluateCallableExpression_convert (fuel : Nat) (profile : TargetProfile)

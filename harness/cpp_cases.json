@@ -20216,5 +20216,17 @@
     "cpp_expression": "callable_witness()",
     "expect": "match",
     "rung": 3
+  },
+  {
+    "id": "expression.callable-conditional-expression-agreement",
+    "kind": "expression",
+    "corpus": "callable refinement seam",
+    "lean_module": "LeanModels.Cpp.CallableRefinementTests",
+    "lean_namespace": "LeanModels.Cpp.CallableRefinementTests",
+    "lean_expression": "callableConditionalExpressionAgreementWitness",
+    "cpp_source": "int choose(int x) { return x ? ++x : 17; } bool callable_witness() { return choose(-128) == -127 && choose(0) == 17 && choose(5) == 6; }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 3
   }
 ]

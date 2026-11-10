@@ -90,6 +90,14 @@ and unsupported integral results. A Lean test composes it with the literal
 theorem for `static_cast<unsigned char>(257)` and for an invalid constructed
 literal; the latter is not claimed as admitted C++.
 
+`callableConditionalExpressionAgreement` composes agreement for a successful
+condition with agreement for its selected branch, threading each evaluator's
+intermediate state into that branch. Its non-value companion propagates an
+invalid, undefined or unsupported condition without entering either branch.
+The refinement tests apply the rule to a branch that increments a parameter;
+they also check that an invalid constructed condition bypasses failing
+branches. These cases do not establish agreement for outer evaluator errors.
+
 `callableBooleanIdentityAgreement` quantifies over both Boolean inputs to one
 identity callable and proves that each API returns the expected Boolean. It is
 a complete input-domain theorem for that callable, not a relation for arbitrary

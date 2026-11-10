@@ -396,20 +396,10 @@ def divideIntFloat (left : Int) (right : Float64) : Except FloatDivisionError Fl
   | none => .error .conversionOverflow
   | some value => divideFinite value right
 
-def divideIntFloatWithNaN (left : Int) (right : Float64) : Except FloatDivisionError Float64 :=
-  match fromInt left with
-  | none => .error .conversionOverflow
-  | some value => divideFiniteWithNaN value right
-
 def divideFloatInt (left : Float64) (right : Int) : Except FloatDivisionError Float64 :=
   match fromInt right with
   | none => .error .conversionOverflow
   | some value => divideFinite left value
-
-def divideFloatIntWithNaN (left : Float64) (right : Int) : Except FloatDivisionError Float64 :=
-  match fromInt right with
-  | none => .error .conversionOverflow
-  | some value => divideFiniteWithNaN left value
 
 private def divisionArithmetic (operator : ArithmeticOp) (left right : Float64) :
     Except FloatDivisionError Float64 :=

@@ -156,3 +156,15 @@ def float_pow_base_overflow():
 
 def float_pow_exponent_overflow():
     return 0.0 ** -(1 << 1100)
+
+
+def mixed_div_left_overflow():
+    return (1 << 1100) / 0.0
+
+
+def mixed_div_right_overflow():
+    return 1.0 / (1 << 1100)
+
+
+def integer_div_huge_ratio():
+    return (1 << 1100) / (1 << 1100)

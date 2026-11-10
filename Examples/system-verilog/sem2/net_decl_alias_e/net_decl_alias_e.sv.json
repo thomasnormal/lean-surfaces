@@ -1,0 +1,135 @@
+{
+  "schema_version": "sv-0.2",
+  "language": "systemverilog",
+  "frontend": {
+    "name": "pyslang",
+    "family": "pyslang-11"
+  },
+  "mode": "symbolic",
+  "top": "net_decl_alias_e",
+  "source_files": [
+    {
+      "path": "Examples/system-verilog/sem2/net_decl_alias_e/net_decl_alias_e.sv",
+      "sha256": "34db5fb1bc75e62bf2bc26cf6679fc9c85e0f4257c0f8808a2447b92ae5a21ab"
+    }
+  ],
+  "packages": [],
+  "design": {
+    "kind": "Design",
+    "modules": [
+      {
+        "kind": "Module",
+        "span": {
+          "line": 5,
+          "col": 1,
+          "end_line": 8,
+          "end_col": 10
+        },
+        "name": "net_decl_alias_e",
+        "imports": [],
+        "params": [],
+        "types": [],
+        "ports": [
+          {
+            "kind": "Port",
+            "span": {
+              "line": 5,
+              "col": 36,
+              "end_line": 5,
+              "end_col": 37
+            },
+            "name": "a",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 5,
+              "col": 52,
+              "end_line": 5,
+              "end_col": 53
+            },
+            "name": "q",
+            "dir": "out",
+            "width": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            }
+          }
+        ],
+        "decls": [
+          {
+            "kind": "Net",
+            "span": {
+              "line": 6,
+              "col": 8,
+              "end_line": 6,
+              "end_col": 13
+            },
+            "name": "t",
+            "width": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            },
+            "init": {
+              "kind": "Ident",
+              "span": {
+                "line": 6,
+                "col": 12,
+                "end_line": 6,
+                "end_col": 13
+              },
+              "width": 1,
+              "name": "a"
+            },
+            "net_rewrite_retained": true
+          }
+        ],
+        "processes": [
+          {
+            "kind": "Assign",
+            "span": {
+              "line": 7,
+              "col": 10,
+              "end_line": 7,
+              "end_col": 15
+            },
+            "target": {
+              "kind": "Ident",
+              "span": {
+                "line": 7,
+                "col": 10,
+                "end_line": 7,
+                "end_col": 11
+              },
+              "width": 1,
+              "name": "q"
+            },
+            "value": {
+              "kind": "Ident",
+              "span": {
+                "line": 7,
+                "col": 14,
+                "end_line": 7,
+                "end_col": 15
+              },
+              "width": 1,
+              "name": "t"
+            }
+          }
+        ],
+        "generates": [],
+        "others": []
+      }
+    ],
+    "others": []
+  },
+  "lean_blocks": []
+}

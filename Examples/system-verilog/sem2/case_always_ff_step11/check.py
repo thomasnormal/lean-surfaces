@@ -32,15 +32,16 @@ def run(args, cwd=ROOT):
     return stdout
 
 
-def main():
-    lean = run(["lake", "env", "lean", "--run", str(HERE / "oracle.lean")])
-    expected = {tag: [] for tag in ("plain", "order")}
+def main(here=HERE, fixtures=(("plain", "case_always_ff_step11", 8),
+                              ("order", "case_always_ff_order_step11", 7))):
+    lean = run(["lake", "env", "lean", "--run", str(here / "oracle.lean")])
+    expected = {tag: [] for tag, _, _ in fixtures}
     for line in lean.splitlines():
         if line.startswith("ROW "):
             _, tag, *values = line.split()
             expected[tag].append(values)
-    if [len(expected[tag]) for tag in ("plain", "order")] != [8, 7]:
-        raise RuntimeError("E did not produce both complete traces:\n" + lean)
+    if any(len(expected[tag]) != count for tag, _, count in fixtures):
+        raise RuntimeError("E did not produce the complete traces:\n" + lean)
 
     if not shutil.which("iverilog") or not shutil.which("vvp"):
         raise RuntimeError("Icarus is required for this differential check")
@@ -59,9 +60,8 @@ def main():
     else:
         print("no Xcelium result: xrun unavailable")
 
-    for tag, top in [("plain", "case_always_ff_step11"),
-                     ("order", "case_always_ff_order_step11")]:
-        sources = [str(HERE / (top + ".sv")), str(HERE / (top + "_tb.sv"))]
+    for tag, top, _ in fixtures:
+        sources = [str(here / (top + ".sv")), str(here / (top + "_tb.sv"))]
         for simulator in simulators:
             with tempfile.TemporaryDirectory(prefix="sv-e-case-") as work:
                 if simulator == "iverilog":
@@ -77,7 +77,7 @@ def main():
                 if line.startswith("ROW "):
                     fields = line.split()[1:]
                     actual.append([p.split("=", 1)[1] for p in fields if "=" in p]
-                                  if tag == "plain" else fields)
+                                  if any("=" in p for p in fields) else fields)
             if actual != expected[tag]:
                 raise RuntimeError(f"{tag}/{simulator}: E {expected[tag]} != {actual}")
             print(f"{tag}/{simulator}: {len(actual)} rows MATCH E")

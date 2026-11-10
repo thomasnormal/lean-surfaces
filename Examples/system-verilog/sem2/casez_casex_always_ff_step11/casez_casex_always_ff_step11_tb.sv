@@ -35,6 +35,10 @@ module casez_casex_always_ff_step11_tb;
         row("sel_1z11_d4", 4'b1z11, 4'b0100);
         row("sel_zzzz_d3", 4'bzzzz, 4'b0011);
         row("sel_xxxx_d2", 4'bxxxx, 4'b0010);
+        row("sel_1x00_dxz", 4'b1x00, 4'bxz01);
+        row("sel_1z11_dz", 4'b1z11, 4'bzzzz);
+        row("sel_1000_dx", 4'b1000, 4'bxxxx);
+        row("sel_zzzz_da", 4'bzzzz, 4'b1010);
         $finish;
     end
 endmodule

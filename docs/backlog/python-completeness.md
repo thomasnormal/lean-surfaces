@@ -74,6 +74,23 @@ runtime binding behavior.
 DECIDED: close `py-def-table-position-independent` on this branch; retain the
 conservative loud guard until definitions become runtime-bound AST nodes.
 
+## 2026-11-10-pyfoundation-13 — revalidate structured global declarations
+
+The inbox finding `py-global-text-truncation` is already closed. The approved
+AST's `Global.names` and `Nonlocal.names` arrays survive extraction and
+ingestion, and both interpreter surfaces consume those structured names
+directly; no truncated source-text parser remains. The long-name declaration
+and live module-global pipeline still match CPython.
+
+| Measurement | Result |
+|---|---|
+| Structured global witness | `global_structured_script.py`: prints `5`, MATCH CPython 3.9 |
+| Live module global | `live_fresh_global.py`: prints `1` then `7`, MATCH CPython 3.9 |
+| Semantic change | none; audit confirmation only |
+
+DECIDED: close `py-global-text-truncation` on this branch and keep lexical
+declarations structured from the approved AST through execution.
+
 ## 2026-11-10-pyfoundation-10 — max/min recursion
 
 `max` and `min` now check the CPython builtin recursion unit after positional

@@ -10,6 +10,9 @@
   the captured source and literal hashes and the recorded ABI and call binding.
   The harness relies on its caller's cgroup instead of imposing an address-space
   limit.
+- Count `sum` calls against the CPython recursion limit after argument
+  evaluation; unsupported keyword forms remain loud.
+
 - Count `all` and `any` calls during recursion, including generator resumption,
   and report their keyword-argument errors in CPython order.
 

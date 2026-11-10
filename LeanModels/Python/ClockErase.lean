@@ -2808,41 +2808,42 @@ theorem ceEvalExpr_succ (ih : CE fuel) : CEEvalExpr (fuel + 1) := by
                             | nil => exact .liftRes hs2 _
                             | cons _ _ => exact .exn hs2 _
                     case bsum =>
-                      refine .bind (ClockErasedF.flattenStarRun (ihEs m st args.toList h)) fun s2 vs hs2 => ?_
+                      refine .bind (ClockErasedF.flattenStarRun (ihEs m st args.toList h)) fun s2 vs hs3 => ?_
+                      refine .bind (.liftRes hs3 _) fun s3 _ hs3 => ?_
                       cases hsa : sumArgs vs with
-                      | none => exact .exn hs2 _
+                      | none => exact .exn hs3 _
                       | some pr =>
                         obtain ⟨v, start⟩ := pr
                         try dsimp only
-                        cases start <;> try exact .exn hs2 _
-                        case str value => exact .liftRes hs2 _
-                        case bytes values => exact .liftRes hs2 _
+                        cases start <;> try exact .exn hs3 _
+                        case str value => exact .liftRes hs3 _
+                        case bytes values => exact .liftRes hs3 _
                         all_goals
-                          cases v <;> try exact .liftRes hs2 _
+                          cases v <;> try exact .liftRes hs3 _
                           case ref address =>
                             ce_norm
-                            cases hobj : Heap.get? s2.world.heap address with
+                            cases hobj : Heap.get? s3.world.heap address with
                             | none => exact .unsupported
                             | some obj =>
                               cases obj <;> try exact .unsupported
-                              case list values => exact .liftRes hs2 _
-                              case dict entries version => exact .liftRes hs2 _
-                              case «instance» classId attrs => exact .exn hs2 _
+                              case list values => exact .liftRes hs3 _
+                              case dict entries version => exact .liftRes hs3 _
+                              case «instance» classId attrs => exact .exn hs3 _
                               case closure name params argsOk localsOk global generator body captured =>
-                                exact .exn hs2 _
+                                exact .exn hs3 _
                               case generator name locals cont status =>
                                 refine .ite .unsupported ?_
-                                refine .bind (ClockErasedW.withLocals (ihDrain m s2.world address hs2))
+                                refine .bind (ClockErasedW.withLocals (ihDrain m s3.world address hs3))
                                   fun s3 values hs3 => ?_
                                 exact .liftRes hs3 _
-                          case none => exact .exn hs2 _
-                          case ellipsis => exact .exn hs2 _
-                          case bool value => exact .exn hs2 _
-                          case int value => exact .exn hs2 _
-                          case float value => exact .exn hs2 _
-                          case notImplemented => exact .exn hs2 _
-                          case surrogate code => exact .exn hs2 _
-                          case callable name => exact .exn hs2 _
+                          case none => exact .exn hs3 _
+                          case ellipsis => exact .exn hs3 _
+                          case bool value => exact .exn hs3 _
+                          case int value => exact .exn hs3 _
+                          case float value => exact .exn hs3 _
+                          case notImplemented => exact .exn hs3 _
+                          case surrogate code => exact .exn hs3 _
+                          case callable name => exact .exn hs3 _
                     case btuple =>
                       refine .bind (ClockErasedF.flattenStarRun (ihEs m st args.toList h)) fun s2 vs hs2 => ?_
                       cases vs with

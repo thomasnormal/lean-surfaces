@@ -17,6 +17,15 @@ before built. `harness/refusal_census.py` is the scoreboard and the acceptance
 battery in one — it exits nonzero on drift, so a landing that moves the tier
 must move the census in the same commit.
 
+## 2026-11-10-pyfoundation-9 — sum recursion
+
+`sum` now checks the CPython C-call recursion unit after evaluating its
+positional arguments. `sum_recursion.py` pins valid and start-value folds,
+wrong type/arity, argument effects, and generator/keyword boundaries; keyword
+forms remain loud because CPython's Argument Clinic diagnostics distinguish
+missing positional arguments from invalid keyword names. The proof interpreter
+shares the check and refuses only the recorded keyword cases.
+
 ## 2026-11-10-pyfoundation-7 — remaining builtin and method recursion sites
 
 `len` now checks its C-call recursion boundary after evaluating arguments;

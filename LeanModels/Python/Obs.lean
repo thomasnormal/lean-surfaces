@@ -1216,6 +1216,7 @@ theorem fuelMono (fuel : Nat) :
                           -- fold; the single-generator arm drains behind the
                           -- `moduleGenFree` guard, like max/min
                           · refine Run.le_bind (flattenStarRun_mono (ihEs m st cargs.toList k hk)) fun st vs => ?_
+                            refine Run.le_bind (Run.le_refl _) fun st _ => ?_
                             cases sumArgs vs with
                             | none => exact Run.le_refl _
                             | some pr =>
@@ -3279,6 +3280,7 @@ theorem worldInv (m : Module) (hm : m.heapFree = true) (fuel : Nat) :
                                 | nil => exact .liftResF h₁ _
                                 | cons _ _ => exact .exn
                         · -- sum
+                          refine .bind (.liftResF h₁ _) fun st₂ _ h₂ => ?_
                           cases sumArgs vs with
                           | none => exact .exn
                           | some pr =>
@@ -3286,17 +3288,17 @@ theorem worldInv (m : Module) (hm : m.heapFree = true) (fuel : Nat) :
                             dsimp only
                             cases start <;> try exact .exn
                             all_goals
-                              cases v <;> try exact .liftResF h₁ _
+                              cases v <;> try exact .liftResF h₂ _
                             all_goals try exact .exn
                             all_goals
                               case ref a =>
                                 dsimp only
-                                cases Heap.get? st₁.world.heap a with
+                                cases Heap.get? st₂.world.heap a with
                                 | none => exact .unsupported
                                 | some obj =>
                                   cases obj <;>
                                     first
-                                      | exact .liftResF h₁ _
+                                      | exact .liftResF h₂ _
                                       | exact .unsupported
                                       | exact .exn
                                       | skip

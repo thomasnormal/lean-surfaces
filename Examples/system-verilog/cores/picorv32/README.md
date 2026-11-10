@@ -1373,3 +1373,34 @@ The low-level executor still returns `ok states=80` when both guards are
 manually bypassed, but that result is **UNVALIDATED** and is not a usable
 PicoRV32 trace.  The symbolic ADDI invariant remains parked until the E
 memory route admits the design.
+
+## 2026-11-10 re-probe on public master `df3b9105b`
+
+I re-extracted the unchanged pinned source
+`ef203c2b0a3fb793280f5114941416c425c5b461` with the public-master extractor.
+The source SHA-256 remains
+`0836050971b3c6cdd28ac3b1e5719a67fb645161912bef1e472e63995ceb0622`; the
+fresh envelope is `/tmp/picorv32-public-df3.sv.json`, SHA-256
+`b615142a6876a7e1ae1e64526769330aa90f3c7cf197e00d8281b76b77ac8738`.
+
+The ordinary route still has the exact first refusal at `picorv32.v:203`:
+
+```text
+unsupported "Instantiate"
+  "decl 'cpuregs': unpacked array storage outside E (UnpackedDecl:memory)"
+```
+
+The source-shaped memory adapter constructs 223 scalar declarations, one
+unpacked memory declaration, no declaration initializers, and 52 processes.
+Its current E admission reports are, in order:
+
+```text
+Schedule:preemptive: processes 0 and 26 may observe an intermediate write under IEEE 1800-2023 §4.7; the preemptive profile requires disjoint cross-process reads/writes
+Schedule:comb-source-order: comb process 9 reads a signal written by later comb process 25; the source-order memory pass would need a second settle pass under IEEE 1800-2023 §10.3/§4.5
+```
+
+With those guards bypassed only for diagnosis, the provisional low-level
+executor returns `ok states=80` for the alternating-clock, two-reset-cycle
+stimulus.  That trace is **UNVALIDATED**: the two schedule reports are the
+current wall, and they belong to the E scheduler/memory work rather than a
+`MemCycle` patch in this lane.  The symbolic ADDI invariant remains parked.

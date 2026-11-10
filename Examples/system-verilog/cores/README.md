@@ -516,3 +516,17 @@ unsupported "Instantiate"
 This conversion-shaped wall is a new generic instance; a clean-room
 parameter-sized memory repro was filed with ls-sv.  No candidate core currently
 loads on the memory route, so the symbolic ADDI invariant remains parked.
+
+## 2026-11-10 PicoRV32 re-probe on public master `df3b9105b`
+
+The unchanged pinned source was re-extracted from
+`ef203c2b0a3fb793280f5114941416c425c5b461` (source SHA-256
+`0836050971b3c6cdd28ac3b1e5719a67fb645161912bef1e472e63995ceb0622`; envelope
+SHA-256 `b615142a6876a7e1ae1e64526769330aa90f3c7cf197e00d8281b76b77ac8738`).
+The ordinary route still first refuses `cpuregs` at `picorv32.v:203` with
+`UnpackedDecl:memory`.  The memory route constructs 223 scalar declarations,
+one unpacked memory, no initializers, and 52 processes, then reports the E
+schedule walls `Schedule:preemptive` (processes 0/26) and
+`Schedule:comb-source-order` (comb processes 9/25).  A guard-bypassed
+diagnostic run returns 80 low-level states, but it is unvalidated until the E
+scheduler closes those reports; no `MemCycle` change is made here.

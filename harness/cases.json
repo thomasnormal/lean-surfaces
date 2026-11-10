@@ -1,4 +1,10 @@
 [
+  {"file": "harness/foundation_probe.py", "function": "int_pow_negative", "args": [[0, 1], [1, 1], [-1, 2], [2, 1], [-2, 3]], "expect": "match", "note": "Convertible negative powers preserve zero-base errors and exact binary-base results."},
+  {"file": "harness/foundation_probe.py", "function": "negative_pow_exponent_boundary", "args": [[1023], [1024]], "expect": "match", "note": "The finite/overflow conversion boundary is checked before the zero-base error."},
+  {"file": "harness/foundation_probe.py", "function": "negative_pow_exponent_overflow", "args": [[0], [1], [-1], [2]], "expect": "match", "note": "Negative integer powers convert the exponent before zero checks or platform pow."},
+  {"file": "harness/foundation_probe.py", "function": "negative_pow_base_overflow", "args": [[1], [2]], "expect": "match", "note": "Negative integer powers convert the base before platform pow."},
+  {"file": "harness/foundation_probe.py", "function": "float_pow_base_overflow", "args": [[]], "expect": "match", "note": "Mixed float power converts an oversized integer base first."},
+  {"file": "harness/foundation_probe.py", "function": "float_pow_exponent_overflow", "args": [[]], "expect": "match", "note": "Mixed float power converts an oversized integer exponent before the zero-base check."},
   {"file": "harness/genexp_creation.py", "function": "gen_iter_deferred", "args": [[{"t":"notImplemented"}], [{"t":"none"}], [5], [{"t":"bool","v":true}], [{"t":"ellipsis"}], [{"t":"str","v":"a"}], [{"t":"tuple","v":[]}]], "expect": "match", "note": "The outer iterable is checked when a generator expression is created, before its first next()."},
   {"file": "harness/genexp_creation.py", "function": "gen_iter_live_list", "args": [[]], "expect": "match", "note": "The iterator sees list growth after generator-expression creation."},
   {"file": "harness/genexp_creation.py", "function": "gen_iter_generator", "args": [[]], "expect": "match", "note": "A generator expression consumes the existing generator iterator."},

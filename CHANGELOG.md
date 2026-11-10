@@ -25,6 +25,9 @@
   model, conditional on an order-indexed loaded-core invariant. Completion
   and retirement progress remain explicit proof obligations.
 
+- Corrected negative integer power to convert both operands before checking
+  for a zero base, preserving CPython's conversion `OverflowError`.
+
 - Restored `py_loop`'s entry and exit automation after the call-depth change,
   so loop proofs finish with their stated invariant and measure.
 

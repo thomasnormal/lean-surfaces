@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Count recursion units for `next` and Python generator resumption, preserving
+  the generator's state when either entry reaches the recursion limit.
+
 - Count ordinary class construction and direct rich comparisons against the
   Python recursion limit, expose the normalized entry depth for batch calls,
   and correct the fib and generator proof bounds at measured recursion boundaries.

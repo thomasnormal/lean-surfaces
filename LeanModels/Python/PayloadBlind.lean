@@ -589,6 +589,24 @@ theorem toWorld {x y : Run FrameState α} (h : PBF a o₀ o x y) :
                        exact ⟨fun _ _ h => absurd h (by simp [Run.toWorld]),
                          fun _ _ h => absurd h (by simp [Run.toWorld])⟩
 
+/-- A frame recursion unit preserves payload blindness. -/
+theorem withFrameRecursionUnit {st : FrameState}
+    {f g : FrameState → Run FrameState α}
+    (hslot : Heap.get? st.world.heap a = some o₀)
+    (hf : ∀ s, Heap.get? s.world.heap a = some o₀ →
+      PBF a o₀ o (f s) (g (s.swapAt a o))) :
+    PBF a o₀ o (Run.withFrameRecursionUnit st f)
+      (Run.withFrameRecursionUnit (st.swapAt a o) g) := by
+  unfold Run.withFrameRecursionUnit Run.withRecursionUnit
+  simp only [FrameState.swapAt_world, FrameState.swapAt_locals, World.swapAt_callDepth]
+  by_cases hd : pythonRecursionFull st.world.callDepth
+  · simp only [hd, if_true, Run.withLocals]
+    simpa [FrameState.swapAt] using (PBF.exn (o := o) (α := α) hslot .recursionError)
+  · simp only [hd, if_false]
+    refine PBW.withLocals (PBW.leaveCallDepth (PBF.toWorld ?_))
+    simpa [FrameState.swapAt, World.swapAt] using
+      (hf { st with world := { st.world with callDepth := st.world.callDepth + 1 } } hslot)
+
 /-! ### The allocation leaves
 
 An `alloc` appends, so it commutes with a swap INSIDE the heap
@@ -3680,34 +3698,44 @@ theorem pbStepIter_succ (htwin : PayloadTwin o₀ o) (ih : PBAll pa o₀ o fuel)
                 | some h₁ =>
                     have hslot₁ : Heap.get? h₁ pa = some o₀ :=
                       (Heap.get?_update_ne hu (Ne.symm hba)).trans hslot
-                    refine PBF.toWorld ?_
-                    refine PBF.bindE (ihGen m ⟨{ w with heap := h₁ }, locals⟩ cont hslot₁)
-                      (fun s r _ hs => ?_) (fun s e _ hs => ?_)
-                    · cases r with
-                      | none =>
-                          simp only [FrameState.swapAt_world, FrameState.swapAt_locals,
+                    simp only [World.swapAt_callDepth]
+                    refine PBW.ite (fun _ => ?_) fun _ => ?_
+                    · simp only [Heap.update_swapAt_ne hba]
+                      cases hu2 : Heap.update h₁ b (.generator qname locals [] .closed) with
+                      | none => exact PBW.unsupported
+                      | some h₂ =>
+                          exact PBW.exn ((Heap.get?_update_ne hu2 (Ne.symm hba)).trans hslot₁) _
+                    · refine PBW.ite (fun _ => ?_) fun _ => ?_
+                      all_goals
+                        first | apply PBW.leaveCallDepth | skip
+                        refine PBF.toWorld ?_
+                        refine PBF.bindE (ihGen m _ cont hslot₁)
+                          (fun s r _ hs => ?_) (fun s e _ hs => ?_)
+                        · cases r with
+                          | none =>
+                              simp only [FrameState.swapAt_world, FrameState.swapAt_locals,
+                                World.swapAt_heap, Heap.update_swapAt_ne hba]
+                              cases hu2 : Heap.update s.world.heap b
+                                (Obj.generator qname s.locals [] .closed) with
+                              | none => exact PBF.unsupported
+                              | some h₂ =>
+                                  exact PBF.ok ((Heap.get?_update_ne hu2 (Ne.symm hba)).trans hs) _
+                          | some vc =>
+                              obtain ⟨v, cont'⟩ := vc
+                              simp only [FrameState.swapAt_world, FrameState.swapAt_locals,
+                                World.swapAt_heap, Heap.update_swapAt_ne hba]
+                              cases hu2 : Heap.update s.world.heap b
+                                (Obj.generator qname s.locals cont' .suspended) with
+                              | none => exact PBF.unsupported
+                              | some h₂ =>
+                                  exact PBF.ok ((Heap.get?_update_ne hu2 (Ne.symm hba)).trans hs) _
+                        · simp only [FrameState.swapAt_world, FrameState.swapAt_locals,
                             World.swapAt_heap, Heap.update_swapAt_ne hba]
                           cases hu2 : Heap.update s.world.heap b
                             (Obj.generator qname s.locals [] .closed) with
                           | none => exact PBF.unsupported
                           | some h₂ =>
-                              exact PBF.ok ((Heap.get?_update_ne hu2 (Ne.symm hba)).trans hs) _
-                      | some vc =>
-                          obtain ⟨v, cont'⟩ := vc
-                          simp only [FrameState.swapAt_world, FrameState.swapAt_locals,
-                            World.swapAt_heap, Heap.update_swapAt_ne hba]
-                          cases hu2 : Heap.update s.world.heap b
-                            (Obj.generator qname s.locals cont' .suspended) with
-                          | none => exact PBF.unsupported
-                          | some h₂ =>
-                              exact PBF.ok ((Heap.get?_update_ne hu2 (Ne.symm hba)).trans hs) _
-                    · simp only [FrameState.swapAt_world, FrameState.swapAt_locals,
-                        World.swapAt_heap, Heap.update_swapAt_ne hba]
-                      cases hu2 : Heap.update s.world.heap b
-                        (Obj.generator qname s.locals [] .closed) with
-                      | none => exact PBF.unsupported
-                      | some h₂ =>
-                          exact PBF.exn ((Heap.get?_update_ne hu2 (Ne.symm hba)).trans hs) _
+                              exact PBF.exn ((Heap.get?_update_ne hu2 (Ne.symm hba)).trans hs) _
             | suspended =>
                 simp only [Heap.update_swapAt_ne hba]
                 cases hu : Heap.update w.heap b (Obj.generator qname locals cont .running) with
@@ -3715,34 +3743,44 @@ theorem pbStepIter_succ (htwin : PayloadTwin o₀ o) (ih : PBAll pa o₀ o fuel)
                 | some h₁ =>
                     have hslot₁ : Heap.get? h₁ pa = some o₀ :=
                       (Heap.get?_update_ne hu (Ne.symm hba)).trans hslot
-                    refine PBF.toWorld ?_
-                    refine PBF.bindE (ihGen m ⟨{ w with heap := h₁ }, locals⟩ cont hslot₁)
-                      (fun s r _ hs => ?_) (fun s e _ hs => ?_)
-                    · cases r with
-                      | none =>
-                          simp only [FrameState.swapAt_world, FrameState.swapAt_locals,
+                    simp only [World.swapAt_callDepth]
+                    refine PBW.ite (fun _ => ?_) fun _ => ?_
+                    · simp only [Heap.update_swapAt_ne hba]
+                      cases hu2 : Heap.update h₁ b (.generator qname locals [] .closed) with
+                      | none => exact PBW.unsupported
+                      | some h₂ =>
+                          exact PBW.exn ((Heap.get?_update_ne hu2 (Ne.symm hba)).trans hslot₁) _
+                    · refine PBW.ite (fun _ => ?_) fun _ => ?_
+                      all_goals
+                        first | apply PBW.leaveCallDepth | skip
+                        refine PBF.toWorld ?_
+                        refine PBF.bindE (ihGen m _ cont hslot₁)
+                          (fun s r _ hs => ?_) (fun s e _ hs => ?_)
+                        · cases r with
+                          | none =>
+                              simp only [FrameState.swapAt_world, FrameState.swapAt_locals,
+                                World.swapAt_heap, Heap.update_swapAt_ne hba]
+                              cases hu2 : Heap.update s.world.heap b
+                                (Obj.generator qname s.locals [] .closed) with
+                              | none => exact PBF.unsupported
+                              | some h₂ =>
+                                  exact PBF.ok ((Heap.get?_update_ne hu2 (Ne.symm hba)).trans hs) _
+                          | some vc =>
+                              obtain ⟨v, cont'⟩ := vc
+                              simp only [FrameState.swapAt_world, FrameState.swapAt_locals,
+                                World.swapAt_heap, Heap.update_swapAt_ne hba]
+                              cases hu2 : Heap.update s.world.heap b
+                                (Obj.generator qname s.locals cont' .suspended) with
+                              | none => exact PBF.unsupported
+                              | some h₂ =>
+                                  exact PBF.ok ((Heap.get?_update_ne hu2 (Ne.symm hba)).trans hs) _
+                        · simp only [FrameState.swapAt_world, FrameState.swapAt_locals,
                             World.swapAt_heap, Heap.update_swapAt_ne hba]
                           cases hu2 : Heap.update s.world.heap b
                             (Obj.generator qname s.locals [] .closed) with
                           | none => exact PBF.unsupported
                           | some h₂ =>
-                              exact PBF.ok ((Heap.get?_update_ne hu2 (Ne.symm hba)).trans hs) _
-                      | some vc =>
-                          obtain ⟨v, cont'⟩ := vc
-                          simp only [FrameState.swapAt_world, FrameState.swapAt_locals,
-                            World.swapAt_heap, Heap.update_swapAt_ne hba]
-                          cases hu2 : Heap.update s.world.heap b
-                            (Obj.generator qname s.locals cont' .suspended) with
-                          | none => exact PBF.unsupported
-                          | some h₂ =>
-                              exact PBF.ok ((Heap.get?_update_ne hu2 (Ne.symm hba)).trans hs) _
-                    · simp only [FrameState.swapAt_world, FrameState.swapAt_locals,
-                        World.swapAt_heap, Heap.update_swapAt_ne hba]
-                      cases hu2 : Heap.update s.world.heap b
-                        (Obj.generator qname s.locals [] .closed) with
-                      | none => exact PBF.unsupported
-                      | some h₂ =>
-                          exact PBF.exn ((Heap.get?_update_ne hu2 (Ne.symm hba)).trans hs) _
+                              exact PBF.exn ((Heap.get?_update_ne hu2 (Ne.symm hba)).trans hs) _
         | _ =>
             rw [RVal.typeNameH_swapAt hslot htwin]
             exact PBW.exn hslot _
@@ -5922,6 +5960,7 @@ theorem pbEvalExpr_succ (htwin : PayloadTwin o₀ o) (ih : PBAll pa o₀ o fuel)
                                     -- next
                                     · refine PBF.bind (PBF.flattenStarRun (ihEs m st args.toList hslot))
                                         fun s1 vs _ hs1 => ?_
+                                      refine PBF.withFrameRecursionUnit hs1 fun s1 hs1 => ?_
                                       cases vs with
                                       | nil =>
                                           simp only [FrameState.swapAt_world, World.swapAt_heap]

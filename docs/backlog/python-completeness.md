@@ -32,7 +32,7 @@ The two extra caller units come from the harness, so they must not be silently
 applied to the fresh-module `callFunction` boundary.
 
 This is not a complete recursion protocol. Nested container comparison,
-`repr`/`str`, generator and closure frames, namedtuple construction, other
+`repr`/`str`, closure frames, namedtuple construction, other
 callable sites, and configurable entry limits remain to be traced through the
 CPython C paths and either counted or refused. `heapEq`'s cycle detection is
 separate from the thread recursion counter. The fib totality hypothesis is now
@@ -40,8 +40,16 @@ separate from the thread recursion counter. The fib totality hypothesis is now
 claimed totality at `k = 999`, where CPython raises during a comparison.
 The generator comparison lemmas now require `w.callDepth < 999`: CPython 3.9
 also raises in a generator comparison at sufficiently deep resumption. The
-`depth_compare` differential row pins comparison failure at the boundary;
-modeling the extra recursion unit for generator resumption itself remains open.
+`depth_compare` differential row pins comparison failure at the boundary.
+Python generator resumption now enters a frame unit, and `next` enters its C
+call unit before dispatch; native iterator cursors have no Python frame unit.
+The `gen_lab` iterator and consuming-body proofs therefore require caller
+depth below 998, leaving room for the resumed frame and its comparison.
+The `generator_recursion.py` rows pin both boundaries and distinguish an early
+`next` failure, which leaves the generator intact, from failed generator-frame
+entry, which closes it. CPython 3.9 paths: `cfunction_vectorcall_FASTCALL` in
+`Objects/methodobject.c`, `builtin_next` in `Python/bltinmodule.c`, and
+`gen_send_ex` in `Objects/genobject.c`.
 
 ## 2026-11-10-pyfoundation-5 — eager non-iterable genexp creation check
 

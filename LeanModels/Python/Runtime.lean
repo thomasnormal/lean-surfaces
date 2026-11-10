@@ -512,6 +512,18 @@ raises. -/
 @[inline] def finishTopCall : Run World α → Run World α :=
   finishCallAt pythonTopCallDepth
 
+/-- Execute a world action under one CPython recursion unit. The limit check
+happens before the action, and returns and Python exceptions both unwind. -/
+@[inline] def withRecursionUnit (w : World) (action : World → Run World α) : Run World α :=
+  if pythonRecursionFull w.callDepth then .exn w .recursionError
+  else leaveCallDepth (action { w with callDepth := w.callDepth + 1 })
+
+/-- Frame-state adapter for `withRecursionUnit`; the caller's locals survive. -/
+@[inline] def withFrameRecursionUnit (st : FrameState)
+    (action : FrameState → Run FrameState α) : Run FrameState α :=
+  withLocals st.locals <| withRecursionUnit st.world fun w =>
+    toWorld (action { st with world := w })
+
 /-- Inversion of a successful bind (the `Res.bind_eq_ok` analog): the
 prefix decided with some intermediate state and value. -/
 @[simp] theorem bind_eq_ok {x : Run σ α} {f : σ → α → Run σ β} {s : σ} {b : β} :

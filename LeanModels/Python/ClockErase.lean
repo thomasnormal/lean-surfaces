@@ -665,6 +665,26 @@ theorem ClockErasedF.toWorld {x : Run FrameState α}
 
 
 
+/-- A frame recursion unit preserves clock erasure. -/
+theorem ClockErasedF.withFrameRecursionUnit {st : FrameState}
+    {f : FrameState → Run FrameState α} (h : st.world.clock = [])
+    (hf : ∀ s, s.world.clock = [] →
+      ClockErasedF (f s) (fun tr => f (s.withClock tr))) :
+    ClockErasedF (Run.withFrameRecursionUnit st f)
+      (fun tr => Run.withFrameRecursionUnit (st.withClock tr) f) := by
+  unfold Run.withFrameRecursionUnit Run.withRecursionUnit
+  simp only [FrameState.withClock_world, FrameState.withClock_locals,
+    World.withClock_callDepth]
+  by_cases hd : pythonRecursionFull st.world.callDepth
+  · simp only [hd, if_true, Run.withLocals]
+    simpa [FrameState.withClock] using
+      (ClockErasedF.exn (st := st) h PyErr.recursionError)
+  · simp only [hd, if_false]
+    refine ClockErasedW.withLocals (ClockErasedW.leaveCallDepth
+      (ClockErasedF.toWorld ?_))
+    simpa [FrameState.withClock, World.withClock] using
+      (hf { st with world := { st.world with callDepth := st.world.callDepth + 1 } } h)
+
 /-- `attrReadResult` (the H3 attribute-read helper, outside the mutual
 block) is seed-natural: the plan reads only the heap. -/
 theorem attrReadResult_withClock (m : Module) (st : FrameState) (a : Addr)
@@ -1059,57 +1079,75 @@ theorem ceStepIter_succ (ih : CE fuel) : CEStepIter (fuel + 1) := by
         cases hupd : Heap.update w.heap a (.generator qname locals cont .running) with
         | none => exact .unsupported
         | some h1 =>
-          refine ClockErasedF.toWorld
-            (.bindE (ihGen m ⟨{ w with heap := h1 }, locals⟩ cont h)
-              (fun s r hs => ?_) (fun s e hs => ?_))
-          · cases r with
-            | none =>
-              refine .of_seed (fun tr => by
-                cases hu2 : Heap.update s.world.heap a
-                    (.generator qname s.locals [] .closed) <;>
-                  simp [hu2, Run.seedF, World.withClock])
-                (by simp only [FrameState.withClock_self hs])
-            | some vc =>
-              cases vc with
-              | mk v cont2 =>
-                refine .of_seed (fun tr => by
+          ce_norm
+          refine .ite ?_ ?_
+          · refine .of_seed (fun tr => by
+              cases hu2 : Heap.update h1 a (.generator qname locals [] .closed) <;>
+                simp [hu2, Run.seedW, World.withClock])
+              (by cases hu2 : Heap.update h1 a (.generator qname locals [] .closed) <;>
+                simp [hu2, h])
+          · refine .ite ?_ ?_
+            all_goals
+              first | apply ClockErasedW.leaveCallDepth | skip
+              refine ClockErasedF.toWorld
+                (.bindE (ihGen m _ cont h) (fun s r hs => ?_) (fun s e hs => ?_))
+              · cases r with
+                | none =>
+                  refine .of_seed (fun tr => by
+                    cases hu2 : Heap.update s.world.heap a
+                        (.generator qname s.locals [] .closed) <;>
+                      simp [hu2, Run.seedF, World.withClock])
+                    (by simp only [FrameState.withClock_self hs])
+                | some vc =>
+                  cases vc with
+                  | mk v cont2 =>
+                    refine .of_seed (fun tr => by
+                      cases hu2 : Heap.update s.world.heap a
+                          (.generator qname s.locals cont2 .suspended) <;>
+                        simp [hu2, Run.seedF, World.withClock])
+                      (by simp only [FrameState.withClock_self hs])
+              · refine .of_seed (fun tr => by
                   cases hu2 : Heap.update s.world.heap a
-                      (.generator qname s.locals cont2 .suspended) <;>
+                      (.generator qname s.locals [] .closed) <;>
                     simp [hu2, Run.seedF, World.withClock])
                   (by simp only [FrameState.withClock_self hs])
-          · refine .of_seed (fun tr => by
-              cases hu2 : Heap.update s.world.heap a
-                  (.generator qname s.locals [] .closed) <;>
-                simp [hu2, Run.seedF, World.withClock])
-              (by simp only [FrameState.withClock_self hs])
       | suspended =>
         dsimp only
         cases hupd : Heap.update w.heap a (.generator qname locals cont .running) with
         | none => exact .unsupported
         | some h1 =>
-          refine ClockErasedF.toWorld
-            (.bindE (ihGen m ⟨{ w with heap := h1 }, locals⟩ cont h)
-              (fun s r hs => ?_) (fun s e hs => ?_))
-          · cases r with
-            | none =>
-              refine .of_seed (fun tr => by
-                cases hu2 : Heap.update s.world.heap a
-                    (.generator qname s.locals [] .closed) <;>
-                  simp [hu2, Run.seedF, World.withClock])
-                (by simp only [FrameState.withClock_self hs])
-            | some vc =>
-              cases vc with
-              | mk v cont2 =>
-                refine .of_seed (fun tr => by
+          ce_norm
+          refine .ite ?_ ?_
+          · refine .of_seed (fun tr => by
+              cases hu2 : Heap.update h1 a (.generator qname locals [] .closed) <;>
+                simp [hu2, Run.seedW, World.withClock])
+              (by cases hu2 : Heap.update h1 a (.generator qname locals [] .closed) <;>
+                simp [hu2, h])
+          · refine .ite ?_ ?_
+            all_goals
+              first | apply ClockErasedW.leaveCallDepth | skip
+              refine ClockErasedF.toWorld
+                (.bindE (ihGen m _ cont h) (fun s r hs => ?_) (fun s e hs => ?_))
+              · cases r with
+                | none =>
+                  refine .of_seed (fun tr => by
+                    cases hu2 : Heap.update s.world.heap a
+                        (.generator qname s.locals [] .closed) <;>
+                      simp [hu2, Run.seedF, World.withClock])
+                    (by simp only [FrameState.withClock_self hs])
+                | some vc =>
+                  cases vc with
+                  | mk v cont2 =>
+                    refine .of_seed (fun tr => by
+                      cases hu2 : Heap.update s.world.heap a
+                          (.generator qname s.locals cont2 .suspended) <;>
+                        simp [hu2, Run.seedF, World.withClock])
+                      (by simp only [FrameState.withClock_self hs])
+              · refine .of_seed (fun tr => by
                   cases hu2 : Heap.update s.world.heap a
-                      (.generator qname s.locals cont2 .suspended) <;>
+                      (.generator qname s.locals [] .closed) <;>
                     simp [hu2, Run.seedF, World.withClock])
                   (by simp only [FrameState.withClock_self hs])
-          · refine .of_seed (fun tr => by
-              cases hu2 : Heap.update s.world.heap a
-                  (.generator qname s.locals [] .closed) <;>
-                simp [hu2, Run.seedF, World.withClock])
-              (by simp only [FrameState.withClock_self hs])
     | list xs => exact .exn h _
     | dict entries ver => exact .exn h _
     | dictView da kind => exact .exn h _
@@ -2947,6 +2985,7 @@ theorem ceEvalExpr_succ (ih : CE fuel) : CEEvalExpr (fuel + 1) := by
                         exact .of_seed (fun tr => by first | rfl | simp) (by first | rfl | simp [FrameState.withClock_self hs2, hs2])
                     case bnext =>
                       refine .bind (ClockErasedF.flattenStarRun (ihEs m st args.toList h)) fun s2 vs hs2 => ?_
+                      refine ClockErasedF.withFrameRecursionUnit hs2 fun s2 hs2 => ?_
                       cases vs with
                       | nil => exact .exn hs2 _
                       | cons v t =>

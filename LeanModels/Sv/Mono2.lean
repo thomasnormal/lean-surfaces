@@ -1,5 +1,6 @@
 import LeanModels.Sv.Spec2
 import LeanModels.Sv.Pure2
+import LeanModels.Sv.Pure2Adequacy
 
 /-!
 # Fuel monotonicity and determinism of the Design2 interpreter (`LeanModels.Sv`)

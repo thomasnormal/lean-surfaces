@@ -1,0 +1,165 @@
+/-
+# SV E-core-0 differential runner
+
+The command-line shape matches `runner2.lean`, but the instantiated Design2 is
+transported through `Elab.ofDesign2` and evaluated by the E-core-0 array
+executor.  E accepts only flat continuous assignments and always_comb bodies;
+other processes remain loud through the source-shaped `Unsupported` node.
+-/
+import Lean
+import LeanModels.Sv.Ingest2
+import LeanModels.Sv.Kernel.RunEArray
+
+open Lean (Json)
+open LeanModels.Sv
+
+namespace SvHarnessE0
+
+ def getF (j : Json) (name : String) : Except String Json :=
+  match j.getObjVal? name with
+  | .ok v => .ok v
+  | .error _ => .error s!"missing field '{name}'"
+
+def getFOpt (j : Json) (name : String) : Option Json :=
+  match j.getObjVal? name with
+  | .ok .null => none
+  | .ok v => some v
+  | .error _ => none
+
+def getStrF (j : Json) (name : String) : Except String String := do
+  match (← getF j name).getStr? with
+  | .ok s => .ok s
+  | .error _ => .error s!"field '{name}' is not a string"
+
+def getArrF (j : Json) (name : String) : Except String (Array Json) := do
+  match (← getF j name).getArr? with
+  | .ok a => .ok a
+  | .error _ => .error s!"field '{name}' is not an array"
+
+def findCase (cases : Array Json) (name : String) : Except String Json := do
+  for c in cases do
+    if (← getStrF c "name") == name then return c
+  .error s!"case '{name}' not found"
+
+def resolvePoint (pd : PDesign) (paramsJ : Option Json) :
+    Except String (PDesign × List Int) :=
+  pd.atPoint <| pd.params.map fun p =>
+    match paramsJ with
+    | none => none
+    | some pj =>
+        match pj.getObjVal? p.name with
+        | .ok v => v.getInt?.toOption
+        | .error _ => none
+
+def caseOverrides (paramsJ : Option Json) : List (String × Int) :=
+  match paramsJ with
+  | some (.obj kvs) =>
+      kvs.toArray.toList.filterMap fun (n, v) => (v.getInt?.toOption.map (n, ·))
+  | _ => []
+
+def renderOverrides (xs : List (String × Int)) : String :=
+  String.intercalate "," (xs.map fun (n, v) => s!"{n}={v}")
+
+def parseEntry (d : Design2) (j : Json) : Except String SvState := do
+  match j with
+  | .obj kvs =>
+      let mut st : SvState := []
+      for (name, v) in kvs.toArray do
+        let bits ← match v.getStr? with
+          | .ok s => pure s
+          | .error _ => .error s!"stimulus '{name}' is not a string"
+        let some lv := LVec.ofString? bits
+          | .error s!"stimulus '{name}': bad digits {bits}"
+        let some dc := d.decls.find? (·.name == name)
+          | .error s!"stimulus '{name}': not a declared signal"
+        unless dc.isInput do .error s!"stimulus '{name}': not an input port"
+        unless lv.width == dc.width do
+          .error s!"stimulus '{name}': width {lv.width} ≠ port width {dc.width}"
+        st := st ++ [(name, lv)]
+      return st
+  | _ => .error "stimulus entry is not an object"
+
+def stimulusArray (case : Json) : Except String (Array Json) := do
+  match case.getObjVal? "stimulus_by_params" with
+  | .error _ => getArrF case "stimulus"
+  | .ok table =>
+      let key := renderOverrides (caseOverrides (getFOpt case "params"))
+      match table.getObjVal? key with
+      | .ok value =>
+          match value.getArr? with
+          | .ok entries => .ok entries
+          | .error _ => .error s!"stimulus_by_params '{key}' is not an array"
+      | .error _ => .error s!"stimulus_by_params has no point '{key}'"
+
+def sigmaOf : String → Except String ScheduleOracle
+  | "src" => .ok σ_src
+  | "rev" => .ok σ_rev
+  | s => .error s!"unknown sigma '{s}' (want src|rev)"
+
+end SvHarnessE0
+
+open SvHarnessE0 in
+def main (argv : List String) : IO UInt32 := do
+  let err (msg : String) : IO UInt32 := do
+    (← IO.getStderr).putStrLn s!"ERROR: {msg}"
+    return 1
+  match argv with
+  | [envPath, casesPath, caseName, sigmaName] => do
+    let envText ← IO.FS.readFile ⟨envPath⟩
+    let casesText ← IO.FS.readFile ⟨casesPath⟩
+    let r : Except String (Design2 × List SvState × List String × Nat) := do
+      let (pd, lib) ← loadHierString envText
+      match pd.crossCheck with
+      | [] => pure ()
+      | msgs => .error s!"crossCheck REFUSED: {String.intercalate " | " msgs}"
+      for c in lib do
+        match c.crossCheck with
+        | [] => pure ()
+        | msgs => .error s!"crossCheck REFUSED (module '{c.name}'): {String.intercalate " | " msgs}"
+      let cj ← Json.parse casesText
+      let fuel := (getFOpt cj "fuel").bind (·.getNat?.toOption) |>.getD 1000
+      let case ← findCase (← getArrF cj "cases") caseName
+      let (pd, args) ← resolvePoint pd (getFOpt case "params")
+      unless (if lib.isEmpty then pd.int32Agrees args else pd.int32AgreesH lib args) do
+        .error "int32: an INT-class constant expression leaves the 32-bit range at these parameters"
+      let flatTop := lib.isEmpty || GenItem.listInstFree pd.generates
+      let inst := if flatTop then pd.instantiateG2 args (PDesign.surfaceFuel args)
+        else pd.instantiateH lib args (PDesign.surfaceFuel args)
+      let d ← match inst with
+        | .ok d => pure d
+        | .timeout => .error "instantiate2: generate fuel exhausted"
+        | .unsupported m => .error s!"instantiate2: {m}"
+      unless d.namesNodup do .error "instantiateH: two declarations of one name after flattening"
+      for p in d.processes do
+        match p with
+        | .unsupported k msg => .error s!"{k}: {msg}"
+        | .alwaysFF _ _ | .alwaysPlain _ _ | .alwaysFFR _ _ _ _ =>
+            .error "E-core-0: edge/timed process is outside the comb fragment"
+        | _ => pure ()
+      let entries ← (← stimulusArray case).toList.mapM (parseEntry d)
+      let signals ← (← getArrF case "signals").toList.mapM (fun s => s.getStr?)
+      pure (d, entries, signals, fuel)
+    match r with
+    | .error e => err e
+    | .ok (d, entries, signals, fuel) =>
+      let σ ← match sigmaOf sigmaName with
+        | .ok σ => pure σ
+        | .error e => return (← err e)
+      let E := LeanModels.Sv.Kernel.Elab.ofDesign2 d
+      let out ← IO.getStdout
+      for dc in d.decls do
+        let sign := if dc.isSigned then "signed" else "unsigned"
+        if dc.isInput then out.putStrLn s!"PORT {dc.name} in {dc.width} {sign}"
+        else if dc.isOutput then out.putStrLn s!"PORT {dc.name} out {dc.width} {sign}"
+      match LeanModels.Sv.Kernel.runE0Array E σ fuel entries with
+      | .timeout => err "E-core-0: timeout (executor fuel exhausted)"
+      | .unsupported m => err s!"E-core-0: unsupported: {m}"
+      | .ok rows =>
+          let mut k := 0
+          for row in rows do
+            let st := E.view row.2.store
+            let cells := signals.map fun s => s!"{s}={SvState.showSignal st s}"
+            out.putStrLn (s!"CYCLE {k} " ++ " ".intercalate cells)
+            k := k + 1
+          return 0
+  | _ => err "usage: runner_e0.lean <envelope.sv.json> <cases2.json> <case> <src|rev>"

@@ -228,12 +228,13 @@ private theorem evals_i (w : World) (env : REnv) (i : Int) (sp : Span)
   py_simp [henv]
 
 /-- `upto`'s loop test, at an arbitrary counter and bound. -/
-private theorem evals_test (w : World) (n i : Int) (s₄ s₅ s₆ : Span) :
+private theorem evals_test (w : World) (n i : Int) (s₄ s₅ s₆ : Span)
+    (hdepth : w.callDepth < 999) :
     EvalsTo gen_lab ⟨w, uptoEnv n i⟩
       (.compare (.name "i" s₄) #[.lt] #[.name "n" s₅] s₆)
       (.bool (decide (i < n))) := by
   refine EvalsTo.of_eval (fuel := 8) ?_
-  py_simp [uptoEnv]
+  py_simp [uptoEnv, show ¬ (999 ≤ w.callDepth) by omega]
   by_cases h : i < n <;> simp [h]
 
 /-! ## `upto`: the drain, symbolically in `n`
@@ -242,7 +243,7 @@ private theorem evals_test (w : World) (n i : Int) (s₄ s₅ s₆ : Span) :
 sits ABOVE the empty block its push left behind — the frame-polymorphic
 form is what lets the two be spliced by `List.append`. -/
 
-theorem upto_loop (w : World) (n : Int) :
+theorem upto_loop (w : World) (n : Int) (hdepth : w.callDepth < 999) :
     ∀ (c : Nat) (i : Int), i + (c : Int) = n →
       GenEmits gen_lab ⟨w, uptoEnv n i⟩ [.whileLoop uptoTest uptoLoopBody []]
         (intsFrom i c) ⟨w, uptoEnv n n⟩ := by
@@ -259,7 +260,7 @@ theorem upto_loop (w : World) (n : Int) :
     refine GenEmits.silent (st₁ := ⟨w, uptoEnv i i⟩)
       (pre₁ := [GenFrame.block []]) (fun k => ?_) ?_
     · simpa using genSilent_whileFalse (m := gen_lab) (k := k)
-        (evals_test w i i s₄ s₅ s₆) (by rw [truthy_bool]; simp)
+        (evals_test w i i s₄ s₅ s₆ hdepth) (by rw [truthy_bool]; simp)
     · exact GenEmits.silent (pre₁ := ([] : GenCont))
         (fun k => by simpa using genSilent_blockNil) GenEmits.nil
   | succ c ih =>
@@ -276,7 +277,7 @@ theorem upto_loop (w : World) (n : Int) :
             .augAssign (.name "i" s₉) .add (.constant (.int 1) s₁₀) s₁₁ ] []])
       (fun k => by
         simpa using genSilent_whileTrue (m := gen_lab) (k := k)
-          (evals_test w n i s₄ s₅ s₆) (by rw [truthy_bool]; simp [hlt]))
+          (evals_test w n i s₄ s₅ s₆ hdepth) (by rw [truthy_bool]; simp [hlt]))
       ?_
     -- the yield
     rw [intsFrom_succ]
@@ -324,13 +325,13 @@ theorem upto_loop (w : World) (n : Int) :
 /-- **THE FIRST GENERATOR THEOREM IN THIS REPO.**
 
 `upto(n)`, suspended exactly as `callIn` leaves it, yields the integers
-`0, 1, …, n-1` and then finishes — for every `n`, in every world.
+`0, 1, …, n-1` and then finishes, provided the entry depth leaves room for a comparison.
 
 Symbolic in the count, symbolic in the world, and stated over the frame
 stack the interpreter actually builds (`uptoCont` is `callIn`'s
 `[.block f.body.toList]`, `uptoEntry` its `mkCallEnv`). Before
 LeanModels/Python/VCGen.lean this sentence had no `Prop` to be. -/
-theorem upto_yields (w : World) (c : Nat) :
+theorem upto_yields (w : World) (c : Nat) (hdepth : w.callDepth < 999) :
     GenYields gen_lab ⟨w, uptoEntry (c : Int)⟩ uptoCont (intsFrom 0 c)
       ⟨w, uptoEnv (c : Int) (c : Int)⟩ := by
   obtain ⟨s₁, s₂, s₃, hassign⟩ := uptoAssign_lit
@@ -351,7 +352,7 @@ theorem upto_yields (w : World) (c : Nat) :
       [GenFrame.block []] [] ⟨w, uptoEnv (c : Int) (c : Int)⟩ :=
     GenEmits.silent (pre₁ := ([] : GenCont))
       (fun k => by simpa using genSilent_blockNil) GenEmits.nil
-  simpa using GenEmits.trans (upto_loop w (c : Int) c 0 (by omega)) hpop
+  simpa using GenEmits.trans (upto_loop w (c : Int) hdepth c 0 (by omega)) hpop
 
 /-! ## `naturals`: laziness, as a theorem
 
@@ -475,10 +476,10 @@ anyway: `upto_yields` covers every `n`, and no concrete row does. (The
 identity CLAIM is not left to the rows: `two_phase_calls` in the L3 section
 proves it symbolically. What stays out is promoting a concrete run.) -/
 
-theorem upto5_yields (w : World) :
+theorem upto5_yields (w : World) (hdepth : w.callDepth < 999) :
     GenYields gen_lab ⟨w, uptoEntry 5⟩ uptoCont
       [.int 0, .int 1, .int 2, .int 3, .int 4] ⟨w, uptoEnv 5 5⟩ := by
-  simpa using upto_yields w 5
+  simpa using upto_yields w 5 hdepth
 
 theorem naturals4_prefix (w : World) :
     GenYieldsPrefix gen_lab ⟨w, natEntry⟩ natCont
@@ -523,11 +524,11 @@ below it. Independent of how many values it has handed over. -/
 def uptoResume : GenCont :=
   [.block [uptoBump], .whileLoop uptoTest uptoLoopBody [], .block []]
 
-private theorem evals_uptoTest (w : World) (n i : Int) :
+private theorem evals_uptoTest (w : World) (n i : Int) (hdepth : w.callDepth < 999) :
     EvalsTo gen_lab ⟨w, uptoEnv n i⟩ uptoTest (.bool (decide (i < n))) := by
   obtain ⟨s₄, s₅, s₆, htest⟩ := uptoTest_lit
   rw [htest]
-  exact evals_test w n i s₄ s₅ s₆
+  exact evals_test w n i s₄ s₅ s₆ hdepth
 
 private theorem evals_uptoYieldE (w : World) (n i : Int) :
     EvalsTo gen_lab ⟨w, uptoEnv n i⟩ (yieldE uptoYield) (.int i) := by
@@ -537,7 +538,7 @@ private theorem evals_uptoYieldE (w : World) (n i : Int) :
 
 /-- The FIRST resumption of a freshly created `upto(n)`: run `i = 0`, push
 the loop, take the true branch, yield `0`. -/
-theorem upto_first (w : World) (n : Int) (h : 0 < n) :
+theorem upto_first (w : World) (n : Int) (h : 0 < n) (hdepth : w.callDepth < 999) :
     GenSteps gen_lab ⟨w, uptoEntry n⟩ uptoCont (some (.int 0, uptoResume))
       ⟨w, uptoEnv n 0⟩ := by
   obtain ⟨s₁, s₂, s₃, hassign⟩ := uptoAssign_lit
@@ -552,14 +553,14 @@ theorem upto_first (w : World) (n : Int) (h : 0 < n) :
       uptoWhile_plan) ?_
   refine GenSteps.silent
     (k₁ := .block uptoLoopBody :: .whileLoop uptoTest uptoLoopBody [] :: .block [] :: [])
-    (genSilent_whileTrue (evals_uptoTest w n 0)
+    (genSilent_whileTrue (evals_uptoTest w n 0 hdepth)
       (by rw [truthy_bool]; simp [h])) ?_
   rw [uptoResume, uptoLoopBody_split]
   exact genSteps_yieldHere (s := uptoYield) (ss := [uptoBump]) uptoYield_plan
     (evals_uptoYieldE w n 0)
 
 /-- A LATER resumption: `i += 1`, re-test, yield. -/
-theorem upto_resume_step (w : World) (n i : Int) (h : i + 1 < n) :
+theorem upto_resume_step (w : World) (n i : Int) (h : i + 1 < n) (hdepth : w.callDepth < 999) :
     GenSteps gen_lab ⟨w, uptoEnv n i⟩ uptoResume
       (some (.int (i + 1), uptoResume)) ⟨w, uptoEnv n (i + 1)⟩ := by
   rw [uptoResume]
@@ -575,7 +576,7 @@ theorem upto_resume_step (w : World) (n i : Int) (h : i + 1 < n) :
     genSilent_blockNil ?_
   refine GenSteps.silent
     (k₁ := .block uptoLoopBody :: .whileLoop uptoTest uptoLoopBody [] :: .block [] :: [])
-    (genSilent_whileTrue (evals_uptoTest w n (i + 1))
+    (genSilent_whileTrue (evals_uptoTest w n (i + 1) hdepth)
       (by rw [truthy_bool]; simp [h])) ?_
   rw [uptoLoopBody_split]
   exact genSteps_yieldHere (s := uptoYield) (ss := [uptoBump]) uptoYield_plan
@@ -583,7 +584,7 @@ theorem upto_resume_step (w : World) (n i : Int) (h : i + 1 < n) :
 
 /-- A freshly created `upto(n)` with nothing to give (`n ≤ 0`): the test is
 false on the first look, the stack unwinds, the step reports exhaustion. -/
-theorem upto_first_done (w : World) (n : Int) (h : ¬ (0 < n)) :
+theorem upto_first_done (w : World) (n : Int) (h : ¬ (0 < n)) (hdepth : w.callDepth < 999) :
     GenSteps gen_lab ⟨w, uptoEntry n⟩ uptoCont Option.none ⟨w, uptoEnv n 0⟩ := by
   obtain ⟨s₁, s₂, s₃, hassign⟩ := uptoAssign_lit
   rw [uptoCont_eq, uptoBody_split]
@@ -596,14 +597,14 @@ theorem upto_first_done (w : World) (n : Int) (h : ¬ (0 < n)) :
     (genSilent_whileHere (s := uptoWhileS) (ss := ([] : List Stmt)) (k := [])
       uptoWhile_plan) ?_
   refine GenSteps.silent (k₁ := .block [] :: .block [] :: [])
-    (genSilent_whileFalse (evals_uptoTest w n 0)
+    (genSilent_whileFalse (evals_uptoTest w n 0 hdepth)
       (by rw [truthy_bool]; simp [h])) ?_
   refine GenSteps.silent (k₁ := .block [] :: []) genSilent_blockNil ?_
   exact GenSteps.silent (k₁ := ([] : GenCont)) genSilent_blockNil genSteps_nil
 
 /-- The LAST resumption: `i += 1` takes the counter to the bound, the test
 is false, the stack unwinds, the step reports exhaustion. -/
-theorem upto_resume_done (w : World) (n i : Int) (h : ¬ (i + 1 < n)) :
+theorem upto_resume_done (w : World) (n i : Int) (h : ¬ (i + 1 < n)) (hdepth : w.callDepth < 999) :
     GenSteps gen_lab ⟨w, uptoEnv n i⟩ uptoResume Option.none
       ⟨w, uptoEnv n (i + 1)⟩ := by
   rw [uptoResume]
@@ -618,7 +619,7 @@ theorem upto_resume_done (w : World) (n i : Int) (h : ¬ (i + 1 < n)) :
     (k₁ := .whileLoop uptoTest uptoLoopBody [] :: .block [] :: [])
     genSilent_blockNil ?_
   refine GenSteps.silent (k₁ := .block [] :: .block [] :: [])
-    (genSilent_whileFalse (evals_uptoTest w n (i + 1))
+    (genSilent_whileFalse (evals_uptoTest w n (i + 1) hdepth)
       (by rw [truthy_bool]; simp [h])) ?_
   refine GenSteps.silent (k₁ := .block [] :: []) genSilent_blockNil ?_
   exact GenSteps.silent (k₁ := ([] : GenCont)) genSilent_blockNil genSteps_nil
@@ -649,34 +650,34 @@ yields `k` and moves to configuration `k + 1`. `IterSteps.pureStep` does
 the heap bookkeeping — this generator's own resumption touches only its
 frame, so its two `stepIter` writes collapse onto the slot the allocation
 made. -/
-theorem upto_iter (w : World) (n : Int) (k : Nat) (h : (k : Int) < n) :
+theorem upto_iter (w : World) (n : Int) (k : Nat) (h : (k : Int) < n) (hdepth : w.callDepth < 999) :
     IterSteps gen_lab (uptoWorld w n k) w.heap.size (some (.int (k : Int)))
       (uptoWorld w n (k + 1)) := by
   cases k with
   | zero =>
     exact IterSteps.pureStep (Heap.get?_push_size _ _) (Or.inl rfl)
-      (Heap.update_push_size _ _ _) (upto_first _ n (by exact_mod_cast h))
+      (Heap.update_push_size _ _ _) (upto_first _ n (by exact_mod_cast h) (by simpa [uptoWorld] using hdepth))
       (Heap.update_push_size _ _ _)
   | succ j =>
     exact IterSteps.pureStep (Heap.get?_push_size _ _) (Or.inr rfl)
       (Heap.update_push_size _ _ _)
-      (upto_resume_step _ n (j : Int) (by omega)) (Heap.update_push_size _ _ _)
+      (upto_resume_step _ n (j : Int) (by omega) (by simpa [uptoWorld] using hdepth)) (Heap.update_push_size _ _ _)
 
 /-- **The exhausting step**: at configuration `k` with nothing left, the
 object reports `none` and is CLOSED — continuation dropped, which is what
 makes every later consumer see zero values. -/
-theorem upto_iter_done (w : World) (n : Int) (k : Nat) (h : ¬ ((k : Int) < n)) :
+theorem upto_iter_done (w : World) (n : Int) (k : Nat) (h : ¬ ((k : Int) < n)) (hdepth : w.callDepth < 999) :
     IterSteps gen_lab (uptoWorld w n k) w.heap.size Option.none
       (uptoWorldDone w n k) := by
   cases k with
   | zero =>
     exact IterSteps.pureDone (Heap.get?_push_size _ _) (Or.inl rfl)
-      (Heap.update_push_size _ _ _) (upto_first_done _ n (by exact_mod_cast h))
+      (Heap.update_push_size _ _ _) (upto_first_done _ n (by exact_mod_cast h) (by simpa [uptoWorld] using hdepth))
       (Heap.update_push_size _ _ _)
   | succ j =>
     exact IterSteps.pureDone (Heap.get?_push_size _ _) (Or.inr rfl)
       (Heap.update_push_size _ _ _)
-      (upto_resume_done _ n (j : Int) (by omega)) (Heap.update_push_size _ _ _)
+      (upto_resume_done _ n (j : Int) (by omega) (by simpa [uptoWorld] using hdepth)) (Heap.update_push_size _ _ _)
 
 /-! ## `total(n)`: a function that CONSUMES a generator
 
@@ -803,7 +804,7 @@ abbrev totalInv (w : World) (N : Nat) (rest : List Nat) (st : FrameState) : Prop
     st = ⟨uptoWorld w (N : Int) k, totalLocals N k⟩
 
 /-- `total`'s whole body, as a triple over an arbitrary entry world. -/
-theorem total_body_triple (w : World) (N : Nat) :
+theorem total_body_triple (w : World) (N : Nat) (hdepth : w.callDepth < 999) :
     PyTriple gen_lab (fun st => st = ⟨w, [("n", .int (N : Int))]⟩) totalBody
       (.ofRet fun rv _ => rv = RVal.int (sumUpto N)) := by
   obtain ⟨s₁, s₂, s₃, hassign⟩ := totalAssign_lit
@@ -846,7 +847,7 @@ theorem total_body_triple (w : World) (N : Nat) :
         rw [hkN] at hst
         subst hst
         exact ⟨uptoWorldDone w (N : Int) N,
-          upto_iter_done w (N : Int) N (by omega), _, rfl⟩
+          upto_iter_done w (N : Int) N (by omega) hdepth, _, rfl⟩
     · -- one value: the object yields it, the body adds it
       intro x rest st hI
       obtain ⟨k, c, hkc, hrest, hst⟩ := hI
@@ -861,7 +862,7 @@ theorem total_body_triple (w : World) (N : Nat) :
         rw [hx]
         refine ⟨uptoWorld w (N : Int) (k + 1),
           Env.set (totalLocals N k) "x" (.int (k : Int)),
-          upto_iter w (N : Int) k (by omega), by rw [htarget]; rfl, ?_⟩
+          upto_iter w (N : Int) k (by omega) hdepth, by rw [htarget]; rfl, ?_⟩
         have hrun : execStmts gen_lab 8
             (⟨uptoWorld w (N : Int) (k + 1), totalLocalsX N k⟩ : FrameState)
             totalLoopBody.toList
@@ -892,7 +893,7 @@ per-round `IterSteps` obligations are `upto_iter`/`upto_iter_done`. -/
 theorem total_calls (N : Nat) :
     CallsTo gen_lab "total" #[.int (N : Int)] (.int (sumUpto N)) :=
   PyTriple.callsTo_ofRet (f := totalF) rfl rfl rfl rfl rfl
-    (total_body_triple _ N)
+    (total_body_triple _ N (by simp))
 
 /-! ### Non-vacuity: the symbolic theorem against the differential row -/
 
@@ -1078,7 +1079,8 @@ abbrev tpInv2 (w : World) (N : Nat) (rest : List Nat) (st : FrameState) : Prop :
   rest = [1] ∧ st = ⟨uptoWorld w (N : Int) 1, tpEnv N w.heap.size 4⟩
 
 /-- `two_phase`'s whole body, as a triple over an arbitrary entry world. -/
-theorem two_phase_body_triple (w : World) (N : Nat) (hN : 2 ≤ N) :
+theorem two_phase_body_triple (w : World) (N : Nat) (hN : 2 ≤ N)
+    (hdepth : w.callDepth < 999) :
     PyTriple gen_lab (fun st => st = ⟨w, [("n", .int (N : Int))]⟩) twoPhaseBody
       (.ofRet fun rv _ => rv = RVal.int 1) := by
   obtain ⟨g₁, g₂, hbind⟩ := tpBindG_lit
@@ -1143,7 +1145,7 @@ theorem two_phase_body_triple (w : World) (N : Nat) (hN : 2 ≤ N) :
       obtain ⟨rfl, rfl⟩ : x = 0 ∧ rest = [] := by simpa using hcons
       subst hst
       refine ⟨uptoWorld w (N : Int) 1, tpEnv N w.heap.size 2,
-        upto_iter w (N : Int) 0 (by omega), by rw [htargetX]; rfl, ?_⟩
+        upto_iter w (N : Int) 0 (by omega) hdepth, by rw [htargetX]; rfl, ?_⟩
       have hrun : execStmts gen_lab 8
           (⟨uptoWorld w (N : Int) 1, tpEnv N w.heap.size 2⟩ : FrameState)
           tpBodyX.toList
@@ -1178,7 +1180,7 @@ theorem two_phase_body_triple (w : World) (N : Nat) (hN : 2 ≤ N) :
       obtain ⟨rfl, rfl⟩ : y = 1 ∧ rest = [] := by simpa using hcons
       subst hst
       refine ⟨uptoWorld w (N : Int) 2, tpEnv N w.heap.size 5,
-        upto_iter w (N : Int) 1 (by omega), by rw [htargetY]; rfl, ?_⟩
+        upto_iter w (N : Int) 1 (by omega) hdepth, by rw [htargetY]; rfl, ?_⟩
       have hrun : execStmts gen_lab 8
           (⟨uptoWorld w (N : Int) 2, tpEnv N w.heap.size 5⟩ : FrameState)
           tpBodyY.toList
@@ -1207,7 +1209,7 @@ at configuration 1, which is `break`-suspends as a theorem. -/
 theorem two_phase_calls (N : Nat) (hN : 2 ≤ N) :
     CallsTo gen_lab "two_phase" #[.int (N : Int)] (.int 1) :=
   PyTriple.callsTo_ofRet (f := twoPhaseF) rfl rfl rfl rfl rfl
-    (two_phase_body_triple _ N hN)
+    (two_phase_body_triple _ N hN (by simp))
 
 /-! ### Non-vacuity: the symbolic theorem against the differential row -/
 

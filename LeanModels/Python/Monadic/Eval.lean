@@ -762,6 +762,23 @@ def applyBuiltin (K : Kont) (m : Module) (fname : String) (vs : List RVal) :
       | _ => refuse viewRecvMsg
     | Option.none => notYet s!"builtin: {fname}()"
 
+/-- The recursion unit around CPython's generic `tp_call` dispatch. The
+world is retained and the unit leaves on both returns and Python exceptions. -/
+def withTypeCallDepth {α : Type} (action : SemF α) : SemF α := do
+  let st ← get
+  if pythonRecursionFull st.world.callDepth then
+    raisePy .recursionError
+  else
+    set { st with world := { st.world with callDepth := st.world.callDepth + 1 } }
+    tryCatch
+      (do
+        let v ← action
+        modify fun st => { st with world := { st.world with callDepth := st.world.callDepth.pred } }
+        pure v)
+      (fun e => do
+        modify fun st => { st with world := { st.world with callDepth := st.world.callDepth.pred } }
+        raisePy e)
+
 /-- Apply a resolved plan to already-evaluated arguments. Not mutual with the
 evaluator: the arguments are values, so nothing here evaluates syntax. -/
 def applyCallPlan (K : Kont) (m : Module) : CallPlan → List RVal → SemF RVal
@@ -790,23 +807,22 @@ def applyCallPlan (K : Kont) (m : Module) : CallPlan → List RVal → SemF RVal
       -- arguments'.
       if vs.length == flds.size then pure (.ntuple tn flds vs.toArray)
       else raisePy (.typeError (ntArityErrorMsg flds vs.length))
-  | .instantiate ci cname hasInit, vs =>
-      if hasInit then do
-        let a ← heapPush (.instance ci (instanceAttrsM m ci))
-        let initName := (classMethodQname m ci "__init__").getD (cname ++ ".__init__")
-        let r ← inFrame (K.call initName ((RVal.ref a :: vs).toArray))
-        match r with
-        | .none => pure (.ref a)
-        -- CPython checks `__init__`'s result: non-None raises.
-        | r => raisePy (.typeError s!"__init__() should return None, not '{r.typeName}'")
-      else
-        match vs with
-        -- The arity error fires BEFORE the allocation, so the failing run's
-        -- world is the caller's untouched — the trunk raises from `st`, not
-        -- from the post-allocation `st'`.
-        | [] => do let a ← heapPush (.instance ci (instanceAttrsM m ci)); pure (.ref a)
-        | _ => raisePy (.typeError s!"{cname}() takes no arguments")
-
+  | .instantiate ci cname hasInit, vs => withTypeCallDepth do
+        if hasInit then do
+          let a ← heapPush (.instance ci (instanceAttrsM m ci))
+          let initName := (classMethodQname m ci "__init__").getD (cname ++ ".__init__")
+          let r ← inFrame (K.call initName ((RVal.ref a :: vs).toArray))
+          match r with
+          | .none => pure (.ref a)
+          -- CPython checks `__init__`'s result: non-None raises.
+          | r => raisePy (.typeError s!"__init__() should return None, not '{r.typeName}'")
+        else
+          match vs with
+          -- The arity error fires BEFORE the allocation, so the failing run's
+          -- world is the caller's untouched — the trunk raises from `st`, not
+          -- from the post-allocation `st'`.
+          | [] => do let a ← heapPush (.instance ci (instanceAttrsM m ci)); pure (.ref a)
+          | _ => raisePy (.typeError s!"{cname}() takes no arguments")
 
 /-! ## §0.7 METHOD CALLS — three receivers, each forking on its own PURE plan
 
@@ -1398,6 +1414,8 @@ def evalCompareChainM (K : Kont) (m : Module) (lhs : RVal) :
       let rhs ← evalOpen K m e
       let h ← frameHeap
       let _ ← checkBytesCompareM m h op lhs rhs
+      let st ← get
+      let _ ← liftRes (richCompareRecursionCheck st.world.callDepth op)
       let b ← liftRes (evalCompareOpH h K.fuel op lhs rhs)
       if b then evalCompareChainM K m rhs ops' rest else pure (.bool false)
   | _, _ => refuse "Compare with mismatched ops/comparators"
@@ -2513,7 +2531,7 @@ def callInM (K : Kont) (m : Module) (fname : String) (args : Array RVal) : SemW 
     else do
       let w ← get
       if w.callDepth == pythonTopCallDepth then
-        set { w with callDepth := 0 }
+        set { w with callDepth := 1 }
         let flow ← finishCallM w.callDepth (inWorld (globalCallEnv w f.params args f.body f.hasGlobal)
           (execOpenList K m f.body.toList))
         match flow with
@@ -2521,7 +2539,7 @@ def callInM (K : Kont) (m : Module) (fname : String) (args : Array RVal) : SemW 
         | .next  => pure .none
         | .brk   => refuse "'break' outside loop"
         | .cont  => refuse "'continue' outside loop"
-      else if w.callDepth + 1 >= pythonRecursionLimit then
+      else if pythonRecursionFull w.callDepth then
         raisePy .recursionError
       else
         set { w with callDepth := w.callDepth + 1 }
@@ -2682,6 +2700,13 @@ theorem saying they are one run.
 model's line to a dict it builds itself by WHOLE-DICT equality, which is what
 makes any additive field a failure; the field appears only under
 `--observations`, exactly like `stdout` and `args_after`. -/
+
+/-- Run from an explicitly supplied recursion depth. The caller supplies the
+normalized CPython entry count in `w.callDepth`; unlike `callInRaw`, this
+entry point does not replace it with the fresh-module boundary. -/
+def callInRawAt (m : Module) (fuel : Nat) (w : World) (fname : String)
+    (args : Array RVal) : HaltWith Unit Unit (Except PyErr RVal × World) :=
+  (kont m fuel).call fname args w
 
 /-- The runner boundary's INNER value — the one `toRun` is a projection of. -/
 def callInRaw (m : Module) (fuel : Nat) (w : World) (fname : String)

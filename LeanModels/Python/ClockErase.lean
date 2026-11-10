@@ -905,7 +905,8 @@ theorem ceEvalCompareChain_succ (ih : CE fuel) : CEEvalCompareChain (fuel + 1) :
       simp only [evalCompareChain]
       refine .bind (ihE m st e h) fun s rhs hs => ?_
       refine .bind (.liftRes hs _) fun checked _ hChecked => ?_
-      refine .bind (.liftRes hChecked _) fun s2 b hs2 => ?_
+      refine .bind (.liftRes hChecked _) fun guarded _ hGuarded => ?_
+      refine .bind (.liftRes hGuarded _) fun s2 b hs2 => ?_
       exact .ite (ihC m s2 rhs ops2 rest hs2) (.ok hs2 _)
 
 
@@ -993,7 +994,10 @@ theorem ceCallIn_succ (ih : CE fuel) : CECallIn (fuel + 1) := by
   | none => exact .exn h _
   | some f =>
     refine .ite .unsupported (.ite .unsupported (.ite (.exn h _) (.ite ?_ ?_)))
-    · exact .of_seed (fun tr => by simp [World.withClock])
+    · exact .of_seed (fun tr => by
+          cases hcheck : genExpCreationRun w.heap fname
+            (markUnboundLocals f.body.toList (mkCallEnv f.params args)) <;>
+            simp [World.withClock, hcheck, Run.seedW])
         (by simp only [World.withClock_self h])
     · by_cases htop : w.callDepth == pythonTopCallDepth
       · simp [htop]
@@ -2330,6 +2334,9 @@ theorem ceEvalExpr_succ (ih : CE fuel) : CEEvalExpr (fuel + 1) := by
                         refine .bind (ClockErasedF.flattenStarRun (ihEs m st args.toList h)) fun s2 vs hs2 => ?_
                         try dsimp only
                         ce_norm
+                        refine .ite (.exn hs2 _) ?_
+                        refine ClockErasedW.withLocals
+                          (ClockErasedW.leaveCallDepth (ClockErasedF.toWorld ?_))
                         cases hi : classMethodQname m ci "__init__" with
                         | some initName =>
                           refine .bind
@@ -2342,7 +2349,9 @@ theorem ceEvalExpr_succ (ih : CE fuel) : CEEvalExpr (fuel + 1) := by
                           cases vs with
                           | nil =>
                             exact .of_seed (fun tr => by first | rfl | simp) (by first | rfl | simp [hs2])
-                          | cons v t => exact .exn hs2 _
+                          | cons v t =>
+                            exact .of_seed (fun tr => by first | rfl | simp)
+                              (by first | rfl | simp [hs2])
                 | none =>
                   cases hnt : findNamedTuple m fname with
                   | some nt =>

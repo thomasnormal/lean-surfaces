@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Count ordinary class construction and direct rich comparisons against the
+  Python recursion limit, expose the normalized entry depth for batch calls,
+  and correct the fib and generator proof bounds at measured recursion boundaries.
+
 - Added an exact-width partial RV32 RVFI port adapter for E observations.
   Unknown valid bits and active trap/halt/handler-entry rows refuse; known
   invalid cycles remain explicit bubbles with irrelevant payloads.

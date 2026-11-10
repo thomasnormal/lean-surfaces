@@ -9017,23 +9017,30 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                     .unsupported s!"class '{fname}' defines dunder methods beyond __init__ — implicit-protocol dispatch is outside the H3 tier"
                   else
                     flattenStarRun (evalExprs m fuel st args.toList) ⤳ fun st vs =>
-                    let a := st.world.heap.size
-                    let st' := { st with world :=
-                      { st.world with heap := st.world.heap.push (.instance ci (instanceAttrs m ci)) } }
-                    match classMethodQname m ci "__init__" with
-                    | some initName =>
-                      Run.withLocals st'.locals
-                        (callIn m fuel st'.world initName
-                          ((RVal.ref a :: vs).toArray)) ⤳ fun st'' r =>
-                      match r with
-                      | .none => .ok st'' (.ref a)
-                      | r =>
-                        -- CPython checks __init__'s result: non-None raises
-                        .exn st'' (.typeError s!"__init__() should return None, not '{r.typeName}'")
-                    | Option.none =>
-                      match vs with
-                      | [] => .ok st' (.ref a)
-                      | _ => .exn st (.typeError s!"{fname}() takes no arguments")
+                    -- Objects/call.c: _PyObject_MakeTpCall enters a recursion
+                    -- unit after argument evaluation, before type_call allocates.
+                    if pythonRecursionFull st.world.callDepth then
+                      .exn st .recursionError
+                    else
+                      let entered := { st with world :=
+                        { st.world with callDepth := st.world.callDepth + 1 } }
+                      Run.withLocals st.locals <| Run.leaveCallDepth <| Run.toWorld <|
+                        let a := entered.world.heap.size
+                        let st' := { entered with world :=
+                          { entered.world with heap := entered.world.heap.push (.instance ci (instanceAttrs m ci)) } }
+                        match classMethodQname m ci "__init__" with
+                        | some initName =>
+                          Run.withLocals st'.locals
+                            (callIn m fuel st'.world initName
+                              ((RVal.ref a :: vs).toArray)) ⤳ fun st'' r =>
+                          match r with
+                          | .none => .ok st'' (.ref a)
+                          | r =>
+                            .exn st'' (.typeError s!"__init__() should return None, not '{r.typeName}'")
+                        | Option.none =>
+                          match vs with
+                          | [] => .ok st' (.ref a)
+                          | _ => .exn entered (.typeError s!"{fname}() takes no arguments")
               | Option.none =>
                 match findNamedTuple m fname with
                 | some nt =>
@@ -10241,6 +10248,15 @@ def evalBoolChain (m : Module) (fuel : Nat) (st : FrameState) (op : BoolOp)
       | .or => if b then .ok st v else evalBoolChain m fuel st .or e' rest'
   termination_by structural fuel
 
+/-- CPython 3.9's COMPARE_OP calls PyObject_RichCompare, which enters one
+recursion unit in Objects/object.c before dispatching the comparison. Identity
+and containment opcodes use separate protocols. -/
+def richCompareRecursionCheck (depth : Nat) (op : CmpOp) : Res Unit :=
+  match op with
+  | .eq | .notEq | .lt | .ltE | .gt | .gtE =>
+      if pythonRecursionFull depth then .exn .recursionError else .ok ()
+  | .is | .isNot | .inOp | .notIn => .ok ()
+
 /-- Chained comparison `a < b < c …`: each operand is evaluated exactly once,
 left to right; short-circuits to `False` on the first failing link (the
 remaining comparators are not evaluated). `lhs` is the already-evaluated
@@ -10255,6 +10271,7 @@ def evalCompareChain (m : Module) (fuel : Nat) (st : FrameState) (lhs : RVal)
     | op :: ops', e :: rest =>
         evalExpr m fuel st e ⤳ fun st rhs =>
         Run.liftRes st (checkBytesCompare m st.world.heap op lhs rhs) ⤳ fun st _ =>
+        Run.liftRes st (richCompareRecursionCheck st.world.callDepth op) ⤳ fun st _ =>
         Run.liftRes st (evalCompareOpH st.world.heap fuel op lhs rhs) ⤳ fun st b =>
         if b then evalCompareChain m fuel st rhs ops' rest
         else .ok st (.bool false)
@@ -10998,7 +11015,7 @@ def callIn (m : Module) (fuel : Nat) (w : World) (fname : String)
             | .next => .ok st .none
             | .brk => .unsupported "'break' outside loop"
             | .cont => .unsupported "'continue' outside loop"
-      else if w.callDepth + 1 >= pythonRecursionLimit then
+      else if pythonRecursionFull w.callDepth then
         .exn w .recursionError
       else
         Run.leaveCallDepth <|

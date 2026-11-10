@@ -199,18 +199,22 @@ def from_typed(a):
     raise ValueError("bad typed argument: %r" % (a,))
 
 
-def batch_job(json_path, fname, args, fuel, clock=None):
+def batch_job(json_path, fname, args, fuel, clock=None, recursion_base=None):
     """One jobs-file line for `leanmodels-run --batch` (compact JSON).
     Canonicalize arguments before JSON transport, preserving float words,
     signed zero and bool-vs-int types. `clock` (a list of
     ints) seeds the model world's clock trace — the replay half of the
-    record-replay protocol (docs/memory-model.md §the trace clock)."""
+    record-replay protocol (docs/memory-model.md §the trace clock).
+    `recursion_base`, when supplied, is the normalized entry count recorded
+    for the oracle's caller context; it seeds the model world's callDepth."""
     job = {"path": json_path, "function": fname,
            "args": [to_canonical_value(from_typed(arg)) for arg in args]}
     if fuel is not None:
         job["fuel"] = fuel
     if clock is not None:
         job["clock"] = list(clock)
+    if recursion_base is not None:
+        job["recursion_base"] = recursion_base
     return json.dumps(job, separators=(",", ":"))
 
 
@@ -386,6 +390,10 @@ def main(argv=None):
              "refusal is recorded, not failed; a wrong answer still fails.",
     )
     opts = parser.parse_args(argv)
+    if sys.getrecursionlimit() != 1000:
+        print("error: the CPython oracle recursion limit must be 1000 (got %d)"
+              % sys.getrecursionlimit(), file=sys.stderr)
+        return 2
 
     os.chdir(REPO_ROOT)
     runner_cmd = opts.runner.split()
@@ -429,7 +437,8 @@ def main(argv=None):
             else:
                 cpy, trace = run_cpython_clock(mod, fname, args, clock_spec)
             calls.append((call, expect, cpy))
-            jobs.append(batch_job(json_path, fname, args, fuel, trace))
+            jobs.append(batch_job(json_path, fname, args, fuel, trace,
+                                  case.get("recursion_base")))
 
     # Pass 2: the Lean side — ONE runner process for all rows, verdicts
     # streamed to stderr as they land.
@@ -491,6 +500,11 @@ def main(argv=None):
     print("-" * len(header))
     print("oracle: Python %s (the model's tier is specified against 3.9)"
           % (sys.version.split()[0],))
+    print("oracle recursion limit:", sys.getrecursionlimit())
+    explicit_bases = sorted({case["recursion_base"] for case in cases
+                             if "recursion_base" in case})
+    if explicit_bases:
+        print("normalized recursion bases:", ", ".join(map(str, explicit_bases)))
     if opts.proof_interpreter:
         print("interpreter: LeanModels/Python/Semantics.lean (the one the "
               "theorems are about)")

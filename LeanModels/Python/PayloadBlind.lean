@@ -239,6 +239,8 @@ def FrameState.swapAt (st : FrameState) (a : Addr) (o : Obj) : FrameState :=
     (w.swapAt a o).globals = w.globals := rfl
 @[simp] theorem World.swapAt_stdout (w : World) (a : Addr) (o : Obj) :
     (w.swapAt a o).stdout = w.stdout := rfl
+@[simp] theorem World.swapAt_callDepth (w : World) (a : Addr) (o : Obj) :
+    (w.swapAt a o).callDepth = w.callDepth := rfl
 @[simp] theorem World.swapAt_clock (w : World) (a : Addr) (o : Obj) :
     (w.swapAt a o).clock = w.clock := rfl
 @[simp] theorem FrameState.swapAt_world (st : FrameState) (a : Addr) (o : Obj) :
@@ -3461,6 +3463,8 @@ theorem pbEvalCompareChain_succ (htwin : PayloadTwin o₀ o) (ih : PBAll pa o₀
             rw [checkBytesCompare_swapAt hs htwin]
             exact PBF.liftRes hs _
           refine PBF.bind hcheck fun checked _ _ hChecked => ?_
+          simp only [FrameState.swapAt_world, World.swapAt_callDepth]
+          refine PBF.bind (PBF.liftRes hChecked _) fun checked _ _ hChecked => ?_
           have hlift : PBF pa o₀ o
               (Run.liftRes checked (evalCompareOpH checked.world.heap fuel op lhs rhs))
               (Run.liftRes (checked.swapAt pa o)
@@ -5093,6 +5097,10 @@ theorem pbEvalExpr_succ (htwin : PayloadTwin o₀ o) (ih : PBAll pa o₀ o fuel)
                                     refine PBF.ite (fun _ => PBF.unsupported) fun _ => ?_
                                     refine PBF.bind (PBF.flattenStarRun (ihEs m st args.toList hslot))
                                       fun s1 vs _ hs1 => ?_
+                                    simp only [FrameState.swapAt_world, FrameState.swapAt_locals,
+                                      World.swapAt_callDepth]
+                                    refine PBF.ite (fun _ => PBF.exn hs1 _) fun _ => ?_
+                                    refine PBW.withLocals (PBW.leaveCallDepth (PBF.toWorld ?_))
                                     cases classMethodQname m ci "__init__" with
                                     | some initName =>
                                         -- `__init__` runs in the world the instance was allocated in
@@ -5101,7 +5109,8 @@ theorem pbEvalExpr_succ (htwin : PayloadTwin o₀ o) (ih : PBAll pa o₀ o fuel)
                                           Heap.size_swapAt]
                                         refine PBF.bind (PBW.withLocals (ihIn m
                                           { s1.world with
-                                              heap := s1.world.heap.push (.instance ci (instanceAttrs m ci)) }
+                                              heap := s1.world.heap.push (.instance ci (instanceAttrs m ci)),
+                                              callDepth := s1.world.callDepth + 1 }
                                           initName
                                           ((RVal.ref s1.world.heap.size :: vs).toArray)
                                           (Heap.get?_push_of_get? _ hs1))) fun s2 r _ hs2 => ?_
@@ -5109,9 +5118,17 @@ theorem pbEvalExpr_succ (htwin : PayloadTwin o₀ o) (ih : PBAll pa o₀ o fuel)
                                         | none => exact PBF.ok hs2 _
                                         | _ => exact PBF.exn hs2 _
                                     | none =>
+                                        let entered : FrameState := { s1 with world :=
+                                          { s1.world with callDepth := s1.world.callDepth + 1 } }
+                                        have hsEntered : Heap.get? entered.world.heap pa = some o₀ := hs1
                                         cases vs with
-                                        | nil => exact PBF.pushRef hs1 _
-                                        | cons _ _ => exact PBF.exn hs1 _
+                                        | nil =>
+                                            simpa [entered, FrameState.swapAt, World.swapAt] using
+                                              (PBF.pushRef (o := o) hsEntered (.instance ci (instanceAttrs m ci)))
+                                        | cons _ _ =>
+                                            simpa [entered, FrameState.swapAt, World.swapAt] using
+                                              (PBF.exn (o := o) (α := RVal) hsEntered
+                                                (.typeError s!"{fname}() takes no arguments"))
                             | none =>
                                 cases findNamedTuple m fname with
                                 | some nt =>

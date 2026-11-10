@@ -5,6 +5,16 @@ namespace LeanModels.Cpp.IntegralTests
 def signed (value : Int) : IntegralValue := ⟨.signed 32, value⟩
 def unsigned (value : Int) : IntegralValue := ⟨.unsigned 32, value⟩
 
+def integralSelfConversionWitness : Bool :=
+  [⟨.boolean, 0⟩, ⟨.boolean, 1⟩, ⟨.signed 8, -128⟩, ⟨.signed 8, 127⟩,
+    ⟨.signed 32, -2147483648⟩, ⟨.signed 32, 2147483647⟩,
+    ⟨.unsigned 8, 0⟩, ⟨.unsigned 8, 255⟩].all fun value =>
+      integralConvert value.format value == .ok value
+
+#guard integralSelfConversionWitness
+#guard integralConvert (.signed 0) ⟨.signed 0, 0⟩ == .invalid .zeroWidth
+#guard integralConvert (.signed 8) ⟨.signed 8, -129⟩ == .invalid .outOfRange
+
 #guard integralConvert (.signed 8) (unsigned 255) == .ok ⟨.signed 8, -1⟩
 #guard integralConvert (.unsigned 8) (signed (-257)) == .ok ⟨.unsigned 8, 255⟩
 #guard integralConvert .boolean (signed (-1)) == .ok ⟨.boolean, 1⟩

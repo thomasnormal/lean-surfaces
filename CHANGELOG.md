@@ -85,6 +85,9 @@
 - Proved the callable evaluators agree on effect-free `noexcept` operands
   for all sufficient fuel budgets.
 
+- Proved self-conversion preserves every valid integral value at any supported
+  width and propagates invalid inputs.
+
 - Extended the value/object evaluator agreement battery with negative signed
   subtraction and native differential coverage.
 

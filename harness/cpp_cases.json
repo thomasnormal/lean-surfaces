@@ -20168,5 +20168,17 @@
     "cpp_expression": "callable_witness()",
     "expect": "match",
     "rung": 3
+  },
+  {
+    "id": "expression.integral-self-conversion-bounds",
+    "kind": "expression",
+    "corpus": "integral conversion invariant",
+    "lean_module": "LeanModels.Cpp.IntegralTests",
+    "lean_namespace": "LeanModels.Cpp.IntegralTests",
+    "lean_expression": "integralSelfConversionWitness",
+    "cpp_source": "bool same_bool(bool x) { return static_cast<bool>(x); } signed char same_sc(signed char x) { return static_cast<signed char>(x); } int same_int(int x) { return static_cast<int>(x); } unsigned char same_uc(unsigned char x) { return static_cast<unsigned char>(x); } bool callable_witness() { return !same_bool(false) && same_bool(true) && same_sc(-128) == -128 && same_sc(127) == 127 && same_int(-2147483647 - 1) == -2147483647 - 1 && same_int(2147483647) == 2147483647 && same_uc(0) == 0 && same_uc(255) == 255; }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 3
   }
 ]

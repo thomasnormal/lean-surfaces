@@ -88,6 +88,19 @@ def integralConvertOfEvidence (profile : TargetProfile) (type : CppTypeEvidence)
   let format ← integralFormatOfEvidence profile type
   pure (integralConvert format value)
 
+/-- The evidence-based conversion shared by both callable evaluators preserves
+valid values when the selected format is the value's own format. -/
+theorem integralConvertOfEvidence_same (profile : TargetProfile) (type : CppTypeEvidence)
+    (value : IntegralValue)
+    (hformat : integralFormatOfEvidence profile type = .ok value.format) :
+    integralConvertOfEvidence profile type value = .ok (match value.invalid? with
+      | some reason => .invalid reason
+      | none => .ok value) := by
+  simp only [integralConvertOfEvidence, hformat]
+  change Except.ok (integralConvert value.format value) = _
+  rw [integralConvert_same]
+  rfl
+
 def mapIntegralResultValue (result : IntegralResult α) (map : α → β) : IntegralResult β :=
   match result with
   | .ok value => .ok (map value)

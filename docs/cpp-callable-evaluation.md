@@ -61,6 +61,13 @@ argument error by the object evaluator. A general relation must state its
 supported fragment and relate the distinct error domains; `Except.toOption`
 alone does not do so.
 
+`integralConvert_same` proves the shared conversion kernel preserves every
+valid value converted to its own format, and propagates an invalid value's
+reason. The result covers Boolean, signed and unsigned formats at every width;
+`integralConvertOfEvidence_same` carries the invariant through the type-evidence
+boundary shared by both callable evaluators. These results do not by themselves
+establish evaluator refinement.
+
 `callableBooleanIdentityAgreement` quantifies over both Boolean inputs to one
 identity callable and proves that each API returns the expected Boolean. It is
 a complete input-domain theorem for that callable, not a relation for arbitrary

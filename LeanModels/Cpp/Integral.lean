@@ -76,6 +76,78 @@ def integralConvert (destination : IntegralFormat) (source : IntegralValue) :
       if destination.width == 0 then .invalid .zeroWidth
       else .ok ⟨destination, destination.wrap source.value⟩
 
+/-- Wrapping a representable value in a nonzero-width format is identity. -/
+theorem IntegralFormat.wrap_eq_of_contains (fmt : IntegralFormat) (value : Int) (hw : 0 < fmt.width)
+    (h : fmt.contains value = true) : fmt.wrap value = value := by
+  cases fmt with
+  | boolean =>
+      simp only [IntegralFormat.contains, IntegralFormat.minimum, IntegralFormat.maximum,
+        Bool.and_eq_true] at h
+      rcases h with ⟨hlo, hhi⟩
+      have hlo := of_decide_eq_true hlo
+      have hhi := of_decide_eq_true hhi
+      have hv : value = 0 ∨ value = 1 := by omega
+      rcases hv with rfl | rfl <;> rfl
+  | unsigned width =>
+      simp only [IntegralFormat.contains, IntegralFormat.minimum, IntegralFormat.maximum,
+        Bool.and_eq_true] at h
+      rcases h with ⟨hlo, hhi⟩
+      have hlo := of_decide_eq_true hlo
+      have hhi := of_decide_eq_true hhi
+      have hlt : value < (2 ^ width : Int) := by omega
+      exact Int.emod_eq_of_lt hlo hlt
+  | signed width =>
+      simp only [IntegralFormat.contains, IntegralFormat.minimum, IntegralFormat.maximum,
+        Bool.and_eq_true] at h
+      rcases h with ⟨hlo, hhi⟩
+      have hlo := of_decide_eq_true hlo
+      have hhi := of_decide_eq_true hhi
+      have hw' : 0 < width := hw
+      let half : Int := 2 ^ (width - 1)
+      have halfpos : 0 < half := Int.pow_pos (by decide)
+      have poweq : (2 ^ width : Int) = 2 * half := by
+        cases width with
+        | zero => simp at hw'
+        | succ n => simp [half, Int.pow_succ, Int.mul_comm]
+      by_cases hneg : value < 0
+      · have hrem : value % (2 * half) = value + 2 * half := by
+          rw [Int.emod_eq_add_self_emod]
+          apply Int.emod_eq_of_lt <;> omega
+        have hge : value + 2 * half ≥ half := by omega
+        simp [IntegralFormat.wrap, poweq, hrem, hge, half]
+      · have h0 : 0 ≤ value := by omega
+        have hlt : value < 2 * half := by omega
+        have hrem := Int.emod_eq_of_lt h0 hlt
+        have hnge : ¬ value ≥ half := by omega
+        simp [IntegralFormat.wrap, poweq, hrem, hnge, half]
+
+/-- Conversion to the source format preserves every valid integral value. -/
+theorem integralConvert_same_of_valid (value : IntegralValue) (h : value.invalid? = none) :
+    integralConvert value.format value = .ok value := by
+  have hw : 0 < value.format.width := by
+    cases hz : value.format.width == 0 with
+    | true => simp [IntegralValue.invalid?, hz] at h
+    | false =>
+        have hne : value.format.width ≠ 0 := by simpa using hz
+        omega
+  have hc : value.format.contains value.value = true := by
+    cases hc : value.format.contains value.value with
+    | true => rfl
+    | false => simp [IntegralValue.invalid?, hc, Nat.ne_of_gt hw] at h
+  have hwrap := IntegralFormat.wrap_eq_of_contains value.format value.value hw hc
+  cases value with
+  | mk format value =>
+      simp [integralConvert, h, hwrap, Nat.ne_of_gt hw]
+
+/-- Self-conversion preserves valid values and propagates invalid inputs. -/
+theorem integralConvert_same (value : IntegralValue) :
+    integralConvert value.format value = match value.invalid? with
+      | some reason => .invalid reason
+      | none => .ok value := by
+  cases h : value.invalid? with
+  | none => simpa [h] using integralConvert_same_of_valid value h
+  | some reason => simp [integralConvert, h]
+
 private def integralArithmetic (format : IntegralFormat) (value : Int) : IntegralResult IntegralValue :=
   match format with
   | .boolean => .unsupported .unpromotedBoolean

@@ -1446,3 +1446,35 @@ environmental constraint for a technical blocker.
 * `sim_available` is `all(...)` over a tool tuple, and `all([])` is True —
   latent, not live.
 
+
+## 2026-11-10-sv-<next> — E-core-0 boundary for pure function calls and unpacked reads
+
+The proposed early move for a user-function call in a continuous-assignment
+right-hand side is **not admitted yet**. The exact candidate subset is an
+automatic function whose input arguments are read-only values, whose body is
+evaluated statement by statement, whose locals and return variable are
+automatic and private, and whose result is the only value crossing the call
+boundary. Static locals, output/ref arguments, tasks, timing controls, calls
+that read module state written by another process, recursion, and unsupported
+body statements remain loud. IEEE 1800-2023 §13.4 gives the function execution
+and no-event rule; the expression position still needs source-shaped call and
+frame structure.
+
+E-core-0 cannot carry that subset today because `Expr2` has no call constructor
+and `Stmt2` is frozen. Adding an inliner or encoding the call as an existing
+expression would lose source structure and violate the one-AST/E-first rule.
+The construct belongs in the retained `PStmt`/envelope path until `Sv.Ast` and
+Step 13 provide a scoped function frame plus its refinement theorem. Estimate:
+2–4 days for the AST/elaboration, statement-by-statement function execution,
+automatic-frame/refinement lemmas, and rows. Steps 5–11 do not need to be
+redone; their E edge and observation contracts remain unchanged.
+
+A combinational read of a fixed-size unpacked array is likewise not an
+E-core-0 addition. It is an array-valued store and its declared labels, x
+initialization, reads, and aliasing belong to the E memory route in Step 12
+(IEEE 1800-2023 §§7.4 and 10.4). `Kernel/CoreMem`/`MemElab` already provide the
+source-shaped one-rank state; wiring a continuous-read expression requires the
+memory elaborator and its refinement, estimated 1–2 days for the one-rank
+read-only fragment plus rows. Nested ranks, dynamic/partial selects,
+compound expressions, and memory writes remain loud. No Steps 5–11 work needs
+to be redone.

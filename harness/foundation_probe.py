@@ -104,3 +104,35 @@ def bisect_fallback_negative_hi():
         else:
             hi = mid
     return lo
+
+
+def deep_linear(n):
+    if n <= 0:
+        return 0
+    return deep_linear(n - 1) + 1
+
+
+def gen_capture_unpack():
+    p = 3
+    g = (p for _ in (1,))
+    p, *rest = (9, 8)
+    return list(g)
+
+
+def gen_capture_walrus():
+    p = 3
+    g = (p for _ in (1,))
+    (p := 7)
+    return list(g)
+
+
+def gen_capture_del():
+    p = 3
+    g = (p for _ in (1,))
+    del p
+    return list(g)
+
+
+def gen_iter_deferred(value):
+    g = (x for x in value)
+    return 1

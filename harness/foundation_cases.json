@@ -2,162 +2,350 @@
   {
     "file": "harness/foundation_probe.py",
     "function": "nan_contains",
-    "args": [[{"t": "float", "bits": "9221120237041090560"}]],
+    "args": [
+      [
+        {
+          "t": "float",
+          "bits": "9221120237041090560"
+        }
+      ]
+    ],
     "expect": "unsupported",
     "note": "Finding 1 stopped: container membership with a non-finite float is loud until RichCompareBool identity is represented."
   },
   {
     "file": "harness/foundation_probe.py",
     "function": "nan_list_equal",
-    "args": [[{"t": "float", "bits": "9221120237041090560"}]],
+    "args": [
+      [
+        {
+          "t": "float",
+          "bits": "9221120237041090560"
+        }
+      ]
+    ],
     "expect": "unsupported",
     "note": "Finding 1 stopped: container equality with a non-finite float is loud until RichCompareBool identity is represented."
   },
   {
     "file": "harness/foundation_probe.py",
     "function": "nan_tuple_order",
-    "args": [[{"t": "float", "bits": "9221120237041090560"}]],
+    "args": [
+      [
+        {
+          "t": "float",
+          "bits": "9221120237041090560"
+        }
+      ]
+    ],
     "expect": "unsupported",
     "note": "RichCompareBool observer: tuple ordering with a non-finite float is loud."
   },
   {
     "file": "harness/foundation_probe.py",
     "function": "nan_sorted",
-    "args": [[{"t": "float", "bits": "9221120237041090560"}]],
+    "args": [
+      [
+        {
+          "t": "float",
+          "bits": "9221120237041090560"
+        }
+      ]
+    ],
     "expect": "unsupported",
     "note": "RichCompareBool observer: sorted() ordering with a non-finite float is loud."
   },
   {
     "file": "harness/foundation_probe.py",
     "function": "nan_max",
-    "args": [[{"t": "float", "bits": "9221120237041090560"}]],
+    "args": [
+      [
+        {
+          "t": "float",
+          "bits": "9221120237041090560"
+        }
+      ]
+    ],
     "expect": "unsupported",
     "note": "RichCompareBool observer: max() ordering with a non-finite float is loud."
   },
   {
     "file": "harness/foundation_probe.py",
     "function": "nan_dict_key",
-    "args": [[{"t": "float", "bits": "9221120237041090560"}]],
+    "args": [
+      [
+        {
+          "t": "float",
+          "bits": "9221120237041090560"
+        }
+      ]
+    ],
     "expect": "unsupported",
     "note": "RichCompareBool/hash observer: NaN dictionary key identity is outside the tier."
   },
   {
     "file": "harness/foundation_probe.py",
     "function": "int_pow_negative",
-    "args": [[23, 21], [9007199254740993, 1]],
+    "args": [
+      [
+        23,
+        21
+      ],
+      [
+        9007199254740993,
+        1
+      ]
+    ],
     "expect": "unsupported",
     "note": "Finding 2 stopped: platform pow conversion is outside the exact binary-base slice."
   },
   {
     "file": "harness/foundation_probe.py",
     "function": "int_pow_negative",
-    "args": [[2, 1]],
+    "args": [
+      [
+        2,
+        1
+      ]
+    ],
     "expect": "match",
     "note": "Finding 2 control: exact binary-base negative power remains live."
   },
   {
     "file": "harness/foundation_probe.py",
     "function": "list_insert_huge",
-    "args": [[9223372036854775808], [-9223372036854775809]],
+    "args": [
+      [
+        9223372036854775808
+      ],
+      [
+        -9223372036854775809
+      ]
+    ],
     "expect": "match",
     "note": "Finding 3 stopped: list.insert uses the shared raising Py_ssize_t conversion and exact OverflowError."
   },
   {
     "file": "harness/foundation_probe.py",
     "function": "list_insert_boundary",
-    "args": [[9223372036854775807], [-9223372036854775808]],
+    "args": [
+      [
+        9223372036854775807
+      ],
+      [
+        -9223372036854775808
+      ]
+    ],
     "expect": "match",
     "note": "Py_ssize_t controls: both signed 64-bit endpoints are accepted by list.insert; clamping remains list semantics."
   },
   {
     "file": "harness/foundation_probe.py",
     "function": "list_pop_huge",
-    "args": [[9223372036854775808]],
+    "args": [
+      [
+        9223372036854775808
+      ]
+    ],
     "expect": "match",
     "note": "Finding 3 stopped: list.pop uses the shared raising Py_ssize_t conversion and exact OverflowError."
   },
   {
     "file": "harness/foundation_probe.py",
     "function": "list_pop_boundary",
-    "args": [[9223372036854775807], [-9223372036854775808]],
+    "args": [
+      [
+        9223372036854775807
+      ],
+      [
+        -9223372036854775808
+      ]
+    ],
     "expect": "match",
     "note": "Py_ssize_t controls: in-range endpoints reach list.pop's ordinary IndexError path."
   },
   {
     "file": "harness/foundation_probe.py",
     "function": "list_pop_empty_huge",
-    "args": [[9223372036854775808]],
+    "args": [
+      [
+        9223372036854775808
+      ]
+    ],
     "expect": "match",
     "note": "Wrapper ordering control: list.pop converts an oversized index before the empty-list check."
   },
   {
     "file": "harness/foundation_probe.py",
     "function": "list_subscript_huge",
-    "args": [[9223372036854775808], [-9223372036854775809]],
+    "args": [
+      [
+        9223372036854775808
+      ],
+      [
+        -9223372036854775809
+      ]
+    ],
     "expect": "match",
     "note": "PyExc_IndexError conversion: list subscripting raises the exact index-sized IndexError before ordinary bounds."
   },
   {
     "file": "harness/foundation_probe.py",
     "function": "tuple_subscript_huge",
-    "args": [[9223372036854775808]],
+    "args": [
+      [
+        9223372036854775808
+      ]
+    ],
     "expect": "match",
     "note": "PyExc_IndexError conversion: tuple subscripting uses the same raising index conversion."
   },
   {
     "file": "harness/foundation_probe.py",
     "function": "string_subscript_huge",
-    "args": [[9223372036854775808]],
+    "args": [
+      [
+        9223372036854775808
+      ]
+    ],
     "expect": "match",
     "note": "PyExc_IndexError conversion: string subscripting carries the exact index-sized IndexError."
   },
   {
     "file": "harness/foundation_probe.py",
     "function": "bytes_subscript_huge",
-    "args": [[9223372036854775808]],
+    "args": [
+      [
+        9223372036854775808
+      ]
+    ],
     "expect": "match",
     "note": "PyExc_IndexError conversion: bytes subscripting carries the exact index-sized IndexError."
   },
   {
     "file": "harness/foundation_probe.py",
     "function": "range_subscript_huge",
-    "args": [[9223372036854775808]],
+    "args": [
+      [
+        9223372036854775808
+      ]
+    ],
     "expect": "match",
     "note": "Range's mapping subscript uses PyNumber_Index without Py_ssize_t narrowing; its ordinary range IndexError remains distinct."
   },
   {
     "file": "harness/foundation_probe.py",
     "function": "list_slice_huge",
-    "args": [[9223372036854775808], [-9223372036854775809]],
+    "args": [
+      [
+        9223372036854775808
+      ],
+      [
+        -9223372036854775809
+      ]
+    ],
     "expect": "match",
     "note": "_PyEval_SliceIndex clamping control: huge slice bounds clip before list-length normalization."
   },
   {
     "file": "harness/foundation_probe.py",
     "function": "string_slice_huge",
-    "args": [[9223372036854775808], [-9223372036854775809]],
+    "args": [
+      [
+        9223372036854775808
+      ],
+      [
+        -9223372036854775809
+      ]
+    ],
     "expect": "match",
     "note": "_PyEval_SliceIndex clamping control on immutable strings."
   },
   {
     "file": "harness/foundation_probe.py",
     "function": "range_len_huge",
-    "args": [[]],
+    "args": [
+      []
+    ],
     "expect": "match",
     "note": "Finding 3 stopped: len(range(...)) uses the shared raising Py_ssize_t conversion and exact OverflowError."
   },
   {
     "file": "harness/foundation_probe.py",
     "function": "bisect_fallback_negative_hi",
-    "args": [[]],
+    "args": [
+      []
+    ],
     "expect": "match",
     "note": "Finding 4 control: pure Python bisect fallback; the C accelerator is measured separately."
   },
   {
     "file": "Examples/python/recursion_limit/recursion_limit.py",
     "function": "depth",
-    "args": [[100], [1000]],
+    "args": [
+      [
+        100
+      ],
+      [
+        1000
+      ]
+    ],
     "expect": "match",
     "note": "Finding 5: active recursion accounting at the pinned CPython 3.9 limit."
+  },
+  {
+    "file": "harness/foundation_probe.py",
+    "function": "deep_linear",
+    "args": [
+      [
+        100
+      ],
+      [
+        1000
+      ],
+      [
+        1100
+      ]
+    ],
+    "expect": "match",
+    "note": "Audit finding 1: recursion-limit boundary."
+  },
+  {
+    "file": "harness/foundation_probe.py",
+    "function": "gen_capture_unpack",
+    "args": [
+      []
+    ],
+    "expect": "unsupported",
+    "note": "Audit finding 4: unpacking rebinding between genexp creation and drain."
+  },
+  {
+    "file": "harness/foundation_probe.py",
+    "function": "gen_capture_walrus",
+    "args": [
+      []
+    ],
+    "expect": "match",
+    "note": "Audit finding 4: walrus rebinding between genexp creation and drain."
+  },
+  {
+    "file": "harness/foundation_probe.py",
+    "function": "gen_capture_del",
+    "args": [
+      []
+    ],
+    "expect": "unsupported",
+    "note": "Audit finding 4: del rebinding between genexp creation and drain."
+  },
+  {
+    "file": "harness/foundation_probe.py",
+    "function": "gen_iter_deferred",
+    "args": [
+      [
+        5
+      ]
+    ],
+    "expect": "match",
+    "note": "Audit finding 5: outer genexp iter() must run at creation."
   }
 ]

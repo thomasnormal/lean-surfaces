@@ -176,3 +176,7 @@ def float_power_special(base, exponent):
 
 def float_power_big_zero():
     return (1 << 1100) ** 0.0
+
+
+def negative_pow_unit_boundary(base, shift):
+    return base ** -(1 << shift)

@@ -6,7 +6,7 @@
     "version": "3.9.25"
   },
   "source_file": "harness/foundation_probe.py",
-  "source_sha256": "d6ae391688618bbe22b9d4be82c84d80b9cb0da528cae44f8454023b9c133d73",
+  "source_sha256": "d6bdfdcdd274e9c39227c0918b1dc7019c36034aeb26ad3452caa5d42f37745b",
   "module": {
     "kind": "Module",
     "body": [
@@ -4322,6 +4322,112 @@
                 "value": {
                   "type": "float",
                   "bits": "0"
+                }
+              }
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 181,
+          "col_offset": 0,
+          "end_lineno": 182,
+          "end_col_offset": 32
+        },
+        "name": "negative_pow_unit_boundary",
+        "args": [
+          {
+            "arg": "base",
+            "span": {
+              "lineno": 181,
+              "col_offset": 31,
+              "end_lineno": 181,
+              "end_col_offset": 35
+            }
+          },
+          {
+            "arg": "shift",
+            "span": {
+              "lineno": 181,
+              "col_offset": 37,
+              "end_lineno": 181,
+              "end_col_offset": 42
+            }
+          }
+        ],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 182,
+              "col_offset": 4,
+              "end_lineno": 182,
+              "end_col_offset": 32
+            },
+            "value": {
+              "kind": "BinOp",
+              "span": {
+                "lineno": 182,
+                "col_offset": 11,
+                "end_lineno": 182,
+                "end_col_offset": 32
+              },
+              "left": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 182,
+                  "col_offset": 11,
+                  "end_lineno": 182,
+                  "end_col_offset": 15
+                },
+                "id": "base"
+              },
+              "op": "Pow",
+              "right": {
+                "kind": "UnaryOp",
+                "span": {
+                  "lineno": 182,
+                  "col_offset": 19,
+                  "end_lineno": 182,
+                  "end_col_offset": 32
+                },
+                "op": "USub",
+                "operand": {
+                  "kind": "BinOp",
+                  "span": {
+                    "lineno": 182,
+                    "col_offset": 21,
+                    "end_lineno": 182,
+                    "end_col_offset": 31
+                  },
+                  "left": {
+                    "kind": "Constant",
+                    "span": {
+                      "lineno": 182,
+                      "col_offset": 21,
+                      "end_lineno": 182,
+                      "end_col_offset": 22
+                    },
+                    "value": {
+                      "type": "int",
+                      "repr": "1"
+                    }
+                  },
+                  "op": "LShift",
+                  "right": {
+                    "kind": "Name",
+                    "span": {
+                      "lineno": 182,
+                      "col_offset": 26,
+                      "end_lineno": 182,
+                      "end_col_offset": 31
+                    },
+                    "id": "shift"
+                  }
                 }
               }
             }

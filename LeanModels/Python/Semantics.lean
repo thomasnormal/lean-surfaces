@@ -2508,8 +2508,13 @@ def evalBinOp (op : BinOp) (a b : RVal) : Res RVal :=
           -- Objects/longobject.c); float_pow converts both operands, in order,
           -- before checking for zero or reaching platform pow.
           let _ ← floatNumber (.int x)
-          let _ ← floatNumber (.int y)
+          let exponent ← floatNumber (.int y)
           if x = 0 then .exn .zeroDivisionPow
+          else if x = 1 then .ok (.float (Float64.ofBits 0x3ff0000000000000))
+          else if x = -1 then
+            .ok (.float (Float64.ofBits
+              (if floatIsOddInteger exponent then 0xbff0000000000000
+               else 0x3ff0000000000000)))
           else if x < -2 || x > 2 then
             .unsupported "integer ** with a negative exponent outside the exact binary-base slice is outside the tier (CPython converts to binary64 and calls platform pow)"
           else if y.natAbs > floatPowBudget then

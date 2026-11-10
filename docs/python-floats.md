@@ -55,6 +55,9 @@ negative-exponent error. `float_power_special` and
 `float_power_big_zero` in `harness/cases.json` pin the cases and conversion
 order. NaN payload results, complex results, and other floating powers remain
 loud until their special cases or the platform `pow` result are modeled.
+Negative powers of integer unit bases also use the converted exponent's parity;
+`int_pow_negative` and `negative_pow_unit_boundary` pin rounding and overflow
+at the conversion boundary.
 
 Addition, subtraction and multiplication compute with exact rational operands
 and round once to nearest-even binary64. Mixed integer/Boolean operands are

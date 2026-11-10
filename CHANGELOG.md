@@ -108,6 +108,9 @@
   model, conditional on an order-indexed loaded-core invariant. Completion
   and retirement progress remain explicit proof obligations.
 
+- Added negative integer powers of unit bases beyond the power budget, using
+  CPython's rounded binary64 exponent when deciding the sign.
+
 - Added CPython floating-power infinity and unit-base cases before platform
   `pow`, preserving the sign for odd powers of negative infinity.
 

@@ -10,6 +10,10 @@
   the captured source and literal hashes and the recorded ABI and call binding.
   The harness relies on its caller's cgroup instead of imposing an address-space
   limit.
+- Revalidated removal of exact-shape ingestion rewrites; source AST statements
+  remain structured, and unsupported callable, generator, active-exception,
+  and allocation boundaries stay loud.
+
 - Revalidated set iteration-order admission: modeled nonnegative integer
   insertion remains live, while negative hashes and table-rebuilding paths
   refuse loudly instead of guessing CPython's hash-table order.

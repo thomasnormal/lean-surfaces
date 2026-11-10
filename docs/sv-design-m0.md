@@ -129,7 +129,7 @@ Normative theorems (M0 definition of done, in `LeanModels/Sv/Proofs.lean`):
 1. `run_deterministic : ∀ d σ fuel stim, run … = run …` — same σ twice gives the
    same trace (should be `rfl`-adjacent; run is a function — state it to pin it).
 2. `swap_nba_spec : ∀ σ` — for the loaded `swap_nba` design: every post-edge
-   snapshot swaps a/b (for ALL schedules).
+   snapshot swaps a/b (for all process-atomic legal schedules).
 3. `race_blk_racy : ∃ σ₁ σ₂` with different traces on the same 1-cycle stimulus
    (the (2,2) vs (1,1) witnesses).
 4. `counter_from_reset : ∀ σ` — after a cycle with rst=1, count follows

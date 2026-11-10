@@ -87,13 +87,23 @@ inlining a function would silently broaden `@*` sensitivity. The
 one-writer profile can be a sufficient admission condition, without changing
 the source language's permissions.
 
-Current retained extraction emits `AlwaysEvent` with
-`event_kind: "ImplicitEventControl"`. The current PProcess/Process2 bridge has
-no implicit-event process, so Ingest2 reports
+Retained extraction emits `AlwaysEvent` with
+`event_kind: "ImplicitEventControl"`. `Ingest2` now retains that event as
+`PProcess.alwaysImplicit`, carrying the existing parsed `PStmt` body rather
+than replacing the entire process by `unsupported`. It rejects contradictory
+explicit event, edge, guard, clock, reset and source-style fields. Other
+event-control kinds keep their existing loud boundary. This is source
+ingestion, not a new activation rule.
+
+The frozen `Process2` bridge still has no implicit-event process and reports
 `ProceduralBlockSymbol:Always: source-level event-controlled always is
 retained; the frozen process AST has no event-list constructor`.
-`agree.lean` keeps that boundary loud. Function declarations/calls and
-initialization have their additional existing boundaries. No new AST,
+`agree.lean` checks the retained case body, function fixture and both startup
+controls, malformed event metadata, and the exact refusal in each frozen
+view. The old memory adapter also explicitly refuses the retained constructor
+at elaboration, including generated occurrences, instead of skipping it.
+Function declarations/calls and
+initialization have their additional existing boundaries. No new body AST,
 interpreter, shared judgment, or legacy execution witness is introduced.
 The actual rule, event/frame proofs, loaded-source E traces and their
 simulator comparisons remain required.

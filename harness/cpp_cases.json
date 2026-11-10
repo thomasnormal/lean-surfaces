@@ -19940,5 +19940,17 @@
     "cpp_expression": "callable_witness()",
     "expect": "match",
     "rung": 3
+  },
+  {
+    "id": "statement.callable-evaluator-refinement-divide",
+    "kind": "statement",
+    "corpus": "callable refinement seam",
+    "lean_module": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_namespace": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_expression": "callableEvaluatorRefinementDivideWitness",
+    "cpp_source": "int divide_refinement_witness(int value) { return value / 3; } bool callable_witness() { return divide_refinement_witness(7) == 2; }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 3
   }
 ]

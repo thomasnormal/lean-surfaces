@@ -513,3 +513,6 @@ differential row.
 
 `callableEvaluatorRefinementMultiply` carries the relation through pure integer
 multiplication, with the same kernel reduction and native differential coverage.
+
+`callableEvaluatorRefinementDivide` carries the relation through pure integer
+division, with the same kernel reduction and native differential coverage.

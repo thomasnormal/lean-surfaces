@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Refreshed the generated backlog index and verified Python coverage against
+  the current runner.
+
 - Revalidated the explicit Python clock-erasure proof target; it builds
   successfully without the reported unsolved goal.
 

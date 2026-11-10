@@ -83,18 +83,20 @@ The theorems below never touch it: the default
 
 /-! ## `bisect_left` -/
 
-/-- **Unconditional termination.** On EVERY list — sorted or not —
+/-- **Termination.** On every list within the pinned `Py_ssize_t` length — sorted or not —
 `bisect_left(xs, x)` terminates and returns an index in `[0, len(xs)]`.
-No hypothesis on `xs` at all. -/
-theorem bisect_left_terminates (xs : List PyInt) (x : PyInt) :
+No sortedness hypothesis on `xs` is needed. -/
+theorem bisect_left_terminates (xs : List PyInt) (x : PyInt)
+    (hsize : (xs.length : Int) ≤ pySsizeMax) :
     ∃ i : PyInt, bench_bisect.bisect_left(xs, x) ==> i ∧
       0 ≤ i ∧ i ≤ (xs.length : Int) := by proofs
 
-/-- **Main theorem.** For every sorted list `xs` and every `x`, the real
+/-- **Main theorem.** For every size-bounded sorted list `xs` and every `x`, the real
 CPython `bisect_left(xs, x)` — run through the deep-embedded interpreter,
 with `lo`/`hi` taking their defaults — terminates and returns the length
 of the strict-lower prefix of `xs`: the leftmost insertion point for `x`. -/
 theorem bisect_left_sorted (xs : List PyInt) (x : PyInt)
+    (hsize : (xs.length : Int) ≤ pySsizeMax)
     (hs : List.Pairwise (· ≤ ·) xs) :
     bench_bisect.bisect_left(xs, x) ==>
       (xs.takeWhile (fun v => decide (v < x))).length := by proofs
@@ -104,6 +106,7 @@ own docstring): on sorted input, the returned index `i` is in range, all of
 `a[:i]` is `< x`, and all of `a[i:]` is `≥ x`. Stated relationally against
 any observed run (`⇓`). -/
 theorem bisect_left_insertion_point (xs : List PyInt) (x : PyInt)
+    (hsize : (xs.length : Int) ≤ pySsizeMax)
     (hs : List.Pairwise (· ≤ ·) xs) {i : PyInt}
     (h : bench_bisect.bisect_left(xs, x) ⇓ i) :
     0 ≤ i ∧ i ≤ (xs.length : Int) ∧
@@ -115,15 +118,17 @@ theorem bisect_left_insertion_point (xs : List PyInt) (x : PyInt)
 returns exactly the insertion point — no exception, no `unsupported`, no
 other value. Free from totality via fuel determinism. -/
 theorem bisect_left_partial (xs : List PyInt) (x : PyInt)
+    (hsize : (xs.length : Int) ≤ pySsizeMax)
     (hs : List.Pairwise (· ≤ ·) xs) :
     bench_bisect.bisect_left(xs, x) ~~>
       (xs.takeWhile (fun v => decide (v < x))).length := by proofs
 
 /-! ## `bisect_right` -/
 
-/-- **Unconditional termination.** On EVERY list — sorted or not —
+/-- **Termination.** On every list within the pinned `Py_ssize_t` length — sorted or not —
 `bisect_right(xs, x)` terminates and returns an index in `[0, len(xs)]`. -/
-theorem bisect_right_terminates (xs : List PyInt) (x : PyInt) :
+theorem bisect_right_terminates (xs : List PyInt) (x : PyInt)
+    (hsize : (xs.length : Int) ≤ pySsizeMax) :
     ∃ i : PyInt, bench_bisect.bisect_right(xs, x) ==> i ∧
       0 ≤ i ∧ i ≤ (xs.length : Int) := by proofs
 
@@ -132,17 +137,19 @@ claim): on sorted input the returned index `i` is in range, everything
 before `i` is `≤ x`, everything from `i` on is `> x` — CPython's own
 docstring contract for `bisect_right`. -/
 theorem bisect_right_total (xs : List PyInt) (x : PyInt)
+    (hsize : (xs.length : Int) ≤ pySsizeMax)
     (hs : List.Pairwise (· ≤ ·) xs) :
     ∃ i : PyInt, bench_bisect.bisect_right(xs, x) ==> i ∧
       0 ≤ i ∧ i ≤ (xs.length : Int) ∧
       (∀ j : Int, 0 ≤ j → j < i → xs.getD j.toNat 0 ≤ x) ∧
       (∀ j : Int, i ≤ j → j < (xs.length : Int) → x < xs.getD j.toNat 0) := by proofs
 
-/-- **Main theorem (deterministic form).** For every sorted list `xs` and
+/-- **Main theorem (deterministic form).** For every size-bounded sorted list `xs` and
 every `x`, `bisect_right(xs, x)` with `lo`/`hi` defaulted terminates and
 returns the length of the weak prefix `xs.takeWhile (· ≤ x)` — the
 rightmost insertion point (the count of elements `≤ x`). -/
 theorem bisect_right_sorted (xs : List PyInt) (x : PyInt)
+    (hsize : (xs.length : Int) ≤ pySsizeMax)
     (hs : List.Pairwise (· ≤ ·) xs) :
     bench_bisect.bisect_right(xs, x) ==>
       (xs.takeWhile (fun v => decide (v ≤ x))).length := by proofs
@@ -151,6 +158,7 @@ theorem bisect_right_sorted (xs : List PyInt) (x : PyInt)
 `bisect_right(xs, x)` on sorted input is in range, with all of `a[:i]`
 `≤ x` and all of `a[i:]` `> x`. -/
 theorem bisect_right_insertion_point (xs : List PyInt) (x : PyInt)
+    (hsize : (xs.length : Int) ≤ pySsizeMax)
     (hs : List.Pairwise (· ≤ ·) xs) {i : PyInt}
     (h : bench_bisect.bisect_right(xs, x) ⇓ i) :
     0 ≤ i ∧ i ≤ (xs.length : Int) ∧
@@ -160,6 +168,7 @@ theorem bisect_right_insertion_point (xs : List PyInt) (x : PyInt)
 /-- **Strengthened partial correctness** (`~~>`): every run either times
 out or returns exactly the rightmost insertion point. -/
 theorem bisect_right_partial (xs : List PyInt) (x : PyInt)
+    (hsize : (xs.length : Int) ≤ pySsizeMax)
     (hs : List.Pairwise (· ≤ ·) xs) :
     bench_bisect.bisect_right(xs, x) ~~>
       (xs.takeWhile (fun v => decide (v ≤ x))).length := by proofs

@@ -25,6 +25,9 @@
   model, conditional on an order-indexed loaded-core invariant. Completion
   and retirement progress remain explicit proof obligations.
 
+- Fixed Python notebook magics to use the pinned CPython 3.9 frontend and
+  differential oracle independently of the notebook kernel's Python version.
+
 - Renamed the repository from `lean-surfaces` to `proglib` (2026-11-10). Old
   links redirect. The Lean library keeps the name `LeanModels` until a later,
   announced commit renames it to `Proglib`.

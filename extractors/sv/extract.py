@@ -51,6 +51,7 @@ from pyslang.ast import (
     StatementBlockKind,
     UnaryOperator,
     UniquePriorityCheck,
+    VariableLifetime,
     VisitAction,
 )
 from pyslang.syntax import SyntaxTree
@@ -22385,6 +22386,44 @@ def convert_stmt(sm, s):
         return internal_error(exc)
 
 
+def _procedural_lifetime(lifetime):
+    """Slang's resolved lifetime, not a guess from declaration spelling."""
+    if lifetime == VariableLifetime.Static:
+        return "static"
+    if lifetime == VariableLifetime.Automatic:
+        return "automatic"
+    return "unknown"
+
+
+def _block_scope_metadata(statement):
+    """Retain Slang's scope names; anonymous scopes also need tree/span identity."""
+    symbol = statement.blockSymbol
+    if symbol is None:
+        return None
+    return {"name": symbol.name,
+            "lexical_path": symbol.lexicalPath,
+            "hierarchical_path": symbol.hierarchicalPath,
+            "default_lifetime": _procedural_lifetime(symbol.defaultLifetime)}
+
+
+def _local_scope_metadata(sm, symbol):
+    """Keep lifetime and symbolic declared type for a future scoped E node.
+
+    Width in an old LocalDecl is only the elaborated default point. The
+    declared-type field retains Slang's dimension AST, as module declarations
+    do, and is never reconstructed from source text.
+    """
+    dtype, reason = _dtype_sym(sm, symbol.type, _decl_type_syntax(symbol),
+                               allow_signed=True)
+    fields = {"lifetime": _procedural_lifetime(symbol.lifetime),
+              "lexical_path": symbol.lexicalPath,
+              "hierarchical_path": symbol.hierarchicalPath,
+              "decl_type": dtype}
+    if reason is not None:
+        fields["decl_type_reason"] = reason
+    return fields
+
+
 def _convert_stmt(sm, s):
     if getattr(s, "bad", False):
         return unsupported(sm, s, "InvalidStatement")
@@ -22423,7 +22462,13 @@ def _convert_stmt(sm, s):
             stmts = [convert_stmt(sm, x) for x in body.list]
         else:
             stmts = [convert_stmt(sm, body)]
-        return {"kind": "Block", "span": node_span(sm, s), "stmts": stmts}
+        result = {"kind": "Block", "span": node_span(sm, s), "stmts": stmts}
+        # Only storage-bearing scopes need this additive metadata. Other
+        # blocks retain their existing envelope bytes. Slang's printed paths
+        # are not unique for anonymous blocks: keep the enclosing tree/span.
+        if _SYM is not None and any(x.get("kind") == "LocalDecl" for x in stmts):
+            result["scope"] = _block_scope_metadata(s)
+        return result
 
     if cname == "StatementList":  # bare list (defensive; slang wraps in Block)
         return {
@@ -24734,7 +24779,8 @@ def _convert_local_decl(sm, stmt):
             }
             if reason is not None:
                 node["type_reason"] = reason
-            return node
+            node.update(_local_scope_metadata(sm, symbol))
+            return signed_metadata(node, symbol.type)
         except Exception:
             return {"kind": "LocalDecl", "span": node_span(sm, stmt),
                     "name": symbol.name, "symbolic_local_retained": True}
@@ -24848,6 +24894,8 @@ def _convert_local_decl(sm, stmt):
     }, symbol.type)
     if _SYM is None and str(symbol.lifetime).split(".")[-1] == "Automatic":
         declaration["automatic_scalar"] = True
+    if _SYM is not None:
+        declaration.update(_local_scope_metadata(sm, symbol))
     return declaration
 
 

@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Revalidated the string specification; its reported `join_generator` guard
+  now builds successfully.
+
 - Revalidated the generator specification; its reported `squares_upto` guards
   now build successfully.
 

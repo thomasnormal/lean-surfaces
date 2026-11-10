@@ -101,6 +101,21 @@ builds on this branch without errors; no semantic or proof change was needed.
 DECIDED: close this branch's generator specification blocker and continue
 with the next rename-rehearsal failure.
 
+## 2026-11-10-pyfoundation-28 — revalidate string specification guard
+
+The rename rehearsal reported a failing `join_generator` guard in
+`Examples.python.str_lab.spec` on an older master tip. The specification
+builds on this branch without errors; no semantic or proof change was needed.
+
+| Measurement | Result |
+|---|---|
+| Target | `Examples.python.str_lab.spec` builds in 312 jobs |
+| Commit measured | `8751b869b` |
+| Errors | none |
+
+DECIDED: close this branch's string specification blocker and continue
+with the next rename-rehearsal failure.
+
 ## 2026-11-10-pyfoundation-11 — revalidate recursion-limit audit
 
 The inbox finding `py-no-recursion-limit` is already closed by the active

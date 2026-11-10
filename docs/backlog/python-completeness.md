@@ -17,6 +17,17 @@ before built. `harness/refusal_census.py` is the scoreboard and the acceptance
 battery in one — it exits nonzero on drift, so a landing that moves the tier
 must move the census in the same commit.
 
+## 2026-11-10-pyfoundation-10 — max/min recursion
+
+`max` and `min` now check the CPython builtin recursion unit after positional
+argument evaluation, and the additional `PyObject_RichCompareBool` unit when
+the admitted input actually has multiple items to compare. Arity, non-iterable,
+and empty-sequence errors do not fabricate a comparison unit. The
+`maxmin_recursion.py` battery pins both builtins, valid sequence and positional
+forms, argument effects, and type/arity/empty errors; keyword forms remain
+loud until their Argument Clinic diagnostics are admitted exactly. The proof
+interpreter shares the same pure check.
+
 ## 2026-11-10-pyfoundation-9 — sum recursion
 
 `sum` now checks the CPython C-call recursion unit after evaluating its

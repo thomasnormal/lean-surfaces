@@ -5593,6 +5593,34 @@ def extremumValH (h : Heap) (isMax : Bool) (vs : List RVal) : Res RVal :=
      | v => extremumVal isMax [v])
   | vs => extremumVal isMax vs
 
+/- CPython's `max`/`min` enters one recursion unit for the builtin call,
+and each non-identity `PyObject_RichCompareBool` enters another unit. The
+second unit is visible only when the input has at least two iterable items (or
+at least two positional arguments); arity, non-iterable, and empty-input
+errors do not compare anything. -/
+def extremumHasComparison (h : Heap) : List RVal → Bool
+  | _ :: _ :: _ => true
+  | [v] =>
+      match v with
+      | .listV xs => decide (xs.size > 1)
+      | .tuple xs => decide (xs.size > 1)
+      | .ntuple _ _ xs => decide (xs.size > 1)
+      | .ref a =>
+          match Heap.get? h a with
+          | some (.list xs) => decide (xs.size > 1)
+          | some (.dict es _) => decide ((dictKeys es).size > 1)
+          | _ => false
+      | _ => false
+  | [] => false
+
+def builtinExtremumRecursionCheck (depth : Nat) (h : Heap) (vs : List RVal) : Res Unit :=
+  if pythonRecursionFull depth then
+    .exn .recursionError
+  else if extremumHasComparison h vs then
+    if pythonRecursionFull (depth + 1) then .exn .recursionError else .ok ()
+  else
+    .ok ()
+
 /-! ### Closure CELLS (H7 cells, docs/memory-model.md §nested defs and
 closures)
 
@@ -9182,6 +9210,7 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                     -- `heapFree` fragment, and worldInv's argument kills
                     -- this branch through the guard)
                     flattenStarRun (evalExprs m fuel st args.toList) ⤳ fun st vs =>
+                    Run.liftRes st (builtinExtremumRecursionCheck st.world.callDepth st.world.heap vs) ⤳ fun st _ =>
                     (match vs with
                      | [.ref a] =>
                        (match Heap.get? st.world.heap a with
@@ -9195,6 +9224,7 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                      | vs => Run.liftRes st (extremumValH st.world.heap true vs))
                   else if fname == "min" then
                     flattenStarRun (evalExprs m fuel st args.toList) ⤳ fun st vs =>
+                    Run.liftRes st (builtinExtremumRecursionCheck st.world.callDepth st.world.heap vs) ⤳ fun st _ =>
                     (match vs with
                      | [.ref a] =>
                        (match Heap.get? st.world.heap a with

@@ -7812,9 +7812,17 @@ def genExpCreationCheck : RVal → Res Unit
   | .ref _ => .unsupported "generator expression over a heap receiver requires a creation-time iterator in the proof interpreter"
   | _ => .ok ()
 
-def genExpCreationRun (fname : String) (env : Env) : Res Unit :=
+/-- The list iterator uses a live index, and `iter(generator)` returns the
+generator itself (CPython 3.9 `PyObject_GetIter`). Their continuation can be
+constructed on first resume without changing either iterator's state. Other
+heap receivers refuse until their own creation-time iterator is represented. -/
+def genExpCreationRun (h : Heap) (fname : String) (env : Env) : Res Unit :=
   if fname.startsWith genExpPrefix then
     match Env.lookup env genExpArgName with
+    | some (.ref a) =>
+      match Heap.get? h a with
+      | some (.list _) | some (.generator ..) => .ok ()
+      | _ => .unsupported "generator expression over this heap receiver requires a creation-time iterator in the proof interpreter"
     | some v => genExpCreationCheck v
     | none => .unsupported "internal: synthesized genexp argument is unbound"
   else .ok ()
@@ -10940,7 +10948,7 @@ def callIn (m : Module) (fuel : Nat) (w : World) (fname : String)
         -- TT writes) therefore happens only as a consumer steps it,
         -- which is exactly the laziness the search depends on.
         let env := markUnboundLocals f.body.toList (mkCallEnv f.params args)
-        let check := genExpCreationRun fname env
+        let check := genExpCreationRun w.heap fname env
         match check with
         | .ok _ =>
           let g : Obj := .generator fname env [.block f.body.toList] .created

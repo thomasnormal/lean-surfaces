@@ -1,5 +1,8 @@
 [
   {"file": "harness/genexp_creation.py", "function": "gen_iter_deferred", "args": [[{"t":"notImplemented"}], [{"t":"none"}], [5], [{"t":"bool","v":true}], [{"t":"ellipsis"}], [{"t":"str","v":"a"}], [{"t":"tuple","v":[]}]], "expect": "match", "note": "The outer iterable is checked when a generator expression is created, before its first next()."},
+  {"file": "harness/genexp_creation.py", "function": "gen_iter_live_list", "args": [[]], "expect": "match", "note": "The iterator sees list growth after generator-expression creation."},
+  {"file": "harness/genexp_creation.py", "function": "gen_iter_generator", "args": [[]], "expect": "match", "note": "A generator expression consumes the existing generator iterator."},
+  {"file": "harness/genexp_creation.py", "function": "gen_iter_dict", "args": [[]], "expect": "match", "note": "Dictionary iterator creation runs in the monadic interpreter; the proof interpreter may refuse."},
   {"file": "Examples/python/add/add.py", "function": "add", "args": [[2, 3], [-2, 3], [2, -3], [-2, -3], [0, 0]], "expect": "match"},
   {"file": "Examples/python/tri/tri.py", "function": "tri", "args": [[10], [0], [-3]], "expect": "match"},
   {"file": "Examples/python/fib/fib.py", "function": "fib", "args": [[0], [1], [10]], "expect": "match"},

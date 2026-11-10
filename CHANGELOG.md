@@ -28,6 +28,10 @@
 - Renamed the repository from `lean-surfaces` to `proglib` (2026-11-10). Old
   links redirect. The Lean library keeps the name `LeanModels` until a later,
   announced commit renames it to `Proglib`.
+
+- Restored proof-interpreter generator expressions over heap lists and
+  generators while retaining creation-time checks for non-iterables.
+
 - Fixed generator-expression creation for `NotImplemented` in both Python
   interpreters, which now raise CPython's `TypeError` before returning.
 

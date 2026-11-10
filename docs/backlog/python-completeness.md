@@ -158,6 +158,22 @@ remains separate.
 DECIDED: close `py-dead-yield-target-drop` on this branch and retain the loud
 global/nonlocal boundary until a send-aware yield-expression frame exists.
 
+## 2026-11-10-pyfoundation-19 — revalidate non-simple annotation order
+
+The inbox finding `py-annassign-nonsimple-order` is already closed by the
+scope-aware structured `AnnAssign` path. Value and target stores precede
+module/class annotation evaluation, while function-scope annotations are
+skipped as required by CPython 3.9.
+
+| Measurement | Result |
+|---|---|
+| Ordering witness | `ann_nonsimple_order.py --compare`: `val`, `ann`, `val`, `1`, MATCH |
+| Scope behavior | function annotation expression is not evaluated |
+| Semantic change | none; audit confirmation only |
+
+DECIDED: close `py-annassign-nonsimple-order` on this branch and retain direct
+structured annotation semantics with its scope gate.
+
 ## 2026-11-10-pyfoundation-10 — max/min recursion
 
 `max` and `min` now check the CPython builtin recursion unit after positional

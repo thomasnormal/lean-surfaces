@@ -822,7 +822,7 @@ def dimOf? (name : String) (d : PDim) : Except String (PDim × Aff × Aff) :=
 
 def declOf? (pd : PDecl) : Except String DeclT :=
   if !pd.unpackedDims.isEmpty then
-    .error s!"declaration `{pd.name}`: unpacked array storage outside the v1 fragment (UnpackedDecl:memory)"
+    .error s!"declaration `{pd.name}`: unpacked array storage (UnpackedDecl:memory), which the semantic-tier family `X.sem` does not model: its instantiation refuses the declaration (`instDecl`: unpacked array storage outside E), so the whole family is one loud process; the cells live only on the source-shaped memory route (`instantiateMemD2`, `runMem2`), which has no proof layer the tactics could be sound against"
   else match pd.init with
   | some _ => .error s!"declaration `{pd.name}` has an initializer"
   | none =>

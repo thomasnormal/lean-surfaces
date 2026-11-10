@@ -10,6 +10,9 @@
   the captured source and literal hashes and the recorded ABI and call binding.
   The harness relies on its caller's cgroup instead of imposing an address-space
   limit.
+- Refreshed the generated backlog index and verified Python coverage against
+  the current runner.
+
 - Revalidated the explicit Python clock-erasure proof target; it builds
   successfully without the reported unsolved goal.
 

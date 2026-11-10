@@ -1,4 +1,5 @@
 import LeanModels.Sv.Sva
+import LeanModels.Sv.SvaInvariant
 import LeanModels.Sv.XMono
 
 namespace Examples.«system-verilog».sem2.sva_counterexample.proof
@@ -41,5 +42,10 @@ theorem counterexample_replay : SvaCheck.evalEdges counterexample check ≠ .ok 
   rw [counterexample_eval]
   intro h
   cases h
+
+theorem invariant_route_smoke {q : Bool} {us : List Bool}
+    (hr : SafetyTrace SafetySmoke.resetSystem false us q) :
+    SafetySmoke.resetSystem.safe q :=
+  SafetySmoke.reset_trace_safe hr
 
 end Examples.«system-verilog».sem2.sva_counterexample.proof

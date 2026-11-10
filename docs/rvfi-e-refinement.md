@@ -16,7 +16,10 @@ The loaded-core proof supplies three concrete things:
 
 - A partial decoder of the actual RVFI ports in the trusted cycle samples.
   A failed decode is `none`; a successfully decoded invalid row is a bubble.
-  The decoder is an explicit parameter here, not a proved wire adapter.
+  The decoder is an explicit parameter here. The concrete one-channel
+  [`RvfiPorts.decodePost`](../LeanModels/Refine/RvfiPorts.lean) adapter below
+  supplies the non-trapping RV32 slice; its connection to a loaded core
+  remains an invariant obligation.
 - A relation indexed by retirement order, with initialization proved on
   every admitted E run. The initial memory and environment admission remain
   explicit, including any reset and memory protocol requirements.
@@ -40,6 +43,47 @@ remain separate obligations. `SafeOn` by itself admits empty behaviours and
 is not an all-prefix liveness theorem. The current stateful RV32I adapter
 and its existing official-model validation obligations also remain as
 recorded; this change supplies no new Sail agreement theorem.
+
+## Concrete port adapter
+
+`RvfiPorts` reads the standard single-channel signal names with a caller-supplied
+prefix (`"rvfi_"` conventionally), `ILEN = XLEN = 32`, and a 64-bit order.
+`readBits_eq_some_iff` requires the exact declared width and every source bit
+known; `readBits_ofBitVec` proves preservation for arbitrary known vectors.
+The conversion uses a width equality, never a resize. `decode_valid` proves
+that a successfully decoded row has the actual known valid bit. Thus an
+undecodable active row cannot become a bubble or disappear from `decodeSamples`.
+
+The wire contract is pinned to [riscv-formal c992aa61](https://github.com/YosysHQ/riscv-formal/blob/c992aa61fdfe0846c5ed90324c596202a1c69b76/docs/source/rvfi.rst),
+sections “Instruction metadata”, “Integer register read/write”, “Program
+counter” and “Memory access”. It gives invalid cycles arbitrary payloads, so
+the adapter reads only `valid` on a bubble and returns a canonical invalid
+record. Those canonical payloads describe no hardware value and no retirement.
+For valid cycles the adapter conservatively requires even unused payloads to
+be known. It preserves the raw register, address, mask and memory-data fields;
+it does not shift aligned masks or infer missing data. The existing
+machine-mode, RV32 and canonical-mask guard remains in force. This is a
+partial decoder, not a complete checker for all RVFI obligations.
+
+Standard RVFI has no `rd_wdata_valid` signal. The adapter derives that field
+from `rd_addr != 0`: zero denotes either no destination or x0, neither of
+which changes architectural registers. The order becomes a `Nat` without
+discarding its upper 32 bits. Finite order wraparound cannot silently satisfy
+the existing consecutive-order normalizer.
+
+This adapter refuses active `trap`, `halt` and `intr` flags. RVFI supplies no
+precise cause port, and `intr` marks the first instruction of a trap handler,
+not the cause of the trapping instruction. Reusing the old `causeWellFormedB`
+interpretation on arbitrary wire rows would require a separate reviewed
+contract. No cause is inferred from an instruction word. Trap handling,
+aligned-memory mode, rollback and other RVFI extensions remain outside this
+adapter's contract.
+
+`decodePost` selects registered outputs at the trusted post-cycle sample.
+The actual loaded-core invariant must justify this timing convention. The
+codec's synthetic field/refusal checks and its actual `E1` bridge typecheck
+are in [`cores/picorv32/rvfi_ports.lean`](../Examples/system-verilog/cores/picorv32/rvfi_ports.lean).
+These checks claim neither simulator execution nor a PicoRV32 invariant.
 
 ## Existing contract findings
 
@@ -78,6 +122,8 @@ bridge until that duplication is removed.
 
 ```sh
 LEAN_NUM_THREADS=2 nice -n 19 lake build LeanModels.Refine.RvfiE
+LEAN_NUM_THREADS=2 nice -n 19 lake build LeanModels.Refine.RvfiPorts \
+  'Examples.«system-verilog».cores.picorv32.rvfi_ports'
 ```
 
 The new theorem's axiom audit contains only the standard three axioms.

@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Added an exact-width partial RV32 RVFI port adapter for E observations.
+  Unknown valid bits and active trap/halt/handler-entry rows refuse; known
+  invalid cycles remain explicit bubbles with irrelevant payloads.
+
 - Retired three preparatory legacy-cycle witnesses for Step 11. Their source
   oracle rows and current E boundary guards remain in place.
 

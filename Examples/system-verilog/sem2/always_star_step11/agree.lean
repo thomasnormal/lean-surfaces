@@ -89,4 +89,70 @@ private def generatedImplicit : PDesign :=
   | .unsupported "ProceduralBlockSymbol:Always: source-level event-controlled always is retained; the frozen process AST has no event-list constructor" => true
   | _ => false
 
+-- The source-shaped generated path must reach the same process parser.
+-- Constructing a PDesign by hand does not exercise that ingestion boundary.
+load_design_sv2 alwaysStarGenerateStep11
+  from "Examples/system-verilog/sem2/always_star_step11/always_star_generate_step11.sv.json"
+
+#guard alwaysStarGenerateStep11.pdesign.processes == []
+#guard alwaysStarGenerateStep11.pdesign.others == []
+#guard match alwaysStarGenerateStep11.pdesign.generates with
+  | [.genIf (.paramRef "USE_A" _) [.process (.alwaysImplicit (.blockingAssign "y" _))]
+        [.process (.alwaysImplicit (.blockingAssign "y" _))],
+      .genFor (some "lanes") "i" _ _ _ _
+        [.process (.alwaysImplicit (.blockingAssignL _ _))]] => true
+  | _ => false
+
+-- These are frozen-view refusals, not generated E execution witnesses.
+#guard [[4, 1, 2], [4, 0, 2], [7, 1, 3]].all fun args =>
+  let d := alwaysStarGenerateStep11.pdesign.instantiateD2 args
+  d.processes.size == (args[2]!.toNat + 1) && d.processes.toList.all fun p =>
+    match p with
+    | .unsupported "ProceduralBlockSymbol:Always"
+        "source-level event-controlled always is retained; the frozen process AST has no event-list constructor" => true
+    | _ => false
+
+#guard [[4, 1, 2], [4, 0, 2], [7, 1, 3]].all fun args =>
+  match alwaysStarGenerateStep11.pdesign.instantiateMem2 args with
+  | .unsupported "ProceduralBlockSymbol:Always: source-level event-controlled always is retained; the frozen process AST has no event-list constructor" => true
+  | _ => false
+
+-- Forwarding an explicit generated event must not admit it to the retiring
+-- memory adapter, whose generic unsupported-process skip is separate debt.
+load_design_sv2 alwaysEventGenerateRefusalStep11
+  from "Examples/system-verilog/sem2/always_star_step11/always_event_generate_refusal_step11.sv.json"
+
+#guard match alwaysEventGenerateRefusalStep11.pdesign.generates with
+  | [.genIf _ [.process (.unsupported "ProceduralBlockSymbol:Always" _)] []] => true
+  | _ => false
+#guard (alwaysEventGenerateRefusalStep11.sem 1).hasUnsupported
+#guard match alwaysEventGenerateRefusalStep11.pdesign.instantiateMem2 [1] with
+  | .unsupported "ProceduralBlockSymbol:Always: source-level event-controlled always is retained; the frozen process AST has no event-list constructor" => true
+  | _ => false
+#guard match alwaysEventGenerateRefusalStep11.pdesign.instantiateMem2 [0] with
+  | .ok d => d.processes == []
+  | _ => false
+
+-- The same refusal applies outside a generate region.
+#guard match ({ alwaysEventGenerateRefusalStep11.pdesign with
+    generates := [], processes := [(parsePProcess (eventJson "SignalEventControl")).toOption.get!] }
+    : PDesign).instantiateMem2 [1] with
+  | .unsupported "ProceduralBlockSymbol:Always: source-level event-controlled always is retained; the frozen process AST has no event-list constructor" => true
+  | _ => false
+
+#guard (parseGenItem (eventJson "ImplicitEventControl")).toOption ==
+  some (.process (.alwaysImplicit (.block [])))
+#guard match (parseGenItem (eventJson "SignalEventControl")).toOption with
+  | some (.process (.unsupported "ProceduralBlockSymbol:Always" _)) => true
+  | _ => false
+#guard ["events", "edge", "iff", "clock", "areset", "areset_n", "reset_iff"].all fun field =>
+  (parseGenItem (eventJson "ImplicitEventControl" [(field, .bool true)])).toOption.isNone
+
+-- Even the inactive generate branch is parsed and retains the metadata guard.
+#guard (parseGenItem (.mkObj [
+  ("kind", .str "GenerateIf"),
+  ("cond", .mkObj [("kind", .str "Int"), ("value", Lean.toJson (0 : Int))]),
+  ("then", .arr #[eventJson "ImplicitEventControl" [("clock", .str "clk")]]),
+  ("else", .arr #[])])).toOption.isNone
+
 end Examples.«system-verilog».sem2.always_star_step11.agree

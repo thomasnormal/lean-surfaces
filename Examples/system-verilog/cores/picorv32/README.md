@@ -1373,3 +1373,34 @@ The low-level executor still returns `ok states=80` when both guards are
 manually bypassed, but that result is **UNVALIDATED** and is not a usable
 PicoRV32 trace.  The symbolic ADDI invariant remains parked until the E
 memory route admits the design.
+
+## 2026-11-10 retained-source re-probe (review branch, item 448)
+
+Extracting the same pinned, unchanged source with `--retain-proc-rewrites`
+keeps its event controls and net declaration assignments in their source
+forms. Before the generate-member parser repair, loading this envelope
+failed with `GenerateIf: AlwaysEvent: unknown generate member kind
+"AlwaysEvent"`. After the repair it loads as a literal `PDesign`: 26
+parameters, 216 declarations, 31 module-level processes and three generates.
+The `TWO_CYCLE_ALU` generate's else branch retains its implicit event and
+all six blocking assignments. This is ingestion progress; native `@*`
+activation and the core invariant remain open.
+
+The default frozen-design instantiation of this **retained-source** envelope
+now reports the earlier boundary at the net declaration assignment
+`wire dbg_mem_valid = mem_valid;` (`picorv32.v:183`):
+
+```text
+unsupported "Instantiate"
+  "decl 'dbg_mem_valid': non-literal initializer outside the M0 tier"
+```
+
+This mode does not perform the older extractor's net-declaration-to-assign
+rewrite. The result above is distinct from the historical ordinary-route
+`cpuregs` wall, and neither is an admitted E execution. The clean-room
+generated implicit-event regression is
+`sem2/always_star_step11/always_star_generate_step11.sv`; its source rows
+exercise both generate branches and a symbolic generate loop without
+changing the core. The companion generated explicit-event fixture pins the
+Res-valued memory instantiation refusal. The unchecked legacy adapter's
+generic unsupported-process skip remains separately reported debt.

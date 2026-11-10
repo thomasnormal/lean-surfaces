@@ -522,3 +522,6 @@ modulo, with the same kernel reduction and native differential coverage.
 
 `callableEvaluatorRefinementBitAnd` carries the relation through pure bitwise
 conjunction, with the same kernel reduction and native differential coverage.
+
+`callableEvaluatorRefinementBitOr` carries the relation through pure bitwise
+disjunction, with the same kernel reduction and native differential coverage.

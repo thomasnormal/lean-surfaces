@@ -29,6 +29,9 @@
 - Added a kernel refinement theorem tying the value and object callable
   evaluators together through pure bitwise conjunction.
 
+- Added a kernel refinement theorem tying the value and object callable
+  evaluators together through pure bitwise disjunction.
+
 - Extended the value/object evaluator agreement battery with negative signed
   subtraction and native differential coverage.
 

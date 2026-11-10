@@ -88,6 +88,11 @@ class VerificationAccountingTests(unittest.TestCase):
         self.addCleanup(directory.cleanup)
         self.directory = directory.name
         self.cases_path = os.path.join(self.directory, "cases.json")
+        fixture = Path(self.directory) / "Examples" / "system-verilog" / "admission_fixture"
+        fixture.mkdir(parents=True)
+        (fixture / "dut.sv").write_text("module dut; endmodule\n")
+        self.fixture = fixture
+        self.patch_runner("REPO", new=self.directory)
         self.trace = ["CYCLE 0 out=0", "CYCLE 1 out=1"]
         self.ports = [("out", "out", 1)]
         self.patch_runner("CASES_JSON", new=self.cases_path)
@@ -135,6 +140,17 @@ class VerificationAccountingTests(unittest.TestCase):
         self.assertEqual(self.run_iverilog.call_count, 2)
         self.run_xcelium.assert_not_called()
         self.run_verilator.assert_not_called()
+
+    def test_memory_sidecars_are_copied_to_simulator_workdir(self):
+        (self.fixture / "init.hex").write_text("ab\n")
+        (self.fixture / "other.MEM").write_text("cd\n")
+        (self.fixture / "ignored.txt").write_text("no\n")
+        status, _ = self.run_main([self.case("sidecars")])
+        self.assertEqual(status, 0)
+        workdir = Path(self.directory) / "sidecars" / "iverilog"
+        self.assertEqual((workdir / "init.hex").read_text(), "ab\n")
+        self.assertEqual((workdir / "other.MEM").read_text(), "cd\n")
+        self.assertFalse((workdir / "ignored.txt").exists())
 
     def test_xrun_only_cases_are_counted_as_skipped(self):
         status, output = self.run_main([self.case("portable"),

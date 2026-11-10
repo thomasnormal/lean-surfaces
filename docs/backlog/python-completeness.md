@@ -36,6 +36,23 @@ DECIDED: require CPython 3.9 for the frontend and default oracle; never fall
 back to an unpinned Python executable or count a frontend refusal as a
 comparison disagreement.
 
+## 2026-11-10-pyfoundation-24 — revalidate the bench-bisect proof blocker
+
+The rename rehearsal's first reported Python failure is already fixed on the
+current branch. The ssize-bounded bisect proof and its supporting specification
+now elaborate without the 12 unsolved goals reported against the older master
+tip; no proof or interpreter change was needed in this item.
+
+| Measurement | Result |
+|---|---|
+| Target | `Examples.python.bench_bisect.proof` builds in 312 jobs |
+| Commit measured | `aba6bec95` |
+| Errors | none |
+| Semantic change | none; revalidation only |
+
+DECIDED: close the bench-bisect proof blocker at the current tip and continue
+with the next rename-rehearsal failure.
+
 ## 2026-11-10-pyfoundation-11 — revalidate recursion-limit audit
 
 The inbox finding `py-no-recursion-limit` is already closed by the active

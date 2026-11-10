@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Revalidated the bench-bisect proof target after ssize-bounded bisect changes;
+  its full 312-job target now builds without unsolved goals.
+
 - Require the pinned Python 3.9 frontend and default oracle for `leanpy`, and
   report rejected script envelopes as refusals rather than comparisons.
 

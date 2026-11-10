@@ -238,6 +238,14 @@ Repetition may short-circuit an empty/nonpositive result only after this
 index-sized conversion would succeed. -/
 def seqIndexBudget : Nat := 9223372036854775807
 
+/-- CPython 3.9's pinned 64-bit `Py_ssize_t` range.  Operations that pass a
+Python integer through a raising C-index conversion refuse outside this range
+until the exact protocol messages are modeled. -/
+def pySsizeMax : Int := 9223372036854775807
+def pySsizeMin : Int := -9223372036854775808
+def pySsizeFits (i : Int) : Bool := pySsizeMin ≤ i && i ≤ pySsizeMax
+def pySsizeMaxNat : Nat := 9223372036854775807
+
 /-- The left-shift budget: the largest shift COUNT `<<` will build, so the
 widest result is about a million bits (128 KB). Its own constant rather
 than a reuse of `seqBudget` — they bound different resources and the
@@ -2639,7 +2647,11 @@ def lenVal : RVal → Res RVal
   | .listV xs => .ok (.int xs.size)
   | .tuple xs => .ok (.int xs.size)
   | .ntuple _ _ xs => .ok (.int xs.size)
-  | .rangeV lo hi step => .ok (.int (rangeLen lo.toInt hi.toInt step.toInt))
+  | .rangeV lo hi step =>
+      let n := rangeLen lo.toInt hi.toInt step.toInt
+      if n > pySsizeMaxNat then
+        .unsupported "len() result does not fit CPython's Py_ssize_t (index-sized narrowing is outside the tier)"
+      else .ok (.int n)
   | .ref _ =>
       .unsupported "len() of a heap object lives in the heap (`heapLen` via `lenValH` decides it)"
   | v => .exn (.typeError s!"object of type '{v.typeName}' has no len()")
@@ -4692,7 +4704,10 @@ def heapPop (h : Heap) (a : Addr) (i : Option Int) : Res (Heap × RVal) :=
   match Heap.get? h a with
   | some (.list xs) =>
     if xs.isEmpty then .exn .indexErrorPopEmpty else
-    match normIndex (i.getD (-1)) xs.size with
+    let index := i.getD (-1)
+    if !pySsizeFits index then
+      .unsupported "list.pop() index outside CPython's Py_ssize_t range is outside the tier"
+    else match normIndex index xs.size with
     | some n =>
       match Heap.update h a (.list ((xs.toList.eraseIdx n).toArray)) with
       | some h' => .ok (h', xs.getD n .none)
@@ -4723,8 +4738,11 @@ single-step materialization). -/
 def heapInsert (h : Heap) (a : Addr) (i : Int) (v : RVal) : Res Heap :=
   match Heap.get? h a with
   | some (.list xs) =>
-    let n : Nat := (if i < 0 then i + xs.size else i).toNat
-    match Heap.update h a (.list ((xs.toList.take n ++ v :: xs.toList.drop n).toArray)) with
+    if !pySsizeFits i then
+      .unsupported "list.insert() index outside CPython's Py_ssize_t range is outside the tier"
+    else
+      let n : Nat := (if i < 0 then i + xs.size else i).toNat
+      match Heap.update h a (.list ((xs.toList.take n ++ v :: xs.toList.drop n).toArray)) with
     | some h' => .ok h'
     | Option.none => .unsupported danglingMsg
   | some (.dict _ _) => .exn .attributeError  -- 'dict' object has no attribute 'insert'

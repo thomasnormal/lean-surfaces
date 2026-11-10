@@ -110,6 +110,9 @@
   decided path to exact binary bases (`-2` through `2`); larger integer bases
   now refuse loudly.
 
+- Added a pinned 64-bit `Py_ssize_t` narrowing boundary for huge list indices
+  and oversized range lengths; those operations now refuse loudly.
+
 - Extended the value/object evaluator agreement battery with a continue body
   state update and native differential coverage.
 

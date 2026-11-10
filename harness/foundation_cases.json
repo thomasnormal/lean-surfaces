@@ -31,22 +31,22 @@
     "file": "harness/foundation_probe.py",
     "function": "list_insert_huge",
     "args": [[9223372036854775808], [-9223372036854775809]],
-    "expect": "match",
-    "note": "Finding 3: PyNumber_AsSsize_t raising conversion at list.insert."
+    "expect": "unsupported",
+    "note": "Finding 3 stopped: list.insert narrowing outside pinned Py_ssize_t is loud."
   },
   {
     "file": "harness/foundation_probe.py",
     "function": "list_pop_huge",
     "args": [[9223372036854775808]],
-    "expect": "match",
-    "note": "Finding 3: raising index conversion at list.pop."
+    "expect": "unsupported",
+    "note": "Finding 3 stopped: list.pop narrowing outside pinned Py_ssize_t is loud."
   },
   {
     "file": "harness/foundation_probe.py",
     "function": "range_len_huge",
     "args": [[]],
-    "expect": "match",
-    "note": "Finding 3: Py_ssize_t narrowing at len(range(...))."
+    "expect": "unsupported",
+    "note": "Finding 3 stopped: len(range(...)) beyond Py_ssize_t is loud."
   },
   {
     "file": "harness/foundation_probe.py",

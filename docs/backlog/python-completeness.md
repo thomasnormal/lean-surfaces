@@ -10879,6 +10879,24 @@ DECIDED: keep the exact `-2 ≤ base ≤ 2` negative-power slice; refuse larger
 integer bases until conversion-to-double and platform `pow` are modeled as an
 explicit protocol/oracle.
 
+## 2026-11-10-pyfoundation-1c — stop Py_ssize_t narrowing errors
+
+Foundation step 1c adds one pinned 64-bit narrowing boundary shared by both
+interpreter surfaces. Raising index conversions used by `list.insert` and
+`list.pop`, and `len(range(...))` results, now refuse outside
+`[-2^63, 2^63-1]` instead of passing arbitrary Python integers through to list
+or length operations.
+
+| Measurement | Result |
+|---|---|
+| Huge `list.insert` indices | both signs now WHITELISTED/REFUSED in both modes |
+| Huge `list.pop` index | now WHITELISTED/REFUSED in both modes |
+| `len(range(2**64))` | now WHITELISTED/REFUSED in both modes |
+| Semantic change | pinned raising `Py_ssize_t` boundary; exact CPython messages remain future protocol work |
+
+DECIDED: keep the 64-bit narrowing refusal until the complete
+`PyNumber_AsSsize_t`/`_PyEval_SliceIndex` protocol and messages are modeled.
+
 ## 2026-11-07-pycomplete-415 — recheck the trace-clock reading boundary
 
 The clock audit finding is already closed in both interpreters. The explicit

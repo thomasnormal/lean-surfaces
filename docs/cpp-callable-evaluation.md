@@ -494,3 +494,8 @@ call unchanged C++ functions. The companion `||` witness exposes the inverse
 selection: a true left operand skips the increment and a false one runs it.
 The negative signed division witness checks that both evaluator APIs preserve C++
 truncation toward zero for `-7 / 3`.
+
+`callableEvaluatorRefinementLiteral` is a kernel-reduced refinement seam: for a
+parameterless integer-literal callable, the value and object evaluator results
+are definitionally equal after their error wrappers are erased. The differential
+row exercises the same witness through the native oracle.

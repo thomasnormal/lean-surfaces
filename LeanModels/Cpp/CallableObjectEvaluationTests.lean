@@ -41956,4 +41956,23 @@ def callableObjectCallRefusalCauseWitness : Except String Unit :=
 
 #guard callableObjectCallRefusalCauseWitness matches .error _
 
+private def callableEvaluatorRefinementLiteralFunction : CallableFunction := {
+  occurrence := functionDeclaration
+  signature := {result := intType, parameters := [], variadic := false}
+  parameters := []
+  body := .return_ {
+    expression := CallableExpression.integer 7,
+    sourceType := intType, type := intType}}
+
+theorem callableEvaluatorRefinementLiteral :
+    (evaluateCallable 32 .lp64 callableEvaluatorRefinementLiteralFunction []).toOption =
+      (evaluateCallableObject 32 .lp64 callableEvaluatorRefinementLiteralFunction []).toOption := by
+  rfl
+
+def callableEvaluatorRefinementLiteralWitness : Bool :=
+  (evaluateCallable 32 .lp64 callableEvaluatorRefinementLiteralFunction []).toOption ==
+    (evaluateCallableObject 32 .lp64 callableEvaluatorRefinementLiteralFunction []).toOption
+
+#guard callableEvaluatorRefinementLiteralWitness
+
 end LeanModels.Cpp.CallableObjectEvaluationTests

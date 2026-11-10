@@ -1,0 +1,103 @@
+#!/usr/bin/env python3
+"""Source evidence for @*; the retained E process boundary remains loud."""
+import importlib.util
+import hashlib
+from pathlib import Path
+import shutil
+import tempfile
+
+HERE = Path(__file__).resolve().parent
+spec = importlib.util.spec_from_file_location(
+    "case_check", HERE.parent / "case_always_ff_step11/check.py")
+case_check = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(case_check)
+run = case_check.run
+
+FIXTURES = (
+    ("always_star_step11", (
+        "first xxxx 0011", "unselected_b 0011 0011", "a_known 1010 1010",
+        "b_known 0101 0101", "selector_x_label 1111 1111", "selector_z_label 0101 0101",
+        "selector_x_default 1111 1111", "known_default 1111 1111", "a_xz xz01 xz01",
+        "b_z zzzz zzzz", "xor_xz xx11 xx11", "not_z xxxx xxxx")),
+    ("always_star_function_sensitivity_step11", (
+        "first xxxx 0110", "hidden_only xxxx 1010", "argument 0011 0011",
+        "hidden_known 0011 1001", "hidden_xz 0011 xx11", "argument_after_xz xx10 xx10",
+        "hidden_z xx10 xxxx", "argument_after_z xxxx xxxx", "hidden_zero xxxx 1111",
+        "argument_zero 0000 0000", "argument_xz xx01 xx01", "argument_z xxxx xxxx")),
+    ("always_star_startup_step11", (
+        "first xxxx 0110 xxxx 0110", "a_known 1111 1111 xxxx 0110",
+        "b_known 0011 0011 xxxx 0110", "a_xz xx00 xx00 xxxx 0110",
+        "b_z xxxx xxxx xxxx 0110")),
+)
+
+# Port startup differs between the measured simulators. These exact source
+# observations are reported separately; they are not a claim of standards
+# equivalence or an allowed E outcome set. The same-module startup fixture
+# above removes that port-propagation question and agrees in both tools.
+PORT_STARTUP_ROWS = {"always_star_step11": 1,
+                     "always_star_function_sensitivity_step11": 2}
+XCELIUM_PORT_STARTUP = {
+    "always_star_step11": ("first 0011 0011",),
+    "always_star_function_sensitivity_step11": (
+        "first 0110 0110", "hidden_only 0110 1010"),
+}
+PORT_STARTUP_SHA256 = {
+    "always_star_step11": "cf39a0bc63867f11145f5ec94f36af4874604057e10c258a4957ac0d934d18c9",
+    "always_star_function_sensitivity_step11": "8bc985025d3e92129578014f67e09ce596f9d2913079307f53bceed9cb0c70a7",
+}
+
+
+def main():
+    print("source oracle evidence only; no E execution result is claimed")
+    if not shutil.which("iverilog") or not shutil.which("vvp"):
+        raise RuntimeError("Icarus is required for this source check")
+    print(run(["iverilog", "-V"]).splitlines()[0])
+    simulators = ["iverilog"]
+    if shutil.which("xrun"):
+        status, details = case_check.probe_xcelium()
+        print(details)
+        if status == 0:
+            print(run(["xrun", "-version"]).strip())
+            simulators.append("xrun")
+        elif status == 77:
+            print("no Xcelium result: explicit license refusal")
+        else:
+            raise RuntimeError("Xcelium readiness probe failed")
+    else:
+        print("no Xcelium result: xrun unavailable")
+    failures = []
+    for top, expected_rows in FIXTURES:
+        sources = [str(HERE / (top + suffix)) for suffix in (".sv", "_tb.sv")]
+        if top in PORT_STARTUP_SHA256:
+            digest = hashlib.sha256(Path(sources[0]).read_bytes() + b"\0"
+                                    + Path(sources[1]).read_bytes()).hexdigest()
+            if digest != PORT_STARTUP_SHA256[top]:
+                raise RuntimeError(f"{top}: startup observation sources changed; re-measure both tools")
+            print(f"SOURCE {top}: source-NUL-testbench sha256 {digest}")
+        for simulator in simulators:
+            expected = [line.split() for line in expected_rows]
+            startup_count = PORT_STARTUP_ROWS.get(top, 0)
+            if simulator == "xrun" and startup_count:
+                expected[:startup_count] = [line.split() for line in XCELIUM_PORT_STARTUP[top]]
+            with tempfile.TemporaryDirectory(prefix="sv-always-star-") as work:
+                if simulator == "iverilog":
+                    exe = str(Path(work) / "sim")
+                    run(["iverilog", "-g2012", "-s", top + "_tb", "-o", exe] + sources, work)
+                    output = run(["vvp", exe], work)
+                else:
+                    output = run(["xrun", "-sv", "-q", "-timescale", "1ns/1ps",
+                                  "-top", top + "_tb"] + sources, work)
+            actual = [line.split()[1:] for line in output.splitlines() if line.startswith("ROW ")]
+            if actual != expected:
+                failures.append(f"{top}/{simulator}: expected {expected} != {actual}")
+                print(failures[-1])
+            else:
+                print(f"{top}/{simulator}: {len(actual) - startup_count} common source rows verified")
+                for row in actual[:startup_count]:
+                    print(f"STARTUP OBSERVATION {top}/{simulator}: " + " ".join(row))
+    if failures:
+        raise RuntimeError("\n".join(failures))
+
+
+if __name__ == "__main__":
+    main()

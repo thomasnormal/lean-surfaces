@@ -17,6 +17,19 @@ before built. `harness/refusal_census.py` is the scoreboard and the acceptance
 battery in one — it exits nonzero on drift, so a landing that moves the tier
 must move the census in the same commit.
 
+## 2026-11-10-pyfoundation-8 — pinned leanpy quickstart admission
+
+The public quickstart's two jobs failed when the host had Python 3.12 but no
+`python3.9`: `tools/leanpy` warned and fell back to 3.12 for extraction, the
+runner rejected that envelope, and `--compare` reported the runner's refusal as
+a class mismatch (Actions run 42882081842, job 130060849685). `leanpy` now
+requires an actual CPython 3.9 frontend and default oracle, exits 3 with one
+plain refusal line before extraction or cache creation, and treats runner
+pre-execution failures as loud refusals rather than Python exceptions. The
+quickstart matrix installs CPython 3.9 explicitly; README names `python3.9`.
+Regression tests cover missing frontend, missing oracle, a wrong-version
+`python3.9` executable, a foreign envelope refusal, and the real compare path.
+
 ## 2026-11-10-pyfoundation-5 — eager non-iterable genexp creation check
 
 The proof interpreter now checks a synthesized generator expression's outer

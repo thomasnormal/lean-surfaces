@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Require the pinned Python 3.9 frontend and default oracle for `leanpy`, and
+  report rejected script envelopes as refusals rather than comparisons.
+
 - Fixed the TinyXML-2 coverage caller's C++ runtime linkage so its
   provenance-verified native calls can run when the system runtime is older.
 

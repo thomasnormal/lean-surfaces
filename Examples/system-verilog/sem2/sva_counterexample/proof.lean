@@ -48,4 +48,9 @@ theorem invariant_route_smoke {q : Bool} {us : List Bool}
     SafetySmoke.resetSystem.safe q :=
   SafetySmoke.reset_trace_safe hr
 
+theorem bounded_counter_invariant_route {q : Nat} {us : List Bool}
+    (hr : SafetyTrace SafetySmoke.boundedCounter (0 : Nat) us q) :
+    SafetySmoke.boundedCounter.safe q :=
+  SafetySmoke.boundedCounter_trace_safe hr
+
 end Examples.«system-verilog».sem2.sva_counterexample.proof

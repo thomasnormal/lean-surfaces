@@ -17,6 +17,9 @@
 - Added a kernel refinement theorem tying the value and object callable
   evaluators together through a pure unary integer expression.
 
+- Added a kernel refinement theorem tying the value and object callable
+  evaluators together through pure integer multiplication.
+
 - Extended the value/object evaluator agreement battery with negative signed
   subtraction and native differential coverage.
 

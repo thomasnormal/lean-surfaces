@@ -19928,5 +19928,17 @@
     "cpp_expression": "callable_witness()",
     "expect": "match",
     "rung": 3
+  },
+  {
+    "id": "statement.callable-evaluator-refinement-multiply",
+    "kind": "statement",
+    "corpus": "callable refinement seam",
+    "lean_module": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_namespace": "LeanModels.Cpp.CallableObjectEvaluationTests",
+    "lean_expression": "callableEvaluatorRefinementMultiplyWitness",
+    "cpp_source": "int multiply_refinement_witness(int value) { return value * 3; } bool callable_witness() { return multiply_refinement_witness(7) == 21; }",
+    "cpp_expression": "callable_witness()",
+    "expect": "match",
+    "rung": 3
   }
 ]

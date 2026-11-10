@@ -42038,4 +42038,27 @@ def callableEvaluatorRefinementUnaryWitness : Bool :=
 
 #guard callableEvaluatorRefinementUnaryWitness
 
+private def callableEvaluatorRefinementMultiplyFunction : CallableFunction := {
+  occurrence := functionDeclaration
+  signature := {result := intType, parameters := [intType], variadic := false}
+  parameters := [parameter]
+  body := .return_ {
+    expression := .binary "*"
+      {expression := .parameter (handle "0x10"),
+        sourceType := intType, type := intType}
+      {expression := .integer 3,
+        sourceType := intType, type := intType}
+      , sourceType := intType, type := intType}}
+
+theorem callableEvaluatorRefinementMultiply :
+    (evaluateCallable 32 .lp64 callableEvaluatorRefinementMultiplyFunction [signed 7]).toOption =
+      (evaluateCallableObject 32 .lp64 callableEvaluatorRefinementMultiplyFunction [signed 7]).toOption := by
+  rfl
+
+def callableEvaluatorRefinementMultiplyWitness : Bool :=
+  (evaluateCallable 32 .lp64 callableEvaluatorRefinementMultiplyFunction [signed 7]).toOption ==
+    (evaluateCallableObject 32 .lp64 callableEvaluatorRefinementMultiplyFunction [signed 7]).toOption
+
+#guard callableEvaluatorRefinementMultiplyWitness
+
 end LeanModels.Cpp.CallableObjectEvaluationTests

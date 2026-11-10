@@ -510,3 +510,6 @@ with the same kernel reduction and native differential coverage.
 `callableEvaluatorRefinementBinary` carries the relation through a pure
 parameter-plus-literal expression, again with a kernel `rfl` proof and a native
 differential row.
+
+`callableEvaluatorRefinementMultiply` carries the relation through pure integer
+multiplication, with the same kernel reduction and native differential coverage.

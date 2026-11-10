@@ -417,6 +417,12 @@ prove a failed property false. The target is every FPV assertion of two
 OpenTitan primitives, proved or refuted as written, with assumptions and reset
 conditions preserved.
 
+The first replay witness is `Examples/system-verilog/sem2/sva_counterexample`:
+its kernel-checked `counterexample_eval` evaluates a concrete sampled trace to
+`.ok false`, and `counterexample_replay` proves that the same trace cannot
+satisfy the assertion. This is the finite replay seam that the unbounded
+invariant route will reuse for OpenTitan counterexamples.
+
 ### F3 — structural composition
 
 Use E-core-2's hierarchy and per-instance contracts. Prove a submodule once,

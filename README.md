@@ -263,7 +263,9 @@ tests, the docs checker, the notebooks, and the SV differential harness
 
 `tools/docs_check.py` keeps the documentation honest: every path-marked code
 block in `docs/`, this README, and `AGENTS.md` must match the referenced file
-verbatim (marker convention in the script's header).
+verbatim (marker convention in the script's header). Records
+(`docs/backlog/**` and `docs/backlog-archive.md`) are left out, because they
+quote the tree as it was.
 
 `tools/check_private_names.py` keeps private site names (internal hosts and
 tools, private organizations, per-user machine paths) out of this public tree:

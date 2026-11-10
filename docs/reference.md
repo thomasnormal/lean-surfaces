@@ -226,7 +226,7 @@ to strings or encoded as base64.
 | `tools/leanpy FILE.py [--compare] [--fuel N] [--clock i,j,k]` | runs a whole Python file under the Lean semantics (extract, then `leanmodels-run --script`), forwarding stdout and the exit status; `--compare` also runs CPython and reports MATCH / LOUD (the model refused) / MISMATCH (exit 5). Needs a built `leanmodels-run` (`lake build leanmodels-run`) |
 | `python3 harness/coverage_page.py [--check]` | regenerates [python-coverage.md](python-coverage.md) from `diff_test.py` and `refusal_census.py --grammar`; `--check` fails if the committed page is stale (CI) |
 | `python3 harness/diff_test.py [--cases F] [--fuel N] [--no-build] [--runner CMD]` | CPython vs Lean on `harness/cases.json` — all rows through ONE `--batch` runner process, per-row progress on stderr; exits non-zero on any non-whitelisted mismatch ([howto](howto/run-the-differential-harness.md)) |
-| `python3 tools/docs_check.py [files…] [--list-unmarked]` | docs drift checker: every path-marked code block in `docs/**`, `README.md`, `AGENTS.md` must match the referenced file (marker convention in the script's header); exits non-zero listing drifted blocks. Full check triad: `lake build && python3 tools/docs_check.py && python3 harness/diff_test.py` |
+| `python3 tools/docs_check.py [files…] [--list-unmarked]` | docs drift checker: every path-marked code block in `docs/**`, `README.md`, `AGENTS.md` must match the referenced file (marker convention in the script's header), except in the records `docs/backlog/**` and `docs/backlog-archive.md`, which quote the tree as it was; exits non-zero listing drifted blocks. Full check triad: `lake build && python3 tools/docs_check.py && python3 harness/diff_test.py` |
 
 ## Raising builtin exceptions
 

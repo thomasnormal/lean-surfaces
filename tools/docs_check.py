@@ -2,9 +2,10 @@
 """docs_check.py — assert that doc-embedded code blocks match the tree.
 
 Run from anywhere: python3 tools/docs_check.py
-Scans README.md, AGENTS.md, and docs/**/*.md. Exit 0 when every checked
-block matches; exit 1 listing every drifted or broken block. Python >= 3.9,
-stdlib only.
+Scans README.md, AGENTS.md, and docs/**/*.md except the RECORDS
+(docs/backlog/** and docs/backlog-archive.md; see RECORDS below). Exit 0
+when every checked block matches; exit 1 listing every drifted or broken
+block. Python >= 3.9, stdlib only.
 
 THE MARKER CONVENTION (normative for doc writers)
 -------------------------------------------------
@@ -66,6 +67,17 @@ PATH_EXTS = (".py", ".lean", ".json", ".md", ".sv", ".toml")
 HTML_MARKER_RE = re.compile(r"<!--\s*docs-check:\s*(\S+)\s*-->")
 ELISION_LINES = {"...", "…"}
 
+# RECORDS keep every byte (docs/family-architecture.md §9.5: the backlog is
+# append-only, the archive is frozen).  A block in a record quotes the tree AS
+# IT WAS; checking it against today's tree would force an edit of history at
+# the next change of the quoted file (the library rename was the first).
+RECORDS = ("docs/backlog/", "docs/backlog-archive.md")
+
+
+def is_record(path, repo):
+    rel = path.relative_to(repo).as_posix()
+    return rel == RECORDS[1] or rel.startswith(RECORDS[0])
+
 
 def looks_like_path(token):
     if "/" in token:
@@ -93,7 +105,8 @@ def doc_files(paths, repo=None):
             "docs_check: REFUSING — default corpus path(s) absent: %s\n"
             "  A missing default is an instrument fault, not a smaller tree."
             % ", ".join(str(p) for p in missing))
-    files = required + sorted(docs_dir.rglob("*.md"))
+    files = required + sorted(p for p in docs_dir.rglob("*.md")
+                              if not is_record(p, repo))
     return [f for f in files if f.is_file()]
 
 
@@ -227,6 +240,12 @@ def self_test():
         (root / "docs" / "d.md").write_text("# d\n", encoding="utf-8")
         check("a complete default corpus is accepted",
               len(doc_files(None, root)), 3)
+        # RECORDS are not in the default corpus.
+        (root / "docs" / "backlog").mkdir()
+        (root / "docs" / "backlog" / "lane.md").write_text("# l\n", encoding="utf-8")
+        (root / "docs" / "backlog-archive.md").write_text("# x\n", encoding="utf-8")
+        check("records are left out of the default corpus",
+              len(doc_files(None, root)), 3)
         # A MISSING DEFAULT REFUSES rather than shrinking the corpus.
         (root / "AGENTS.md").unlink()
         try:
@@ -255,7 +274,8 @@ def main(argv=None):
         description="Check doc-embedded code blocks against the repo tree.")
     ap.add_argument("paths", nargs="*",
                     help="markdown files to check (default: README.md, "
-                         "AGENTS.md, docs/**/*.md)")
+                         "AGENTS.md, docs/**/*.md except the records "
+                         "docs/backlog/** and docs/backlog-archive.md)")
     ap.add_argument("--self-test", action="store_true",
                     help="run every refusal path and exit")
     ap.add_argument("--list-unmarked", action="store_true",

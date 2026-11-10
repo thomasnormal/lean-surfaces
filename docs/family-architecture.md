@@ -7658,8 +7658,8 @@ done half the enumeration:
 
 ```python
 # tools/docs_check.py (excerpt — the gate's own statement of what it is pointed AT)
-Scans README.md, AGENTS.md, and docs/**/*.md. Exit 0 when every checked
-block matches; exit 1 listing every drifted or broken block. Python >= 3.9,
+Scans README.md, AGENTS.md, and docs/**/*.md except the RECORDS
+(docs/backlog/** and docs/backlog-archive.md; see RECORDS below). Exit 0
 ...
 A fenced code block is checked against the tree iff it carries a path
 marker, in one of two forms:

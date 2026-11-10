@@ -10,8 +10,9 @@ extends E-core-0 with edge processes and the NBA region).
 
 ## E-core-1, edge fragment
 
-* An edge process (`FF`) is `always_ff @(posedge clk)` or `@(posedge clk or negedge rst_n)` (an
-  active-low asynchronous reset). Its body uses nonblocking assignments only (`if`/`begin-end`
+* An edge process (`FF`) is `always_ff @(posedge clk)`, plain `always @(posedge clk)`,
+  or `@(posedge clk or negedge rst_n)` (an active-low asynchronous reset). The source style
+  is retained. Its body uses nonblocking assignments only (`if`/`begin-end`
   and unqualified `case`/`casez`/`casex` around them); anything else refuses. It reads the store's view, which does not change while it
   runs, and returns its NBA updates (`execFF`, the queue type `NbaQueue2` of `run2`).
 * `Config1` adds the NBA queue. `step1`: if the Active region is not empty, the Choice picks a
@@ -133,12 +134,21 @@ inductive ClockEdge where
   | negedge
 deriving Repr, BEq, DecidableEq, Inhabited
 
-/-- An edge process: `always_ff @(posedge clk)`, or `@(posedge clk or negedge rstn)`. -/
+/-- IEEE 1800-2023 §§9.2.2.1, 9.2.2.4: retain the source process kind.
+Both styles use the same edge rule for an admitted NBA-only body. -/
+inductive EdgeStyle where
+  | alwaysFF
+  | alwaysPlain
+deriving Repr, BEq, DecidableEq, Inhabited
+
+/-- An edge process, retaining whether its source was `always_ff` or plain
+`always`. The event and body have one execution rule for either style. -/
 structure FF where
   clk : String
   rstn : Option String
   body : Stmt2
   edge : ClockEdge := .posedge
+  style : EdgeStyle := .alwaysFF
 
 /-- An elaborated design of edge processes. -/
 structure Elab1 where
@@ -890,11 +900,13 @@ def refusal1 : ExecResult1 → Option String
 /-- An `always_ff` with a blocking assignment, still outside E-core-1. -/
 def ffBlocking : Elab1 where
   decls := cnt.decls
-  procs := #[⟨"clk", none, .blockingAssign (.ident "q") (.lit (.ofNat 4 0)), .posedge⟩]
+  procs := #[{ clk := "clk", rstn := none,
+               body := .blockingAssign (.ident "q") (.lit (.ofNat 4 0)) }]
 
 def ffCase : Elab1 where
   decls := cnt.decls
-  procs := #[⟨"clk", none, .caseStmt (.ident "q") #[] none .normal .none, .posedge⟩]
+  procs := #[{ clk := "clk", rstn := none,
+               body := .caseStmt (.ident "q") #[] none .normal .none }]
 
 /-- A closed configuration at `clk = 0` with the given stores, then a slot with `entry`. -/
 def openSlot (E : Elab1) (init : List (String × LVec)) (entry : SvState) : Config1 :=

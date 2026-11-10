@@ -30,3 +30,14 @@ The retained-node Lean proof pins `Process2.alwaysPlain` and
 the source-oracle rows above are retained, and source-preserving E transport
 remains on its review branch. Plain always procedures with blocking bodies,
 multiple clocks, delays, or unsupported event controls remain loud.
+
+## E-core review boundary
+
+Reviewed against E-core-1 on 2026-11-10. The retained `Process2.alwaysPlain`
+shape, NBA-only profile, and five simulator rows pass the focused Lean proof.
+The source process is eligible for the same event/NBA contract, but the current
+E elaborator has only the `FF` edge-process record and no source-kind-preserving
+`alwaysPlain` elaboration. It therefore remains a named E front-end boundary;
+no silent rewrite to `always_ff` was added. A future packet must retain the
+source kind while proving the shared edge contract and its no-blocking/delay
+restrictions.

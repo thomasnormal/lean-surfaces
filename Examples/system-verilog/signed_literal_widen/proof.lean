@@ -11,48 +11,36 @@ load_design_sv2 signedLiteralWiden
 #guard !(signedLiteralWiden.sem 8).hasUnsupported
 #guard !(signedLiteralWiden.sem 16).hasUnsupported
 
--- The signed literal is -128 when widened with the signed input, while the
--- mixed expression zero-extends it because its other operand is unsigned.
-#guard (match run2 (signedLiteralWiden.sem 4) σ_src 256 [
-    [("x", .ofNat 4 8), ("u", .ofNat 4 8)],
-    [("x", .ofNat 4 7), ("u", .ofNat 4 7)]] with
-  | .ok [s0, s1] =>
-      [((SvState.lookup s0 "y").map LVec.toBinString,
-        (SvState.lookup s0 "mixed").map LVec.toBinString,
-        (SvState.lookup s0 "ge").map LVec.toBinString),
-       ((SvState.lookup s1 "y").map LVec.toBinString,
-        (SvState.lookup s1 "mixed").map LVec.toBinString,
-        (SvState.lookup s1 "ge").map LVec.toBinString)] ==
-      [(some "1000", some "1000", some "1"),
-       (some "0111", some "0111", some "1")]
-  | _ => false)
+/- The parser's signed literal marker is retained through instantiation.  A
+   signed context receives `resizeSigned`, while the mixed unsigned context
+   receives `resize` around the same signed literal.  These are source-shaped
+   checks of the node mapping; the differential rows exercise their values. -/
+def signedAdd : Expr2 → Bool
+  | .binary .add (.resizeSigned _ (.ident _))
+      (.resizeSigned _ (.resizeSigned 8 (.lit _))) => true
+  | .resize _ e => signedAdd e
+  | _ => false
 
-#guard (match run2 (signedLiteralWiden.sem 8) σ_src 256 [
-    [("x", .ofNat 8 128), ("u", .ofNat 8 128)],
-    [("x", .ofNat 8 127), ("u", .ofNat 8 127)]] with
-  | .ok [s0, s1] =>
-      [((SvState.lookup s0 "y").map LVec.toBinString,
-        (SvState.lookup s0 "mixed").map LVec.toBinString,
-        (SvState.lookup s0 "ge").map LVec.toBinString),
-       ((SvState.lookup s1 "y").map LVec.toBinString,
-        (SvState.lookup s1 "mixed").map LVec.toBinString,
-        (SvState.lookup s1 "ge").map LVec.toBinString)] ==
-      [(some "00000000", some "00000000", some "1"),
-       (some "11111111", some "11111111", some "1")]
-  | _ => false)
+def signedGe : Expr2 → Bool
+  | .scmp .ge (.resizeSigned _ (.ident _))
+      (.resizeSigned _ (.resizeSigned 8 (.lit _))) => true
+  | .resize _ e => signedGe e
+  | _ => false
 
-#guard (match run2 (signedLiteralWiden.sem 16) σ_src 256 [
-    [("x", .ofNat 16 32768), ("u", .ofNat 16 32768)],
-    [("x", .ofNat 16 127), ("u", .ofNat 16 127)]] with
-  | .ok [s0, s1] =>
-      [((SvState.lookup s0 "y").map LVec.toBinString,
-        (SvState.lookup s0 "mixed").map LVec.toBinString,
-        (SvState.lookup s0 "ge").map LVec.toBinString),
-       ((SvState.lookup s1 "y").map LVec.toBinString,
-        (SvState.lookup s1 "mixed").map LVec.toBinString,
-        (SvState.lookup s1 "ge").map LVec.toBinString)] ==
-      [(some "0111111110000000", some "1000000010000000", some "0"),
-       (some "1111111111111111", some "0000000011111111", some "1")]
-  | _ => false)
+def mixedZeroExtend : Expr2 → Bool
+  | .binary .add _ (.resize _ (.resizeSigned 8 (.lit _))) => true
+  | .resize _ e => mixedZeroExtend e
+  | _ => false
+
+def rhsExprs (N : Nat) : List Expr2 :=
+  match (signedLiteralWiden.sem N).processes.toList with
+  | [.assign _ y, .assign _ mixed, .assign _ ge] => [y, mixed, ge]
+  | _ => []
+
+#guard [4, 8, 16].all fun N =>
+  match rhsExprs N with
+  | [y, mixed, ge] =>
+      signedAdd y && signedGe ge && mixedZeroExtend mixed
+  | _ => false
 
 end Examples.«system-verilog».signed_literal_widen

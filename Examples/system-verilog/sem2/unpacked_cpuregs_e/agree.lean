@@ -1,5 +1,6 @@
 import LeanModels.Sv.Ingest2
 import LeanModels.Sv.Kernel.MemE
+import LeanModels.Sv.Kernel.Core0E
 
 /-! Clean-room E memory witness for a one-rank unpacked register file.
 
@@ -17,8 +18,8 @@ set_option maxRecDepth 100000 in
 load_design_sv2 cpuregsE
   from "Examples/system-verilog/sem2/unpacked_cpuregs_e/unpacked_cpuregs_e.sv.json"
 
-private def design : Res MemEDesign :=
-  MemEDesign.ofPDesign cpuregsE.pdesign [32]
+private def canonical : Res Elab :=
+  LeanModels.Sv.Kernel.PDesign.instantiateMemoryE cpuregsE.pdesign [32]
 
 private def stimuli : List SvState :=
   [[("clk", LVec.ofNat 1 0), ("raddr", LVec.ofNat 5 0),
@@ -67,11 +68,17 @@ private def output (s : MemEState) : Option LVec :=
   SvState.lookup s.scalar "rdata"
 
 private def outputs : Except String (List (Option LVec)) :=
-  match design with
-  | .ok d =>
-      match runRows d d.init stimuli with
-      | .ok ss => .ok (ss.map output)
-      | .error e => .error e
+  match canonical with
+  | .ok e =>
+      match e.memory with
+      | some d =>
+          match e.memoryInitial with
+          | .ok initial =>
+              match runRows d initial stimuli with
+              | .ok ss => .ok (ss.map output)
+              | .error e => .error e
+          | .error e => .error e
+      | none => .error "canonical E design has no memory"
   | .timeout => .error "memory design elaboration timed out"
   | .unsupported e => .error e
 
@@ -79,9 +86,11 @@ private def x32 : LVec := LVec.xVec 32
 private def a5 : LVec := LVec.ofNat 32 0xa5
 private def z5 : LVec := LVec.ofNat 32 0x5a
 
-#guard match design with
-  | .ok d => d.memDecls.length == 1 && d.processes.length == 2 &&
-      d.memDecls.all (fun (p : PDecl) => p.name == "cpuregs")
+#guard match canonical with
+  | .ok e => match e.memory with
+    | some d => d.memDecls.length == 1 && d.processes.length == 2 &&
+        d.memDecls.all (fun (p : PDecl) => p.name == "cpuregs")
+    | none => false
   | _ => false
 
 #guard match outputs with

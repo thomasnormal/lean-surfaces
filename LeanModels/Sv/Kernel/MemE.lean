@@ -1,4 +1,3 @@
-import LeanModels.Sv.Kernel.Core1Edge
 import LeanModels.Sv.Kernel.MemElab
 import LeanModels.Sv.Gen2
 import LeanModels.Sv.Loop2

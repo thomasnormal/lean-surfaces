@@ -1,5 +1,6 @@
 import LeanModels.Sv.CombEBase
 import LeanModels.Sv.Param2
+import LeanModels.Sv.Kernel.MemE
 import LeanModels.Core.Outcome
 
 /-!
@@ -133,6 +134,10 @@ variable `⟨[], i⟩`) and its processes. -/
 structure Elab where
   decls : Array Decl
   procs : Array Proc0
+  /-- Source-shaped unpacked storage retained beside the scalar E store.  The
+      memory profile is optional so ordinary E-core-0 proofs keep their same
+      scalar store and process semantics. -/
+  memory : Option MemEDesign := none
   /-- The module's name (carried to the corresponding Design2; E never reads it). -/
   name : String := "core0"
 
@@ -170,6 +175,31 @@ def Elab.ofEDesign2 (d : EDesign2) : Elab :=
   { decls := d.decls
     procs := (d.processes.toList.map Proc0.ofEProcess2).toArray
     name := d.name }
+
+/-! ## Canonical source-shaped memory entry
+
+`MemEDesign` is the existing E memory state and transition.  This adapter puts
+that state beside the canonical E elaboration rather than making callers choose
+between a second interpreter and the scalar E store.  The scalar process
+judgments remain unchanged; memory designs use the explicit memory transition
+below until the scheduler's array-valued store is widened. -/
+
+def Elab.memoryInitial (E : Elab) : Except String MemEState :=
+  match E.memory with
+  | some d => d.timeZero
+  | none => .error "E design has no source-shaped memory"
+
+def Elab.memoryStep (E : Elab) (s : MemEState) (inputs : SvState) : Except String MemEState :=
+  match E.memory with
+  | some d => d.step s inputs
+  | none => .error "E design has no source-shaped memory"
+
+def PDesign.instantiateMemoryE (d : PDesign) (args : List Int) : Res Elab := do
+  let md ← MemEDesign.ofPDesign d args
+  -- The scalar E elaborator deliberately refuses unpacked declarations; the
+  -- memory entry keeps the source declaration in `md` and supplies the scalar
+  -- declaration view needed by observations without expanding its cells.
+  .ok { name := d.name, decls := md.decls.toArray, procs := #[], memory := some md }
 
 /-! ## Design2 transport (the E-side elaboration entry point) -/
 

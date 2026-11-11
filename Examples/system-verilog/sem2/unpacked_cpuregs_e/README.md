@@ -17,7 +17,9 @@ first x state, two run-time writes, known reads, x/z reads, an x-index write,
 and an x-valued write enable.  `check.py` compares the same rows with Icarus
 Verilog 13.0 and Xcelium 24.03-s004; both report 11 rows MATCH E.
 
-The ordinary `instantiateE2`/`Core0E` route still refuses the declaration as
-`UnpackedDecl:memory`.  This packet therefore records the source-shaped E
-memory behavior and requests integration of `MemState` into the canonical E
-store separately; it does not claim that PicoRV32 executes through E yet.
+The scalar `instantiateE2`/`Core0E` process route still refuses the declaration
+as `UnpackedDecl:memory`.  The canonical E entry now attaches the source-shaped
+`MemEDesign` beside that scalar store, and the receipt runs its memory state
+through `Elab.memoryInitial`/`Elab.memoryStep`; the scheduler's array-valued
+store remains a separate reviewed widening step, so this does not yet claim
+that PicoRV32 executes through the ordinary scalar E process loop.

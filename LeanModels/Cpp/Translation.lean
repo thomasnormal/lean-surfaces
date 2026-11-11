@@ -720,10 +720,18 @@ def admitStaticAssertion (artifact : Artifact) (path : List Nat) :
 def executionRefusal : String :=
   "C++ translation-only tier: execution requires object, lifetime, type, expression and statement semantics"
 
+private def executeTopDeclaration (raw : Raw) : Except String Unit :=
+  match raw.text "kind", raw.field "inner" with
+  | some "NamespaceDecl", some (.array []) => pure ()
+  | some "NamespaceDecl", some (.array _) => .error executionRefusal
+  | some "NamespaceDecl", _ => .error "translation: namespace inner must be an array"
+  | _, _ => .error executionRefusal
+
 def execute (artifact : Artifact) (_declarationId : String) : Except String Unit := do
   let _ ← admitTranslationUnit artifact
   match artifact.ast.field "inner" with
   | some (.array []) => pure ()
+  | some (.array [declaration]) => executeTopDeclaration declaration
   | some (.array _) => .error executionRefusal
   | some _ => .error "translation: root inner must be an array"
   | none => .error "translation: root has no inner array"

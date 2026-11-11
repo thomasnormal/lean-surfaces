@@ -1577,6 +1577,9 @@ def namespaceTranslationWitness : Bool :=
 def emptyTranslationExecution : Except String Unit :=
   execute emptyTranslation ""
 
+def namespaceTranslationExecution : Except String Unit :=
+  execute namespaceTranslation "ns"
+
 def nonemptyTranslationExecution : Except String Unit :=
   execute functionTranslation "f"
 
@@ -2939,6 +2942,7 @@ def staticAssertTranslationWitness : Except String Unit :=
 #guard admitStaticAssertion staticAssertTranslation [] matches .error _
 #guard admitStaticAssertion usingTranslation [1] matches .error _
 #guard execute emptyTranslation "" matches .ok ()
+#guard execute namespaceTranslation "ns" matches .ok ()
 #guard execute functionTranslation "f" matches .error "C++ translation-only tier: execution requires object, lifetime, type, expression and statement semantics"
 
 theorem empty_translation_admits : admitTranslationUnit emptyTranslation = .ok () := rfl
@@ -2949,6 +2953,8 @@ theorem wrong_root_refuses : admitTranslationUnit wrongRoot =
 
 theorem empty_translation_executes : execute emptyTranslation "" = .ok () := rfl
 
+theorem namespace_translation_executes : execute namespaceTranslation "ns" = .ok () := rfl
+
 theorem nonempty_execution_remains_loud : execute functionTranslation "f" = .error executionRefusal := rfl
 
 theorem namespace_translation_witness : namespaceTranslationWitness = true := by
@@ -2957,6 +2963,7 @@ theorem namespace_translation_witness : namespaceTranslationWitness = true := by
 #print axioms empty_translation_admits
 #print axioms wrong_root_refuses
 #print axioms empty_translation_executes
+#print axioms namespace_translation_executes
 #print axioms nonempty_execution_remains_loud
 #print axioms namespace_translation_witness
 

@@ -111,3 +111,23 @@ sampling view while threading private writes left to right. Its NBA-only
 rule should be a proved special case. The rule, initialization/lifetime
 proofs, admission, loaded-source E traces and simulator agreement remain
 required before this Step 11 construct is complete.
+
+## Current E review
+
+On 2026-11-11, public master `05f089221` was checked after the procedural
+local metadata landing `ffbb5ee04`.  The retained envelope preserves the
+named block, Slang scope paths, resolved lifetime, signed/two-state metadata,
+symbolic type, and optional initializer; the semantic `LocalDecl` boundary
+still refuses before E execution.  The focused Lean receipt loads both
+source-shaped designs and keeps the refusal guards green.  The source checker
+verifies five rows for the block-local fixture and ten rows for the static-
+lifetime fixture with Icarus Verilog 13.0 and readiness-gated Xcelium
+24.03-s004.  No E trace is claimed for these rows.
+
+This review intentionally does not add a `Stmt2` constructor or a parallel
+local interpreter.  The next implementation must use the planned single
+source AST and one E body engine, with private static-cell state and NBA
+issues in one activation result; automatic locals, local initializers, local
+arrays, loops, and local NBA targets remain loud until their rules are
+specified.  Resolution, `DecisionKnown`, `Spec2`, run2, and MemCycle are
+unchanged.

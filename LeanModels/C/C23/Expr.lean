@@ -607,6 +607,20 @@ Written in the CENSUS's order, not the standard's: the conversion lattice
 first (1837 + 405 sites), then the short-circuits whose rule is not
 "evaluate both", then everything else. -/
 
+/-! Refuse calls whose indeterminately sequenced arguments can both write.
+The check is conservative and happens before either argument runs. -/
+def mayWrite (e : Expr) : Bool :=
+  e.subexprs.any fun n => match n with
+    | .call .. | .compoundAssign .. => true
+    | .unop op .. => op == "++" || op == "--"
+    | _ => false
+
+def hasTwoImpure : List Expr → Bool
+  | [] => false
+  | e :: es =>
+      if mayWrite e then es.any mayWrite || hasTwoImpure es
+      else hasTwoImpure es
+
 mutual
 
 /-- §6.3.2.1p1 — an expression in LVALUE position, yielding the address
@@ -689,6 +703,11 @@ def evalExpr (ctx : Ctx) : Expr → EvalM CVal
   -- produced never exists — there is nothing to speak about, which is
   -- precisely what the amendment forbids concluding. 181 sites in all.
   | .binop op l r ty _ =>
+      if (op == "=" && mayWrite r) ||
+          (op != "&&" && op != "||" && op != "," && op != "=" &&
+           mayWrite l && mayWrite r) then
+        refuseUnsupported "unsequenced side effects in binary operands"
+      else
       if op == "&&" then do
         -- §6.5.14p4: the right operand is evaluated ONLY if the left
         -- compares unequal to 0 — and §6.5.14p4 also makes this a SEQUENCE
@@ -772,6 +791,8 @@ def evalExpr (ctx : Ctx) : Expr → EvalM CVal
   -- §6.5.17.3 — compound assignment: `a op= b` is `a = a op b` with the
   -- lvalue evaluated ONCE. 24 sites (`+=` 10, `|=` 6, `^=` 3, `-=` 3, `*=` 2).
   | .compoundAssign op l r computeLHSType computeResultType ty _ => do
+      if mayWrite r then
+        refuseUnsupported "unsequenced side effects in compound assignment"
       let p ← evalLValue ctx l
       let old ← loadAt p (ctx.layout.normalizeTy l.ty)
       let rv ← evalExpr ctx r
@@ -826,6 +847,8 @@ def evalExpr (ctx : Ctx) : Expr → EvalM CVal
   -- and the handler receives VALUES. Still fuel-free: `evalArgs` is in this
   -- mutual block and shrinks the same `Expr` measure.
   | .call callee args _ _ => do
+      if hasTwoImpure args then
+        refuseUnsupported "unsequenced side effects in call arguments"
       let vs ← evalArgs ctx args
       ctx.call callee vs
 

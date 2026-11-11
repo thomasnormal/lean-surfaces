@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Refused C expressions and calls with two potentially writing
+  unsequenced operands or arguments instead of choosing left-to-right.
+
 - Preserved Clang's compound-assignment promotion types and applied the
   integer promotions for compound assignment and increment/decrement,
   including distinct `_Bool` handling.

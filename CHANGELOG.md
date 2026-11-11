@@ -90,6 +90,9 @@
 - Record explicit non-admission domains for divergent Python accelerator
   fallbacks and check the registry for domain/equivalence consistency.
 
+- Add a structured statement smoke gate that differentially checks curated
+  proof-example domains through both Python interpreters.
+
 - Count `round`'s builtin and numeric `__round__` recursion frames after
   successful argument binding, preserving CPython's pre-frame arity errors.
 

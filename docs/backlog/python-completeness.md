@@ -133,6 +133,25 @@ DECIDED: an accelerator is admitted only when its recorded equivalence and
 domain are both true; otherwise extraction refuses by the named accelerator
 boundary.
 
+## 2026-11-11-pyfoundation-37 — smoke proof statements against the oracle
+
+`harness/statement_smoke.py` now selects structured argument rows for 12
+curated proof-example statements and runs their 34 concrete calls against
+CPython 3.9.25, the monadic runner, and the proof interpreter. The manifest is
+derived from `harness/cases.json`; the tool does not reparse Lean or Python
+source text. It is wired into the Python acceptance plan as
+`py-statement-smoke`.
+
+| Measurement | Result |
+|---|---|
+| Structured statements | 12 proof-example functions |
+| Differential calls | 34 in each interpreter mode |
+| Native runner | 34 MATCH, 0 failures or refusals |
+| Proof interpreter | 34 MATCH, 0 failures or refusals |
+
+DECIDED: keep statement smoke domains structured and add a row to the shared
+case manifest whenever a new proof statement becomes a foundation witness.
+
 ## 2026-11-10-pyfoundation-23 — pin the leanpy quickstart admission
 
 The public quickstart's Python 3.9 pin is now enforced at the runner boundary.

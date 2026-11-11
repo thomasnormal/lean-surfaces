@@ -106,6 +106,11 @@ def main():
         for _name, token, detail in rows:
             if token in SCORED:
                 continue
+            # Frontend diagnostics include the outside cache's absolute path;
+            # retain the test-relative part so the committed histogram does
+            # not change merely because a runner chose another cache root.
+            if token == "not-parsed" and "/src/" in detail:
+                detail = detail[detail.rfind("/src/") + 1:]
             key = token if not detail else token + ": " + detail
             histogram[key] = histogram.get(key, 0) + 1
         payload = {

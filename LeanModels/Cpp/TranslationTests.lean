@@ -94,6 +94,10 @@ private def intBuiltinType : Raw := .object [
   ("kind", .string "BuiltinType"),
   ("type", .object [("qualType", .string "int")])]
 
+private def boolBuiltinType : Raw := .object [
+  ("kind", .string "BuiltinType"),
+  ("type", .object [("qualType", .string "bool")])]
+
 private def typeAliasExecutionTranslation : Artifact := {emptyTranslation with
   ast := .object [
     ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
@@ -158,6 +162,15 @@ private def emptyEnumExecutionTranslation : Artifact := {emptyTranslation with
         ("name", .string "E"),
         ("fixedUnderlyingType", .object [
           ("qualType", .string "int")])]]) ]}
+
+private def boolTypeAliasExecutionTranslation : Artifact := {emptyTranslation with
+  ast := .object [
+    ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
+    ("inner", .array [
+      .object [("id", .string "a"), ("kind", .string "TypeAliasDecl"),
+        ("name", .string "B"),
+        ("type", .object [("qualType", .string "bool")]),
+        ("inner", .array [boolBuiltinType])]])]}
 
 private def usingDirectiveTranslation : Artifact := {emptyTranslation with
   ast := .object [
@@ -1685,6 +1698,9 @@ def usingTranslationExecution : Except String Unit :=
 def emptyEnumTranslationExecution : Except String Unit :=
   execute emptyEnumExecutionTranslation "e"
 
+def boolTypeAliasTranslationExecution : Except String Unit :=
+  execute boolTypeAliasExecutionTranslation "a"
+
 def nonemptyTranslationExecution : Except String Unit :=
   execute functionTranslation "f"
 
@@ -3056,6 +3072,7 @@ def staticAssertTranslationWitness : Except String Unit :=
 #guard execute usingDirectiveExecutionTranslation "u" matches .ok ()
 #guard execute usingExecutionTranslation "u" matches .ok ()
 #guard execute emptyEnumExecutionTranslation "e" matches .ok ()
+#guard execute boolTypeAliasExecutionTranslation "a" matches .ok ()
 #guard execute functionTranslation "f" matches .error "C++ translation-only tier: execution requires object, lifetime, type, expression and statement semantics"
 
 theorem empty_translation_admits : admitTranslationUnit emptyTranslation = .ok () := rfl
@@ -3092,6 +3109,9 @@ theorem using_translation_executes :
 theorem empty_enum_translation_executes :
     execute emptyEnumExecutionTranslation "e" = .ok () := rfl
 
+theorem bool_type_alias_translation_executes :
+    execute boolTypeAliasExecutionTranslation "a" = .ok () := rfl
+
 theorem nonempty_execution_remains_loud : execute functionTranslation "f" = .error executionRefusal := rfl
 
 theorem namespace_translation_witness : namespaceTranslationWitness = true := by
@@ -3109,6 +3129,7 @@ theorem namespace_translation_witness : namespaceTranslationWitness = true := by
 #print axioms using_directive_translation_executes
 #print axioms using_translation_executes
 #print axioms empty_enum_translation_executes
+#print axioms bool_type_alias_translation_executes
 #print axioms nonempty_execution_remains_loud
 #print axioms namespace_translation_witness
 

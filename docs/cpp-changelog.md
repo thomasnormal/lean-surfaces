@@ -19,6 +19,10 @@ coverage advance independently from the Python tier.
 
 ### Added
 
+- `using B = bool;` and equivalent `typedef bool B;` declaration-only aliases
+  now execute through their structured `BuiltinType` targets; unsupported
+  alias targets remain loud refusals.
+
 - Empty named scoped and unscoped enum declarations now execute when Clang
   supplies no enumerators and, when present, an `int` fixed underlying type;
   enumerated values and other underlying types remain loud refusals.

@@ -19,6 +19,8 @@ coverage advance independently from the Python tier.
 
 ### Added
 
+- C++ linkage bodies now have a direct declaration-only function-prototype witness alongside the C form; unsupported and defining declarations remain loud refusals.
+
 - C++ linkage bodies now have a direct `extern bool` variable witness alongside the C linkage case; both use the same structured storage-free rule.
 
 - Linkage bodies now have a direct `extern bool` variable witness in addition to the `extern int` case; both remain storage-free declaration nodes.

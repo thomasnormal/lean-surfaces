@@ -351,6 +351,25 @@ private def linkageVariableExecutionTranslation : Artifact := {emptyTranslation 
     ])]
   }
 
+private def cppLinkageFunctionExecutionTranslation : Artifact := {emptyTranslation with
+  ast := .object [
+    ("id", .string "tu"),
+    ("kind", .string "TranslationUnitDecl"),
+    ("inner", .array [
+      .object [
+        ("id", .string "l"),
+        ("kind", .string "LinkageSpecDecl"),
+        ("language", .string "C++"),
+        ("inner", .array [
+          .object [
+            ("id", .string "f"),
+            ("kind", .string "FunctionDecl"),
+            ("name", .string "f"),
+            ("type", .object [("qualType", .string "void ()")])]
+        ])]
+    ])]
+  }
+
 private def linkageFunctionExecutionTranslation : Artifact := {emptyTranslation with
   ast := .object [
     ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
@@ -2043,6 +2062,9 @@ def cppLinkageBoolVariableTranslationExecution : Except String Unit :=
 def linkageBoolVariableTranslationExecution : Except String Unit :=
   execute linkageBoolVariableExecutionTranslation "l"
 
+def cppLinkageFunctionTranslationExecution : Except String Unit :=
+  execute cppLinkageFunctionExecutionTranslation "l"
+
 def linkageFunctionTranslationExecution : Except String Unit :=
   execute linkageFunctionExecutionTranslation "l"
 
@@ -3461,6 +3483,7 @@ def staticAssertTranslationWitness : Except String Unit :=
 #guard unscopedEmptyEnumTranslationExecution matches .ok ()
 #guard cppLinkageTranslationExecution matches .ok ()
 #guard linkageFunctionTranslationExecution matches .ok ()
+#guard cppLinkageFunctionTranslationExecution matches .ok ()
 #guard linkageVariableTranslationExecution matches .ok ()
 #guard linkageBoolVariableTranslationExecution matches .ok ()
 #guard cppLinkageBoolVariableTranslationExecution matches .ok ()
@@ -3545,6 +3568,9 @@ theorem cpp_linkage_translation_executes :
 
 theorem linkage_function_translation_executes :
     linkageFunctionTranslationExecution = .ok () := rfl
+
+theorem cpp_linkage_function_translation_executes :
+    cppLinkageFunctionTranslationExecution = .ok () := rfl
 
 theorem linkage_variable_translation_executes :
     linkageVariableTranslationExecution = .ok () := rfl

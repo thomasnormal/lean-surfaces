@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Revalidated the module-definition ordering audit: forward reachability and
+  redefinition witnesses remain loud refusals, preserving CPython's sequential
+  `NameError` and rebinding behavior until runtime-bound definitions land.
+
 - Revalidated the high-priority recursion-limit audit against the pinned
   CPython 3.9.25 rows; active call-depth checks and the depth-bounded
   recursive theorem remain sound, with no semantic change required.

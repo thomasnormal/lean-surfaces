@@ -13373,3 +13373,22 @@ rows agree with CPython 3.9.25; no duplicate semantics change is needed.
 
 DECIDED: close `py-no-recursion-limit`; keep `sys.setrecursionlimit` outside
 the pinned tier and retain depth hypotheses on universal recursive specs.
+## 2026-11-11-pyfoundation-69 — revalidate module-definition ordering audit
+
+The high-priority `py-def-table-position-independent` finding is already
+contained by the current admission boundary. `defsReachableBefore` rejects a
+function body that can reach a later module definition or duplicate function
+name, while `scriptForwardName` and `scriptRebindMsg` preserve source-order
+checks for live statements. The direct witnesses stay loud: the model refuses
+the forward call and redefinition, while CPython 3.9.25 produces `NameError`
+and `1`/`2`, respectively. No semantics change is needed in this item.
+
+| Measurement | Result |
+|---|---|
+| Forward witness | `def_table_forward.py`: model exit 3; CPython 3.9.25 `NameError` exit 1 |
+| Redefinition witness | `def_table_rebind.py`: model exit 3; CPython 3.9.25 prints `1` then `2` |
+| Guards | `defsReachableBefore`, `scriptForwardName`, and `scriptRebindMsg` present |
+| Semantic change | none; audit closure only |
+
+DECIDED: close `py-def-table-position-independent`; retain the loud boundary
+until definitions become runtime-bound AST nodes.

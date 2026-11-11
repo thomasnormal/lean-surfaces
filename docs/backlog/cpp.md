@@ -24,6 +24,10 @@ evaluators select a matching label and execute the retained suffix for faithful
 fallthrough, and kernel guards pin the source-item shape and sibling boundary.
 The older clause constructor remains only for existing hand-built evaluator
 fixtures; source admission and execution use the direct item representation.
+Revalidated 2026-11-11 with the 24 GiB cgroup: `lake build
+LeanModels.Cpp.CallableTests LeanModels.Cpp.TranslationTests
+LeanModels.Cpp.CallableObjectEvaluationTests` completed successfully (26
+jobs), including the source-item and cleanup guards.
 
 ## `c-name-resolution-by-string`: declaration-id resolution
 

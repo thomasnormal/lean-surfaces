@@ -84,19 +84,6 @@ simulation, and compares both complete source-testbench traces with E's
 equalities and new frame/totality lemmas are kernel checked; their axiom
 audits contain only subsets of `propext`, `Classical.choice`, `Quot.sound`.
 
-## Earlier public review
-
-The public-master review on 2026-11-10 recorded this boundary before the
-implementation on this review branch:
-
-> The fixture was reviewed against the current E-core-1 proof surface on
-> 2026-11-10. The refusal remains deliberate. Supporting this construct requires
-> the first-match arm walk, NBA queue construction, and totality/frame lemmas to
-> be added together. The existing `execFF_mem` and `execFF_total` theorems cover
-> the accepted statement fragment and reject a partial arm evaluator; a local
-> implementation that only handled direct NBA arm bodies therefore was not
-> landed. The source-shaped parser envelope and all eight simulator rows remain
-> the acceptance target for the later E packet.
-
-This branch adds the complete arm walk, NBA construction, and frame/totality
-packet described above. Landing remains subject to owner review.
+The complete arm walk, NBA queue construction, and frame/totality packet are
+present in public master. The implementation is source-shaped: the parser's
+`caseStmt` node reaches E directly, with no if-chain lowering or semantic fuel.

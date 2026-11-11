@@ -560,7 +560,7 @@ unsafe def runSvStructureL (rankStx? lexStx? : Option Syntax) (hintOnly : Bool) 
       | throwError "sv_structure: the design is not a named constant"
     match ← evalSummaryP pd with
     | .error msg =>
-        let rom ← evalExpr String (mkConst ``String) (mkApp (mkConst ``LeanModels.Sv.PDesign.romNote) pd)
+        let rom ← evalExpr String (mkConst ``String) (mkApp (mkConst ``LeanModels.Sv.PDesign.wallNote) pd)
         throwError "sv_structure: outside the supported fragment — {msg}{rom}"
     | .ok s =>
       if hintOnly then
@@ -1021,7 +1021,7 @@ unsafe def runSvEquationsL (hintOnly : Bool) : TacticM Unit := do
       | throwError "sv_equations: the design is not a named constant"
     match ← evalSummaryP pd with
     | .error msg =>
-        let rom ← evalExpr String (mkConst ``String) (mkApp (mkConst ``LeanModels.Sv.PDesign.romNote) pd)
+        let rom ← evalExpr String (mkConst ``String) (mkApp (mkConst ``LeanModels.Sv.PDesign.wallNote) pd)
         throwError "sv_equations: outside the supported fragment — {msg}{rom}"
     | .ok s =>
       let probs := s.structProblems

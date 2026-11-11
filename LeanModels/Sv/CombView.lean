@@ -822,7 +822,7 @@ def dimOf? (name : String) (d : PDim) : Except String (PDim × Aff × Aff) :=
 
 def declOf? (pd : PDecl) : Except String DeclT :=
   if !pd.unpackedDims.isEmpty then
-    .error s!"declaration `{pd.name}`: unpacked array storage (UnpackedDecl:memory), which the semantic-tier family `X.sem` does not model: its instantiation refuses the declaration (`instDecl`: unpacked array storage outside E), so the whole family is one loud process; the cells live only on the source-shaped memory route (`instantiateMemD2`, `runMem2`), which has no proof layer the tactics could be sound against"
+    .error s!"declaration `{pd.name}`: unpacked array storage whose shape depends on a parameter (UnpackedDecl:memory), which the semantic-tier family `X.sem` does not model: its instantiation refuses the declaration (`instDecl`: unpacked array storage outside E), so the whole family is one loud process; the cells live only on the source-shaped memory route (`instantiateMemD2`, `runMem2`), which has no proof layer the tactics could be sound against (a FIXED-size unpacked array reaches `X.sem` as one declaration per cell, `{pd.name}[0]`, …, which the tactics read)"
   else match pd.init with
   | some _ => .error s!"declaration `{pd.name}` has an initializer"
   | none =>
@@ -1778,6 +1778,23 @@ def siteOf? (ds : List DeclT) (pos : Nat) : PProcess → Except String TSite
   | .alwaysImplicit _ => .error "unsupported process `ProceduralBlockSymbol:Always`"
   | .unsupported k _ => .error s!"unsupported process `{k}`"
 
+mutual
+/-- (Refusal text only.) The kinds of the loud generate items and loud processes of a generate item, at any depth. -/
+def _root_.LeanModels.Sv.GenItem.loudKinds : GenItem → List String
+  | .unsupported k _ => [k]
+  | .process (.unsupported k _) => [k]
+  | .genFor _ _ _ _ _ _ body => LeanModels.Sv.GenItem.loudKindsL body
+  | .genIf _ th el => LeanModels.Sv.GenItem.loudKindsL th ++ LeanModels.Sv.GenItem.loudKindsL el
+  | _ => []
+termination_by structural it => it
+
+/-- `GenItem.loudKinds`, over a list. -/
+def _root_.LeanModels.Sv.GenItem.loudKindsL : List GenItem → List String
+  | [] => []
+  | it :: rest => LeanModels.Sv.GenItem.loudKinds it ++ LeanModels.Sv.GenItem.loudKindsL rest
+termination_by structural l => l
+end
+
 /-- What the refusal of a design with an `initial` `$readmemh` adds (for the tactics' messages only; no theorem reads
 it). A time-zero ROM load (the extractor's `SystemTask:readmemh` marker, ls-sv 539ad6172): `X.sem` (`instProcess2`) keeps
 it as the loud process `T2:Initial` and the ROM's cells as uninitialized declarations, and only the source-shaped memory
@@ -1792,6 +1809,20 @@ def _root_.LeanModels.Sv.PDesign.romNote (d : PDesign) : String :=
         s!" (the `initial` is a `$readmemh` the extractor refuses, below the tactics: `{k}`: {t})"
       else ""
   | none => ""
+
+/-- (Refusal text only.) What a refusal adds when the module has a loud `ElementSelect:default-point-index` member (a
+process or a generate item, at any depth): the extractor's refusal of a constant index into a FIXED-size unpacked array
+that names a genvar or a parameter. -/
+def _root_.LeanModels.Sv.PDesign.cellIndexNote (d : PDesign) : String :=
+  let ks := d.processes.filterMap (fun p => match p with | .unsupported k _ => some k | _ => none) ++
+    GenItem.loudKindsL d.generates
+  if ks.contains "ElementSelect:default-point-index" then
+    " (`ElementSelect:default-point-index` is the extractor's refusal of a constant index into a FIXED-size unpacked array that names a genvar or a parameter: such an array reaches `X.sem` as one declaration per cell, `m[0]`, `m[1]`, …, and an index that changes with the generate iteration or the parameter point has no per-cell form short of unrolling; reading it needs the array in `X.sem` as ONE declaration, its cells laid out as a 2-D packed array, with such indices lowered as constant slices — ls-sv's step)"
+  else ""
+
+/-- What the tactics' refusal of a design adds about the markers below them (messages only; no theorem reads it): a ROM
+load (`romNote`), a fixed unpacked array indexed by a genvar or a parameter (`cellIndexNote`). -/
+def _root_.LeanModels.Sv.PDesign.wallNote (d : PDesign) : String := d.romNote ++ d.cellIndexNote
 
 /-- The recognizer of a process list, GENERIC in the recognizer `so` of one process (`siteOf?`; the
 proc-aware layer, `CombProcSummary.lean`, instantiates it with `siteOfP?`). -/

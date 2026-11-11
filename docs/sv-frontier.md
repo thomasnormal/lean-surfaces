@@ -76,6 +76,17 @@ cell NBAs, and a continuous scalar assign from a cell. Its source-shaped
 adapter is retained only until the E memory step; the legacy `run2` route
 remains unchanged for scalar designs.
 
+The first source-shaped memory cycle is now also exercised in E by
+`Kernel/MemE`. Its narrow profile retains the `always_ff @(posedge clk or
+negedge rstn)` body and the continuous `assign q = mem[0]` as parser nodes,
+keeps the one-rank `MemState` beside scalar state, and issues and commits the
+cell NBA before settling the direct cell driver. The clean-room
+`sem2/async_mem_fifo_e` receipt matches the five-cycle Icarus trace at
+`W=8,N=4`. The profile refuses nested ranks, compound memory expressions,
+non-cell edge targets, and other process forms; the provisional `MemCycle`
+route remains the labelled test executor until the general memory step is
+complete.
+
 `MemElab` now resolves one-rank `PLhs.arrayElem` targets against source labels
 and delegates their reads and writes to `MemState`, with guards for an updated
 cell and an out-of-range all-x/no-op access. Dynamic indices, partial array

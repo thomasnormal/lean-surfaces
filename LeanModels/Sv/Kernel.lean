@@ -7,6 +7,7 @@ import LeanModels.Sv.Kernel.Core1Resolve
 import LeanModels.Sv.Kernel.CoreMem
 import LeanModels.Sv.Kernel.XResolve
 import LeanModels.Sv.Kernel.MemElab
+import LeanModels.Sv.Kernel.MemE
 import LeanModels.Sv.Comb2Fuel
 
 /-!

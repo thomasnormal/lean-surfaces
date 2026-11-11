@@ -225,6 +225,7 @@ def PProcess.memPreemptAtomic : PProcess → Bool
   | .assign _ _ | .assignL _ _ => true
   | .alwaysFF _ b | .alwaysPlain _ b | .alwaysFFR _ _ b _ =>
       PStmt.memPreemptNBAOnly b
+  | .alwaysImplicit _ => false
   | _ => false
 
 def PProcess.memPreemptAccess (d : MemDesign2) : PProcess → ProcessAccess
@@ -234,7 +235,7 @@ def PProcess.memPreemptAccess (d : MemDesign2) : PProcess → ProcessAccess
        PLhs.memPreemptWrites d l)
   | .alwaysFF _ b | .alwaysPlain _ b | .alwaysFFR _ _ b _ =>
       (PStmt.memPreemptReads d b, PStmt.memPreemptWrites d b)
-  | .alwaysComb b | .initial b =>
+  | .alwaysComb b | .alwaysImplicit b | .initial b =>
       (PStmt.memPreemptReads d b, PStmt.memPreemptWrites d b)
   | .unsupported _ _ => ([], [])
 

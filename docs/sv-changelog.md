@@ -1,5 +1,15 @@
 # [unreleased] — 2026-11-04 (an Sv landing builds the comb chain above it)
 
+## First unpacked-memory cycle in E — 2026-11-11
+
+`LeanModels.Sv.Kernel.MemE` now executes the narrow source-shaped FIFO memory
+profile directly in E: a one-rank unpacked declaration, an active-low reset
+edge body with cell NBAs, and a continuous scalar read from `mem[0]`. The
+`async_mem_fifo_e` receipt keeps the `ArraySel` nodes and matches the five
+cycle Icarus trace at `W=8,N=4`; nested ranks, compound memory expressions,
+and other process forms remain named refusals. `MemCycle` remains only the
+labelled provisional executor while the general memory step is built.
+
 ## Guarded asynchronous reset events — 2026-11-10
 
 The symbolic loader now keeps an explicit `AlwaysPosedge:reset-iff`

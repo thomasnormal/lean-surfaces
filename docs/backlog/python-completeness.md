@@ -100,6 +100,22 @@ remain loud.
 
 DECIDED: keep sign flags restricted to the measured numeric scalar domain.
 
+## 2026-11-11-pyformat-6 — admit numeric percent-format alternate form
+
+The scalar percent-format worker now admits `#` for hexadecimal and octal
+numeric conversions, including sign-aware negative values. Alternate form for
+other conversions remains loud.
+
+| Measurement | Result |
+|---|---|
+| Generated edge battery | 62 cases, 107 calls |
+| Native runner | 92 MATCH, 15 documented refusals, 0 failures |
+| Proof interpreter | 92 MATCH, 15 loud refusals, 0 failures |
+| Managed build | `lake build leanmodels-run`, 40 jobs, passed |
+
+DECIDED: retain alternate-form support only for the measured `%x` and `%o`
+domain.
+
 ## 2026-11-11-pyfoundation-31 — count `sorted` recursion and materialization
 
 The builtin recursion audit found that `sorted` was missing the nested call

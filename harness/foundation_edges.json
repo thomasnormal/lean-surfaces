@@ -673,6 +673,34 @@
   {
     "args": [
       [
+        3
+      ],
+      [
+        -3
+      ]
+    ],
+    "expect": "match",
+    "file": "harness/foundation_probe.py",
+    "function": "percent_alternate_hex",
+    "note": "hexadecimal percent-format alternate form."
+  },
+  {
+    "args": [
+      [
+        3
+      ],
+      [
+        -3
+      ]
+    ],
+    "expect": "match",
+    "file": "harness/foundation_probe.py",
+    "function": "percent_alternate_oct",
+    "note": "octal percent-format alternate form."
+  },
+  {
+    "args": [
+      [
         0.0,
         0.0
       ],

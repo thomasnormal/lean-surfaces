@@ -6,7 +6,7 @@
     "version": "3.9.25"
   },
   "source_file": "harness/foundation_probe.py",
-  "source_sha256": "119f730ef2a99f1ba571803c21f30b2d0a0d959fe9015613ef9a20ea0a00ec7f",
+  "source_sha256": "ada35016cbca5f3ce007f16c11b6606de627bcd58763cd2764c1eb5d75d8077c",
   "module": {
     "kind": "Module",
     "body": [
@@ -6774,6 +6774,140 @@
                   "lineno": 282,
                   "col_offset": 19,
                   "end_lineno": 282,
+                  "end_col_offset": 24
+                },
+                "id": "value"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 285,
+          "col_offset": 0,
+          "end_lineno": 286,
+          "end_col_offset": 24
+        },
+        "name": "percent_alternate_hex",
+        "args": [
+          {
+            "arg": "value",
+            "span": {
+              "lineno": 285,
+              "col_offset": 26,
+              "end_lineno": 285,
+              "end_col_offset": 31
+            }
+          }
+        ],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 286,
+              "col_offset": 4,
+              "end_lineno": 286,
+              "end_col_offset": 24
+            },
+            "value": {
+              "kind": "BinOp",
+              "span": {
+                "lineno": 286,
+                "col_offset": 11,
+                "end_lineno": 286,
+                "end_col_offset": 24
+              },
+              "left": {
+                "kind": "Constant",
+                "span": {
+                  "lineno": 286,
+                  "col_offset": 11,
+                  "end_lineno": 286,
+                  "end_col_offset": 16
+                },
+                "value": {
+                  "type": "str",
+                  "value": "%#x"
+                }
+              },
+              "op": "Mod",
+              "right": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 286,
+                  "col_offset": 19,
+                  "end_lineno": 286,
+                  "end_col_offset": 24
+                },
+                "id": "value"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 289,
+          "col_offset": 0,
+          "end_lineno": 290,
+          "end_col_offset": 24
+        },
+        "name": "percent_alternate_oct",
+        "args": [
+          {
+            "arg": "value",
+            "span": {
+              "lineno": 289,
+              "col_offset": 26,
+              "end_lineno": 289,
+              "end_col_offset": 31
+            }
+          }
+        ],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 290,
+              "col_offset": 4,
+              "end_lineno": 290,
+              "end_col_offset": 24
+            },
+            "value": {
+              "kind": "BinOp",
+              "span": {
+                "lineno": 290,
+                "col_offset": 11,
+                "end_lineno": 290,
+                "end_col_offset": 24
+              },
+              "left": {
+                "kind": "Constant",
+                "span": {
+                  "lineno": 290,
+                  "col_offset": 11,
+                  "end_lineno": 290,
+                  "end_col_offset": 16
+                },
+                "value": {
+                  "type": "str",
+                  "value": "%#o"
+                }
+              },
+              "op": "Mod",
+              "right": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 290,
+                  "col_offset": 19,
+                  "end_lineno": 290,
                   "end_col_offset": 24
                 },
                 "id": "value"

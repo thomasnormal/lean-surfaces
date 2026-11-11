@@ -280,3 +280,11 @@ def percent_plus(value):
 
 def percent_space(value):
     return "% d" % value
+
+
+def percent_alternate_hex(value):
+    return "%#x" % value
+
+
+def percent_alternate_oct(value):
+    return "%#o" % value

@@ -2290,6 +2290,16 @@ def strFormatSignPiece (c : Char) (v : RVal) (space : Bool) : Res String := do
   else
     return piece
 
+def strFormatAlternatePiece (c : Char) (v : RVal) : Res String := do
+  let piece ← strFormatConv c v
+  if c == 'x' || c == 'o' then
+    let pre := if c == 'x' then "0x" else "0o"
+    match piece.toList with
+    | '-' :: rest => return "-" ++ pre ++ String.ofList rest
+    | _ => return pre ++ piece
+  else
+    .unsupported "alternate form for this percent conversion is outside the tier"
+
 def strFormatReadDigits : List Char → Nat → Option (Nat × List Char)
   | [], _ => Option.none
   | c :: rest, acc =>
@@ -2368,6 +2378,17 @@ def strFormatWalk : List Char → List RVal → Bool → String → Res String
             | .timeout => .timeout
             | .unsupported msg => .unsupported msg
       else .unsupported "sign flags for this percent conversion are outside the tier"
+  | '%' :: '#' :: c :: cs, args, mapping, acc =>
+      if c == 'x' || c == 'o' then
+        match args with
+        | [] => .exn (.typeError "not enough arguments for format string")
+        | a :: rest =>
+            match strFormatAlternatePiece c a with
+            | .ok piece => strFormatWalk cs rest mapping (acc ++ piece)
+            | .exn e => .exn e
+            | .timeout => .timeout
+            | .unsupported msg => .unsupported msg
+      else .unsupported "alternate form for this percent conversion is outside the tier"
   | '%' :: cs, args, mapping, acc =>
       match strFormatWidthSpec cs with
       | some (left, zero, width, precision, c, restChars) =>

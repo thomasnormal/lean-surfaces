@@ -108,6 +108,20 @@ successfully, so the pinned-oracle expectation required no edit.
 DECIDED: treat the `str_lab` guard item as revalidated and continue with the
 next inbox target after rereading the inbox.
 
+## 2026-11-11-pyfoundation-50 — revalidate ClockErase proof
+
+The direct proof target named by the pre-rename red list is already resolved on
+the current integrated tree. A fresh managed build completed successfully, so
+no proof source change was needed in this item.
+
+| Measurement | Result |
+|---|---|
+| `LeanModels/Python/ClockErase.lean` | managed build passed (12/12 targets) |
+| Source change | none; this packet records the revalidation |
+
+DECIDED: treat the `ClockErase` proof item as revalidated and continue with
+the final inbox target after rereading the inbox.
+
 ## 2026-11-11-pyfoundation-43 — repair PayloadBlind comparison recursion transport
 
 The proof observer now transports the heap-aware rich-comparison recursion

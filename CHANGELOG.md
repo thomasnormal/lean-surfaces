@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Revalidated the direct `ClockErase` proof target after the recursion and
+  protocol repairs; the managed target is green on the public tip.
+
 - Revalidated the `str_lab` specification guard against the pinned oracle; the
   managed target is green on the public tip.
 

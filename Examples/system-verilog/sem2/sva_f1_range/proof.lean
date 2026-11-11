@@ -32,7 +32,7 @@ private def trace : List (CycleObs PortSample) :=
 #guard match bounded.pdesign.properties[1]? with
   | some p => match SvaContract.ofProperty env [] p with
     | .ok c => c.check.kind == .cover &&
-        match c.eval trace with | .ok false => true | _ => false
+        match c.eval trace with | .ok true => true | _ => false
     | .error _ => false
   | none => false
 

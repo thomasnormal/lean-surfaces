@@ -141,10 +141,32 @@ def fetch_one(slug, rev, name, dest):
     return data
 
 
+def git_listing(repo, rev):
+    """List the pinned subtree from an external partial git clone."""
+    p = subprocess.run(["git", "-C", str(repo), "ls-tree", "-r", "--name-only",
+                        rev, SUBDIR], capture_output=True, text=True)
+    if p.returncode:
+        die("git cache cannot read revision %s: %s" % (rev, p.stderr.strip()))
+    prefix = SUBDIR + "/"
+    return [{"name": line[len(prefix):]} for line in p.stdout.splitlines()
+            if line.startswith(prefix) and line.endswith(".c")]
+
+
+def git_fetch_one(repo, rev, name):
+    path = "%s/%s" % (SUBDIR, name)
+    p = subprocess.run(["git", "-C", str(repo), "show", "%s:%s" % (rev, path)],
+                       capture_output=True)
+    if p.returncode:
+        die("git cache cannot read %s at %s: %s" % (name, rev, p.stderr.decode(errors="replace").strip()))
+    return p.stdout
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--cache", default=None)
+    ap.add_argument("--git-repo", default=None,
+                    help="external partial clone to read at the pinned revision")
     ap.add_argument("--limit", type=int, default=300,
                     help="first N by name — the census's own sample rule (default 300)")
     ap.add_argument("--offline", action="store_true",
@@ -172,11 +194,11 @@ def main():
         names = [t["name"] for t in pin["tests"]]
         want = {t["name"]: t for t in pin["tests"]}
     else:
-        listing = api_listing(slug, rev)
+        listing = git_listing(a.git_repo, rev) if a.git_repo else api_listing(slug, rev)
         if not isinstance(listing, list):
             die("GitHub contents API said: %s" % listing.get("message"))
         names = sorted(x["name"] for x in listing if x["name"].endswith(".c"))[:a.limit]
-        want = {x["name"]: {"blob_sha1": x["sha"]} for x in listing}
+        want = {x["name"]: {"blob_sha1": x.get("sha")} for x in listing}
 
     tests = []
     for n in names:
@@ -189,7 +211,13 @@ def main():
                 continue
             data = f.read_bytes()
         else:
-            data = f.read_bytes() if f.exists() else fetch_one(slug, rev, n, f)
+            if f.exists():
+                data = f.read_bytes()
+            elif a.git_repo:
+                data = git_fetch_one(a.git_repo, rev, n)
+                f.write_bytes(data)
+            else:
+                data = fetch_one(slug, rev, n, f)
         b, s = blob_sha1(data), hashlib.sha256(data).hexdigest()
         exp = want.get(n, {})
         if exp.get("blob_sha1") and exp["blob_sha1"] != b:

@@ -741,6 +741,15 @@ private def nestedFunctionPrototype : Raw → Except String Unit
           | none => .error executionRefusal
       | _, _ => .error executionRefusal
 
+private def externIntegralDeclaration : Raw → Except String Unit
+  | declaration =>
+      match declaration.text "name", declaration.text "storageClass", declaration.field "type" with
+      | some _, some "extern", some (.object fields) =>
+          match (Raw.object fields).text "qualType" with
+          | some "int" | some "bool" => pure ()
+          | _ => .error executionRefusal
+      | _, _, _ => .error executionRefusal
+
 private def executeNestedNamespaces : List Raw → Except String Unit
   | [] => pure ()
   | declaration :: rest =>
@@ -823,6 +832,8 @@ private def executeNestedNamespaces : List Raw → Except String Unit
 
 private def executeTopDeclaration (raw : Raw) : Except String Unit :=
   match raw.text "kind", raw.field "inner" with
+  | some "VarDecl", none => externIntegralDeclaration raw
+  | some "VarDecl", some (.array []) => externIntegralDeclaration raw
   | some "FunctionDecl", none => nestedFunctionPrototype raw
   | some "FunctionDecl", some (.array []) => nestedFunctionPrototype raw
   | some "NamespaceDecl", some (.array []) => pure ()

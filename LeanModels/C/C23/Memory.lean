@@ -358,7 +358,7 @@ def natOfBytes : List UInt8 → Nat
 integer (`Value.lean`'s invariant), so it is reduced into the type's
 unsigned residue first — that is what a representation IS. -/
 def encodeInt (t : IntTy) (v : Int) : List CByte :=
-  let width := t.bits / 8
+  let width := max 1 (t.bits / 8)
   let u := (v % t.modulus + t.modulus) % t.modulus
   (natToBytes width u.toNat).map CByte.conc
 
@@ -396,7 +396,7 @@ The corpus has exactly one site where the third could fire and one where
 the second could; neither is detectable by any sanitizer on either
 development host, which is why the byte lattice is here at all. -/
 def loadInt (m : Mem) (p : Ptr) (t : IntTy) : MRes CVal := do
-  let width := t.bits / 8
+  let width := max 1 (t.bits / 8)
   let (o, c, off) ← m.resolve p width
   let bs := (c.bytes.drop off).take width
   match decodeInt t bs with

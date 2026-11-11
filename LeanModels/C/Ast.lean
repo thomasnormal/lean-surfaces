@@ -104,7 +104,8 @@ inductive Expr where
   function — all 19 in the corpus go through the `movecb` parameter. -/
   | call (callee : Expr) (args : List Expr) (ty : CType) (span : CSpan)
   | binop (op : String) (lhs rhs : Expr) (ty : CType) (span : CSpan)
-  | compoundAssign (op : String) (lhs rhs : Expr) (ty : CType) (span : CSpan)
+  | compoundAssign (op : String) (lhs rhs : Expr)
+      (computeLHSType computeResultType ty : CType) (span : CSpan)
   | unop (op : String) (sub : Expr) (isPostfix : Bool) (ty : CType) (span : CSpan)
   | cond (c t e : Expr) (ty : CType) (span : CSpan)
   | paren (sub : Expr) (ty : CType) (span : CSpan)
@@ -249,7 +250,7 @@ def Expr.ty : Expr → CType
   | .intLit _ t _ | .charLit _ t _ | .strLit _ t _ | .floatLit _ t _ => t
   | .declRef _ _ t _ => t
   | .member _ _ _ t _ | .index _ _ t _ | .call _ _ t _ => t
-  | .binop _ _ _ t _ | .compoundAssign _ _ _ t _ => t
+  | .binop _ _ _ t _ | .compoundAssign _ _ _ _ _ t _ => t
   | .unop _ _ _ t _ | .cond _ _ _ t _ | .paren _ t _ => t
   | .implicitCast _ _ t _ | .cast _ _ t _ => t
   | .initList _ t _ | .compoundLit _ t _ | .implicitValueInit t _ => t
@@ -289,7 +290,7 @@ def Expr.subexprs : Expr → List Expr
   | e@(.index b i _ _) => e :: (b.subexprs ++ i.subexprs)
   | e@(.call c args _ _) => e :: (c.subexprs ++ args.flatMap Expr.subexprs)
   | e@(.binop _ l r _ _) => e :: (l.subexprs ++ r.subexprs)
-  | e@(.compoundAssign _ l r _ _) => e :: (l.subexprs ++ r.subexprs)
+  | e@(.compoundAssign _ l r _ _ _ _) => e :: (l.subexprs ++ r.subexprs)
   | e@(.unop _ s _ _ _) => e :: s.subexprs
   | e@(.cond c t f _ _) => e :: (c.subexprs ++ t.subexprs ++ f.subexprs)
   | e@(.paren s _ _) => e :: s.subexprs
@@ -352,8 +353,8 @@ def Expr.sizes (es : List Expr) : Nat := (es.flatMap Expr.subexprs).length
     (Expr.binop op l r t sp).size = l.size + r.size + 1 := by
   simp [Expr.size, Expr.subexprs] <;> omega
 
-@[simp] theorem Expr.size_compoundAssign (l r : Expr) (op : String) (t : CType) (sp : CSpan) :
-    (Expr.compoundAssign op l r t sp).size = l.size + r.size + 1 := by
+@[simp] theorem Expr.size_compoundAssign (l r : Expr) (op lhsTy resultTy t : CType) (sp : CSpan) :
+    (Expr.compoundAssign op l r lhsTy resultTy t sp).size = l.size + r.size + 1 := by
   simp [Expr.size, Expr.subexprs] <;> omega
 
 @[simp] theorem Expr.size_cond (c a b : Expr) (t : CType) (sp : CSpan) :

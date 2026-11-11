@@ -225,7 +225,7 @@ def intTyOf? (ty : CType) : Option IntTy :=
   | "uint32_t" => some IntTy.uint
   | "int64_t" => some IntTy.long_
   | "uint64_t" => some IntTy.ulong
-  | "_Bool" | "bool" => some IntTy.uchar
+  | "_Bool" | "bool" => some IntTy.bool_
   -- QUALIFIED spellings, tabled rather than stripped. Measured: these four
   -- are the ONLY qualified integer spellings on an expression node in the
   -- corpus (`const int` 35, `const char` 30, `const unsigned char` 18,
@@ -249,6 +249,10 @@ def intTyOf (ty : CType) : EvalM IntTy :=
   match intTyOf? ty with
   | some t => pure t
   | none => refuseUnsupported s!"not an integer type: '{ty}'"
+
+/-- Integer promotions on the pinned LP64 profile. -/
+def promoteIntTy (t : IntTy) : IntTy :=
+  if t.bits < IntTy.int_.bits then IntTy.int_ else t
 
 /-! ## The environment
 
@@ -661,6 +665,10 @@ def evalExpr (ctx : Ctx) : Expr → EvalM CVal
         let (_, n) ← asInt v
         let t ← intTyOf (ctx.layout.normalizeTy ty)
         pure (convert t n)
+      else if ck == "IntegralToBoolean" then do
+        let v ← evalExpr ctx sub
+        let (_, n) ← asInt v
+        pure (convert IntTy.bool_ n)
       else if ck == "NoOp" then
         -- A qualifier or typedef change: the VALUE is untouched. 217 sites,
         -- and they are why type equality must be resolution, not spelling.
@@ -749,23 +757,36 @@ def evalExpr (ctx : Ctx) : Expr → EvalM CVal
         -- the update, and the update itself can overflow (`J.2(35)`).
         let p ← evalLValue ctx sub
         let old ← loadAt p (ctx.layout.normalizeTy sub.ty)
-        let (t, n) ← asInt old
+        let (storageT, n) ← asInt old
+        let t := promoteIntTy storageT
         match (if op == "++" then addOp t n 1 else subOp t n 1) with
         | .ub u => refuseValue u
-        | .ok nv => do
-            storeAt p (ctx.layout.normalizeTy sub.ty) nv
-            pure (if post then old else nv)
+        | .ok (.int _ nv) => do
+            let storedT ← intTyOf (ctx.layout.normalizeTy sub.ty)
+            let stored := convert storedT nv
+            storeAt p (ctx.layout.normalizeTy sub.ty) stored
+            pure (if post then old else stored)
+        | .ok _ => refuseUnsupported "increment of a non-integer value"
       else refuseUnsupported s!"unary operator '{op}'"
 
   -- §6.5.17.3 — compound assignment: `a op= b` is `a = a op b` with the
   -- lvalue evaluated ONCE. 24 sites (`+=` 10, `|=` 6, `^=` 3, `-=` 3, `*=` 2).
-  | .compoundAssign op l r ty _ => do
+  | .compoundAssign op l r computeLHSType computeResultType ty _ => do
       let p ← evalLValue ctx l
       let old ← loadAt p (ctx.layout.normalizeTy l.ty)
       let rv ← evalExpr ctx r
-      let nv ← evalArith ctx (compoundBase op) old rv ty
-      storeAt p (ctx.layout.normalizeTy l.ty) nv
-      pure nv
+      let lhsT ← intTyOf (ctx.layout.normalizeTy computeLHSType)
+      let resultT ← intTyOf (ctx.layout.normalizeTy computeResultType)
+      let (_, oldN) ← asInt old
+      let (_, rvN) ← asInt rv
+      let old' := convert lhsT oldN
+      let rv' := convert resultT rvN
+      let nv ← evalArith ctx (compoundBase op) old' rv' computeResultType
+      let storageT ← intTyOf (ctx.layout.normalizeTy l.ty)
+      let (_, nvN) ← asInt nv
+      let stored := convert storageT nvN
+      storeAt p (ctx.layout.normalizeTy l.ty) stored
+      pure stored
 
   -- ===== lvalues reaching value position without a conversion =====
   -- Clang wraps scalar reads in `LValueToRValue`, so these are the
@@ -1522,7 +1543,7 @@ private theorem memInvariant_core (ctx : Ctx) : ∀ (n : Nat) (e : Expr), e.size
       -- and an increment store; aggregate initialization writes through the
       -- layout; an out-of-tier node is unknown rather than harmless.
       | call _ _ _ _ => simp [Expr.nodeIsPure] at hnode
-      | compoundAssign _ _ _ _ _ => simp [Expr.nodeIsPure] at hnode
+      | compoundAssign _ _ _ _ _ _ _ => simp [Expr.nodeIsPure] at hnode
       | initList _ _ _ => simp [Expr.nodeIsPure] at hnode
       | arrayInitList _ _ _ _ => simp [Expr.nodeIsPure] at hnode
       | implicitValueInit _ _ => simp [Expr.nodeIsPure] at hnode

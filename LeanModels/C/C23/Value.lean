@@ -83,6 +83,9 @@ for integer SIZES at all). The corpus's 10 integer types collapse onto
 these. -/
 def char_ : IntTy := ⟨true, 8⟩          -- signed on both hosts, and depended on
 def uchar : IntTy := ⟨false, 8⟩
+/-! `_Bool` has its own rank and range.  It occupies one byte in the
+profile's object representation, but its value range is exactly `{0,1}`. -/
+def bool_ : IntTy := ⟨false, 1⟩
 def short_ : IntTy := ⟨true, 16⟩
 def ushort : IntTy := ⟨false, 16⟩
 def int_ : IntTy := ⟨true, 32⟩
@@ -110,7 +113,8 @@ def minVal (t : IntTy) : Int :=
   if t.signed then -((2 : Int) ^ (t.bits - 1)) else 0
 
 def maxVal (t : IntTy) : Int :=
-  if t.signed then (2 : Int) ^ (t.bits - 1) - 1 else (2 : Int) ^ t.bits - 1
+  if t == bool_ then 1
+  else if t.signed then (2 : Int) ^ (t.bits - 1) - 1 else (2 : Int) ^ t.bits - 1
 
 /-- Is `v` representable in `t`? -/
 def inRange (t : IntTy) (v : Int) : Bool :=
@@ -387,7 +391,9 @@ standard would have silently withdrawn.
 
 Modeling the signal arm is not owed: no host in the profile raises one,
 and inventing an unraised signal would be inventing behavior. -/
-def convert (to : IntTy) (v : Int) : CVal := .int to (to.wrap v)
+def convert (to : IntTy) (v : Int) : CVal :=
+  if to == IntTy.bool_ then .int to (if v == 0 then 0 else 1)
+  else .int to (to.wrap v)
 
 /-! ## Gates
 

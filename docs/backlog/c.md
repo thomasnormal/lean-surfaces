@@ -13,6 +13,18 @@ one of those references keeps resolving.
 
 ---
 
+## 2026-11-11-c-compound-assign-unpromoted — usual arithmetic conversions
+
+Clang's `CompoundAssignOperator` carries `computeLHSType` and
+`computeResultType`; the former envelope discarded both and evaluated at the
+lvalue storage type. The envelope now retains those fields, and the model
+promotes narrow integer operands before applying the operator and converts the
+result back to the lvalue type. Increment and decrement use the same promotion
+rule. `_Bool` is represented distinctly with a one-bit value range and
+one-byte storage. Differential rows cover defined narrow promotions,
+`_Bool++`, mixed signed/unsigned assignment, and UBSan-confirmed signed
+overflow refusal.
+
 ## 2026-11-10-c-array-filler-designators — Clang array initializer positions
 
 The previous extractor removed every `ImplicitValueInitExpr` from Clang's

@@ -161,7 +161,7 @@ rung rather than a v0 hole.
 | `ArraySubscriptExpr` | 328 | `base`: expr, `index`: expr, `type` |
 | `CallExpr` | 320 | `callee`: expr, `args`: [expr…], `type` |
 | `BinaryOperator` | 1007 | `op` (§3.5), `lhs`, `rhs`, `type` |
-| `CompoundAssignOperator` | 24 | `op` (§3.5), `lhs`, `rhs`, `type` |
+| `CompoundAssignOperator` | 24 | `op` (§3.5), `lhs`, `rhs`, `compute_lhs_type`, `compute_result_type`, `type` |
 | `UnaryOperator` | 311 | `op` (§3.5), `sub`, `postfix`: bool, `type` |
 | `ConditionalOperator` | 42 | `cond`, `then`, `else`, `type` |
 | `ParenExpr` | 237 | `sub`, `type` |

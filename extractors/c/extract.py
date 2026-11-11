@@ -430,7 +430,14 @@ class Extractor:
                 "rhs": self.node(c[1] if len(c) > 1 else None),
                 "type": qual(n)}
 
-    e_CompoundAssignOperator = e_BinaryOperator
+    def e_CompoundAssignOperator(self, n):
+        c = kids(n)
+        return {"op": n.get("opcode"),
+                "lhs": self.node(c[0] if c else None),
+                "rhs": self.node(c[1] if len(c) > 1 else None),
+                "compute_lhs_type": (n.get("computeLHSType") or {}).get("qualType"),
+                "compute_result_type": (n.get("computeResultType") or {}).get("qualType"),
+                "type": qual(n)}
 
     def e_UnaryOperator(self, n):
         c = kids(n)

@@ -118,7 +118,7 @@ for. -/
 `int_32`, `long_64`. `double` is deliberately absent — floats are a named
 decision, not an oversight. -/
 def torScalarSize : CType → Option Nat
-  | "char" | "signed char" | "unsigned char" | "_Bool" => some 1
+  | "char" | "signed char" | "unsigned char" | "_Bool" | "bool" => some 1
   | "short" | "short int" | "unsigned short" => some 2
   | "int" | "unsigned int" | "unsigned" => some 4
   | "long" | "unsigned long" | "long long" | "unsigned long long"

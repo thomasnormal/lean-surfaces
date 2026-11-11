@@ -176,6 +176,7 @@ partial def parseExpr (j : Json) : Except String Expr := do
         return .binop (← getStr j "op") (← sub "lhs") (← sub "rhs") (← ty) span
     | "CompoundAssignOperator" =>
         return .compoundAssign (← getStr j "op") (← sub "lhs") (← sub "rhs")
+          (← getStr j "compute_lhs_type") (← getStr j "compute_result_type")
           (← ty) span
     | "UnaryOperator" =>
         return .unop (← getStr j "op") (← sub "sub") (← getBool j "postfix")

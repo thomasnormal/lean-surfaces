@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Preserved Clang's compound-assignment promotion types and applied the
+  integer promotions for compound assignment and increment/decrement,
+  including distinct `_Bool` handling.
+
 - Preserved Clang's array filler and implicit initializer nodes in C
   envelopes, preventing designated elements from being shifted. Older
   initializer envelopes without the field must be re-extracted.

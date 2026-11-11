@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Revalidated generator-expression capture admission for unpacking, walrus,
+  and `del` rebinding; unsafe by-value captures stay loud and the safe walrus
+  cell row still matches CPython 3.9.25.
+
 - Revalidated structured `global` declarations with the long-name witness;
   the extractor carries `node.names` directly and the runner matches CPython
   3.9.25, with no text-truncation path remaining in global scope handling.

@@ -13410,3 +13410,21 @@ absent. The long declaration witness preserves its eleventh name and prints
 
 DECIDED: close `py-global-text-truncation`; retain structured declaration
 nodes as the sole lexical source.
+## 2026-11-11-pyfoundation-71 — close generator capture census audit
+
+The high-priority `py-genexp-capture-census` finding remains closed. Ingestion
+counts tuple-unpack and `del` targets through `bodyAssigns`, expression walrus
+stores through `exprAssigns`, and keeps unsafe by-value captures as the original
+generator node so evaluation refuses loudly. The rebinding witness refuses in
+the model while CPython 3.9.25 raises the captured-name `NameError`; the safe
+walrus-cell witness returns `[7]` on both interpreters.
+
+| Measurement | Result |
+|---|---|
+| Unpack/`del` witness | `genexp_capture_rebinding.py`: model exit 3; CPython `NameError` exit 1 |
+| Walrus witness | `gen_capture_walrus()`: model and CPython both return `[7]` |
+| Census workers | `bodyAssigns` includes unpack/`del`; `exprAssigns` includes `NamedExpr` |
+| Semantic change | none; audit closure only |
+
+DECIDED: close `py-genexp-capture-census`; retain conservative loudness until
+native generator-expression nodes replace the lowering.

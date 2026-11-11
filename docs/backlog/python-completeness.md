@@ -13846,3 +13846,19 @@ decided mismatch.
 
 DECIDED: close `py-row-coverage-gaps`; require new edge pools and rows whenever
 future protocol boundaries are added.
+## 2026-11-11-pyfoundation-95 — close float-round unrolling audit
+
+The low `py-round-digits-unrolled` finding is already fixed. Both interpreter
+surfaces dispatch through the single parameterized `roundFloatNDigits` worker;
+the former per-digit `roundFloat*`/`roundDigits*` family is absent. The pinned
+rows cover positive and negative cutoffs, signed zero, non-finite values, and
+`ndigits` beyond the old 43-digit range, matching CPython 3.9.25.
+
+| Measurement | Result |
+|---|---|
+| Worker census | one `roundFloatNDigits`; zero per-digit worker definitions |
+| Boundary battery | `round_float_general` includes ndigits 100, -308, 324, and 43 |
+| Semantic change | none; audit closure only |
+
+DECIDED: close `py-round-digits-unrolled`; retain the parameterized worker and
+explicit integer/unsupported protocol boundaries.

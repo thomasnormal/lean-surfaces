@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Revalidated parameterized float rounding: one `roundFloatNDigits` worker
+  serves both interpreters, with no per-digit worker family; rows beyond the
+  former unrolled range continue to match CPython 3.9.25.
+
 - Revalidated differential edge coverage: generated foundation rows are current
   (71/71), including the non-cancelling negative-set hash and every previously
   identified high-finding witness; no decided mismatch remains.

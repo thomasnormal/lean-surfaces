@@ -96,7 +96,8 @@ identity is modeled. Differential rows pin both refusals.
 File-scope setup now reuses an existing object for repeated declarations,
 applies a later initializer to that object, and refuses an `extern` with no
 definition in the translation unit. The differential row covers a tentative
-declaration, pointer capture, and later definition.
+declaration, pointer capture, and later definition. Revalidated 2026-11-11
+against the pinned Clang/LLVM 21.1.8 oracle: `tentative-definition MATCH 3`.
 
 ## 2026-11-11-c-forward-record-size-zero — complete record selection
 

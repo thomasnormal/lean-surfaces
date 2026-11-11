@@ -327,6 +327,21 @@ equation after transporting both children.
 DECIDED: continue the literal binary family with explicit fuel and source-node
 dispatch evidence; recursive and script adequacy remain open.
 
+## 2026-11-11-pyfoundation-63 — prove binary literal-bitwise-or refinement
+
+The literal binary control family now covers bitwise-or. The theorem transports
+both children through the constant bridge and proves `.bitOr` bypasses the
+heap-specialized branches before reusing the shared binary worker equation.
+
+| Measurement | Result |
+|---|---|
+| Target | managed `lake build LeanModels/Python/Monadic/Eval.lean` passed |
+| New theorem | `Monadic.twinAgrees_evalOpen_intBitOr` |
+| Semantic change | theorem only; no evaluator behavior change |
+
+DECIDED: continue literal binary refinement with explicit fuel and dispatch
+evidence; recursive and script adequacy remain open.
+
 ## 2026-11-11-pyfoundation-43 — repair PayloadBlind comparison recursion transport
 
 The proof observer now transports the heap-aware rich-comparison recursion

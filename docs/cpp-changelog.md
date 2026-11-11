@@ -19,6 +19,8 @@ coverage advance independently from the Python tier.
 
 ### Added
 
+- `using enum E;` now executes inside namespace bodies when Clang supplies a structured enum target; unresolved targets and unsupported enum members remain loud refusals.
+
 - Empty named enum declarations inside namespace bodies now execute with no fixed underlying type or an explicit `int` underlying type; enumerators, anonymous enums, and other types remain loud refusals.
 
 - Empty `extern "C"` and `extern "C++"` linkage specifications now execute inside namespace bodies; unsupported languages and nonempty bodies remain loud refusals.

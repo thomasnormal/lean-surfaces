@@ -782,6 +782,13 @@ private def executeNestedNamespaces : List Raw → Except String Unit
               | some "int" => executeNestedNamespaces rest
               | _ => .error executionRefusal
           | _, _ => .error executionRefusal
+      | some "UsingEnumDecl", none =>
+          match declaration.field "target" with
+          | some target =>
+              match target.text "kind", target.text "id" with
+              | some "EnumDecl", some _ => executeNestedNamespaces rest
+              | _, _ => .error executionRefusal
+          | none => .error executionRefusal
       | some "StaticAssertDecl", some (.array [condition, message]) =>
           match condition.text "kind", condition.field "value", message with
           | some "CXXBoolLiteralExpr", some (.bool true), .object [] =>

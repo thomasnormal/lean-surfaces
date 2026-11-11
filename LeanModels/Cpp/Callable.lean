@@ -80,6 +80,9 @@ structure CallableSwitchClause where
   legacy fallthrough representation may ignore it, but admission does not
   lose the frontend node identity. -/
   source : Option FrontendHandle := none
+  /-- Handles of every source child retained in this clause, including
+  statements that appear between this label and the next label. -/
+  sourceItems : List FrontendHandle := []
   deriving Repr, BEq, Inhabited
 
   structure CallableCallee where
@@ -187,7 +190,8 @@ private def switchClauseRaws (raws : List Raw) : Except String (List Raw × List
         let (body, remaining) ← switchClauseRaws rest
         pure (raw :: body, remaining)
 
-private partial def switchClauses (raws : List Raw) : Except String (List (Option Int × List Raw)) := do
+private partial def switchClauses (raws : List Raw) :
+    Except String (List (Option Int × List Raw × List FrontendHandle)) := do
   match raws with
   | [] => pure []
   | raw :: rest =>
@@ -202,11 +206,13 @@ private partial def switchClauses (raws : List Raw) : Except String (List (Optio
         | _ => throw "callable: switch body must contain only case/default labels"
       let (tailBody, remaining) ← switchClauseRaws rest
       let clauses ← switchClauses remaining
-      pure ((label, initialBody ++ tailBody) :: clauses)
+      let sourceItems := (raw :: initialBody ++ tailBody).filterMap (fun item =>
+        item.text "id" |>.map FrontendHandle.mk)
+      pure ((label, initialBody ++ tailBody, sourceItems) :: clauses)
 
-private def switchLabelsValid : List (Option Int × List Raw) → Bool
+private def switchLabelsValid : List (Option Int × List Raw × List FrontendHandle) → Bool
   | [] => true
-  | (label, _) :: rest =>
+  | (label, _, _) :: rest =>
       (match label with
       | none => !rest.any (fun clause => clause.1.isNone)
       | some value => !rest.any (fun clause => clause.1 == some value)) && switchLabelsValid rest
@@ -767,9 +773,9 @@ mutual
       let clauseRaws ← switchClauses bodyRaws
       unless switchLabelsValid clauseRaws do
         throw "callable: switch labels must be unique with at most one default"
-      let clauses ← clauseRaws.mapM fun (label, raws) => do
+      let clauses ← clauseRaws.mapM fun (label, raws, sourceItems) => do
         let body ← parseCallableSequence profile parameters expressionRows resultType raws
-        pure {label, body}
+        pure {label, body, source := none, sourceItems}
       pure (.switch_ condition clauses)
   | "WhileStmt" =>
       let children ← rawChildren statement
@@ -1023,10 +1029,10 @@ partial def parseCallableStatementWithLocals (probe : DeclarationProbe)
       let clauseRaws ← switchClauses bodyRaws
       unless switchLabelsValid clauseRaws do
         throw "callable: switch labels must be unique with at most one default"
-      let clauses ← clauseRaws.mapM fun (label, raws) => do
+      let clauses ← clauseRaws.mapM fun (label, raws, sourceItems) => do
         let (body, _) ← callableSequenceWithLocals probe typeRows variableRows expressionRows
           expressionTypes profile resultType scope raws
-        pure {label, body}
+        pure {label, body, source := none, sourceItems}
       pure (.switch_ condition clauses, scope)
   | "WhileStmt" =>
       let children ← rawChildren statement

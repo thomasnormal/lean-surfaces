@@ -75,6 +75,16 @@ Revalidated 2026-11-11 with the pinned Clang/LLVM 21.1.8 frontend:
 facts, and `--check-lean docs/c-profile.json` found agreement on all 9
 width/signedness points (9 `IntTy` definitions parsed).
 
+## 2026-11-11-c-no-compiled-oracle — pinned differential battery
+
+The C lane now compares each unchanged source row against a pinned
+Clang/LLVM 21.1.8 compile and the extracted envelope, retaining the full
+frontend version in the envelope and refusing missing or mismatched oracles.
+Revalidated 2026-11-11 in the 24 GiB cgroup: five value rows matched
+(`return-zero`, `return-seven`, `unsigned-wrap`, `negative-return`, and
+`declaration-id-local-shadow`) and the UBSan signed-overflow row refused;
+the run printed the pinned compiler version and exited 0.
+
 ---
 
 ## 2026-11-11-c-torture-main-return-ignored — scorer exit status

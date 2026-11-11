@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Revalidated trailing definition deletion: ingestion retains the `del` node,
+  and the module executor refuses static-table tombstoning instead of erasing
+  the statement; the opcode-shaped witness is loud while CPython completes.
+
 - Revalidated module-level function aliasing: admitted aliases and their
   source-order/rebinding guards match CPython 3.9.25, while first-class
   function values and identity semantics remain the explicit follow-up needed

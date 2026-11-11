@@ -13685,3 +13685,20 @@ interpreters.
 
 DECIDED: keep `py-def-alias-copy` open as a medium rule-2 milestone; do not
 broadly admit function-valued assignments beyond the guarded static slice.
+## 2026-11-11-pyfoundation-86 — close trailing definition-delete rewrite audit
+
+The medium `py-trailing-del-rewrite` finding is already fixed. No active
+`rewriteOne` or trailing-definition deletion pass remains in `Json.lean`;
+source `del` nodes reach the module executor, which refuses to tombstone static
+function/class/namedtuple table entries. `del_trailing_script.py` and the
+opcode-shaped `fmt_script.py` therefore stop loudly at the definition delete,
+while CPython 3.9.25 completes their preceding output.
+
+| Measurement | Result |
+|---|---|
+| Source audit | no trailing `del` rewrite in active ingestion |
+| Script witnesses | model exit 3 at `del def_op`; CPython 3.9.25 exits 0 with prior output |
+| Semantic change | none; audit closure only |
+
+DECIDED: close `py-trailing-del-rewrite`; retain the loud static-table boundary
+until definitions become runtime bindings.

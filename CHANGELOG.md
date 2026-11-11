@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Merged repeated file-scope declarations onto the existing object and
+  refused undefined `extern` declarations without a unit definition.
+
 - Ignored incomplete forward record declarations when selecting C record
   layouts, so later complete definitions determine size and alignment.
 

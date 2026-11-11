@@ -13,6 +13,13 @@ one of those references keeps resolving.
 
 ---
 
+## 2026-11-11-c-duplicate-file-scope-objects — tentative declarations
+
+File-scope setup now reuses an existing object for repeated declarations,
+applies a later initializer to that object, and refuses an `extern` with no
+definition in the translation unit. The differential row covers a tentative
+declaration, pointer capture, and later definition.
+
 ## 2026-11-11-c-forward-record-size-zero — complete record selection
 
 Forward `RecordDecl`s with no fields previously shadowed later complete

@@ -381,22 +381,34 @@ def setupGlobals (fuel : Nat) (lay : Layout) :
   | [], acc => pure acc
   | d :: ds, acc =>
     match d with
-    | .var nm ty _ init _ =>
-        match lay.size ty with
-        | none => setupGlobals fuel lay ds acc
-        | some sz =>
-            match init with
-            | none => do
-                let m ← get
-                let (m', o) := m.allocZeroed .static_ sz (some ty)
-                set m'
-                setupGlobals fuel lay ds ((nm, o) :: acc)
-            | some e => do
-                let m ← get
-                let (m', o) := m.alloc .static_ sz (some ty)
-                set m'
+    | .var nm ty storage init _ =>
+        match acc.lookup? nm with
+        | some o =>
+            match storage, init with
+            | some "extern", _ => setupGlobals fuel lay ds acc
+            | _, none => setupGlobals fuel lay ds acc
+            | _, some e => do
                 initObject fuel { env := acc, layout := lay } (Ptr.toObject o) ty e
-                setupGlobals fuel lay ds ((nm, o) :: acc)
+                setupGlobals fuel lay ds acc
+        | none =>
+          if storage == some "extern" then
+            refuseUnsupported s!"extern object '{nm}' has no definition in the translation unit"
+          else
+            match lay.size ty with
+            | none => setupGlobals fuel lay ds acc
+            | some sz =>
+              match init with
+              | none => do
+                  let m ← get
+                  let (m', o) := m.allocZeroed .static_ sz (some ty)
+                  set m'
+                  setupGlobals fuel lay ds ((nm, o) :: acc)
+              | some e => do
+                  let m ← get
+                  let (m', o) := m.alloc .static_ sz (some ty)
+                  set m'
+                  initObject fuel { env := acc, layout := lay } (Ptr.toObject o) ty e
+                  setupGlobals fuel lay ds ((nm, o) :: acc)
     | _ => setupGlobals fuel lay ds acc
 
 /-- **THE ORACLE-TESTS-COMPILER SHAPE, re-derived from the ingested AST.**

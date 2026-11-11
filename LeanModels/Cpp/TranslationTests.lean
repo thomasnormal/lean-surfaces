@@ -252,6 +252,13 @@ private def linkageExecutionTranslation : Artifact := {emptyTranslation with
       .object [("id", .string "l"), ("kind", .string "LinkageSpecDecl"),
         ("language", .string "C"), ("hasBraces", .bool true)]]) ]}
 
+private def cppLinkageExecutionTranslation : Artifact := {emptyTranslation with
+  ast := .object [
+    ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
+    ("inner", .array [
+      .object [("id", .string "l"), ("kind", .string "LinkageSpecDecl"),
+        ("language", .string "C++"), ("hasBraces", .bool true)]]) ]}
+
 private def staticAssertExecutionTranslation : Artifact := {emptyTranslation with
   ast := .object [
     ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
@@ -1884,6 +1891,9 @@ def typedefTranslationExecution : Except String Unit :=
 def linkageTranslationExecution : Except String Unit :=
   execute linkageExecutionTranslation "l"
 
+def cppLinkageTranslationExecution : Except String Unit :=
+  execute cppLinkageExecutionTranslation "l"
+
 def staticAssertTranslationExecution : Except String Unit :=
   execute staticAssertExecutionTranslation "s"
 
@@ -3282,6 +3292,7 @@ def staticAssertTranslationWitness : Except String Unit :=
 #guard topUsingFunctionTranslationExecution matches .ok ()
 #guard boolTypedefTranslationExecution matches .ok ()
 #guard unscopedEmptyEnumTranslationExecution matches .ok ()
+#guard cppLinkageTranslationExecution matches .ok ()
 #guard execute namespaceAliasExecutionTranslation "a" matches .ok ()
 #guard execute typeAliasExecutionTranslation "a" matches .ok ()
 #guard execute typedefExecutionTranslation "a" matches .ok ()
@@ -3345,6 +3356,9 @@ theorem bool_typedef_translation_executes :
 
 theorem unscoped_empty_enum_translation_executes :
     unscopedEmptyEnumTranslationExecution = .ok () := rfl
+
+theorem cpp_linkage_translation_executes :
+    cppLinkageTranslationExecution = .ok () := rfl
 
 theorem namespace_alias_translation_executes :
     execute namespaceAliasExecutionTranslation "a" = .ok () := rfl

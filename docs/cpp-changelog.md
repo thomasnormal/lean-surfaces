@@ -19,6 +19,8 @@ coverage advance independently from the Python tier.
 
 ### Added
 
+- Empty `extern "C++" {}` linkage specifications now execute alongside the existing C form; unsupported languages and nonempty bodies remain loud refusals.
+
 - Empty named unscoped enums now execute when Clang supplies no enumerators and omits the fixed underlying type; anonymous, enumerated, and unsupported-underlying forms remain loud refusals.
 
 - Top-level `typedef bool B;` now executes through a matching structured `BuiltinType` child, complementing the existing `int` and `bool` alias cases; other typedef targets remain loud refusals.

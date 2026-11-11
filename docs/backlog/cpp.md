@@ -1,5 +1,14 @@
 # C++ lane backlog
 
+## `cpp-diff-handwritten-twins`: reporting boundary
+
+**Closed 2026-11-11 (reporting correction).** The harness and generated page
+classify independent handwritten Lean/native checks as `WITNESS`; only the
+verified TinyXML-2 capture path can produce `MATCH`. A regression test pins
+that a generic callable row cannot become `MATCH` by matching values alone.
+The broader source-derived capture pipeline remains separately documented as
+open work and is not represented as a differential match.
+
 ## `cpp-call-arg-order`: effectful call arguments
 
 **Closed 2026-11-11.** Direct-call admission now refuses any call argument

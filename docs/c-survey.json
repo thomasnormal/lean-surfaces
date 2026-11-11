@@ -3,15 +3,15 @@
  "counts": {
   "not-ingested": 1,
   "not-parsed": 30,
-  "passed": 30,
-  "refused-libc": 80,
+  "passed": 34,
+  "refused-libc": 86,
   "refused-ub": 6,
-  "refused-unsupported": 151,
+  "refused-unsupported": 141,
   "timeout": 2
  },
- "manifest_hash": "33aa92be14205ed07df2a2df9c4a937c64c4df9d20aa63eefb34f96ae5951157",
- "measured_at_utc": "2026-11-11T23:20:17Z",
- "measured_commit": "3ccd4f100",
+ "manifest_hash": "94e82042f4a8170f60f31ed1fb01f322efeb3b65582a4ec195f02f03ee2fa744",
+ "measured_at_utc": "2026-11-11T23:35:00Z",
+ "measured_commit": "b7e399d33",
  "pin": {
   "rev": "9e54d865af9361413b9c84e11dddfe652cb4ca81",
   "slug": "gcc-mirror/gcc",
@@ -404,12 +404,12 @@
    "verdict": "refused-unsupported"
   },
   {
-   "detail": "unsequenced side effects in binary operands",
+   "detail": "id24",
    "manifest_status": "parsed",
    "name": "20000715-1.c",
    "sha256": "7712d2f40bdefa2835d4d4cc9f24e4ad713da8c4b2fe57cfa8add40fdc97db00",
    "static_walls": [],
-   "verdict": "refused-unsupported"
+   "verdict": "refused-libc"
   },
   {
    "detail": "unary operator '~'",
@@ -514,7 +514,7 @@
    "verdict": "refused-unsupported"
   },
   {
-   "detail": "unsequenced side effects in binary operands",
+   "detail": "id27",
    "manifest_status": "parsed",
    "name": "20000801-2.c",
    "sha256": "c9a6d4624d1532eeab33fa70e1a4cb7ce601854092cf7f5bd1927415a6c360c6",
@@ -522,7 +522,7 @@
     "assignment-call",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "refused-libc"
   },
   {
    "detail": "unbound declaration 'id38' (name 's')",
@@ -620,7 +620,7 @@
    "verdict": "not-parsed"
   },
   {
-   "detail": "unsequenced side effects in binary operands",
+   "detail": "out of tier: StmtExpr",
    "manifest_status": "parsed",
    "name": "20000917-1.c",
    "sha256": "af46d094c68fe6e9cb0e7a37fcc6b7deaf727e946d32c609c5295a5c6371248c",
@@ -776,7 +776,7 @@
    "verdict": "refused-unsupported"
   },
   {
-   "detail": "unsequenced side effects in binary operands",
+   "detail": "",
    "manifest_status": "parsed",
    "name": "20001130-1.c",
    "sha256": "10bdc986464fded284df081c0fafb5ac37a3510fbeef8d117f36455c5921791d",
@@ -784,7 +784,7 @@
     "assignment-call",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "detail": "out of tier: SwitchStmt",
@@ -902,7 +902,7 @@
    "verdict": "refused-libc"
   },
   {
-   "detail": "unsequenced side effects in binary operands",
+   "detail": "indirect call through a non-FunctionDecl reference",
    "manifest_status": "parsed",
    "name": "20010122-1.c",
    "sha256": "4210cf56b3c94ef460267f46d90d50035f8925bf925a60ee015024c4403ae9f1",
@@ -970,7 +970,7 @@
    "verdict": "refused-libc"
   },
   {
-   "detail": "unsequenced side effects in binary operands",
+   "detail": "id25",
    "manifest_status": "parsed",
    "name": "20010224-1.c",
    "sha256": "5550548c308e4dff8b1524a50346835e5b1c5e506b211bd4707d4ff687ff039d",
@@ -978,7 +978,7 @@
     "assignment-call",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "refused-libc"
   },
   {
    "detail": "not an lvalue: StringLiteral",
@@ -1557,7 +1557,7 @@
    "verdict": "refused-unsupported"
   },
   {
-   "detail": "unsequenced side effects in binary operands",
+   "detail": "",
    "manifest_status": "parsed",
    "name": "20020402-3.c",
    "sha256": "5ab1e0c0dcc433fcbce0f41e7eef7a06250ae9047e8ce766d27187ad5fcc1fdc",
@@ -1565,7 +1565,7 @@
     "assignment-call",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "detail": "/tmp/ls-c-torture-g0/9e54d865af9361413b9c84e11dddfe652cb4ca81/src/20020404-1.c:11:27: error: expected identifier",
@@ -1576,7 +1576,7 @@
    "verdict": "not-parsed"
   },
   {
-   "detail": "unsequenced side effects in binary operands",
+   "detail": "id25",
    "manifest_status": "parsed",
    "name": "20020406-1.c",
    "sha256": "34df7369b73cbc4f119553b58f5fa4fe373fa108f9c3d790a62e997f6a9b8816",
@@ -1587,7 +1587,7 @@
     "type-layout",
     "unsequenced-effects"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "refused-libc"
   },
   {
    "detail": "no layout for declared type '_Complex double[1]'",
@@ -1641,7 +1641,7 @@
    "verdict": "refused-libc"
   },
   {
-   "detail": "unsequenced side effects in binary operands",
+   "detail": "pointer used as an integer (no ptr\u2194int cast in tier)",
    "manifest_status": "parsed",
    "name": "20020503-1.c",
    "sha256": "faa87d6b8a37a51510f77989304f7d5fa64607b82bb8ea8a6822225d350f41bf",
@@ -1692,7 +1692,7 @@
    "verdict": "passed"
   },
   {
-   "detail": "unsequenced side effects in binary operands",
+   "detail": "id31",
    "manifest_status": "parsed",
    "name": "20020529-1.c",
    "sha256": "4f1736545a78454520641f373c2b81155a0afcc6ef6f8fc52df56d4f3b8cdc35",
@@ -1701,7 +1701,7 @@
     "type-layout",
     "unsupported:SwitchStmt"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "refused-libc"
   },
   {
    "detail": "id24",
@@ -1741,7 +1741,7 @@
    "verdict": "refused-unsupported"
   },
   {
-   "detail": "unsequenced side effects in binary operands",
+   "detail": "out of tier: NullStmt",
    "manifest_status": "parsed",
    "name": "20020716-1.c",
    "sha256": "6f64cb17fa8b395c02385f85f9110ed4ea0472109bb3c711090dd7d962522bd8",
@@ -2130,7 +2130,7 @@
    "verdict": "refused-libc"
   },
   {
-   "detail": "unsequenced side effects in binary operands",
+   "detail": "out of tier: SwitchStmt",
    "manifest_status": "parsed",
    "name": "20030313-1.c",
    "sha256": "03c9b1ca6b81a7d22b5b6ba53944ed307b482a794d42c91d468f8762b10034c0",
@@ -2169,12 +2169,12 @@
    "verdict": "passed"
   },
   {
-   "detail": "unsequenced side effects in binary operands",
+   "detail": "",
    "manifest_status": "parsed",
    "name": "20030401-1.c",
    "sha256": "6396b9273c8663815c02bab6f81e2456beb1b06f5596b226625974c7b92a8ed5",
    "static_walls": [],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "detail": "",
@@ -2537,12 +2537,12 @@
    "verdict": "refused-unsupported"
   },
   {
-   "detail": "unsequenced side effects in binary operands",
+   "detail": "",
    "manifest_status": "parsed",
    "name": "20031216-1.c",
    "sha256": "206e714da9d6d8a06a60bd604bcfe594dee681e26e340a1ced922e3c587fd308",
    "static_walls": [],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "detail": "no layout for declared type 'long double'",
@@ -2839,7 +2839,7 @@
    "verdict": "refused-unsupported"
   },
   {
-   "detail": "unsequenced side effects in binary operands",
+   "detail": "id24",
    "manifest_status": "parsed",
    "name": "20040805-1.c",
    "sha256": "198e9b0dc6d142d80e7358a32189d7e573aa6f54491412ccd1b8cdbd2debcae7",
@@ -2847,7 +2847,7 @@
     "assignment-call",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "refused-libc"
   },
   {
    "detail": "out of tier: NullStmt",

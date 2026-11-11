@@ -102,8 +102,12 @@ def static_walls(env):
 
 
 def load_manifest(path):
-    raw = Path(path).read_bytes()
-    data = json.loads(raw)
+    data = json.loads(Path(path).read_text())
+    # `cache` is an execution location, not part of the frozen manifest's
+    # identity.  Hash the pin and test records only so an outside cache under
+    # /tmp (or a different machine) produces the same survey provenance.
+    identity = {k: v for k, v in data.items() if k != "cache"}
+    raw = json.dumps(identity, sort_keys=True, separators=(",", ":")).encode()
     return data, hashlib.sha256(raw).hexdigest()
 
 

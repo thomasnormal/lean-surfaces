@@ -2,10 +2,10 @@
 
 Generated from the pinned `gcc.c-torture/execute` August 300-test manifest.
 
-- verdicts: 30/300 scored (passed 30, failed 0)
-- manifest SHA-256: `33aa92be14205ed07df2a2df9c4a937c64c4df9d20aa63eefb34f96ae5951157`
-- measured commit: `3ccd4f100`
-- measured at: `2026-11-11T23:20:17Z`
+- verdicts: 34/300 scored (passed 34, failed 0)
+- manifest SHA-256: `94e82042f4a8170f60f31ed1fb01f322efeb3b65582a4ec195f02f03ee2fa744`
+- measured commit: `b7e399d33`
+- measured at: `2026-11-11T23:35:00Z`
 
 ## Verdict counts
 
@@ -13,10 +13,10 @@ Generated from the pinned `gcc.c-torture/execute` August 300-test manifest.
 | --- | ---: |
 | `not-ingested` | 1 |
 | `not-parsed` | 30 |
-| `passed` | 30 |
-| `refused-libc` | 80 |
+| `passed` | 34 |
+| `refused-libc` | 86 |
 | `refused-ub` | 6 |
-| `refused-unsupported` | 151 |
+| `refused-unsupported` | 141 |
 | `timeout` | 2 |
 
 ## Static wall ranking

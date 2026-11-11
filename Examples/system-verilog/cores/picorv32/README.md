@@ -1571,6 +1571,44 @@ admission wall.  The first retained unsupported process is still the earlier
 `TimedStatement:ImplicitEventControl` boundary for `always @*` at
 `pcpi_mul_wait`, so no E execution or retirement trace is claimed yet.
 
+## 2026-11-11 re-probe after time-zero `always @*` retention
+
+Public master was `838e74503848344c6846ff956ec6e21cdb9f9ef7` when the pinned
+YosysHQ source was re-extracted.  The source remains commit
+`ef203c2b0a3fb793280f5114941416c425c5b461`, with SHA-256
+`0836050971b3c6cdd28ac3b1e5719a67fb645161912bef1e472e63995ceb062`.  To
+regenerate the envelope from the unchanged source, set `PINNED_PICORV32` to
+the read-only YosysHQ checkout and run:
+
+```text
+python3 extractors/sv/extract.py --top picorv32 \
+  -o picorv32-after-481.sv.json "$PINNED_PICORV32/picorv32.v"
+```
+
+The regenerated envelope is 3,024,548 bytes with SHA-256
+`2a676f30f2bbe060932112856f9c828acc1b2c5b52fda8933bb58f4c775684ac`.
+The source-shaped extractor now retains the `AlwaysEvent` at
+`pcpi_mul_wait`; its other non-admitted `always @*` shapes remain explicit
+unsupported nodes.
+
+The loaded symbolic design has 216 declarations, 43 processes, three generate
+entries and 32 retained module-member records.  Its E elaboration first
+refuses at `picorv32.v:203`:
+
+```text
+unsupported "Instantiate"
+  "decl 'cpuregs': unpacked array storage outside E (UnpackedDecl:memory)"
+```
+
+`instantiateE2` reports the same `cpuregs` declaration boundary.  The retired
+source-shaped MemCycle adapter reaches the retained event and then reports
+`ProceduralBlockSymbol:Always: source-level event-controlled always is retained;
+the frozen process AST has no event-list constructor`; this is a legacy-route
+guard, not an E execution result.  No E execution, retirement trace or
+symbolic ADDI invariant is claimed.  The next generic E wall is therefore the
+already-pinned one-rank unpacked `cpuregs` storage, while the continuous-driver
+`always @*` wall is closed at extraction.
+
 ## Current rung state
 
 * **R0 — ISA:** the executable RV32I model and byte-memory lemmas compile;
@@ -1586,8 +1624,7 @@ admission wall.  The first retained unsupported process is still the earlier
 * **R4 — out-of-order superscalar:** no RSD (or comparable-core) theorem is
   proved.
 
-The next wall is the current E route's retained
-`TimedStatement:ImplicitEventControl` refusal for PicoRV32's `always @*`
-process at `pcpi_mul_wait`; the ordinary route still has the `cpuregs`
-unpacked-memory wall, and the provisional memory route still reports its two
-schedule guards.
+The next wall is the E route's `cpuregs` unpacked-memory declaration at
+`picorv32.v:203`; the legacy source-shaped memory route also has its explicit
+retained-event guard, but it is not an E meaning.  The old guard-bypassed
+80-cycle result remains **UNVALIDATED**.

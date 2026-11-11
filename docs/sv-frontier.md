@@ -87,6 +87,15 @@ non-cell edge targets, and other process forms; the provisional `MemCycle`
 route remains the labelled test executor until the general memory step is
 complete.
 
+The same E memory profile now issues whole-signal NBAs from an edge body and
+commits them alongside cell NBAs. `MemEUpdate.scalar` keeps the RHS evaluated
+from the pre-edge scalar state at the declared destination width; the source
+`PStmt.nbaAssign` node remains intact and no scalar target is fabricated as a
+memory cell. The clean-room `sem2/memory_scalar_nba_e` receipt writes a scalar
+and `mem[0]` together and matches five rows in Icarus 13.0 and Xcelium
+24.03-s004 through the readiness gate. Blocking assignments and unsupported
+targets remain loud.
+
 `MemElab` now resolves one-rank `PLhs.arrayElem` targets against source labels
 and delegates their reads and writes to `MemState`, with guards for an updated
 cell and an out-of-range all-x/no-op access. Dynamic indices, partial array

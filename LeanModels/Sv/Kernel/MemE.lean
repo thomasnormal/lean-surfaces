@@ -134,9 +134,18 @@ def memETarget (d : MemEDesign) (s : MemEState) : PLhs → Except String (Option
   | .arrayPart .. => .error "memory target part select is outside the one-rank E profile"
   | _ => .error "target is not an unpacked memory cell"
 
+def MemEDesign.scalarWidth? (d : MemEDesign) (name : String) : Except String Nat :=
+  match d.decls.find? (fun dc => dc.name == name) with
+  | some dc => .ok dc.width
+  | none => .error s!"scalar NBA target '{name}' is not a declared scalar"
+
 mutual
 
 def execMemEStmt (d : MemEDesign) (s : MemEState) : PStmt → Except String (List MemEUpdate)
+  | .nbaAssign name value => do
+      let width ← d.scalarWidth? name
+      let v ← evalMemEExpr d s (some width) value
+      .ok [.scalar name v]
   | .nbaAssignL target value => do
       let target? ← memETarget d s target
       match target? with
@@ -151,8 +160,8 @@ def execMemEStmt (d : MemEDesign) (s : MemEState) : PStmt → Except String (Lis
       let cv ← evalMemEExpr d s (some 1) cond
       if cv.condTrue then execMemEStmt d s yes else execMemEStmtOpt d s no
   | .block body => execMemEStmtList d s body
-  | .nbaAssign _ _ | .blockingAssign _ _ | .blockingAssignL _ _ =>
-      .error "E memory edge body requires an unpacked-cell NBA"
+  | .blockingAssign _ _ | .blockingAssignL _ _ =>
+      .error "E memory edge body requires an NBA assignment"
   | .caseStmt .. => .error "E memory edge case is outside the first memory profile"
   | .forLoop .. => .error "E memory edge loop is outside the first memory profile"
   | .unsupported k _ => .error s!"unsupported statement '{k}'"

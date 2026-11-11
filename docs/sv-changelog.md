@@ -1,5 +1,16 @@
 # [unreleased] — 2026-11-04 (an Sv landing builds the comb chain above it)
 
+## Whole-signal NBAs in the first E memory profile — 2026-11-11
+
+`LeanModels.Sv.Kernel.MemE` now handles the parser's whole-signal
+`PStmt.nbaAssign` in an edge body. The RHS is evaluated from the pre-edge
+scalar state at the declared destination width and queued as `MemEUpdate.scalar`,
+then committed with source-shaped memory-cell NBAs before continuous reads
+settle. `sem2/memory_scalar_nba_e` covers a scalar and an unpacked cell in one
+active-low-reset edge body; its five rows match Icarus 13.0 and Xcelium
+24.03-s004 through the readiness gate. Blocking assignments and unsupported
+targets remain loud.
+
 ## First unpacked-memory cycle in E — 2026-11-11
 
 `LeanModels.Sv.Kernel.MemE` now executes the narrow source-shaped FIFO memory

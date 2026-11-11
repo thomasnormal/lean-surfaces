@@ -17,7 +17,9 @@ Pointer equality now refuses the placement-dependent case where a one-past
 pointer is compared with the start of a different object. Other unrelated
 object pointers still compare unequal, and equality within one object keeps
 its existing identity-and-offset behavior. The differential row pins the
-refusal against Clang 21.1.8.
+refusal against Clang 21.1.8. Revalidated 2026-11-11 with the pinned
+Clang/LLVM 21.1.8 oracle: `adjacent-one-past-equality REFUSE`, while the
+native witness exited 0.
 
 ## 2026-11-11-c-record-attributes-dropped — packed and aligned records
 

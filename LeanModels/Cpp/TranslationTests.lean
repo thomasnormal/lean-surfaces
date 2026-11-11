@@ -525,6 +525,15 @@ private def unsignedCharTypeAliasExecutionTranslation : Artifact := {emptyTransl
         ("type", .object [("qualType", .string "unsigned char")]),
         ("inner", .array [unsignedCharBuiltinType])]])]}
 
+private def unsignedCharTypedefExecutionTranslation : Artifact := {emptyTranslation with
+  ast := .object [
+    ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
+    ("inner", .array [
+      .object [("id", .string "a"), ("kind", .string "TypedefDecl"),
+        ("name", .string "UC"),
+        ("type", .object [("qualType", .string "unsigned char")]),
+        ("inner", .array [unsignedCharBuiltinType])]])]}
+
 private def charTypedefExecutionTranslation : Artifact := {emptyTranslation with
   ast := .object [
     ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
@@ -2269,6 +2278,9 @@ def unsignedLongTypedefTranslationExecution : Except String Unit :=
 def signedCharTypeAliasTranslationExecution : Except String Unit :=
   execute signedCharTypeAliasExecutionTranslation "a"
 
+def unsignedCharTypedefTranslationExecution : Except String Unit :=
+  execute unsignedCharTypedefExecutionTranslation "a"
+
 def unsignedCharTypeAliasTranslationExecution : Except String Unit :=
   execute unsignedCharTypeAliasExecutionTranslation "a"
 
@@ -3693,6 +3705,7 @@ def staticAssertTranslationWitness : Except String Unit :=
 #guard charTypeAliasTranslationExecution matches .ok ()
 #guard charTypedefTranslationExecution matches .ok ()
 #guard unsignedCharTypeAliasTranslationExecution matches .ok ()
+#guard unsignedCharTypedefTranslationExecution matches .ok ()
 #guard signedCharTypeAliasTranslationExecution matches .ok ()
 #guard unsignedLongTypedefTranslationExecution matches .ok ()
 #guard longTypedefTranslationExecution matches .ok ()
@@ -3821,6 +3834,9 @@ theorem char_typedef_translation_executes :
 
 theorem unsigned_char_type_alias_translation_executes :
     unsignedCharTypeAliasTranslationExecution = .ok () := rfl
+
+theorem unsigned_char_typedef_translation_executes :
+    unsignedCharTypedefTranslationExecution = .ok () := rfl
 
 theorem signed_char_type_alias_translation_executes :
     signedCharTypeAliasTranslationExecution = .ok () := rfl

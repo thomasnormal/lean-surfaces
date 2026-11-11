@@ -19,6 +19,8 @@ coverage advance independently from the Python tier.
 
 ### Added
 
+- `typedef unsigned char UC;` now executes through matching structured `BuiltinType` evidence, completing the unsigned-char alias and typedef pair.
+
 - `using SC = signed char;` now executes through matching structured `BuiltinType` evidence; signedness is retained only from Clang's node and never inferred.
 
 - `typedef char C;` now executes through matching structured `BuiltinType` evidence, completing the char alias and typedef pair.

@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Revalidated leanpy pinning: the runner requires CPython 3.9 for frontend and
+  default oracle, reports both versions, and the pinned whole-file comparison
+  matches; survey fallbacks remain explicit warnings.
+
 - Revalidated the general ingestion bridge audit: retired display/raise-cause/
   yield-from/try rewrites remain absent, while f-string format workers,
   multi-item `with`, delete markers, chain splitting, consuming dict-view

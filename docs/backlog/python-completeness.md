@@ -13793,3 +13793,21 @@ case.
 DECIDED: keep `py-general-ingestion-rewrites` open as a medium rule-2
 refactoring queue; replace each bridge with a native source-node case before
 widening admission.
+## 2026-11-11-pyfoundation-92 — close leanpy oracle/frontend pinning audit
+
+The low `py-leanpy-oracle-unpinned` finding is already fixed. `tools/leanpy`
+re-executes under CPython 3.9 for extraction, requires the pinned interpreter
+for the default comparison oracle, reports frontend and oracle versions, and
+refuses when the pin is unavailable. `leanpy_survey.py` keeps its selectable
+oracle override but warns on fallback. The pinned `gen_script.py --compare`
+run reports CPython 3.9.25 for both and MATCHes.
+
+| Measurement | Result |
+|---|---|
+| Whole-file comparison | frontend/oracle 3.9.25; MATCH, exit 0 |
+| Missing-pin behavior | plain loud refusal rather than silent fallback |
+| Survey behavior | explicit fallback warning and selectable `--cpython` override |
+| Semantic change | none; audit closure only |
+
+DECIDED: close `py-leanpy-oracle-unpinned`; retain explicit alternate-oracle
+selection only when requested via `LEANPY_CPYTHON`/`--cpython`.

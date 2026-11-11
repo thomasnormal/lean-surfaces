@@ -78,4 +78,22 @@ theorem typed_after_any_profile_slot {ch : Choice} {s : Store} {entry : SvState}
       edge.base.Typed c'.store := by
   exact closes1 edge_profile ch hT entry
 
+/- Concrete E observations for the reset/base and enabled increment cases.
+   These are source-shaped execution guards, not a replacement for the
+   invariant theorem above. -/
+def openSlot (init : List (String × LVec)) (entry : SvState) : Config1 :=
+  Config1.nextSlot edge
+    { store := init.foldl (fun s nv => edge.base.setName s nv.1 nv.2)
+        edge.base.initStore, active := [], nba := [] }
+    entry
+
+#guard Core1Smoke.show1 edge ["q"] (exec1 edge σ_src 10
+    (openSlot [("clk", .ofNat 1 0), ("rst", .ofNat 1 1),
+      ("en", .ofNat 1 0), ("q", .ofNat 4 13)]
+      [("clk", .ofNat 1 1)])) == some ["0000"]
+#guard Core1Smoke.show1 edge ["q"] (exec1 edge σ_src 10
+    (openSlot [("clk", .ofNat 1 0), ("rst", .ofNat 1 0),
+      ("en", .ofNat 1 1), ("q", .ofNat 4 13)]
+      [("clk", .ofNat 1 1)])) == some ["1110"]
+
 end Examples.«system-verilog».sem2.clk_cnt_e.proof

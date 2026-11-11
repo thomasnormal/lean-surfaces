@@ -18,6 +18,9 @@ profile, and proves that every closed process-atomic slot preserves E's typed
 state invariant. This is the first F2 base/step theorem over a loaded RTL;
 the value-level counter safety statement remains the next refinement.
 
+The receipt also pins two kernel E observations: synchronous reset produces
+`q=0000`, and an enabled edge increments `q=1101` to `q=1110`.
+
 ## Guarded asynchronous reset events — 2026-11-10
 
 The symbolic loader now keeps an explicit `AlwaysPosedge:reset-iff`

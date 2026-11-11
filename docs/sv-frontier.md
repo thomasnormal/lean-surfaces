@@ -464,6 +464,12 @@ using `Steps1.typed`. This is the base and one-cycle preservation seam for a
 value-level counter safety property; it does not replace the RTL with the
 abstract `SafetySmoke` counter.
 
+The same receipt now checks two concrete E edge observations through the
+kernel executor: synchronous reset drives `q` to `0000`, and an enabled edge
+increments a concrete `q=1101` state to `1110`. These rows exercise the loaded
+body and its NBA commit directly; they are the finite trace evidence beside
+the unbounded typed-state step theorem.
+
 The same seam now has a parameterized FIFO occupancy model,
 `SafetySmoke.fifoCounter`. Its reset base and one-cycle step prove
 `occupancy ≤ depth`, including the full/empty no-op cases for push/pop inputs.

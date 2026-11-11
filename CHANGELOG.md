@@ -39,6 +39,9 @@
   envelopes, preventing designated elements from being shifted. Older
   initializer envelopes without the field must be re-extracted.
 
+- Refused C pointer equality when a one-past pointer is compared with the
+  start of a different object, whose result depends on unspecified placement.
+
 - Fixed the TinyXML-2 coverage caller's C++ runtime linkage so its
   provenance-verified native calls can run when the system runtime is older.
 

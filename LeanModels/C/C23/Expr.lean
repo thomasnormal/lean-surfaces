@@ -581,8 +581,12 @@ def evalArith (ctx : Ctx) (op : String) (lv rv : CVal) (ty : CType) : EvalM CVal
   -- §6.5.10p7 vs §6.5.9p6 — the asymmetry: `==`/`!=` across unrelated
   -- objects is DEFINED, `<` and friends are UNDEFINED.
   | .ptr a, .ptr b =>
-      if op == "==" then pure (ofBool (Mem.ptrEq a b))
-      else if op == "!=" then pure (ofBool (!Mem.ptrEq a b))
+      if op == "==" || op == "!=" then do
+        let boundary ← readMem (fun m => .ok (Mem.ptrEqBoundary m a b))
+        if boundary then
+          refuseUnsupported "pointer equality at an unspecified adjacent boundary"
+        else if op == "==" then pure (ofBool (Mem.ptrEq a b))
+        else pure (ofBool (!Mem.ptrEq a b))
       else if op == "<" then do let c ← readMem (fun _ => Mem.ptrLt a b); pure (ofBool c)
       else if op == ">" then do let c ← readMem (fun _ => Mem.ptrLt b a); pure (ofBool c)
       else if op == "<=" then do let c ← readMem (fun _ => Mem.ptrLt b a); pure (ofBool (!c))
@@ -1311,6 +1315,11 @@ theorem refuseUnsupported' (what : String) :
   rw [EvalM.run_refuseUnsupported] at h
   simp at h
 
+theorem ite' {p : Prop} [Decidable p] {x y : EvalM α}
+    (hx : MemInvariant x) (hy : MemInvariant y) :
+    MemInvariant (if p then x else y) := by
+  split <;> assumption
+
 /-- The composition rule, and the refusal branch is where the layer order
 becomes visible: the head's out-memory is `m` by `hx` applied **to the
 refusal result**, which is exactly the quantifier `MemInvariant` carries. -/
@@ -1393,6 +1402,9 @@ theorem evalArith' (ctx : Ctx) (op : String) (lv rv : CVal) (ty : CType) :
     | exact refuseUnsupported' _
     | exact intBinop' _ _ _ _
     | exact bind (readMem' _) fun _ => pure' _
+    | exact bind (readMem' _) fun _ =>
+        ite' (refuseUnsupported' _) (pure' _)
+    | exact ite' (refuseUnsupported' _) (pure' _)
 
 end MemInvariant
 

@@ -498,11 +498,23 @@ same operands, which is the kind of thing a model gets wrong by being
 tidy. -/
 
 /-- **C23 §6.5.10p7 — equality.** Comparing pointers into unrelated
-objects is fully DEFINED; they simply compare unequal. (The standard even
-allows a one-past-the-end pointer to compare equal to a pointer to a
-different object that happens to follow it — a case this model cannot
-produce, since it has no address to coincide with.) -/
+objects is fully DEFINED; they simply compare unequal, except for the
+placement-dependent one-past/start case. The memory model has no concrete
+addresses, so that case is detected and refused rather than assigned a
+false result. -/
 def ptrEq (a b : Ptr) : Bool := a == b
+
+def ptrEqBoundary (m : Mem) (a b : Ptr) : Bool :=
+  match a.obj, b.obj with
+  | some x, some y =>
+      if x == y then false
+      else
+        let onePast (p : Ptr) (o : ObjId) :=
+          match m.get? o with
+          | some c => p.off == c.size
+          | none => false
+        (onePast a x && b.off == 0) || (onePast b y && a.off == 0)
+  | _, _ => false
 
 /-- **C23 §6.5.9p6 — relational.** Comparing pointers into DIFFERENT
 objects with `<`, `>`, `<=` or `>=` is UNDEFINED — "in all other cases,

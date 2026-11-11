@@ -11,6 +11,14 @@ survive the race §9.5 retires.
 lane's history is §L35, §L40, §L42, §L50, §L54, §L57, §L72 and §L83, and every
 one of those references keeps resolving.
 
+## 2026-11-11-c-ptr-eq-adjacent — one-past pointer equality
+
+Pointer equality now refuses the placement-dependent case where a one-past
+pointer is compared with the start of a different object. Other unrelated
+object pointers still compare unequal, and equality within one object keeps
+its existing identity-and-offset behavior. The differential row pins the
+refusal against Clang 21.1.8.
+
 ---
 
 ## 2026-11-11-c-torture-main-return-ignored — scorer exit status

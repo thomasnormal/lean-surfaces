@@ -56,6 +56,10 @@ def svaValueWidth (env : IEnv) (elems : List (String × Nat)) : PSvaValue → Op
   let allElems := elems ++ env.widths
   let rec width : PSvaValue → Option Nat
     | .current value | .past _ value | .countOnes value => selfWidth2 env allElems value
+    | .paramCast parameter _ =>
+        match env.intVal? parameter with
+        | some value => if 0 ≤ value then some value.toNat else none
+        | none => none
     | .binary _ left right =>
       match width left, width right with
       | some a, some b => some (max a b)
@@ -71,6 +75,11 @@ def instantiateValueAt (env : IEnv) (elems : List (String × Nat))
     | .current value => .current (instExpr2 env allElems ctx value)
     | .past cycles value => .past cycles (instExpr2 env allElems ctx value)
     | .countOnes value => .countOnes (instExpr2 env allElems ctx value)
+    | .paramCast parameter value =>
+        let width := match env.intVal? parameter with
+          | some n => if 0 ≤ n then some n.toNat else none
+          | none => none
+        .paramCast width (go value)
     | .binary op left right => .binary op (go left) (go right)
   exact go
 

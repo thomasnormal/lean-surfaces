@@ -1,0 +1,339 @@
+{
+  "schema_version": "sv-0.2",
+  "language": "systemverilog",
+  "frontend": {
+    "name": "pyslang",
+    "family": "pyslang-11"
+  },
+  "mode": "symbolic",
+  "top": "sva_param_cast",
+  "source_files": [
+    {
+      "path": "Examples/system-verilog/sem2/sva_param_cast/sva_param_cast.sv",
+      "sha256": "b8f4e7be0636f40d18240844070418b6e9cad94b8e232f5fe1e1c8507f73aa03"
+    }
+  ],
+  "packages": [],
+  "design": {
+    "kind": "Design",
+    "modules": [
+      {
+        "kind": "Module",
+        "span": {
+          "line": 2,
+          "col": 1,
+          "end_line": 11,
+          "end_col": 10
+        },
+        "name": "sva_param_cast",
+        "imports": [],
+        "params": [
+          {
+            "kind": "ParameterDecl",
+            "span": {
+              "line": 3,
+              "col": 17,
+              "end_line": 3,
+              "end_col": 22
+            },
+            "name": "N",
+            "type": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 3,
+                      "col": 17,
+                      "end_line": 3,
+                      "end_col": 22
+                    },
+                    "value": 31,
+                    "resolved_width": 32
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 3,
+                      "col": 17,
+                      "end_line": 3,
+                      "end_col": 22
+                    },
+                    "value": 0,
+                    "resolved_width": 32
+                  }
+                }
+              ],
+              "resolved": 32
+            },
+            "default": {
+              "kind": "Int",
+              "span": {
+                "line": 3,
+                "col": 21,
+                "end_line": 3,
+                "end_col": 22
+              },
+              "value": 4,
+              "resolved_width": 32
+            },
+            "resolved": 4
+          }
+        ],
+        "types": [],
+        "ports": [
+          {
+            "kind": "Port",
+            "span": {
+              "line": 5,
+              "col": 15,
+              "end_line": 5,
+              "end_col": 18
+            },
+            "name": "clk",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 6,
+              "col": 23,
+              "end_line": 6,
+              "end_col": 24
+            },
+            "name": "a",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Binary",
+                    "span": {
+                      "line": 6,
+                      "col": 16,
+                      "end_line": 6,
+                      "end_col": 19
+                    },
+                    "width": null,
+                    "op": "-",
+                    "left": {
+                      "kind": "ParamRef",
+                      "span": {
+                        "line": 6,
+                        "col": 16,
+                        "end_line": 6,
+                        "end_col": 17
+                      },
+                      "name": "N"
+                    },
+                    "right": {
+                      "kind": "Int",
+                      "span": {
+                        "line": 6,
+                        "col": 18,
+                        "end_line": 6,
+                        "end_col": 19
+                      },
+                      "value": 1,
+                      "resolved_width": null
+                    }
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 6,
+                      "col": 20,
+                      "end_line": 6,
+                      "end_col": 21
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 4
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 7,
+              "col": 24,
+              "end_line": 7,
+              "end_col": 25
+            },
+            "name": "q",
+            "dir": "out",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Binary",
+                    "span": {
+                      "line": 7,
+                      "col": 17,
+                      "end_line": 7,
+                      "end_col": 20
+                    },
+                    "width": null,
+                    "op": "-",
+                    "left": {
+                      "kind": "ParamRef",
+                      "span": {
+                        "line": 7,
+                        "col": 17,
+                        "end_line": 7,
+                        "end_col": 18
+                      },
+                      "name": "N"
+                    },
+                    "right": {
+                      "kind": "Int",
+                      "span": {
+                        "line": 7,
+                        "col": 19,
+                        "end_line": 7,
+                        "end_col": 20
+                      },
+                      "value": 1,
+                      "resolved_width": null
+                    }
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 7,
+                      "col": 21,
+                      "end_line": 7,
+                      "end_col": 22
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 4
+            }
+          }
+        ],
+        "decls": [],
+        "processes": [
+          {
+            "kind": "Assign",
+            "span": {
+              "line": 9,
+              "col": 10,
+              "end_line": 9,
+              "end_col": 15
+            },
+            "target": {
+              "kind": "Ident",
+              "span": {
+                "line": 9,
+                "col": 10,
+                "end_line": 9,
+                "end_col": 11
+              },
+              "width": 4,
+              "name": "q"
+            },
+            "value": {
+              "kind": "Ident",
+              "span": {
+                "line": 9,
+                "col": 14,
+                "end_line": 9,
+                "end_col": 15
+              },
+              "width": 4,
+              "name": "a"
+            }
+          }
+        ],
+        "generates": [],
+        "others": [],
+        "properties": [
+          {
+            "kind": "SvaProperty",
+            "span": {
+              "line": 10,
+              "col": 3,
+              "end_line": 10,
+              "end_col": 66
+            },
+            "name": "",
+            "property_kind": "assert",
+            "clock": "clk",
+            "text": "assert property (@(posedge clk) a |-> a > (N'(1) << $past(a)));",
+            "ast": {
+              "kind": "SvaCheck",
+              "property_kind": "assert",
+              "edge": "posedge",
+              "clock": "clk",
+              "property": {
+                "kind": "SvaImplication",
+                "antecedent": {
+                  "kind": "SvaAtom",
+                  "test": {
+                    "kind": "SvaExpr",
+                    "expr": {
+                      "kind": "Ident",
+                      "name": "a"
+                    }
+                  }
+                },
+                "consequent": {
+                  "kind": "SvaAtom",
+                  "test": {
+                    "kind": "SvaValueCmp",
+                    "op": ">",
+                    "left": {
+                      "kind": "SvaCurrent",
+                      "expr": {
+                        "kind": "Ident",
+                        "name": "a"
+                      }
+                    },
+                    "right": {
+                      "kind": "SvaValueBinary",
+                      "op": "<<",
+                      "left": {
+                        "kind": "SvaParamCast",
+                        "parameter": "N",
+                        "value": {
+                          "kind": "SvaCurrent",
+                          "expr": {
+                            "kind": "Int",
+                            "value": 1
+                          }
+                        }
+                      },
+                      "right": {
+                        "kind": "SvaPastValue",
+                        "cycles": 1,
+                        "expr": {
+                          "kind": "Ident",
+                          "name": "a"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    ],
+    "others": []
+  },
+  "lean_blocks": []
+}

@@ -31,6 +31,9 @@ inductive SvaValue where
   | current (value : Expr2)
   | past (cycles : Nat) (value : Expr2)
   | countOnes (value : Expr2)
+  /-- A parameter-sized cast after the parameter point has been selected.
+      `none` is retained as a loud unbound/invalid-width boundary. -/
+  | paramCast (width : Option Nat) (value : SvaValue)
   | binary (op : BinOp) (left right : SvaValue)
 deriving Repr, Inhabited
 
@@ -197,6 +200,10 @@ def SvaValue.eval (trace : List SvState) (index : Nat) : SvaValue →
   | .countOnes value => do
       let some v ← exprAt trace index value | .ok none
       .ok (some (LVec.ofNat 32 (v.bits.toList.countP (fun b => b == Logic.l1))))
+  | .paramCast none _ => .error "SVA: parameter-sized cast has no concrete width"
+  | .paramCast (some width) value => do
+      let some v ← value.eval trace index | .ok none
+      .ok (some (v.resizeU width))
   | .binary op left right => do
       let some l ← left.eval trace index | .ok none
       let some r ← right.eval trace index | .ok none

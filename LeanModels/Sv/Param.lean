@@ -577,6 +577,11 @@ inductive PSvaValue where
   | current (value : PExpr)
   | past (cycles : Nat) (value : PExpr)
   | countOnes (value : PExpr)
+  /-- A parameter-sized integral cast retained inside a sampled value.  The
+      width is evaluated at the concrete parameter point by the SVA contract;
+      keeping the parameter name here avoids folding it at the extractor's
+      default point. -/
+  | paramCast (parameter : String) (value : PSvaValue)
   | binary (op : BinOp) (left right : PSvaValue)
 deriving Repr, BEq, Inhabited
 

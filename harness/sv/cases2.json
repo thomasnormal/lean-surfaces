@@ -602,6 +602,26 @@
       "measured": "2026-11-07: fixed-width shift expressions retain the existing SVA value-binary path; parameter-sized casts remain loud."
     },
     {
+      "name": "sva_param_cast",
+      "example": "sem2/sva_param_cast",
+      "top": "sva_param_cast",
+      "clock": "clk",
+      "signals": [
+        "a",
+        "q"
+      ],
+      "stimulus": [
+        {
+          "a": "0000"
+        },
+        {
+          "a": "0010"
+        }
+      ],
+      "verilator_only": true,
+      "measured": "2026-11-11: parameter-sized N'(1) is retained in the sampled SVA value tree and evaluated at the concrete parameter point."
+    },
+    {
       "name": "sva_inside",
       "example": "sem2/sva_inside",
       "top": "sva_inside",

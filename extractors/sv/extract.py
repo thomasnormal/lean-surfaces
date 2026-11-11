@@ -26689,6 +26689,20 @@ def _sva_value(node):
     signal value for the previous cycle.
     """
     node = _sva_unwrap(node)
+    if isinstance(node, dict) and node.get("kind") == "CastExpression":
+        # A parameter-sized integral cast (N'(expr)) is a value operation,
+        # not a default-point width conversion.  Retain the parameter name
+        # and recurse through the operand so the contract can resolve its
+        # width at the selected parameter point.
+        target = node.get("left") or {}
+        if target.get("kind") == "IdentifierName":
+            parameter = (target.get("identifier") or {}).get("text", "")
+            rhs = node.get("right") or {}
+            if rhs.get("kind") == "ParenthesizedExpression":
+                rhs = rhs.get("expression")
+            if parameter and rhs is not None:
+                return {"kind": "SvaParamCast", "parameter": parameter,
+                        "value": _sva_value(rhs)}
     if isinstance(node, dict) and node.get("kind") == "InvocationExpression":
         left = node.get("left", {})
         name = left.get("systemIdentifier", {}).get("text", "")

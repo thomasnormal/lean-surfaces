@@ -192,6 +192,26 @@ endmodule
         self.assertEqual(test["right"]["expr"], {
             "kind": "Literal", "span": None, "width": 2, "bits": "01"})
 
+    def test_parameter_sized_cast_stays_in_sampled_value_tree(self):
+        source = """module top #(parameter int N = 8)
+  (input logic clk, input logic [N-1:0] a, output logic q);
+  assign q = a[0];
+  assert property (@(posedge clk) a |-> a > (N'(1) << $past(a)));
+endmodule
+"""
+        with tempfile.TemporaryDirectory() as directory:
+            src = Path(directory) / "param_cast.sv"
+            out = Path(directory) / "param_cast.sv.json"
+            src.write_text(source)
+            extract.process_symbolic("top", [str(src)], [], str(out))
+            prop = json.loads(out.read_text())["design"]["modules"][0]["properties"][0]
+        value = prop["ast"]["property"]["consequent"]["test"]["right"]
+        self.assertEqual(value["kind"], "SvaValueBinary")
+        self.assertEqual(value["left"], {
+            "kind": "SvaParamCast", "parameter": "N",
+            "value": {"kind": "SvaCurrent", "expr": {"kind": "Int", "value": 1}},
+        })
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -1,5 +1,14 @@
 # [unreleased] — 2026-11-04 (an Sv landing builds the comb chain above it)
 
+## Parameter-sized casts in sampled SVA values — 2026-11-11
+
+The finite SVA value tree now retains a parameter-sized integral cast such as
+`N'(1)` with its parameter name and operand. `SvaContract` resolves the width
+at the concrete parameter point and applies the existing four-state resize
+before sampled arithmetic. The clean-room `sva_param_cast` receipt and its
+Verilator row cover `N'(1) << $past(a)` at `N=4`; an unbound or invalid width
+remains a named SVA error.
+
 ## Whole-signal NBAs in the first E memory profile — 2026-11-11
 
 `LeanModels.Sv.Kernel.MemE` now handles the parser's whole-signal

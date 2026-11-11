@@ -353,12 +353,20 @@ removed from the property AST; eight unrelated property nodes remain outside
 the finite value fragment.
 Sampled order comparisons (`<`, `<=`, `>`, `>=`) now retain temporal operands
 as `SvaValueCmp` and evaluate them at the sampled width. The clean-room
-`sem2/sva_past_cmp` witness covers `a > $past(b)`; the arbiter remains at two
-independent walls for the parameter-sized cast and one system invocation.
+`sem2/sva_past_cmp` witness covers `a > $past(b)`; the arbiter's remaining
+property-expression wall is one system invocation after the parameter cast
+packet below.
 Fixed-width shift expressions now use the existing sampled value-binary path.
 The clean-room `sem2/sva_shift` witness covers `a << 1`; the parameter-sized
-`N'(1)` cast in the arbiter remains loud because its width context is not yet
-represented in the SVA environment.
+cast is retained by the following sampled-value packet.
+Parameter-sized integral casts in sampled values now retain the parameter name
+and operand in the SVA value tree. `SvaContract` resolves the width at the
+concrete parameter point and applies the four-state unsigned resize before the
+sampled shift. The clean-room `sem2/sva_param_cast` witness and Verilator row
+cover `N'(1) << $past(a)` at `N = 4`; missing or negative parameter widths stay
+a named SVA error. This removes the parameter-cast expression wall from the
+finite `prim_arbiter_ppc` property fragment; its unrelated design-level loops,
+unpacked ports, and system-call/dependency walls remain.
 
 F1 acceptance for the first pinned target is now measured: the current
 `prim_fifo_sync` extraction retains all 27 assertion properties and contains

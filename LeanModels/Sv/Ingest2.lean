@@ -766,7 +766,13 @@ def parsePDecl (j : Json) : Except String PDecl := do
           | "in" =>
               if init.isSome then throw "input port with an initializer (a port default) is outside the tier"
               return { name, type := ty, unpackedDims := unpacked, isSigned, twoState, isInput := true }
-          | "out" => return { name := name, type := ty, unpackedDims := unpacked, isSigned := isSigned, twoState := twoState, isOutput := true, init := init, flatBase := flatBase, flatIndex := flatIndex }
+          | "out" =>
+              -- A symbolic output marked `net_as_variable` is still a net
+              -- for IEEE §6.6 startup: undriven bits read z.  Retain that
+              -- fact in the declaration instead of treating the port as a
+              -- variable merely because the hierarchy adapter writes it.
+              let isNet := (getOptField j "net_as_variable").bind (·.getBool?.toOption) |>.getD false
+              return { name := name, type := ty, unpackedDims := unpacked, isSigned := isSigned, twoState := twoState, isOutput := true, isNet := isNet, init := init, flatBase := flatBase, flatIndex := flatIndex }
           | d => throw s!"unknown port dir {d.quote}"
       | "UnpackedDecl" =>
           let init ← match getOptField j "init" with
@@ -1527,6 +1533,27 @@ private def miniExpected : PDesign :=
 
 #guard (loadPDesignString miniEnvelopeText).toOption == some miniExpected
 #guard (parseEnvelope2String miniEnvelopeText).toOption.map (·.top) == some "gen_cnt"
+
+/- A symbolic output port retained as `net_as_variable` is still a net for
+   startup: an uncovered driven window must read z, not x. -/
+private def netOutputPortText : String := r#"{
+  "schema_version":"sv-0.2", "language":"systemverilog",
+  "frontend":{"name":"pyslang","version":"11.0.0"}, "mode":"symbolic", "top":"net_p",
+  "source_files":[], "packages":[], "design":{"kind":"Design","modules":[
+    {"kind":"Module","name":"net_p","imports":[],"params":[],"types":[],
+     "ports":[{"kind":"Port","name":"y","dir":"out","net_as_variable":true,
+       "width":{"kind":"PackedType","packed":[],"resolved":1}}],
+     "decls":[],"processes":[],"generates":[],"others":[]}
+  ],"others":[]}, "lean_blocks":[]}"#
+
+#guard (loadPDesignString netOutputPortText).toOption.map
+    (fun d => d.decls.head?.map (·.isNet)) == some (some true)
+#guard match (loadPDesignString netOutputPortText).toOption with
+  | some d =>
+      let m := d.instantiateD2 []
+      m.decls[0]?.map (fun dc =>
+        SvState.lookup (initState2 m) dc.name == some (LVec.lit "z")) == some true
+  | none => false
 
 -- The metadata cross-check at defaults is clean (what `load_design_sv2`
 -- gates on).

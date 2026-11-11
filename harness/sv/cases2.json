@@ -787,6 +787,20 @@
       "measured": "2026-11-09: a parameterized parent output wire is tiled by source-shaped child output port ranges; the hierarchy route retains both instance drivers and agrees with Icarus and Xcelium."
     },
     {
+      "name": "hierarchy_wire_hole_p3",
+      "example": "sem2/hierarchy_wire_hole",
+      "top": "hierarchy_wire_hole",
+      "params": {
+        "W": 8,
+        "P": 3
+      },
+      "signals": ["a", "y"],
+      "stimulus": [
+        {"a": "10101010"}
+      ],
+      "measured": "2026-11-11: at W=8,P=3 the child port windows leave parent output bit 3 undriven; IEEE 1800-2023 §6.6.1 and Icarus retain that net bit as z, while driven bits follow a."
+    },
+    {
       "name": "hierarchy_parameterized_output_wire_w4",
       "example": "sem2/hierarchy_parameterized",
       "top": "hierarchy_parameterized",

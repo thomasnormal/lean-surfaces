@@ -103,12 +103,33 @@ def read_pin():
     return c["slug"], c["rev"]
 
 
+def paginate_listing(fetch_page):
+    """Collect contents API pages until the first short page."""
+    out = []
+    page = 1
+    while True:
+        got = fetch_page(page)
+        if not isinstance(got, list):
+            return got
+        out.extend(got)
+        if len(got) < 100:
+            return out
+        page += 1
+
+
 def api_listing(slug, rev):
-    url = ("https://api.github.com/repos/%s/contents/%s?ref=%s&per_page=100"
-           % (slug, SUBDIR, rev))
-    req = urllib.request.Request(url, headers={"User-Agent": "lean-surfaces-c-lane"})
-    with urllib.request.urlopen(req, timeout=120) as r:
-        return json.load(r)
+    # GitHub caps one contents response at 1,000 entries even when the
+    # advertised `per_page` is larger.  The GCC execute directory has 1,918
+    # files, so one request silently produced a truncated "all" manifest.
+    # Page until the short response; preserve the API's name records and let
+    # the caller apply the frozen sample limit.
+    def fetch(page):
+        url = ("https://api.github.com/repos/%s/contents/%s?ref=%s&per_page=100&page=%d"
+               % (slug, SUBDIR, rev, page))
+        req = urllib.request.Request(url, headers={"User-Agent": "lean-surfaces-c-lane"})
+        with urllib.request.urlopen(req, timeout=120) as r:
+            return json.load(r)
+    return paginate_listing(fetch)
 
 
 def fetch_one(slug, rev, name, dest):
@@ -240,6 +261,9 @@ def selftest():
         check("guard allows an outside path", "allowed", "allowed")
     except SystemExit:
         check("guard allows an outside path", "refused", "allowed")
+    pages = paginate_listing(lambda page: ([{"name": str(i)} for i in range(100)]
+                                           if page == 1 else [{"name": "last"}]))
+    check("contents pagination keeps the short final page", len(pages), 101)
     print("c_corpus_fetch --selftest:", "ok" if ok else "FAILED")
     return 0 if ok else 1
 

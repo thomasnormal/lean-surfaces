@@ -1,7 +1,7 @@
 import LeanModels.Sv.Ingest2
 import LeanModels.Sv.Kernel.MemE
 
-/-! The first Carnot memory wall through E.  The retained unpacked declaration,
+/-! The first clean-room memory wall through E.  The retained unpacked declaration,
 the source `ArraySel` target and the cell read all stay in the envelope; this
 receipt does not use the provisional MemCycle route. -/
 

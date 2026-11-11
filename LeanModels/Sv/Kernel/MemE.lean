@@ -5,7 +5,7 @@ import LeanModels.Sv.Gen2
 /-!
 # The first source-shaped memory step in E
 
-This is the small E memory profile used by the Carnot FIFO wall.  It keeps
+This is the small E memory profile used by a clean-room FIFO wall.  It keeps
 unpacked declarations and `ArraySel` targets in the parser AST; there is no
 cell expansion and no run2/MemCycle adapter.  The profile admits one-rank
 memories, an active-low reset edge body made of `if`/`begin`/NBA statements,

@@ -327,6 +327,17 @@
     "rung": 0
   },
   {
+    "id": "translation.cpp-linkage-bool-variable-execution",
+    "kind": "translation",
+    "corpus": "translation witness",
+    "lean_module": "LeanModels.Cpp.TranslationTests",
+    "lean_namespace": "LeanModels.Cpp.TranslationTests",
+    "lean_expression": "cppLinkageBoolVariableTranslationExecution",
+    "cpp_source": "extern \"C++\" { extern bool flag; }",
+    "expect": "match",
+    "rung": 0
+  },
+  {
     "id": "translation.nested-linkage-function-execution",
     "kind": "translation",
     "corpus": "translation witness",

@@ -291,6 +291,26 @@ private def linkageExecutionTranslation : Artifact := {emptyTranslation with
       .object [("id", .string "l"), ("kind", .string "LinkageSpecDecl"),
         ("language", .string "C"), ("hasBraces", .bool true)]]) ]}
 
+private def linkageVariableExecutionTranslation : Artifact := {emptyTranslation with
+  ast := .object [
+    ("id", .string "tu"),
+    ("kind", .string "TranslationUnitDecl"),
+    ("inner", .array [
+      .object [
+        ("id", .string "l"),
+        ("kind", .string "LinkageSpecDecl"),
+        ("language", .string "C"),
+        ("inner", .array [
+          .object [
+            ("id", .string "v"),
+            ("kind", .string "VarDecl"),
+            ("name", .string "x"),
+            ("type", .object [("qualType", .string "int")]),
+            ("storageClass", .string "extern")]
+        ])]
+    ])]
+  }
+
 private def linkageFunctionExecutionTranslation : Artifact := {emptyTranslation with
   ast := .object [
     ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
@@ -1974,6 +1994,9 @@ def typedefTranslationExecution : Except String Unit :=
 def linkageTranslationExecution : Except String Unit :=
   execute linkageExecutionTranslation "l"
 
+def linkageVariableTranslationExecution : Except String Unit :=
+  execute linkageVariableExecutionTranslation "l"
+
 def linkageFunctionTranslationExecution : Except String Unit :=
   execute linkageFunctionExecutionTranslation "l"
 
@@ -3392,6 +3415,7 @@ def staticAssertTranslationWitness : Except String Unit :=
 #guard unscopedEmptyEnumTranslationExecution matches .ok ()
 #guard cppLinkageTranslationExecution matches .ok ()
 #guard linkageFunctionTranslationExecution matches .ok ()
+#guard linkageVariableTranslationExecution matches .ok ()
 #guard topUsingEnumTranslationExecution matches .ok ()
 #guard externVariableTranslationExecution matches .ok ()
 #guard externBoolVariableTranslationExecution matches .ok ()
@@ -3473,6 +3497,9 @@ theorem cpp_linkage_translation_executes :
 
 theorem linkage_function_translation_executes :
     linkageFunctionTranslationExecution = .ok () := rfl
+
+theorem linkage_variable_translation_executes :
+    linkageVariableTranslationExecution = .ok () := rfl
 
 theorem top_using_enum_translation_executes :
     topUsingEnumTranslationExecution = .ok () := rfl

@@ -196,7 +196,7 @@ run the plugin over the pinned `tinyxml2.cpp` in one frontend action:
 "$LEANCPP_CLANG" --no-default-config -std=c++17 -fPIC -shared -fno-rtti \\
   -I"$LEANCPP_HEADERS/include" extractors/cpp/canonical_probe.cpp \\
   -L"$LEANCPP_LIBS" -Wl,-rpath,"$LEANCPP_LIBS" -Wl,--no-undefined \\
-  -l:libclang-cpp.so.21.1 -l:libLLVM.so.21.1 -o "$LEANCPP_PROBE_LIBRARY"
+  -l:libclang-cpp.so.21.1 -l:libLLVM.so.21.1 -lstdc++ -o "$LEANCPP_PROBE_LIBRARY"
 (cd "$LEANCPP_TINYXML2_DIR" && "$LEANCPP_CLANG" --no-default-config -std=c++23 \\
   -pedantic-errors -fsyntax-only tinyxml2.cpp -Xclang -load -Xclang \\
   "$LEANCPP_PROBE_LIBRARY" -Xclang -plugin -Xclang leancpp-canonical-probe) \\

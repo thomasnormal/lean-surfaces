@@ -2,15 +2,19 @@
 
 ## `cpp-tinyxml2-probe-regeneration`: pinned capture prerequisite
 
-**Blocked by a missing pinned development input (measured 2026-11-11).** The
-TinyXML-2 revision `321ea883b7190d4e85cae5512a12e5eaa8f8731f` was fetched and
-both source hashes matched `provenance.json` exactly. The prescribed Clang
-21.1.8 plugin build cannot start in the pinned runtime: `libclang-cpp.so.21.1`
-and `libLLVM.so.21.1` are present, but the matching development headers are
-absent, and Clang fails immediately with `fatal error: 'clang/AST/ASTConsumer.h'
-file not found`. No probe or literal was regenerated. The README already
-contains the exact reproducible plugin/capture command; rerun it once matching
-Clang 21.1.8 headers are available.
+**Capture mismatch (measured 2026-11-11).** The TinyXML-2 revision
+`321ea883b7190d4e85cae5512a12e5eaa8f8731f` was fetched and both source hashes
+matched `provenance.json` exactly. Matching Clang/LLVM 21.1.8 development
+packages were extracted read-only, the plugin built, and the probe emitted the
+required 35,509,721 bytes. Its SHA-256 was
+`07bfc2191519a662b24eadd210294922b7ae0fb9132957285b40c23e6de8a001`
+(ASLR-disabled repeat:
+`b4dab823a89e14c87fe7b3030a7cfe51f39138ffc263ec031f9bcc37ac9e53ee`), not the
+required `ce2b760fec4f...`. Ordinary repeats differ at byte 21 because
+`canonical_probe.cpp` serializes raw declaration pointers as IDs; ASLR-disabled
+repeats are internally identical but use a different fixed address range. No
+probe or literal was regenerated. The README command now includes the required
+`-lstdc++` link when using `--no-default-config`.
 
 ## `cpp-target-profile-unchecked`: artifact profile gate
 

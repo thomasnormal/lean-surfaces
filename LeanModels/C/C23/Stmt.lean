@@ -437,7 +437,10 @@ def declare : Nat → Ctx → List Decl → ExecM Ctx
   | _, ctx, [] => pure ctx
   | fuel + 1, ctx, d :: ds =>
     match d with
-    | .var name ty _ init _ => do
+    | .var name ty storage init _ => do
+        match storage with
+        | some "auto" | some "register" | none => pure ()
+        | some s => refuseUnsupported s!"block-scope storage class '{s}' is outside the tier"
         match ctx.layout.size ty with
         | none => refuseUnsupported s!"no layout for declared type '{ty}'"
         | some sz => do

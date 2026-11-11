@@ -13,6 +13,14 @@ one of those references keeps resolving.
 
 ---
 
+## 2026-11-11-c-block-static-extern-ignored — storage-class boundary
+
+Block declarations now dispatch on their storage class and refuse classes
+outside the admitted automatic/register/unspecified set. This prevents a
+static local from being reinitialized on each call and prevents a block
+`extern` from shadowing the file-scope object until persistent-storage
+identity is modeled. Differential rows pin both refusals.
+
 ## 2026-11-11-c-duplicate-file-scope-objects — tentative declarations
 
 File-scope setup now reuses an existing object for repeated declarations,

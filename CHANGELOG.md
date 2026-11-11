@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Refused unsupported block-scope `static` and `extern` declarations rather
+  than recreating static locals as automatic objects or shadowing globals.
+
 - Merged repeated file-scope declarations onto the existing object and
   refused undefined `extern` declarations without a unit definition.
 

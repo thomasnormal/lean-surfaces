@@ -19,6 +19,8 @@ coverage advance independently from the Python tier.
 
 ### Added
 
+- True empty-message `static_assert` declarations now execute inside namespace bodies; false, malformed, and message-bearing assertions remain loud refusals.
+
 - Nested namespace aliases now execute when their structured namespace target is present; malformed targets remain loud refusals.
 
 - Nested `using namespace` directives now execute when their structured namespace target is present; malformed targets remain loud refusals.

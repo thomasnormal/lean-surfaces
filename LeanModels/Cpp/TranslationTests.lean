@@ -57,6 +57,17 @@ private def nestedNamespaceAliasExecutionTranslation : Artifact := {emptyTransla
               ("id", .string "inner"), ("kind", .string "NamespaceDecl"),
               ("name", .string "inner")])]])]])]}
 
+private def nestedStaticAssertExecutionTranslation : Artifact := {emptyTranslation with
+  ast := .object [
+    ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
+    ("inner", .array [
+      .object [("id", .string "outer"), ("kind", .string "NamespaceDecl"),
+        ("name", .string "outer"), ("inner", .array [
+          .object [("id", .string "s"), ("kind", .string "StaticAssertDecl"),
+            ("inner", .array [
+              .object [("kind", .string "CXXBoolLiteralExpr"), ("value", .bool true)],
+              .object []])]])]])]}
+
 private def functionTranslation : Artifact := {emptyTranslation with
   ast := .object [
     ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
@@ -1731,6 +1742,9 @@ def nestedUsingDirectiveTranslationExecution : Except String Unit :=
 def nestedNamespaceAliasTranslationExecution : Except String Unit :=
   execute nestedNamespaceAliasExecutionTranslation "outer"
 
+def nestedStaticAssertTranslationExecution : Except String Unit :=
+  execute nestedStaticAssertExecutionTranslation "outer"
+
 def namespaceAliasTranslationExecution : Except String Unit :=
   execute namespaceAliasExecutionTranslation "a"
 
@@ -3127,6 +3141,7 @@ def staticAssertTranslationWitness : Except String Unit :=
 #guard nestedNamespaceTranslationExecution matches .ok ()
 #guard nestedUsingDirectiveTranslationExecution matches .ok ()
 #guard nestedNamespaceAliasTranslationExecution matches .ok ()
+#guard nestedStaticAssertTranslationExecution matches .ok ()
 #guard execute namespaceAliasExecutionTranslation "a" matches .ok ()
 #guard execute typeAliasExecutionTranslation "a" matches .ok ()
 #guard execute typedefExecutionTranslation "a" matches .ok ()
@@ -3157,6 +3172,9 @@ theorem nested_using_directive_translation_executes :
 
 theorem nested_namespace_alias_translation_executes :
     nestedNamespaceAliasTranslationExecution = .ok () := rfl
+
+theorem nested_static_assert_translation_executes :
+    nestedStaticAssertTranslationExecution = .ok () := rfl
 
 theorem namespace_alias_translation_executes :
     execute namespaceAliasExecutionTranslation "a" = .ok () := rfl

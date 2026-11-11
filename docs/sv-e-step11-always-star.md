@@ -3,8 +3,9 @@
 The clean-room sources are in
 [`Examples/system-verilog/sem2/always_star_step11/`](../Examples/system-verilog/sem2/always_star_step11/).
 They retain the parser's `ImplicitEventControl` and process body, rather than
-converting the process into `always_comb`. These are source-oracle fixtures
-and a rule proposal. **E execution remains incomplete.**
+converting the process into `always_comb`. The ordinary fixtures have an
+E-core-0 execution receipt; the continuous-driver startup case is kept as a
+source-shaped receipt with an explicit simulator schedule split.
 
 IEEE 1800-2023 §9.4.2.2 defines the implicit event control; §9.2.2.2.2
 distinguishes `always_comb` from `always @*`. In particular, `always_comb`
@@ -112,3 +113,19 @@ The older timed loader's `AlwaysImplicit` path currently starts with a ready
 body (`Load.lean`, `timedProcOfRaw`), like `always_comb`. That startup is not
 the implicit-wait rule above. It is legacy execution debt, not E evidence;
 the correction belongs to the single source-AST/E migration.
+
+## Continuous-driver time-zero boundary
+
+[`always_star_timezero_e`](../Examples/system-verilog/sem2/always_star_timezero_e/)
+is the minimal source shape that previously hit the R3 refusal: a plain
+`always @*` reads `k` while a continuous assignment drives `k` at time zero.
+The extractor now retains the parser's `AlwaysEvent` node and its body for E;
+it does not lower the process to `always_comb`. E's `σ_src` receipt produces
+`0011` for `y_star` on the first row and follows the changed input thereafter.
+
+The differential checker records the same source under Icarus 13.0 and
+Xcelium 24.03-s004. Icarus leaves `y_star=xxxx` on the first row, while
+Xcelium produces `0011`; all later known/x/z rows agree. This is the
+time-zero Active-region ordering freedom of §4.7. The receipt is therefore
+not an exact-equivalence claim for that first observation, and neither tool's
+startup order is selected as the language meaning.

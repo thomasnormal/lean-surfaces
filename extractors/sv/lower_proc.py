@@ -809,6 +809,27 @@ def star_block(ex, sm, m, module_level):
         why = _star_rules(ex, sm, m, converted, listed, form)
     except Exception as exc:        # noqa: BLE001  (fail closed)
         why = "the rules could not be decided (%s: %s)" % (type(exc).__name__, str(exc)[:120])
+    if why is not None and form == "implicit" and "continuous time-zero driver" in why:
+        # A plain @* is an event-controlled process, not an always_comb
+        # process.  The R3 check used to turn this source node into an
+        # Unsupported marker because the continuous driver and the implicit
+        # wait can race in the time-zero Active region.  Keep the parser's
+        # process and its body as an AlwaysEvent for the source-shaped E
+        # view; the frozen Process2/cycle views continue to refuse it.  The
+        # startup order remains an explicit scheduler boundary: the E
+        # fixture records its σ_src receipt separately from the Icarus and
+        # Xcelium rows instead of selecting one simulator result.  Other R3
+        # failures (no external read or a 2-state read) remain loud because
+        # they have no wake-up event to observe.
+        return {
+            "kind": "AlwaysEvent",
+            "span": ex.sym_span(sm, m),
+            "event_kind": "ImplicitEventControl",
+            "body": ex.convert_stmt(sm, body.stmt),
+            "text": ex.source_text(m),
+            "symbolic_event_retained": True,
+            "symbolic_event_reason": why,
+        }
     return refuse(why) if why else node
 
 

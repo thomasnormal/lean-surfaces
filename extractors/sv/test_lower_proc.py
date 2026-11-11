@@ -716,9 +716,14 @@ class StarBlocks(Base):
     def test_parameterized_widths_whole_assignments(self):
         self.admitted("always @* begin y = a & b; z = 0; end", ports="input [N-1:0] a, b, output reg [N-1:0] y, z", params="#(parameter N = 4) ")
 
-    def test_time_zero_continuous_driver_is_refused(self):
-        self.refused("assign k = 4'd1; always @* y = k;",
-                     "time-zero driver", decls="wire [3:0] k;")
+    def test_time_zero_continuous_driver_keeps_implicit_event(self):
+        procs, _ = self.proc("assign k = 4'd1; always @* y = k;",
+                              decls="wire [3:0] k;")
+        event = procs[1]
+        self.assertEqual(event["kind"], "AlwaysEvent")
+        self.assertEqual(event["event_kind"], "ImplicitEventControl")
+        self.assertTrue(event["symbolic_event_retained"])
+        self.assertIn("continuous time-zero driver", event["symbolic_event_reason"])
 
     # ---- refusals, one per rule
     def test_r1_nonblocking_and_timing(self):

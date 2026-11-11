@@ -741,6 +741,18 @@ private def nestedFunctionPrototype : Raw → Except String Unit
           | none => .error executionRefusal
       | _, _ => .error executionRefusal
 
+private def executeNestedLinkageBody : List Raw → Except String Unit
+  | [] => pure ()
+  | declaration :: rest =>
+      match declaration.text "kind", declaration.field "inner" with
+      | some "FunctionDecl", none => do
+          let _ ← nestedFunctionPrototype declaration
+          executeNestedLinkageBody rest
+      | some "FunctionDecl", some (.array []) => do
+          let _ ← nestedFunctionPrototype declaration
+          executeNestedLinkageBody rest
+      | _, _ => .error executionRefusal
+
 private def externIntegralDeclaration : Raw → Except String Unit
   | declaration =>
       match declaration.text "name", declaration.text "storageClass", declaration.field "type" with
@@ -799,6 +811,12 @@ private def executeNestedNamespaces : List Raw → Except String Unit
       | some "LinkageSpecDecl", some (.array []) =>
           match declaration.text "language" with
           | some "C" | some "C++" => executeNestedNamespaces rest
+          | _ => .error executionRefusal
+      | some "LinkageSpecDecl", some (.array body) =>
+          match declaration.text "language" with
+          | some "C" | some "C++" => do
+              let _ ← executeNestedLinkageBody body
+              executeNestedNamespaces rest
           | _ => .error executionRefusal
       | some "EnumDecl", none =>
           match declaration.text "name", declaration.field "fixedUnderlyingType" with

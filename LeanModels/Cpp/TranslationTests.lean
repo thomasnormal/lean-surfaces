@@ -85,6 +85,31 @@ private def nestedTypeAliasExecutionTranslation : Artifact := {emptyTranslation 
             ("inner", .array [(.object [("kind", .string "BuiltinType"),
               ("type", .object [("qualType", .string "int")])])])]])]])]}
 
+private def nestedLinkageFunctionExecutionTranslation : Artifact := {emptyTranslation with
+  ast := .object [
+    ("id", .string "tu"),
+    ("kind", .string "TranslationUnitDecl"),
+    ("inner", .array [
+      .object [
+        ("id", .string "outer"),
+        ("kind", .string "NamespaceDecl"),
+        ("name", .string "outer"),
+        ("inner", .array [
+          .object [
+            ("id", .string "l"),
+            ("kind", .string "LinkageSpecDecl"),
+            ("language", .string "C"),
+            ("inner", .array [
+              .object [
+                ("id", .string "f"),
+                ("kind", .string "FunctionDecl"),
+                ("name", .string "f"),
+                ("type", .object [("qualType", .string "void ()")])]
+            ])]
+        ])]
+    ])]
+  }
+
 private def nestedLinkageExecutionTranslation : Artifact := {emptyTranslation with
   ast := .object [
     ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
@@ -1907,6 +1932,9 @@ def nestedStaticAssertTranslationExecution : Except String Unit :=
 def nestedTypeAliasTranslationExecution : Except String Unit :=
   execute nestedTypeAliasExecutionTranslation "outer"
 
+def nestedLinkageFunctionTranslationExecution : Except String Unit :=
+  execute nestedLinkageFunctionExecutionTranslation "outer"
+
 def nestedLinkageTranslationExecution : Except String Unit :=
   execute nestedLinkageExecutionTranslation "outer"
 
@@ -3352,6 +3380,7 @@ def staticAssertTranslationWitness : Except String Unit :=
 #guard nestedStaticAssertTranslationExecution matches .ok ()
 #guard nestedTypeAliasTranslationExecution matches .ok ()
 #guard nestedLinkageTranslationExecution matches .ok ()
+#guard nestedLinkageFunctionTranslationExecution matches .ok ()
 #guard nestedEnumTranslationExecution matches .ok ()
 #guard nestedUsingEnumTranslationExecution matches .ok ()
 #guard nestedFunctionPrototypeTranslationExecution matches .ok ()
@@ -3408,6 +3437,9 @@ theorem nested_type_alias_translation_executes :
 
 theorem nested_linkage_translation_executes :
     nestedLinkageTranslationExecution = .ok () := rfl
+
+theorem nested_linkage_function_translation_executes :
+    nestedLinkageFunctionTranslationExecution = .ok () := rfl
 
 theorem nested_enum_translation_executes :
     nestedEnumTranslationExecution = .ok () := rfl

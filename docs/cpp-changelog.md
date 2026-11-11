@@ -19,6 +19,8 @@ coverage advance independently from the Python tier.
 
 ### Added
 
+- Namespace linkage bodies now execute declaration-only function prototypes under the same exact C/C++ language and structured-node checks; definitions and unsupported children remain loud refusals.
+
 - Linkage specifications now execute bodies containing declaration-only function prototypes while preserving the exact C/C++ language tag; definitions and unsupported children remain loud refusals.
 
 - The extern-variable boundary now has a direct `extern bool flag;` witness in addition to `extern int x;`; both require structured integral type evidence.

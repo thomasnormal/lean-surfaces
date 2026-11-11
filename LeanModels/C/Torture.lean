@@ -456,7 +456,9 @@ def scoreEnvelope (fuel : Nat) (envl : Envelope)
     let genv ← setupGlobals fuel lay envl.unit.fileScopeObjects []
     callByName fuel { prog with globals := genv } "main" []
   match ExecM.verdict Mem.empty run with
-  | .ok _ => .passed
+  | .ok (.int _ 0) | .ok .undef => .passed
+  | .ok (.int _ _) => .failed
+  | .ok (.ptr _) => .failed
   -- `abort` is the oracle's FAILURE channel — unless the test is one the
   -- oracle wrote to convict a compiler, in which case reaching it is the
   -- conforming outcome and the row leaves the score entirely.

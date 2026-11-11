@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Made the C torture scorer treat nonzero `main` returns as failures.
+
 - Refused forward gotos that skip a declaration until block-entry binding is
   modeled, preventing writes from resolving to an outer same-named object.
 

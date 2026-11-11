@@ -13,6 +13,13 @@ one of those references keeps resolving.
 
 ---
 
+## 2026-11-11-c-torture-main-return-ignored — scorer exit status
+
+The torture scorer now distinguishes `main` returning zero (or falling off)
+from a nonzero integer return. Nonzero returns are failures, matching the
+oracle's process exit status instead of counting every successful model run as
+passed.
+
 ## 2026-11-11-c-goto-skips-decl — declaration-scope boundary
 
 Forward goto handling now refuses when the skipped range contains a

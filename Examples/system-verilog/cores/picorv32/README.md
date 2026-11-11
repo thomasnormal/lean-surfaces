@@ -1462,3 +1462,37 @@ Schedule:comb-source-order: comb process 9 reads a signal written by later comb 
 The guard-bypassed low-level executor still returns `ok states=80`; that result
 is **UNVALIDATED**, is not E execution or a retirement trace, and the symbolic
 ADDI invariant remains parked behind the E scheduler boundary.
+
+## 2026-11-11 re-probe after structured `$readmemh` E landing `3a30a91b9`
+
+The pinned source was re-extracted with the approved extractor on public master
+`3a30a91b99adbb2f3433811e43225da672e1650a`.  The source SHA-256 remains
+`0836050971b3c6cdd28ac3b1e5719a67fb645161912bef1e472e63995ceb062`; the fresh
+envelope `/tmp/picorv32-post-readmemh.sv.json` has SHA-256
+`7af9b70dd05e2b4a1fc73d6776e2a84de7a0a497630fb64c6004fcd2a853a5fb` and is
+2,991,612 bytes.  The approved source is unchanged at YosysHQ commit
+`ef203c2b0a3fb793280f5114941416c425c5b461`.
+
+The ordinary route still refuses first at `picorv32.v:203`:
+
+```text
+unsupported "Instantiate"
+  "decl 'cpuregs': unpacked array storage outside E (UnpackedDecl:memory)"
+```
+
+The provisional source-shaped memory adapter constructs 223 scalar
+declarations, one unpacked memory declaration, and 52 processes.  Its first
+two admission reports remain:
+
+```text
+Schedule:preemptive: processes 0 and 26 may observe an intermediate write under IEEE 1800-2023 §4.7; the preemptive profile requires disjoint cross-process reads/writes
+Schedule:comb-source-order: comb process 9 reads a signal written by later comb process 25; the source-order memory pass would need a second settle pass under IEEE 1800-2023 §10.3/§4.5
+```
+
+The E memory elaboration itself constructs 215 scalar declarations, one native
+unpacked memory, and 43 retained processes.  Its first retained unsupported
+process is the generic `TimedStatement:ImplicitEventControl` boundary for the
+source `always @*` body (`pcpi_mul_wait`); no E execution or symbolic ADDI
+invariant is claimed.  The `$readmemh` landing does not move either the
+ordinary `cpuregs` wall or the E scheduler/event wall, and the old
+guard-bypassed `ok states=80` result remains **UNVALIDATED**.

@@ -13,6 +13,13 @@ one of those references keeps resolving.
 
 ---
 
+## 2026-11-11-c-goto-skips-decl — declaration-scope boundary
+
+Forward goto handling now refuses when the skipped range contains a
+declaration. This prevents the old behavior from resolving a later write to
+an outer object; block-entry allocation remains a separate future extension.
+The differential row pins the refusal.
+
 ## 2026-11-11-c-union-init — designated union members
 
 Clang's `InitListExpr.field` is now carried through the envelope. Union

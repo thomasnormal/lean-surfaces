@@ -318,6 +318,11 @@ def findLabel (name : String) : List Stmt → Option (List Stmt)
                             else findLabel name rest
       | _ => findLabel name rest
 
+def hasDecl : List Stmt → Bool
+  | [] => false
+  | .decl _ _ :: _ => true
+  | _ :: rest => hasDecl rest
+
 /-! ## §6.8 — the statement evaluator
 
 Fuel decreases on EVERY recursive call, not only at the loop step. That
@@ -403,7 +408,10 @@ def execBlock : Nat → Ctx → List Stmt → ExecM Flow
           -- §6.8.7.1: a forward jump lands on a label later in THIS block,
           -- or propagates outward to an enclosing one.
           match findLabel l rest with
-          | some tail => execBlock fuel ctx tail
+          | some tail =>
+              if hasDecl rest then
+                refuseUnsupported "goto skips a block declaration"
+              else execBlock fuel ctx tail
           | none => pure (.goto l)
       | other => pure other
 

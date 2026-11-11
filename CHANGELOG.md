@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Refused forward gotos that skip a declaration until block-entry binding is
+  modeled, preventing writes from resolving to an outer same-named object.
+
 - Preserved designated union initializer fields and initialized only the
   selected union member.
 

@@ -690,7 +690,14 @@ def evalExpr (ctx : Ctx) : Expr → EvalM CVal
       else if ck == "BitCast" then
         -- §6.3.2.3p1 — `void*` ↔ `T*`. Provenance carried, not recomputed:
         -- 52 sites, all void-pointer conversions, ZERO type punning.
-        evalExpr ctx sub
+        let isVoidOrCharPtr (t : CType) : Bool :=
+          t == "void *" || t == "const void *" ||
+          t == "char *" || t == "const char *" ||
+          t == "unsigned char *" || t == "const unsigned char *"
+        if isVoidOrCharPtr ty || isVoidOrCharPtr sub.ty then
+          evalExpr ctx sub
+        else
+          refuseUnsupported "pointer bit-cast across incompatible effective types"
       else if ck == "FunctionToPointerDecay" then
         refuseUnsupported "function-to-pointer decay (inch 5)"
       else if ck == "IntegralToFloating" then

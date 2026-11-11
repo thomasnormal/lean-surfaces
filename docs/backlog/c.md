@@ -13,6 +13,14 @@ one of those references keeps resolving.
 
 ---
 
+## 2026-11-11-c-effective-type-unchecked — pointer-punning boundary
+
+The memory object records effective types, but the previous `BitCast` arm
+passed every object-pointer cast through and `loadInt` decoded its bytes.
+Non-character object-pointer casts now refuse at the cast boundary; the
+existing `void*` and character-pointer paths remain admitted. A differential
+row pins refusal of an `int` read through `short*`.
+
 ## 2026-11-11-c-auto-lifetime-never-ends — automatic lifetime cleanup
 
 Automatic objects were allocated but never tombstoned. Memory now provides a

@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Refused non-character pointer bit-casts across incompatible effective
+  types instead of decoding a type-punned representation.
+
 - Ended automatic-object lifetimes at compound-block and function exit so
   dangling accesses raise `deadObject`.
 

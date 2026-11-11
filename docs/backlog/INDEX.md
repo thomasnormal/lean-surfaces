@@ -16,12 +16,13 @@ with ids `YYYY-MM-DD-<lane>-<n>` that need no reservation. Everything before
 the split is in [`docs/backlog-archive.md`](../backlog-archive.md), frozen,
 and every existing `§Lnn` reference still resolves there.
 
-**1396 entries across 19 lanes.** Regenerate with
+**1397 entries across 19 lanes.** Regenerate with
 `tools/backlog-index.sh`; check with `--check` (exit 1 on drift).
 
 | id | class | title | lane |
 | --- | --- | --- | --- |
 | `2026-11-11-ls-sv2-477` |  | unify the E-core-0 and observation cones | ls-sv2 |
+| `2026-11-11-pyfoundation-45` |  | revalidate bench_bisect proof | python-completeness |
 | `2026-11-11-pyfoundation-44` |  | repair fib proof after recursion guards | python-completeness |
 | `2026-11-11-pyfoundation-43` |  | repair PayloadBlind comparison recursion transport | python-completeness |
 | `2026-11-11-pyfoundation-42` |  | pin direct rendering recursion boundaries | python-completeness |
@@ -1355,7 +1356,7 @@ and every existing `§Lnn` reference still resolves there.
 | `2026-08-22-ada-1` |  | THE STANDING STRATEGY, adopted by touch: `DIFFER` was a conformance gap, and this lane was one of §9.4's drifted emitters | ada |
 | ``cpp-two-callable-evaluators`:` |  | one callable semantics | cpp |
 | ``cpp-target-profile-unchecked`:` |  | artifact profile gate | cpp |
-| ``cpp-switch-and-ir-lowering`:` |  | cleanup-node retention | cpp |
+| ``cpp-switch-and-ir-lowering`:` |  | source-item switch semantics | cpp |
 | ``cpp-spelling-identity`:` |  | qualified-name suffix guard | cpp |
 | ``cpp-harness-oracle-misfile`:` |  | native oracle policy | cpp |
 | ``cpp-diff-handwritten-twins`:` |  | source-derived differential execution | cpp |

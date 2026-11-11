@@ -37,6 +37,20 @@ was introduced.
 DECIDED: keep recursion guards represented in proof statements and symbolic
 execution; the next item must reread the inbox before continuing.
 
+## 2026-11-11-pyfoundation-45 — revalidate bench_bisect proof
+
+The first pre-rename red target from the coordinator's list is already fixed
+on the current integrated tree. A fresh managed build of the proof target
+completed without errors, so no proof source change was needed in this item.
+
+| Measurement | Result |
+|---|---|
+| `Examples/python/bench_bisect/proof.lean` | managed build passed (317/317 targets) |
+| Source change | none; this packet records the revalidation |
+
+DECIDED: treat `bench_bisect` as revalidated and continue with the next inbox
+target after rereading the inbox.
+
 ## 2026-11-11-pyfoundation-43 — repair PayloadBlind comparison recursion transport
 
 The proof observer now transports the heap-aware rich-comparison recursion

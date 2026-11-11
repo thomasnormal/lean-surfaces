@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Revalidated the `bench_bisect` proof target after the recursion and protocol
+  repairs; the managed target is green on the public tip.
+
 - Repaired the `sorted` generator proof boundary for CPython recursion-frame
   guards and restored `py_simp`/`py_vcgen` reduction for heap-aware comparison
   recursion checks.

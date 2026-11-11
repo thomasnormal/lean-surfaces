@@ -732,7 +732,8 @@ private def nestedIntegralAlias : Raw → Except String Unit
                 some "short", some "short" | some "long", some "long" |
                 some "unsigned long", some "unsigned long" | some "char", some "char" |
                 some "unsigned char", some "unsigned char" |
-                some "signed char", some "signed char" => pure ()
+                some "signed char", some "signed char" |
+                some "wchar_t", some "wchar_t" => pure ()
               | _, _ => .error executionRefusal
           | _, _ => .error executionRefusal
       | _, _ => .error executionRefusal
@@ -935,7 +936,8 @@ private def executeTopDeclaration (raw : Raw) : Except String Unit :=
             some "short", some "short" | some "long", some "long" |
             some "unsigned long", some "unsigned long" | some "char", some "char" |
             some "unsigned char", some "unsigned char" |
-            some "signed char", some "signed char" => pure ()
+            some "signed char", some "signed char" |
+            some "wchar_t", some "wchar_t" => pure ()
           | _, _ => .error executionRefusal
       | _, _, _ => .error executionRefusal
   | some _, _ => .error executionRefusal

@@ -19,6 +19,8 @@ coverage advance independently from the Python tier.
 
 ### Added
 
+- `using W = wchar_t;` now executes through matching structured `BuiltinType` evidence; the pinned scalar profile supplies `wchar_t` width, and unsupported alias targets remain loud refusals.
+
 - `typedef unsigned char UC;` now executes through matching structured `BuiltinType` evidence, completing the unsigned-char alias and typedef pair.
 
 - `using SC = signed char;` now executes through matching structured `BuiltinType` evidence; signedness is retained only from Clang's node and never inferred.

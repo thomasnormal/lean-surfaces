@@ -2846,6 +2846,23 @@ private def emptyModule : Module := { functions := #[], classes := #[], namedtup
 private def K0 : Kont := kont emptyModule 64
 private def st0 : FrameState := ⟨{ heap := #[], globals := [] }, [("x", .int 7)]⟩
 
+/-! ## §1.1 A control-level refinement seed
+
+The monadic evaluator and the legacy fuelled evaluator agree on the first
+control arm that has no recursive continuation: literal evaluation.  Keeping
+this bridge here, beside the monadic arm, makes the remaining adequacy debt
+explicit rather than treating the pure-worker bridges as if they covered the
+whole evaluator. -/
+
+theorem twinAgrees_evalOpen_constant (K : Kont) (m : Module) (st : FrameState)
+    (c : Const) (sp : Span) (fuel : Nat) (hfuel : 0 < fuel) :
+    LeanModels.Python.Monadic.toRun (evalOpen K m (.constant c sp)) st =
+      evalExpr m fuel st (.constant c sp) := by
+  cases fuel with
+  | zero => omega
+  | succ fuel =>
+      rfl
+
 /- `x + 5 = 12`, through the fuel-free evaluator, decided by the KERNEL. -/
 #guard (match toRun (evalOpen K0 emptyModule
           (.binOp (.name "x" sp0) .add (.constant (.int 5) sp0) sp0)) st0 with

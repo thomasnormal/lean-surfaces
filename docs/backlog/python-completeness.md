@@ -195,6 +195,24 @@ artifact. The foundation evidence is clean in both interpreter modes.
 DECIDED: keep shared batch-file harness runs sequential in acceptance checks;
 the foundation evidence now has zero decided mismatches on the current runner.
 
+## 2026-11-11-pyfoundation-55 — add the first control refinement bridge
+
+The two-interpreter audit remains a real architectural debt: the pure-worker
+bridges are not a theorem about recursive expression, statement, or script
+execution. This item adds a kernel-checked seed beside the monadic evaluator:
+for every positive fuel, its constant-expression arm agrees exactly with the
+legacy `evalExpr` arm. The recursive continuation and script layers remain
+explicitly open rather than being implied by this seed.
+
+| Measurement | Result |
+|---|---|
+| Target | managed `lake build LeanModels/Python/Monadic/Eval.lean` passed |
+| New theorem | `Monadic.twinAgrees_evalOpen_constant` |
+| Semantic change | theorem only; no evaluator behavior change |
+
+DECIDED: retain the explicit control-level adequacy boundary and extend the
+bridge one AST control arm at a time.
+
 ## 2026-11-11-pyfoundation-43 — repair PayloadBlind comparison recursion transport
 
 The proof observer now transports the heap-aware rich-comparison recursion

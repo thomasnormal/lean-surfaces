@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Added a kernel-checked control-level refinement seed relating monadic and
+  legacy expression evaluation for constant AST nodes, while keeping the
+  recursive and script-layer adequacy boundary explicit.
+
 - Revalidated the foundation evidence sequentially after refreshing the runner:
   edge pools, statement smoke, native differential, and proof differential all
   pass with zero decided mismatches.

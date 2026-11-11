@@ -76,6 +76,8 @@ with observable effects, matching the existing binary-operand guard and
 avoiding a fabricated left-to-right resolution for indeterminately sequenced
 parameter initializations. `CallableTests` pins the refusal for a postfix
 increment argument while the pure direct-call witness remains admitted.
+Revalidated 2026-11-11 with `lake build LeanModels.Cpp.CallableTests` under
+the 24 GiB cgroup (18 jobs, exit 0).
 
 ## `cpp-diff-handwritten-twins`: source-derived differential execution
 

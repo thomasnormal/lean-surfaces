@@ -13356,3 +13356,20 @@ later item.
 
 DECIDED: continue the refinement family with the next worker/literal seam;
 the general heap/value-pair transport theorem remains open.
+## 2026-11-11-pyfoundation-68 — revalidate the recursion-limit audit
+
+The inbox's `py-no-recursion-limit` finding is already closed in this tree.
+`World.callDepth` and the pinned `pythonRecursionLimit = 1000` guard both
+interpreter surfaces, and the public Fibonacci theorem carries an explicit
+depth hypothesis. The direct script witness and closed-function boundary
+rows agree with CPython 3.9.25; no duplicate semantics change is needed.
+
+| Measurement | Result |
+|---|---|
+| Script witness | `recursion_limit_script.py`: both sides raise `RecursionError`, exit 1 |
+| Closed-function rows | `depth(100)` and `depth(1000)` are pinned as MATCH |
+| Recursive theorem | `fib_total (k : Nat) (hk : k < pythonRecursionLimit)` |
+| Semantic change | none; audit closure only |
+
+DECIDED: close `py-no-recursion-limit`; keep `sys.setrecursionlimit` outside
+the pinned tier and retain depth hypotheses on universal recursive specs.

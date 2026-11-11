@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Revalidated the high-priority recursion-limit audit against the pinned
+  CPython 3.9.25 rows; active call-depth checks and the depth-bounded
+  recursive theorem remain sound, with no semantic change required.
+
 - Added a kernel-checked heap-aware binary worker refinement theorem for
   immediate integer bitwise-and, making the unchanged heap/value pair
   explicit at the monadic boundary.

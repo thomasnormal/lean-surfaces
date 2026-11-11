@@ -1,4 +1,5 @@
 import LeanModels.Sv.CombEBase
+import LeanModels.Sv.Param2
 import LeanModels.Core.Outcome
 
 /-!
@@ -117,6 +118,11 @@ def Store.set (s : Store) (x : VarId) (v : Val) : Store :=
 inductive Proc0 where
   | assign (target : Lhs2) (rhs : Expr2)
   | comb (body : Stmt2)
+  /-- Plain `always @*` (§9.4.2.2): the process starts waiting and is
+  reactivated only by a change in its raw read set.  Its body is the same
+  source-shaped `Stmt2` engine as `always_comb`; only startup/sensitivity
+  metadata differs. -/
+  | implicit (body : Stmt2)
 deriving Inhabited
 
 /-- A process index. -/
@@ -133,6 +139,8 @@ structure Elab where
 def Proc0.toProcess2 : Proc0 → Process2
   | .assign t e => .assign t e
   | .comb body => .alwaysComb body
+  | .implicit _ => .unsupported "ProceduralBlockSymbol:Always"
+      "source-level event-controlled always is retained; the frozen process AST has no event-list constructor"
 
 /-- The corresponding Design2: the same declarations, each process its
 syntactic image. Only the statements about `combSettle2` and the reused
@@ -140,6 +148,28 @@ profile (`CombDesign`, debt D-X1a) mention it; E does not. -/
 def Elab.toDesign2 (E : Elab) : Design2 :=
   { name := E.name, decls := E.decls,
     processes := (E.procs.toList.map Proc0.toProcess2).toArray }
+
+/-! ## Source-preserving E entry point
+
+`PDesign.instantiateE2` retains the parser's implicit event node beside the
+frozen `Process2` image.  This adapter is the only place that turns that
+retained node into an E process; all ordinary processes keep their existing
+`Process2` image and loud boundaries. -/
+
+def Proc0.ofEProcess2 : EProcess2 → Proc0
+  | .alwaysImplicit body => .implicit body
+  | .ordinary p =>
+      match p with
+      | .assign t e => .assign t e
+      | .alwaysComb b => .comb b
+      | .unsupported k x => .comb (.unsupported k x)
+      | .alwaysFF _ _ | .alwaysPlain _ _ | .alwaysFFR _ _ _ _ =>
+          .comb (.unsupported "always_ff" "clocked processes are outside E-core-0")
+
+def Elab.ofEDesign2 (d : EDesign2) : Elab :=
+  { decls := d.decls
+    procs := (d.processes.toList.map Proc0.ofEProcess2).toArray
+    name := d.name }
 
 /-! ## Design2 transport (the E-side elaboration entry point) -/
 
@@ -469,7 +499,7 @@ def activate (E : Elab) (p : ProcId) : EM Unit :=
           let v ← ofRes (evalPure2 (E.view s) e)
           set (E.writeWins s (v.resizeU (Win.sumWidth ws)) (Win.placed ws))
       | none => refuse0 "10.3.2" "continuous assignment target has no static window"
-  | some (.comb body) => execBody E body
+  | some (.comb body) | some (.implicit body) => execBody E body
   | none => refuse0 "4.5" "no such process"
 
 /-! ## Sensitivity and triggering -/
@@ -490,6 +520,7 @@ def Elab.sens (E : Elab) (q : ProcId) : List ReadWin :=
   | some (.comb body) =>
       body.rawReads.filter (fun r => !((body.targetWins E.toDesign2).any fun W => r.overlaps W)) ++
         body.partialSens E.toDesign2
+  | some (.implicit body) => body.rawReads
   | none => []
 
 /-- A read of the body that overlaps no written window is in the sensitivity (the statement agent
@@ -546,8 +577,18 @@ theorem Choice.legal (ch : Choice) : Legal ch.choose := ch.choose_perm
 
 /-- The start of a slot in which every process is ready (time zero, or after
 an arbitrary change). -/
+def Proc0.readyAtStart : Proc0 → Bool
+  | .implicit _ => false
+  | .assign _ _ | .comb _ => true
+
+def Elab.startActive (E : Elab) : List ProcId :=
+  (List.range E.procs.size).filter fun q =>
+    match E.procs[q]? with
+    | some p => p.readyAtStart
+    | none => false
+
 def Config.init (E : Elab) (s : Store) : Config :=
-  { store := s, active := List.range E.procs.size, k := 0 }
+  { store := s, active := E.startActive, k := 0 }
 
 /-! ## Slots and the environment's input events (E-core-0: no clocks) -/
 

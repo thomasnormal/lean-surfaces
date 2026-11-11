@@ -109,6 +109,8 @@ def generated_rows():
             "hexadecimal percent-format alternate form."),
         row("percent_alternate_oct", [[3], [-3]], "match",
             "octal percent-format alternate form."),
+        row("percent_dynamic_width", [[5, 3], [-5, 3]], "match",
+            "dynamic percent-format width with positive and negative widths."),
         row("float_power_special", [[0.0, 0.0], [-0.0, 2.0], [1.0, 3.5]],
             "match", "portable float-power special-case pool."),
         row("float_power_special", [[-1.0, 0.5]], "unsupported",

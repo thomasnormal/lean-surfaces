@@ -2300,6 +2300,16 @@ def strFormatAlternatePiece (c : Char) (v : RVal) : Res String := do
   else
     .unsupported "alternate form for this percent conversion is outside the tier"
 
+def strFormatDynamicWidthPiece (c : Char) (width value : RVal) : Res String :=
+  match asInt width with
+  | some n =>
+      if n.natAbs > 10000 then
+        .unsupported "dynamic percent-format width beyond the tier budget"
+      else
+        strFormatWidthPiece n.natAbs Option.none c value (n < 0) false
+  | Option.none =>
+      .exn (.typeError "'*' format requires an integer width")
+
 def strFormatReadDigits : List Char → Nat → Option (Nat × List Char)
   | [], _ => Option.none
   | c :: rest, acc =>
@@ -2389,6 +2399,18 @@ def strFormatWalk : List Char → List RVal → Bool → String → Res String
             | .timeout => .timeout
             | .unsupported msg => .unsupported msg
       else .unsupported "alternate form for this percent conversion is outside the tier"
+  | '%' :: '*' :: c :: cs, args, mapping, acc =>
+      if c == 's' || c == 'r' || c == 'a' || c == 'c' || c == 'd' || c == 'i' ||
+          c == 'u' || c == 'x' || c == 'o' then
+        match args with
+        | width :: value :: rest =>
+            match strFormatDynamicWidthPiece c width value with
+            | .ok piece => strFormatWalk cs rest mapping (acc ++ piece)
+            | .exn e => .exn e
+            | .timeout => .timeout
+            | .unsupported msg => .unsupported msg
+        | _ => .exn (.typeError "not enough arguments for format string")
+      else .unsupported "dynamic width for this percent conversion is outside the tier"
   | '%' :: cs, args, mapping, acc =>
       match strFormatWidthSpec cs with
       | some (left, zero, width, precision, c, restChars) =>

@@ -116,6 +116,22 @@ other conversions remains loud.
 DECIDED: retain alternate-form support only for the measured `%x` and `%o`
 domain.
 
+## 2026-11-11-pyformat-7 — admit dynamic percent-format width
+
+The scalar format worker now admits dynamic `*` widths for existing
+conversions, including CPython's negative-width left alignment. Widths beyond
+the bounded tier budget and dynamic precision remain loud.
+
+| Measurement | Result |
+|---|---|
+| Generated edge battery | 63 cases, 109 calls |
+| Native runner | 94 MATCH, 15 documented refusals, 0 failures |
+| Proof interpreter | 94 MATCH, 15 loud refusals, 0 failures |
+| Managed build | `lake build leanmodels-run`, 40 jobs, passed |
+
+DECIDED: keep dynamic width restricted to the measured scalar conversion
+domain until full argument Clinic error paths are modeled.
+
 ## 2026-11-11-pyfoundation-31 — count `sorted` recursion and materialization
 
 The builtin recursion audit found that `sorted` was missing the nested call

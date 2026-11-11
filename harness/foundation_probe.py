@@ -288,3 +288,7 @@ def percent_alternate_hex(value):
 
 def percent_alternate_oct(value):
     return "%#o" % value
+
+
+def percent_dynamic_width(width, value):
+    return "%*d" % (width, value)

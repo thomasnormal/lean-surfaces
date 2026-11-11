@@ -19,6 +19,8 @@ coverage advance independently from the Python tier.
 
 ### Added
 
+- Empty named unscoped enums now execute when Clang supplies no enumerators and omits the fixed underlying type; anonymous, enumerated, and unsupported-underlying forms remain loud refusals.
+
 - Top-level `typedef bool B;` now executes through a matching structured `BuiltinType` child, complementing the existing `int` and `bool` alias cases; other typedef targets remain loud refusals.
 
 - Top-level `UsingDecl`/`UsingShadowDecl` pairs now execute when their shadow target is a structured function declaration; unresolved or non-function targets remain loud refusals.

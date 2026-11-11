@@ -292,6 +292,13 @@ private def emptyEnumExecutionTranslation : Artifact := {emptyTranslation with
         ("fixedUnderlyingType", .object [
           ("qualType", .string "int")])]]) ]}
 
+private def unscopedEmptyEnumExecutionTranslation : Artifact := {emptyTranslation with
+  ast := .object [
+    ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
+    ("inner", .array [
+      .object [("id", .string "e"), ("kind", .string "EnumDecl"),
+        ("name", .string "E"), ("inner", .array [])]])]}
+
 private def boolTypeAliasExecutionTranslation : Artifact := {emptyTranslation with
   ast := .object [
     ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
@@ -1889,6 +1896,9 @@ def usingTranslationExecution : Except String Unit :=
 def emptyEnumTranslationExecution : Except String Unit :=
   execute emptyEnumExecutionTranslation "e"
 
+def unscopedEmptyEnumTranslationExecution : Except String Unit :=
+  execute unscopedEmptyEnumExecutionTranslation "e"
+
 def boolTypeAliasTranslationExecution : Except String Unit :=
   execute boolTypeAliasExecutionTranslation "a"
 
@@ -3271,6 +3281,7 @@ def staticAssertTranslationWitness : Except String Unit :=
 #guard topFunctionPrototypeTranslationExecution matches .ok ()
 #guard topUsingFunctionTranslationExecution matches .ok ()
 #guard boolTypedefTranslationExecution matches .ok ()
+#guard unscopedEmptyEnumTranslationExecution matches .ok ()
 #guard execute namespaceAliasExecutionTranslation "a" matches .ok ()
 #guard execute typeAliasExecutionTranslation "a" matches .ok ()
 #guard execute typedefExecutionTranslation "a" matches .ok ()
@@ -3331,6 +3342,9 @@ theorem top_using_function_translation_executes :
 
 theorem bool_typedef_translation_executes :
     boolTypedefTranslationExecution = .ok () := rfl
+
+theorem unscoped_empty_enum_translation_executes :
+    unscopedEmptyEnumTranslationExecution = .ok () := rfl
 
 theorem namespace_alias_translation_executes :
     execute namespaceAliasExecutionTranslation "a" = .ok () := rfl

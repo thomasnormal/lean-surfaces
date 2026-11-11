@@ -81,7 +81,8 @@ The differential row pins the refusal.
 Clang's `InitListExpr.field` is now carried through the envelope. Union
 initialization selects that member and writes only its overlapping storage;
 struct and array initialization retain their existing paths. A designated
-union row matches Clang's result.
+union row matches Clang's result. Revalidated 2026-11-11 against the pinned
+Clang/LLVM 21.1.8 oracle: `union-designated-member MATCH 5`.
 
 ## 2026-11-11-c-block-static-extern-ignored — storage-class boundary
 

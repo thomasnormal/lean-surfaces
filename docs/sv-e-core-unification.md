@@ -23,9 +23,10 @@ The migration is staged so each boundary remains checkable:
    remove the old declarations from the compatibility path and build the full
    SV chain.
 
-The exploratory alias build reached the first boundary: after replacing the
-old `Core0` body with an import of `Core0E` plus the legacy transport imports,
-`Core0Comb` had only the startup-readiness mismatch and one missing explicit
-`Proc0.implicit` case. This note records the design choice so the next patch
-does not reintroduce a second kernel or turn a retained event process into a
-combinational process.
+The transport has now crossed that boundary. `Core0.lean` is the compatibility
+import, and `Core0Comb`, `Core0Proc`, `Core0Obs`, `Core0Win`, and `Loop2Slot`
+use the declarations from `Core0E`. Their settle certificates carry an
+explicit startup-readiness premise: ordinary assigns and `always_comb` are
+ready at slot start, while a retained implicit event process starts waiting and
+is never given combinational meaning. The old run2 definitions remain only in
+the refinement imports that these transport theorems use.

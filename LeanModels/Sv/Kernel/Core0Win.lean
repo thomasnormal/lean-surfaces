@@ -390,6 +390,9 @@ structure WSettles (E : Elab) (d : Design2) (own : ProcId → List Nat) (rank : 
   comb : CombDesign d
   decls : d.decls = E.decls
   four : AllFour E
+  /-- Every process represented by this profile is ready at startup. Retained
+      event-controlled processes start waiting and are outside this settle profile. -/
+  startReady : ∀ q, q < E.procs.size → q ∈ E.startActive
   disj : ∀ p q j, j ∈ own p → j ∈ own q → p = q
   cover : ∀ j, j < d.processes.size → ∃ p, p < E.procs.size ∧ j ∈ own p
   act : ∀ (s : Store) (p : ProcId), E.Typed s → p < E.procs.size →
@@ -413,11 +416,12 @@ structure WSettleInv (E : Elab) (d : Design2) (own : ProcId → List Nat) (c : C
 
 /-- With every process ready, the invariant holds of any typed store. -/
 theorem WSettleInv.init {E : Elab} {d : Design2} {own : ProcId → List Nat} {s : Store}
-    (hT : E.Typed s) : WSettleInv E d own (Config.init E s) where
+    (hready : ∀ q, q < E.procs.size → q ∈ E.startActive) (hT : E.Typed s) :
+    WSettleInv E d own (Config.init E s) where
   typed := hT
-  nodup := List.nodup_range
-  range := fun _ hq => List.mem_range.mp hq
-  eqs := fun _ hq hna => absurd (List.mem_range.mpr hq) hna
+  nodup := (List.nodup_range.filter _)
+  range := fun _ hq => List.mem_range.mp (List.mem_filter.mp hq).1
+  eqs := fun q hq hna => absurd (hready q hq) hna
 
 namespace WSettles
 
@@ -799,6 +803,7 @@ theorem Settles.toW {E : Elab} {d : Design2} {rank : Nat → Nat} (hS : Settles 
   comb := hS.comb
   decls := hS.decls
   four := hS.four
+  startReady := hS.startReady
   disj := fun p q j hp hq => by
     rw [List.mem_singleton] at hp hq
     rw [← hp, ← hq]
@@ -937,7 +942,34 @@ theorem WSettles.ofLowerWin {E : Elab} {ps : List (Nat × Process2)} {rank : Nat
   have hsize : (E.toDesign2.winDesign ps).processes.size = ps.length := by
     simp [Design2.winDesign]
   have hdecls : (E.toDesign2.winDesign ps).decls = E.decls := rfl
-  refine ⟨hd, hdecls, h4, ?_, ?_, ?_, ?_, ?_, ha, ?_⟩
+  refine ⟨hd, hdecls, h4, ?_, ?_, ?_, ?_, ?_, ?_, ha, ?_⟩
+  · -- startup readiness: lowerWin has no image for retained event processes
+    intro q hq
+    cases hpp : E.procs[q]? with
+    | none =>
+        rw [Array.getElem?_eq_getElem hq] at hpp
+        cases hpp
+    | some pr =>
+        cases pr with
+        | assign t e =>
+            rw [Elab.startActive]
+            apply List.mem_filter.mpr
+            refine ⟨List.mem_range.mpr hq, ?_⟩
+            rw [hpp]
+            rfl
+        | comb body =>
+            rw [Elab.startActive]
+            apply List.mem_filter.mpr
+            refine ⟨List.mem_range.mpr hq, ?_⟩
+            rw [hpp]
+            rfl
+        | implicit body =>
+            have hpr : E.toDesign2.processes[q]? = some (.unsupported
+                "ProceduralBlockSymbol:Always"
+                "source-level event-controlled always is retained; the frozen process AST has no event-list constructor") := by
+              simp [Elab.toDesign2, hpp, Proc0.toProcess2]
+            obtain ⟨g, hg⟩ := Design2.lowerWin_total hl hpr
+            simp [Proc0.toProcess2, Process2.lowerWin] at hg
   · -- disj
     intro p q j hp hq
     obtain ⟨_, h1⟩ := mem_winOwn.mp hp
@@ -989,6 +1021,8 @@ theorem WSettles.ofLowerWin {E : Elab} {ps : List (Nat × Process2)} {rank : Nat
               obtain ⟨x, hx, rfl⟩ := List.mem_map.mp hq
               exact ⟨x, hx, hpq⟩
             · exact hcov _ (List.mem_map_of_mem hx)
+        | implicit body =>
+            simp [Proc0.toProcess2, Process2.lowerWin] at hg
   · -- complete
     intro q j t e hj hp r hr
     obtain ⟨q', hq'⟩ := mem_winOwn.mp hj
@@ -1334,14 +1368,14 @@ theorem ibex_rcomb (ch : Choice) {s : Store} (hT : ibex.Typed s) :
     ∃ c', SlotCloses ibex ch (Config.init ibex s) c' ∧ CombEqs ibexEq (ibex.view c'.store) ∧
       ∀ st, StateShape ibexEq st → CombEqs ibexEq st → Frame ibexEq (ibex.view s) st →
         st = ibex.view c'.store := by
-  obtain ⟨c', hcl, he, -, huniq⟩ := ibex_wsettles.rcomb ch (WSettleInv.init hT)
+  obtain ⟨c', hcl, he, -, huniq⟩ := ibex_wsettles.rcomb ch (WSettleInv.init ibex_wsettles.startReady hT)
   exact ⟨c', hcl, he, huniq⟩
 
 /-- **Schedule independence on the ibex shape**: any two process-atomic legal schedules close at the same store. -/
 theorem ibex_schedule_independent {s : Store} (hT : ibex.Typed s) {c₁ c₂ : Config}
     {ch₁ ch₂ : Choice} (h₁ : SlotCloses ibex ch₁ (Config.init ibex s) c₁)
     (h₂ : SlotCloses ibex ch₂ (Config.init ibex s) c₂) : ibex.view c₁.store = ibex.view c₂.store :=
-  ibex_wsettles.schedule_independent (WSettleInv.init hT) h₁ h₂
+  ibex_wsettles.schedule_independent (WSettleInv.init ibex_wsettles.startReady hT) h₁ h₂
 
 /-- The process-level lowering (G-B's `Design2.lowerComb`): `assign {a, c} = {x, b}` beside
 `assign b = a + 1`. -/
@@ -1471,7 +1505,7 @@ theorem ibex_closed_eq_combSettle2 {ch : Choice} {s : Store} (hT : ibex.Typed s)
     {S : SvState} {k' : Nat} (hS2 : combSettle2 ibex.toDesign2 σ fuel (ibex.view s) k = .ok (S, k')) :
     ibex.view c'.store = S :=
   WSettles.closed_eq_combSettle2 ibex_lower ibexLow_comb ibex_lowerWin ibex_wsettles
-    (WSettleInv.init hT) h hS2
+    (WSettleInv.init ibex_wsettles.startReady hT) h hS2
 
 /-- **The process rank, as the special case** (non-vacuity of `Settles.toW`): G-B's fixture is a
 window-rank instance with each process owning its own equation. -/

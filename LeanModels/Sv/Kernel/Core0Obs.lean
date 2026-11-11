@@ -233,7 +233,7 @@ theorem Settles.nextSlot_inv {E : Elab} {d : Design2} {rank : Nat → Nat} (hS :
 /-- The startup store is typed. -/
 theorem Config.start_inv {E : Elab} {d : Design2} {rank : Nat → Nat} (hS : Settles E d rank)
     (entry : SvState) : SettleInv E d (Config.start E entry) :=
-  SettleInv.init hS.size ((Elab.typed_initStore E).applyInputs entry)
+  SettleInv.init hS.size hS.startReady ((Elab.typed_initStore E).applyInputs entry)
 
 /-- **Every slot of a behaviour is closed and keeps the invariant.** -/
 theorem behaves0_inv {E : Elab} {d : Design2} {rank : Nat → Nat} (hS : Settles E d rank)
@@ -540,7 +540,7 @@ theorem runObs2_of_runs_E0 {E : Elab} {rank : Nat → Nat} (hS : Settles E E.toD
       induction ps with
       | nil => rfl
       | cons p ps ih => cases p <;>
-          simp only [List.map_cons, List.any_cons, Proc0.toProcess2, ih, Bool.false_or]
+          simp only [List.map_cons, List.any_cons, Proc0.toProcess2, ih, Bool.false_or] <;> native_decide
     have hc : run2ClockNames E.toDesign2 = [] := by
       simp [run2ClockNames, Elab.toDesign2, hnames E.procs.toList]
     have hi : E.toDesign2.processes.toList.any (fun p =>
@@ -752,7 +752,7 @@ theorem runs2_of_runs_E0_agree {E : Elab} {d : Design2} {rank : Nat → Nat}
       induction ps with
       | nil => rfl
       | cons p ps ih => cases p <;>
-          simp only [List.map_cons, List.any_cons, Proc0.toProcess2, ih, Bool.false_or]
+          simp only [List.map_cons, List.any_cons, Proc0.toProcess2, ih, Bool.false_or] <;> native_decide
     have hc : run2ClockNames E.toDesign2 = [] := by
       simp [run2ClockNames, Elab.toDesign2, hnames E.procs.toList]
     have hi : E.toDesign2.processes.toList.any (fun p =>
@@ -1059,22 +1059,6 @@ theorem not_included_run2_E0 {E : Elab} {rank : Nat → Nat} (hS : Settles E E.t
     rw [Obs_run2.read_sample hnames]; exact hSn
   exact hv (E0_pre_width hS hbE (c := 0)
     (o := ⟨Obs_run2.sample E.toDesign2 S, Obs_run2.sample E.toDesign2 S⟩) rfl hw hread)
-
-/-! ## The elaboration of a `Design2` into E-core-0 (R-DESIGN2's `toE`) -/
-
-/-- A `Design2` process as an E-core-0 process. Clocked and loud processes become loud
-`always_comb` bodies: they are outside E-core-0 and refuse when run. -/
-def Proc0.ofProcess2 : Process2 → Proc0
-  | .assign t e => .assign t e
-  | .alwaysComb b => .comb b
-  | .unsupported k x => .comb (.unsupported k x)
-  | .alwaysFF _ _ | .alwaysPlain _ _ | .alwaysFFR _ _ _ _ =>
-      .comb (.unsupported "always_ff" "clocked processes are outside E-core-0")
-
-/-- **`toE`**: the E-core-0 design of a `Design2`: the same name and declarations, every process
-its E-core-0 image. -/
-def Elab.ofDesign2 (d : Design2) : Elab :=
-  { decls := d.decls, procs := (d.processes.toList.map Proc0.ofProcess2).toArray, name := d.name }
 
 /-- The round trip: when every process is an assign or an `always_comb`, the corresponding
 Design2 of `toE d` is `d`. -/

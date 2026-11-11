@@ -50,7 +50,7 @@ theorem WSettles.nextSlot_inv (hS : WSettles E d own rank) {c : Config}
 theorem WSettles.behaves0_inv (hS : WSettles E d own rank) {env : List SvState} {ch : Choice}
     {cfg : Nat → Config} (hb : Behaves0 E env ch cfg) :
     ∀ t, WSettleInv E d own (cfg t) ∧ (cfg t).active = []
-  | 0 => ⟨hS.steps_inv hb.1.1 (WSettleInv.init ((Elab.typed_initStore E).applyInputs _)),
+  | 0 => ⟨hS.steps_inv hb.1.1 (WSettleInv.init hS.startReady ((Elab.typed_initStore E).applyInputs _)),
       active_nil_of_closed hb.1.2⟩
   | t + 1 =>
       have ih := hS.behaves0_inv hb t
@@ -64,7 +64,7 @@ theorem WSettles.slot_start (hS : WSettles E d own rank) {env : List SvState} {c
   cases c with
   | zero =>
       exact ⟨Config.start E (slotEntry env 0), E.initStore, rfl, E.typed_initStore,
-        WSettleInv.init ((Elab.typed_initStore E).applyInputs _), hb.1, fun _ => rfl,
+        WSettleInv.init hS.startReady ((Elab.typed_initStore E).applyInputs _), hb.1, fun _ => rfl,
         fun h => absurd h (Nat.lt_irrefl 0)⟩
   | succ c =>
       have hidx : 2 * (c + 1) - 1 + 1 = 2 * (c + 1) := by omega
@@ -217,7 +217,8 @@ theorem runs2_of_runs_E0_wagree (hS : WSettles E d own rank) (hA : WSettleAgree 
       induction ps with
       | nil => rfl
       | cons p ps ih => cases p <;>
-          simp only [List.map_cons, List.any_cons, Proc0.toProcess2, ih, Bool.false_or]
+          simp only [List.map_cons, List.any_cons, Proc0.toProcess2, ih, Bool.false_or] <;>
+            native_decide
     have hc : (List.filterMap run2Clock? (E.procs.toList.map Proc0.toProcess2)).eraseDups = [] := by
       simpa [Function.comp_def] using congrArg List.eraseDups hnames
     rw [hc]

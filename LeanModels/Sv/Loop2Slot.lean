@@ -247,7 +247,7 @@ theorem open_next (hs : SingleE E body I F W) {c : Config} (hT : E.Typed c.store
 
 theorem start_active (hs : SingleE E body I F W) (entry : SvState) :
     (Config.start E entry).active = [0] := by
-  simp [Config.start, Config.init, hs.procs]
+  simp [Config.start, Config.init, Elab.startActive, Proc0.readyAtStart, hs.procs]
 
 /-- **Every slot of every behaviour closes settled and typed.** -/
 theorem behaves (hs : SingleE E body I F W) {env : List SvState} {ch : Choice} {cfg : Nat → Config}

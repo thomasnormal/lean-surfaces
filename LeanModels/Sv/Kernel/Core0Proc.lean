@@ -575,6 +575,7 @@ def Elab.qualFreeB (E : Elab) : Bool :=
   E.procs.toList.all fun p => match p with
     | .comb body => body.qualFree
     | .assign _ _ => true
+    | .implicit body => body.qualFree
 
 theorem Elab.qualFree_of_qualFreeB {E : Elab} (h : E.qualFreeB = true) {p : ProcId} {body : Stmt2}
     (hp : E.procs[p]? = some (.comb body)) : body.qualFree = true := by
@@ -596,6 +597,35 @@ theorem Settles.ofLower {E : Elab} {d' : Design2} {rank : Nat → Nat}
   decls := (Design2.lowerComb_spec hl).2.1
   size := by rw [(Design2.lowerComb_spec hl).2.2.1, Elab.size_toDesign2]
   four := h4
+  startReady := fun p hp => by
+    cases hpp : E.procs[p]? with
+    | none =>
+        rw [Array.getElem?_eq_getElem hp] at hpp
+        simp at hpp
+    | some pr =>
+        cases pr with
+        | assign t e =>
+            have hget : E.procs[p] = .assign t e := by
+              simpa [Array.getElem?_eq_getElem hp] using hpp
+            rw [Elab.startActive]
+            apply List.mem_filter.mpr
+            refine ⟨List.mem_range.mpr hp, ?_⟩
+            rw [hpp]
+            rfl
+        | comb body =>
+            have hget : E.procs[p] = .comb body := by
+              simpa [Array.getElem?_eq_getElem hp] using hpp
+            rw [Elab.startActive]
+            apply List.mem_filter.mpr
+            refine ⟨List.mem_range.mpr hp, ?_⟩
+            rw [hpp]
+            rfl
+        | implicit body =>
+            have hpE : E.toDesign2.processes[p]? = some (.unsupported
+                "ProceduralBlockSymbol:Always" "source-level event-controlled always is retained; the frozen process AST has no event-list constructor") := by
+              simp [Elab.toDesign2, hpp, Proc0.toProcess2]
+            obtain ⟨q, hq, hqp⟩ := Design2.lowerComb_proc hl hpE
+            simp [Process2.lowerComb] at hq
   act := fun s p hT hpn => by
     have hdecls : d'.decls = E.toDesign2.decls := (Design2.lowerComb_spec hl).2.1
     cases hpp : E.procs[p]? with
@@ -617,6 +647,12 @@ theorem Settles.ofLower {E : Elab} {d' : Design2} {rank : Nat → Nat}
             refine ⟨t, e, v, _, hq', hv, activate_assign hpp hws hv, ?_, hT.writeWins _ _⟩
             rw [Elab.view_writeWins h4 _ _ hT, combWrite]
         | comb body => exact activate_comb hl hd' h4 hpp (Elab.qualFree_of_qualFreeB hq hpp) hT
+        | implicit body =>
+            have hpE : E.toDesign2.processes[p]? = some (.unsupported
+                "ProceduralBlockSymbol:Always" "source-level event-controlled always is retained; the frozen process AST has no event-list constructor") := by
+              simp [Elab.toDesign2, hpp, Proc0.toProcess2]
+            obtain ⟨q, hq, hqp⟩ := Design2.lowerComb_proc hl hpE
+            simp [Process2.lowerComb] at hq
   complete := complete_of_completeB hc
   ranked := ranked_of_rankedB hr
   bound := bound_of_boundB hb
@@ -650,7 +686,7 @@ theorem rcomb1 {E : Elab} {d' : Design2} {rank : Nat → Nat}
     ∃ c', SlotCloses E ch (Config.init E s) c' ∧ CombEqs d' (E.view c'.store) ∧
       (∀ st, StateShape d' st → CombEqs d' st → Frame d' (E.view s) st → st = E.view c'.store) ∧
       ∃ fuel k', combSettle2 E.toDesign2 σ fuel (E.view s) k = .ok (E.view c'.store, k') := by
-  have hI := SettleInv.init hS.size hT (d := d')
+  have hI := SettleInv.init hS.size hS.startReady hT (d := d')
   obtain ⟨c', S, k', hcl, hS2, heq⟩ := hS.rcomb_combSettle2 ch σ hT k d'.settleFuel (Nat.le_refl _)
   obtain ⟨he, hsh, hf⟩ := hS.slotCloses_combEqs hI hcl
   obtain ⟨-, f', hf'⟩ := (CombSim.of_lowerComb' hl hS.comb).combSettle2 σ d'.settleFuel (E.view s) k

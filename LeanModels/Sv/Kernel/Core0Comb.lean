@@ -319,14 +319,16 @@ structure SettleInv (E : Elab) (d : Design2) (c : Config) : Prop where
 
 /-- With every process ready, the invariant holds of any typed store. -/
 theorem SettleInv.init {E : Elab} {d : Design2} (hsize : d.processes.size = E.procs.size)
+    (hready : ∀ q, q < E.procs.size → q ∈ E.startActive)
     {s : Store} (hT : E.Typed s) : SettleInv E d (Config.init E s) where
   typed := hT
-  nodup := List.nodup_range
-  range := fun _ hq => List.mem_range.mp hq
+  nodup := (List.nodup_range.filter _)
+  range := fun _ hq => List.mem_range.mp (List.mem_filter.mp hq).1
   eqs := fun q hq _ _ _ _ _ _ hp _ => by
-    refine absurd (List.mem_range.mpr ?_) hq
-    have := (Array.getElem?_eq_some_iff.mp hp).1
-    rwa [hsize] at this
+    have hqE : q < E.procs.size := by
+      have hqD := (Array.getElem?_eq_some_iff.mp hp).1
+      rwa [hsize] at hqD
+    exact absurd (hready q hqE) hq
 
 /-- Bits that no process writes, and the frame: widths and those bits agree. -/
 def Undriven (d : Design2) (x : String) (b : Nat) : Prop :=
@@ -374,6 +376,9 @@ structure Settles (E : Elab) (d : Design2) (rank : Nat → Nat) : Prop where
   decls : d.decls = E.decls
   size : d.processes.size = E.procs.size
   four : AllFour E
+  /-- Every process in this settle profile is ready at startup. Retained
+      event-controlled processes intentionally do not satisfy this premise. -/
+  startReady : ∀ q, q < E.procs.size → q ∈ E.startActive
   act : ∀ (s : Store) (p : ProcId), E.Typed s → p < E.procs.size →
     ∃ t e v s', d.processes[p]? = some (.assign t e) ∧ evalPure2 (E.view s) e = .ok v ∧
       activate E p s = .ok (.ok (), s') ∧ E.view s' = combWrite d (E.view s) t v ∧ E.Typed s'
@@ -802,7 +807,7 @@ theorem Settles.rcomb_combSettle2 {E : Elab} {d : Design2} {rank : Nat → Nat}
     (k fuel : Nat) (hf : d.settleFuel ≤ fuel) :
     ∃ c' S k', SlotCloses E ch (Config.init E s) c' ∧
       combSettle2 d σ fuel (E.view s) k = .ok (S, k') ∧ E.view c'.store = S := by
-  have hI := SettleInv.init hS.size hT (d := d)
+  have hI := SettleInv.init hS.size hS.startReady hT (d := d)
   obtain ⟨c', hcl, -⟩ := hS.slot_closes ch hI
   obtain ⟨S, k', hS2⟩ := combSettle2_terminates_of_le hS.comb hS.acyclic hf σ (E.view s) k
     (hS.shape hT)
@@ -818,6 +823,24 @@ theorem Settles.ofProfile0 {E : Elab} (hP : Profile0 E) {rank : Nat → Nat}
   decls := rfl
   size := E.size_toDesign2
   four := hP.four
+  startReady := fun q hq => by
+    cases hq' : E.procs[q]? with
+    | none =>
+        have hqget := Array.getElem?_eq_getElem hq
+        rw [hqget] at hq'
+        simp at hq'
+    | some p =>
+        have hqget : E.procs[q] = p := by
+          simpa [Array.getElem?_eq_getElem hq] using hq'
+        cases p with
+        | assign t e => simp [Elab.startActive, hq, hqget, Proc0.readyAtStart]
+        | comb body => simp [Elab.startActive, hq, hqget, Proc0.readyAtStart]
+        | implicit body =>
+            have hp : E.toDesign2.processes[q]? = some (.unsupported
+                "ProceduralBlockSymbol:Always" "source-level event-controlled always is retained; the frozen process AST has no event-list constructor") := by
+              simp [Elab.toDesign2, hq', Proc0.toProcess2]
+            obtain ⟨_, _, _, hbad, _⟩ := hP.comb.assign q _ hp
+            cases hbad
   act := fun s p hT hpn => by
     obtain ⟨t, e, ws, hp, hws⟩ := hP.comb.writes_of_lt (by rwa [Elab.size_toDesign2])
     have hs := Elab.shape_view hP.comb hT
@@ -839,6 +862,13 @@ theorem Settles.ofProfile0 {E : Elab} (hP : Profile0 E) {rank : Nat → Nat}
         | comb body =>
             exfalso
             have hq' : E.toDesign2.processes[q]? = some (.alwaysComb body) := by
+              simp [Elab.toDesign2, hq, Proc0.toProcess2]
+            obtain ⟨_, _, _, h, -⟩ := hP.comb.assign q _ hq'
+            cases h
+        | implicit body =>
+            exfalso
+            have hq' : E.toDesign2.processes[q]? = some (.unsupported
+                "ProceduralBlockSymbol:Always" "source-level event-controlled always is retained; the frozen process AST has no event-list constructor") := by
               simp [Elab.toDesign2, hq, Proc0.toProcess2]
             obtain ⟨_, _, _, h, -⟩ := hP.comb.assign q _ hq'
             cases h

@@ -13903,3 +13903,21 @@ state and `Run` outcome.
 
 DECIDED: keep extending the expression-control bridge one source operator at a
 time; recursive calls, statement execution, and script adequacy remain open.
+
+## 2026-11-11-pyfoundation-98 — prove literal multiplication control refinement
+
+The expression-control refinement family now includes immediate integer
+multiplication. `Monadic.twinAgrees_binOpHM_intMult` records the frame-heap read
+and the unchanged heap/value result of the list-specialized dispatch on two
+integers. `Monadic.twinAgrees_evalOpen_intMult` then transports both literal
+children through the constant bridge and applies that worker equation with the
+explicit `1 < fuel` legacy margin. Runtime semantics are unchanged.
+
+| Measurement | Result |
+|---|---|
+| Target | managed `lake build LeanModels/Python/Monadic/Eval.lean` passed (11/11 jobs) |
+| New theorems | `Monadic.twinAgrees_binOpHM_intMult`, `Monadic.twinAgrees_evalOpen_intMult` |
+| Semantic change | theorem only; no evaluator behavior change |
+
+DECIDED: continue the literal expression-control bridge one operator at a time;
+recursive calls, statement execution, and script adequacy remain open.

@@ -3215,6 +3215,29 @@ theorem twinAgrees_binOpHM_intBitAnd (a b : Int) (st : FrameState) :
   simpa [twinAgrees_binOp, evalBinOpH, setLikeRefH, evalBinOp, asInt,
     hmult, Run.liftRes]
 
+/- Immediate integer multiplication also takes the heap-aware dispatch branch:
+   it reads the frame heap, recognizes that neither operand is a list, and
+   returns the pure worker result with the heap unchanged. -/
+theorem twinAgrees_binOpHM_intMult (a b : Int) (st : FrameState) :
+    LeanModels.Python.Monadic.toRun (binOpHM .mult (.int a) (.int b)) st =
+      match evalBinOpH st.world.heap .mult (.int a) (.int b) with
+      | .ok (h, v) => .ok { st with world := { st.world with heap := h } } v
+      | .exn e => .exn st e
+      | .timeout => .timeout
+      | .unsupported msg => .unsupported msg := by
+  have hand : (BinOp.mult == BinOp.bitAnd) = false := by decide
+  have hmult : (BinOp.mult == BinOp.mult) = true := by decide
+  unfold binOpHM
+  simp only [hand, hmult, Bool.false_eq_true, if_false, if_true]
+  rw [toRun_bind]
+  unfold frameHeap
+  rw [toRun_bind]
+  rw [toRun_get]
+  simp only [toRun_pure]
+  simp [twinAgrees_binOp, evalBinOpH, evalBinOpMultH, evalBinOp,
+    evalBinOpMultH, asInt, hand, hmult, Bool.false_eq_true, if_false,
+    if_true, Run.liftRes]
+
 /- The expression-control bridge for a literal integer bitwise-and.  The
    heap-aware dispatch theorem above supplies the state-preserving worker
    equation after both literal children have crossed the shared constant
@@ -3252,6 +3275,42 @@ theorem twinAgrees_evalOpen_intBitAnd (K : Kont) (m : Module) (st : FrameState)
       simp only [evalOpen, toRun_bind, toRun_pure, Run.bind, handAnd, handMult,
         Bool.true_or, if_true]
       exact twinAgrees_binOpHM_intBitAnd a b st
+
+/- The expression-control bridge for literal integer multiplication reuses the
+   heap-aware worker equation above and preserves the same legacy fuel margin. -/
+theorem twinAgrees_evalOpen_intMult (K : Kont) (m : Module) (st : FrameState)
+    (a b : Int) (sp : Span) (fuel : Nat) (hfuel : 1 < fuel) :
+    LeanModels.Python.Monadic.toRun (evalOpen K m
+      (.binOp (.constant (.int a) sp) .mult (.constant (.int b) sp) sp)) st =
+      evalExpr m fuel st
+        (.binOp (.constant (.int a) sp) .mult (.constant (.int b) sp) sp) := by
+  cases fuel with
+  | zero => omega
+  | succ fuel =>
+    cases fuel with
+    | zero => omega
+    | succ fuel =>
+      rw [evalExpr]
+      have hca := twinAgrees_evalOpen_constant K m st (.int a) sp (fuel + 1) (by omega)
+      have hcb : ∀ st' : FrameState,
+          LeanModels.Python.Monadic.toRun (evalOpen K m
+            (.constant (.int b) sp)) st' =
+            evalExpr m (fuel + 1) st' (.constant (.int b) sp) := by
+        intro st'
+        exact twinAgrees_evalOpen_constant K m st' (.int b) sp (fuel + 1) (by omega)
+      rw [← hca]
+      have hcb' : ∀ st' : FrameState,
+          evalExpr m (fuel + 1) st' (.constant (.int b) sp) =
+            LeanModels.Python.Monadic.toRun (evalOpen K m
+              (.constant (.int b) sp)) st' := by
+        intro st'
+        exact (hcb st').symm
+      simp only [hcb']
+      have hmultAnd : (BinOp.mult == BinOp.bitAnd) = false := by decide
+      have hmultSelf : (BinOp.mult == BinOp.mult) = true := by decide
+      simp only [evalOpen, toRun_bind, toRun_pure, Run.bind, hmultAnd, hmultSelf,
+        Bool.false_or, if_false, Bool.true_or, if_true]
+      exact twinAgrees_binOpHM_intMult a b st
 
 /- `x + 5 = 12`, through the fuel-free evaluator, decided by the KERNEL. -/
 #guard (match toRun (evalOpen K0 emptyModule

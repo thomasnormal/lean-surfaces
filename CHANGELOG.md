@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Added the kernel-checked `twinAgrees_evalOpen_intMult` control bridge and
+  its state-preserving `twinAgrees_binOpHM_intMult` worker equation. Immediate
+  integer multiplication now has an explicit heap-read/refinement proof with
+  no evaluator behavior change.
+
 - Added the kernel-checked `twinAgrees_evalOpen_intBitAnd` control bridge for
   literal integer bitwise-and expressions. It composes the constant-child
   transport with the existing heap-aware worker refinement and preserves the

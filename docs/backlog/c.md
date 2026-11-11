@@ -104,7 +104,8 @@ Forward `RecordDecl`s with no fields previously shadowed later complete
 definitions under the same tag, making `sizeof` and pointer stride zero. The
 layout census now excludes incomplete records from its record table; uses of
 an actually incomplete type still refuse. A differential `sizeof` row pins
-the complete-definition path.
+the complete-definition path. Revalidated 2026-11-11 against the pinned
+Clang/LLVM 21.1.8 oracle: `forward-record-size MATCH 8`.
 
 ## 2026-11-11-c-effective-type-unchecked — pointer-punning boundary
 

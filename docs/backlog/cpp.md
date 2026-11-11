@@ -48,7 +48,9 @@ unqualified spellings remain admitted. Friend-class admission now refuses
 until Clang's friend target handle is retained; setter and remaining enum
 parameter checks now use the retained structured enum handle and preserve
 qualified source spellings as data. Direct enum arguments still await a probe
-handle join before their source spelling can be removed from the boundary.
+handle join before their source spelling can be removed from the legacy
+boundary; the new `admitWithTypeEvidence` path performs that join and accepts
+qualified spellings.
 
 ## `cpp-harness-oracle-misfile`: native oracle policy
 

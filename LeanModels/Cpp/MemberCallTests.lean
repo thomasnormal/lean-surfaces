@@ -763,6 +763,25 @@ private def enumArgumentBindAccepted : Bool :=
       | .error _ => false
   | none => false
 
+private def qualifiedEnumArgumentTypeRows : List TypeEvidenceRow := [{
+  ordinal := 0, occurrence := h "0x21", canonical := h "0x21",
+  type := .enumeration (h "0x13")}]
+
+private def enumArgumentQualifiedHandleAccepted : Bool :=
+  match enumSetterRepresentation with
+  | some representation =>
+      match IntegralMemberEnumArgument.admitWithTypeEvidence
+          qualifiedEnumArgumentTypeRows
+          (rawEnumArgument "0x20" "ns::XMLError" "0x21") representation with
+      | .ok argument =>
+          argument.sourceType == "ns::XMLError" &&
+            (IntegralMemberEnumArgument.evaluate argument representation .lp64
+              ⟨.unsigned 32, 9⟩).isOk
+      | .error _ => false
+  | none => false
+
+#guard enumArgumentQualifiedHandleAccepted
+
 private def enumSetterSourceArgument : Option IntegralMemberEnumArgument :=
   match enumSetterRepresentation with
   | some representation =>

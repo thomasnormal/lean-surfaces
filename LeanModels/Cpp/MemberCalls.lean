@@ -608,7 +608,7 @@ private def spellingMatches (spelling name : String) : Bool :=
 /-- Admit one direct enum `DeclRefExpr` under the caller's representation
 oracle. Casts, literals, and other argument forms remain outside this witness.
 -/
-def admit (raw : Raw) (representation : IntegralMemberEnumRepresentation) :
+private def admitUnchecked (raw : Raw) (representation : IntegralMemberEnumRepresentation) :
     Except IntegralMemberEnumArgumentError IntegralMemberEnumArgument := do
   unless raw.text "kind" == some "DeclRefExpr" do throw .notDeclRef
   let occurrence ← match raw.field "id" with
@@ -621,7 +621,6 @@ def admit (raw : Raw) (representation : IntegralMemberEnumRepresentation) :
         | some value => if !value.isEmpty then pure value else throw .malformedType
         | none => throw .malformedType
     | none => throw .malformedType
-  unless spellingMatches sourceType representation.profile.name do throw .unsupportedType
   let referenced ← match raw.field "referencedDecl" with
     | some (.object fields) =>
         match (Raw.object fields).field "id" with
@@ -632,6 +631,25 @@ def admit (raw : Raw) (representation : IntegralMemberEnumRepresentation) :
         (parseFrontendHandle value).mapError (fun _ => .missingReferencedDeclaration)
     | _ => throw .missingReferencedDeclaration
   pure {occurrence := occurrence, sourceType := sourceType, type := .enumeration representation.profile.enum, declaration := referenced}
+
+def admit (raw : Raw) (representation : IntegralMemberEnumRepresentation) :
+    Except IntegralMemberEnumArgumentError IntegralMemberEnumArgument := do
+  let argument ← admitUnchecked raw representation
+  unless spellingMatches argument.sourceType representation.profile.name do
+    throw .unsupportedType
+  pure argument
+
+/-- Admit a direct enum argument after joining its referenced declaration to
+validated structured type evidence. The qualified source spelling is retained
+for diagnostics but does not decide identity once this handle join succeeds. -/
+def admitWithTypeEvidence (typeRows : List TypeEvidenceRow) (raw : Raw)
+    (representation : IntegralMemberEnumRepresentation) :
+    Except IntegralMemberEnumArgumentError IntegralMemberEnumArgument := do
+  let argument ← admitUnchecked raw representation
+  let some (.enumeration enum) := typeEvidenceFor typeRows argument.declaration
+    | throw .unsupportedType
+  unless enum == representation.profile.enum do throw .unsupportedType
+  pure argument
 
 def bindTo (argument : IntegralMemberEnumArgument) (parameter : FrontendHandle)
     (parameterType : CppTypeEvidence) :
@@ -781,8 +799,6 @@ def evaluate (argument : IntegralMemberEnumArgument)
     (stored : IntegralValue) :
     Except IntegralMemberEnumValueError IntegralMemberEnumValue := do
   unless argument.type == .enumeration representation.profile.enum do
-    throw .argumentMismatch
-  unless spellingMatches argument.sourceType representation.profile.name do
     throw .argumentMismatch
   let format ← match profile.format representation.underlying with
     | .ok format => pure format

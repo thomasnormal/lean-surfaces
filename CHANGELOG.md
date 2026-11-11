@@ -150,6 +150,10 @@
 - Let qualified enum source spellings pass member-parameter and setter
   admission when the retained structured enum handle agrees; the spelling is
   preserved for diagnostics and no longer decides identity in those paths.
+
+- Added a structured-type-evidence admission path for direct enum arguments;
+  once the referenced declaration handle joins the expected enum handle,
+  qualified source spellings are accepted and preserved only as diagnostics.
 - Admit space-padded combinations of percent-format sign and alternate flags
   with widths; zero-padded combinations remain loud until their prefix order is
   modeled.

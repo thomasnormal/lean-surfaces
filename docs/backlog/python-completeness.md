@@ -13338,3 +13338,21 @@ fuel-threaded `EvalsState`/`CallsIn` seam in `VC2.lean`.
 
 DECIDED: keep the quantified recursive proof open until the stateful fuel
 relation is complete; do not equate depth-zero and depth-one frames.
+## 2026-11-11-pyfoundation-67 — share the heap-aware bitwise-and worker refinement
+
+The monadic refinement family now has an explicit bridge for the immediate
+integer `bitAnd` worker. `twinAgrees_binOpH_intBitAnd` unfolds the monadic
+fallback and the legacy heap-aware worker together, proving that integer
+bitwise-and returns the unchanged frame state and the same value/error result.
+The proof records the non-`mult` dispatch guard and transports the result
+through `Run.liftRes`, leaving the more general heap/value-pair lift seam for a
+later item.
+
+| Measurement | Result |
+|---|---|
+| Target | managed `lake build LeanModels/Python/Monadic/Eval.lean` passed |
+| New theorem | `Monadic.twinAgrees_binOpH_intBitAnd` |
+| Semantic change | none; this is a kernel-checked control/refinement bridge |
+
+DECIDED: continue the refinement family with the next worker/literal seam;
+the general heap/value-pair transport theorem remains open.

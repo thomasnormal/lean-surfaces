@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Added a kernel-checked heap-aware binary worker refinement theorem for
+  immediate integer bitwise-and, making the unchanged heap/value pair
+  explicit at the monadic boundary.
+
 - Added a kernel-checked binary-expression refinement theorem for integer
   literal right-shift, preserving explicit fuel and dispatch decisions.
 

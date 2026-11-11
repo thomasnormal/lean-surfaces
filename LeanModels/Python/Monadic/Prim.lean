@@ -390,8 +390,25 @@ theorem twinAgrees_unaryOp (op : UnaryOp) (v : RVal) (st : FrameState) :
   simpa [Run.liftRes] using
     (twinAgrees_liftRes (evalUnaryOpH st.world.heap op v) st)
 
+/- Immediate bitwise-and is the first heap-aware binary boundary.  The H
+   worker still returns the unchanged heap/value pair for integer operands;
+   this equation makes that fact explicit for the control refinement. -/
+theorem twinAgrees_binOpH_intBitAnd (a b : Int) (st : FrameState) :
+    LeanModels.Python.Monadic.toRun
+        (binOpM .bitAnd (.int a) (.int b)) st =
+      match evalBinOpH st.world.heap .bitAnd (.int a) (.int b) with
+      | .ok (_, v) => .ok st v
+      | .exn e => .exn st e
+      | .timeout => .timeout
+      | .unsupported msg => .unsupported msg := by
+  unfold binOpM
+  have hmult : (BinOp.bitAnd == BinOp.mult) = false := by decide
+  simp [twinAgrees_liftRes, evalBinOpH, setLikeRefH, evalBinOp, asInt,
+    hmult, Run.liftRes]
+
 #print axioms twinAgrees_liftRes
 #print axioms twinAgrees_binOp
 #print axioms twinAgrees_unaryOp
+#print axioms twinAgrees_binOpH_intBitAnd
 
 end LeanModels.Python.Monadic

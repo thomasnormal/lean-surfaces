@@ -47,7 +47,9 @@ Clang's JSON prints a signed high-bit ordinary character constant as a
 zero-extended 32-bit pattern (`'\\xff'` as `4294967295`). The evaluator now
 recovers the signed 8-bit execution-character value before constructing the
 promoted `int`. Pinned ASCII, `\\xff`, octal-`\\377`, and `\\x80` rows match
-Clang 21.1.8.
+Clang 21.1.8. Revalidated 2026-11-11 against the pinned Clang/LLVM 21.1.8
+oracle: `ascii MATCH`, `high-hex MATCH`, `high-octal MATCH`, and `high-80
+MATCH`.
 
 ## 2026-11-11-c-type-spelling-grammar — guarded declarator boundary
 

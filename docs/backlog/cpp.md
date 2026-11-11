@@ -41,7 +41,8 @@ handle-keyed bindings, and direct calls dispatch through the referenced
 old hand-built AST fixtures and the public `callByName` entry point; extracted
 program semantics no longer redoes declaration lookup by spelling. The schema
 table, C runners, and a compiled two-function/local-shadow probe cover the
-new identity path.
+new identity path. Revalidated 2026-11-11 with pinned Clang/LLVM 21.1.8:
+`local-variable-callee REFUSE` from the identity guard.
 
 ## `cpp-spelling-identity`: structured base and result identity
 

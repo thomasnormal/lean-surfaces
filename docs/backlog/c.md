@@ -43,6 +43,16 @@ recovers the signed 8-bit execution-character value before constructing the
 promoted `int`. Pinned ASCII, `\\xff`, octal-`\\377`, and `\\x80` rows match
 Clang 21.1.8.
 
+## 2026-11-11-c-type-spelling-grammar — guarded declarator boundary
+
+The C envelope still receives Clang's flat `qualType` for ordinary nodes;
+Clang emits structured type children only in the typedef type subtrees. The
+layout path now has one conservative admission guard and refuses function
+pointers, postfix-qualified pointers, nested array spellings, and elaborated
+scope forms before any string peeling can assign them a meaning. Differential
+rows pin all three refusals. A future extractor revision can replace this
+guard with declaration-identity and complete Clang type trees.
+
 ---
 
 ## 2026-11-11-c-torture-main-return-ignored — scorer exit status

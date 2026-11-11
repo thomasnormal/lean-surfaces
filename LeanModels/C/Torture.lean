@@ -125,6 +125,16 @@ def torScalarSize : CType → Option Nat
   | "long int" | "unsigned long int" => some 8
   | t => if t.endsWith "*" then some 8 else none
 
+/-- The envelope's ordinary declaration types are flat Clang spellings.
+Admit only the closed spelling fragment consumed by the profile layout; any
+declarator grammar that this tier cannot represent as a tree is rejected at
+the layout boundary instead of being partially peeled into a different type.
+The guard is deliberately conservative for function-pointer and postfix-
+qualified forms, nested array syntax, and elaborated scope spellings. -/
+def typeSpellingAdmitted (t : CType) : Bool :=
+  !t.contains "(*" && !t.endsWith " const" && !t.endsWith " volatile" &&
+  !t.contains "][" && !t.contains ") [" && !t.contains "::"
+
 /-- Drop the qualifiers. Exact: `const`/`volatile` do not change a size. -/
 def stripQuals : Nat → CType → CType
   | 0, t => t
@@ -136,7 +146,7 @@ def stripQuals : Nat → CType → CType
 /-- `T[N]` → `(T, N)`. **Single dimension only**: `int[2][3]` splits into
 three parts and gets `none`, which is a named zero rather than a guess. -/
 def arrayOf (t : CType) : Option (CType × Nat) :=
-  if !t.endsWith "]" then none
+  if !typeSpellingAdmitted t || !t.endsWith "]" then none
   else match ((t.dropEnd 1).toString).splitOn "[" with
        | [e, ext] => ext.toNat?.map fun n => (e, n)
        | _ => none
@@ -256,6 +266,7 @@ def sizeAlign (tds : List (CType × CType))
     Nat → CType → Option (Nat × Nat)
   | 0, _ => none
   | n + 1, t0 =>
+      if !typeSpellingAdmitted t0 then none else
       -- QUALIFIERS COME OFF BEFORE THE TYPEDEF IS RESOLVED, and both come off
       -- before anything is asked about the type. §6.2.5p28: a qualified type
       -- has the SAME representation and alignment as its unqualified version,

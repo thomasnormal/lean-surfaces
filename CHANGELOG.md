@@ -51,6 +51,9 @@
 - Interpreted Clang's sign-extended ordinary high-bit character literal
   patterns as signed `char` values before C integer promotion.
 
+- Added a conservative C type-spelling admission guard so unsupported
+  declarator grammars refuse before layout or pointer dispatch.
+
 - Fixed the TinyXML-2 coverage caller's C++ runtime linkage so its
   provenance-verified native calls can run when the system runtime is older.
 

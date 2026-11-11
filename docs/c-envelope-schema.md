@@ -212,6 +212,11 @@ than as flags — including `restrict`, which is **INGESTED and NEVER
 EXPLOITED** (the memo's §2.5 non-claim, recorded so nobody later reads it
 off the AST and assumes the model checked it).
 
+The layout admission guard rejects function-pointer and postfix-qualified
+declarators, nested array spellings, and elaborated scope forms before any
+flat spelling can receive a natural layout. These nodes remain in the
+envelope and surface as loud model refusals.
+
 The scalar type vocabulary the corpus actually uses, by node count:
 `int` 4733, `long` 340, `char` 254, `unsigned char` 173, `uint64_t` 153,
 `double` 117, `unsigned long` 33, `unsigned long long` 15,

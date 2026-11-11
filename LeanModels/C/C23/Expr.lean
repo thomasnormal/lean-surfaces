@@ -556,6 +556,18 @@ def compoundBase : String → String
   | "<<=" => "<<" | ">>=" => ">>"
   | _ => ""
 
+/-! Clang's JSON records an ordinary high-bit character constant as the
+32-bit unsigned representation of its signed `char` value (for example
+`'\\xff'` is `4294967295`). C's ordinary character constant is an `int`
+whose value is the execution-character value, so recover the profile's
+signed 8-bit byte before constructing the value. Multi-character constants
+remain below the sign-extension marker and retain Clang's folded value. -/
+def charLiteralValue (n : Int) : Int :=
+  if n >= (2 : Int) ^ 31 then
+    let b := n % 256
+    if b >= 128 then b - 256 else b
+  else n
+
 /-- The non-short-circuit binary rules, once both operands have values. -/
 def evalArith (ctx : Ctx) (op : String) (lv rv : CVal) (ty : CType) : EvalM CVal :=
   match lv, rv with
@@ -843,7 +855,7 @@ def evalExpr (ctx : Ctx) : Expr → EvalM CVal
   | .charLit v ty _ => do
       let t ← intTyOf (ctx.layout.normalizeTy ty)
       match v.toInt? with
-      | some n => pure (.int t n)
+      | some n => pure (.int t (if t == IntTy.int_ then charLiteralValue n else n))
       | none => refuseUnsupported s!"character literal spelling '{v}'"
   | .strLit .. => refuseUnsupported "string literal (inch 4: it needs a static object)"
   | .floatLit .. => refuseUnsupported "floating literal (floats are a named decision)"

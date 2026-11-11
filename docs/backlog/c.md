@@ -35,6 +35,14 @@ addresses, array decay, and allocated storage set that bound; `offsetPtr` and
 unknown types. The `s.a[2]` row therefore refuses `outOfBounds` instead of
 reading the neighboring `s.b` field.
 
+## 2026-11-11-c-charlit-unsigned-pattern — ordinary character constants
+
+Clang's JSON prints a signed high-bit ordinary character constant as a
+zero-extended 32-bit pattern (`'\\xff'` as `4294967295`). The evaluator now
+recovers the signed 8-bit execution-character value before constructing the
+promoted `int`. Pinned ASCII, `\\xff`, octal-`\\377`, and `\\x80` rows match
+Clang 21.1.8.
+
 ---
 
 ## 2026-11-11-c-torture-main-return-ignored — scorer exit status

@@ -13589,3 +13589,20 @@ partial-delete, and deleted-handler witnesses all hit the loud boundary.
 
 DECIDED: close `py-static-del-noop-census`; retain loud definition deletion
 until runtime-bound definition entries can be tombstoned faithfully.
+## 2026-11-11-pyfoundation-81 — close clock integer-reading audit
+
+The high-priority `py-clock-int-reading` finding is already fixed. Both
+interpreter surfaces refuse unshadowed `time.time()` value reads with the
+explicit binary64 boundary; argumented calls still evaluate to the faithful
+zero-argument `TypeError`. The differential clock replay stub returns Python
+`float` values, and canonicalization records their binary64 bits, while the
+model receives only the integer trace for the refused path.
+
+| Measurement | Result |
+|---|---|
+| Clock value rows | `clock_lab.read_clock`/`read_twice` remain explicit refusals |
+| Oracle replay | `_ReplayClock.time()` returns `float(reading)`; `_RecordingClock` returns real float |
+| Semantic change | none; audit closure only |
+
+DECIDED: close `py-clock-int-reading`; retain the loud boundary until the
+world trace is upgraded to binary64 readings.

@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Revalidated the trace-clock boundary: `time.time()` readings are refused
+  until binary64 traces are modeled, and differential replay supplies CPython
+  float readings rather than claiming integer values.
+
 - Revalidated static definition deletion: `scriptStaticDeleteNoop` admits only
   unobserved benign imports and excludes function/class/namedtuple names, so
   deleted definitions cannot remain reachable through function bodies or

@@ -26,70 +26,70 @@ private def admitBooleanIdentity : Except String CallableFunction :=
 
 #guard match admitBoolCast with
   | .ok function =>
-      match evaluateCallable 4 .lp64 function [signed 7] with
+      match evaluateCallableValue 4 .lp64 function [signed 7] with
       | .ok (.ok value) => value == boolean 1
       | _ => false
   | .error _ => false
 
 #guard match admitBoolCast with
   | .ok function =>
-      match evaluateCallable 4 .lp64 function [signed 0] with
+      match evaluateCallableValue 4 .lp64 function [signed 0] with
       | .ok (.ok value) => value == boolean 0
       | _ => false
   | .error _ => false
 
 #guard match admitIf with
   | .ok function =>
-      match evaluateCallable 16 .lp64 function [] with
+      match evaluateCallableValue 16 .lp64 function [] with
       | .ok (.ok value) => value == signed 7
       | _ => false
   | .error _ => false
 
 #guard match admitWhile with
   | .ok function =>
-      match evaluateCallable 12 .lp64 function [signed 0] with
+      match evaluateCallableValue 12 .lp64 function [signed 0] with
       | .ok (.ok value) => value == signed 0
       | _ => false
   | .error _ => false
 
 #guard match admitUnary with
   | .ok function =>
-      match evaluateCallable 16 .lp64 function [signed 7] with
+      match evaluateCallableValue 16 .lp64 function [signed 7] with
       | .ok (.ok value) => value == signed (-7)
       | _ => false
   | .error _ => false
 
 #guard match admitLogical with
   | .ok function =>
-      match evaluateCallable 16 .lp64 function [signed 7, signed 3] with
+      match evaluateCallableValue 16 .lp64 function [signed 7, signed 3] with
       | .ok (.ok value) => value == boolean 1
       | _ => false
   | .error _ => false
 
 #guard match admitLogical with
   | .ok function =>
-      match evaluateCallable 16 .lp64 function [signed 0, signed 3] with
+      match evaluateCallableValue 16 .lp64 function [signed 0, signed 3] with
       | .ok (.ok value) => value == boolean 0
       | _ => false
   | .error _ => false
 
 #guard match admitWhile with
   | .ok function =>
-      match evaluateCallable 12 .lp64 function [signed 7] with
+      match evaluateCallableValue 12 .lp64 function [signed 7] with
       | .ok (.ok value) => value == signed 7
       | _ => false
   | .error _ => false
 
 #guard match admitDo with
   | .ok function =>
-      match evaluateCallable 12 .lp64 function [signed 0] with
+      match evaluateCallableValue 12 .lp64 function [signed 0] with
       | .ok (.ok value) => value == signed 7
       | _ => false
   | .error _ => false
 
 #guard match admitDo with
   | .ok function =>
-      match evaluateCallable 12 .lp64 function [signed 1] with
+      match evaluateCallableValue 12 .lp64 function [signed 1] with
       | .error .fuelExhausted => true
       | _ => false
   | .error _ => false
@@ -102,7 +102,7 @@ private def admitBooleanIdentity : Except String CallableFunction :=
             expression := .integer 0, sourceType := .builtin .int, type := .builtin .int}
           let function := {function with
             body := .conditional zero whenTrue whenFalse}
-          match evaluateCallable 16 .lp64 function [] with
+          match evaluateCallableValue 16 .lp64 function [] with
           | .ok (.ok value) => value == signed 8
           | _ => false
       | _ => false
@@ -110,105 +110,105 @@ private def admitBooleanIdentity : Except String CallableFunction :=
 
 #guard match admitIdentity with
   | .ok function =>
-      match evaluateCallable 4 .lp64 function [signed 17] with
+      match evaluateCallableValue 4 .lp64 function [signed 17] with
       | .ok (.ok value) => value == signed 17
       | _ => false
   | .error _ => false
 
 #guard match admitAssignment with
   | .ok function =>
-      match evaluateCallable 16 .lp64 function [signed 4] with
+      match evaluateCallableValue 16 .lp64 function [signed 4] with
       | .ok (.ok value) => value == signed 5
       | _ => false
   | .error _ => false
 
 #guard match admitPrefixIncrement with
   | .ok function =>
-      match evaluateCallable 16 .lp64 function [signed 4] with
+      match evaluateCallableValue 16 .lp64 function [signed 4] with
       | .ok (.ok value) => value == signed 5
       | _ => false
   | .error _ => false
 
 #guard match admitPostfixIncrement with
   | .ok function =>
-      match evaluateCallable 16 .lp64 function [signed 4] with
+      match evaluateCallableValue 16 .lp64 function [signed 4] with
       | .ok (.ok value) => value == signed 4
       | _ => false
   | .error _ => false
 
 #guard match admitDecrement with
   | .ok function =>
-      match evaluateCallable 16 .lp64 function [signed 4] with
+      match evaluateCallableValue 16 .lp64 function [signed 4] with
       | .ok (.ok value) => value == signed 3
       | _ => false
   | .error _ => false
 
 #guard match admitConditional with
   | .ok function =>
-      match evaluateCallable 16 .lp64 function [signed 7] with
+      match evaluateCallableValue 16 .lp64 function [signed 7] with
       | .ok (.ok value) => value == signed 7
       | _ => false
   | .error _ => false
 
 #guard match admitComma with
   | .ok function =>
-      match evaluateCallable 16 .lp64 function [signed 4] with
+      match evaluateCallableValue 16 .lp64 function [signed 4] with
       | .ok (.ok value) => value == signed 5
       | _ => false
   | .error _ => false
 
 #guard match admitComma with
   | .ok function =>
-      match evaluateCallable 16 .lp64 function [signed 2147483647] with
+      match evaluateCallableValue 16 .lp64 function [signed 2147483647] with
       | .ok (.undefined .signedOverflow) => true
       | _ => false
   | .error _ => false
 
 #guard match admitFor with
   | .ok function =>
-      match evaluateCallable 64 .lp64 function [signed (-9)] with
+      match evaluateCallableValue 64 .lp64 function [signed (-9)] with
       | .ok (.ok value) => value == signed 4
       | _ => false
   | .error _ => false
 
 #guard match admitForBreak with
   | .ok function =>
-      match evaluateCallable 64 .lp64 function [signed 0] with
+      match evaluateCallableValue 64 .lp64 function [signed 0] with
       | .ok (.ok value) => value == signed 1
       | _ => false
   | .error _ => false
 
 #guard match admitForContinue with
   | .ok function =>
-      match evaluateCallable 64 .lp64 function [signed 0] with
+      match evaluateCallableValue 64 .lp64 function [signed 0] with
       | .ok (.ok value) => value == signed 3
       | _ => false
   | .error _ => false
 
 #guard match admitSwitch with
   | .ok function =>
-      match evaluateCallable 64 .lp64 function [signed 0] with
+      match evaluateCallableValue 64 .lp64 function [signed 0] with
       | .ok (.ok value) => value == signed 4
       | _ => false
   | .error _ => false
 
 #guard match admitSwitch with
   | .ok function =>
-      match evaluateCallable 64 .lp64 function [signed 1] with
+      match evaluateCallableValue 64 .lp64 function [signed 1] with
       | .ok (.ok value) => value == signed 3
       | _ => false
   | .error _ => false
 
 #guard match admitSwitch with
   | .ok function =>
-      match evaluateCallable 64 .lp64 function [signed 2] with
+      match evaluateCallableValue 64 .lp64 function [signed 2] with
       | .ok (.ok value) => value == signed 2
       | _ => false
   | .error _ => false
 
 #guard match admitSwitch with
   | .ok function =>
-      match evaluateCallable 64 .lp64 function [signed 7] with
+      match evaluateCallableValue 64 .lp64 function [signed 7] with
       | .ok (.ok value) => value == signed 10
       | _ => false
   | .error _ => false
@@ -219,217 +219,217 @@ private def admitBooleanIdentity : Except String CallableFunction :=
         expression := .integer 1, sourceType := .builtin .int, type := .builtin .int}
       let function := {function with
         body := .switch_ condition [{label := none, body := .continue_}]}
-      match evaluateCallable 16 .lp64 function [signed 0] with
+      match evaluateCallableValue 16 .lp64 function [signed 0] with
       | .error .continueOutsideLoop => true
       | _ => false
   | .error _ => false
 
 #guard match admitBreak with
   | .ok function =>
-      match evaluateCallable 32 .lp64 function [signed (-1)] with
+      match evaluateCallableValue 32 .lp64 function [signed (-1)] with
       | .ok (.ok value) => value == signed 0
       | _ => false
   | .error _ => false
 
 #guard match admitContinue with
   | .ok function =>
-      match evaluateCallable 32 .lp64 function [signed 0] with
+      match evaluateCallableValue 32 .lp64 function [signed 0] with
       | .ok (.ok value) => value == signed 3
       | _ => false
   | .error _ => false
 
 #guard match admitDoBreak with
   | .ok function =>
-      match evaluateCallable 32 .lp64 function [signed 0] with
+      match evaluateCallableValue 32 .lp64 function [signed 0] with
       | .ok (.ok value) => value == signed 1
       | _ => false
   | .error _ => false
 
 #guard match admitDoContinue with
   | .ok function =>
-      match evaluateCallable 32 .lp64 function [signed 0] with
+      match evaluateCallableValue 32 .lp64 function [signed 0] with
       | .ok (.ok value) => value == signed 3
       | _ => false
   | .error _ => false
 
 #guard match admitLogicalEffect "&&" "bothIncrement" with
   | .ok function =>
-      match evaluateCallable 16 .lp64 function [signed (-1)] with
+      match evaluateCallableValue 16 .lp64 function [signed (-1)] with
       | .ok (.ok value) => value == boolean 0
       | _ => false
   | .error _ => false
 
 #guard match admitLogicalEffect "&&" "bothIncrement" with
   | .ok function =>
-      match evaluateCallable 16 .lp64 function [signed 0] with
+      match evaluateCallableValue 16 .lp64 function [signed 0] with
       | .ok (.ok value) => value == boolean 0
       | _ => false
   | .error _ => false
 
 #guard match admitLogicalEffect "||" "eitherIncrement" with
   | .ok function =>
-      match evaluateCallable 16 .lp64 function [signed 0] with
+      match evaluateCallableValue 16 .lp64 function [signed 0] with
       | .ok (.ok value) => value == boolean 1
       | _ => false
   | .error _ => false
 
 #guard match admitConditional with
   | .ok function =>
-      match evaluateCallable 16 .lp64 function [signed 0] with
+      match evaluateCallableValue 16 .lp64 function [signed 0] with
       | .ok (.ok value) => value == signed 3
       | _ => false
   | .error _ => false
 
 #guard match admitPrefixIncrement with
   | .ok function =>
-      match evaluateCallable 16 .lp64 function [signed 2147483647] with
+      match evaluateCallableValue 16 .lp64 function [signed 2147483647] with
       | .ok (.undefined .signedOverflow) => true
       | _ => false
   | .error _ => false
 
 #guard match admitCompoundAssignment with
   | .ok function =>
-      match evaluateCallable 16 .lp64 function [signed 4] with
+      match evaluateCallableValue 16 .lp64 function [signed 4] with
       | .ok (.ok value) => value == signed 5
       | _ => false
   | .error _ => false
 
 #guard match admitCompoundAssignment with
   | .ok function =>
-      match evaluateCallable 16 .lp64 function [signed (-1)] with
+      match evaluateCallableValue 16 .lp64 function [signed (-1)] with
       | .ok (.ok value) => value == signed 0
       | _ => false
   | .error _ => false
 
 #guard match admitCompoundAssignment with
   | .ok function =>
-      match evaluateCallable 16 .lp64 function [signed 2147483647] with
+      match evaluateCallableValue 16 .lp64 function [signed 2147483647] with
       | .ok (.undefined .signedOverflow) => true
       | _ => false
   | .error _ => false
 
 #guard match admitAssignment with
   | .ok function =>
-      match evaluateCallable 16 .lp64 function [signed (-1)] with
+      match evaluateCallableValue 16 .lp64 function [signed (-1)] with
       | .ok (.ok value) => value == signed 0
       | _ => false
   | .error _ => false
 
 #guard match admitIdentity with
   | .ok function =>
-      match evaluateCallable 4 .lp64 function [short 17] with
+      match evaluateCallableValue 4 .lp64 function [short 17] with
       | .ok (.ok value) => value == signed 17
       | _ => false
   | .error _ => false
 
 #guard match admitIdentity with
   | .ok function =>
-      match evaluateCallable 4 .lp64 function [unsigned 4294967295] with
+      match evaluateCallableValue 4 .lp64 function [unsigned 4294967295] with
       | .ok (.ok value) => value == signed (-1)
       | _ => false
   | .error _ => false
 
 #guard match admitIdentity with
   | .ok function =>
-      match evaluateCallable 4 .lp64 function [boolean 1] with
+      match evaluateCallableValue 4 .lp64 function [boolean 1] with
       | .ok (.ok value) => value == signed 1
       | _ => false
   | .error _ => false
 
 #guard match admitIdentity with
   | .ok function =>
-      match evaluateCallable 4 .lp64 function [⟨.signed 16, 40000⟩] with
+      match evaluateCallableValue 4 .lp64 function [⟨.signed 16, 40000⟩] with
       | .ok (.invalid .outOfRange) => true
       | _ => false
   | .error _ => false
 
 #guard match admitFirst with
   | .ok function =>
-      match evaluateCallable 4 .lp64 function [short 17, unsigned 4294967295] with
+      match evaluateCallableValue 4 .lp64 function [short 17, unsigned 4294967295] with
       | .ok (.ok value) => value == signed 17
       | _ => false
   | .error _ => false
 
 #guard match admitFirst with
   | .ok function =>
-      match evaluateCallable 4 .lp64 function [signed 17, ⟨.unsigned 0, 0⟩] with
+      match evaluateCallableValue 4 .lp64 function [signed 17, ⟨.unsigned 0, 0⟩] with
       | .ok (.invalid .zeroWidth) => true
       | _ => false
   | .error _ => false
 
 #guard match admitFirst with
   | .ok function =>
-      match evaluateCallable 4 .lp64 function [signed 17, ⟨.signed 16, 40000⟩] with
+      match evaluateCallableValue 4 .lp64 function [signed 17, ⟨.signed 16, 40000⟩] with
       | .ok (.invalid .outOfRange) => true
       | _ => false
   | .error _ => false
 
 #guard match admitBooleanIdentity with
   | .ok function =>
-      match evaluateCallable 4 .lp64 function [signed (-7)] with
+      match evaluateCallableValue 4 .lp64 function [signed (-7)] with
       | .ok (.ok value) => value == boolean 1
       | _ => false
   | .error _ => false
 
 #guard match admitBooleanIdentity with
   | .ok function =>
-      match evaluateCallable 4 .lp64 function [signed 0] with
+      match evaluateCallableValue 4 .lp64 function [signed 0] with
       | .ok (.ok value) => value == boolean 0
       | _ => false
   | .error _ => false
 
 #guard match admitLiteral with
   | .ok function =>
-      match evaluateCallable 4 .lp64 function [] with
+      match evaluateCallableValue 4 .lp64 function [] with
       | .ok (.ok value) => value == signed 7
       | _ => false
   | .error _ => false
 
 #guard match admitBinary with
   | .ok function =>
-      match evaluateCallable 4 .lp64 function [signed 4, signed 9] with
+      match evaluateCallableValue 4 .lp64 function [signed 4, signed 9] with
       | .ok (.ok value) => value == signed 13
       | _ => false
   | .error _ => false
 
 #guard match admitBinary with
   | .ok function =>
-      match evaluateCallable 4 .lp64 function [short 17, unsigned 4294967295] with
+      match evaluateCallableValue 4 .lp64 function [short 17, unsigned 4294967295] with
       | .ok (.ok value) => value == signed 16
       | _ => false
   | .error _ => false
 
 #guard match admitIdentity with
   | .ok function =>
-      match evaluateCallable 4 {TargetProfile.lp64 with intWidth := 16} function [signed 65535] with
+      match evaluateCallableValue 4 {TargetProfile.lp64 with intWidth := 16} function [signed 65535] with
       | .ok (.ok value) => value == ⟨.signed 16, -1⟩
       | _ => false
   | .error _ => false
 
 #guard match admitBinary with
   | .ok function =>
-      match evaluateCallable 4 .lp64 function [signed 2147483647, signed 1] with
+      match evaluateCallableValue 4 .lp64 function [signed 2147483647, signed 1] with
       | .ok (.undefined .signedOverflow) => true
       | _ => false
   | .error _ => false
 
 #guard match admitBinary with
   | .ok function =>
-      match evaluateCallable 0 .lp64 function [signed 1, signed 2] with
+      match evaluateCallableValue 0 .lp64 function [signed 1, signed 2] with
       | .error .fuelExhausted => true
       | _ => false
   | .error _ => false
 
 #guard match admitIdentity with
   | .ok function =>
-      match evaluateCallable 4 .lp64 function [] with
+      match evaluateCallableValue 4 .lp64 function [] with
       | .error .arityMismatch => true
       | _ => false
   | .error _ => false
 
 #guard match admitIdentity with
   | .ok function =>
-      match evaluateCallable 4 {TargetProfile.lp64 with intWidth := 8} function [signed 1] with
+      match evaluateCallableValue 4 {TargetProfile.lp64 with intWidth := 8} function [signed 1] with
       | .error .invalidProfile => true
       | _ => false
   | .error _ => false
@@ -446,7 +446,7 @@ private def checkFor (condition : TypedCallableExpression) (step body : Callable
   | .ok function =>
       let function := {function with body := .block (.sequence
         (.forLoop .skip condition step (.block body)) (.return_ (typedParameter "0x10")))}
-      match evaluateCallable 64 .lp64 function [signed 2147483647] with
+      match evaluateCallableValue 64 .lp64 function [signed 2147483647] with
       | .ok result => result == expected
       | _ => false
   | .error _ => false
@@ -462,7 +462,7 @@ private def checkFor (condition : TypedCallableExpression) (step body : Callable
 #guard checkFor one (.expression increment) .skip (.undefined .signedOverflow)
 #guard match admitIdentity with
   | .ok function =>
-      match evaluateCallable 8 .lp64 {function with body := .forLoop .skip one .skip .skip}
+      match evaluateCallableValue 8 .lp64 {function with body := .forLoop .skip one .skip .skip}
           [signed 0] with
       | .error .fuelExhausted => true
       | _ => false
@@ -476,7 +476,7 @@ private def checkTypedLiteral (type : CppTypeEvidence) (literal : Nat)
       let function := {function with
         signature := {function.signature with result := type}
         body := .return_ {expression := .integer literal, sourceType := type, type}}
-      (evaluateCallable 4 .lp64 function []).toOption == some expected
+      (evaluateCallableValue 4 .lp64 function []).toOption == some expected
   | .error _ => false
 
 #guard checkTypedLiteral (.builtin .boolean) 1 (.ok (boolean 1))

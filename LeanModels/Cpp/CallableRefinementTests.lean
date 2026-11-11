@@ -393,14 +393,14 @@ private def pureBlockFunction (expr : TypedCallableExpression) : CallableFunctio
 /-- For any depth, the public call APIs agree on a block returning this
 cast chain. This follows from the whole-call fragment theorem. -/
 theorem castChainWholeCallAgreement (n : Nat) :
-    ∃ result, evaluateCallable (n + 3) .lp64 (pureBlockFunction (castChain n)) [] = .ok result ∧
+    ∃ result, evaluateCallableValue (n + 3) .lp64 (pureBlockFunction (castChain n)) [] = .ok result ∧
       evaluateCallableObject (n + 3) .lp64 (pureBlockFunction (castChain n)) [] = .ok result := by
   exact callablePureBlockReturnAgreement (n + 1) .lp64 (pureBlockFunction (castChain n))
     (castChain n) rfl rfl rfl rfl (castChainPure n)
 
 private def wholeCallCastWitness (n : Nat) : Bool :=
   let callable := pureBlockFunction (castChain n)
-  match evaluateCallable (n + 3) .lp64 callable [], evaluateCallableObject (n + 3) .lp64 callable [] with
+  match evaluateCallableValue (n + 3) .lp64 callable [], evaluateCallableObject (n + 3) .lp64 callable [] with
   | .ok (.ok a), .ok (.ok b) => a == signed 7 && b == signed 7
   | _, _ => false
 
@@ -414,13 +414,13 @@ private def invalidLiteral : TypedCallableExpression := {
 
 /-- An invalid constructed literal stays invalid through both call APIs. -/
 theorem invalidPureWholeCallAgreement :
-    evaluateCallable 3 .lp64 (pureBlockFunction invalidLiteral) [] = .ok (.invalid .outOfRange) ∧
+    evaluateCallableValue 3 .lp64 (pureBlockFunction invalidLiteral) [] = .ok (.invalid .outOfRange) ∧
     evaluateCallableObject 3 .lp64 (pureBlockFunction invalidLiteral) [] = .ok (.invalid .outOfRange) := by
   have fragment : CallablePureExpression .lp64 1 invalidLiteral :=
     CallablePureExpression.literal 0 2147483648 (signed 2147483648) intType intType rfl rfl
   obtain ⟨result, hvalue, hobject⟩ := callablePureBlockReturnAgreement 1 .lp64
     (pureBlockFunction invalidLiteral) invalidLiteral rfl rfl rfl rfl fragment
-  have hexact : evaluateCallable 3 .lp64 (pureBlockFunction invalidLiteral) [] =
+  have hexact : evaluateCallableValue 3 .lp64 (pureBlockFunction invalidLiteral) [] =
       .ok (.invalid .outOfRange) := rfl
   have heq : result = .invalid .outOfRange := Except.ok.inj (hvalue.symm.trans hexact)
   subst result

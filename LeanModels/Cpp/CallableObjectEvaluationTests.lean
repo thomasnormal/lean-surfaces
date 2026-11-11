@@ -318,7 +318,7 @@ private def readsParameter : Bool :=
 def callableReadsParameterWitness : Bool := readsParameter
 
 private def valueOnlyRemainsLoud : Bool :=
-  match evaluateCallable 32 .lp64 (functionWithLocal (.read (handle "0x10"))) [signed 7] with
+  match evaluateCallableValue 32 .lp64 (functionWithLocal (.read (handle "0x10"))) [signed 7] with
   | .error .unsupportedDeclaration => true
   | _ => false
 
@@ -41969,6 +41969,13 @@ theorem callableEvaluatorRefinementLiteral :
       (evaluateCallableObject 32 .lp64 callableEvaluatorRefinementLiteralFunction []).toOption := by
   rfl
 
+theorem callableEvaluatorPublicProjection :
+    evaluateCallable 32 .lp64 callableEvaluatorRefinementLiteralFunction [] =
+        .ok (.ok (signed 7)) ↔
+      evaluateCallableObject 32 .lp64 callableEvaluatorRefinementLiteralFunction [] =
+        .ok (.ok (signed 7)) := by
+  exact evaluateCallable_ok_value_iff 32 .lp64 callableEvaluatorRefinementLiteralFunction [] (signed 7)
+
 def callableEvaluatorRefinementLiteralWitness : Bool :=
   (evaluateCallable 32 .lp64 callableEvaluatorRefinementLiteralFunction []).toOption ==
     (evaluateCallableObject 32 .lp64 callableEvaluatorRefinementLiteralFunction []).toOption
@@ -42439,25 +42446,41 @@ private def callableRefinementCallBoundaryFunction : CallableFunction := {
         expression := .integer 1, sourceType := intType, type := intType}} [],
     sourceType := intType, type := intType}}
 
+/-- The public value-shaped entry point is the object evaluator projected through
+its typed result, so its unsupported-call cause is preserved. -/
+def callableEvaluatorPublicCallBoundary : Bool :=
+  let callee : CallableCallee := {
+    signature := {result := intType, parameters := [], variadic := false}
+    parameters := []
+    body := .return_ {expression := .integer 1, sourceType := intType, type := intType}}
+  let function : CallableFunction := {
+    occurrence := functionDeclaration
+    signature := {result := intType, parameters := [], variadic := false}
+    parameters := []
+    body := .return_ {expression := .call callee [], sourceType := intType, type := intType}}
+  evaluateCallable 32 .lp64 function [] matches .error .unsupportedCall
+
+#guard callableEvaluatorPublicCallBoundary
+
 /-- Direct calls show why the concrete agreement examples are not a general
 refinement theorem: the value evaluator executes this call and the object
 evaluator refuses it. -/
 theorem callableEvaluatorDirectCallBoundary :
-    evaluateCallable 32 .lp64 callableRefinementCallBoundaryFunction [] = .ok (.ok (signed 1)) ∧
+    evaluateCallableValue 32 .lp64 callableRefinementCallBoundaryFunction [] = .ok (.ok (signed 1)) ∧
     evaluateCallableObject 32 .lp64 callableRefinementCallBoundaryFunction [] = .error .unsupportedCall := by
   exact ⟨rfl, rfl⟩
 
 /-- Argument validation also has different error shapes, even on the identity
 function; projecting errors to `Option` alone does not relate these results. -/
 theorem callableEvaluatorInvalidArgumentBoundary :
-    evaluateCallable 32 .lp64 callableEvaluatorRefinementParameterFunction [signed 2147483648] =
+    evaluateCallableValue 32 .lp64 callableEvaluatorRefinementParameterFunction [signed 2147483648] =
       .ok (.invalid .outOfRange) ∧
     evaluateCallableObject 32 .lp64 callableEvaluatorRefinementParameterFunction [signed 2147483648] =
       .error (.invalidArgument .outOfRange) := by
   exact ⟨rfl, rfl⟩
 
 def callableEvaluatorDirectCallBoundaryWitness : Bool :=
-  match evaluateCallable 32 .lp64 callableRefinementCallBoundaryFunction [],
+  match evaluateCallableValue 32 .lp64 callableRefinementCallBoundaryFunction [],
       evaluateCallableObject 32 .lp64 callableRefinementCallBoundaryFunction [] with
   | .ok (.ok value), .error .unsupportedCall => value == signed 1
   | _, _ => false

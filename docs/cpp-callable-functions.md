@@ -175,9 +175,10 @@ body was executed merely because Clang accepted its source.
 
 The object-backed callable profile consumes the
 [automatic integral declaration contract](cpp-local-declarations.md). Its
-legacy value-only evaluator remains loud on `CallableStatement.automatic`
-nodes; only the object-backed evaluator executes those declarations with
-preserved bindings, scopes and cleanup.
+public `evaluateCallable` entry point is a projection of the object-backed
+evaluator. The compatibility `evaluateCallableValue` evaluator remains loud on
+`CallableStatement.automatic` nodes; only the object-backed evaluator executes
+those declarations with preserved bindings, scopes and cleanup.
 
 ## Validation
 
@@ -208,8 +209,8 @@ Automatic integral lvalue references execute through the object-backed frame:
 types are their referent types. Const views preserve const access, and lexical
 cleanup removes alias bindings without ending the referent. Reference parameters
 are supported through the [shared caller-store boundary](cpp-reference-parameters.md);
-reference results remain outside the callable signature profile. The value-only
-evaluator continues to refuse automatic declarations. See
+reference results remain outside the callable signature profile. The compatibility
+value evaluator continues to refuse automatic declarations. See
 [reference execution](cpp-reference-types.md#local-reference-execution-boundary).
 
 The generic `extractors/cpp/export_callable.lean` validates a complete probe

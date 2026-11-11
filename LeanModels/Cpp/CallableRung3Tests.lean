@@ -24,7 +24,7 @@ def incrementFunction : CallableFunction := {
 }
 
 def callableIncrementWitness : Bool :=
-  match evaluateCallable 16 .lp64 incrementFunction [signed 4] with
+  match evaluateCallableValue 16 .lp64 incrementFunction [signed 4] with
   | .ok (.ok value) => value == signed 5
   | _ => false
 
@@ -41,7 +41,7 @@ def narrowIncrementFunction : CallableFunction := {
 }
 
 def callableNarrowIncrementWitness : Bool :=
-  match evaluateCallable 16 .lp64 narrowIncrementFunction [⟨.unsigned 16, 65535⟩] with
+  match evaluateCallableValue 16 .lp64 narrowIncrementFunction [⟨.unsigned 16, 65535⟩] with
   | .ok (.ok value) => value == ⟨.unsigned 16, 0⟩
   | _ => false
 
@@ -54,7 +54,7 @@ def narrowDecrementFunction : CallableFunction := {
 }
 
 def callableNarrowDecrementWitness : Bool :=
-  match evaluateCallable 16 .lp64 narrowDecrementFunction [⟨.unsigned 16, 0⟩] with
+  match evaluateCallableValue 16 .lp64 narrowDecrementFunction [⟨.unsigned 16, 0⟩] with
   | .ok (.ok value) => value == ⟨.unsigned 16, 65535⟩
   | _ => false
 
@@ -70,7 +70,7 @@ def unaryNarrowFunction : CallableFunction := {
 }
 
 def callableUnaryNarrowWitness : Bool :=
-  match evaluateCallable 16 .lp64 unaryNarrowFunction [⟨.signed 16, -32768⟩] with
+  match evaluateCallableValue 16 .lp64 unaryNarrowFunction [⟨.signed 16, -32768⟩] with
   | .ok (.ok value) => value == signed 32768
   | _ => false
 
@@ -86,7 +86,7 @@ def unaryComplementFunction : CallableFunction := {
 }
 
 def callableUnaryComplementWitness : Bool :=
-  match evaluateCallable 16 .lp64 unaryComplementFunction [signed (-1)] with
+  match evaluateCallableValue 16 .lp64 unaryComplementFunction [signed (-1)] with
   | .ok (.ok value) => value == signed 0
   | _ => false
 
@@ -102,8 +102,8 @@ def unaryLogicalNotFunction : CallableFunction := {
 }
 
 def callableUnaryLogicalNotWitness : Bool :=
-  match evaluateCallable 16 .lp64 unaryLogicalNotFunction [signed 0],
-        evaluateCallable 16 .lp64 unaryLogicalNotFunction [signed 3] with
+  match evaluateCallableValue 16 .lp64 unaryLogicalNotFunction [signed 0],
+        evaluateCallableValue 16 .lp64 unaryLogicalNotFunction [signed 3] with
   | .ok (.ok zero), .ok (.ok nonzero) =>
       zero == integralBoolean true && nonzero == integralBoolean false
   | _, _ => false
@@ -126,7 +126,7 @@ def noexceptFunction : CallableFunction := {
 }
 
 def callableNoexceptWitness : Bool :=
-  match evaluateCallable 16 .lp64 noexceptFunction [] with
+  match evaluateCallableValue 16 .lp64 noexceptFunction [] with
   | .ok (.ok value) => value == integralBoolean true
   | _ => false
 
@@ -142,7 +142,7 @@ def unaryPlusFunction : CallableFunction := {
 }
 
 def callableUnaryPlusWitness : Bool :=
-  match evaluateCallable 16 .lp64 unaryPlusFunction [signed (-7)] with
+  match evaluateCallableValue 16 .lp64 unaryPlusFunction [signed (-7)] with
   | .ok (.ok value) => value == signed (-7)
   | _ => false
 
@@ -161,7 +161,7 @@ def bitwiseAndFunction : CallableFunction := {
 }
 
 def callableBitwiseAndWitness : Bool :=
-  match evaluateCallable 16 .lp64 bitwiseAndFunction [signed 240, signed 15] with
+  match evaluateCallableValue 16 .lp64 bitwiseAndFunction [signed 240, signed 15] with
   | .ok (.ok value) => value == signed 0
   | _ => false
 
@@ -176,7 +176,7 @@ def bitwiseOrFunction : CallableFunction := {
 }
 
 def callableBitwiseOrWitness : Bool :=
-  match evaluateCallable 16 .lp64 bitwiseOrFunction [signed 240, signed 15] with
+  match evaluateCallableValue 16 .lp64 bitwiseOrFunction [signed 240, signed 15] with
   | .ok (.ok value) => value == signed 255
   | _ => false
 
@@ -191,7 +191,7 @@ def bitwiseXorFunction : CallableFunction := {
 }
 
 def callableBitwiseXorWitness : Bool :=
-  match evaluateCallable 16 .lp64 bitwiseXorFunction [signed 240, signed 15] with
+  match evaluateCallableValue 16 .lp64 bitwiseXorFunction [signed 240, signed 15] with
   | .ok (.ok value) => value == signed 255
   | _ => false
 
@@ -206,7 +206,7 @@ def multiplicationFunction : CallableFunction := {
 }
 
 def callableMultiplicationWitness : Bool :=
-  match evaluateCallable 16 .lp64 multiplicationFunction [signed 6, signed 7] with
+  match evaluateCallableValue 16 .lp64 multiplicationFunction [signed 6, signed 7] with
   | .ok (.ok value) => value == signed 42
   | _ => false
 
@@ -221,7 +221,7 @@ def divisionFunction : CallableFunction := {
 }
 
 def callableDivisionWitness : Bool :=
-  match evaluateCallable 16 .lp64 divisionFunction [signed 42, signed 6] with
+  match evaluateCallableValue 16 .lp64 divisionFunction [signed 42, signed 6] with
   | .ok (.ok value) => value == signed 7
   | _ => false
 
@@ -236,7 +236,7 @@ def remainderFunction : CallableFunction := {
 }
 
 def callableRemainderWitness : Bool :=
-  match evaluateCallable 16 .lp64 remainderFunction [signed 43, signed 6] with
+  match evaluateCallableValue 16 .lp64 remainderFunction [signed 43, signed 6] with
   | .ok (.ok value) => value == signed 1
   | _ => false
 
@@ -251,7 +251,7 @@ def shiftLeftFunction : CallableFunction := {
 }
 
 def callableShiftLeftWitness : Bool :=
-  match evaluateCallable 16 .lp64 shiftLeftFunction [signed 1, signed 4] with
+  match evaluateCallableValue 16 .lp64 shiftLeftFunction [signed 1, signed 4] with
   | .ok (.ok value) => value == signed 16
   | _ => false
 
@@ -266,7 +266,7 @@ def shiftRightFunction : CallableFunction := {
 }
 
 def callableShiftRightWitness : Bool :=
-  match evaluateCallable 16 .lp64 shiftRightFunction [signed (-7), signed 1] with
+  match evaluateCallableValue 16 .lp64 shiftRightFunction [signed (-7), signed 1] with
   | .ok (.ok value) => value == signed (-4)
   | _ => false
 
@@ -282,7 +282,7 @@ def lessThanFunction : CallableFunction := {
 }
 
 def callableLessThanWitness : Bool :=
-  match evaluateCallable 16 .lp64 lessThanFunction [signed 3, signed 5] with
+  match evaluateCallableValue 16 .lp64 lessThanFunction [signed 3, signed 5] with
   | .ok (.ok value) => value == integralBoolean true
   | _ => false
 
@@ -297,7 +297,7 @@ def lessEqualFunction : CallableFunction := {
 }
 
 def callableLessEqualWitness : Bool :=
-  match evaluateCallable 16 .lp64 lessEqualFunction [signed 5, signed 5] with
+  match evaluateCallableValue 16 .lp64 lessEqualFunction [signed 5, signed 5] with
   | .ok (.ok value) => value == integralBoolean true
   | _ => false
 
@@ -312,7 +312,7 @@ def equalFunction : CallableFunction := {
 }
 
 def callableEqualWitness : Bool :=
-  match evaluateCallable 16 .lp64 equalFunction [signed 5, signed 5] with
+  match evaluateCallableValue 16 .lp64 equalFunction [signed 5, signed 5] with
   | .ok (.ok value) => value == integralBoolean true
   | _ => false
 
@@ -327,7 +327,7 @@ def notEqualFunction : CallableFunction := {
 }
 
 def callableNotEqualWitness : Bool :=
-  match evaluateCallable 16 .lp64 notEqualFunction [signed 5, signed 6] with
+  match evaluateCallableValue 16 .lp64 notEqualFunction [signed 5, signed 6] with
   | .ok (.ok value) => value == integralBoolean true
   | _ => false
 
@@ -342,7 +342,7 @@ def greaterThanFunction : CallableFunction := {
 }
 
 def callableGreaterThanWitness : Bool :=
-  match evaluateCallable 16 .lp64 greaterThanFunction [signed 6, signed 5] with
+  match evaluateCallableValue 16 .lp64 greaterThanFunction [signed 6, signed 5] with
   | .ok (.ok value) => value == integralBoolean true
   | _ => false
 
@@ -357,7 +357,7 @@ def greaterEqualFunction : CallableFunction := {
 }
 
 def callableGreaterEqualWitness : Bool :=
-  match evaluateCallable 16 .lp64 greaterEqualFunction [signed 5, signed 5] with
+  match evaluateCallableValue 16 .lp64 greaterEqualFunction [signed 5, signed 5] with
   | .ok (.ok value) => value == integralBoolean true
   | _ => false
 
@@ -372,7 +372,7 @@ def additionFunction : CallableFunction := {
 }
 
 def callableAdditionWitness : Bool :=
-  match evaluateCallable 16 .lp64 additionFunction [signed 7, signed 5] with
+  match evaluateCallableValue 16 .lp64 additionFunction [signed 7, signed 5] with
   | .ok (.ok value) => value == signed 12
   | _ => false
 
@@ -387,7 +387,7 @@ def subtractionFunction : CallableFunction := {
 }
 
 def callableSubtractionWitness : Bool :=
-  match evaluateCallable 16 .lp64 subtractionFunction [signed 9, signed 4] with
+  match evaluateCallableValue 16 .lp64 subtractionFunction [signed 9, signed 4] with
   | .ok (.ok value) => value == signed 5
   | _ => false
 
@@ -401,7 +401,7 @@ def unaryMinusFunction : CallableFunction := {
 }
 
 def callableUnaryMinusWitness : Bool :=
-  match evaluateCallable 16 .lp64 unaryMinusFunction [signed (-7)] with
+  match evaluateCallableValue 16 .lp64 unaryMinusFunction [signed (-7)] with
   | .ok (.ok value) => value == signed 7
   | _ => false
 
@@ -414,7 +414,7 @@ def decrementFunction : CallableFunction := {
 }
 
 def callableDecrementWitness : Bool :=
-  match evaluateCallable 16 .lp64 decrementFunction [signed 4] with
+  match evaluateCallableValue 16 .lp64 decrementFunction [signed 4] with
   | .ok (.ok value) => value == signed 3
   | _ => false
 
@@ -427,7 +427,7 @@ def postfixDecrementFunction : CallableFunction := {
 }
 
 def callablePostfixDecrementWitness : Bool :=
-  match evaluateCallable 16 .lp64 postfixDecrementFunction [signed 4] with
+  match evaluateCallableValue 16 .lp64 postfixDecrementFunction [signed 4] with
   | .ok (.ok value) => value == signed 4
   | _ => false
 
@@ -442,7 +442,7 @@ def sizeOfFunction : CallableFunction := {
 }
 
 def callableSizeOfWitness : Bool :=
-  match evaluateCallable 16 .lp64 sizeOfFunction [] with
+  match evaluateCallableValue 16 .lp64 sizeOfFunction [] with
   | .ok (.ok value) => value == ⟨.unsigned 64, 2⟩
   | _ => false
 
@@ -457,7 +457,7 @@ def alignOfFunction : CallableFunction := {
 }
 
 def callableAlignOfWitness : Bool :=
-  match evaluateCallable 16 .lp64 alignOfFunction [] with
+  match evaluateCallableValue 16 .lp64 alignOfFunction [] with
   | .ok (.ok value) => value == ⟨.unsigned 64, 2⟩
   | _ => false
 
@@ -472,7 +472,7 @@ def boolLiteralFunction : CallableFunction := {
 }
 
 def callableBoolLiteralWitness : Bool :=
-  match evaluateCallable 16 .lp64 boolLiteralFunction [] with
+  match evaluateCallableValue 16 .lp64 boolLiteralFunction [] with
   | .ok (.ok value) => value == integralBoolean true
   | _ => false
 
@@ -485,7 +485,7 @@ def falseBoolLiteralFunction : CallableFunction := {
 }
 
 def callableFalseBoolLiteralWitness : Bool :=
-  match evaluateCallable 16 .lp64 falseBoolLiteralFunction [] with
+  match evaluateCallableValue 16 .lp64 falseBoolLiteralFunction [] with
   | .ok (.ok value) => value == integralBoolean false
   | _ => false
 
@@ -503,7 +503,7 @@ def characterLiteralFunction : CallableFunction := {
 }
 
 def callableCharacterLiteralWitness : Bool :=
-  match evaluateCallable 16 .lp64 characterLiteralFunction [] with
+  match evaluateCallableValue 16 .lp64 characterLiteralFunction [] with
   | .ok (.ok value) => value == signed 65
   | _ => false
 
@@ -518,7 +518,7 @@ def constantExpressionFunction : CallableFunction := {
 }
 
 def callableConstantExpressionWitness : Bool :=
-  match evaluateCallable 16 .lp64 constantExpressionFunction [] with
+  match evaluateCallableValue 16 .lp64 constantExpressionFunction [] with
   | .ok (.ok value) => value == signed 7
   | _ => false
 
@@ -533,7 +533,7 @@ def unsignedIntegerLiteralFunction : CallableFunction := {
 }
 
 def callableUnsignedIntegerLiteralWitness : Bool :=
-  match evaluateCallable 16 .lp64 unsignedIntegerLiteralFunction [] with
+  match evaluateCallableValue 16 .lp64 unsignedIntegerLiteralFunction [] with
   | .ok (.ok value) => value == ⟨.unsigned 32, 7⟩
   | _ => false
 
@@ -548,7 +548,7 @@ def nullPointerComparisonFunction : CallableFunction := {
 }
 
 def callableNullPointerWitness : Bool :=
-  match evaluateCallable 16 .lp64 nullPointerComparisonFunction [] with
+  match evaluateCallableValue 16 .lp64 nullPointerComparisonFunction [] with
   | .ok (.ok value) => value == integralBoolean true
   | _ => false
 
@@ -561,7 +561,7 @@ def nullPointerInequalityFunction : CallableFunction := {
 }
 
 def callableNullPointerInequalityWitness : Bool :=
-  match evaluateCallable 16 .lp64 nullPointerInequalityFunction [] with
+  match evaluateCallableValue 16 .lp64 nullPointerInequalityFunction [] with
   | .ok (.ok value) => value == integralBoolean false
   | _ => false
 
@@ -579,7 +579,7 @@ def castFunction : CallableFunction := {
 }
 
 def callableCastWitness : Bool :=
-  match evaluateCallable 16 .lp64 castFunction [⟨.signed 16, -7⟩] with
+  match evaluateCallableValue 16 .lp64 castFunction [⟨.signed 16, -7⟩] with
   | .ok (.ok value) => value == signed (-7)
   | _ => false
 
@@ -597,7 +597,7 @@ def narrowCastFunction : CallableFunction := {
 }
 
 def callableNarrowCastWitness : Bool :=
-  match evaluateCallable 16 .lp64 narrowCastFunction [⟨.signed 16, -7⟩] with
+  match evaluateCallableValue 16 .lp64 narrowCastFunction [⟨.signed 16, -7⟩] with
   | .ok (.ok value) => value == ⟨.unsigned 8, 249⟩
   | _ => false
 
@@ -612,7 +612,7 @@ def postfixFunction : CallableFunction := {
 }
 
 def callablePostfixWitness : Bool :=
-  match evaluateCallable 16 .lp64 postfixFunction [signed 4] with
+  match evaluateCallableValue 16 .lp64 postfixFunction [signed 4] with
   | .ok (.ok value) => value == signed 5
   | _ => false
 
@@ -628,7 +628,7 @@ def compoundAssignmentFunction : CallableFunction := {
 }
 
 def callableCompoundAssignmentWitness : Bool :=
-  match evaluateCallable 16 .lp64 compoundAssignmentFunction [signed 4] with
+  match evaluateCallableValue 16 .lp64 compoundAssignmentFunction [signed 4] with
   | .ok (.ok value) => value == signed 7
   | _ => false
 
@@ -647,7 +647,7 @@ def assignmentFunction : CallableFunction := {
 }
 
 def callableAssignmentWitness : Bool :=
-  match evaluateCallable 16 .lp64 assignmentFunction [signed 4] with
+  match evaluateCallableValue 16 .lp64 assignmentFunction [signed 4] with
   | .ok (.ok value) => value == signed 7
   | _ => false
 
@@ -669,7 +669,7 @@ def mixedArithmeticFunction : CallableFunction := {
 }
 
 def callableMixedArithmeticWitness : Bool :=
-  match evaluateCallable 16 .lp64 mixedArithmeticFunction
+  match evaluateCallableValue 16 .lp64 mixedArithmeticFunction
       [⟨.signed 16, -1⟩, ⟨.unsigned 32, 1⟩] with
   | .ok (.ok value) => value == ⟨.unsigned 32, 0⟩
   | _ => false
@@ -692,7 +692,7 @@ def mixedCompoundFunction : CallableFunction := {
 }
 
 def callableMixedCompoundWitness : Bool :=
-  match evaluateCallable 16 .lp64 mixedCompoundFunction
+  match evaluateCallableValue 16 .lp64 mixedCompoundFunction
       [⟨.signed 16, -1⟩, ⟨.unsigned 32, 1⟩] with
   | .ok (.ok value) => value == ⟨.signed 16, 0⟩
   | _ => false
@@ -712,7 +712,7 @@ def mixedComparisonFunction : CallableFunction := {
 }
 
 def callableMixedComparisonWitness : Bool :=
-  match evaluateCallable 16 .lp64 mixedComparisonFunction
+  match evaluateCallableValue 16 .lp64 mixedComparisonFunction
       [⟨.signed 16, -1⟩, ⟨.unsigned 32, 1⟩] with
   | .ok (.ok value) => value == integralBoolean false
   | _ => false
@@ -732,7 +732,7 @@ def mixedShiftFunction : CallableFunction := {
 }
 
 def callableMixedShiftWitness : Bool :=
-  match evaluateCallable 16 .lp64 mixedShiftFunction
+  match evaluateCallableValue 16 .lp64 mixedShiftFunction
       [⟨.signed 16, -1⟩, ⟨.unsigned 32, 1⟩] with
   | .ok (.ok value) => value == signed (-1)
   | _ => false
@@ -761,7 +761,7 @@ def callFunction : CallableFunction := {
 }
 
 def callableCallWitness : Bool :=
-  match evaluateCallable 32 .lp64 callFunction [signed 4] with
+  match evaluateCallableValue 32 .lp64 callFunction [signed 4] with
   | .ok (.ok value) => value == signed 7
   | _ => false
 
@@ -789,7 +789,7 @@ def callConversionFunction : CallableFunction := {
 }
 
 def callableCallConversionWitness : Bool :=
-  match evaluateCallable 32 .lp64 callConversionFunction [⟨.signed 16, -1⟩] with
+  match evaluateCallableValue 32 .lp64 callConversionFunction [⟨.signed 16, -1⟩] with
   | .ok (.ok value) => value == ⟨.unsigned 32, 4294967295⟩
   | _ => false
 
@@ -817,7 +817,7 @@ def callableParsedCallWitness : Bool :=
         signature := {result := intType, parameters := [intType], variadic := false}
         parameters := [{declaration := parameter, name := some "value", type := intType}]
         body := .block (.return_ expression)}
-      match evaluateCallable 32 .lp64 function [signed 4] with
+      match evaluateCallableValue 32 .lp64 function [signed 4] with
       | .ok (.ok value) => value == signed 7
       | _ => false
   | .error _ => false
@@ -834,8 +834,8 @@ def conditionalFunction : CallableFunction := {
 }
 
 def callableConditionalWitness : Bool :=
-  match evaluateCallable 16 .lp64 conditionalFunction [signed 1],
-        evaluateCallable 16 .lp64 conditionalFunction [signed 0] with
+  match evaluateCallableValue 16 .lp64 conditionalFunction [signed 1],
+        evaluateCallableValue 16 .lp64 conditionalFunction [signed 0] with
   | .ok (.ok positive), .ok (.ok zero) => positive == signed 7 && zero == signed 8
   | _, _ => false
 
@@ -856,8 +856,8 @@ def logicalFunction : CallableFunction := {
 }
 
 def callableLogicalWitness : Bool :=
-  match evaluateCallable 16 .lp64 logicalFunction [signed 0],
-        evaluateCallable 16 .lp64 logicalFunction [signed 1] with
+  match evaluateCallableValue 16 .lp64 logicalFunction [signed 0],
+        evaluateCallableValue 16 .lp64 logicalFunction [signed 1] with
   | .ok (.ok zero), .ok (.ok one) => zero == signed 0 && one == signed 2
   | _, _ => false
 
@@ -878,8 +878,8 @@ def logicalOrFunction : CallableFunction := {
 }
 
 def callableLogicalOrWitness : Bool :=
-  match evaluateCallable 16 .lp64 logicalOrFunction [signed 1],
-        evaluateCallable 16 .lp64 logicalOrFunction [signed 0] with
+  match evaluateCallableValue 16 .lp64 logicalOrFunction [signed 1],
+        evaluateCallableValue 16 .lp64 logicalOrFunction [signed 0] with
   | .ok (.ok one), .ok (.ok zero) => one == signed 1 && zero == signed 1
   | _, _ => false
 

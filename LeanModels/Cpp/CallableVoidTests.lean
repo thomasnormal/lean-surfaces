@@ -57,7 +57,7 @@ private def failureAndLegacy : Bool :=
     (missing.result matches .error .missingReturn) &&
     (bad.result matches .error .returnTypeMismatch) &&
     (badValue.result matches .error .returnTypeMismatch) &&
-    (evaluateCallable 32 .lp64 f [value 2, value 3] matches .error (.unsupportedType .void))
+    (evaluateCallableValue 32 .lp64 f [value 2, value 3] matches .error (.unsupportedType .void))
 
 private def undefinedIsNotVoid : Bool :=
   let divide : TypedCallableExpression := ⟨.binary "/" (literal 1) (literal 0), intType, intType⟩

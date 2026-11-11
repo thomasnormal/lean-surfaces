@@ -332,7 +332,7 @@ theorem callablePureReturnAgreement (fuel : Nat) (profile : TargetProfile) (func
     (hvalid : profile.valid = true) (hresult : (function.signature.result == .void) = false)
     (hparams : function.parameters = []) (hbody : function.body = .return_ expression)
     (fragment : CallablePureExpression profile fuel expression) :
-    ∃ result, evaluateCallable (fuel + 1) profile function [] = .ok result ∧
+    ∃ result, evaluateCallableValue (fuel + 1) profile function [] = .ok result ∧
       evaluateCallableObject (fuel + 1) profile function [] = .ok result := by
   obtain ⟨frame, hempty, hstart⟩ := CallableObjectFrame.start_noParameters profile function hvalid hparams
   let callable : CallableObjectFrame := {profile := profile, function := function, frame := frame.enterScope.frame}
@@ -352,7 +352,7 @@ theorem callablePureBlockReturnAgreement (fuel : Nat) (profile : TargetProfile) 
     (hvalid : profile.valid = true) (hresult : (function.signature.result == .void) = false)
     (hparams : function.parameters = []) (hbody : function.body = .block (.return_ expression))
     (fragment : CallablePureExpression profile fuel expression) :
-    ∃ result, evaluateCallable (fuel + 2) profile function [] = .ok result ∧
+    ∃ result, evaluateCallableValue (fuel + 2) profile function [] = .ok result ∧
       evaluateCallableObject (fuel + 2) profile function [] = .ok result := by
   obtain ⟨frame, hempty, hstart⟩ := CallableObjectFrame.start_noParameters profile function hvalid hparams
   let callable : CallableObjectFrame := {profile := profile, function := function, frame := frame.enterScope.frame}

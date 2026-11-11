@@ -102,7 +102,7 @@ private def failureRetainsPrefix : Bool :=
     result.frame.store.values == [some (signed 2), some (signed 3), some (signed 4)] &&
     result.frame.scopes.length == 1 && result.frame.bound (h "0") &&
     !result.frame.bound (h "1") &&
-    (evaluateCallable 16 .lp64 f [signed 4, signed 5] matches .error (.unsupportedType _))
+    (evaluateCallableValue 16 .lp64 f [signed 4, signed 5] matches .error (.unsupportedType _))
 
 private def unreadableValueAndActualConst : Bool :=
   let opened := (IntegralObjectFrame.empty .lp64).toOption.getD default |>.enterScope.frame

@@ -24,9 +24,9 @@ def switchFunction : CallableFunction := {
 }
 
 def callableSwitchWitness : Bool :=
-  match evaluateCallable 32 .lp64 switchFunction [signed 1],
-        evaluateCallable 32 .lp64 switchFunction [signed 2],
-        evaluateCallable 32 .lp64 switchFunction [signed 7] with
+  match evaluateCallableValue 32 .lp64 switchFunction [signed 1],
+        evaluateCallableValue 32 .lp64 switchFunction [signed 2],
+        evaluateCallableValue 32 .lp64 switchFunction [signed 7] with
   | .ok (.ok one), .ok (.ok two), .ok (.ok other) =>
       one == signed 10 && two == signed 20 && other == signed 30
   | _, _, _ => false
@@ -40,8 +40,8 @@ def ifFunction : CallableFunction := {
 }
 
 def callableIfWitness : Bool :=
-  match evaluateCallable 16 .lp64 ifFunction [signed 1],
-        evaluateCallable 16 .lp64 ifFunction [signed 0] with
+  match evaluateCallableValue 16 .lp64 ifFunction [signed 1],
+        evaluateCallableValue 16 .lp64 ifFunction [signed 0] with
   | .ok (.ok positive), .ok (.ok zero) => positive == signed 10 && zero == signed 20
   | _, _ => false
 
@@ -58,8 +58,8 @@ def whileFunction : CallableFunction := {
 }
 
 def callableWhileWitness : Bool :=
-  match evaluateCallable 32 .lp64 whileFunction [signed 3],
-        evaluateCallable 16 .lp64 whileFunction [signed 0] with
+  match evaluateCallableValue 32 .lp64 whileFunction [signed 3],
+        evaluateCallableValue 16 .lp64 whileFunction [signed 0] with
   | .ok (.ok three), .ok (.ok zero) => three == signed 0 && zero == signed 0
   | _, _ => false
 
@@ -76,7 +76,7 @@ def doFunction : CallableFunction := {
 }
 
 def callableDoWitness : Bool :=
-  match evaluateCallable 16 .lp64 doFunction [signed 0] with
+  match evaluateCallableValue 16 .lp64 doFunction [signed 0] with
   | .ok (.ok value) => value == signed 1
   | _ => false
 
@@ -99,7 +99,7 @@ def forFunction : CallableFunction := {
 }
 
 def callableForWitness : Bool :=
-  match evaluateCallable 64 .lp64 forFunction [signed 9] with
+  match evaluateCallableValue 64 .lp64 forFunction [signed 9] with
   | .ok (.ok value) => value == signed 4
   | _ => false
 
@@ -113,7 +113,7 @@ def breakFunction : CallableFunction := {
 }
 
 def callableBreakWitness : Bool :=
-  match evaluateCallable 16 .lp64 breakFunction [signed 3] with
+  match evaluateCallableValue 16 .lp64 breakFunction [signed 3] with
   | .ok (.ok value) => value == signed 3
   | _ => false
 
@@ -140,7 +140,7 @@ def continueFunction : CallableFunction := {
 }
 
 def callableContinueWitness : Bool :=
-  match evaluateCallable 64 .lp64 continueFunction [signed 9] with
+  match evaluateCallableValue 64 .lp64 continueFunction [signed 9] with
   | .ok (.ok value) => value == signed 4
   | _ => false
 
@@ -152,7 +152,7 @@ def nullFunction : CallableFunction := {
 }
 
 def callableNullWitness : Bool :=
-  match evaluateCallable 16 .lp64 nullFunction [signed 7] with
+  match evaluateCallableValue 16 .lp64 nullFunction [signed 7] with
   | .ok (.ok value) => value == signed 7
   | _ => false
 
@@ -169,8 +169,8 @@ def gotoFunction : CallableFunction := {
 }
 
 def callableGotoWitness : Bool :=
-  match evaluateCallable 32 .lp64 gotoFunction [signed 1],
-        evaluateCallable 32 .lp64 gotoFunction [signed 0] with
+  match evaluateCallableValue 32 .lp64 gotoFunction [signed 1],
+        evaluateCallableValue 32 .lp64 gotoFunction [signed 0] with
   | .ok (.ok one), .ok (.ok zero) => one == signed 1 && zero == signed 7
   | _, _ => false
 

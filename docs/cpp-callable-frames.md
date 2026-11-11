@@ -1,9 +1,11 @@
 # C++ callable object-frame bridge
 
 2026-10-19. `LeanModels/Cpp/CallableFrame.lean` connects typed callable
-parameters to the object-backed automatic-declaration fragment. It is a
-stateful boundary for the next callable rung; it does not replace the existing
-value-only `CallableEvaluation` or claim that `Translation.execute` runs.
+parameters to the object-backed automatic-declaration fragment. It is the
+stateful callable semantics; the public value-shaped `evaluateCallable` API
+projects this evaluator and does not run a second interpreter. The former
+list-state implementation is available as `evaluateCallableValue` only for
+compatibility proofs. This file does not claim that `Translation.execute` runs.
 
 `CallableObjectFrame.start` checks the target profile and arity, converts each
 argument to its parameter's profile-resolved integral format, creates one
@@ -32,9 +34,10 @@ validated automatic-declaration evidence, and retains the resulting
 their lexical scope and reject a local handle that collides with an active
 parameter or earlier local; the object evaluator executes the same tree against
 the parameter frame, opening and closing block scopes while preserving retained
-state on errors. The established value-only evaluator remains deliberately
-loud on this node (`unsupportedDeclaration`), so adding object-backed
-execution cannot turn an old value-only result into a guessed one.
+state on errors. The compatibility `evaluateCallableValue` evaluator remains
+deliberately loud on this node (`unsupportedDeclaration`); the public
+`evaluateCallable` path uses the frame evaluator and therefore executes
+admitted automatic declarations.
 
 The object-backed evaluator is a bounded integral callable surface, not a
 replacement for `Translation.execute`: unsupported calls, conversions,

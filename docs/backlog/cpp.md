@@ -82,9 +82,15 @@ results.
 
 ## `cpp-two-callable-evaluators`: one callable semantics
 
-**Open.** The value and object evaluators still interpret the same callable IR
-independently. Expression and restricted whole-call agreement theorems cover
-selected fragments, not a general refinement or the full differential corpus.
-Delete the duplicate evaluator by projecting the object semantics, or establish
-a refinement for its full admitted domain, and run source-derived differential
-rows through the evaluator used in the proofs.
+**Closed 2026-11-11.** `evaluateCallable` is now a value-shaped projection of
+the frame-backed `CallableObjectEvaluation.evaluateCallableObject`; it no longer
+interprets the callable tree a second time. The former list-state implementation
+is retained as the explicitly named `evaluateCallableValue` compatibility
+evaluator for its existing expression/refinement lemmas, while the public
+entry point and object-backed callable differential rows use the object
+evaluator.
+`evaluateCallable_ok_value_iff` records the successful-result projection and
+`evaluateCallable_unsupportedCall_iff` pins the single `unsupportedCall`
+diagnostic. Existing whole-call refinement theorems now name the compatibility
+evaluator explicitly, so their scope is honest. The frame evaluator's call arm
+remains a loud boundary with its own cause.

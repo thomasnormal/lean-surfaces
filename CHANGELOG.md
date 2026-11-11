@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+- Made the frame-backed C++ callable evaluator the single public semantics.
+  `evaluateCallable` now projects `evaluateCallableObject`; the former list-state
+  implementation is explicitly named `evaluateCallableValue` for compatibility
+  proofs. Added kernel projection lemmas and kept direct-call refusal as the
+  typed `unsupportedCall` boundary. The object-backed callable rows now use
+  the frame-backed path.
+
 - Refused C++ direct calls whose arguments have side effects instead of
   selecting a left-to-right evaluation order.
 

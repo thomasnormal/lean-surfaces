@@ -1,8 +1,15 @@
 # C++ callable statement evaluation
 
+The public `evaluateCallable` API is a value-shaped projection of the
+frame-backed `CallableObjectEvaluation.evaluateCallableObject`; it does not
+interpret the callable tree a second time. `evaluateCallableValue` is retained
+as an explicitly named compatibility evaluator for the older list-state
+refinement proofs. Successful integral results therefore have one authoritative
+execution path, while stateful callers use the object API directly.
+
 Logical operator spelling and the left operand's short-circuit decision are
-shared through `ScalarArithmetic`; each evaluator retains its own frame and
-error handling after that pure boundary.
+shared through `ScalarArithmetic`; the frame evaluator retains object state and
+the projection maps only its outer error domain.
 
 Unary and binary operator spellings now use the same `ScalarArithmetic`
 decoders in both evaluator layers; unknown spellings still reach each layer's
@@ -48,18 +55,13 @@ including qualified builtin evidence and unsupported-type refusal.
 Integral type extraction is shared through `integralTypeOfEvidence`; qualified
 builtins unwrap structurally while non-integral evidence remains loud.
 
-The object evaluator's direct-call boundary now reports its dedicated
-`unsupportedCall` cause; the differential harness records that refusal without
-discarding the diagnostic in the Lean witness.
-
-The concrete agreement witnesses below are individual examples, not a general
-refinement theorem. `callableEvaluatorDirectCallBoundary` proves that the
-value evaluator returns 1 for a direct call that the object evaluator refuses.
-`callableEvaluatorInvalidArgumentBoundary` also shows that an out-of-range
-argument is returned as an invalid result by the value evaluator but as an
-argument error by the object evaluator. A general relation must state its
-supported fragment and relate the distinct error domains; `Except.toOption`
-alone does not do so.
+The object evaluator's direct-call boundary reports its dedicated
+`unsupportedCall` cause; the public projection preserves it. The kernel lemmas
+`evaluateCallable_ok_value_iff` and `evaluateCallable_unsupportedCall_iff`
+state the public relation. The older `callableEvaluatorDirectCallBoundary`
+and `callableEvaluatorInvalidArgumentBoundary` witnesses now name
+`evaluateCallableValue` explicitly: they document the compatibility evaluator's
+different error surface rather than presenting it as a second public semantics.
 
 `integralConvert_same` proves the shared conversion kernel preserves every
 valid value converted to its own format, and propagates an invalid value's
@@ -374,11 +376,12 @@ It also includes negative signed multiplication, checking both evaluator APIs.
 
 It also includes negative signed subtraction, checking both evaluator APIs.
 
-`LeanModels/Cpp/CallableEvaluation.lean` is the legacy value-only evaluator for
-the already-admitted `CallableFunction` statement profile; it does not change
-the translation execution boundary or execute object-backed local nodes.
-`CallableObjectEvaluation.lean` evaluates the same callable tree against an
-`IntegralObjectFrame`, including validated automatic integral declarations.
+`LeanModels/Cpp/CallableEvaluation.lean` exposes the public value-shaped
+projection, and `LeanModels/Cpp/CallableValueEvaluation.lean` contains the
+explicitly named compatibility evaluator for the older list-state proofs.
+`CallableObjectEvaluation.lean` evaluates the callable tree against an
+`IntegralObjectFrame`; this is the authoritative semantics, including validated
+automatic integral declarations.
 It accepts positional `IntegralValue` arguments, converts each valid argument
 to the declared parameter format with the existing profile-checked integral
 conversion, evaluates integer literals, parameter references, integral casts,
@@ -397,12 +400,12 @@ rather than becoming host-language behavior. A return carries a returned result
 only after its expression succeeds; an integral failure remains a failure with
 the active frame retained for the caller.
 
-Direct call expressions use an already-selected `CallableCallee` and evaluate
-their integral argument expressions left to right before entering that callee.
-The callee receives the existing profile-checked argument conversion and its
-integral result is checked against the call expression's represented type. This
-is the value-only call boundary; the object-backed evaluator keeps direct calls
-loud until a caller/callee frame bridge can retain shared object state.
+Direct call expressions remain a loud boundary in the authoritative frame
+evaluator, with `unsupportedCall` as their diagnostic. The public projection
+keeps that same cause. The compatibility value evaluator still contains its
+historical direct-call implementation for old proof fixtures; those fixtures
+must call `evaluateCallableValue` explicitly and do not contribute public
+execution coverage.
 
 N4950 §7.6.1.3 [expr.call] initializes every parameter from its corresponding
 argument. This boundary therefore converts and validates all supplied arguments
@@ -538,8 +541,7 @@ parsers; this execution refactor does not establish a kernel-reducible ingestion
 pipeline or a theorem about an original corpus function.
 
 The evaluator is
-not wired to `Translation.execute`, and does not admit local objects in its
-value-only path, calls,
+not wired to `Translation.execute`, and does not admit calls,
 overload resolution or general implicit-conversion semantics.
 Falling through
 without a return is a typed `missingReturn` refusal for an integral result.

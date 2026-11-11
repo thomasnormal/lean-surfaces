@@ -18,6 +18,15 @@ callable evaluators execute its child while preserving the source boundary.
 Switch bodies still use the existing clause representation; replacing that
 regrouping with source `CaseStmt`/`DefaultStmt` items remains open.
 
+## `c-name-resolution-by-string`: callee declaration-kind guard
+
+**Partially closed 2026-11-11.** C call dispatch now uses the retained
+`DeclRefExpr` declaration kind through `calleeName` and refuses local-variable
+or indirect references before looking up a function by name. A local callee
+row pins the refusal (the existing type-layout frontier may report first).
+Full declaration-id threading for variables, globals, and function bodies
+remains open.
+
 ## `cpp-diff-handwritten-twins`: reporting boundary
 
 **Closed 2026-11-11 (reporting correction).** The harness and generated page

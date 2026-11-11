@@ -64,6 +64,10 @@
 - Retained Clang `ExprWithCleanups` nodes in the callable statement AST and
   evaluator instead of erasing the full-expression boundary.
 
+- C call dispatch now requires the callee `DeclRefExpr` to resolve to a
+  `FunctionDecl`; local variables and indirect references refuse before name
+  lookup can select a same-named function.
+
 - Fixed the TinyXML-2 coverage caller's C++ runtime linkage so its
   provenance-verified native calls can run when the system runtime is older.
 

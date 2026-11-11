@@ -591,14 +591,12 @@ def callFn : Nat → Program → LeanModels.C.FunctionDefn → List CVal → Exe
         -- The callee's own call handler: one fuel less, so the recursion
         -- terminates on the fuel and on nothing else.
         let handler : CallHandler := fun callee vs =>
-          let nm := calleeNameOf callee
-          if nm == "<indirect>" then
-            -- 19 sites, every one through `movecb`. The callback protocol
-            -- needs a function POINTER value, which the value model does
-            -- not carry yet — named, not silently mishandled.
-            refuseUnsupported "indirect call through a function pointer (movecb)"
-          else
-            match prog.find? nm with
+          match calleeName callee with
+          | none =>
+            -- A DeclRefExpr to a local variable is not a function call target.
+            -- Do not redo clang's resolved declaration identity by its name.
+            refuseUnsupported "indirect call through a non-FunctionDecl reference"
+          | some nm => match prog.find? nm with
             -- One of the 27 externals: cause `libc`, which retires by
             -- widening the slice and never pools with the other two.
             | none => throw (.libc nm)

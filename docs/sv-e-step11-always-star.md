@@ -3,8 +3,10 @@
 The clean-room sources are in
 [`Examples/system-verilog/sem2/always_star_step11/`](../Examples/system-verilog/sem2/always_star_step11/).
 They retain the parser's `ImplicitEventControl` and process body, rather than
-converting the process into `always_comb`. These are source-oracle fixtures
-and a rule proposal. **E execution remains incomplete.**
+converting the process into `always_comb`. The E-core-0 source entry now keeps
+that node as an implicit process: the first case fixture executes in E, and the
+startup fixture checks its time-zero distinction. The function-sensitivity
+fixture remains loud at the function-call boundary.
 
 IEEE 1800-2023 §9.4.2.2 defines the implicit event control; §9.2.2.2.2
 distinguishes `always_comb` from `always @*`. In particular, `always_comb`
@@ -69,23 +71,40 @@ lake build 'Examples.«system-verilog».sem2.always_star_step11.agree'
 python3 Examples/system-verilog/sem2/always_star_step11/check.py
 ```
 
-## Proposed E rule and remaining boundary
+## E rule and remaining boundary
 
-The single source AST needs an implicit event-controlled process with its
-own style, body and source-derived read sensitivity. Process startup first
-suspends at this event control. A change in a watched read schedules the
-existing E body engine in Active; after the body completes, the process
-re-arms its implicit wait. An empty read set never wakes. Input-port
-propagation is an event if the source connection semantics generates one;
-the wait rule itself does not invent an initial activation.
+The source-shaped E entry represents an implicit event-controlled process with
+its body and source-derived read sensitivity. Process startup first suspends at
+this event control. A change in a watched read schedules the existing E body
+engine in Active; after the body completes, the process re-arms its implicit
+wait. An empty read set never wakes. Input-port propagation is an event if the
+source connection semantics generates one; the wait rule itself does not
+invent an initial activation.
 
-The mixed E scheduler must notify this wait after relevant Active writes and
-NBA commits. The same existing body meaning handles blocking assignments and
-case statements. Function sensitivity must consult retained call nodes;
-inlining a function would silently broaden `@*` sensitivity. The
-`always_comb` startup and function-read rules remain its own cases. A narrow
-one-writer profile can be a sufficient admission condition, without changing
-the source language's permissions.
+The E active scheduler notifies this wait after relevant writes. The same
+existing body meaning handles blocking assignments and case statements. Plain
+`@*` uses the body's raw reads, unlike `always_comb`, whose sensitivity removes
+its own writes. Function sensitivity must consult retained call nodes; inlining
+a function would silently broaden `@*` sensitivity. The `always_comb` startup
+and function-read rules remain its own cases. This E-core-0 entry is a flat,
+single-slot fragment; unsupported functions, clocked processes, hierarchy and
+other constructs remain loud.
+
+The first fixture's E proof checks the loaded `Proc0.implicit` node's
+sensitivity and executes all twelve source stimuli, including its initial
+wait. Its kernel trace is:
+
+```text
+xxxx 0011 | 0011 0011 | 1010 1010 | 0101 0101
+1111 1111 | 0101 0101 | 1111 1111 | 1111 1111
+xz01 xz01 | zzzz zzzz | xx11 xx11 | xxxx xxxx
+```
+
+The startup fixture's E guard checks the initial row
+`xxxx,0110,xxxx,0110`, separating the plain `@*` wait and the
+`always_comb` time-zero activation. The function-sensitivity fixture retains
+the parser's `FunctionCall` nodes and refuses in E; no inlined or fabricated
+function result is used.
 
 Retained extraction emits `AlwaysEvent` with
 `event_kind: "ImplicitEventControl"`. `Ingest2` now retains that event as
@@ -95,18 +114,16 @@ explicit event, edge, guard, clock, reset and source-style fields. Other
 event-control kinds keep their existing loud boundary. This is source
 ingestion, not a new activation rule.
 
-The frozen `Process2` bridge still has no implicit-event process and reports
+The ordinary frozen `Process2` bridge still has no implicit-event process and reports
 `ProceduralBlockSymbol:Always: source-level event-controlled always is
 retained; the frozen process AST has no event-list constructor`.
-`agree.lean` checks the retained case body, function fixture and both startup
-controls, malformed event metadata, and the exact refusal in each frozen
-view. The old memory adapter also explicitly refuses the retained constructor
-at elaboration, including generated occurrences, instead of skipping it.
-Function declarations/calls and
-initialization have their additional existing boundaries. No new body AST,
-interpreter, shared judgment, or legacy execution witness is introduced.
-The actual rule, event/frame proofs, loaded-source E traces and their
-simulator comparisons remain required.
+The E entry is separate: `PDesign.instantiateE2` retains the parser node and
+`Elab.ofEDesign2` maps it to `Proc0.implicit` without lowering it to
+`always_comb`. `agree.lean` checks the retained case body, function fixture and
+startup control, malformed event metadata, the exact refusal in each frozen
+view, and the generated-process refusal in the retiring memory adapter.
+Function declarations/calls and initialization have their additional existing
+boundaries. No parallel body AST or shared judgment was introduced.
 
 The older timed loader's `AlwaysImplicit` path currently starts with a ready
 body (`Load.lean`, `timedProcOfRaw`), like `always_comb`. That startup is not

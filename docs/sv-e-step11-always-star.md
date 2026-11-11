@@ -129,3 +129,23 @@ Xcelium produces `0011`; all later known/x/z rows agree. This is the
 time-zero Active-region ordering freedom of §4.7. The receipt is therefore
 not an exact-equivalence claim for that first observation, and neither tool's
 startup order is selected as the language meaning.
+
+## R5 case-latch retention boundary
+
+[`always_star_case_latch_e`](../Examples/system-verilog/sem2/always_star_case_latch_e/)
+is the next source-shaped boundary: a plain `always @*` with a `case` that
+has no `default`.  The extractor retains `AlwaysEvent` with
+`event_kind: "ImplicitEventControl"`, preserves the `PStmt.caseStmt` and its
+source-order arms, and carries the R5 missing-assignment reason.  It does not
+add a default arm or lower the case into an `if` chain.  This is the parser
+admission needed by the E scheduler; it is not a latch execution claim.
+
+The one-cycle memory profile refuses this retained process explicitly because
+it has no implicit-wait scheduler or latch state.  The refusal is
+`E memory route does not yet admit implicit event-controlled processes`, which
+prevents `execMemEEdge` from silently skipping the process.  The fixture's
+rows cover a matching arm, unmatched selectors, an x/z selector, data changes
+while unmatched, and hold after the last capture.  Icarus Verilog 13.0 leaves
+the first `q` sample `xxxx`, while readiness-gated Xcelium 24.03-s004 reports
+`0011`; this is the same §4.7 startup-order split.  The remaining seven rows
+match exactly in both tools.

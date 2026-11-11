@@ -156,11 +156,13 @@ one, exactly as the same body of an `always_comb`).
 | R2 | an explicit list names every signal the body reads, as a plain signal (a select or an expression in the list is refused); a signal that a COMPLETE earlier assignment of the body defines is not an input and need not be listed. The simulators wake on the list, Yosys synthesizes the function: a list that misses a read is a tools split |
 | R3 | the body reads at least one signal it does not write, and every such signal is 4-state, integral and a module signal: an `@*` block does not run at time zero, so a block whose inputs are 2-state (driven to the initial value: no event) or reads nothing would leave its targets x in a simulator while the model computes them. A continuous time-zero driver is retained as the parser's `AlwaysEvent` node for the E source view; its startup ordering remains a scheduler boundary rather than a lowered `AlwaysComb` meaning |
 | R4 | a called function reads no module signal it does not receive as an argument (Verilog-2001 `@*` does not wake on those reads, `always_comb` does); decided on slang's tree, transitively through the called functions |
-| R5 | every target is assigned on every path (Yosys `proc` infers a latch SILENTLY for `@*`, where `always_comb` is an error), and no target, or window of one, is read before a complete assignment defines it. Coverage is by bit window for a target of literal width whose range is `[W-1:0]` (the windows an unrolled loop leaves), by whole assignment otherwise; an `if` covers what both arms cover, a `case` only with a `default` |
+| R5 | every target is assigned on every path (Yosys `proc` infers a latch SILENTLY for `@*`, where `always_comb` is an error), and no target, or window of one, is read before a complete assignment defines it. Coverage is by bit window for a target of literal width whose range is `[W-1:0]` (the windows an unrolled loop leaves), by whole assignment otherwise; an `if` covers what both arms cover, a `case` only with a `default`. A plain implicit `@*` whose source-shaped body contains a case without a default is retained as `AlwaysEvent` with its R5 reason for the E scheduler; other R5 failures remain loud. |
 | R6 | no other process writes a target (slang's `MultipleAlwaysAssigns` does not fire for `@*`: slang's driver table is asked, `AnalysisManager.getDrivers`) and no target has a declaration initializer |
 
 Recorded over-refusals: a `case` that covers every value without a `default`, a read of a partly written target through a non-literal
-index, a target written in two processes on disjoint bits. A continuous driver
+index, a target written in two processes on disjoint bits. A plain implicit
+`@*` case without a `default` is retained as source metadata for E; its latch
+execution remains a scheduler boundary. A continuous driver
 feeding an `@*` input is retained as `TimedStatement:ImplicitEventControl`
 for E, with its source-shaped body and raw sensitivity. The clean-room
 fixture `Examples/system-verilog/sem2/always_star_timezero_e/` records the

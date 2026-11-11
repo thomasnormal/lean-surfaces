@@ -1629,6 +1629,34 @@ The next wall is the E route's `cpuregs` unpacked-memory declaration at
 retained-event guard, but it is not an E meaning.  The old guard-bypassed
 80-cycle result remains **UNVALIDATED**.
 
+## 2026-11-11 re-probe after R5 case retention
+
+The pinned source is unchanged at YosysHQ commit
+`ef203c2b0a3fb793280f5114941416c425c5b461` (source SHA-256
+`0836050971b3c6cdd28ac3b1e5719a67fb645161912bef1e472e63995ceb062`).  To
+regenerate the approved envelope from that read-only checkout, run:
+
+```text
+python3 extractors/sv/extract.py --top picorv32 \
+  -o picorv32-current-r5-latch.sv.json "$PINNED_PICORV32/picorv32.v"
+```
+
+The envelope is 3,084,319 bytes with SHA-256
+`b30c4705579b9d5fa157b2f0d957f0b2a70bde2487b43d92ff3fa7a889a6052a`.
+The `always @*` process at `picorv32.v:401` is now retained as an
+`ImplicitEventControl` with its source-shaped case and R5 reason.  The
+canonical E memory entry refuses it explicitly with:
+
+```text
+E memory route does not yet admit implicit event-controlled processes
+```
+
+This is the scheduler/latch-state boundary, not an execution result.  The
+ordinary scalar route still first refuses the one-rank `cpuregs` declaration
+at `picorv32.v:203` (`UnpackedDecl:memory`), and no E execution, retirement
+trace or symbolic ADDI invariant is claimed.  The old guard-bypassed
+run2/MemCycle 80-cycle result remains **UNVALIDATED**.
+
 ## 2026-11-11 clean-room E memory receipt for `cpuregs`
 
 The existing source-shaped E memory profile was exercised on the exact

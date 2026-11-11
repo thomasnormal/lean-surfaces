@@ -488,6 +488,14 @@ def MemEDesign.ofPDesign (d : PDesign) (args : List Int) : Res MemEDesign := do
   let env ← d.paramEnv2 args
   if d.others.any (fun entry => !memEAllowedOther entry) then
     .unsupported "E memory route does not yet admit unsupported module members"
+  -- A retained plain `always @*` carries a source event control that this
+  -- one-cycle memory profile does not schedule.  Refuse it here instead of
+  -- letting `execMemEEdge` silently skip the process and fabricate a latch
+  -- value.  The parser node remains available to the mixed E scheduler.
+  if d.processes.any (fun p => match p with
+      | .alwaysImplicit _ => true
+      | _ => false) then
+    .unsupported "E memory route does not yet admit implicit event-controlled processes"
   let rec decls : List PDecl → Res (List Decl)
     | [] => .ok []
     | pd :: rest => do

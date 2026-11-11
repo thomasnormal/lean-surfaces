@@ -13828,3 +13828,21 @@ reports all 83 Python envelopes fresh under the CPython 3.9 family.
 
 DECIDED: close `py-frontend-unchecked-stale-envelopes`; keep freshness and
 frontend-family checks in the normal documentation/CI gates.
+## 2026-11-11-pyfoundation-94 — close differential row-coverage audit
+
+The low `py-row-coverage-gaps` finding is closed in the current battery. The
+generated foundation edge manifest now covers 71 rows, including the
+non-cancelling negative set hash (`-5`), creation-time non-iterable genexp,
+recursion-limit depths, list-comprehension shadowing, long structured globals,
+oversized repetition, annotated-assignment order, and global-yield target
+boundaries. The pinned cases retain explicit MATCH or loud outcomes with no
+decided mismatch.
+
+| Measurement | Result |
+|---|---|
+| Foundation edge check | `foundation_edges.py --check`: 71 generated rows current, exit 0 |
+| High-finding witnesses | all named rows present in `cases.json`/`scripts.json` |
+| Semantic change | none; coverage audit closure only |
+
+DECIDED: close `py-row-coverage-gaps`; require new edge pools and rows whenever
+future protocol boundaries are added.

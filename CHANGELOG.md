@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Revalidated differential edge coverage: generated foundation rows are current
+  (71/71), including the non-cancelling negative-set hash and every previously
+  identified high-finding witness; no decided mismatch remains.
+
 - Revalidated frontend/envelope freshness: all 83 Python envelopes regenerate
   under the pinned CPython 3.9 family, with frontend metadata retained and
   stale cache/runner inputs rejected loudly.

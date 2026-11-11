@@ -57,7 +57,10 @@ parameter checks now use the retained structured enum handle and preserve
 qualified source spellings as data. Direct enum arguments still await a probe
 handle join before their source spelling can be removed from the legacy
 boundary; the new `admitWithTypeEvidence` path performs that join and accepts
-qualified spellings.
+qualified spellings. Revalidated 2026-11-11 with the 24 GiB cgroup:
+`lake build LeanModels.Cpp.ClassSubobjects LeanModels.Cpp.MemberCallTests`
+completed successfully (18 jobs), including the structured-handle guards and
+friend-class refusal.
 
 ## `cpp-harness-oracle-misfile`: native oracle policy
 

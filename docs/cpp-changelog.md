@@ -19,6 +19,8 @@ coverage advance independently from the Python tier.
 
 ### Added
 
+- Linkage bodies now have a direct `extern bool` variable witness in addition to the `extern int` case; both remain storage-free declaration nodes.
+
 - Linkage specifications now have a direct storage-free `extern int` body witness in addition to function prototypes; initialized and unsupported declarations remain loud refusals.
 
 - Namespace linkage bodies now execute declaration-only function prototypes under the same exact C/C++ language and structured-node checks; definitions and unsupported children remain loud refusals.

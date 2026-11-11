@@ -13428,3 +13428,20 @@ walrus-cell witness returns `[7]` on both interpreters.
 
 DECIDED: close `py-genexp-capture-census`; retain conservative loudness until
 native generator-expression nodes replace the lowering.
+## 2026-11-11-pyfoundation-72 — close generator creation-iteration audit
+
+The high-priority `py-genexp-iter-deferred` finding remains closed. The
+synthesized generator-expression call path evaluates the outer iterable and
+performs its creation-time iterator check before allocating the suspended
+generator; `genExpCreationRun` keeps the proof surface loud for heap receiver
+shapes that need richer iterator representation. The scalar witness now raises
+the same `TypeError` at creation in the model and CPython 3.9.25.
+
+| Measurement | Result |
+|---|---|
+| Scalar outer source | `genexp_iter_creation.py`: model and CPython both `TypeError`, exit 1 |
+| Creation worker | `genExpCreationRun` present in both call paths |
+| Semantic change | none; audit closure only |
+
+DECIDED: close `py-genexp-iter-deferred`; retain the explicit creation guard
+and lazy behavior for ordinary user generator functions.

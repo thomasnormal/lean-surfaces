@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Revalidated generator-expression creation-time iteration: scalar outer
+  sources raise the faithful `TypeError` before the first resume, matching
+  CPython 3.9.25.
+
 - Revalidated generator-expression capture admission for unpacking, walrus,
   and `del` rebinding; unsafe by-value captures stay loud and the safe walrus
   cell row still matches CPython 3.9.25.

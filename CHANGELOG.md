@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Revalidated the pinned quickstart: leanpy reports CPython 3.9.25 for both
+  frontend and oracle and the whole-file comparison matches.
+
 - Revalidated the generated Python coverage page, documentation checks, and
   backlog index on the current public tip; all freshness gates pass.
 

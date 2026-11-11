@@ -139,6 +139,25 @@ the repository's pre-existing warnings for legacy C++ headings.
 DECIDED: treat the coverage/docs item as revalidated and reread the inbox
 before the next goal item.
 
+## 2026-11-11-pyfoundation-52 — revalidate pinned quickstart
+
+The public quickstart fix is present on the integrated tree. The two focused
+test suites pass, and the actual whole-file comparison reports matching
+CPython 3.9.25 frontend/oracle versions and exit 0. The runner also warns that
+its cached binary predates the latest Lean sources; the comparison itself is
+still green, and the managed proof targets in prior packets cover the current
+tree.
+
+| Measurement | Result |
+|---|---|
+| `tools/test_leanpy.py` | 15 tests passed |
+| `tools/test_python_onboarding.py` | 17 tests passed |
+| `tools/leanpy --compare harness/scripts/gen_script.py` | MATCH, exit 0 |
+| Pinned versions | frontend/oracle CPython 3.9.25 |
+
+DECIDED: treat the quickstart item as revalidated and reread the inbox before
+the next goal item.
+
 ## 2026-11-11-pyfoundation-43 — repair PayloadBlind comparison recursion transport
 
 The proof observer now transports the heap-aware rich-comparison recursion

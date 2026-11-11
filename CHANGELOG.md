@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Revalidated `yield from` handling: source delegation remains a structured
+  `YieldFrom` node and is refused at the missing PEP 380 send/throw/close
+  protocol boundary instead of being rewritten into a `for` loop.
+
 - Revalidated trailing definition deletion: ingestion retains the `del` node,
   and the module executor refuses static-table tombstoning instead of erasing
   the statement; the opcode-shaped witness is loud while CPython completes.

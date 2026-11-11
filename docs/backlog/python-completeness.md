@@ -13702,3 +13702,20 @@ while CPython 3.9.25 completes their preceding output.
 
 DECIDED: close `py-trailing-del-rewrite`; retain the loud static-table boundary
 until definitions become runtime bindings.
+## 2026-11-11-pyfoundation-87 — close yield-from inlining audit
+
+The medium `py-yieldfrom-inline` finding is already fixed. The approved
+extractor and ingestion preserve statement-position delegation as a structured
+`YieldFrom` node; the monadic and legacy generator paths refuse that node until
+PEP 380's send/throw/close forwarding and delegation return-value protocol are
+modeled. The `gen_lab` delegation rows remain loud, while the empty delegated
+path that never resumes still matches CPython 3.9.25.
+
+| Measurement | Result |
+|---|---|
+| Source audit | no fresh-target `for` lowering for `yield from` remains |
+| Delegation rows | yielding delegates are explicit refusals; empty delegate matches |
+| Semantic change | none; audit closure only |
+
+DECIDED: close `py-yieldfrom-inline`; retain the structured loud boundary until
+a native delegation frame implements PEP 380.

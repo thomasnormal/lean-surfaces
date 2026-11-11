@@ -357,6 +357,21 @@ heap-specialized dispatch, and reuses the shared binary worker refinement.
 DECIDED: continue literal binary refinement with explicit fuel and dispatch
 evidence; recursive and script adequacy remain open.
 
+## 2026-11-11-pyfoundation-65 — prove binary literal-left-shift refinement
+
+The literal binary control family now covers left-shift. The theorem transports
+both children through the constant bridge, discharges heap-specialized dispatch
+guards, and reuses the shared binary worker refinement.
+
+| Measurement | Result |
+|---|---|
+| Target | managed `lake build LeanModels/Python/Monadic/Eval.lean` passed |
+| New theorem | `Monadic.twinAgrees_evalOpen_intLShift` |
+| Semantic change | theorem only; no evaluator behavior change |
+
+DECIDED: continue literal binary refinement with explicit fuel and dispatch
+evidence; recursive and script adequacy remain open.
+
 ## 2026-11-11-pyfoundation-43 — repair PayloadBlind comparison recursion transport
 
 The proof observer now transports the heap-aware rich-comparison recursion

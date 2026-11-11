@@ -26,10 +26,10 @@ These bars use each tier's checked-in differential corpus: `MATCH` rows divided 
 
 | Language | Completion | Current measurement |
 | --- | --- | --- |
-| Python | <progress value="96.0" max="100" aria-label="96.0% complete">96.0%</progress> **96.0%** | 4,426 / 4,610 differential rows ([coverage](docs/python-coverage.md)); proof interpreter: 4,311 / 4,610 |
-| C++ | <progress value="98.9" max="100" aria-label="98.9% complete">98.9%</progress> **98.9%** | 1,690 / 1,708 differential rows ([coverage](docs/cpp-coverage.md)) |
+| Python | <progress value="95.6" max="100" aria-label="95.6% complete">95.6%</progress> **95.6%** | 4,968 / 5,195 differential rows ([coverage](docs/python-coverage.md)); proof interpreter: 4,845 / 5,195 |
+| C++ | <progress value="0.2" max="100" aria-label="0.2% complete">0.2%</progress> **0.2%** | 4 / 1,709 differential rows ([coverage](docs/cpp-coverage.md)) |
 | Rust | <progress value="0.0" max="100" aria-label="0.0% complete">0.0%</progress> **0.0%** | Lane planned, implementation not started ([roadmap](#roadmap-not-built--do-not-expect-it-in-this-tree)) |
-| SystemVerilog | <progress value="96.4" max="100" aria-label="96.4% complete">96.4%</progress> **96.4%** | 616 / 639 differential self-check rows ([coverage](docs/sv-coverage.md)) |
+| SystemVerilog | <progress value="92.3" max="100" aria-label="92.3% complete">92.3%</progress> **92.3%** | 591 / 640 differential self-check rows ([coverage](docs/sv-coverage.md)) |
 <!-- LANGUAGE_PROGRESS:END -->
 
 **Unvalidated lanes.** The Go, ES (JavaScript), Ada, SPICE and Verilog-A lanes are unvalidated: an audit against the [engineering rules](AGENTS.md#engineering-rules-every-lane) on 2026-11-05 found silent wrong answers in each ([issue #11](https://github.com/thomasnormal/proglib/issues/11)). Do not rely on their results until that issue is closed.

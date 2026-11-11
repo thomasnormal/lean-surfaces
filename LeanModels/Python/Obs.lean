@@ -1034,7 +1034,7 @@ theorem fuelMono (fuel : Nat) :
                                  (Run.le_ite ?_                                  -- any/all
                                   (Run.le_ite ?_                                 -- set
                                    (Run.le_ite (hb _)                            -- abs
-                                    (Run.le_ite (hb _)                           -- round
+                                   (Run.le_ite (hb _)                           -- round
                                      (Run.le_ite (hb _)                           -- int
                                      (Run.le_ite (hb _)
                                      (Run.le_ite (hb _)
@@ -2717,6 +2717,29 @@ theorem leaveCallDepth {α : Type} {w : World} {x : Run World α}
   | timeout => exact Run.OkW.timeout
   | unsupported msg => exact Run.OkW.unsupported
 
+/-! A heap-free builtin may still enter C frames.  The frame wrapper restores
+the caller's depth on every decided return, so its successful world remains
+the caller's world. -/
+theorem withFrameRecursionUnit {α : Type} {st : FrameState}
+    {f : FrameState → Run FrameState α}
+    (h : ∀ s, Run.OkW (fun s' : FrameState => s'.world = s.world) (f s)) :
+    Run.OkW (fun s' : FrameState => s'.world = st.world)
+      (Run.withFrameRecursionUnit st f) := by
+  unfold Run.withFrameRecursionUnit Run.withRecursionUnit
+  apply Run.OkW.withLocals
+  split
+  · exact Run.OkW.exn
+  · apply Run.OkW.leaveCallDepth
+    exact Run.OkW.toWorld (h _)
+
+theorem withFrameRecursionUnit_of_world {α : Type} {st : FrameState}
+    {w : World} {f : FrameState → Run FrameState α}
+    (hw : st.world = w)
+    (h : ∀ s, Run.OkW (fun s' : FrameState => s'.world = s.world) (f s)) :
+    Run.OkW (fun s' : FrameState => s'.world = w)
+      (Run.withFrameRecursionUnit st f) :=
+  (withFrameRecursionUnit h).mono (fun _ hs => hs.trans hw)
+
 theorem finishCallAt {α : Type} {w : World} {depth : Nat} {x : Run World α}
     (h : Run.OkW (· = { w with callDepth := 0 }) x) :
     Run.OkW (· = { w with callDepth := depth }) (Run.finishCallAt depth x) := by
@@ -3247,34 +3270,50 @@ theorem worldInv (m : Module) (hm : m.heapFree = true) (fuel : Nat) :
                                         (.ite (.bind hargs fun st₁ vs h₁ => .liftResF h₁ _)
                                         (.ite .unsupported ?_)))))))))))))))
                         · cases vs with
-                          | nil => exact .exn
+                          | nil =>
+                            refine .bind (.liftResF h₁ (builtinRoundRecursionCheck st₁.world.callDepth))
+                              fun st₂ _ h₂ => .exn
                           | cons v rest =>
                             cases rest with
                             | nil =>
+                              refine Run.OkW.withFrameRecursionUnit_of_world h₁ ?_
+                              intro s
+                              refine .bind (.liftResF rfl _) fun s' _ hs' => ?_
                               cases v <;>
                                 first
-                                | exact .okF h₁ _
-                                | exact .liftResF h₁ _
-                                | exact .unsupported
-                            | cons digits tail =>
-                              cases tail with
+                                  | exact .okF hs' _
+                                  | exact .liftResF hs' _
+                                  | exact .unsupported
+                            | cons digits rest' =>
+                              cases rest' with
+                              | cons _ _ =>
+                                exact .unsupported
                               | nil =>
-                                cases hd : asInt digits with
-                                | none => simp [hd]; exact .unsupported
+                                refine Run.OkW.withFrameRecursionUnit_of_world h₁ ?_
+                                intro s
+                                refine .bind (.liftResF rfl _) fun s' _ hs' => ?_
+                                cases hdi : asInt digits with
+                                | none => exact .unsupported
                                 | some d =>
-                                  simp [hd]
                                   cases v with
                                   | int n =>
                                     by_cases hneg : d < 0
-                                    · simp [hneg]; exact .unsupported
-                                    · simp [hneg]; exact .okF h₁ _
+                                    · simp only [hdi, hneg, ↓reduceIte]
+                                      exact .unsupported
+                                    · simp only [hdi, hneg, ↓reduceIte]
+                                      exact .okF hs' _
                                   | bool b =>
                                     by_cases hneg : d < 0
-                                    · simp [hneg]; exact .unsupported
-                                    · simp [hneg]; exact .okF h₁ _
-                                  | float value => exact .liftResF h₁ _
-                                  | _ => exact .unsupported
-                              | cons _ _ => simp only; exact .unsupported
+                                    · simp only [hdi, hneg, ↓reduceIte]
+                                      exact .unsupported
+                                    · simp only [hdi, hneg, ↓reduceIte]
+                                      exact .okF hs' _
+                                  | float value =>
+                                    simp only [hdi]
+                                    exact .liftResF hs' _
+                                  | _ =>
+                                    simp only [hdi]
+                                    exact .unsupported
                         · exact .liftResF h₁ _
                         · cases vs with
                           | nil => exact .exn

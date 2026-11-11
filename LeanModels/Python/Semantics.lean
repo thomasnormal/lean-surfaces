@@ -5497,6 +5497,13 @@ unit. Both paths observe the same boundary after argument evaluation
 def builtinMethORecursionCheck (depth : Nat) : Res Unit :=
   if pythonRecursionFull depth then .exn .recursionError else .ok ()
 
+/-- `round` is a FASTCALL builtin that immediately invokes the selected
+`__round__` FASTCALL method (`Python/bltinmodule.c:builtin_round_impl`). The
+outer frame is represented by `withFrameRecursionUnit`; this check accounts
+for the nested numeric method frame after argument evaluation. -/
+def builtinRoundRecursionCheck (depth : Nat) : Res Unit :=
+  if pythonRecursionFull depth then .exn .recursionError else .ok ()
+
 /-- `sorted` calls into `list.sort` after materializing its input
 (`Python/bltinmodule.c:builtin_sorted`). Argument errors and sorting reach
 different nested recursion checks, and generator materialization may execute
@@ -9393,8 +9400,12 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                     -- parameterized decimal scaling rule below.
                     flattenStarRun (evalExprs m fuel st args.toList) ⤳ fun st vs =>
                     match vs with
-                    | [] => .exn st (.typeError "round() missing required argument 'number' (pos 1)")
+                    | [] =>
+                      Run.liftRes st (builtinRoundRecursionCheck st.world.callDepth) ⤳ fun st _ =>
+                        .exn st (.typeError "round() missing required argument 'number' (pos 1)")
                     | [v] =>
+                      Run.withFrameRecursionUnit st fun st =>
+                      Run.liftRes st (builtinRoundRecursionCheck st.world.callDepth) ⤳ fun st _ =>
                       (match v with
                        | .int n => .ok st (.int n)
                        | .bool b => .ok st (.int (if b then 1 else 0))
@@ -9402,6 +9413,8 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                        | _ => .unsupported "round() over this non-integral value is outside the tier"
                       )
                     | [v, digits] =>
+                      Run.withFrameRecursionUnit st fun st =>
+                      Run.liftRes st (builtinRoundRecursionCheck st.world.callDepth) ⤳ fun st _ =>
                       match asInt digits with
                       | none => .unsupported "round() with non-integral ndigits is outside the tier"
                       | some d =>

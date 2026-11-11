@@ -22,6 +22,7 @@ and every existing `§Lnn` reference still resolves there.
 | id | class | title | lane |
 | --- | --- | --- | --- |
 | `2026-11-11-ls-sv2-477` |  | unify the E-core-0 and observation cones | ls-sv2 |
+| `2026-11-11-pyfoundation-32` |  | count `round` recursion and binder order | python-completeness |
 | `2026-11-11-pyfoundation-31` |  | count `sorted` recursion and materialization | python-completeness |
 | `2026-11-10-pyfoundation-30` |  | refresh the generated backlog index | python-completeness |
 | `2026-11-10-pyfoundation-29` |  | revalidate clock erasure | python-completeness |

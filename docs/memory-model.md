@@ -885,6 +885,12 @@ understand, the refusal is the LOUD unsupported, never a binding
   demonstrates. The builtin's recursion unit remains active while it drains
   a generator (`sorted_deep_generator`); calls near the unmodeled nested
   `list.sort` recursion boundary refuse (`sorted_valid`, `sorted_bad_kw`).
+* the builtin `round`: the evaluator enters the CPython builtin's FASTCALL
+  frame after argument evaluation and checks the nested numeric
+  `__round__` FASTCALL call before deciding the admitted integer/Boolean and
+  float forms. Calls at that two-unit boundary raise `RecursionError` at the
+  same depths as CPython 3.9 (`round_recursion.py`); unsupported operand and
+  arity shapes remain loud.
 
 `float(...)` also preserves the ordinary positional-then-keyword evaluation
 order before reporting CPython's faithful `TypeError: float() takes no

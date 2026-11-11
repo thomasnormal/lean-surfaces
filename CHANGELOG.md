@@ -84,6 +84,9 @@
 
 - Made the C++ differential harness require a pinned native oracle by default;
   exploratory runs must opt into `--allow-oracle` explicitly.
+- Count `round`'s builtin and numeric `__round__` recursion frames after
+  successful argument binding, preserving CPython's pre-frame arity errors.
+
 - Count `sorted`'s builtin and nested list-sort recursion after argument
   evaluation, including generator materialization and unsupported keyword
   ordering; refuse calls at the unmodeled boundary.

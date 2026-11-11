@@ -2757,19 +2757,26 @@ theorem ceEvalExpr_succ (ih : CE fuel) : CEEvalExpr (fuel + 1) := by
                     case bround =>
                       refine .bind (ClockErasedF.flattenStarRun (ihEs m st args.toList h)) fun s2 vs hs2 => ?_
                       cases vs with
-                      | nil => exact .exn hs2 _
+                      | nil =>
+                        ce_norm
+                        refine .bind (.liftRes hs2 _) fun s3 _ hs3 => ?_
+                        exact .exn hs3 _
                       | cons v t =>
                         cases t with
                         | nil =>
+                          refine ClockErasedF.withFrameRecursionUnit hs2 fun s2 hs2 => ?_
+                          refine .bind (.liftRes hs2 _) fun sGuard _ hsGuard => ?_
                           cases v with
-                          | int n => exact .ok hs2 _
-                          | bool b => exact .ok hs2 _
-                          | float value => exact .liftRes hs2 _
+                          | int n => exact .ok hsGuard _
+                          | bool b => exact .ok hsGuard _
+                          | float value => exact .liftRes hsGuard _
                           | _ => exact .unsupported
                         | cons d t2 =>
                           cases t2 with
                           | cons _ _ => exact .unsupported
                           | nil =>
+                            refine ClockErasedF.withFrameRecursionUnit hs2 fun s2 hs2 => ?_
+                            refine .bind (.liftRes hs2 _) fun sGuard _ hsGuard => ?_
                             ce_norm
                             cases hdi : asInt d with
                             | none => exact .unsupported
@@ -2778,12 +2785,12 @@ theorem ceEvalExpr_succ (ih : CE fuel) : CEEvalExpr (fuel + 1) := by
                               | int n =>
                                 by_cases hneg : nd < 0
                                 · simp [hdi, hneg]; exact .unsupported
-                                · simp [hdi, hneg]; exact .ok hs2 _
+                                · simp [hdi, hneg]; exact .ok hsGuard _
                               | bool b =>
                                 by_cases hneg : nd < 0
                                 · simp [hdi, hneg]; exact .unsupported
-                                · simp [hdi, hneg]; exact .ok hs2 _
-                              | float value => exact .liftRes hs2 _
+                                · simp [hdi, hneg]; exact .ok hsGuard _
+                              | float value => exact .liftRes hsGuard _
                               | _ => exact .unsupported
                     case bint =>
                       exact .bind (ClockErasedF.flattenStarRun (ihEs m st args.toList h)) fun s2 vs hs2 =>

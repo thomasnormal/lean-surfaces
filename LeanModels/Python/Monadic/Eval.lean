@@ -461,27 +461,36 @@ def applyBuiltin (K : Kont) (m : Module) (fname : String) (vs : List RVal) :
     -- the exact binary64 ratio and ties-to-even. Integral ndigits use the
     -- parameterized decimal scaling rule below.
     match vs with
-    | [] => raisePy (.typeError "round() missing required argument 'number' (pos 1)")
-    | [v] =>
-        match v with
-        | .int n => pure (.int n)
-        | .bool b => pure (.int (if b then 1 else 0))
-        | .float value => liftRes (roundFloatVal value)
-        | _ => refuse "round() over this non-integral value is outside the tier"
-    | [v, digits] =>
-        match asInt digits with
-        | none => refuse "round() with non-integral ndigits is outside the tier"
-        | some d =>
-          match v with
-          | .int n =>
-            if d < 0 then refuse "round() with negative ndigits for integers is outside the tier"
-            else pure (.int n)
-          | .bool b =>
-            if d < 0 then refuse "round() with negative ndigits for integers is outside the tier"
-            else pure (.int (if b then 1 else 0))
-          | .float value => liftRes (roundFloatNDigits value d)
+      | [] => do
+          let st ← get
+          let _ ← liftRes (builtinRoundRecursionCheck st.world.callDepth)
+          raisePy (.typeError "round() missing required argument 'number' (pos 1)")
+      | [v] =>
+          withFrameRecursionUnit do
+            let st ← get
+            let _ ← liftRes (builtinRoundRecursionCheck st.world.callDepth)
+            match v with
+          | .int n => pure (.int n)
+          | .bool b => pure (.int (if b then 1 else 0))
+          | .float value => liftRes (roundFloatVal value)
           | _ => refuse "round() over this non-integral value is outside the tier"
-    | _ => refuse "round() with ndigits is outside the tier"
+      | [v, digits] =>
+          withFrameRecursionUnit do
+            let st ← get
+            let _ ← liftRes (builtinRoundRecursionCheck st.world.callDepth)
+            match asInt digits with
+          | none => refuse "round() with non-integral ndigits is outside the tier"
+          | some d =>
+            match v with
+            | .int n =>
+              if d < 0 then refuse "round() with negative ndigits for integers is outside the tier"
+              else pure (.int n)
+            | .bool b =>
+              if d < 0 then refuse "round() with negative ndigits for integers is outside the tier"
+              else pure (.int (if b then 1 else 0))
+            | .float value => liftRes (roundFloatNDigits value d)
+            | _ => refuse "round() over this non-integral value is outside the tier"
+      | _ => refuse "round() with ndigits is outside the tier"
   else if fname == "int" then
     liftRes (intCastArgs vs)
   else if fname == "float" then

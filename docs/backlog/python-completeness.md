@@ -38,6 +38,28 @@ clock erasure, and payload-blind observer.
 DECIDED: keep `sorted` calls near the unmodeled nested sort boundary loud, and
 keep the recursion unit active through iterable materialization.
 
+## 2026-11-11-pyfoundation-32 — count `round` recursion and binder order
+
+CPython's `Python/bltinmodule.c:builtin_round_impl` enters a builtin frame
+only after Argument Clinic has accepted the required positional arguments;
+numeric `__round__` then enters its own FASTCALL method. The runner and
+ordinary evaluator now count both units for admitted integer, Boolean, and
+float forms, while missing and excess argument diagnostics remain before the
+frame. The proof-side world observer transports the frame relation; the
+payload observer keeps this newly stateful builtin loud after evaluating its
+arguments.
+
+| Measurement | Result |
+|---|---|
+| Focused runner differential | 49 rows: 45 MATCH, 4 documented refusals, 0 failures against CPython 3.9.25 |
+| Focused proof differential | 49 rows: 45 MATCH, 4 loud refusals, 0 failures |
+| Full runner battery | 5,195 rows: 4,968 MATCH, 227 documented refusals, 0 failures |
+| Build status | Managed build of `leanmodels-run`, `ClockErase`, and `PayloadBlind` passed (45 jobs) |
+| Semantic change | shared round recursion unit, pre-frame arity ordering, proof-tier loud boundary |
+
+DECIDED: count the builtin and numeric method frames for valid `round` calls;
+raise missing or excess-argument errors before entering either frame.
+
 ## 2026-11-10-pyfoundation-23 — pin the leanpy quickstart admission
 
 The public quickstart's Python 3.9 pin is now enforced at the runner boundary.

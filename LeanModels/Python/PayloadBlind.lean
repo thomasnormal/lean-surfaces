@@ -5598,35 +5598,52 @@ theorem pbEvalExpr_succ (htwin : PayloadTwin o₀ o) (ih : PBAll pa o₀ o fuel)
                                           | nil => exact PBF.liftRes hs2 _
                                     refine PBF.ite (fun _ => ?_) fun _ => ?_
                                     · refine PBF.bind (PBF.flattenStarRun (ihEs m st args.toList hslot))
-                                        fun nextState values _ invariant => ?_
+                                        fun s1 values _ hs1 => ?_
                                       cases values with
-                                      | nil => exact PBF.exn invariant _
-                                      | cons value rest =>
-                                        cases rest with
-                                        | nil =>
-                                          cases value <;> try exact PBF.unsupported
-                                          case int _ => exact PBF.ok invariant _
-                                          case bool _ => exact PBF.ok invariant _
-                                          case float _ => exact PBF.liftRes invariant _
-                                        | cons digits tail =>
-                                          cases tail with
+                                      | nil =>
+                                          simp only [FrameState.swapAt_world, World.swapAt_callDepth]
+                                          refine PBF.bind (PBF.liftRes hs1 _) fun s2 _ _ hs2 => ?_
+                                          exact PBF.exn hs2 _
+                                      | cons v rest =>
+                                          cases rest with
                                           | nil =>
-                                            cases hd : asInt digits with
-                                            | none => simp [hd]; exact PBF.unsupported
-                                            | some d =>
-                                              simp [hd]
-                                              cases value with
-                                              | int _ =>
-                                                by_cases hneg : d < 0
-                                                · simp [hneg]; exact PBF.unsupported
-                                                · simp [hneg]; exact PBF.ok invariant _
-                                              | bool _ =>
-                                                by_cases hneg : d < 0
-                                                · simp [hneg]; exact PBF.unsupported
-                                                · simp [hneg]; exact PBF.ok invariant _
-                                              | float _ => exact PBF.liftRes invariant _
+                                              refine PBF.withFrameRecursionUnit hs1 fun s1 hs1 => ?_
+                                              simp only [FrameState.swapAt_world, World.swapAt_callDepth]
+                                              refine PBF.bind (PBF.liftRes hs1 _) fun sGuard _ _ hsGuard => ?_
+                                              cases v with
+                                              | int n => exact PBF.ok hsGuard _
+                                              | bool b => exact PBF.ok hsGuard _
+                                              | float value => exact PBF.liftRes hsGuard _
                                               | _ => exact PBF.unsupported
-                                          | cons _ _ => exact PBF.unsupported
+                                          | cons digits rest' =>
+                                              cases rest' with
+                                              | cons _ _ => exact PBF.unsupported
+                                              | nil =>
+                                                  refine PBF.withFrameRecursionUnit hs1 fun s1 hs1 => ?_
+                                                  simp only [FrameState.swapAt_world, World.swapAt_callDepth]
+                                                  refine PBF.bind (PBF.liftRes hs1 _) fun sGuard _ _ hsGuard => ?_
+                                                  cases hdi : asInt digits with
+                                                  | none => exact PBF.unsupported
+                                                  | some d =>
+                                                      cases v with
+                                                      | int n =>
+                                                          by_cases hneg : d < 0
+                                                          · simp only [hdi, hneg, ↓reduceIte]
+                                                            exact PBF.unsupported
+                                                          · simp only [hdi, hneg, ↓reduceIte]
+                                                            exact PBF.ok hsGuard _
+                                                      | bool b =>
+                                                          by_cases hneg : d < 0
+                                                          · simp only [hdi, hneg, ↓reduceIte]
+                                                            exact PBF.unsupported
+                                                          · simp only [hdi, hneg, ↓reduceIte]
+                                                            exact PBF.ok hsGuard _
+                                                      | float value =>
+                                                          simp only [hdi]
+                                                          exact PBF.liftRes hsGuard _
+                                                      | _ =>
+                                                          simp only [hdi]
+                                                          exact PBF.unsupported
                                     refine PBF.ite (fun _ => ?_) fun _ => ?_
                                     · exact PBF.bind (PBF.flattenStarRun (ihEs m st args.toList hslot))
                                         fun s1 vs _ hs1 => PBF.liftRes hs1 _

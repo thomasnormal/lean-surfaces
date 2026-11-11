@@ -13626,3 +13626,21 @@ value and is not a source-text parser.
 
 DECIDED: close `py-text-keyed-semantics`; keep diagnostic text opaque and
 preserve structured AST data as the sole semantic input.
+## 2026-11-11-pyfoundation-83 — prove heap-aware bitwise-and control refinement
+
+The two-interpreter refinement edge now crosses one heap-aware expression
+worker. `twinAgrees_binOpHM_intBitAnd` proves that the monadic `binOpHM` path
+for immediate integer `.bitAnd` reads the frame heap, takes the non-set branch,
+and agrees with the legacy `evalBinOpH` result while preserving the frame state
+and heap/value pair. The proof uses the shared `toRun` stack transport and the
+previously established pure `twinAgrees_binOp` bridge.
+
+| Measurement | Result |
+|---|---|
+| Target | managed `lake build LeanModels/Python/Monadic/Eval.lean` passed |
+| New theorem | `Monadic.twinAgrees_binOpHM_intBitAnd` |
+| Axiom audit | theorem printed with the existing monadic substrate axiom set |
+| Semantic change | theorem only; evaluator behavior unchanged |
+
+DECIDED: continue the control-level refinement one heap-aware expression arm at
+a time; recursive calls and the script layer remain explicit debt.

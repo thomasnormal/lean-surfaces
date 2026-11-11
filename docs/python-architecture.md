@@ -51,7 +51,9 @@ Contributors need to know which one a given check exercises.
 **Canonical statement:** theorems are stated over
 `LeanModels/Python/Semantics.lean`. The shared pure-worker edge is already
 kernel-checked by `twinAgrees_liftRes` and `twinAgrees_binOp` in
-`Monadic/Prim.lean`; the remaining owed work is the control-level refinement
+`Monadic/Prim.lean`; the heap-aware immediate-bitwise-and control edge is now
+also kernel-checked by `twinAgrees_binOpHM_intBitAnd` in `Monadic/Eval.lean`;
+the remaining owed work is the control-level refinement
 for the mutually recursive evaluators and stateful script layer.
 
 The two interpreters share the pure workers: arithmetic, comparison,

@@ -3192,6 +3192,29 @@ theorem twinAgrees_evalOpen_intRShift (K : Kont) (m : Module) (st : FrameState)
       simp [evalOpen, binOpHM, hrshiftAnd, hrshiftMult, hrshiftMod, toRun_bind,
         toRun_pure, twinAgrees_binOp, Run.bind, Run.liftRes]
 
+/- The expression-control family reaches the heap-aware binary worker for
+   `.bitAnd`. Immediate integer operands cannot be set-like, so the monadic
+   branch falls through to the shared pure worker and leaves the heap/value
+   pair unchanged. -/
+theorem twinAgrees_binOpHM_intBitAnd (a b : Int) (st : FrameState) :
+    LeanModels.Python.Monadic.toRun (binOpHM .bitAnd (.int a) (.int b)) st =
+      match evalBinOpH st.world.heap .bitAnd (.int a) (.int b) with
+      | .ok (h, v) => .ok { st with world := { st.world with heap := h } } v
+      | .exn e => .exn st e
+      | .timeout => .timeout
+      | .unsupported msg => .unsupported msg := by
+  have hand : (BinOp.bitAnd == BinOp.bitAnd) = true := by decide
+  have hmult : (BinOp.bitAnd == BinOp.mult) = false := by decide
+  unfold binOpHM
+  rw [if_pos hand]
+  rw [toRun_bind]
+  unfold frameHeap
+  rw [toRun_bind]
+  rw [toRun_get]
+  simp only [toRun_pure]
+  simpa [twinAgrees_binOp, evalBinOpH, setLikeRefH, evalBinOp, asInt,
+    hmult, Run.liftRes]
+
 /- `x + 5 = 12`, through the fuel-free evaluator, decided by the KERNEL. -/
 #guard (match toRun (evalOpen K0 emptyModule
           (.binOp (.name "x" sp0) .add (.constant (.int 5) sp0) sp0)) st0 with
@@ -3374,5 +3397,6 @@ indices of a 3-element tuple gives 0+1+2 = 3, and the pair unpacks. -/
 #print axioms ofRun_toRun_of_plain
 #print axioms inFrame_toRun
 #print axioms inWorld_toRun
+#print axioms twinAgrees_binOpHM_intBitAnd
 
 end LeanModels.Python.Monadic

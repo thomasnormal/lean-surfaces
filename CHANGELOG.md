@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Added a kernel-checked control refinement edge for the monadic heap-aware
+  `bitAnd` worker on immediate integer operands, including the frame-heap
+  read and unchanged heap/value-pair transport.
+
 - Revalidated the text-keyed semantics audit: lexical declarations, imports,
   value-less annotations, and exception-handler names are structured AST data;
   `ast.unparse` remains diagnostic-only and no longer drives semantics.

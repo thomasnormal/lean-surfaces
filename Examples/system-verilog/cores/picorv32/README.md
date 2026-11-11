@@ -6,12 +6,13 @@ source is YosysHQ's `picorv32` repository at commit
 under the ISC license (`COPYING`).  The pinned source tree was cloned
 read-only; no RTL adaptation was made.
 
-The current symbolic envelope was generated from the single upstream
-`picorv32.v` source with:
+Set `PINNED_PICORV32` to the read-only checkout at that commit.  The original
+symbolic envelope was generated from the single upstream `picorv32.v` source
+with:
 
 ```text
 python3 extractors/sv/extract.py --top picorv32 \
-  -o /tmp/picorv32-ls-current.sv.json /tmp/picorv32-ls/picorv32.v
+  -o picorv32-ls-current.sv.json "$PINNED_PICORV32/picorv32.v"
 ```
 
 Its SHA-256 is
@@ -179,9 +180,9 @@ Compile it against the pinned source (without modifying that source) with:
 
 ```text
 iverilog -g2012 -DRISCV_FORMAL -s tb_picorv32_rvfi \
-  -o /tmp/picorv32_rvfi_tb <PINNED_PICORV32>/picorv32.v \
+  -o picorv32_rvfi_tb "$PINNED_PICORV32/picorv32.v" \
   Examples/system-verilog/cores/picorv32/rvfi_probe.v
-vvp /tmp/picorv32_rvfi_tb
+vvp picorv32_rvfi_tb
 ```
 
 Icarus Verilog 13.0 and Verilator 5.052 produced the same five RVFI rows.  The
@@ -1380,7 +1381,7 @@ I re-extracted the unchanged pinned source
 `ef203c2b0a3fb793280f5114941416c425c5b461` with the public-master extractor.
 The source SHA-256 remains
 `0836050971b3c6cdd28ac3b1e5719a67fb645161912bef1e472e63995ceb0622`; the
-fresh envelope is `/tmp/picorv32-public-df3.sv.json`, SHA-256
+fresh envelope has SHA-256
 `b615142a6876a7e1ae1e64526769330aa90f3c7cf197e00d8281b76b77ac8738`.
 
 The ordinary route still has the exact first refusal at `picorv32.v:203`:
@@ -1410,7 +1411,7 @@ current wall, and they belong to the E scheduler/memory work rather than a
 The pinned source was re-extracted with the approved extractor after the
 public E changes.  The source SHA-256 remains
 `0836050971b3c6cdd28ac3b1e5719a67fb645161912bef1e472e63995ceb062`; the fresh
-envelope `/tmp/picorv32-current-463.sv.json` has SHA-256
+envelope has SHA-256
 `45533947d14682922a58bec67f98f812896daafa18cf5a437043a425d46e269d` and is
 2,991,600 bytes.
 
@@ -1440,7 +1441,7 @@ symbolic ADDI invariant is claimed.
 The pinned source was re-extracted with the approved extractor on public master
 `6b9d53dc479e4f067313ddbbee3d39849381f11b`.  The source SHA-256 remains
 `0836050971b3c6cdd28ac3b1e5719a67fb645161912bef1e472e63995ceb062`; the fresh
-2,991,600-byte envelope `/tmp/picorv32-current-464.sv.json` has SHA-256
+2,991,600-byte envelope has SHA-256
 `4120c9760499f8861411464cb70923770a2ec6d240a5ce49c7f64a4cfdf31c25`.
 
 The ordinary route is unchanged at its first refusal, `picorv32.v:203`:
@@ -1468,7 +1469,7 @@ ADDI invariant remains parked behind the E scheduler boundary.
 The pinned source was re-extracted with the approved extractor on public master
 `3a30a91b99adbb2f3433811e43225da672e1650a`.  The source SHA-256 remains
 `0836050971b3c6cdd28ac3b1e5719a67fb645161912bef1e472e63995ceb062`; the fresh
-envelope `/tmp/picorv32-post-readmemh.sv.json` has SHA-256
+envelope has SHA-256
 `7af9b70dd05e2b4a1fc73d6776e2a84de7a0a497630fb64c6004fcd2a853a5fb` and is
 2,991,612 bytes.  The approved source is unchanged at YosysHQ commit
 `ef203c2b0a3fb793280f5114941416c425c5b461`.
@@ -1502,8 +1503,17 @@ guard-bypassed `ok states=80` result remains **UNVALIDATED**.
 The pinned source was re-extracted with the approved extractor after the
 public-master update.  The source remains YosysHQ commit
 `ef203c2b0a3fb793280f5114941416c425c5b461`, SHA-256
-`0836050971b3c6cdd28ac3b1e5719a67fb645161912bef1e472e63995ceb062`.  The
-fresh envelope `/tmp/picorv32-current-476.sv.json` is 2,991,593 bytes with
+`0836050971b3c6cdd28ac3b1e5719a67fb645161912bef1e472e63995ceb062`.
+
+To regenerate the envelope from the unchanged pinned source, set
+`PINNED_PICORV32` to the read-only YosysHQ checkout and run:
+
+```text
+python3 extractors/sv/extract.py --top picorv32 \
+  -o picorv32-current-476.sv.json "$PINNED_PICORV32/picorv32.v"
+```
+
+The resulting envelope is 2,991,593 bytes with
 SHA-256
 `b615142a6876a7e1ae1e64526769330aa90f3c7cf197e00d8281b76b77ac8738`.
 
@@ -1542,3 +1552,24 @@ symbolic ADDI invariant is claimed.  The guard-bypassed legacy result remains
 this one touched only C files, so the unchanged source-shaped envelope is
 still the approved input; the three reports were re-evaluated with
 `LeanModels.Sv.MemPreemptGuard` imported.
+
+## Current rung state
+
+* **R0 — ISA:** the executable RV32I model and byte-memory lemmas compile;
+  official Sail refinement remains open.  The last recorded differential run
+  passed 257 cases, but this host has no pinned Sail binary for a new comparison.
+* **R1 — observation:** the generic RVFI observation/normalization contract and
+  a finite four-row PicoRV32 observation-to-ISA bridge are proved.  The E
+  safety bridge is conditional on a loaded-core invariant.
+* **R2 — in-order core:** PicoRV32 is selected and its measured RVFI prefix is
+  certified, but no whole-core refinement theorem exists because E admission
+  still stops before execution.
+* **R3 — out-of-order completion:** no CVA6 theorem is proved.
+* **R4 — out-of-order superscalar:** no RSD (or comparable-core) theorem is
+  proved.
+
+The next wall is the current E route's retained
+`TimedStatement:ImplicitEventControl` refusal for PicoRV32's `always @*`
+process at `pcpi_mul_wait`; the ordinary route still has the `cpuregs`
+unpacked-memory wall, and the provisional memory route still reports its two
+schedule guards.

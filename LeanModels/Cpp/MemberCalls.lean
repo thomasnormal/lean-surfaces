@@ -603,7 +603,7 @@ private def parameterRaws (raw : Raw) :
   | _ => throw .malformedMethodSignature
 
 private def spellingMatches (spelling name : String) : Bool :=
-  spelling == name || spelling == "enum " ++ name || spelling.endsWith ("::" ++ name)
+  spelling == name || spelling == "enum " ++ name
 
 /-- Admit one direct enum `DeclRefExpr` under the caller's representation
 oracle. Casts, literals, and other argument forms remain outside this witness.
@@ -1189,7 +1189,7 @@ private def handle (raw : Raw) (name : String) :
   | none => throw .fieldMismatch
 
 private def spellingMatches (spelling name : String) : Bool :=
-  spelling == name || spelling == "enum " ++ name || spelling.endsWith ("::" ++ name)
+  spelling == name || spelling == "enum " ++ name
 
 private def rawId (raw : Raw) : Option String := do
   let (.string value) ← raw.field "id" | none

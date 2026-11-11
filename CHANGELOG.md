@@ -68,6 +68,10 @@
   `FunctionDecl`; local variables and indirect references refuse before name
   lookup can select a same-named function.
 
+- Refused C++ enum and class identity checks that rely on qualified-name
+  suffix matching; qualified identities now require retained declaration
+  handles.
+
 - Fixed the TinyXML-2 coverage caller's C++ runtime linkage so its
   provenance-verified native calls can run when the system runtime is older.
 

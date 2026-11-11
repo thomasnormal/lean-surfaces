@@ -27,6 +27,14 @@ row pins the refusal (the existing type-layout frontier may report first).
 Full declaration-id threading for variables, globals, and function bodies
 remains open.
 
+## `cpp-spelling-identity`: qualified-name suffix guard
+
+**Partially closed 2026-11-11.** Enum and class admission no longer accepts a
+qualified spelling merely because it ends with the expected bare name;
+qualified identities refuse until the extractor's retained declaration
+handles are used. Exact unqualified spellings remain admitted. Full handle
+threading for class, enum, and friend identity remains open.
+
 ## `cpp-diff-handwritten-twins`: reporting boundary
 
 **Closed 2026-11-11 (reporting correction).** The harness and generated page

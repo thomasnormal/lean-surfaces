@@ -83,6 +83,7 @@ private def lastName : List String → Option String
   | _ :: rest => lastName rest
 
 private def sourceTypeName (spelling : String) : Option String :=
+  if spelling.contains "::" then none else
   let spelling :=
     if spelling.startsWith "class " then (spelling.drop 6).toString
     else if spelling.startsWith "struct " then (spelling.drop 7).toString
@@ -94,6 +95,8 @@ private def friendName (raw : Raw) : Except String String := do
     | throw "class hierarchy: friend declaration has no type"
   let some spelling := type.text "qualType"
     | throw "class hierarchy: friend declaration has no source type"
+  unless !spelling.contains "::" do
+    throw "class hierarchy: qualified friend identity requires declaration handles"
   unless spelling.startsWith "class " do
     throw "class hierarchy: only class friend declarations are supported"
   let some name := lastName ((spelling.drop 6).toString.splitOn "::")

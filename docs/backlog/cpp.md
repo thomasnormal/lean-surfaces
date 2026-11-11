@@ -46,7 +46,9 @@ handle in `CppTypeEvidence`, and enum member-call result matching rejects
 qualified suffixes instead of accepting a spelling-only identity. Exact
 unqualified spellings remain admitted. Friend-class admission now refuses
 until Clang's friend target handle is retained; setter and remaining enum
-parameter checks still need full declaration-handle threading.
+parameter checks now use the retained structured enum handle and preserve
+qualified source spellings as data. Direct enum arguments still await a probe
+handle join before their source spelling can be removed from the boundary.
 
 ## `cpp-harness-oracle-misfile`: native oracle policy
 

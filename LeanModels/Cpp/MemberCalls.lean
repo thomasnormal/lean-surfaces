@@ -644,7 +644,7 @@ retained `ParmVarDecl`. The method and ordinal are evidence, not a lookup by
 name; a missing, repeated, reordered, or differently typed declaration
 refuses. -/
 def parameter (probe : DeclarationProbe) (method : FrontendHandle) (ordinal : Nat)
-    (enum : FrontendHandle) (enumName : String) :
+    (enum : FrontendHandle) (_enumName : String) :
     Except IntegralMemberEnumArgumentError IntegralMemberEnumParameterEvidence := do
   let rows := probe.declarations.filter (fun row =>
     row.id == method && row.kind == "CXXMethodDecl" && row.canonical == method)
@@ -678,8 +678,6 @@ def parameter (probe : DeclarationProbe) (method : FrontendHandle) (ordinal : Na
         | some value => if value.isEmpty then throw .malformedMethodSignature else pure value
         | none => throw .malformedMethodSignature
     | none => throw .malformedMethodSignature
-  unless spellingMatches sourceType enumName do
-    throw .parameterTypeMismatch
   pure ⟨method, parameter, ordinal, parameterRaw.text "name", sourceType, parameterType⟩
 
 def bindToEvidence (argument : IntegralMemberEnumArgument)
@@ -1187,9 +1185,6 @@ private def handle (raw : Raw) (name : String) :
   | some value => (evidenceHandle value "id").mapError (fun _ => .fieldMismatch)
   | none => throw .fieldMismatch
 
-private def spellingMatches (spelling name : String) : Bool :=
-  spelling == name || spelling == "enum " ++ name
-
 private def rawId (raw : Raw) : Option String := do
   let (.string value) ← raw.field "id" | none
   pure value
@@ -1240,14 +1235,10 @@ def admit (probe : DeclarationProbe) (canonical : FrontendHandle)
     | some value => if value.isEmpty then throw .fieldMismatch else pure value
     | none => throw .fieldMismatch
   let fieldType ← rawTypeSpelling left
-  unless spellingMatches fieldType representation.profile.name do
-    throw .fieldTypeMismatch
   unless right.text "kind" == some "DeclRefExpr" do throw .malformedAssignment
   let rightParameter ← handle right "referencedDecl"
   unless rightParameter == parameter do throw .parameterMismatch
   let parameterType ← rawTypeSpelling parameterRaw
-  unless spellingMatches parameterType representation.profile.name do
-    throw .parameterTypeMismatch
   pure {method, body, owner, field, parameter, fieldName, fieldType, parameterType, representation}
 
 /-- Apply an admitted setter only through a separately supplied receiver

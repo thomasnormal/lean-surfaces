@@ -129,21 +129,28 @@ private def profileProbe : DeclarationProbe :=
     declarations := [declarationRow methodHandle.value "CXXMethodDecl" methodHandle.value]
       |>.map fun row => {row with raw := profileRaw}}
 
-private def enumSetterParameter : Raw := rawObject [
+private def enumSetterParameterWith (spelling : String) : Raw := rawObject [
   ("kind", rawText "ParmVarDecl"), ("id", rawText "0x15"),
-  ("name", rawText "error"), ("type", rawObject [("qualType", rawText "XMLError")])]
+  ("name", rawText "error"), ("type", rawObject [("qualType", rawText spelling)])]
 
-private def enumSetterField : Raw := rawObject [
+private def enumSetterParameter : Raw := enumSetterParameterWith "XMLError"
+
+private def enumSetterFieldWith (spelling : String) : Raw := rawObject [
   ("kind", rawText "MemberExpr"), ("isArrow", .bool true),
   ("valueCategory", rawText "lvalue"), ("name", rawText "_errorID"),
-  ("type", rawObject [("qualType", rawText "XMLError")]),
+  ("type", rawObject [("qualType", rawText spelling)]),
   ("referencedMemberDecl", rawText fieldHandle.value),
   ("inner", .array [rawObject [("kind", rawText "CXXThisExpr")]])]
 
-private def enumSetterRight (parameter : String) : Raw := rawObject [
+private def enumSetterField : Raw := enumSetterFieldWith "XMLError"
+
+private def enumSetterRightWith (spelling parameter : String) : Raw := rawObject [
   ("kind", rawText "DeclRefExpr"),
-  ("type", rawObject [("qualType", rawText "XMLError")]),
+  ("type", rawObject [("qualType", rawText spelling)]),
   ("referencedDecl", rawObject [("id", rawText parameter)])]
+
+private def enumSetterRight (parameter : String) : Raw :=
+  enumSetterRightWith "XMLError" parameter
 
 private def enumSetterBinary (right : Raw) : Raw := rawObject [
   ("kind", rawText "BinaryOperator"), ("opcode", rawText "="),
@@ -154,9 +161,14 @@ private def enumSetterBody (right : Raw) : Raw := rawObject [
   ("kind", rawText "CompoundStmt"),
   ("inner", .array [enumSetterBinary right])]
 
-private def enumSetterAst (right : Raw) : Raw := rawObject [
+private def enumSetterAstWith (spelling : String) (right : Raw) : Raw := rawObject [
   ("kind", rawText "CXXMethodDecl"), ("id", rawText methodHandle.value),
-  ("inner", .array [enumSetterParameter, enumSetterBody right])]
+  ("inner", .array [enumSetterParameterWith spelling,
+    rawWithField (enumSetterBody right) "inner"
+      (.array [rawWithField (enumSetterBinary right) "inner"
+        (.array [enumSetterFieldWith spelling, right])])])]
+
+private def enumSetterAst (right : Raw) : Raw := enumSetterAstWith "XMLError" right
 
 private def enumSetterProfileRaw : Raw :=
   rawWithFieldOrAppend
@@ -172,6 +184,13 @@ private def enumSetterFieldRow : DeclarationEvidenceRow :=
 
 private def enumSetterProbeWith (right : Raw) : DeclarationProbe :=
   {ast := enumSetterAst right, metadata := .object [],
+    declarations := [
+      {declarationRow methodHandle.value "CXXMethodDecl" methodHandle.value with
+        raw := enumSetterProfileRaw},
+      enumSetterFieldRow]}
+
+private def enumSetterProbeQualified (right : Raw) : DeclarationProbe :=
+  {ast := enumSetterAstWith "ns::XMLError" right, metadata := .object [],
     declarations := [
       {declarationRow methodHandle.value "CXXMethodDecl" methodHandle.value with
         raw := enumSetterProfileRaw},
@@ -232,6 +251,28 @@ private def enumSetterAccepted : Bool :=
         setter.fieldName == "_errorID" && setter.fieldType == "XMLError" &&
         setter.parameterType == "XMLError"
   | none => false
+
+private def enumParameterQualifiedAccepted : Bool :=
+  match IntegralMemberEnumArgument.parameter
+      (enumSetterProbeQualified (enumSetterRightWith "ns::XMLError" "0x15"))
+      methodHandle 0 (h "0x13") "XMLError" with
+  | .ok evidence => evidence.sourceType == "ns::XMLError" &&
+      evidence.type == .enumeration (h "0x13")
+  | .error _ => false
+
+private def enumSetterQualifiedAccepted : Bool :=
+  match enumSetterRepresentation with
+  | some representation =>
+      match IntegralMemberEnumSetter.admit
+          (enumSetterProbeQualified (enumSetterRightWith "ns::XMLError" "0x15"))
+          methodHandle representation with
+      | .ok setter => setter.fieldType == "ns::XMLError" &&
+          setter.parameterType == "ns::XMLError"
+      | .error _ => false
+  | none => false
+
+#guard enumParameterQualifiedAccepted
+#guard enumSetterQualifiedAccepted
 
 private def enumSetterWrongParameter : Bool :=
   match enumSetterRepresentation with

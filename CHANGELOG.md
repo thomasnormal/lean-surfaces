@@ -142,6 +142,10 @@
   enum member-call result spellings instead of accepting a matching suffix;
   friend-class admission also stays loud until its target handle is threaded;
   setter and enum-parameter paths remain open.
+
+- Let qualified enum source spellings pass member-parameter and setter
+  admission when the retained structured enum handle agrees; the spelling is
+  preserved for diagnostics and no longer decides identity in those paths.
 - Admit space-padded combinations of percent-format sign and alternate flags
   with widths; zero-padded combinations remain loud until their prefix order is
   modeled.

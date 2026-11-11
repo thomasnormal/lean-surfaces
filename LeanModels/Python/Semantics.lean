@@ -10644,12 +10644,14 @@ def richCompareRecursionCheck (depth : Nat) (op : CmpOp) : Res Unit :=
 def richCompareRecursionCheckH (h : Heap) (depth : Nat) (op : CmpOp)
     (a b : RVal) : Res Unit := do
   let _ ← richCompareRecursionCheck depth op
-  -- Tuple/list ordering uses `PyObject_RichCompareBool(..., Py_EQ)` to
-  -- decide whether to continue to the next element.  The same nested
-  -- equality probe therefore accounts for both equality and ordering sites;
-  -- an early mismatch remains `False`, while an equal chain reaches the
-  -- pinned recursive boundary.
-  heapEqRecursionCheck h depth a b
+  -- Ref-free values cannot hide a nested container comparison, so the
+  -- direct `PyObject_RichCompare` unit above is the complete recursion cost.
+  -- Tuple/list ordering and heap-backed values still use the bounded walker;
+  -- its nested `PyObject_RichCompareBool(..., Py_EQ)` probes account for the
+  -- additional units on those paths.  This fast path also keeps scalar
+  -- comparisons from expanding an irrelevant heap walker in proofs.
+  if RVal.refFree a && RVal.refFree b then .ok ()
+  else heapEqRecursionCheck h depth a b
 
 /-- Chained comparison `a < b < c …`: each operand is evaluated exactly once,
 left to right; short-circuits to `False` on the first failing link (the

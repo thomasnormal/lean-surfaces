@@ -17,6 +17,12 @@ coverage advance independently from the Python tier.
   under the pinned Clang/LLVM 21.1.8 profile and 24 GiB cgroup, including the
   qualified direct enum argument and friend-class refusal guards.
 
+### Added
+
+- Empty C++ translation units now execute through the translation boundary;
+  nonempty units retain the named refusal until declaration and body semantics
+  are threaded through the object model.
+
 ## [0.1.232] — 2026-11-04
 
 ### Added

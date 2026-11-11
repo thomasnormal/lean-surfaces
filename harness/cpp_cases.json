@@ -10,6 +10,18 @@
     "rung": 0
   },
   {
+    "id": "translation.empty-execution",
+    "kind": "translation",
+    "corpus": "translation witness",
+    "lean_module": "LeanModels.Cpp.TranslationTests",
+    "lean_namespace": "LeanModels.Cpp.TranslationTests",
+    "lean_expression": "emptyTranslationExecution",
+    "render": "unit",
+    "cpp_source": "",
+    "expect": "match",
+    "rung": 0
+  },
+  {
     "id": "translation.namespace-declaration",
     "kind": "translation",
     "corpus": "translation witness",

@@ -1574,6 +1574,12 @@ private def cxxThrowExpressionTranslation : Artifact := {emptyTranslation with
 def namespaceTranslationWitness : Bool :=
   (admitNamespaceDeclaration namespaceTranslation [0]).isOk
 
+def emptyTranslationExecution : Except String Unit :=
+  execute emptyTranslation ""
+
+def nonemptyTranslationExecution : Except String Unit :=
+  execute functionTranslation "f"
+
 def functionTranslationWitness : Except String Unit :=
   admitFunctionDeclaration functionTranslation [0]
 
@@ -2932,7 +2938,8 @@ def staticAssertTranslationWitness : Except String Unit :=
 #guard staticAssertTranslationWitness matches .ok ()
 #guard admitStaticAssertion staticAssertTranslation [] matches .error _
 #guard admitStaticAssertion usingTranslation [1] matches .error _
-#guard execute emptyTranslation "f" matches .error "C++ translation-only tier: execution requires object, lifetime, type, expression and statement semantics"
+#guard execute emptyTranslation "" matches .ok ()
+#guard execute functionTranslation "f" matches .error "C++ translation-only tier: execution requires object, lifetime, type, expression and statement semantics"
 
 theorem empty_translation_admits : admitTranslationUnit emptyTranslation = .ok () := rfl
 
@@ -2940,14 +2947,17 @@ set_option maxRecDepth 100000 in
 theorem wrong_root_refuses : admitTranslationUnit wrongRoot =
     .error "translation: expected TranslationUnitDecl root, got FunctionDecl" := rfl
 
-theorem execution_remains_loud : execute emptyTranslation "f" = .error executionRefusal := rfl
+theorem empty_translation_executes : execute emptyTranslation "" = .ok () := rfl
+
+theorem nonempty_execution_remains_loud : execute functionTranslation "f" = .error executionRefusal := rfl
 
 theorem namespace_translation_witness : namespaceTranslationWitness = true := by
   rfl
 
 #print axioms empty_translation_admits
 #print axioms wrong_root_refuses
-#print axioms execution_remains_loud
+#print axioms empty_translation_executes
+#print axioms nonempty_execution_remains_loud
 #print axioms namespace_translation_witness
 
 end LeanModels.Cpp.TranslationTests

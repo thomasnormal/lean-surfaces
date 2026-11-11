@@ -720,7 +720,12 @@ def admitStaticAssertion (artifact : Artifact) (path : List Nat) :
 def executionRefusal : String :=
   "C++ translation-only tier: execution requires object, lifetime, type, expression and statement semantics"
 
-def execute (_artifact : Artifact) (_declarationId : String) : Except String Unit :=
-  .error executionRefusal
+def execute (artifact : Artifact) (_declarationId : String) : Except String Unit := do
+  let _ ← admitTranslationUnit artifact
+  match artifact.ast.field "inner" with
+  | some (.array []) => pure ()
+  | some (.array _) => .error executionRefusal
+  | some _ => .error "translation: root inner must be an array"
+  | none => .error "translation: root has no inner array"
 
 end LeanModels.Cpp

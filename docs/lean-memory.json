@@ -1,0 +1,11 @@
+{
+  "LeanModels/Python/Float64.lean": {
+    "exit_code": 0,
+    "module": "LeanModels/Python/Float64.lean",
+    "over_budget": false,
+    "peak_bytes": 199200768,
+    "peak_gib": 0.186,
+    "seconds": 16.28,
+    "warning": false
+  }
+}

@@ -120,7 +120,9 @@ Automatic objects were allocated but never tombstoned. Memory now provides a
 range cleanup operation, and compound blocks and function calls kill every
 automatic object allocated during their execution on every flow result.
 Differential rows cover a block escape, a pointer returned from a function,
-and a live local.
+and a live local. Revalidated 2026-11-11 against the pinned Clang/LLVM
+21.1.8 oracle: `block-dangling-read REFUSE deadObject`,
+`return-dangling-read REFUSE deadObject`, and `live-local MATCH 5`.
 
 ## 2026-11-11-c-eval-order-unsequenced — unsequenced side effects
 

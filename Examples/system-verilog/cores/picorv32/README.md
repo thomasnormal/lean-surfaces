@@ -1434,3 +1434,31 @@ The legacy executor returns `ok states=80` only when those guards are
 bypassed.  This is **UNVALIDATED** and is not an E execution or a retirement
 trace; the scheduler and memory admission belong to the E migration.  No
 symbolic ADDI invariant is claimed.
+
+## 2026-11-11 re-probe after scalar-NBA E landing `6b9d53dc4`
+
+The pinned source was re-extracted with the approved extractor on public master
+`6b9d53dc479e4f067313ddbbee3d39849381f11b`.  The source SHA-256 remains
+`0836050971b3c6cdd28ac3b1e5719a67fb645161912bef1e472e63995ceb062`; the fresh
+2,991,600-byte envelope `/tmp/picorv32-current-464.sv.json` has SHA-256
+`4120c9760499f8861411464cb70923770a2ec6d240a5ce49c7f64a4cfdf31c25`.
+
+The ordinary route is unchanged at its first refusal, `picorv32.v:203`:
+
+```text
+unsupported "Instantiate"
+  "decl 'cpuregs': unpacked array storage outside E (UnpackedDecl:memory)"
+```
+
+The source-shaped memory adapter still constructs 223 scalar declarations, one
+unpacked memory declaration, no declaration initializers, and 52 processes.
+The scalar-NBA E landing does not move the design past the admission guards:
+
+```text
+Schedule:preemptive: processes 0 and 26 may observe an intermediate write under IEEE 1800-2023 §4.7; the preemptive profile requires disjoint cross-process reads/writes
+Schedule:comb-source-order: comb process 9 reads a signal written by later comb process 25; the source-order memory pass would need a second settle pass under IEEE 1800-2023 §10.3/§4.5
+```
+
+The guard-bypassed low-level executor still returns `ok states=80`; that result
+is **UNVALIDATED**, is not E execution or a retirement trace, and the symbolic
+ADDI invariant remains parked behind the E scheduler boundary.

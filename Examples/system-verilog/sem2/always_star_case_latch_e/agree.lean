@@ -18,11 +18,22 @@ load_design_sv2 alwaysStarCaseLatchE
       items.length == 2
   | _ => false
 
-/- The source process is retained by the parser.  The admitted implicit-event
-   slice reaches the case node, then refuses its execution rather than silently
-   skipping the latch. -/
+private def output (sel d : String) : Option LVec :=
+  match MemEDesign.ofPDesign alwaysStarCaseLatchE.pdesign [4] with
+  | .ok design =>
+      (design.step design.init
+        [("sel", LVec.lit sel), ("d", LVec.lit d)]).toOption.bind
+        (fun s => SvState.lookup s.scalar "q")
+  | .unsupported _ | .timeout => none
+
+/- The source process is retained by the parser and its narrow case-arm slice
+   executes the source-shaped first-match arm through E. -/
 #guard match MemEDesign.ofPDesign alwaysStarCaseLatchE.pdesign [4] with
-  | .unsupported "E implicit body case execution is outside the current memory profile" => true
+  | .ok _ => true
   | _ => false
+
+#guard output "00" "0011" == some (LVec.lit "0011")
+#guard output "01" "0011" == some (LVec.lit "1100")
+#guard output "10" "0011" == some (LVec.xVec 4)
 
 end Examples.«system-verilog».sem2.always_star_case_latch_e

@@ -508,6 +508,39 @@ def memESelectCase (d : MemEDesign) (s : MemEState) (subject : LVec)
       else
         memESelectCase d s subject rest default? mode
 
+/-! The first implicit-event case slice keeps arm execution deliberately
+source-shaped and narrow: an arm may be one blocking scalar or cell assignment
+(`begin end` with no statements is also harmless).  Rich arm bodies remain a
+named boundary until the general procedural E walker is available. -/
+
+def execMemECaseBody (d : MemEDesign) (s : MemEState) : PStmt →
+    Except String MemEState
+  | .blockingAssign name value => do
+      let width ← d.scalarWidth? name
+      let v ← evalMemEExpr d s (some width) value
+      .ok { s with scalar := SvState.set s.scalar name v }
+  | .blockingAssignL target value =>
+      match target with
+      | .arrayElem name [_idx] => do
+          let some pd := d.memDecl? name
+            | .error s!"memory target '{name}' is not declared"
+          let target? ← memETarget d s target
+          match target? with
+          | none => .ok s
+          | some (memName, index) => do
+              let ctx ← (d.shape? pd).map (·.elemWidth)
+              let v ← evalMemEExpr d s (some ctx) value
+              match s.memory.write memName index v with
+              | some memory => .ok { s with memory }
+              | none => .error s!"memory '{memName}' is not present in E state"
+      | _ => .error "E implicit case arm target is outside the source-shaped memory profile"
+  | .block [] => .ok s
+  | _ => .error "E implicit case arm body is outside the current memory profile"
+
+def memECaseBodyAdmission : PStmt → Except String Unit
+  | .blockingAssign _ _ | .blockingAssignL _ _ | .block [] => .ok ()
+  | _ => .error "E implicit case arm body is outside the current memory profile"
+
 /-! Execute one activation of a retained plain `always @*` body.  The body is
 blocking by construction; NBA statements belong to edge processes and remain
 a loud boundary here.  Case arms are walked in source order and use the
@@ -542,17 +575,23 @@ def execMemEImplicitBody (d : MemEDesign) (s : MemEState) : PStmt →
       if cv.condTrue then execMemEImplicitBody d s yes else
         execMemEImplicitBodyOpt d s no
   | .block body => execMemEImplicitBodyList d s body
-  | .caseStmt .. =>
-      .error "E implicit body case execution is outside the current memory profile"
+  | .caseStmt subject items default? mode _check => do
+      let sv ← evalMemEExpr d s none subject
+      let selected ← memESelectCase d s sv items default? mode
+      match selected with
+      | none => .ok s
+      | some body => execMemECaseBody d s body
   | .forLoop .. => .error "E implicit body procedural loops are outside the memory profile"
   | .nbaAssign .. | .nbaAssignL .. =>
       .error "E implicit body requires blocking assignments"
   | .unsupported k _ => .error s!"unsupported statement '{k}'"
+termination_by structural stmt => stmt
 
 def execMemEImplicitBodyOpt (d : MemEDesign) (s : MemEState) : Option PStmt →
     Except String MemEState
   | none => .ok s
   | some body => execMemEImplicitBody d s body
+termination_by structural opt => opt
 
 def execMemEImplicitBodyList (d : MemEDesign) (s : MemEState) : List PStmt →
     Except String MemEState
@@ -560,6 +599,7 @@ def execMemEImplicitBodyList (d : MemEDesign) (s : MemEState) : List PStmt →
   | stmt :: rest => do
       let s' ← execMemEImplicitBody d s stmt
       execMemEImplicitBodyList d s' rest
+termination_by structural stmts => stmts
 
 end
 
@@ -578,8 +618,11 @@ def memEImplicitBodyAdmission : PStmt → Except String Unit
       | none => .ok ()
       | some body => memEImplicitBodyAdmission body
   | .block body => memEImplicitBodyListAdmission body
-  | .caseStmt .. =>
-      .error "E implicit body case execution is outside the current memory profile"
+  | .caseStmt _ items default? _mode _check => do
+      memEImplicitCaseItemsAdmission items
+      match default? with
+      | none => .ok ()
+      | some body => memECaseBodyAdmission body
   | .forLoop .. =>
       .error "E implicit body procedural loops are outside the current memory profile"
   | .nbaAssign .. | .nbaAssignL .. =>
@@ -591,6 +634,18 @@ def memEImplicitBodyListAdmission : List PStmt → Except String Unit
   | stmt :: rest => do
       memEImplicitBodyAdmission stmt
       memEImplicitBodyListAdmission rest
+
+def memEImplicitBodyItemsAdmission : List (List PExpr × PStmt) → Except String Unit
+  | [] => .ok ()
+  | (_, body) :: rest => do
+      memEImplicitBodyAdmission body
+      memEImplicitBodyItemsAdmission rest
+
+def memEImplicitCaseItemsAdmission : List (List PExpr × PStmt) → Except String Unit
+  | [] => .ok ()
+  | (_, body) :: rest => do
+      memECaseBodyAdmission body
+      memEImplicitCaseItemsAdmission rest
 
 def memEForBodyAdmission : PStmt → Except String Unit
   | .nbaAssign _ _ | .nbaAssignL _ _ => .ok ()

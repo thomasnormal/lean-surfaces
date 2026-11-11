@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Revalidated class-method flattening: admitted class creation and method rows
+  match CPython 3.9.25, while runtime class namespaces/objects remain the
+  explicit follow-up needed to remove qualified method entries and class
+  marker nodes.
+
 - Revalidated `yield from` handling: source delegation remains a structured
   `YieldFrom` node and is refused at the missing PEP 380 send/throw/close
   protocol boundary instead of being rewritten into a `for` loop.

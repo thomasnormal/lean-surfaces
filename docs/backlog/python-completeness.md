@@ -13719,3 +13719,21 @@ path that never resumes still matches CPython 3.9.25.
 
 DECIDED: close `py-yieldfrom-inline`; retain the structured loud boundary until
 a native delegation frame implements PEP 380.
+## 2026-11-11-pyfoundation-88 — revalidate class-method flattening boundary
+
+The medium `py-method-flattening` finding remains open. Ingestion still stores
+class methods as qualified `"C.m"` function entries and represents the class
+statement as a structured marker; script execution either skips creation-pure
+bodies or runs the admitted executable class-body slice. `class_script.py`,
+`cls_data_script.py`, and `cls_effect_script.py` match CPython 3.9.25. Removing
+the rewrite safely requires runtime class namespaces and class objects with
+method attributes, while preserving the existing creation-effect guards.
+
+| Measurement | Result |
+|---|---|
+| Class batteries | all three witnesses match CPython 3.9.25, exit 0 |
+| Remaining debt | runtime class object/namespace; delete qualified flattening and marker dispatch afterward |
+| Semantic change | none; audit confirmation only |
+
+DECIDED: keep `py-method-flattening` open as a medium rule-2 milestone; retain
+the current guarded static class representation.

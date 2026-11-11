@@ -925,15 +925,57 @@ unsafe def signedStructureDesign? : TacticM (Option Name) := do
   let some pdName ← signedStructureDesign? | throwUnsupportedSyntax
   withDeepRec (runSvStructure none none none true (signedHook pdName))
 
+/-- (Diagnostics of `sv_structure` only; no theorem reads it.) Whether process `k` of the flat twin is a port connection
+(`CombHier.twinOrigin`'s order: the parent's processes, then per instance its connections in the child's port order and
+the child's processes). -/
+def LeanModels.Sv.CombHier.twinIsConn (d : PDesign) (pl : List (PInst × PDesign)) (k : Nat) : Bool :=
+  if k < d.processes.length then false else go pl (k - d.processes.length)
+where
+  go : List (PInst × PDesign) → Nat → Bool
+    | [], _ => false
+    | (_, c) :: rest, k =>
+        if k < (childPorts c).length then true
+        else
+          let j := k - (childPorts c).length
+          if j < c.processes.length then false else go rest (j - c.processes.length)
+
+/-- (Diagnostics of `sv_structure` only; no theorem reads it.) The refusal text of the first site of the flat twin's
+summary `s` whose width contract (`Sk.WidthOkC`, what the obligation `WidthObl` asks of the site) fails at the valuation
+`σ`, naming where it comes from in the design as written; `""` when every site keeps its contract there. A port
+connection of another width than the port's is the case it names: the twin's connection is a continuous assignment of
+the actual to the port (an input) or of the port to the target (an output), and the summary reads such an assignment only
+at equal widths (`conn_in_eq`, `conn_out_eq`), while `connProcs` extends or truncates it (`fitExpr2`, `portOut`). -/
+def LeanModels.Sv.CombHier.twinWidthMsg (d : PDesign) (pl : List (PInst × PDesign)) (s : Summary)
+    (σ : String → Int) : String :=
+  let bad := s.statics.findSome? fun st =>
+    let dw := s.dw σ
+    let sk := CombEq.skRhs (CombEq.rhsOf st.proc) st.rds
+    let tw := (st.tgt.win σ dw).2.2
+    if decide (sk.WidthOkC σ dw tw) then none else some (st, sk.width σ dw, tw)
+  let bits (n : Nat) : String := if n == 1 then "1 bit" else s!"{n} bits"
+  match bad with
+  | none => ""
+  | some (st, w, tw) =>
+      let o := twinOrigin d pl st.pos
+      if twinIsConn d pl st.pos then
+        let what := match st.proc with
+          | .assign .. => s!"the actual is {bits w} wide and the port {bits tw}"
+          | _ => s!"the port is {bits w} wide and its target {bits tw}"
+        s!"the flat twin's width obligation fails at site `plain#{st.pos}` ({o}): {what}. The hierarchy summary reads a port connection whose actual (an input) or target (an output) is exactly as wide as the port; a connection that changes width, an input actual truncated to the port or an output port zero-extended into a wider target (IEEE 1800-2023 §23.3.3, §10.7), is outside it"
+      else
+        s!"the flat twin's width obligation fails at site `plain#{st.pos}` ({o}): its right-hand side is {bits w} wide and its target {bits tw}"
+
 /-- The hook of `sv_structure` for a design with module instances: the twin, the wrapper, and the closing of the
 bridge's goals (the twin's own, the fragment, and the width obligation normalized as for a design with signed reads). -/
 unsafe def hierHook (pd lib args : Lean.Expr) : MetaM SignedHook := do
   let (twinE, plE, pnames, pl) ← mkHierTwin "sv_structure" pd lib
   let origin ← evalExpr String (mkConst ``String) (mkApp2 (mkConst ``LeanModels.Sv.CombHier.twinRefusedOrigin) pd lib)
+  let pdV ← evalExpr LeanModels.Sv.PDesign (mkConst ``LeanModels.Sv.PDesign) pd
   return {
     twin? := some {
       design := twinE, args := args, restate := hierRestate pd lib args, wrap := hierWrap pd lib args twinE plE,
-      what := "a design with module instances (its summary is its flat twin's, `CombHier.lean`)", origin }
+      what := "a design with module instances (its summary is its flat twin's, `CombHier.lean`)", origin,
+      widthBad := fun s σ => LeanModels.Sv.CombHier.twinWidthMsg pdV pl s σ }
     extra := fun find s => do
       let hasRepl := s.hasRepl
       let replL ← if hasRepl then replSimpLemmas else pure #[]

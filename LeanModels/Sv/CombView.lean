@@ -871,6 +871,21 @@ def constW : List (Aff × Aff) → Option Nat
 
 /-! ## Recognizing accesses and expressions -/
 
+/-- (Refusal text only; no theorem reads it.) A quotient inside an index or a bound that `affOf?` does not read: a division
+whose numerator is not one named constant, or whose divisor is not a positive literal (`affDiv`). -/
+def _root_.LeanModels.Sv.PExpr.badQuot : PExpr → Bool
+  | .binary .div l r => (affOf? (.binary .div l r)).isNone || l.badQuot || r.badQuot
+  | .binary _ l r => l.badQuot || r.badQuot
+  | .unary _ a => a.badQuot
+  | .resize _ a => a.badQuot
+  | _ => false
+
+/-- (Refusal text only.) What a refused index or bound adds when it holds a quotient the affine forms do not read. -/
+def quotNote (es : List PExpr) : String :=
+  if es.any PExpr.badQuot then
+    " — it holds a quotient the affine forms do not read: a quotient is read only as `n / d`, one named constant `n` (a parameter, a localparam or a genvar) divided by a positive literal `d`"
+  else ""
+
 def elemAcc? (ds : List DeclT) (n : String) (is : List PExpr) : Except String Acc :=
   match dimsOf ds n with
   | none => .error s!"`{n}` is not declared"
@@ -880,19 +895,19 @@ def elemAcc? (ds : List DeclT) (n : String) (is : List PExpr) : Except String Ac
           if l = Aff.const 0 then
             match affOf? i with
             | some a => .ok (.cell1 n a)
-            | none => .error s!"index of `{n}[…]` is not affine (dynamic or nonlinear)"
+            | none => .error s!"index of `{n}[…]` is not affine (dynamic or nonlinear){quotNote [i]}"
           else .error s!"`{n}`: element selects need a zero-based descending dimension `[hi:0]`"
       | [(_, l1), (m2, l2)], [i] =>
           if l1 = Aff.const 0 ∧ l2 = Aff.const 0 then
             match affOf? i with
             | some a => .ok (.row n (m2.add (Aff.const 1)) a)
-            | none => .error s!"index of `{n}[…]` is not affine (dynamic or nonlinear)"
+            | none => .error s!"index of `{n}[…]` is not affine (dynamic or nonlinear){quotNote [i]}"
           else .error s!"`{n}`: element selects need zero-based descending dimensions `[hi:0][hi:0]`"
       | [(_, l1), (m2, l2)], [i, j] =>
           if l1 = Aff.const 0 ∧ l2 = Aff.const 0 then
             match affOf? i, affOf? j with
             | some a, some b => .ok (.cell2 n (m2.add (Aff.const 1)) a b)
-            | _, _ => .error s!"an index of `{n}[…][…]` is not affine (dynamic or nonlinear)"
+            | _, _ => .error s!"an index of `{n}[…][…]` is not affine (dynamic or nonlinear){quotNote [i, j]}"
           else .error s!"`{n}`: element selects need zero-based descending dimensions `[hi:0][hi:0]`"
       | _, _ => .error s!"select path on `{n}` does not match its declared packed dimensions (outside the v1 fragment)"
 
@@ -910,13 +925,13 @@ def partAcc? (ds : List DeclT) (n : String) (is : List PExpr) (mode : PartMode) 
               if l = Aff.const 0 then
                 match affOf? hi, affOf? lo with
                 | some h, some l' => .ok (.part1 n h l')
-                | _, _ => .error s!"a bound of `{n}[hi:lo]` is not affine (dynamic or nonlinear)"
+                | _, _ => .error s!"a bound of `{n}[hi:lo]` is not affine (dynamic or nonlinear){quotNote [hi, lo]}"
               else .error s!"`{n}`: part selects need a zero-based descending dimension `[hi:0]`"
           | [(_, l1), (m2, l2)], [i] =>
               if l1 = Aff.const 0 ∧ l2 = Aff.const 0 then
                 match affOf? i, affOf? hi, affOf? lo with
                 | some r, some h, some l' => .ok (.part2 n (m2.add (Aff.const 1)) r h l')
-                | _, _, _ => .error s!"an index or bound of `{n}[…][hi:lo]` is not affine (dynamic or nonlinear)"
+                | _, _, _ => .error s!"an index or bound of `{n}[…][hi:lo]` is not affine (dynamic or nonlinear){quotNote [i, hi, lo]}"
               else .error s!"`{n}`: part selects need zero-based descending dimensions `[hi:0][hi:0]`"
           | _, _ => .error s!"part select on `{n}` does not match its declared packed dimensions (outside the v1 fragment)"
 

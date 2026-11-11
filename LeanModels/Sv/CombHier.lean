@@ -40,13 +40,22 @@ decidable side condition on the summaries (`HierOk`), which the tactics decide.
 * instances at module level only: an instance inside a generate loop or branch is refused, saying why (its sites
   would be a generate family whose names carry the loop index);
 * the parent has no generate block besides its instances; a child has no instance and no generate block;
-* every port is connected; no connection is loud.
+* every port is connected; no connection is loud;
+* every connection is exactly as wide as its port at every parameter point (`conn_in_eq`, `conn_out_eq`): a connection
+  that changes width, an input actual truncated to the port or an output port zero-extended into a wider target (which
+  `connProcs` lowers through `fitExpr2`/`portOut`), is outside v1. The width obligation `WidthObl` of the twin says so at
+  each point; `sv_structure` samples it and names the connection (`twinWidthMsg`, `CombEqTactic.lean`).
 
 A parent's `wire` output tiled by the instances' output ports (`.y(y[W/2-1:0])`, `.y(y[W-1:W/2])`) is read like a
 variable port: the extractor checks that each instance output targets the net and that the windows cover it without
 overlap at the default point, and marks it a net-as-variable; the loader reads it as an output declaration, so the twin's
 assignments `target = p ++ y` are the instantiation's (`conn_out_eq`), and the one-driver rule at each parameter point is
-the twin's disjointness obligation, decided like any other.
+the twin's disjointness obligation, decided like any other. What this does not give is ls-sv's (reported): the
+extractor checks that the windows COVER the net at the default point only, and `driversOk` re-checks overlaps at every
+point but not holes. At a point where the windows leave a bit undriven, the output declaration starts at x and the bit
+reads x, where the standard (an undriven `wire` is z) and Icarus give z (measured: `run2` gives `y = 1010x010`, Icarus 12
+`1010z010`, for windows `y[P-1:0]`, `y[W-1:W/2]` at `W = 8`, `P = 3`, `a = 8'hAA`). The summary states no equation for an
+undriven bit, so no theorem the tactics prove speaks of its value.
 -/
 
 namespace LeanModels.Sv

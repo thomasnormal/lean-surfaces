@@ -805,6 +805,9 @@ structure TwinInfo where
   /-- Where the first process the site recognizer refuses comes from in the design as written (`""`: no such process),
   for the refusal of a twin outside the fragment, whose site names are the twin's. -/
   origin : String := ""
+  /-- The refusal text of a site of the twin's summary whose width contract fails at a sampled valuation (`""`: none),
+  checked with the other sampled obligations (diagnostics only: `CombHier.twinWidthMsg`). -/
+  widthBad : Summary → (String → Int) → String := fun _ _ => ""
 
 structure SignedHook where
   extra : (Name → TacticM MVarId) → Summary → TacticM (List MVarId)
@@ -942,6 +945,10 @@ unsafe def runSvStructure (rankStx? lexStx? usingStx? : Option Syntax) (hintOnly
           throwError "sv_structure: in-range obligation fails — {m} {ctxMsg}"
         if let some m := s.disjCounterexample σ then
           throwError "sv_structure: {m} {ctxMsg}"
+        if let some tw := twin? then
+          let m := tw.widthBad s σ
+          unless m.isEmpty do
+            throwError "sv_structure: {m} {ctxMsg}"
         if let some re := rankE? then
           let reK := re.replaceFVars (fvs.map mkFVar) lits
           let ρ ← evalRank reK

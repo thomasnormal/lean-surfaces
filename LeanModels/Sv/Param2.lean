@@ -1474,6 +1474,126 @@ def instProcess2 (env : IEnv) (elems : List (String × Nat)) : PProcess → Proc
       | .error e => .unsupported "AssignL" e
   | .unsupported k t => .unsupported k t
 
+/-! ## Source-preserving E instantiation
+
+`Process2` is deliberately frozen: it has no constructor for an implicit event
+control.  E still needs the parser node and its instantiated body, however, so
+this small source view carries the one extra case alongside the ordinary
+`Process2` image.  The ordinary semantic tier continues to use `instProcess2`
+and therefore keeps the exact loud boundary.
+-/
+
+inductive EProcess2 where
+  | ordinary (process : Process2)
+  | alwaysImplicit (body : Stmt2)
+deriving Repr, Inhabited
+
+structure EDesign2 where
+  name : String
+  decls : Array Decl
+  processes : Array EProcess2
+deriving Repr, Inhabited
+
+def instEProcess2 (env : IEnv) (elems : List (String × Nat)) : PProcess → EProcess2
+  | .alwaysImplicit b => .alwaysImplicit (instStmt2 env elems b)
+  | p => .ordinary (instProcess2 env elems p)
+
+/-- The typed-constant width pass used by the E view. This is deliberately a
+structural helper rather than `List.filterMapM`: the latter is an elaborator
+helper whose generated loop is not kernel-visible on some loaded envelopes
+(and therefore cannot be reduced by `instantiateDE2`). -/
+def typedParamWidthsE (env : IEnv) : List (String × Option PType) → Res (List (String × Nat))
+  | [] => .ok []
+  | (n, none) :: rest => typedParamWidthsE env rest
+  | (n, some ty) :: rest =>
+      match ty.width env with
+      | .error e => Res.unsupported s!"parameter '{n}' type: {e}"
+      | .ok w =>
+          match typedParamWidthsE env rest with
+          | .ok ws => .ok ((n, w) :: ws)
+          | .timeout => .timeout
+          | .unsupported e => .unsupported e
+
+mutual
+def GenItem.expandE2 (env : IEnv) (elems : List (String × Nat)) (iterFuel : Nat) :
+    GenItem → Res (List EProcess2)
+  | .process p => .ok [instEProcess2 env elems p]
+  | .unsupported k t => .ok [.ordinary (.unsupported k t)]
+  | .inst i => .ok [.ordinary (.unsupported "Instance"
+      s!"module instance '{i.name}' of '{i.module}': flat instantiation (hierarchical designs instantiate through `PDesign.instantiateH`, Hier2.lean)")]
+  | .genIf cond thenB elseB =>
+      match evalGenGuard env cond with
+      | .error e => .unsupported s!"generate if: {e}"
+      | .ok v => if v != 0 then expandEList2 env elems iterFuel thenB
+                 else expandEList2 env elems iterFuel elseB
+  | .genFor _label g initE bound step _rc body =>
+      match evalInt env initE, stepDelta g step with
+      | .ok i0, .ok δ => do
+          let vs ← genvarSeq env g bound δ iterFuel i0
+          expandE env elems iterFuel g vs body
+      | .error e, _ => .unsupported s!"generate for: {e}"
+      | _, .error e => .unsupported s!"generate for: {e}"
+  termination_by it => (sizeOf it, 0)
+  decreasing_by all_goals (simp_wf; omega)
+
+def expandEList2 (env : IEnv) (elems : List (String × Nat)) (iterFuel : Nat) :
+    List GenItem → Res (List EProcess2)
+  | [] => .ok []
+  | it :: rest => do
+      let ps ← it.expandE2 env elems iterFuel
+      let qs ← expandEList2 env elems iterFuel rest
+      .ok (ps ++ qs)
+  termination_by l => (sizeOf l, 0)
+  decreasing_by all_goals (simp_wf; omega)
+
+def expandE (env : IEnv) (elems : List (String × Nat)) (iterFuel : Nat)
+    (g : String) : List Int → List GenItem → Res (List EProcess2)
+  | [], _ => .ok []
+  | v :: vs, body => do
+      let ps ← expandEList2 (env.bindVal g v) elems iterFuel body
+      let qs ← expandE env elems iterFuel g vs body
+      .ok (ps ++ qs)
+  termination_by vs body => (sizeOf body, vs.length + 1)
+  decreasing_by all_goals (simp_wf; omega)
+end
+
+def PDesign.instantiateE2From (envI : IEnv) (d : PDesign) (args : List Int)
+    (iterFuel : Nat := 4096) : Res EDesign2 :=
+  if args.length != d.params.length then
+    .unsupported s!"parameter arity: got {args.length}, want {d.params.length}"
+  else do
+    let envP ← bindPackageParams envI d.packageParams
+    let envP ← bindPackageEnums envP d.enums
+    let env0 ← bindParamsRes envP d.params args
+    let env1 ← bindLocals env0 d.localParams
+    let env2 ← bindEnums env1 d.enums
+    let pws ← typedParamWidthsE env2
+      (d.params.map (fun p => (p.name, p.type?))
+        ++ d.localParams.map (fun lp => (lp.name, lp.type?)))
+    let env2 := { env2 with pwidths := pws }
+    let env2 := { env2 with dims := dimTable env2 d.decls }
+    let decls ← buildDecls env2 d.decls
+    let elems ← buildElems env2 d.decls
+    let envP := { env2 with widths := decls.map fun dc => (dc.name, dc.width) }
+    let gens ← expandEList2 envP elems iterFuel d.generates
+    .ok { name := d.name
+          decls := decls.toArray
+          processes := ((d.processes.map (instEProcess2 envP elems)) ++ gens
+            ++ d.others.map fun (k, t) => EProcess2.ordinary (.unsupported k t)).toArray }
+
+def PDesign.instantiateE2 (d : PDesign) (args : List Int) (iterFuel : Nat := 4096) :
+    Res EDesign2 :=
+  d.instantiateE2From { int32 := true } args iterFuel
+
+def PDesign.instantiateDE2 (d : PDesign) (args : List Int) : EDesign2 :=
+  match d.instantiateE2 args (PDesign.surfaceFuel args) with
+  | .ok m => m
+  | .timeout => { name := d.name, decls := #[],
+                  processes := #[.ordinary (.unsupported "Instantiate"
+                    "generate expansion fuel exhausted")] }
+  | .unsupported msg => { name := d.name, decls := #[],
+                          processes := #[.ordinary (.unsupported "Instantiate" msg)] }
+
 /-! ## Generate expansion (Process2 mirror of `Param.lean`'s) -/
 
 mutual

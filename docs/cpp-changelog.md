@@ -19,6 +19,10 @@ coverage advance independently from the Python tier.
 
 ### Added
 
+- Namespace execution now accepts a namespace body containing only nested
+  empty namespace declarations; unrelated or nonempty children remain loudly
+  refused.
+
 - `using enum E;` now executes when Clang supplies a structured `EnumDecl`
   target and an adjacent checked `UsingShadowDecl` for an enum constant;
   unresolved or non-enum targets remain loud refusals.

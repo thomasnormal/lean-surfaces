@@ -5,6 +5,18 @@ coverage advance independently from the Python tier.
 
 ## [Unreleased]
 
+### Fixed
+
+- Closed the stale `cpp-spelling-identity` backlog note for direct qualified
+  enum arguments. The retained declaration handle is joined to structured enum
+  evidence before admission; the legacy spelling path remains compatibility-only.
+
+### Measured
+
+- `LeanModels.Cpp.ClassSubobjects` and `LeanModels.Cpp.MemberCallTests` passed
+  under the pinned Clang/LLVM 21.1.8 profile and 24 GiB cgroup, including the
+  qualified direct enum argument and friend-class refusal guards.
+
 ## [0.1.232] — 2026-11-04
 
 ### Added

@@ -74,13 +74,14 @@ qualified suffixes instead of accepting a spelling-only identity. Exact
 unqualified spellings remain admitted. Friend-class admission now refuses
 until Clang's friend target handle is retained; setter and remaining enum
 parameter checks now use the retained structured enum handle and preserve
-qualified source spellings as data. Direct enum arguments still await a probe
-handle join before their source spelling can be removed from the legacy
-boundary; the new `admitWithTypeEvidence` path performs that join and accepts
-qualified spellings. Revalidated 2026-11-11 with the 24 GiB cgroup:
+qualified source spellings as data. Direct enum arguments now use the
+`admitWithTypeEvidence` path, which joins the argument's retained declaration
+handle to validated structured enum evidence before accepting a qualified
+spelling. The legacy spelling API remains only for compatibility fixtures.
+Revalidated 2026-11-11 with the 24 GiB cgroup:
 `lake build LeanModels.Cpp.ClassSubobjects LeanModels.Cpp.MemberCallTests`
-completed successfully (18 jobs), including the structured-handle guards and
-friend-class refusal.
+completed successfully (18 jobs), including the structured-handle guards,
+qualified direct enum argument, and friend-class refusal.
 
 ## `cpp-harness-oracle-misfile`: native oracle policy
 

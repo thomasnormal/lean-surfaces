@@ -1692,3 +1692,43 @@ the three-row trace.  Icarus Verilog 13.0 and readiness-gated Xcelium
 24.03-s004 each match all three rows.  This is a source-shaped E memory
 receipt; it does not claim a whole-core PicoRV32 execution or refinement
 theorem.
+
+## 2026-11-11 re-probe after empty-task E admission (`877db6cf5`)
+
+The pinned source remains YosysHQ commit
+`ef203c2b0a3fb793280f5114941416c425c5b461`, with source SHA-256
+`0836050971b3c6cdd28ac3b1e5719a67fb645161912bef1e472e63995ceb062`.  To
+regenerate the approved envelope from the unchanged checkout, set
+`PINNED_PICORV32` to that read-only source tree and run:
+
+```text
+python3 extractors/sv/extract.py --top picorv32 \
+  -o picorv32-current-486.sv.json "$PINNED_PICORV32/picorv32.v"
+```
+
+The envelope is 3,024,503 bytes with SHA-256
+`104c50e8c10b61dc821ef82ef16a035521cc8345225b37c42e68d1af43db48fa`.
+The loaded symbolic design has 216 declarations, 43 processes, three
+generate entries and 32 retained module-member records.  The scalar
+`instantiateE2` view still first refuses the one-rank `cpuregs` declaration at
+`picorv32.v:203`:
+
+```text
+unsupported "Instantiate"
+  "decl 'cpuregs': unpacked array storage outside E (UnpackedDecl:memory)"
+```
+
+The canonical source-shaped entry
+`LeanModels.Sv.Kernel.PDesign.instantiateMemoryE` now succeeds with 223
+scalar declarations and an attached native memory.  Its retained memory
+process list admits the empty-task and net-z markers, then reaches the next
+generic wall at `picorv32.v:401` (`always @*` with a `case` lacking a
+default):
+
+```text
+TimedStatement:ImplicitEventControl: R5: `mem_la_wdata` is not assigned on every path
+```
+
+This is an E admission result only; no PicoRV32 execution, retirement trace
+or symbolic ADDI invariant is claimed.  The old guard-bypassed run2/MemCycle
+80-cycle result remains **UNVALIDATED**.

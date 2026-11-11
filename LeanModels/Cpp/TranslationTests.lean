@@ -90,6 +90,19 @@ private def namespaceAliasExecutionTranslation : Artifact := {emptyTranslation w
           ("id", .string "n"), ("kind", .string "NamespaceDecl"),
           ("name", .string "n")])]])]}
 
+private def intBuiltinType : Raw := .object [
+  ("kind", .string "BuiltinType"),
+  ("type", .object [("qualType", .string "int")])]
+
+private def typeAliasExecutionTranslation : Artifact := {emptyTranslation with
+  ast := .object [
+    ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
+    ("inner", .array [
+      .object [("id", .string "a"), ("kind", .string "TypeAliasDecl"),
+        ("name", .string "I"),
+        ("type", .object [("qualType", .string "int")]),
+        ("inner", .array [intBuiltinType])]])]}
+
 private def usingDirectiveTranslation : Artifact := {emptyTranslation with
   ast := .object [
     ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
@@ -1595,6 +1608,9 @@ def namespaceTranslationExecution : Except String Unit :=
 def namespaceAliasTranslationExecution : Except String Unit :=
   execute namespaceAliasExecutionTranslation "a"
 
+def typeAliasTranslationExecution : Except String Unit :=
+  execute typeAliasExecutionTranslation "a"
+
 def nonemptyTranslationExecution : Except String Unit :=
   execute functionTranslation "f"
 
@@ -2959,6 +2975,7 @@ def staticAssertTranslationWitness : Except String Unit :=
 #guard execute emptyTranslation "" matches .ok ()
 #guard execute namespaceTranslation "ns" matches .ok ()
 #guard execute namespaceAliasExecutionTranslation "a" matches .ok ()
+#guard execute typeAliasExecutionTranslation "a" matches .ok ()
 #guard execute functionTranslation "f" matches .error "C++ translation-only tier: execution requires object, lifetime, type, expression and statement semantics"
 
 theorem empty_translation_admits : admitTranslationUnit emptyTranslation = .ok () := rfl
@@ -2974,6 +2991,9 @@ theorem namespace_translation_executes : execute namespaceTranslation "ns" = .ok
 theorem namespace_alias_translation_executes :
     execute namespaceAliasExecutionTranslation "a" = .ok () := rfl
 
+theorem type_alias_translation_executes :
+    execute typeAliasExecutionTranslation "a" = .ok () := rfl
+
 theorem nonempty_execution_remains_loud : execute functionTranslation "f" = .error executionRefusal := rfl
 
 theorem namespace_translation_witness : namespaceTranslationWitness = true := by
@@ -2984,6 +3004,7 @@ theorem namespace_translation_witness : namespaceTranslationWitness = true := by
 #print axioms empty_translation_executes
 #print axioms namespace_translation_executes
 #print axioms namespace_alias_translation_executes
+#print axioms type_alias_translation_executes
 #print axioms nonempty_execution_remains_loud
 #print axioms namespace_translation_witness
 

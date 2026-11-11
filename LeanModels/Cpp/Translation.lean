@@ -741,6 +741,14 @@ private def executeTopDeclaration (raw : Raw) : Except String Unit :=
           | _, _ => .error executionRefusal
       | none => .error "translation: namespace alias target is absent"
   | some "NamespaceAliasDecl", _ => .error executionRefusal
+  | some "TypeAliasDecl", some (.array [target]) =>
+      match target.text "kind", target.field "type", raw.field "type" with
+      | some "BuiltinType", some (.object targetType), some (.object aliasType) =>
+          match (Raw.object targetType).text "qualType", (Raw.object aliasType).text "qualType" with
+          | some "int", some "int" => pure ()
+          | _, _ => .error executionRefusal
+      | _, _, _ => .error executionRefusal
+  | some "TypeAliasDecl", _ => .error executionRefusal
   | _, _ => .error executionRefusal
 
 private def executeTopDeclarations : List Raw → Except String Unit

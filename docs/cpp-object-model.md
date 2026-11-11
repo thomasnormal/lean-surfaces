@@ -73,9 +73,10 @@ preserves an ended storage identity for a new lifetime. Only dynamic storage
 has an explicit release operation in this slice.
 
 `LeanModels/Cpp/Translation.execute` executes an empty translation unit, a
-namespace declaration whose `inner` array is empty, and a namespace alias whose
-structured target is a namespace. Other nonempty units still refuse until the
-store is connected to a typed expression/statement model
+namespace declaration whose `inner` array is empty, a namespace alias whose
+structured target is a namespace, and an `int` type alias with a `BuiltinType`
+child. Other nonempty units still refuse until the store is connected to a typed
+expression/statement model
 and add initialization/destruction obligations before any compiled-execution
 claim is made.
 

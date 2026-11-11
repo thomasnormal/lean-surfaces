@@ -147,6 +147,14 @@ private def topFunctionPrototypeExecutionTranslation : Artifact := {emptyTransla
       .object [("id", .string "f"), ("kind", .string "FunctionDecl"),
         ("name", .string "f"), ("type", .object [("qualType", .string "void ()")])]])]}
 
+private def deletedFunctionExecutionTranslation : Artifact := {emptyTranslation with
+  ast := .object [
+    ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
+    ("inner", .array [
+      .object [("id", .string "f"), ("kind", .string "FunctionDecl"),
+        ("name", .string "f"), ("type", .object [("qualType", .string "void ()")]),
+        ("explicitlyDeleted", .bool true)]]) ]}
+
 private def topUsingFunctionExecutionTranslation : Artifact := {emptyTranslation with
   ast := .object [
     ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
@@ -1873,6 +1881,9 @@ def nestedUsingFunctionTranslationExecution : Except String Unit :=
 def topFunctionPrototypeTranslationExecution : Except String Unit :=
   execute topFunctionPrototypeExecutionTranslation "f"
 
+def deletedFunctionTranslationExecution : Except String Unit :=
+  execute deletedFunctionExecutionTranslation "f"
+
 def topUsingFunctionTranslationExecution : Except String Unit :=
   execute topUsingFunctionExecutionTranslation "u"
 
@@ -3289,6 +3300,7 @@ def staticAssertTranslationWitness : Except String Unit :=
 #guard nestedFunctionPrototypeTranslationExecution matches .ok ()
 #guard nestedUsingFunctionTranslationExecution matches .ok ()
 #guard topFunctionPrototypeTranslationExecution matches .ok ()
+#guard deletedFunctionTranslationExecution matches .ok ()
 #guard topUsingFunctionTranslationExecution matches .ok ()
 #guard boolTypedefTranslationExecution matches .ok ()
 #guard unscopedEmptyEnumTranslationExecution matches .ok ()
@@ -3347,6 +3359,9 @@ theorem nested_using_function_translation_executes :
 
 theorem top_function_prototype_translation_executes :
     topFunctionPrototypeTranslationExecution = .ok () := rfl
+
+theorem deleted_function_translation_executes :
+    deletedFunctionTranslationExecution = .ok () := rfl
 
 theorem top_using_function_translation_executes :
     topUsingFunctionTranslationExecution = .ok () := rfl

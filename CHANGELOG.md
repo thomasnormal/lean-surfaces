@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Revalidated augmented-repeat semantics: the former boundary rewrite is
+  absent, heap-list `*=` mutates the existing address, and the script alias
+  witness matches CPython 3.9.25.
+
 - Revalidated list-comprehension shadowing: `ListComp` remains a structured
   AST node with its own evaluator, so module or local bindings named `list`
   cannot alter comprehension semantics; the shadow witness matches CPython

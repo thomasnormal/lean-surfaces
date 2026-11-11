@@ -13463,3 +13463,20 @@ CPython 3.9.25.
 
 DECIDED: close `py-listcomp-list-shadow`; retain explicit loud boundaries for
 unsupported comprehension forms rather than synthesizing a `list` call.
+## 2026-11-11-pyfoundation-74 — close augmented-repeat rewrite audit
+
+The high-priority `py-boundary-augrepeat-rewrite` finding is already fixed.
+No `lowerBoundaryAugRepeat` ingestion path remains; `AugAssign` is preserved
+as an AST node, and heap-list `*=` reaches the in-place `heapListAugAssign` /
+`heapListRepeatUpdate` workers. The aliasing script witness prints the repeated
+contents through both names and matches CPython 3.9.25.
+
+| Measurement | Result |
+|---|---|
+| Alias witness | `list_aug_repeat_script.py`: model and CPython both print `True [1, 2, 1, 2]`, exit 0 |
+| Source audit | no `lowerBoundaryAugRepeat` definition or call remains |
+| Error boundary | unsupported boundary-passed mutable lists remain explicit in `cases.json` |
+| Semantic change | none; audit closure only |
+
+DECIDED: close `py-boundary-augrepeat-rewrite`; retain the explicit mutable
+boundary refusal until list thawing is wired end to end.

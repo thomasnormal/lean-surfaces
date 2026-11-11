@@ -296,6 +296,21 @@ worker theorem.
 DECIDED: continue literal binary control bridges with explicit fuel margins;
 recursive and script adequacy remain open.
 
+## 2026-11-11-pyfoundation-61 — prove binary literal-floor-division refinement
+
+The literal binary refinement family now covers floor division. Both children
+are transported through the constant bridge and the `.floorDiv` dispatch is
+shown to remain on the shared pure worker path.
+
+| Measurement | Result |
+|---|---|
+| Target | managed `lake build LeanModels/Python/Monadic/Eval.lean` passed |
+| New theorem | `Monadic.twinAgrees_evalOpen_intFloorDiv` |
+| Semantic change | theorem only; no evaluator behavior change |
+
+DECIDED: continue literal binary refinement with explicit fuel margins before
+attempting recursive calls or scripts.
+
 ## 2026-11-11-pyfoundation-43 — repair PayloadBlind comparison recursion transport
 
 The proof observer now transports the heap-aware rich-comparison recursion

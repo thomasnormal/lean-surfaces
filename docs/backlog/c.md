@@ -27,7 +27,9 @@ The C extractor now retains non-field record children and non-bit-field
 attribute children as `Unsupported` declarations. The layout census omits any
 record containing one, so `_Alignas`, `#pragma pack`, and packed attributes
 refuse rather than receiving natural-alignment offsets. A Clang 21.1.8 row
-matches natively and refuses in the model.
+matches natively and refuses in the model. Revalidated 2026-11-11 against the
+pinned Clang/LLVM 21.1.8 oracle: `record-attributes REFUSE`, while the native
+witness exited 0; all three attribute nodes were retained in the envelope.
 
 ## 2026-11-11-c-subobject-bounds-unchecked — array-member provenance
 

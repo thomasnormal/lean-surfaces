@@ -233,6 +233,22 @@ def tinyxml_capture_verified(row, root):
         return False
 
 
+def tinyxml_capture_gate():
+    """Require the current canonical probe when one is supplied.
+
+    The manifest/literal hash checks bind the source snapshot, but only the
+    exporter gate can prove that the checked-in literal is still the output of
+    the complete probe. Without the probe the callable rows stay ORACLE.
+    """
+    probe = os.environ.get("LEANCPP_TINYXML2_PROBE")
+    if not probe:
+        return True, None
+    gate = run([sys.executable, "extractors/cpp/test_tinyxml2_literals.py"], timeout=900)
+    if gate.returncode != 0:
+        return False, "canonical TinyXML-2 literal gate failed: " + (gate.stdout + gate.stderr)[-1200:]
+    return True, None
+
+
 def native_rows(cases, clang):
     if clang is None:
         return {row["id"]: ("ORACLE", "pinned Clang/LLVM %s is unavailable" % PINNED_CLANG) for row in cases}
@@ -285,6 +301,10 @@ def native_rows(cases, clang):
     header = root / "tinyxml2.h"
     if not implementation.is_file() or not header.is_file():
         result.update({row["id"]: ("ORACLE", "LEANCPP_TINYXML2_DIR must contain tinyxml2.cpp and tinyxml2.h") for row in callable_cases})
+        return result
+    capture_ok, capture_reason = tinyxml_capture_gate()
+    if not capture_ok:
+        result.update({row["id"]: ("ORACLE", capture_reason) for row in callable_cases})
         return result
     with tempfile.TemporaryDirectory(prefix="cpp-diff-native-") as directory:
         snapshot = pathlib.Path(directory) / "source"

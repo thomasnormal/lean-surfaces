@@ -62,7 +62,12 @@ increment argument while the pure direct-call witness remains admitted.
 
 ## `cpp-diff-handwritten-twins`: source-derived differential execution
 
-**Open.** The C++ coverage harness evaluates checked-in Lean fixtures while
+**Partially closed 2026-11-11.** The bounded TinyXML-2 callable path now
+requires the current canonical literal gate whenever
+`LEANCPP_TINYXML2_PROBE` is supplied, in addition to the pinned source,
+literal, ABI and call-binding checks. A missing probe keeps those rows
+`ORACLE`; a stale or mismatched probe cannot produce `MATCH`. The C++ coverage
+harness still evaluates checked-in Lean fixtures while
 Clang compiles separate source witnesses. Passing both is useful unit evidence,
 but it does not show that Lean evaluated the compiled source's AST. The four
 TinyXML-2 callable rows use a source-derived literal, whose provenance manifest
@@ -72,7 +77,7 @@ census checks Clang's emitted node kind and records a refusal boundary; it does
 not execute each grammar source in Lean.
 
 The reporting correction classifies these independent passes as `WITNESS` and
-keeps failing checks visible. To close the finding, capture each native source
+keeps failing checks visible. To close the remaining generic finding, capture each native source
 with the pinned Clang frontend and canonical probe, admit and execute its
 corresponding callable on the row's arguments, and compare its observed result
 with the compiled original. Record loud refusals where the pipeline cannot

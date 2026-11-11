@@ -15,6 +15,7 @@ def main():
                "rung": 3, "expect": "match"}
     rows = module.differential([fixture], {"fixture": "ok 7"}, {"fixture": ("NATIVE", "7")})
     assert rows[0]["verdict"] == "WITNESS"
+    assert module.tinyxml_capture_gate()[0]
     print("cpp differential reporting: ok")
 
 

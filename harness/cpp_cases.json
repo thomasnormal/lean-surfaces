@@ -133,6 +133,17 @@
     "rung": 0
   },
   {
+    "id": "translation.nested-using-function-execution",
+    "kind": "translation",
+    "corpus": "translation witness",
+    "lean_module": "LeanModels.Cpp.TranslationTests",
+    "lean_namespace": "LeanModels.Cpp.TranslationTests",
+    "lean_expression": "nestedUsingFunctionTranslationExecution",
+    "cpp_source": "namespace outer { void f(); using outer::f; }",
+    "expect": "match",
+    "rung": 0
+  },
+  {
     "id": "translation.namespace-alias-execution",
     "kind": "translation",
     "corpus": "translation witness",

@@ -773,6 +773,16 @@ private def executeNestedNamespaces : List Raw → Except String Unit
       | some "FunctionDecl", some (.array []) => do
           let _ ← nestedFunctionPrototype declaration
           executeNestedNamespaces rest
+      | some "UsingDecl", _ =>
+          match rest with
+          | shadow :: tail =>
+              match shadow.text "kind", shadow.field "target" with
+              | some "UsingShadowDecl", some target =>
+                  match target.text "kind", target.text "id" with
+                  | some "FunctionDecl", some _ => executeNestedNamespaces tail
+                  | _, _ => .error executionRefusal
+              | _, _ => .error executionRefusal
+          | [] => .error executionRefusal
       | some "LinkageSpecDecl", none =>
           match declaration.text "language" with
           | some "C" | some "C++" => executeNestedNamespaces rest

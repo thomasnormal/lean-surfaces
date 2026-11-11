@@ -437,6 +437,17 @@
     "rung": 0
   },
   {
+    "id": "translation.short-typedef-execution",
+    "kind": "translation",
+    "corpus": "translation witness",
+    "lean_module": "LeanModels.Cpp.TranslationTests",
+    "lean_namespace": "LeanModels.Cpp.TranslationTests",
+    "lean_expression": "shortTypedefTranslationExecution",
+    "cpp_source": "typedef short S;",
+    "expect": "match",
+    "rung": 0
+  },
+  {
     "id": "translation.empty-scoped-enum-execution",
     "kind": "translation",
     "corpus": "translation witness",

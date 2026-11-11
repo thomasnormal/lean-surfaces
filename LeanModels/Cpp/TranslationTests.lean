@@ -496,6 +496,15 @@ private def shortTypeAliasExecutionTranslation : Artifact := {emptyTranslation w
         ("type", .object [("qualType", .string "short")]),
         ("inner", .array [shortBuiltinType])]])]}
 
+private def shortTypedefExecutionTranslation : Artifact := {emptyTranslation with
+  ast := .object [
+    ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
+    ("inner", .array [
+      .object [("id", .string "a"), ("kind", .string "TypedefDecl"),
+        ("name", .string "S"),
+        ("type", .object [("qualType", .string "short")]),
+        ("inner", .array [shortBuiltinType])]])]}
+
 private def unsignedTypeAliasExecutionTranslation : Artifact := {emptyTranslation with
   ast := .object [
     ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
@@ -2156,6 +2165,9 @@ def externVariableTranslationExecution : Except String Unit :=
 def unsignedTypedefTranslationExecution : Except String Unit :=
   execute unsignedTypedefExecutionTranslation "a"
 
+def shortTypedefTranslationExecution : Except String Unit :=
+  execute shortTypedefExecutionTranslation "a"
+
 def shortTypeAliasTranslationExecution : Except String Unit :=
   execute shortTypeAliasExecutionTranslation "a"
 
@@ -3560,6 +3572,7 @@ def staticAssertTranslationWitness : Except String Unit :=
 #guard externBoolVariableTranslationExecution matches .ok ()
 #guard unsignedTypeAliasTranslationExecution matches .ok ()
 #guard shortTypeAliasTranslationExecution matches .ok ()
+#guard shortTypedefTranslationExecution matches .ok ()
 #guard unsignedTypedefTranslationExecution matches .ok ()
 #guard execute namespaceAliasExecutionTranslation "a" matches .ok ()
 #guard execute typeAliasExecutionTranslation "a" matches .ok ()
@@ -3669,6 +3682,9 @@ theorem unsigned_type_alias_translation_executes :
 
 theorem short_type_alias_translation_executes :
     shortTypeAliasTranslationExecution = .ok () := rfl
+
+theorem short_typedef_translation_executes :
+    shortTypedefTranslationExecution = .ok () := rfl
 
 theorem unsigned_typedef_translation_executes :
     unsignedTypedefTranslationExecution = .ok () := rfl

@@ -19,6 +19,8 @@ coverage advance independently from the Python tier.
 
 ### Added
 
+- `typedef char C;` now executes through matching structured `BuiltinType` evidence, completing the char alias and typedef pair.
+
 - `using UC = unsigned char;` now executes through matching structured `BuiltinType` evidence; unsupported alias targets remain loud refusals.
 
 - `using C = char;` now executes through matching structured `BuiltinType` evidence; unsupported alias targets remain loud refusals.

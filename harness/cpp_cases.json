@@ -503,6 +503,17 @@
     "rung": 0
   },
   {
+    "id": "translation.char-typedef-execution",
+    "kind": "translation",
+    "corpus": "translation witness",
+    "lean_module": "LeanModels.Cpp.TranslationTests",
+    "lean_namespace": "LeanModels.Cpp.TranslationTests",
+    "lean_expression": "charTypedefTranslationExecution",
+    "cpp_source": "typedef char C;",
+    "expect": "match",
+    "rung": 0
+  },
+  {
     "id": "translation.unsigned-char-type-alias-execution",
     "kind": "translation",
     "corpus": "translation witness",

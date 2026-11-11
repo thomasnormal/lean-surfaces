@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Revalidated the `dictcomp_lab` specification guards against the pinned
+  oracle; the managed target is green on the public tip.
+
 - Revalidated the `bench_statistics` proof target after the recursion and
   protocol repairs; the managed target is green on the public tip.
 

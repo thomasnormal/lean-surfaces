@@ -65,6 +65,20 @@ errors, so no proof source change was needed in this item.
 DECIDED: treat `bench_statistics` as revalidated and continue with the next
 inbox target after rereading the inbox.
 
+## 2026-11-11-pyfoundation-47 — revalidate dictcomp_lab guards
+
+The two pre-rename failing guards in `dictcomp_lab/spec.lean` are already
+resolved on the current integrated tree. A fresh managed build of the spec
+completed successfully, so the pinned-oracle expectations required no edit.
+
+| Measurement | Result |
+|---|---|
+| `Examples/python/dictcomp_lab/spec.lean` | managed build passed (30/30 targets) |
+| Oracle decision | both guards pass; no expectation change |
+
+DECIDED: treat the `dictcomp_lab` guard item as revalidated and continue with
+the next inbox target after rereading the inbox.
+
 ## 2026-11-11-pyfoundation-43 — repair PayloadBlind comparison recursion transport
 
 The proof observer now transports the heap-aware rich-comparison recursion

@@ -1574,8 +1574,8 @@ private theorem memInvariant_core (ctx : Ctx) : ∀ (n : Nat) (e : Expr), e.size
       -- layout; an out-of-tier node is unknown rather than harmless.
       | call _ _ _ _ => simp [Expr.nodeIsPure] at hnode
       | compoundAssign _ _ _ _ _ _ _ => simp [Expr.nodeIsPure] at hnode
-      | initList _ _ _ => simp [Expr.nodeIsPure] at hnode
-      | arrayInitList _ _ _ _ => simp [Expr.nodeIsPure] at hnode
+      | initList _ _ _ _ => simp [Expr.nodeIsPure] at hnode
+      | arrayInitList _ _ _ _ _ => simp [Expr.nodeIsPure] at hnode
       | implicitValueInit _ _ => simp [Expr.nodeIsPure] at hnode
       | compoundLit _ _ _ => simp [Expr.nodeIsPure] at hnode
       | unsupported _ _ _ => simp [Expr.nodeIsPure] at hnode

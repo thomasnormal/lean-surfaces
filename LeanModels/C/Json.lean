@@ -85,6 +85,17 @@ def getOptNode (j : Json) (name : String) : Option Json :=
   | .ok .null => none
   | .ok v => some v
 
+def getOptFieldName (j : Json) : Except String (Option String) :=
+  match j.getObjVal? "field" with
+  | .error _ | .ok .null => .ok none
+  | .ok v =>
+      match v with
+      | .str s => .ok (some s)
+      | _ =>
+          match v.getObjValAs? String "name" with
+          | .ok s => .ok (some s)
+          | .error e => .error e
+
 def getBool (j : Json) (name : String) : Except String Bool :=
   match j.getObjVal? name with
   | .error _ => .ok false
@@ -190,11 +201,12 @@ partial def parseExpr (j : Json) : Except String Expr := do
         return .cast (← getStr j "cast") (← sub "sub") (← ty) span
     | "InitListExpr" =>
         let inits ← (← getArr j "inits").mapM parseExpr
+        let field ← getOptFieldName j
         -- This field is mandatory: legacy c-0.1 envelopes silently dropped
         -- positional fillers, so accepting an absent field can change a program.
         match ← getField j "array_filler" with
-        | .null => return .initList inits (← ty) span
-        | .arr filler => return .arrayInitList inits (← filler.toList.mapM parseExpr) (← ty) span
+        | .null => return .initList inits field (← ty) span
+        | .arr filler => return .arrayInitList inits (← filler.toList.mapM parseExpr) field (← ty) span
         | _ => throw "field 'array_filler' is not an array or null"
     | "ImplicitValueInitExpr" => return .implicitValueInit (← ty) span
     | "CompoundLiteralExpr" => return .compoundLit (← sub "init") (← ty) span

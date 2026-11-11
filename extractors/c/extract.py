@@ -467,8 +467,10 @@ class Extractor:
         # positional ImplicitValueInitExpr. Missing means the field was absent,
         # not an empty array. Old envelopes lack this required evidence.
         filler = n.get("array_filler")
+        field = (n.get("field") or {}).get("name")
         return {"inits": self.seq(kids(n)),
                 "array_filler": None if filler is None else self.seq(filler),
+                "field": field,
                 "type": qual(n)}
 
     def e_ImplicitValueInitExpr(self, n):

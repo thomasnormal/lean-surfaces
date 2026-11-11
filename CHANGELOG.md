@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Preserved designated union initializer fields and initialized only the
+  selected union member.
+
 - Refused unsupported block-scope `static` and `extern` declarations rather
   than recreating static locals as automatic objects or shadowing globals.
 

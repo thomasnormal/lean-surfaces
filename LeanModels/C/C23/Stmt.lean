@@ -230,7 +230,7 @@ def initObject : Nat → Ctx → Ptr → CType → Expr → ExecM Unit
   | fuel + 1, ctx, p, ty, e =>
     match e with
     | .implicitValueInit _ _ => zeroInit fuel ctx p ty
-    | .arrayInitList inits filler _ _ =>
+    | .arrayInitList inits filler field _ _ =>
         -- Clang's array_filler is [default filler, positional entries...].
         -- Only its implicit-zero default is in tier; retain and refuse other
         -- shapes rather than guessing their repeated initialization semantics.
@@ -240,7 +240,16 @@ def initObject : Nat → Ctx → Ptr → CType → Expr → ExecM Unit
             | some esz => initElems fuel ctx p et esz n 0 entries
             | none => refuseUnsupported s!"no size for element type '{et}'"
         | _, _, _ => refuseUnsupported "unsupported Clang array_filler initializer"
-    | .initList inits _ _ =>
+    | .initList inits field _ _ =>
+        if (ty.startsWith "union ") then
+          match ctx.layout.members ty, inits with
+          | some ms, e :: _ =>
+              let target := field.getD ((ms.head?.map (·.1)).getD "")
+              match ctx.layout.fieldOff ty target with
+              | some off => initObject fuel ctx (Mem.member p off) (ms.find? (·.1 == target) |>.map (·.2) |>.getD ty) e
+              | none => refuseUnsupported s!"no offset for union member '{target}'"
+          | _, _ => refuseUnsupported "union initializer has no member"
+        else
         match ctx.layout.elem ty with
         -- an ARRAY: elements at i * sizeof(elem), then §6.7.11p10 on the tail
         | some (et, n) =>

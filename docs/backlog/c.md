@@ -13,6 +13,13 @@ one of those references keeps resolving.
 
 ---
 
+## 2026-11-11-c-union-init — designated union members
+
+Clang's `InitListExpr.field` is now carried through the envelope. Union
+initialization selects that member and writes only its overlapping storage;
+struct and array initialization retain their existing paths. A designated
+union row matches Clang's result.
+
 ## 2026-11-11-c-block-static-extern-ignored — storage-class boundary
 
 Block declarations now dispatch on their storage class and refuse classes

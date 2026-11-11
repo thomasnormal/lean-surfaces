@@ -401,5 +401,133 @@
     "file": "harness/foundation_probe.py",
     "function": "deep_linear",
     "note": "linear recursion-limit edge pool."
+  },
+  {
+    "args": [
+      [
+        0.0,
+        0.0
+      ],
+      [
+        -0.0,
+        2.0
+      ],
+      [
+        1.0,
+        3.5
+      ]
+    ],
+    "expect": "match",
+    "file": "harness/foundation_probe.py",
+    "function": "float_power_special",
+    "note": "portable float-power special-case pool."
+  },
+  {
+    "args": [
+      [
+        -1.0,
+        0.5
+      ]
+    ],
+    "expect": "unsupported",
+    "file": "harness/foundation_probe.py",
+    "function": "float_power_special",
+    "note": "complex-result float power remains loud."
+  },
+  {
+    "args": [
+      []
+    ],
+    "expect": "match",
+    "file": "harness/foundation_probe.py",
+    "function": "float_power_big_zero",
+    "note": "integer-to-double conversion precedes zero exponent."
+  },
+  {
+    "args": [
+      []
+    ],
+    "expect": "match",
+    "file": "harness/foundation_probe.py",
+    "function": "mixed_div_left_overflow",
+    "note": "left integer conversion precedes mixed division."
+  },
+  {
+    "args": [
+      []
+    ],
+    "expect": "match",
+    "file": "harness/foundation_probe.py",
+    "function": "mixed_div_right_overflow",
+    "note": "right integer conversion precedes mixed division."
+  },
+  {
+    "args": [
+      []
+    ],
+    "expect": "match",
+    "file": "harness/foundation_probe.py",
+    "function": "integer_div_huge_ratio",
+    "note": "integer true division retains its exact-ratio path."
+  },
+  {
+    "args": [
+      [
+        1023
+      ],
+      [
+        1024
+      ]
+    ],
+    "expect": "match",
+    "file": "harness/foundation_probe.py",
+    "function": "negative_pow_exponent_boundary",
+    "note": "integer exponent conversion boundary."
+  },
+  {
+    "args": [
+      [
+        0
+      ],
+      [
+        2
+      ]
+    ],
+    "expect": "match",
+    "file": "harness/foundation_probe.py",
+    "function": "negative_pow_exponent_overflow",
+    "note": "negative-power exponent conversion boundary."
+  },
+  {
+    "args": [
+      [
+        1
+      ],
+      [
+        2
+      ]
+    ],
+    "expect": "match",
+    "file": "harness/foundation_probe.py",
+    "function": "negative_pow_base_overflow",
+    "note": "negative-power base conversion boundary."
+  },
+  {
+    "args": [
+      []
+    ],
+    "expect": "match",
+    "file": "harness/foundation_probe.py",
+    "function": "float_pow_base_overflow",
+    "note": "mixed float-power base conversion boundary."
+  },
+  {
+    "args": [
+      []
+    ],
+    "expect": "match",
+    "file": "harness/foundation_probe.py",
+    "function": "float_pow_exponent_overflow",
+    "note": "mixed float-power exponent conversion boundary."
   }
 ]

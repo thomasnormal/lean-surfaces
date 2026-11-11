@@ -22,6 +22,7 @@ and every existing `§Lnn` reference still resolves there.
 | id | class | title | lane |
 | --- | --- | --- | --- |
 | `2026-11-11-ls-sv2-477` |  | unify the E-core-0 and observation cones | ls-sv2 |
+| `2026-11-11-pyfoundation-40` |  | cover conversion-to-double boundaries | python-completeness |
 | `2026-11-11-pyfoundation-39` |  | cover index conversion endpoints | python-completeness |
 | `2026-11-11-pyfoundation-38` |  | fail closed on stale runner binaries | python-completeness |
 | `2026-11-11-pyfoundation-37` |  | smoke proof statements against the oracle | python-completeness |

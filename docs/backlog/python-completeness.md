@@ -187,6 +187,23 @@ path instead of sampling only one large positive index.
 DECIDED: retain the separate raising and clamping workers; endpoint rows are
 required evidence for future sequence-index admissions.
 
+## 2026-11-11-pyfoundation-40 — cover conversion-to-double boundaries
+
+The generated edge battery now includes portable float-power special cases,
+mixed integer/float division conversion order, integer true division's exact
+ratio path, and the finite/overflow boundaries for negative powers. General
+platform `pow` and complex-result cases remain explicitly loud.
+
+| Measurement | Result |
+|---|---|
+| Generated cases/calls | 40 cases, 67 calls |
+| Native runner | 58 MATCH, 9 documented refusals, 0 failures |
+| Proof interpreter | 58 MATCH, 9 loud refusals, 0 failures |
+| Semantic change | none; conversion-to-double protocol evidence |
+
+DECIDED: keep portable special cases admitted and platform-dependent `pow`
+outside the decided domain until an explicit libm/oracle input is modeled.
+
 ## 2026-11-10-pyfoundation-23 — pin the leanpy quickstart admission
 
 The public quickstart's Python 3.9 pin is now enforced at the runner boundary.

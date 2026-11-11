@@ -19,6 +19,8 @@ coverage advance independently from the Python tier.
 
 ### Added
 
+- Anonymous empty namespace declarations now execute as translation no-ops; nonempty anonymous bodies remain loud refusals.
+
 - Explicitly deleted bodyless function declarations now execute as declaration-only nodes when Clang supplies the structured function type; definitions remain loud refusals.
 
 - Empty `extern "C++" {}` linkage specifications now execute alongside the existing C form; unsupported languages and nonempty bodies remain loud refusals.

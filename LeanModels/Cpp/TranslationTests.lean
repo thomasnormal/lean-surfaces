@@ -23,6 +23,12 @@ private def namespaceTranslation : Artifact := {emptyTranslation with
       .object [("id", .string "ns"), ("kind", .string "NamespaceDecl"),
         ("name", .string "n"), ("inner", .array [])]])]}
 
+private def anonymousNamespaceExecutionTranslation : Artifact := {emptyTranslation with
+  ast := .object [
+    ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
+    ("inner", .array [
+      .object [("id", .string "ns"), ("kind", .string "NamespaceDecl")]])]}
+
 private def nestedNamespaceExecutionTranslation : Artifact := {emptyTranslation with
   ast := .object [
     ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
@@ -1848,6 +1854,9 @@ def emptyTranslationExecution : Except String Unit :=
 def namespaceTranslationExecution : Except String Unit :=
   execute namespaceTranslation "ns"
 
+def anonymousNamespaceTranslationExecution : Except String Unit :=
+  execute anonymousNamespaceExecutionTranslation "ns"
+
 def nestedNamespaceTranslationExecution : Except String Unit :=
   execute nestedNamespaceExecutionTranslation "outer"
 
@@ -3289,6 +3298,7 @@ def staticAssertTranslationWitness : Except String Unit :=
 #guard admitStaticAssertion usingTranslation [1] matches .error _
 #guard execute emptyTranslation "" matches .ok ()
 #guard execute namespaceTranslation "ns" matches .ok ()
+#guard anonymousNamespaceTranslationExecution matches .ok ()
 #guard nestedNamespaceTranslationExecution matches .ok ()
 #guard nestedUsingDirectiveTranslationExecution matches .ok ()
 #guard nestedNamespaceAliasTranslationExecution matches .ok ()
@@ -3326,6 +3336,9 @@ theorem wrong_root_refuses : admitTranslationUnit wrongRoot =
 theorem empty_translation_executes : execute emptyTranslation "" = .ok () := rfl
 
 theorem namespace_translation_executes : execute namespaceTranslation "ns" = .ok () := rfl
+
+theorem anonymous_namespace_translation_executes :
+    anonymousNamespaceTranslationExecution = .ok () := rfl
 
 theorem nested_namespace_translation_executes :
     nestedNamespaceTranslationExecution = .ok () := rfl

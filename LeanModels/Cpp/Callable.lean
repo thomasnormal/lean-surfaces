@@ -49,6 +49,10 @@ mutual
     | automatic (declaration : AdmittedAutomaticDeclStmt)
     /-- A retained source compound-statement boundary; declarations remain out of tier. -/
     | block (body : CallableStatement)
+    /-- Clang's full-expression cleanup boundary. The admitted integral
+    subset has no nontrivial cleanup action, but the source node is retained
+    so admission does not silently erase it. -/
+    | cleanups (body : CallableStatement)
     | expression (expression : TypedCallableExpression)
     | assign (declaration : FrontendHandle) (expression : TypedCallableExpression)
     | compoundAssign (operator : String) (declaration : FrontendHandle)
@@ -72,6 +76,10 @@ mutual
 structure CallableSwitchClause where
   label : Option Int
   body : CallableStatement
+  /-- Identity of the source `CaseStmt`/`DefaultStmt`; the evaluator's
+  legacy fallthrough representation may ignore it, but admission does not
+  lose the frontend node identity. -/
+  source : Option FrontendHandle := none
   deriving Repr, BEq, Inhabited
 
   structure CallableCallee where
@@ -97,6 +105,7 @@ def CallableStatement.findLabelSuffix (label : String) : CallableStatement → O
       | some suffix => some (.sequence suffix second)
       | none => second.findLabelSuffix label
   | .block body => (body.findLabelSuffix label).map (fun suffix => .block suffix)
+  | .cleanups body => (body.findLabelSuffix label).map (fun suffix => .cleanups suffix)
   | _ => none
 
 mutual
@@ -802,7 +811,7 @@ mutual
       let children ← rawChildren statement
       let [child] := children
         | throw "callable: expression cleanup wrapper requires one child"
-      parseCallableStatement profile parameters expressionRows resultType child
+      pure (.cleanups (← parseCallableStatement profile parameters expressionRows resultType child))
   | "BinaryOperator" =>
       let operator ← evidenceText statement "opcode"
       if operator == "=" then
@@ -1065,8 +1074,9 @@ partial def parseCallableStatementWithLocals (probe : DeclarationProbe)
       let children ← rawChildren statement
       let [child] := children
         | throw "callable: expression cleanup wrapper requires one child"
-      parseCallableStatementWithLocals probe typeRows variableRows expressionRows expressionTypes profile
-        resultType scope child
+      let (body, scope') ← parseCallableStatementWithLocals probe typeRows variableRows
+        expressionRows expressionTypes profile resultType scope child
+      pure (.cleanups body, scope')
   | "BinaryOperator" =>
       let operator ← evidenceText statement "opcode"
       if operator == "=" then

@@ -10,6 +10,14 @@ Lean artifact ingester applies the same check. `-m32`, `-m64`,
 artifact evaluated under a different profile. `harness/cpp_profile_guard_test.py`
 pins the default match and profile-changing-flag refusal.
 
+## `cpp-switch-and-ir-lowering`: cleanup-node retention
+
+**Partially closed 2026-11-11.** Callable admission now retains
+`ExprWithCleanups` as an explicit `CallableStatement.cleanups` node, and both
+callable evaluators execute its child while preserving the source boundary.
+Switch bodies still use the existing clause representation; replacing that
+regrouping with source `CaseStmt`/`DefaultStmt` items remains open.
+
 ## `cpp-diff-handwritten-twins`: reporting boundary
 
 **Closed 2026-11-11 (reporting correction).** The harness and generated page

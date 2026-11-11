@@ -378,6 +378,8 @@ mutual
                     match exited.result with
                     | .error reason => frameFailure exited.frame reason
                     | .ok _ => success exited.frame execution
+        | .cleanups body =>
+            evalStatement fuel profile frame body
         | .expression expression =>
             let result := evalExpression fuel profile frame expression
             match result.result with

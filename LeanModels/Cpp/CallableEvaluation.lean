@@ -384,6 +384,8 @@ mutual
       | .skip => .ok (.normal arguments)
       | .automatic _ => throw .unsupportedDeclaration
       | .block body => evaluateCallableStatement fuel profile parameters arguments body
+      | .cleanups body =>
+          evaluateCallableStatement fuel profile parameters arguments body
       | .expression expression =>
           (evaluateTyped fuel profile parameters arguments expression).map
             (fun (result, updated) => terminalResult updated result)

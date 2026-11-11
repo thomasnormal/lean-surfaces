@@ -17,6 +17,22 @@ before built. `harness/refusal_census.py` is the scoreboard and the acceptance
 battery in one — it exits nonzero on drift, so a landing that moves the tier
 must move the census in the same commit.
 
+## 2026-11-11-pyfoundation-43 — repair PayloadBlind comparison recursion transport
+
+The proof observer now transports the heap-aware rich-comparison recursion
+check through generator-slot swaps. The bounded container-depth walker and
+heap equality boundary are proved blind under the existing `PayloadTwin`
+relation, so chained comparisons retain their state relation while accounting
+for CPython's recursion unit.
+
+| Measurement | Result |
+|---|---|
+| Target | `lake build LeanModels/Python/PayloadBlind.lean`, 14 jobs, passed |
+| Semantic change | proof observer only; no runtime behavior change |
+
+DECIDED: keep the heap-aware comparison guard exact in `Semantics.lean` and
+transport it through PayloadBlind rather than dropping the recursion check.
+
 ## 2026-11-11-pyformat-1 — admit measured percent-format width flags
 
 The string modulo worker now handles CPython 3.9's `%5…`, `%05…`, and

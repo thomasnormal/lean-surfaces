@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Repair PayloadBlind's stateful rich-comparison recursion transport and its
+  heap-depth swap proof so the proof observer compiles again.
+
 - Require the pinned Python 3.9 frontend and default oracle for `leanpy`, and
   report rejected script envelopes as refusals rather than comparisons.
 

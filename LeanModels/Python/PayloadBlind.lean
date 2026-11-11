@@ -1589,6 +1589,42 @@ theorem checkBytesCompare_swapAt (hslot : Heap.get? h pa = some o₀)
   cases op <;> cases container <;>
     simp [checkBytesCompare, bytesOperandCheck_swapAt hslot htwin]
 
+theorem compareContainerDepth_swapAt (hslot : Heap.get? h pa = some o₀)
+    (htwin : PayloadTwin o₀ o) (fuel : Nat) (active : List Addr) (value : RVal) :
+    compareContainerDepth (Heap.swapAt h pa o) fuel active value =
+      compareContainerDepth h fuel active value := by
+  obtain ⟨q, l₀, c₀, l₁, c₁, rfl, rfl⟩ := htwin
+  apply compareContainerDepth.induct (h := h)
+    (motive1 := fun f act v =>
+      compareContainerDepth (Heap.swapAt h pa (.generator q l₁ c₁ .running)) f act v =
+        compareContainerDepth h f act v)
+    (motive2 := fun f act es =>
+      compareContainerDepthEntries (Heap.swapAt h pa (.generator q l₁ c₁ .running)) f act es =
+        compareContainerDepthEntries h f act es)
+    (motive3 := fun f act vs =>
+      compareContainerDepthList (Heap.swapAt h pa (.generator q l₁ c₁ .running)) f act vs =
+        compareContainerDepthList h f act vs) <;>
+    intros <;>
+    simp_all [compareContainerDepth, compareContainerDepthList,
+      compareContainerDepthEntries, Heap.get?_swapAt_twin hslot,
+      Heap.get?_swapAt_of_ne_slot]
+  case case9 =>
+    rename_i active a fuel hnot xs hget ih
+    have hs := Heap.get?_swapAt_of_ne_slot
+      (o := .generator q l₁ c₁ .running) hslot (by simp) hget
+    simp [hs, ih]
+  case case10 =>
+    rename_i active a fuel hnot entries shapeVersion hget ih
+    have hs := Heap.get?_swapAt_of_ne_slot
+      (o := .generator q l₁ c₁ .running) hslot (by simp) hget
+    simp [hs, ih]
+  case case11 =>
+    rename_i active a fuel hnot hlist hdict
+    rcases Heap.get?_swapAt_twin (b := a) hslot
+      ⟨q, l₀, c₀, l₁, c₁, rfl, rfl⟩ with heq | ⟨_, _, _, _, _, h₀, h₁⟩
+    · simp [compareContainerDepth, heq, hlist, hdict]
+    · simp [compareContainerDepth, h₁]
+
 theorem dictPairValues_swapAt (hslot : Heap.get? h pa = some o₀)
     (htwin : PayloadTwin o₀ o) (value : RVal) :
     dictPairValues (Heap.swapAt h pa o) value = dictPairValues h value := by
@@ -3504,7 +3540,17 @@ theorem pbEvalCompareChain_succ (htwin : PayloadTwin o₀ o) (ih : PBAll pa o₀
             exact PBF.liftRes hs _
           refine PBF.bind hcheck fun checked _ _ hChecked => ?_
           simp only [FrameState.swapAt_world, World.swapAt_callDepth]
-          refine PBF.bind (PBF.liftRes hChecked _) fun checked _ _ hChecked => ?_
+          have hrich : PBF pa o₀ o
+              (Run.liftRes checked
+                (richCompareRecursionCheckH checked.world.heap checked.world.callDepth op lhs rhs))
+              (Run.liftRes (checked.swapAt pa o)
+                (richCompareRecursionCheckH
+                  (Heap.swapAt checked.world.heap pa o) checked.world.callDepth op lhs rhs)) := by
+            simp only [richCompareRecursionCheckH,
+              compareContainerDepth_swapAt hChecked htwin,
+              heapEqRecursionCheck, heapEq_swapAt hChecked htwin]
+            exact PBF.liftRes hChecked _
+          refine PBF.bind hrich fun checked _ _ hChecked => ?_
           have hlift : PBF pa o₀ o
               (Run.liftRes checked (evalCompareOpH checked.world.heap fuel op lhs rhs))
               (Run.liftRes (checked.swapAt pa o)

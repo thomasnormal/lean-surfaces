@@ -16,12 +16,13 @@ with ids `YYYY-MM-DD-<lane>-<n>` that need no reservation. Everything before
 the split is in [`docs/backlog-archive.md`](../backlog-archive.md), frozen,
 and every existing `§Lnn` reference still resolves there.
 
-**1393 entries across 19 lanes.** Regenerate with
+**1394 entries across 19 lanes.** Regenerate with
 `tools/backlog-index.sh`; check with `--check` (exit 1 on drift).
 
 | id | class | title | lane |
 | --- | --- | --- | --- |
 | `2026-11-11-ls-sv2-477` |  | unify the E-core-0 and observation cones | ls-sv2 |
+| `2026-11-11-pyfoundation-43` |  | repair PayloadBlind comparison recursion transport | python-completeness |
 | `2026-11-11-pyfoundation-42` |  | pin direct rendering recursion boundaries | python-completeness |
 | `2026-11-11-pyfoundation-41` |  | account nested comparison recursion | python-completeness |
 | `2026-11-11-pyfoundation-40` |  | cover conversion-to-double boundaries | python-completeness |

@@ -1,69 +1,86 @@
 # Python protocol census
 
-Foundation step 2 (2026-11-10). This is a source census, not a refinement
-claim. The two interpreter columns name the implementation currently called by
-each surface. `shared` means both surfaces call the same worker; `separate`
-marks a control/transport wrapper that still needs an adequacy theorem.
+Foundation step 2 (2026-11-10), refreshed 2026-11-11. This is a source
+census, not a refinement claim. The CPython column names the entry point and
+the protocol calls that can observe an argument. The two Lean columns name the
+worker reached by each surface. `shared` means both surfaces call the same
+worker; `separate` marks a control or transport wrapper that still needs an
+adequacy theorem.
 
-| CPython 3.9 protocol | Trunk (`Semantics.lean`) | Runner (`Monadic/`) | Current observation / gap |
+## Protocol families
+
+| CPython 3.9 entry and call order | Trunk (`Semantics.lean`) | Runner (`Monadic/`) | Current observation / gap |
 |---|---|---|---|
-| `PyObject_RichCompare` / `PyObject_RichCompareBool` | `valEq`, `heapEq`, `keyEq`, `heapContainsScan`, `rvalLt` | `evalCompareOpH` and shared workers through `Monadic.Prim` | Shared value equality; container identity for non-finite floats now refuses at equality, membership, tuple/list ordering, `sorted`, `max`, `min`, and key probes. |
-| `PyObject_IsTrue` | `truthyH` | `truthyM` → `truthyH` | shared |
-| `PyObject_Hash` | `hashableKey`, `setHashNat`, dict/set key gates | same workers through `liftRes` / evaluator arms | finite numeric and tuple key slice; identity-hashed objects and unmodeled set construction refuse |
-| `PyNumber_Index` | `asInt`, `asRangeBound` | shared through `asInt` in builtin/method arms | the raising `Py_ssize_t` conversion is now a separate pinned boundary for list/range-length sites; full messages remain owed |
-| `PyLong_AsSsize_t` (after `PyNumber_Index` in list Clinic wrappers) | `pySsizeRaising` at `heapInsert`, `heapPop`, `lenVal` | same workers | shared raising conversion with CPython's exact `OverflowError`; sequence subscripting's `PyExc_IndexError` replacement is `pySsizeIndex` and `indexErrorSize` |
-| `_PyEval_SliceIndex` | `pySsizeClamping`, `asSliceIdx`, `normIndex` | shared | slice bounds clip to the pinned `Py_ssize_t` range before ordinary sequence clamping |
-| `PyFloat_AsDouble` / `PyLong_AsDouble` | `floatNumber` / `Float64.fromInt` | shared through `evalBinOp` | mixed true division and negative integer or mixed-float power convert left then right before special cases (`mixed_div_left_overflow`, `mixed_div_right_overflow`, `negative_pow_exponent_overflow`, `negative_pow_base_overflow`); integer true division retains its separate exact-ratio path (`integer_div_huge_ratio`); unit integer powers use converted exponent parity (`negative_pow_unit_boundary`), and floating zero, infinity and unit-base cases are decided (`float_power_special`); NaN payload, complex and platform `pow` cases stay loud |
-| `PyObject_GetIter` / `iternext` | `rangeVals`, `heapContains`, `execFor*`, generator steppers | `iterValues`, `Kont` cursors, `exec*` shells | shared value workers; live generator/dict mutation has explicit stateful arms |
-| `PyObject_Size` | `lenVal`, `lenValH`, `heapLen` | `lenM`, `liftRes` | `len(range(...))` applies `pySsizeRaising` to the `PyLong_AsSsize_t` result |
-| `PyObject_GetItem` / `PyObject_SetItem` | `indexValH`, `heapIndex`, `assignToH` | `indexM`, `assignM` | shared; receiver-specific heap paths |
-| `PyObject_Str` / `PyObject_Repr` | `strOfVal`, `reprVal`, `printOne` | `strOfVal`/rendering through `applyBuiltin` | shared rendering workers; sets and identity objects remain loud |
-| `Py_EnterRecursiveCall` | `pythonRecursionFull`, `callIn`, `callClosure`, `positionalArityError`, `mergeKwArgsAt`, `exceptionConstructError`, `builtinMethORecursionCheck`, `builtinExtremumRecursionCheck`, ordinary-class construction, direct rich comparison, `heapEqRecursionCheck`, `next` and generator resumption | same predicate through shared binding helpers, `callInM`, `withFrameRecursionUnit`, `withWorldRecursionUnit` and `richCompareRecursionCheckH` | Function and closure frames and ordinary `type_call` are counted, and direct plus nested rich comparisons check their units; `nested_equal(990/999)` and `nested_tuple_order(990/999)` pin equality and ordering boundaries, while `nested_mismatch(999)` pins the early-false path. `construct_depth`, `truth_depth`, `fib_left`, `fib(999)` and `closure_recursion.py` pin boundaries and unwind. `arity_recursion.py` pins argument-binding repr and keyword comparison; `generator_recursion.py` pins `next`, generator-frame entry and state on failure. `exception_recursion.py`, `len_recursion.py`, `abs_recursion.py`, `anyall_recursion.py`, `sum_recursion.py`, and `maxmin_recursion.py` pin builtin C-call frames, comparison units, argument order and error paths. General rendering remains a declared loud boundary: `nested_print(513/999)` refuses at the fixed `reprFuel` before CPython's limit, while `nested_print(510)` matches. `World.callDepth` carries the normalized entry depth. |
-| guarded accelerator admission | extractor `ACCELERATOR_ADMISSIONS` | extraction shared by both surfaces | `_bisect` is domain-guarded after `hi=-1` diverges (`ImportFrom:accelerator-outside-domain`); `_stat`/`_opcode` are measured or inspected divergences, and unmeasured entries refuse |
+| `Objects/object.c:PyObject_RichCompareBool` (identity shortcut, then rich comparison) and `PyObject_RichCompare` | `valEq`/`valEqList` for ref-free values; `heapEq`/`heapEqList`/`heapEqEntries` for heap values; `keyEq`/`keyEqList` for hash-key probes; `heapContainsScan`; `rvalLt`/`rvalLtList` for ordering | `evalCompareOpH`, `valContains`, and the same workers through `Monadic.Prim` | These are deliberately context-specific workers, not one definition. The missing identity representation is a loud boundary for non-finite container values in equality, membership, ordering, `sorted`, `max`, `min`, and key probes. The census work item is to unify or formally relate these workers before widening the domain. |
+| `Objects/object.c:PyObject_IsTrue` (type `nb_bool`, then `sq_length`, then default true) | `truthyH` and `truthy` | `truthyM` → `truthyH` | shared; instances and generators use the admitted default protocol, while unsupported cells refuse. |
+| `Objects/object.c:PyObject_Hash` and `Objects/dictobject.c` key lookup (hash, then equality) | `hashableKey`, `setHashNat`, `dictFind`/`keyEq`, dict/set key gates | same workers through `liftRes` and evaluator arms | Hashing and equality are separate workers because table layout and identity hashes are not modeled. Finite numeric and tuple keys are admitted; identity-hashed objects and unsupported set construction refuse. |
+| `Objects/abstract.c:PyNumber_Index`, then `PyNumber_AsSsize_t` / `Objects/listobject.c` Clinic conversion | `asInt`, `asRangeBound`, then `pySsizeRaising` at `heapInsert`, `heapPop`, and `lenVal` | same workers | shared raising conversion with CPython's exact `OverflowError`; the sequence-subscript `PyExc_IndexError` variant is `pySsizeIndex`/`indexErrorSize`. |
+| `Python/ceval.c:_PyEval_SliceIndex` (index protocol, then signed-size clipping) | `pySsizeClamping`, `asSliceIdx`, `normIndex` | shared | slice bounds clip to the pinned signed 64-bit range before ordinary sequence normalization. |
+| `Objects/floatobject.c:PyFloat_AsDouble` and `Objects/longobject.c:PyLong_AsDouble` (left conversion, right conversion, then operation) | `floatNumber` / `Float64.fromInt`; integer true division uses `Float64.divideInt` directly | shared through `evalBinOp` | Mixed division and negative or mixed-float power preserve conversion order. Portable zero, infinity, and unit-base power cases are decided; NaN payload, complex, and platform-libm `pow` cases stay loud. |
+| `Objects/abstract.c:PyObject_GetIter`, then `PyIter_Next` | `rangeVals`, `heapContains`, `execFor*`, and generator steppers | `iterValues`, `Kont` cursors, and `exec*` shells | shared value workers; live generator and dictionary mutation use explicit stateful cursors. |
+| `Objects/abstract.c:PyObject_Size` (sequence/mapping length) | `lenVal`, `lenValH`, `heapLen` | `lenM`, `liftRes` | shared; `len(range(...))` narrows the computed result through `pySsizeRaising`. |
+| `Objects/abstract.c:PyObject_GetItem` / `PyObject_SetItem` | `indexValH`, `heapIndex`, `assignToH` | `indexM`, `assignM` | shared receiver-specific heap paths; list and dict errors retain their CPython classes/messages. |
+| `Objects/object.c:PyObject_Str` / `PyObject_Repr`, and `Objects/listobject.c`/`dictobject.c` container renderers | `strOfVal`, `reprVal`, `printOne` | the same rendering workers through `applyBuiltin` and `emit` | shared rendering tables; sets, identity objects, unsupported Unicode rendering, and unbounded recursion remain loud. |
+| `Include/internal/pycore_ceval.h:Py_EnterRecursiveCall` at each C frame (with matching leave) | `pythonRecursionFull` plus call, argument-binding, exception, comparison, builtin, generator, and class-construction checks | the same predicate through `callInM`, `withFrameRecursionUnit`, `withWorldRecursionUnit`, and `richCompareRecursionCheckH` | The normalized `World.callDepth` and pinned limit 1000 cover admitted sites. Direct rendering beyond the fixed `reprFuel` boundary remains a declared refusal. |
+| extractor `ACCELERATOR_ADMISSIONS` (native import, then guarded call domain) | structured admission metadata | extraction shared by both surfaces | `_bisect` is guarded after the measured `hi=-1` divergence; `_stat` and `_opcode` remain explicitly unadmitted where equivalence is not established. |
+
+The census therefore records five protocol families with more than one Lean
+worker (`RichCompareBool`, hash/equality key lookup, iteration, rendering, and
+recursive entry). Those splits are now named rather than hidden behind the word
+"shared". A future admission must either route all observers through one
+worker or add a theorem and a domain row explaining why the split is exact.
 
 ## Operator dispatch
 
-| Source arm | Trunk | Runner | Protocol route |
+| Source arm | CPython entry and protocol order | Trunk | Runner | Domain / remaining gap |
+|---|---|---|---|---|
+| `+`, `-`, `*`, `/`, `//`, `%`, `**`, shifts, bitwise ops | `Objects/abstract.c:PyNumber_*` (numeric dispatch, then operand conversion); string `%` uses `PyUnicode_Format`; power uses `float_pow` for floating paths | `evalBinOp`; heap `evalBinOpH` for refs | `binOpM` / `evalOpen` | shared arithmetic workers; bare and measured-width string conversions are live, while precision, mapping keys, complex results, and platform `pow` remain loud. |
+| unary `+`, `-`, `~`, `not` | `PyNumber_Positive`, `PyNumber_Negative`, `PyNumber_Invert`, or `PyObject_IsTrue` for `not` | `evalUnaryOp`, `evalUnaryOpH` | `unaryOpM` | `not` delegates to shared truthiness. |
+| `==`, `!=`, `<`, `<=`, `>`, `>=` | `PyObject_RichCompare` (container implementations call `PyObject_RichCompareBool` for element equality) | `evalCompareOpH`, `ordFromLt` | `evalCompareChainM` → shared `evalCompareOpH` | value and heap workers are explicit; non-finite container comparisons refuse because immediate identity is not represented. |
+| `is`, `is not` | `Py_Is`/pointer identity in the comparison opcode; no value comparison | identity arms of `evalCompareOpH` | identity arms of `evalCompareChainM` | refs, `None`, and singleton markers are exact; other immediate identity is loud. |
+| `in`, `not in` | `PySequence_Contains` or mapping key lookup; each element probe uses `PyObject_RichCompareBool` | `valContains`, `heapContains` | shared through `evalCompareChainM` | strings, tuples/lists, and dict/set keys are admitted; generator membership remains stateful/loud. |
+
+## Builtin arms
+
+Both surfaces expose the following names. The runner dispatch is in
+`Monadic.Eval.applyBuiltin`; the trunk dispatch is its `evalExpr` call arm.
+The middle column records the CPython entry point and the protocol sequence
+that the worker must preserve.
+
+| Builtin arm | CPython entry and protocol order | Trunk / runner worker | Current boundary |
 |---|---|---|---|
-| `+`, `-`, `*`, `/`, `//`, `%`, `**`, shifts, bitwise ops | `evalBinOp`; heap `evalBinOpH` for refs | `binOpM` / `evalOpen` | shared arithmetic workers; string `%` admits bare conversions plus measured `%5…`/`%05…`/`%-5…` width forms; precision, other flags, and mapping keys remain loud; `**` uses the declared exact-base slice |
-| unary `+`, `-`, `~`, `not` | `evalUnaryOp`, `evalUnaryOpH` | `unaryOpM` | `not` delegates to shared truthiness |
-| `==`, `!=`, `<`, `<=`, `>`, `>=` | `evalCompareOpH`, `ordFromLt` | `evalCompareChainM` → shared `evalCompareOpH` | equality/order workers; non-finite container comparisons refuse |
-| `is`, `is not` | `evalCompareOpH` identity arms | `evalCompareChainM` identity arms | refs/None/singletons; other immediate identity is loud |
-| `in`, `not in` | `valContains`, `heapContains` | shared through `evalCompareChainM` | string, tuple/list, dict/set key paths; generator membership is loud/stateful |
+| `len` | `builtin_len` → `PyObject_Size` | `lenValH` / `heapLen`; `lenM` | signed-size narrowing is pinned; unsupported objects refuse. |
+| `abs`, `int`, `float`, `bool`, `round` | `builtin_abs`, `PyNumber_Long`, `PyNumber_Float`, `PyObject_IsTrue`, `builtin_round` (conversion, then admitted numeric method frame) | scalar conversion, truthiness, and rounding workers | scalar domain is live; unsupported protocols and unmodeled frames refuse. |
+| `divmod`, `pow` | `builtin_divmod` / `PyNumber_Divmod`; `builtin_pow` / `PyNumber_Power` (argument conversion before arithmetic) | `divmodVal`, `powModArgs`, `evalBinOp .pow` | integer modular slice and portable power cases are live; platform `pow` remains loud. |
+| `range` | `range_constructor` (argument `__index__`, then size computation) | `rangeMake`, `rangeVals` | range bounds and result narrowing use the shared index workers. |
+| `sorted` | `builtin_sorted` → `PySequence_List`/`PyList_Sort` → rich comparison | `sortedValH`, `sortByLt` | list materialization and stable `rvalLt` are live; non-finite comparison and unsupported key/cmp paths refuse. |
+| `max`, `min` | `builtin_min_max` → `PyObject_RichCompareBool` for each candidate | `extremumValH`, `rvalLt` | argument order and comparison recursion are pinned; unsupported ordering refuses. |
+| `sum` | `builtin_sum` → iterator protocol and numeric addition | `sumFold` and iterator dispatch | admitted scalar and iterator paths are live; unsupported additions refuse. |
+| `tuple`, `list`, `set`, `dict` | constructors drain `PyObject_GetIter`; list/dict/set constructors allocate and may hash or compare keys | iterator workers plus allocation workers | modeled allocation budgets replace environment-dependent exhaustion; unsupported pair/key forms refuse. |
+| `any`, `all` | `builtin_any`/`builtin_all` → `PyObject_IsTrue` for each iterator item | `anyAllScan` or stateful generator cursor | short circuit and generator state are explicit. |
+| `next`, `iter`, `enumerate`, `count` | iterator constructor/`tp_iternext`, including `StopIteration` | generator/iterator step workers | admitted generators are stateful; unsupported delegation remains loud. |
+| `ord`, `chr`, `ascii`, `hex`, `oct`, `bin`, `format`, `str`, `repr` | scalar conversion and `PyObject_Str`/`PyObject_Repr` | scalar and rendering workers | printable scalar/container inventory is shared; sets and identity objects refuse. |
+| `print` | `builtin_print` → `PyObject_Str`/`PyFile_WriteObject` in argument order | stdout-aware trunk arm; `strOfArgs`/`emit` in runner | stdout is visible only through stateful/script surfaces; kwargs and unsupported rendering remain loud. |
+| internal `<dictdel>`, `<attrdel>`, f-string and star markers | extractor marker arms, not Python-name lookup | explicit synthetic boundaries | source-level shadows cannot change these internal dispatches; native source-node semantics remain follow-up work. |
 
-## Builtin and method arms
+## Method arms
 
-Both surfaces expose the same following builtin inventory; the runner dispatch
-is in `Monadic.Eval.applyBuiltin`, while the trunk dispatch is in its
-`evalExpr` call arm. Each name below is one arm in both inventories.
+| Method arm | CPython entry and protocol order | Trunk / runner worker | Current boundary |
+|---|---|---|---|
+| dict `.get`, `.keys`, `.values`, `.items`, `.clear` | `dict_get`, `dict_keys`, `dict_values`, `dict_items`, `dict_clear`; key methods hash/probe before returning a view | heap dict/view workers and live view cursors | dict lookup, mutation, and live views are admitted; unsupported view operations refuse. |
+| list `.append`, `.pop`, `.insert` | `list_append`, `list_pop`, `list_insert`; index arguments use `PyNumber_Index` then the raising or clamping size conversion | `heapAppend`, `heapPop`, `heapInsert` | raising/clamping workers are shared and endpoint-tested; allocation limits remain loud. |
+| str `.swapcase`, `.isupper`, `.islower`, `.upper`, `.index`, `.join` | Unicode methods, with `.index` raising after a search and `.join` draining an iterable | string workers and iterator drain | admitted Unicode 3.9 table is live; unsupported Unicode/rendering forms refuse. |
+| float `.is_integer` | `float_is_integer` on the binary64 value | `floatIsInteger` | binary64 word semantics are shared. |
+| admitted instance methods and namedtuple methods | descriptor lookup, bound `self`, then `PyObject_Call` | `callIn` / class and tuple dispatch | qualified method entries and static namedtuple recognition remain architectural boundaries; runtime class/namedtuple values are the follow-up. |
 
-| Builtins | Shared worker / protocol |
-|---|---|
-| `len` | `lenValH` / `heapLen` |
-| `abs`, `int`, `float`, `bool`, `round` | scalar conversion/rounding workers |
-| `divmod`, `pow` | `divmodVal`, `powModArgs`, `evalBinOp .pow` |
-| `range` | `rangeMake`, `rangeVals` |
-| `sorted` | `sortedValH`, `sortByLt` |
-| `max`, `min` | `extremumValH`, `rvalLt` |
-| `sum` | `sumFold`, iterator dispatch |
-| `tuple`, `list`, `set`, `dict` | iterator protocol plus allocation workers |
-| `any`, `all` | `anyAllScan` or stateful generator cursor |
-| `next`, `iter`, `enumerate`, `count` | generator/iterator step workers |
-| `ord`, `chr`, `ascii`, `hex`, `oct`, `bin`, `format`, `str`, `repr` | scalar/rendering workers |
-| `print` | `strOfArgs`/`emit` (runner) and stdout-aware trunk arm |
-| internal `<dictdel>`, `<attrdel>`, f-string and star markers | explicit synthetic boundaries; no source-level builtin lookup |
+## Work list produced by the census
 
-| Methods | Shared worker / protocol |
-|---|---|
-| dict `.get`, `.keys`, `.values`, `.items`, `.clear` | heap dict/view workers and live view cursors |
-| list `.append`, `.pop`, `.insert` | `heapAppend`, `heapPop`, `heapInsert` |
-| str `.swapcase`, `.isupper`, `.islower`, `.upper`, `.index`, `.join` | string workers, iterator drain |
-| float `.is_integer` | `floatIsInteger` |
-| admitted instance methods and namedtuple methods | `callIn` / class and tuple dispatch |
-
-The census identifies the next protocol work precisely: replace raw `Int`
-arguments at every C-index site with typed raising/clamping conversions;
-separate `PyFloat_AsDouble` + platform `pow` from exact reciprocal arithmetic;
-and complete recursion-unit accounting at nested comparison, rendering and remaining exception sites. The runner
-and trunk share the workers listed above, but their control/transport wrappers
-remain separate and are not a refinement theorem.
+The remaining protocol work is now explicit. Rich comparison has multiple
+context workers and needs either one shared worker or a refinement/domain
+theorem before widening identity-sensitive values. Hash/key probes and
+rendering have the same obligation. The index workers already separate raising
+and clamping conversions; the float conversion worker is shared, but platform
+`pow` remains refused. Recursive entry is shared as a predicate, with direct
+rendering beyond `reprFuel` still outside the decided domain. The runner and
+trunk control/transport wrappers remain separate and do not yet have a full
+recursive expression, statement, or script adequacy theorem.

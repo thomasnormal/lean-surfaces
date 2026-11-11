@@ -13862,3 +13862,26 @@ rows cover positive and negative cutoffs, signed zero, non-finite values, and
 
 DECIDED: close `py-round-digits-unrolled`; retain the parameterized worker and
 explicit integer/unsupported protocol boundaries.
+
+## 2026-11-11-pyfoundation-96 — refresh the CPython protocol census
+
+The protocol census now records the CPython 3.9 entry point and ordered
+protocol calls for every operator family, builtin arm, and admitted method
+arm. It names the five protocol families that still have context-specific
+workers (`RichCompareBool`, hash/key lookup, iteration, rendering, and
+recursive entry) instead of calling them all shared. The remaining identity,
+hash-layout, rendering, platform-`pow`, and recursive expression/script
+adequacy boundaries are explicit work-list entries; no runtime definition was
+changed.
+
+| Measurement | Result |
+|---|---|
+| Census rows | 13 inventory rows (including accelerator admission), 5 operator families, 13 builtin rows, 5 method rows |
+| Evidence | 125 foundation-edge calls: 106 MATCH, 19 loud refusals, 0 failures; statement smoke 34/34 in both modes |
+| Freshness | managed `leanmodels-run` build 40/40; strict runner stamp verified |
+| Documentation | `docs_check.py`, coverage check, accelerator-domain check, and generated backlog index passed |
+| Semantic change | none; census and work-list documentation only |
+
+DECIDED: keep the census as the source inventory for the next protocol or
+refinement item; every new admission must identify its CPython call order,
+shared worker, observer domain, and boundary row.

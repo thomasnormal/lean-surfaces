@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- Refreshed the Python protocol census with the CPython 3.9 entry point and
+  ordered protocol calls for every operator, builtin, and admitted method arm.
+  The census now names the five multi-worker protocol families and records the
+  remaining identity, hash-layout, rendering, platform-`pow`, and recursive
+  adequacy boundaries without changing runtime semantics.
+
 - Revalidated parameterized float rounding: one `roundFloatNDigits` worker
   serves both interpreters, with no per-digit worker family; rows beyond the
   former unrolled range continue to match CPython 3.9.25.

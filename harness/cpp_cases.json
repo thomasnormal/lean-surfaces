@@ -82,6 +82,18 @@
     "rung": 0
   },
   {
+    "id": "translation.true-static-assert-execution",
+    "kind": "translation",
+    "corpus": "translation witness",
+    "lean_module": "LeanModels.Cpp.TranslationTests",
+    "lean_namespace": "LeanModels.Cpp.TranslationTests",
+    "lean_expression": "staticAssertTranslationExecution",
+    "render": "unit",
+    "cpp_source": "static_assert(true);",
+    "expect": "match",
+    "rung": 0
+  },
+  {
     "id": "translation.namespace-declaration",
     "kind": "translation",
     "corpus": "translation witness",

@@ -750,6 +750,11 @@ private def executeTopDeclaration (raw : Raw) : Except String Unit :=
       | some "C" | some "C++" => pure ()
       | _ => .error executionRefusal
   | some "LinkageSpecDecl", _ => .error executionRefusal
+  | some "StaticAssertDecl", some (.array [condition, message]) =>
+      match condition.text "kind", condition.field "value", message with
+      | some "CXXBoolLiteralExpr", some (.bool true), .object [] => pure ()
+      | _, _, _ => .error executionRefusal
+  | some "StaticAssertDecl", _ => .error executionRefusal
   | some kind, some (.array [target]) =>
       if kind != "TypeAliasDecl" && kind != "TypedefDecl" then .error executionRefusal else
       match target.text "kind", target.field "type", raw.field "type" with

@@ -19,6 +19,10 @@ coverage advance independently from the Python tier.
 
 ### Added
 
+- `static_assert(true);` now executes as a declaration-only translation node
+  when Clang supplies a true boolean condition and empty message placeholder;
+  false, non-boolean, and message-bearing assertions remain loud refusals.
+
 - Empty `extern "C" {}` and `extern "C++" {}` linkage declarations now
   execute as declaration-only translation nodes when their bodies are empty;
   unsupported languages and nonempty linkage bodies remain loud refusals.

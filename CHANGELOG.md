@@ -84,6 +84,10 @@
 
 - Made the C++ differential harness require a pinned native oracle by default;
   exploratory runs must opt into `--allow-oracle` explicitly.
+- Admit space-padded combinations of percent-format sign and alternate flags
+  with widths; zero-padded combinations remain loud until their prefix order is
+  modeled.
+
 - Run the generated protocol edge-pool battery in the Python acceptance check
   through both interpreter modes.
 

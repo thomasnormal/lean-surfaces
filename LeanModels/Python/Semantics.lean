@@ -2281,24 +2281,67 @@ def strFormatWidthPiece (width : Nat) (precision : Option Nat) (c : Char)
   else
     return padFormatField width piece
 
-def strFormatSignPiece (c : Char) (v : RVal) (space : Bool) : Res String := do
-  let piece ← strFormatConv c v
-  if c == 'd' || c == 'i' || c == 'u' || c == 'x' || c == 'o' then
-    match piece.toList with
-    | '-' :: _ => return piece
-    | _ => return (if space then " " else "+") ++ piece
-  else
-    return piece
+def strFormatReadFlags : List Char → Bool → Bool → Bool → Bool → Bool →
+    Option (Bool × Bool × Bool × Bool × Bool × List Char)
+  | [], left, zero, plus, space, alternate =>
+      some (left, zero, plus, space, alternate, [])
+  | c :: rest, left, zero, plus, space, alternate =>
+      if c == '-' then
+        strFormatReadFlags rest true zero plus space alternate
+      else if c == '0' then
+        strFormatReadFlags rest left true plus space alternate
+      else if c == '+' then
+        strFormatReadFlags rest left zero true space alternate
+      else if c == ' ' then
+        strFormatReadFlags rest left zero plus true alternate
+      else if c == '#' then
+        strFormatReadFlags rest left zero plus space true
+      else
+        some (left, zero, plus, space, alternate, c :: rest)
 
-def strFormatAlternatePiece (c : Char) (v : RVal) : Res String := do
+def strFormatPrecisionPiece (precision : Option Nat) (c : Char)
+    (piece : String) : Res String :=
+  match precision with
+  | some n =>
+      if c == 's' || c == 'r' || c == 'a' then
+        .ok (String.ofList (piece.toList.take n))
+      else if c == 'd' || c == 'i' || c == 'u' || c == 'x' || c == 'o' then
+        .ok (precisionPadFormatField n piece)
+      else
+        .unsupported "precision for this percent conversion is outside the tier"
+  | Option.none => .ok piece
+
+def strFormatFieldPiece (width : Nat) (precision : Option Nat) (c : Char)
+    (v : RVal) (left zero plus space alternate : Bool) : Res String := do
   let piece ← strFormatConv c v
-  if c == 'x' || c == 'o' then
-    let pre := if c == 'x' then "0x" else "0o"
-    match piece.toList with
-    | '-' :: rest => return "-" ++ pre ++ String.ofList rest
-    | _ => return pre ++ piece
-  else
+  let piece ← strFormatPrecisionPiece precision c piece
+  let numeric := c == 'd' || c == 'i' || c == 'u' || c == 'x' || c == 'o'
+  if (plus || space) && !numeric then
+    .unsupported "sign flags for this percent conversion are outside the tier"
+  else if alternate && !(c == 'x' || c == 'o') then
     .unsupported "alternate form for this percent conversion is outside the tier"
+  else
+    let piece :=
+      if plus || space then
+        match piece.toList with
+        | '-' :: _ => piece
+        | _ => (if plus then "+" else " ") ++ piece
+      else piece
+    let piece :=
+      if alternate then
+        let pre := if c == 'x' then "0x" else "0o"
+        match piece.toList with
+        | '-' :: rest => "-" ++ pre ++ String.ofList rest
+        | '+' :: rest => "+" ++ pre ++ String.ofList rest
+        | ' ' :: rest => " " ++ pre ++ String.ofList rest
+        | _ => pre ++ piece
+      else piece
+    if left then
+      return padFormatFieldLeft width piece
+    else if zero && numeric then
+      return zeroPadFormatField width piece
+    else
+      return padFormatField width piece
 
 def strFormatDynamicWidthPiece (c : Char) (width value : RVal) : Res String :=
   match asInt width with
@@ -2334,8 +2377,8 @@ def strFormatReadDigits : List Char → Nat → Option (Nat × List Char)
       else Option.none
 
 def strFormatWidthSpec (chars : List Char) :
-    Option (Bool × Bool × Nat × Option Nat × Char × List Char) :=
-  let read := fun (left zero : Bool) (digits : List Char) =>
+    Option (Bool × Bool × Bool × Bool × Bool × Nat × Option Nat × Char × List Char) :=
+  let read := fun (left zero plus space alternate : Bool) (digits : List Char) =>
     match strFormatReadDigits digits 0 with
     | some (width, rest) =>
         match rest with
@@ -2343,23 +2386,34 @@ def strFormatWidthSpec (chars : List Char) :
             match strFormatReadDigits precisionChars 0 with
             | some (precision, afterPrecision) =>
                 match afterPrecision with
-                | c :: tail => some (left, zero, width, some precision, c, tail)
+                | c :: tail =>
+                    some (left, zero, plus, space, alternate, width, some precision, c, tail)
                 | [] => Option.none
             | Option.none => Option.none
-        | c :: tail => some (left, zero, width, Option.none, c, tail)
+        | c :: tail => some (left, zero, plus, space, alternate, width, Option.none, c, tail)
         | [] => Option.none
     | Option.none => Option.none
-  match chars with
-  | '-' :: rest => read true false rest
-  | '0' :: rest => read false true rest
-  | '.' :: precisionChars =>
-      match strFormatReadDigits precisionChars 0 with
-      | some (precision, afterPrecision) =>
-          match afterPrecision with
-          | c :: tail => some (false, false, 0, some precision, c, tail)
-          | [] => Option.none
-      | Option.none => Option.none
-  | _ => read false false chars
+  match strFormatReadFlags chars false false false false false with
+  | some (left, zero, plus, space, alternate, rest) =>
+      match rest with
+      | [] => Option.none
+      | '.' :: precisionChars =>
+          match strFormatReadDigits precisionChars 0 with
+          | some (precision, afterPrecision) =>
+              match afterPrecision with
+              | c :: tail =>
+                  some (left, zero, plus, space, alternate, 0,
+                    some precision, c, tail)
+              | [] => Option.none
+          | Option.none => Option.none
+      | c :: tail =>
+          if '0' ≤ c && c ≤ '9' then
+            read left zero plus space alternate (c :: tail)
+          else if left || zero || plus || space || alternate then
+            some (left, zero, plus, space, alternate, 0, Option.none, c, tail)
+          else
+            Option.none
+  | Option.none => Option.none
 
 /-- The single left-to-right pass. Literals copy; `%%` emits one `%` and
 consumes NOTHING; `%s`/`%r`/`%a`/`%c`/`%d`/`%i`/`%u`/`%x`/`%o` consume the next argument. Running out
@@ -2367,48 +2421,16 @@ mid-walk is CPython's `not enough arguments` verbatim, and so are
 leftover arguments at the end — EXCEPT under `mapping`, the `ctx.dict`
 flag above, which is exactly the condition CPython guards that second
 check with. The admitted slice is decimal `%N…`, `%0N…`, and `%-N…` widths,
-plus `%.N` precision for string, repr, and ASCII-repr conversions; numeric
-precision, other flags, and mapping keys remain loud. The invalid `%q` form
-and a trailing `%` carry CPython's faithful
+plus space-padded combinations of sign or alternate flags with a width, and
+`%.N` precision for string, repr, and ASCII-repr conversions; zero-padded
+sign/alternate combinations, other flags, and mapping keys remain loud. The
+invalid `%q` form and a trailing `%` carry CPython's faithful
 `ValueError`s. -/
 def strFormatWalk : List Char → List RVal → Bool → String → Res String
   | [], args, mapping, acc =>
       if args.isEmpty || mapping then .ok acc
       else .exn (.typeError "not all arguments converted during string formatting")
   | '%' :: '%' :: cs, args, mapping, acc => strFormatWalk cs args mapping (acc ++ "%")
-  | '%' :: '+' :: c :: cs, args, mapping, acc =>
-      if c == 'd' || c == 'i' || c == 'u' || c == 'x' || c == 'o' then
-        match args with
-        | [] => .exn (.typeError "not enough arguments for format string")
-        | a :: rest =>
-            match strFormatSignPiece c a false with
-            | .ok piece => strFormatWalk cs rest mapping (acc ++ piece)
-            | .exn e => .exn e
-            | .timeout => .timeout
-            | .unsupported msg => .unsupported msg
-      else .unsupported "sign flags for this percent conversion are outside the tier"
-  | '%' :: ' ' :: c :: cs, args, mapping, acc =>
-      if c == 'd' || c == 'i' || c == 'u' || c == 'x' || c == 'o' then
-        match args with
-        | [] => .exn (.typeError "not enough arguments for format string")
-        | a :: rest =>
-            match strFormatSignPiece c a true with
-            | .ok piece => strFormatWalk cs rest mapping (acc ++ piece)
-            | .exn e => .exn e
-            | .timeout => .timeout
-            | .unsupported msg => .unsupported msg
-      else .unsupported "sign flags for this percent conversion are outside the tier"
-  | '%' :: '#' :: c :: cs, args, mapping, acc =>
-      if c == 'x' || c == 'o' then
-        match args with
-        | [] => .exn (.typeError "not enough arguments for format string")
-        | a :: rest =>
-            match strFormatAlternatePiece c a with
-            | .ok piece => strFormatWalk cs rest mapping (acc ++ piece)
-            | .exn e => .exn e
-            | .timeout => .timeout
-            | .unsupported msg => .unsupported msg
-      else .unsupported "alternate form for this percent conversion is outside the tier"
   | '%' :: '.' :: '*' :: c :: cs, args, mapping, acc =>
       if c == 's' || c == 'r' || c == 'a' || c == 'd' || c == 'i' ||
           c == 'u' || c == 'x' || c == 'o' then
@@ -2435,12 +2457,14 @@ def strFormatWalk : List Char → List RVal → Bool → String → Res String
       else .unsupported "dynamic width for this percent conversion is outside the tier"
   | '%' :: cs, args, mapping, acc =>
       match strFormatWidthSpec cs with
-      | some (left, zero, width, precision, c, restChars) =>
-        if c == 's' || c == 'r' || c == 'a' || c == 'c' || c == 'd' || c == 'i' || c == 'u' || c == 'x' || c == 'o' then
+      | some (left, zero, plus, space, alternate, width, precision, c, restChars) =>
+        if zero && (plus || space || alternate) then
+          .unsupported "zero padding combined with sign or alternate percent flags is outside the tier"
+        else if c == 's' || c == 'r' || c == 'a' || c == 'c' || c == 'd' || c == 'i' || c == 'u' || c == 'x' || c == 'o' then
           match args with
           | [] => .exn (.typeError "not enough arguments for format string")
           | a :: rest =>
-              match strFormatWidthPiece width precision c a left zero with
+              match strFormatFieldPiece width precision c a left zero plus space alternate with
               | .ok piece => strFormatWalk restChars rest mapping (acc ++ piece)
               | .exn e => .exn e
               | .timeout => .timeout

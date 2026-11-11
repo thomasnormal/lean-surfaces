@@ -148,6 +148,24 @@ Dynamic precision outside that domain remains loud.
 DECIDED: keep dynamic precision bounded and share its conversion worker with
 literal precision.
 
+## 2026-11-11-pyformat-9 — admit space-padded combined percent flags
+
+The percent-format parser now accepts sign and alternate flags together with
+space-padded widths. `%+5d`, `% 5d`, `%#8x`, and `%+#8x` apply conversion,
+precision, sign, alternate prefix, and width in CPython's order. Zero-padding
+combined with sign or alternate flags remains loud until its prefix/zero
+ordering is modeled.
+
+| Measurement | Result |
+|---|---|
+| Generated edge battery | 71 cases, 125 calls |
+| Native runner | 106 MATCH, 19 documented refusals, 0 failures |
+| Proof interpreter | 106 MATCH, 19 loud refusals, 0 failures |
+| Semantic change | shared flag parser and field worker |
+
+DECIDED: admit only space-padded sign/alternate combinations; retain loud
+failure for zero-padded combinations and richer format grammar.
+
 ## 2026-11-11-pyfoundation-31 — count `sorted` recursion and materialization
 
 The builtin recursion audit found that `sorted` was missing the nested call

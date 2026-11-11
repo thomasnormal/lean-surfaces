@@ -701,6 +701,104 @@
   {
     "args": [
       [
+        3
+      ],
+      [
+        -3
+      ]
+    ],
+    "expect": "match",
+    "file": "harness/foundation_probe.py",
+    "function": "percent_plus_width",
+    "note": "space-padded percent-format plus flag with width."
+  },
+  {
+    "args": [
+      [
+        3
+      ],
+      [
+        -3
+      ]
+    ],
+    "expect": "match",
+    "file": "harness/foundation_probe.py",
+    "function": "percent_space_width",
+    "note": "space-padded percent-format space flag with width."
+  },
+  {
+    "args": [
+      [
+        3
+      ],
+      [
+        -3
+      ]
+    ],
+    "expect": "match",
+    "file": "harness/foundation_probe.py",
+    "function": "percent_alternate_width",
+    "note": "space-padded percent-format alternate flag with width."
+  },
+  {
+    "args": [
+      [
+        3
+      ],
+      [
+        -3
+      ]
+    ],
+    "expect": "match",
+    "file": "harness/foundation_probe.py",
+    "function": "percent_plus_alternate_width",
+    "note": "space-padded percent-format sign and alternate flags with width."
+  },
+  {
+    "args": [
+      [
+        3
+      ],
+      [
+        -3
+      ]
+    ],
+    "expect": "match",
+    "file": "harness/foundation_probe.py",
+    "function": "percent_space_alternate_width",
+    "note": "space-padded percent-format space and alternate flags with width."
+  },
+  {
+    "args": [
+      [
+        3
+      ],
+      [
+        -3
+      ]
+    ],
+    "expect": "unsupported",
+    "file": "harness/foundation_probe.py",
+    "function": "percent_zero_plus_width",
+    "note": "zero padding combined with a sign flag remains loud."
+  },
+  {
+    "args": [
+      [
+        3
+      ],
+      [
+        -3
+      ]
+    ],
+    "expect": "unsupported",
+    "file": "harness/foundation_probe.py",
+    "function": "percent_zero_alternate_width",
+    "note": "zero padding combined with an alternate flag remains loud."
+  },
+  {
+    "args": [
+      [
         5,
         3
       ],

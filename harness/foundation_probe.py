@@ -290,6 +290,34 @@ def percent_alternate_oct(value):
     return "%#o" % value
 
 
+def percent_plus_width(value):
+    return "%+5d" % value
+
+
+def percent_space_width(value):
+    return "% 5d" % value
+
+
+def percent_alternate_width(value):
+    return "%#8x" % value
+
+
+def percent_plus_alternate_width(value):
+    return "%+#8x" % value
+
+
+def percent_space_alternate_width(value):
+    return "% #8x" % value
+
+
+def percent_zero_plus_width(value):
+    return "%+05d" % value
+
+
+def percent_zero_alternate_width(value):
+    return "%#05x" % value
+
+
 def percent_dynamic_width(width, value):
     return "%*d" % (width, value)
 

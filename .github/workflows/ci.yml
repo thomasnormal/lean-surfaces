@@ -8,11 +8,15 @@ on:
   push:
   pull_request:
 
-# Superseded pushes do not need to consume a hosted runner. Keep one active
-# workflow per ref and bound the full check if a tool or dependency hangs.
+# Superseded pushes do not need to consume a hosted runner, except on master:
+# there a run in progress is left to finish, and a newer push waits (only the
+# newest waiting run is kept), so that master gets completed results. With
+# cancellation on master too, 195 of the last 200 master runs were cancelled
+# and none completed after 2026-11-09. Keep one active workflow per ref and
+# bound the full check if a tool or dependency hangs.
 concurrency:
   group: ci-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
 
 jobs:
   check:

@@ -20,7 +20,7 @@ coverage advance independently from the Python tier.
 ### Added
 
 - Empty C++ translation units now execute through the translation boundary;
-  empty namespace declarations, namespace aliases, and `int` type aliases execute as declaration-only nodes; other
+  empty namespace declarations, namespace aliases, `int` type aliases, and `typedef int` aliases execute as declaration-only nodes; other
   nonempty units retain the named refusal until declaration and body semantics
   are threaded through the object model.
 

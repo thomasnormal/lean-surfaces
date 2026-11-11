@@ -58,6 +58,18 @@
     "rung": 0
   },
   {
+    "id": "translation.int-typedef-execution",
+    "kind": "translation",
+    "corpus": "translation witness",
+    "lean_module": "LeanModels.Cpp.TranslationTests",
+    "lean_namespace": "LeanModels.Cpp.TranslationTests",
+    "lean_expression": "typedefTranslationExecution",
+    "render": "unit",
+    "cpp_source": "typedef int I;",
+    "expect": "match",
+    "rung": 0
+  },
+  {
     "id": "translation.namespace-declaration",
     "kind": "translation",
     "corpus": "translation witness",

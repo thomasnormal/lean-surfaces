@@ -134,6 +134,10 @@ evaluator.
 diagnostic. Existing whole-call refinement theorems now name the compatibility
 evaluator explicitly, so their scope is honest. The frame evaluator's call arm
 remains a loud boundary with its own cause.
+Revalidated 2026-11-11 with the 24 GiB cgroup: `lake build
+LeanModels.Cpp.CallableRefinementTests LeanModels.Cpp.CallableObjectEvaluationTests
+LeanModels.Cpp.CallableTests` completed successfully (26 jobs), including the
+projection, refinement, and `unsupportedCall` guards.
 
 ## `c-no-compiled-oracle`: pinned C differential battery
 

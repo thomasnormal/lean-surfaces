@@ -230,6 +230,23 @@ control proofs do not re-expand the StateT plumbing.
 DECIDED: reuse the shared unary bridge in the next expression-control proof;
 recursive and script-level adequacy remain open.
 
+## 2026-11-11-pyfoundation-57 — prove unary expression control refinement
+
+The expression-level unary bridge now composes the constant-child theorem
+with `twinAgrees_unaryOp`. Its explicit `1 < fuel` premise records that the
+legacy evaluator spends fuel on the child while the monadic evaluator is
+fuel-free. The proof preserves left-to-right state and closes the exact
+`Run.bind`/`Run.liftRes` shape.
+
+| Measurement | Result |
+|---|---|
+| Target | managed `lake build LeanModels/Python/Monadic/Eval.lean` passed |
+| New theorem | `Monadic.twinAgrees_evalOpen_unaryInt` |
+| Semantic change | theorem only; no evaluator behavior change |
+
+DECIDED: continue the control-level refinement one AST arm at a time, keeping
+fuel hypotheses explicit; recursive calls and script execution remain open.
+
 ## 2026-11-11-pyfoundation-43 — repair PayloadBlind comparison recursion transport
 
 The proof observer now transports the heap-aware rich-comparison recursion

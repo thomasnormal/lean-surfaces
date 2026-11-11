@@ -2863,6 +2863,26 @@ theorem twinAgrees_evalOpen_constant (K : Kont) (m : Module) (st : FrameState)
   | succ fuel =>
       rfl
 
+/- A unary literal has one recursive child. The explicit `1 < fuel` premise
+   records the fuel spent by the legacy child evaluation; without it the
+   fuel-free monadic presentation can decide a run that the trunk times out. -/
+theorem twinAgrees_evalOpen_unaryInt (K : Kont) (m : Module) (st : FrameState)
+    (op : UnaryOp) (a : Int) (sp : Span) (fuel : Nat) (hfuel : 1 < fuel) :
+    LeanModels.Python.Monadic.toRun (evalOpen K m
+      (.unaryOp op (.constant (.int a) sp) sp)) st =
+      evalExpr m fuel st (.unaryOp op (.constant (.int a) sp) sp) := by
+  cases fuel with
+  | zero => omega
+  | succ fuel =>
+    cases fuel with
+    | zero => omega
+    | succ fuel =>
+      rw [evalExpr]
+      have hc := twinAgrees_evalOpen_constant K m st (.int a) sp (fuel + 1) (by omega)
+      rw [← hc]
+      simp [evalOpen, toRun_bind, toRun_pure, twinAgrees_unaryOp, Run.bind,
+        Run.liftRes]
+
 /- `x + 5 = 12`, through the fuel-free evaluator, decided by the KERNEL. -/
 #guard (match toRun (evalOpen K0 emptyModule
           (.binOp (.name "x" sp0) .add (.constant (.int 5) sp0) sp0)) st0 with

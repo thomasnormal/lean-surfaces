@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Added a kernel-checked unary-expression refinement theorem that composes
+  the constant-child bridge with the shared unary worker bridge and records the
+  legacy evaluator's child-fuel requirement.
+
 - Added a kernel-checked `toRun` bridge for the monadic heap-aware unary
   worker, so unary expression refinement proofs can reuse one state-read
   equation instead of expanding the frame monad at every site.

@@ -54,6 +54,10 @@
 - Added a conservative C type-spelling admission guard so unsupported
   declarator grammars refuse before layout or pointer dispatch.
 
+- Gated all fourteen C profile facts that the Lean value, layout, and memory
+  layers read, including scalar widths, pointer width, byte order, and signed
+  right shift.
+
 - Fixed the TinyXML-2 coverage caller's C++ runtime linkage so its
   provenance-verified native calls can run when the system runtime is older.
 

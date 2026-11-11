@@ -338,10 +338,9 @@ whose Annex J home is **`J.3.6(4)`** ("the results of some bitwise
 operations on signed integers"), a catch-all that does not name shifts;
 §6.5.8p5 is the precise citation.
 
-The corpus has **zero signed right shifts** (measured: all 6 `>>` sites
-are on `uint64_t`), so the fact is recorded and deliberately NOT depended
-on. `Int.fdiv` floors, which is the arithmetic-shift answer both hosts
-give. -/
+The profile gate checks `arithmetic_right_shift` before an envelope is
+accepted. `Int.fdiv` floors, which is the arithmetic-shift answer pinned by
+that fact. -/
 def shrOp (t : IntTy) (a b : Int) : CRes CVal :=
   if b < 0 then .ub (.shiftCountNegative b)
   else if b ≥ (t.bits : Int) then .ub (.shiftCountTooLarge b t.bits)

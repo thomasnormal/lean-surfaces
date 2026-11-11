@@ -346,11 +346,10 @@ def storeBytes (m : Mem) (p : Ptr) (bs : List CByte) : MRes Mem := do
 
 /-! ### §6.2.6.2 Integer representation
 
-Byte order is the profile's `little_endian`, measured on both hosts and
-**deliberately not depended on**: a store/load round trip is
-order-independent, and the corpus's only byte-level view of a multi-byte
-object is `pos_seal` hashing the board, whose result is never observable
-(`docs/c-profile.md` §4.3). -/
+Byte order is the profile's `little_endian`, and the extractor's profile gate
+checks it before an envelope is accepted. The store/load round trip remains
+structurally explicit, but representation order is still a consumed profile
+fact (`docs/c-profile.md` §4.3). -/
 
 /-- Little-endian digits, `n` of them. -/
 def natToBytes : Nat → Nat → List UInt8

@@ -63,15 +63,15 @@ FACTS = [
      "_Alignof(int) == 4 && sizeof(struct { char c; int i; }) == 8 && _Alignof(struct { char c; int i; }) == 4 && sizeof(struct { char a; char b; }) == 2", True,
      "torLayout computes struct/union size and member offsets from this rule (2026-08-25-c-26). C leaves the padding implementation-defined, so a layout computed from an UNDECLARED rule is a fabricated layout -- the same defect as a fabricated column, one abstraction up. Declared here so it is a profile decision like the scalar widths, and PROBED so it is checked on both hosts rather than assumed from one.",
      "J.3.9(1) -- the alignment requirements of structure and union members, and the padding between them (6.7.2.1). C23 leaves both implementation-defined; this profile pins the SysV/AAPCS shape both profiled hosts implement: every member at its own alignment, no reordering, the aggregate aligned to its widest member and its size rounded up to that alignment."),
-    ("long_long_64", "sizeof(long long) == 8", False,
+    ("long_long_64", "sizeof(long long) == 8", True,
      "reached only through uint64_t, which <stdint.h> fixes exactly",
      "J.3.14(1) — as int_32"),
-    ("pointer_64", "sizeof(void *) == 8", False,
+    ("pointer_64", "sizeof(void *) == 8", True,
      "no integer<->pointer cast in the corpus (0 sites), so no observable "
      "depends on the width; the model needs it for sizeof only",
      "J.3.8 (Arrays and pointers) — but its entries are about "
      "integer<->pointer conversion, which the corpus never does"),
-    ("short_16", "sizeof(short) == 2", False, "unused by the corpus",
+    ("short_16", "sizeof(short) == 2", True, "IntTy.short_ and IntTy.ushort_ use the profile width",
      "J.3.14(1) — as int_32"),
     ("twos_complement", "INT_MIN == -INT_MAX - 1", True,
      "C23 6.2.6.2p6 NOTE 2 mandates it; the signed-overflow UB boundary the "
@@ -111,18 +111,18 @@ FACTS = [
      "integer to a signed type when the value cannot be represented "
      "(6.3.1.3p3)"),
     ("little_endian",
-     "__BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__", False,
+     "__BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__", True,
      "pos_seal hashes the board THROUGH uint64_t words, so h is "
      "endian-dependent — but h is never observable: pos_eq uses it only as "
-     "a fast reject in front of a full memcmp (L209-217) and the bucket "
-     "layout it induces is unobservable by the file's own argument "
-     "(L403-405).  Measured, deliberately NOT depended on",
+     "a fast reject in front of a full memcmp (L209-217), and the C memory "
+     "model's representation encoder reads this fact directly. It is now "
+     "depended on and must be checked before an envelope is accepted",
      "NONE — byte order is not in J.3; it is a consequence of the "
      "object-representation rules (6.2.6.1) that the standard leaves "
      "unspecified rather than implementation-defined"),
-    ("arithmetic_right_shift", "(-1 >> 1) == -1", False,
-     "the corpus has ZERO signed right shifts — all 6 >> sites are on "
-     "uint64_t (L192-194, L652-653).  Measured so the claim stays checkable",
+    ("arithmetic_right_shift", "(-1 >> 1) == -1", True,
+     "the value model implements signed right shift directly; the profile "
+     "must check the chosen arithmetic result before admitting such rows",
      "J.3.6(4) — 'the results of some bitwise operations on signed "
      "integers' (6.5.1), a catch-all that does NOT name shifts; the precise "
      "citation is normative 6.5.8p5"),

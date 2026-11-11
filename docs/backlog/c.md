@@ -53,6 +53,13 @@ scope forms before any string peeling can assign them a meaning. Differential
 rows pin all three refusals. A future extractor revision can replace this
 guard with declaration-identity and complete Clang type trees.
 
+## 2026-11-11-c-profile-facts-ungated — profile dependency gate
+
+The profile probe now marks all fourteen facts consumed by Lean as
+depended-on. Long-long, pointer, and short widths, byte order, and signed
+right-shift behavior are checked before an envelope is accepted; the
+generated profile reports 14/14 depended-on facts and all hosts agree.
+
 ---
 
 ## 2026-11-11-c-torture-main-return-ignored — scorer exit status

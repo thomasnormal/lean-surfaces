@@ -7,6 +7,9 @@ name: ci
 on:
   push:
   pull_request:
+  workflow_dispatch:
+  schedule:
+    - cron: "17 2 * * *"
 
 # Superseded pushes do not need to consume a hosted runner, except on master:
 # there a run in progress is left to finish, and a newer push waits (only the
@@ -15,8 +18,10 @@ on:
 # and none completed after 2026-11-09. Keep one active workflow per ref and
 # bound the full check if a tool or dependency hangs.
 concurrency:
-  group: ci-${{ github.ref }}
-  cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
+  # Scheduled runs have their own lane, so the nightly baseline never waits
+  # behind a push and a manual dispatch can start the first completion now.
+  group: ${{ github.event_name == 'schedule' && 'ci-nightly' || format('ci-{0}', github.ref) }}
+  cancel-in-progress: ${{ github.event_name != 'schedule' && github.ref != 'refs/heads/master' }}
 
 jobs:
   check:

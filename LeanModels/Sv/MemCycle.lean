@@ -367,6 +367,11 @@ def instantiateMem2 (d : PDesign) (args : List Int)
   let (scalarDecls, initializers) ← scalarDeclsMem env d.decls
   let decls := scalarDecls ++ memOtherDecls d.others
   let generated ← memExpandList env iterFuel [] d.generates
+  -- The retained constructor must not fall through the legacy scheduler's
+  -- unsupported-process default. No implicit-event execution is added here.
+  if (d.processes ++ generated).any (fun p => match p with
+      | .alwaysImplicit _ => true | _ => false) then
+    .unsupported "ProceduralBlockSymbol:Always: source-level event-controlled always is retained; the frozen process AST has no event-list constructor"
   let memDecls := memDeclsOf d
   let envP := { env with widths := decls.map fun dc => (dc.name, dc.width) }
   let base : MemDesign2 :=
@@ -710,6 +715,8 @@ end
 
 def runMemProcess (d : MemDesign2) (fuel : Nat) (st : MemCycleState)
     (q : MemPending) : PProcess → Res (MemCycleState × MemPending)
+  | .alwaysImplicit _ => .unsupported
+      "ProceduralBlockSymbol:Always: source-level event-controlled always is retained; the frozen process AST has no event-list constructor"
   | .alwaysFF _ body | .alwaysPlain _ body | .alwaysFFR _ _ body _ =>
       execMemStmt d fuel st q body
   | .alwaysComb body => execMemStmt d fuel st q body
@@ -797,6 +804,8 @@ def memStep (d : MemDesign2) (fuel : Nat) (inputs : SvState)
         | .ok (_, _) => .unsupported "AssignL:memory cycle route does not admit NBA"
         | .unsupported e => .unsupported e
         | .timeout => .timeout
+    | .alwaysImplicit _ => .unsupported
+        "ProceduralBlockSymbol:Always: source-level event-controlled always is retained; the frozen process AST has no event-list constructor"
     | _ => .ok st
 
 def runMemFrom (d : MemDesign2) (fuel : Nat) (st : MemCycleState)

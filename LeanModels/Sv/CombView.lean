@@ -1638,6 +1638,7 @@ def siteOf? (ds : List DeclT) (pos : Nat) : PProcess → Except String TSite
       .error "procedural process (`always`): outside the combinational-assign fragment"
   | .initial .. =>
       .error "procedural process (`initial`): outside the combinational-assign fragment"
+  | .alwaysImplicit _ => .error "unsupported process `ProceduralBlockSymbol:Always`"
   | .unsupported k _ => .error s!"unsupported process `{k}`"
 
 /-- The recognizer of a process list, GENERIC in the recognizer `so` of one process (`siteOf?`; the

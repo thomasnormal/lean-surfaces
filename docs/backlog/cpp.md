@@ -8,7 +8,9 @@ predefined macros against the admitted LP64/signed-char profile (8-bit bytes,
 Lean artifact ingester applies the same check. `-m32`, `-m64`,
 `-fsigned-char`, and `-funsigned-char` are refused instead of producing an
 artifact evaluated under a different profile. `harness/cpp_profile_guard_test.py`
-pins the default match and profile-changing-flag refusal.
+pins the default match and profile-changing-flag refusal. Revalidated
+2026-11-11 under the 24 GiB cgroup with pinned Clang/LLVM 21.1.8:
+`cpp-lp64-profile MATCH` and `cpp-profile-changing-flag REFUSE`.
 
 ## `cpp-switch-and-ir-lowering`: source-item switch semantics
 

@@ -89,7 +89,9 @@ Block declarations now dispatch on their storage class and refuse classes
 outside the admitted automatic/register/unspecified set. This prevents a
 static local from being reinitialized on each call and prevents a block
 `extern` from shadowing the file-scope object until persistent-storage
-identity is modeled. Differential rows pin both refusals.
+identity is modeled. Differential rows pin both refusals. Revalidated
+2026-11-11 against the pinned Clang/LLVM 21.1.8 oracle:
+`static-local REFUSE storage-class` and `extern-local REFUSE storage-class`.
 
 ## 2026-11-11-c-duplicate-file-scope-objects — tentative declarations
 

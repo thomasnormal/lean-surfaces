@@ -13497,3 +13497,20 @@ the generator and prints `None`.
 
 DECIDED: close `py-dead-yield-target-drop`; retain the loud boundary until a
 real send channel represents expression-position yield stores.
+## 2026-11-11-pyfoundation-76 — close annotated-assignment ordering audit
+
+The high-priority `py-annassign-nonsimple-order` finding is already fixed.
+`convert_ann_assign` preserves non-simple targets as an ordinary assignment
+followed by a separate annotation expression at module/class scope, and emits
+only the assignment in function scope, matching CPython 3.9's
+`compiler_annassign`/`check_annotation` order. A synthetic attribute-target
+witness prints `val`, `ann`, `val`, `1` on both interpreters.
+
+| Measurement | Result |
+|---|---|
+| Annotation-order witness | model and CPython 3.9.25 both print `val / ann / val / 1`, exit 0 |
+| Extractor path | `convert_ann_assign` keeps value/store before annotation and skips function annotation evaluation |
+| Semantic change | none; audit closure only |
+
+DECIDED: close `py-annassign-nonsimple-order`; retain the existing loud
+boundaries for unsupported annotation-table/class shapes.

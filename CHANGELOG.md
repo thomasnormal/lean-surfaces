@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Revalidated non-simple annotated-assignment ordering: value and target
+  evaluation precede module/class annotations, while function annotations are
+  skipped, matching CPython 3.9.25's effect order.
+
 - Revalidated expression-yield target safety: `global`/`nonlocal` targets are
   refused before the old dead-target lowering can drop the resumed store;
   the witness is loud against CPython 3.9.25's `None` result.

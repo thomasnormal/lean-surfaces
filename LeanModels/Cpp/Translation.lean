@@ -913,6 +913,12 @@ private def executeTopDeclaration (raw : Raw) : Except String Unit :=
   | some _, _ => .error executionRefusal
   | _, _ => .error executionRefusal
 
+private def executeLinkageBody : List Raw → Except String Unit
+  | [] => pure ()
+  | declaration :: rest => do
+      let _ ← executeTopDeclaration declaration
+      executeLinkageBody rest
+
 private def executeTopDeclarations : List Raw → Except String Unit
   | [] => pure ()
   | declaration :: [] =>
@@ -929,11 +935,33 @@ private def executeTopDeclarations : List Raw → Except String Unit
               | some "EnumConstantDecl", some _ => pure ()
               | _, _ => .error executionRefusal
           | none => .error executionRefusal
+      | some "LinkageSpecDecl" =>
+          match declaration.text "language", declaration.field "inner" with
+          | some "C", some (.array body) => executeLinkageBody body
+          | some "C++", some (.array body) => executeLinkageBody body
+          | _, none => executeTopDeclaration declaration
+          | _, some (.array []) => executeTopDeclaration declaration
+          | _, _ => .error executionRefusal
       | _ => do
           let _ ← executeTopDeclaration declaration
           pure ()
   | declaration :: shadow :: tail =>
       match declaration.text "kind" with
+      | some "LinkageSpecDecl" =>
+          match declaration.text "language", declaration.field "inner" with
+          | some "C", some (.array body) => do
+              let _ ← executeLinkageBody body
+              executeTopDeclarations (shadow :: tail)
+          | some "C++", some (.array body) => do
+              let _ ← executeLinkageBody body
+              executeTopDeclarations (shadow :: tail)
+          | _, none => do
+              let _ ← executeTopDeclaration declaration
+              executeTopDeclarations (shadow :: tail)
+          | _, some (.array []) => do
+              let _ ← executeTopDeclaration declaration
+              executeTopDeclarations (shadow :: tail)
+          | _, _ => .error executionRefusal
       | some "UsingEnumDecl" => do
           let _ ← executeTopDeclaration declaration
           match shadow.text "kind", shadow.field "target" with

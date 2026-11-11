@@ -25345,6 +25345,31 @@ def _display_argument(sm, expression):
     return empty if empty is not None else _default_display_argument(sm, expression)
 
 
+def _readmemh_string_argument(expression):
+    """Return a literal or elaborated string parameter used as a file name.
+
+    Source spelling is not a constant evaluator: for ``$readmemh(FILE, ...)``
+    slang retains the parameter reference even when ``FILE`` has a string
+    default, while ``source_text`` would return the identifier ``FILE``.  A
+    named runtime variable, unresolved parameter, or non-string parameter is
+    deliberately rejected instead of being treated as a path.
+    """
+    if type(expression).__name__ == "StringLiteral":
+        value = getattr(expression, "value", None)
+        return value if isinstance(value, str) else None
+    symbol = getattr(expression, "symbol", None)
+    if type(symbol).__name__ != "ParameterSymbol":
+        return None
+    try:
+        canonical = symbol.type.canonicalType
+    except Exception:
+        canonical = getattr(symbol, "type", None)
+    if type(canonical).__name__ != "StringType":
+        return None
+    value = getattr(getattr(symbol, "value", None), "value", None)
+    return value if isinstance(value, str) else None
+
+
 def _convert_syscall(sm, s, e):
     """`$display`/`$write`/`$strobe`/`$monitor`/`$finish`/`$stop` in statement position ->
     `SysCall` node (self-check tier §f). `$display`/`$write` require the
@@ -25432,7 +25457,9 @@ def _convert_syscall(sm, s, e):
         # frozen); the memory E route consumes its retained file payload.
         try:
             args = list(e.arguments)
-            filename = source_text(args[0]).strip().strip('"')
+            filename = _readmemh_string_argument(args[0])
+            if filename is not None:
+                filename = filename.strip()
             target_expr = getattr(args[1], "left", args[1])
             target = source_text(target_expr).strip()
             if len(args) != 2 or not filename or not target:
@@ -25443,7 +25470,9 @@ def _convert_syscall(sm, s, e):
             if not os.path.isfile(path):
                 return unsupported(sm, s, "SystemTask:readmemh:missing-file",
                                    f"literal file '{filename}' is not present beside the source")
-            raw = re.sub(r"//[^\n]*|/\*.*?\*/", "", open(path, encoding="utf-8").read(), flags=re.S)
+            with open(path, encoding="utf-8") as data_file:
+                contents = data_file.read()
+            raw = re.sub(r"//[^\n]*|/\*.*?\*/", "", contents, flags=re.S)
             words = raw.split()
             if not words or any(re.fullmatch(r"[0-9a-fA-F]+", word) is None for word in words):
                 return unsupported(sm, s, "SystemTask:readmemh:xz-digit",

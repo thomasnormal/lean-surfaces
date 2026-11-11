@@ -34,6 +34,7 @@ and every existing `§Lnn` reference still resolves there.
 | `2026-11-11-pyfoundation-33` |  | reconfirm protocol findings on the current runner | python-completeness |
 | `2026-11-11-pyfoundation-32` |  | count `round` recursion and binder order | python-completeness |
 | `2026-11-11-pyfoundation-31` |  | count `sorted` recursion and materialization | python-completeness |
+| `2026-11-11-pyformat-4` |  | admit numeric percent-format precision | python-completeness |
 | `2026-11-11-pyformat-3` |  | admit string percent-format precision | python-completeness |
 | `2026-11-11-pyformat-2` |  | generalize admitted percent-format widths | python-completeness |
 | `2026-11-11-pyformat-1` |  | admit measured percent-format width flags | python-completeness |

@@ -617,6 +617,34 @@
   {
     "args": [
       [
+        3
+      ],
+      [
+        -3
+      ]
+    ],
+    "expect": "match",
+    "file": "harness/foundation_probe.py",
+    "function": "percent_numeric_precision",
+    "note": "numeric percent-format precision with sign-aware zero padding."
+  },
+  {
+    "args": [
+      [
+        3
+      ],
+      [
+        255
+      ]
+    ],
+    "expect": "match",
+    "file": "harness/foundation_probe.py",
+    "function": "percent_hex_precision",
+    "note": "hexadecimal percent-format precision."
+  },
+  {
+    "args": [
+      [
         0.0,
         0.0
       ],

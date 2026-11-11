@@ -6,7 +6,7 @@
     "version": "3.9.25"
   },
   "source_file": "harness/foundation_probe.py",
-  "source_sha256": "edbf71809cda7b3a281edb890236449a81d72698ef1e2c1a3959582d6823e795",
+  "source_sha256": "e0181440a778616be9cfe74d852d9f57f7c15252ac6603b974d6238e9f589bb9",
   "module": {
     "kind": "Module",
     "body": [
@@ -6506,6 +6506,140 @@
                   "lineno": 266,
                   "col_offset": 20,
                   "end_lineno": 266,
+                  "end_col_offset": 25
+                },
+                "id": "value"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 269,
+          "col_offset": 0,
+          "end_lineno": 270,
+          "end_col_offset": 25
+        },
+        "name": "percent_numeric_precision",
+        "args": [
+          {
+            "arg": "value",
+            "span": {
+              "lineno": 269,
+              "col_offset": 30,
+              "end_lineno": 269,
+              "end_col_offset": 35
+            }
+          }
+        ],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 270,
+              "col_offset": 4,
+              "end_lineno": 270,
+              "end_col_offset": 25
+            },
+            "value": {
+              "kind": "BinOp",
+              "span": {
+                "lineno": 270,
+                "col_offset": 11,
+                "end_lineno": 270,
+                "end_col_offset": 25
+              },
+              "left": {
+                "kind": "Constant",
+                "span": {
+                  "lineno": 270,
+                  "col_offset": 11,
+                  "end_lineno": 270,
+                  "end_col_offset": 17
+                },
+                "value": {
+                  "type": "str",
+                  "value": "%.5d"
+                }
+              },
+              "op": "Mod",
+              "right": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 270,
+                  "col_offset": 20,
+                  "end_lineno": 270,
+                  "end_col_offset": 25
+                },
+                "id": "value"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 273,
+          "col_offset": 0,
+          "end_lineno": 274,
+          "end_col_offset": 25
+        },
+        "name": "percent_hex_precision",
+        "args": [
+          {
+            "arg": "value",
+            "span": {
+              "lineno": 273,
+              "col_offset": 26,
+              "end_lineno": 273,
+              "end_col_offset": 31
+            }
+          }
+        ],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 274,
+              "col_offset": 4,
+              "end_lineno": 274,
+              "end_col_offset": 25
+            },
+            "value": {
+              "kind": "BinOp",
+              "span": {
+                "lineno": 274,
+                "col_offset": 11,
+                "end_lineno": 274,
+                "end_col_offset": 25
+              },
+              "left": {
+                "kind": "Constant",
+                "span": {
+                  "lineno": 274,
+                  "col_offset": 11,
+                  "end_lineno": 274,
+                  "end_col_offset": 17
+                },
+                "value": {
+                  "type": "str",
+                  "value": "%.5x"
+                }
+              },
+              "op": "Mod",
+              "right": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 274,
+                  "col_offset": 20,
+                  "end_lineno": 274,
                   "end_col_offset": 25
                 },
                 "id": "value"

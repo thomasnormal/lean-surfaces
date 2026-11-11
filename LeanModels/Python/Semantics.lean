@@ -2249,6 +2249,15 @@ def zeroPadFormatField (width : Nat) (s : String) : String :=
     | _ => zeros ++ s
   else s
 
+def precisionPadFormatField (digits : Nat) (s : String) : String :=
+  match s.toList with
+  | '-' :: rest =>
+      if rest.length < digits then
+        "-" ++ String.ofList (List.replicate (digits - rest.length) '0') ++
+          String.ofList rest
+      else s
+  | _ => zeroPadFormatField digits s
+
 def strFormatWidthPiece (width : Nat) (precision : Option Nat) (c : Char)
     (v : RVal) (left zero : Bool) : Res String := do
   let piece ← strFormatConv c v
@@ -2257,9 +2266,13 @@ def strFormatWidthPiece (width : Nat) (precision : Option Nat) (c : Char)
     | some n =>
         if c == 's' || c == 'r' || c == 'a' then
           String.ofList (piece.toList.take n)
+        else if c == 'd' || c == 'i' || c == 'u' || c == 'x' || c == 'o' then
+          precisionPadFormatField n piece
         else piece
     | Option.none => piece
-  if precision.isSome && !(c == 's' || c == 'r' || c == 'a') then
+  if precision.isSome &&
+      !(c == 's' || c == 'r' || c == 'a' || c == 'd' || c == 'i' ||
+        c == 'u' || c == 'x' || c == 'o') then
     .unsupported "precision for this percent conversion is outside the tier"
   else if left then
     return padFormatFieldLeft width piece

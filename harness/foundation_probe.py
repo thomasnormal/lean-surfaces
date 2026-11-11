@@ -264,3 +264,11 @@ def percent_precision(value):
 
 def percent_precision_repr(value):
     return "%.4r" % value
+
+
+def percent_numeric_precision(value):
+    return "%.5d" % value
+
+
+def percent_hex_precision(value):
+    return "%.5x" % value

@@ -68,6 +68,22 @@ dynamic precision, and the remaining format flags stay loud.
 DECIDED: keep precision restricted to the three scalar text conversions until
 numeric precision has an exact CPython 3.9 implementation.
 
+## 2026-11-11-pyformat-4 — admit numeric percent-format precision
+
+Numeric precision now pads the converted digits to the requested minimum,
+including sign-aware zero padding for negative values. `%d`, `%i`, `%u`, `%x`,
+and `%o` are admitted; unsupported conversion precision remains loud.
+
+| Measurement | Result |
+|---|---|
+| Generated edge battery | 58 cases, 99 calls |
+| Native runner | 84 MATCH, 15 documented refusals, 0 failures |
+| Proof interpreter | 84 MATCH, 15 loud refusals, 0 failures |
+| Managed build | `lake build leanmodels-run`, 40 jobs, passed |
+
+DECIDED: retain one shared precision worker and keep dynamic or unsupported
+precision forms outside the tier.
+
 ## 2026-11-11-pyfoundation-31 — count `sorted` recursion and materialization
 
 The builtin recursion audit found that `sorted` was missing the nested call

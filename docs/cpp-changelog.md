@@ -19,6 +19,10 @@ coverage advance independently from the Python tier.
 
 ### Added
 
+- `using namespace n;` now executes when Clang supplies a structured
+  `NamespaceDecl` target; unresolved and malformed using directives remain
+  loud refusals.
+
 - `static_assert(true);` now executes as a declaration-only translation node
   when Clang supplies a true boolean condition and empty message placeholder;
   false, non-boolean, and message-bearing assertions remain loud refusals.

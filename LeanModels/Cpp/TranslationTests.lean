@@ -128,6 +128,17 @@ private def staticAssertExecutionTranslation : Artifact := {emptyTranslation wit
           .object [("kind", .string "CXXBoolLiteralExpr"), ("value", .bool true)],
           .object []])]]) ]}
 
+private def usingDirectiveExecutionTranslation : Artifact := {emptyTranslation with
+  ast := .object [
+    ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
+    ("inner", .array [
+      .object [("id", .string "n"), ("kind", .string "NamespaceDecl"),
+        ("name", .string "n"), ("inner", .array [])],
+      .object [("id", .string "u"), ("kind", .string "UsingDirectiveDecl"),
+        ("nominatedNamespace", .object [
+          ("id", .string "n"), ("kind", .string "NamespaceDecl"),
+          ("name", .string "n")])]]) ]}
+
 private def usingDirectiveTranslation : Artifact := {emptyTranslation with
   ast := .object [
     ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
@@ -1645,6 +1656,9 @@ def linkageTranslationExecution : Except String Unit :=
 def staticAssertTranslationExecution : Except String Unit :=
   execute staticAssertExecutionTranslation "s"
 
+def usingDirectiveTranslationExecution : Except String Unit :=
+  execute usingDirectiveExecutionTranslation "u"
+
 def nonemptyTranslationExecution : Except String Unit :=
   execute functionTranslation "f"
 
@@ -3013,6 +3027,7 @@ def staticAssertTranslationWitness : Except String Unit :=
 #guard execute typedefExecutionTranslation "a" matches .ok ()
 #guard execute linkageExecutionTranslation "l" matches .ok ()
 #guard execute staticAssertExecutionTranslation "s" matches .ok ()
+#guard execute usingDirectiveExecutionTranslation "u" matches .ok ()
 #guard execute functionTranslation "f" matches .error "C++ translation-only tier: execution requires object, lifetime, type, expression and statement semantics"
 
 theorem empty_translation_admits : admitTranslationUnit emptyTranslation = .ok () := rfl
@@ -3040,6 +3055,9 @@ theorem linkage_translation_executes :
 theorem static_assert_translation_executes :
     execute staticAssertExecutionTranslation "s" = .ok () := rfl
 
+theorem using_directive_translation_executes :
+    execute usingDirectiveExecutionTranslation "u" = .ok () := rfl
+
 theorem nonempty_execution_remains_loud : execute functionTranslation "f" = .error executionRefusal := rfl
 
 theorem namespace_translation_witness : namespaceTranslationWitness = true := by
@@ -3054,6 +3072,7 @@ theorem namespace_translation_witness : namespaceTranslationWitness = true := by
 #print axioms typedef_translation_executes
 #print axioms linkage_translation_executes
 #print axioms static_assert_translation_executes
+#print axioms using_directive_translation_executes
 #print axioms nonempty_execution_remains_loud
 #print axioms namespace_translation_witness
 

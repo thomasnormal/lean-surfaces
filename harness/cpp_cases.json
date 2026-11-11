@@ -94,6 +94,18 @@
     "rung": 0
   },
   {
+    "id": "translation.using-namespace-execution",
+    "kind": "translation",
+    "corpus": "translation witness",
+    "lean_module": "LeanModels.Cpp.TranslationTests",
+    "lean_namespace": "LeanModels.Cpp.TranslationTests",
+    "lean_expression": "usingDirectiveTranslationExecution",
+    "render": "unit",
+    "cpp_source": "namespace n {} using namespace n;",
+    "expect": "match",
+    "rung": 0
+  },
+  {
     "id": "translation.namespace-declaration",
     "kind": "translation",
     "corpus": "translation witness",

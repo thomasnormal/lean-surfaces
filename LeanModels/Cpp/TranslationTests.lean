@@ -320,6 +320,16 @@ private def unscopedEmptyEnumExecutionTranslation : Artifact := {emptyTranslatio
       .object [("id", .string "e"), ("kind", .string "EnumDecl"),
         ("name", .string "E"), ("inner", .array [])]])]}
 
+private def topUsingEnumExecutionTranslation : Artifact := {emptyTranslation with
+  ast := .object [
+    ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
+    ("inner", .array [
+      .object [("id", .string "e"), ("kind", .string "EnumDecl"),
+        ("name", .string "E"), ("inner", .array [])],
+      .object [("id", .string "u"), ("kind", .string "UsingEnumDecl"),
+        ("target", .object [("id", .string "e"), ("kind", .string "EnumDecl"),
+          ("name", .string "E")])]])]}
+
 private def boolTypeAliasExecutionTranslation : Artifact := {emptyTranslation with
   ast := .object [
     ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
@@ -1929,6 +1939,9 @@ def emptyEnumTranslationExecution : Except String Unit :=
 def unscopedEmptyEnumTranslationExecution : Except String Unit :=
   execute unscopedEmptyEnumExecutionTranslation "e"
 
+def topUsingEnumTranslationExecution : Except String Unit :=
+  execute topUsingEnumExecutionTranslation "u"
+
 def boolTypeAliasTranslationExecution : Except String Unit :=
   execute boolTypeAliasExecutionTranslation "a"
 
@@ -3315,6 +3328,7 @@ def staticAssertTranslationWitness : Except String Unit :=
 #guard boolTypedefTranslationExecution matches .ok ()
 #guard unscopedEmptyEnumTranslationExecution matches .ok ()
 #guard cppLinkageTranslationExecution matches .ok ()
+#guard topUsingEnumTranslationExecution matches .ok ()
 #guard execute namespaceAliasExecutionTranslation "a" matches .ok ()
 #guard execute typeAliasExecutionTranslation "a" matches .ok ()
 #guard execute typedefExecutionTranslation "a" matches .ok ()
@@ -3387,6 +3401,9 @@ theorem unscoped_empty_enum_translation_executes :
 
 theorem cpp_linkage_translation_executes :
     cppLinkageTranslationExecution = .ok () := rfl
+
+theorem top_using_enum_translation_executes :
+    topUsingEnumTranslationExecution = .ok () := rfl
 
 theorem namespace_alias_translation_executes :
     execute namespaceAliasExecutionTranslation "a" = .ok () := rfl

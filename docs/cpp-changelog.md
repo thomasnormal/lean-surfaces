@@ -19,6 +19,8 @@ coverage advance independently from the Python tier.
 
 ### Added
 
+- Top-level `using enum E;` now executes for an empty named enum target supplied through Clang's structured handle; unresolved targets remain loud refusals.
+
 - Anonymous empty namespace declarations now execute as translation no-ops; nonempty anonymous bodies remain loud refusals.
 
 - Explicitly deleted bodyless function declarations now execute as declaration-only nodes when Clang supplies the structured function type; definitions remain loud refusals.

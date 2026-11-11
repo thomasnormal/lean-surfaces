@@ -47,6 +47,6 @@ The grammar census checks one source witness per listed Clang AST node kind. Its
 | measurement | rows | MATCH | WITNESS | DIVERGE | REFUSE | TIMEOUT | ORACLE |
 |---|---:|---:|---:|---:|---:|---:|---:|
 | grammar witnesses | 24 | 0 | 0 | 0 | 24 | 0 | 0 |
-| differential and independent witnesses | 1738 | 4 | 1720 | 0 | 8 | 0 | 6 |
+| differential and independent witnesses | 1739 | 4 | 1721 | 0 | 8 | 0 | 6 |
 
 The cases include 59 compile-only translation witnesses, 43 rung-1 lifetime witnesses, 2 rung-2 scalar checks, 235 rung-3 expression checks, 1193 rung-4 statement checks, 21 rung-7 member-expression checks, and 167 callable rows; set `LEANCPP_TINYXML2_DIR` and `LEANCPP_CLANG` to run the available native calls.

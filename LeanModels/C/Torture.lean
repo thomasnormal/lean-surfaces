@@ -394,40 +394,55 @@ the one that had to be thought about:
 
 Earlier globals are in scope for later initializers, which is §6.2.1p4's
 "to the end of the translation unit" doing its own work. -/
-def setupGlobals (fuel : Nat) (lay : Layout) :
-    List LeanModels.C.Decl → Env → ExecM Env
-  | [], acc => pure acc
-  | d :: ds, acc =>
+def setupGlobalsWithIds (fuel : Nat) (lay : Layout) :
+    List LeanModels.C.Decl → Env → IdEnv → ExecM (Env × IdEnv)
+  | [], acc, ids => pure (acc, ids)
+  | d :: ds, acc, ids =>
     match d with
-    | .var nm ty storage init _ =>
+    | .var declaration nm ty storage init _ =>
         match acc.lookup? nm with
         | some o =>
+            let ids' := match declaration with
+              | some id => (id, o) :: ids
+              | none => ids
             match storage, init with
-            | some "extern", _ => setupGlobals fuel lay ds acc
-            | _, none => setupGlobals fuel lay ds acc
+            | some "extern", _ => setupGlobalsWithIds fuel lay ds acc ids'
+            | _, none => setupGlobalsWithIds fuel lay ds acc ids'
             | _, some e => do
-                initObject fuel { env := acc, layout := lay } (Ptr.toObject o) ty e
-                setupGlobals fuel lay ds acc
+                initObject fuel { env := acc, idEnv := ids', layout := lay }
+                  (Ptr.toObject o) ty e
+                setupGlobalsWithIds fuel lay ds acc ids'
         | none =>
           if storage == some "extern" then
             refuseUnsupported s!"extern object '{nm}' has no definition in the translation unit"
           else
             match lay.size ty with
-            | none => setupGlobals fuel lay ds acc
+            | none => setupGlobalsWithIds fuel lay ds acc ids
             | some sz =>
               match init with
               | none => do
                   let m ← get
                   let (m', o) := m.allocZeroed .static_ sz (some ty)
                   set m'
-                  setupGlobals fuel lay ds ((nm, o) :: acc)
+                  setupGlobalsWithIds fuel lay ds ((nm, o) :: acc)
+                    (match declaration with
+                    | some id => (id, o) :: ids
+                    | none => ids)
               | some e => do
                   let m ← get
                   let (m', o) := m.alloc .static_ sz (some ty)
                   set m'
-                  initObject fuel { env := acc, layout := lay } (Ptr.toObject o) ty e
-                  setupGlobals fuel lay ds ((nm, o) :: acc)
-    | _ => setupGlobals fuel lay ds acc
+                  initObject fuel { env := acc, idEnv := ids, layout := lay }
+                    (Ptr.toObject o) ty e
+                  setupGlobalsWithIds fuel lay ds ((nm, o) :: acc)
+                    (match declaration with
+                    | some id => (id, o) :: ids
+                    | none => ids)
+    | _ => setupGlobalsWithIds fuel lay ds acc ids
+
+def setupGlobals (fuel : Nat) (lay : Layout) :
+    List LeanModels.C.Decl → Env → ExecM Env
+  | decls, acc => (setupGlobalsWithIds fuel lay decls acc []).map Prod.fst
 
 /-- **THE ORACLE-TESTS-COMPILER SHAPE, re-derived from the ingested AST.**
 
@@ -469,10 +484,12 @@ will be by widening the slice. -/
 def scoreEnvelope (fuel : Nat) (envl : Envelope)
     (oracleSym : Option String) (oracleWhy : String) : Verdict :=
   let lay := layoutFor envl
-  let prog : Program := { fns := envl.unit.functionDefns, layout := lay }
+  let prog : Program := { fns := envl.unit.functionDefns }
+  let prog := { prog with layout := lay }
+  let prog := { prog with enumIds := envl.unit.enumBindings }
   let run : ExecM CVal := do
-    let genv ← setupGlobals fuel lay envl.unit.fileScopeObjects []
-    callByName fuel { prog with globals := genv } "main" []
+    let genv ← setupGlobalsWithIds fuel lay envl.unit.fileScopeObjects [] []
+    callByName fuel { prog with globals := genv.1, globalIds := genv.2 } "main" []
   match ExecM.verdict Mem.empty run with
   | .ok (.int _ 0) | .ok .undef => .passed
   | .ok (.int _ _) => .failed

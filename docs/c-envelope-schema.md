@@ -118,14 +118,14 @@ Counts are today's corpus and are informative, not normative.
 
 | kind | count | fields |
 | --- | ---: | --- |
-| `FunctionDecl` | 59 | `name`, `type`, `storage` (`static` \| null), `params`: [`ParmVarDecl`…], `body`: `CompoundStmt` \| null (null = a prototype) |
-| `VarDecl` | 321 | `name`, `type`, `storage`, `init`: expr \| null |
-| `ParmVarDecl` | 113 | `name`, `type` |
+| `FunctionDecl` | 59 | `decl_id`, `name`, `type`, `storage` (`static` \| null), `params`: [`ParmVarDecl`…], `body`: `CompoundStmt` \| null (null = a prototype) |
+| `VarDecl` | 321 | `decl_id`, `name`, `type`, `storage`, `init`: expr \| null |
+| `ParmVarDecl` | 113 | `decl_id`, `name`, `type` |
 | `FieldDecl` | 62 | `name`, `type`, `bits`: nat \| null |
 | `RecordDecl` | 13 | `name` \| null (anonymous), `fields`: [`FieldDecl` \| `Unsupported`…] |
 | `TypedefDecl` | 7 | `name`, `type` |
 | `EnumDecl` | 3 | `name` \| null, `constants`: [`EnumConstantDecl`…] |
-| `EnumConstantDecl` | 11 | `name`, `value`: str (decimal). clang wraps the value in a `ConstantExpr`; it is FLATTENED here, because an enum constant's meaning is the folded integer. **All 11 in-corpus `ConstantExpr` nodes are exactly these**, so the emitted vocabulary is 44 kinds + this flattening |
+| `EnumConstantDecl` | 11 | `decl_id`, `name`, `value`: str (decimal). clang wraps the value in a `ConstantExpr`; it is FLATTENED here, because an enum constant's meaning is the folded integer. **All 11 in-corpus `ConstantExpr` nodes are exactly these**, so the emitted vocabulary is 44 kinds + this flattening |
 
 Record and field layout attributes are retained as `Unsupported` children of
 the containing `RecordDecl` (for example `PackedAttr`,
@@ -162,7 +162,7 @@ rung rather than a v0 hole.
 | `CharacterLiteral` | 95 | `value`: int, `type` |
 | `StringLiteral` | 126 | `value`: str, `type` |
 | `FloatingLiteral` | 15 | `value`: str (exact decimal spelling), `type` |
-| `DeclRefExpr` | 2444 | `name`, `decl_kind`, `type` |
+| `DeclRefExpr` | 2444 | `decl_id`, `name`, `decl_kind`, `type`; `decl_id` is clang's `referencedDecl.id` and is the identity used for resolution |
 | `MemberExpr` | 410 | `base`: expr, `member`: str, `arrow`: bool, `type` |
 | `ArraySubscriptExpr` | 328 | `base`: expr, `index`: expr, `type` |
 | `CallExpr` | 320 | `callee`: expr, `args`: [expr…], `type` |

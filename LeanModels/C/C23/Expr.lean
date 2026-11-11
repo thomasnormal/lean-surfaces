@@ -93,7 +93,7 @@ increments target the same four kinds. One function serves both.
 
 namespace LeanModels.C.C23
 
-open LeanModels.C (CType Expr CSpan)
+open LeanModels.C (CType Expr CSpan DeclarationId)
 
 /-! ## The evaluation monad -/
 
@@ -265,9 +265,14 @@ the lifetime of its frame. -/
 /-- Names in scope, innermost first. -/
 abbrev Env := List (String × ObjId)
 
+abbrev IdEnv := List (DeclarationId × ObjId)
+
 /-- Resolve a name to its object. Innermost binding wins (§6.2.1). -/
 def Env.lookup? (env : Env) (name : String) : Option ObjId :=
   (env.find? (·.1 == name)).map (·.2)
+
+def IdEnv.lookup? (env : IdEnv) (id : DeclarationId) : Option ObjId :=
+  (env.find? (·.1 == id)).map (·.2)
 
 /-! ## Calls — the handler, and where fuel will arrive
 
@@ -282,7 +287,7 @@ through the `movecb` callback parameter. -/
 def calleeNameOf : Expr → String
   | .implicitCast _ s _ _ => calleeNameOf s
   | .paren s _ _ => calleeNameOf s
-  | .declRef n _ _ _ => n
+  | .declRef _ n _ _ _ => n
   | _ => "<indirect>"
 
 /-- What a call site delegates to: the callee expression and its arguments
@@ -399,9 +404,12 @@ parameter instead of four. -/
 /-- Everything an expression evaluation reads but never writes. -/
 structure Ctx where
   env : Env
+  /-- Declaration-identity bindings for real extracted references. -/
+  idEnv : IdEnv := []
   /-- Enumeration constants, folded to integers by the ingester
   (`docs/c-envelope-schema.md` §3.1). Measured: 11 in the corpus. -/
   enums : List (String × Int) := []
+  enumIds : List (DeclarationId × Int) := []
   layout : Layout := Layout.unknown
   call : CallHandler := noCalls
 
@@ -532,7 +540,13 @@ def storeAt (p : Ptr) (ty : CType) (v : CVal) : EvalM Unit :=
 def calleeName : Expr → Option String
   | .implicitCast _ s _ _ => calleeName s
   | .paren s _ _ => calleeName s
-  | .declRef n "FunctionDecl" _ _ => some n
+  | .declRef _ n "FunctionDecl" _ _ => some n
+  | _ => none
+
+def calleeId : Expr → Option DeclarationId
+  | .implicitCast _ s _ _ => calleeId s
+  | .paren s _ _ => calleeId s
+  | .declRef (some id) _ "FunctionDecl" _ _ => some id
   | _ => none
 
 /-! ## §6.5 — the evaluator
@@ -651,7 +665,14 @@ fallthrough. -/
 def evalLValue (ctx : Ctx) : Expr → EvalM Ptr
   | .paren sub _ _ => evalLValue ctx sub
   -- §6.5.2p2: an identifier designating an object is an lvalue.
-  | .declRef name _ ty _ =>
+  | .declRef (some id) name _ ty _ =>
+      match ctx.idEnv.lookup? id with
+      | some o =>
+          pure (match ctx.layout.size (ctx.layout.normalizeTy ty) with
+            | some sz => Ptr.toObjectBound o sz
+            | none => Ptr.toObject o)
+      | none => refuseUnsupported s!"unbound declaration '{id.value}' (name '{name}')"
+  | .declRef none name _ ty _ =>
       match ctx.env.lookup? name with
       | some o =>
           pure (match ctx.layout.size (ctx.layout.normalizeTy ty) with
@@ -862,7 +883,13 @@ def evalExpr (ctx : Ctx) : Expr → EvalM CVal
 
   -- A bare name in value position is an enumeration constant; every other
   -- name arrives wrapped in a conversion or a decay.
-  | .declRef name declKind ty _ =>
+  | .declRef (some id) name declKind ty _ =>
+      if declKind == "EnumConstantDecl" then
+        match (ctx.enumIds.find? (·.1 == id)).map (·.2) with
+        | some n => do let t ← intTyOf (ctx.layout.normalizeTy ty); pure (.int t n)
+        | none => refuseUnsupported s!"unknown enum declaration '{id.value}' (name '{name}')"
+      else refuseUnsupported s!"name '{name}' in value position without a conversion"
+  | .declRef none name declKind ty _ =>
       if declKind == "EnumConstantDecl" then
         match (ctx.enums.find? (·.1 == name)).map (·.2) with
         | some n => do let t ← intTyOf (ctx.layout.normalizeTy ty); pure (.int t n)

@@ -454,7 +454,7 @@ def declare : Nat → Ctx → List Decl → ExecM Ctx
   | _, ctx, [] => pure ctx
   | fuel + 1, ctx, d :: ds =>
     match d with
-    | .var name ty storage init _ => do
+    | .var id name ty storage init _ => do
         match storage with
         | some "auto" | some "register" | none => pure ()
         | some s => refuseUnsupported s!"block-scope storage class '{s}' is outside the tier"
@@ -466,7 +466,11 @@ def declare : Nat → Ctx → List Decl → ExecM Ctx
             let m ← get
             let (m', o) := m.alloc .automatic sz (some ty)
             set m'
+            let idEnv' := match id with
+              | some declaration => (declaration, o) :: ctx.idEnv
+              | none => ctx.idEnv
             let ctx' := { ctx with env := (name, o) :: ctx.env }
+            let ctx' := { ctx' with idEnv := idEnv' }
             match init with
             | none => declare fuel ctx' ds
             | some e => do
@@ -507,6 +511,7 @@ structure Program where
   fns : List LeanModels.C.FunctionDefn
   layout : Layout := Layout.unknown
   enums : List (String × Int) := []
+  enumIds : List (LeanModels.C.DeclarationId × Int) := []
   /-- **§6.2.1p4 — the file-scope objects a function body can SEE.**
 
   This field is a bug fix, not a feature. `callFn` used to start every
@@ -521,9 +526,14 @@ structure Program where
   name`, and all 69 of the names were file-scope objects** — 100 %, no
   locals and no typos (`docs/backlog/c.md` 2026-08-24-c-22). -/
   globals : Env := []
+  globalIds : IdEnv := []
 
 def Program.find? (p : Program) (name : String) : Option LeanModels.C.FunctionDefn :=
   p.fns.find? (·.name == name)
+
+def Program.findId? (p : Program) (id : LeanModels.C.DeclarationId) :
+    Option LeanModels.C.FunctionDefn :=
+  p.fns.find? (fun f => f.id == some id)
 
 -- `evalArgsLR` lived here, unreachable, as "the shape the repair will
 -- re-attach to". The repair did not re-attach to it: argument evaluation
@@ -544,7 +554,7 @@ def bindParams (lay : Layout) : Ctx → List LeanModels.C.Decl → List CVal →
   | _, _ :: _, [] => refuseUnsupported "fewer arguments than parameters"
   | ctx, d :: ps, v :: vs =>
     match d with
-    | .param n ty _ =>
+    | .param id n ty _ =>
         match lay.size ty with
         | none => refuseUnsupported s!"no layout for parameter type '{ty}'"
         | some sz => do
@@ -567,7 +577,10 @@ def bindParams (lay : Layout) : Ctx → List LeanModels.C.Decl → List CVal →
             let env' := match n with
                         | some nm => (nm, o) :: ctx.env
                         | none => ctx.env
-            bindParams lay { ctx with env := env' } ps vs
+            let idEnv' := match id with
+                          | some declaration => (declaration, o) :: ctx.idEnv
+                          | none => ctx.idEnv
+            bindParams lay { ctx with env := env', idEnv := idEnv' } ps vs
     | _ => refuseUnsupported "non-parameter in a parameter list"
 
 /-- §6.5.3.3 — call a defined function with already-evaluated arguments.
@@ -591,7 +604,11 @@ def callFn : Nat → Program → LeanModels.C.FunctionDefn → List CVal → Exe
         -- The callee's own call handler: one fuel less, so the recursion
         -- terminates on the fuel and on nothing else.
         let handler : CallHandler := fun callee vs =>
-          match calleeName callee with
+          match calleeId callee with
+          | some declaration => match prog.findId? declaration with
+            | none => throw (.libc declaration.value)
+            | some g => callFn fuel prog g vs
+          | none => match calleeName callee with
           | none =>
             -- A DeclRefExpr to a local variable is not a function call target.
             -- Do not redo clang's resolved declaration identity by its name.
@@ -609,7 +626,8 @@ def callFn : Nat → Program → LeanModels.C.FunctionDefn → List CVal → Exe
         -- and the parameters are bound ON TOP of them, so a parameter that
         -- shadows a global wins by being consed later.
         let ctx0 : Ctx :=
-          { env := prog.globals, enums := prog.enums, layout := prog.layout,
+          { env := prog.globals, idEnv := prog.globalIds, enums := prog.enums,
+            enumIds := prog.enumIds, layout := prog.layout,
             call := handler }
         let ctx ← bindParams prog.layout ctx0 f.params args
         let flow ← execStmt fuel ctx body

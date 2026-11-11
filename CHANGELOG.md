@@ -120,6 +120,11 @@
   ordered source items instead of regrouping them into synthetic clauses;
   callable evaluators now select and fall through over that direct item
   sequence.
+
+- Retained Clang declaration handles throughout the C envelope and resolved
+  extracted object, enum, and direct function references by `DeclarationId`
+  instead of redoing name lookup by spelling; name-only lookup remains only for
+  compatibility fixtures and the public name entry point.
 - Admit space-padded combinations of percent-format sign and alternate flags
   with widths; zero-padded combinations remain loud until their prefix order is
   modeled.

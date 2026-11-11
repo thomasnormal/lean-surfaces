@@ -260,14 +260,14 @@ class Extractor:
     def e_FunctionDecl(self, n):
         body = next((c for c in kids(n) if c.get("kind") == "CompoundStmt"), None)
         params = [c for c in kids(n) if c.get("kind") == "ParmVarDecl"]
-        return {"name": n.get("name"), "type": qual(n),
+        return {"decl_id": n.get("id"), "name": n.get("name"), "type": qual(n),
                 "storage": n.get("storageClass"),
                 "params": self.seq(params),
                 "body": self.node(body) if body else None}
 
     def e_VarDecl(self, n):
         init = kids(n)[-1] if n.get("init") and kids(n) else None
-        return {"name": n.get("name"), "type": qual(n),
+        return {"decl_id": n.get("id"), "name": n.get("name"), "type": qual(n),
                 "storage": n.get("storageClass"),
                 "init": self.node(init) if init else None}
 
@@ -277,7 +277,7 @@ class Extractor:
         # as `col` and `macro`: one spelling for absence, and never a
         # synthetic, which would be a fabricated name one field over from a
         # fabricated column.
-        out = {"type": qual(n)}
+        out = {"decl_id": n.get("id"), "type": qual(n)}
         if n.get("name") is not None:
             out["name"] = n["name"]
         return out
@@ -348,7 +348,7 @@ class Extractor:
         # again (see `col`, and a parameter's `name`).  A fabricated "0"
         # would read exactly like a folded value somebody would then use.
         v = next((c for c in kids(n) if c.get("kind") == "ConstantExpr"), None)
-        out = {"name": n.get("name")}
+        out = {"decl_id": n.get("id"), "name": n.get("name")}
         if (v or {}).get("value") is not None:
             out["value"] = v["value"]
         return out
@@ -433,7 +433,8 @@ class Extractor:
 
     def e_DeclRefExpr(self, n):
         d = n.get("referencedDecl") or {}
-        return {"name": d.get("name"), "decl_kind": d.get("kind"),
+        return {"decl_id": d.get("id"), "name": d.get("name"),
+                "decl_kind": d.get("kind"),
                 "type": qual(n)}
 
     def e_MemberExpr(self, n):

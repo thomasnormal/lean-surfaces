@@ -178,7 +178,9 @@ partial def parseExpr (j : Json) : Except String Expr := do
                           | .num n => toString n
                           | _ => v.compress) (← ty) span
     | "DeclRefExpr" =>
-        return .declRef (← getStr j "name") (← getStr j "decl_kind") (← ty) span
+        let id ← getOptStr j "decl_id"
+        return .declRef (id.map DeclarationId.mk) (← getStr j "name")
+          (← getStr j "decl_kind") (← ty) span
     | "MemberExpr" =>
         return .member (← sub "base") (← getStr j "member")
           (← getBool j "arrow") (← ty) span
@@ -236,13 +238,17 @@ partial def parseDecl (j : Json) : Except String Decl := do
     let span ← nodeSpan j
     match kind with
     | "VarDecl" =>
-        return .var (← getStr j "name") (← getStr j "type")
+        let id ← getOptStr j "decl_id"
+        return .var (id.map DeclarationId.mk) (← getStr j "name") (← getStr j "type")
           (← getOptStr j "storage")
           (← match getOptNode j "init" with
               | none => pure none
               | some v => some <$> parseExpr v) span
     -- `name` is OPTIONAL (§6.7.6.3): absent and `null` are one absence.
-    | "ParmVarDecl" => return .param (← getOptStr j "name") (← getStr j "type") span
+    | "ParmVarDecl" =>
+        let id ← getOptStr j "decl_id"
+        return .param (id.map DeclarationId.mk) (← getOptStr j "name")
+          (← getStr j "type") span
     | "FieldDecl" =>
         return .field (← getStr j "name") (← getStr j "type") (← getOptNat j "bits") span
     | "RecordDecl" =>
@@ -258,7 +264,9 @@ partial def parseDecl (j : Json) : Except String Decl := do
           (← (← getArr j "constants").mapM parseDecl) span
     | "EnumConstantDecl" =>
         -- `value` is OPTIONAL: clang does not always fold one.
-        return .enumConst (← getStr j "name") (← getOptStr j "value") span
+        let id ← getOptStr j "decl_id"
+        return .enumConst (id.map DeclarationId.mk) (← getStr j "name")
+          (← getOptStr j "value") span
     | "Unsupported" =>
         return .unsupported (← getStr j "c_kind") (← getStr j "text") span
     | other => throw s!"unknown declaration kind {other.quote}"
@@ -308,7 +316,8 @@ partial def parseStmt (j : Json) : Except String Stmt := do
 
 def parseFunctionDefn (j : Json) : Except String FunctionDefn :=
   withCtx "FunctionDecl" do
-    return { name := ← getStr j "name", ty := ← getStr j "type"
+    let id ← getOptStr j "decl_id"
+    return { id := id.map DeclarationId.mk, name := ← getStr j "name", ty := ← getStr j "type"
              storage := ← getOptStr j "storage"
              params := ← (← getArr j "params").mapM parseDecl
              body := ← (match getOptNode j "body" with

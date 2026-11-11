@@ -10,10 +10,12 @@ def main (args : List String) : IO UInt32 := do
   | .error reason => IO.eprintln s!"ingestion: {reason}"; return 2
   | .ok envl =>
       let lay := layoutFor envl
-      let prog : Program := {fns := envl.unit.functionDefns, layout := lay}
+      let prog : Program := {fns := envl.unit.functionDefns}
+      let prog := {prog with layout := lay}
+      let prog := {prog with enumIds := envl.unit.enumBindings}
       let run : ExecM CVal := do
-        let globals ← setupGlobals 512 lay envl.unit.fileScopeObjects []
-        callByName 512 {prog with globals} "main" []
+        let globals ← setupGlobalsWithIds 512 lay envl.unit.fileScopeObjects [] []
+        callByName 512 {prog with globals := globals.1, globalIds := globals.2} "main" []
       match ExecM.verdict Mem.empty run with
       | .ok (.int _ value) => IO.println s!"{value}"; return 0
       | outcome => IO.eprintln s!"model refused: {repr outcome}"; return 3

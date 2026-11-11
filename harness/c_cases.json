@@ -24,6 +24,12 @@
     "return_value": -1
   },
   {
+    "id": "declaration-id-local-shadow",
+    "source": "int value = 4; int f(void) { int value = 5; return value; } int main(void) { return f() == 5 ? 0 : 7; }",
+    "expect": "match",
+    "return_value": 0
+  },
+  {
     "id": "signed-overflow",
     "source": "int main(void) { int x = 2147483647; x += 1; return x; }",
     "expect": "refuse",

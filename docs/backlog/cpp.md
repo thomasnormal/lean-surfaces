@@ -23,14 +23,19 @@ fallthrough, and kernel guards pin the source-item shape and sibling boundary.
 The older clause constructor remains only for existing hand-built evaluator
 fixtures; source admission and execution use the direct item representation.
 
-## `c-name-resolution-by-string`: callee declaration-kind guard
+## `c-name-resolution-by-string`: declaration-id resolution
 
-**Partially closed 2026-11-11.** C call dispatch now uses the retained
-`DeclRefExpr` declaration kind through `calleeName` and refuses local-variable
-or indirect references before looking up a function by name. A local callee
-row pins the refusal (the existing type-layout frontier may report first).
-Full declaration-id threading for variables, globals, and function bodies
-remains open.
+**Closed 2026-11-11.** The C extractor now retains Clang declaration handles
+on `FunctionDecl`, `VarDecl`, `ParmVarDecl`, `EnumConstantDecl`, and every
+`DeclRefExpr`. The ingested AST carries those handles as structured
+`DeclarationId` values. Function frames and globals bind an identity
+environment, lvalues resolve object references by handle, enum constants use
+handle-keyed bindings, and direct calls dispatch through the referenced
+`FunctionDecl` handle. Name lookup remains only as a compatibility path for
+old hand-built AST fixtures and the public `callByName` entry point; extracted
+program semantics no longer redoes declaration lookup by spelling. The schema
+table, C runners, and a compiled two-function/local-shadow probe cover the
+new identity path.
 
 ## `cpp-spelling-identity`: qualified-name suffix guard
 

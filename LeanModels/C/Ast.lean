@@ -1,4 +1,5 @@
 import LeanModels.Core.Basic
+import Lean.ToExpr
 
 /-!
 # The C tier's deep-embedded AST (`LeanModels.C`)
@@ -49,6 +50,13 @@ def pinnedFrontendVersion : String :=
 `"int (*)(Move, void *)"`). See the module docstring: this is the
 frontend's string, deliberately unparsed. -/
 abbrev CType := String
+
+/- Clang's declaration handle is an identity, not a source spelling. Keep it
+   distinct from names even though the frontend currently serializes the
+   token as text. -/
+structure DeclarationId where
+  value : String
+deriving Repr, Inhabited, BEq, DecidableEq, Lean.ToExpr
 
 /-- A source span, with the macro that produced the construct when one did.
 `line`/`col` are the EXPANSION location — where a reader sees it. -/
@@ -104,7 +112,8 @@ inductive Expr where
   | strLit (value : String) (ty : CType) (span : CSpan)
   | floatLit (value : String) (ty : CType) (span : CSpan)
   /-- A name, with the kind of declaration it resolved to. -/
-  | declRef (name : String) (declKind : String) (ty : CType) (span : CSpan)
+  | declRef (id : Option DeclarationId) (name : String) (declKind : String)
+      (ty : CType) (span : CSpan)
   | member (base : Expr) (field : String) (arrow : Bool) (ty : CType) (span : CSpan)
   | index (base : Expr) (idx : Expr) (ty : CType) (span : CSpan)
   /-- A call. An INDIRECT call is one whose callee is not a `declRef` to a
@@ -139,8 +148,8 @@ deriving Repr, Inhabited
 /-- C declarations that can appear at BLOCK scope as well as file scope —
 everything but a function definition. -/
 inductive Decl where
-  | var (name : String) (ty : CType) (storage : Option String)
-      (init : Option Expr) (span : CSpan)
+  | var (id : Option DeclarationId) (name : String) (ty : CType)
+      (storage : Option String) (init : Option Expr) (span : CSpan)
   /-- A parameter. `name` is **optional**, because C's is: §6.7.6.3 lets a
   prototype declare a parameter with no identifier (`int f(int);`), and
   clang reports one with no `name`.
@@ -150,7 +159,7 @@ inductive Decl where
   real name, and something downstream would eventually look it up. The
   absence is decided in exactly ONE place, `C23.bindParams`
   (`docs/backlog/c.md` 2026-08-24-c-20). -/
-  | param (name : Option String) (ty : CType) (span : CSpan)
+  | param (id : Option DeclarationId) (name : Option String) (ty : CType) (span : CSpan)
   /-- A member declarator. `bits` is the BIT-FIELD WIDTH (§6.7.2.1p4) and
   `none` means "not a bit-field" — the two are different declarations, not
   a present/absent spelling of one. It is carried because `unsigned int b :
@@ -171,7 +180,7 @@ inductive Decl where
   Measured: nothing in this tier reads it. `C23.Ctx.enums` is only ever
   supplied from `Program.enums`, which nothing builds from an envelope, so
   this is schema-widening (`docs/backlog/c.md` 2026-08-24-c-21). -/
-  | enumConst (name : String) (value : Option String) (span : CSpan)
+  | enumConst (id : Option DeclarationId) (name : String) (value : Option String) (span : CSpan)
   | unsupported (cKind : String) (text : String) (span : CSpan)
 deriving Repr, Inhabited
 
@@ -200,6 +209,7 @@ deriving Repr, Inhabited
 /-- A function DEFINITION (or prototype, when `body = none`). `storage` is
 clang's `storageClass` — `"static"`, or `none` for external linkage. -/
 structure FunctionDefn where
+  id : Option DeclarationId := none
   name : String
   ty : CType
   storage : Option String
@@ -256,7 +266,7 @@ Version-neutral: it reads a field the `c-0.1` envelope already carries
 consumer refuses rather than inventing one. -/
 def Expr.ty : Expr → CType
   | .intLit _ t _ | .charLit _ t _ | .strLit _ t _ | .floatLit _ t _ => t
-  | .declRef _ _ t _ => t
+  | .declRef _ _ _ t _ => t
   | .member _ _ _ t _ | .index _ _ t _ | .call _ _ t _ => t
   | .binop _ _ _ t _ | .compoundAssign _ _ _ _ _ t _ => t
   | .unop _ _ _ t _ | .cond _ _ _ t _ | .paren _ t _ => t
@@ -405,7 +415,7 @@ tactic's failure as the fact's absence. -/
 
 /-- The expressions a block-scope declaration contains. -/
 def Decl.exprs : Decl → List Expr
-  | .var _ _ _ (some i) _ => i.subexprs
+  | .var _ _ _ _ (some i) _ => i.subexprs
   | _ => []
 
 /-- Statements nested inside a statement, including itself. -/
@@ -447,6 +457,15 @@ def fileScopeObjects (u : TranslationUnit) : List Decl :=
     | .decl d@(.var ..) => some d
     | _ => none
 
+/-- Folded enum constants keyed by their frontend declaration handles. -/
+def enumBindings (u : TranslationUnit) : List (DeclarationId × Int) :=
+  u.items.flatMap fun item => match item with
+    | .decl (.enum _ constants _) => constants.filterMap fun constant =>
+        match constant with
+        | .enumConst (some id) _ (some value) _ => value.toInt?.map (fun n => (id, n))
+        | _ => none
+    | _ => []
+
 /-- Every statement in the unit (function bodies only — C has no
 statements outside one). -/
 def stmts (u : TranslationUnit) : List Stmt :=
@@ -471,7 +490,7 @@ def indirectCalls (u : TranslationUnit) : List Expr :=
   u.exprs.filter fun e => match e with
     | .call callee _ _ _ =>
         match calleeHead callee with
-        | .declRef _ "FunctionDecl" _ _ => false
+        | .declRef _ _ "FunctionDecl" _ _ => false
         | _ => true
     | _ => false
 

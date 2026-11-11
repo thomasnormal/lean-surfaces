@@ -67,7 +67,8 @@ generated profile reports 14/14 depended-on facts and all hosts agree.
 The torture scorer now distinguishes `main` returning zero (or falling off)
 from a nonzero integer return. Nonzero returns are failures, matching the
 oracle's process exit status instead of counting every successful model run as
-passed.
+passed. Revalidated 2026-11-11 with the pinned Clang/LLVM 21.1.8 frontend:
+`main-return-7: failed`.
 
 ## 2026-11-11-c-goto-skips-decl — declaration-scope boundary
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""c_construct_census.py — the C tier's construct census, from the sources.
+"""c_construct_census.py — the C tier's construct census, from Clang.
 
 Measures which C the corpus actually USES: node kinds, operators, the
 conversion lattice, control flow, the libc surface, the object kinds, and
@@ -42,6 +42,10 @@ clang starts emitting it the instrument says so instead of drifting.
 
 Python >= 3.9, stdlib only.  Deterministic: every mapping is emitted in
 sorted order, so a double run is byte-identical.
+
+Includes and macro definitions come from Clang's preprocessor stream; all
+construct counts come from the JSON AST. The source text is used only for byte
+hashes and line-count reporting.
 """
 
 import argparse
@@ -50,8 +54,9 @@ import hashlib
 import json
 import os
 import re
-import subprocess
 import sys
+
+from c_frontend import run as clang_run, source_includes, source_macros, version as clang_full_version
 
 # The pinned profile.  See the module docstring: these flags change the AST.
 CLANG_STD = "-std=c23"
@@ -68,21 +73,8 @@ EXPR_KINDS = re.compile(r"(Expr|Operator|Literal)$")
 EFFECT_CALL_KINDS = {"CallExpr", "CompoundAssignOperator"}
 
 
-def run(cmd):
-    out = subprocess.run(cmd, capture_output=True, text=True)
-    return out
-
-
 def clang_version():
-    out = run(["clang", "--version"])
-    first = (out.stdout or "").splitlines()[:1]
-    text = first[0] if first else ""
-    # The FAMILY, never the point release: stamping `17.0.0 (clang-1700.6.4.2)`
-    # re-keys every artifact for a byte-identical payload.  That churn is
-    # recorded twice in docs/backlog.md; this is the correction applied up front.
-    m = re.search(r"(Apple clang|clang) version (\d+)", text)
-    return ("apple-clang-%s" % m.group(2)) if m and m.group(1) == "Apple clang" \
-        else ("clang-%s" % m.group(2)) if m else "unknown"
+    return clang_full_version()
 
 
 def effects(node):
@@ -278,7 +270,7 @@ def walk(node, st, parent=None):
 
 
 def census(path):
-    ast = run(["clang"] + AST_FLAGS + [path])
+    ast = clang_run(AST_FLAGS + [path])
     # A clang DIAGNOSTIC still yields a partial AST on stdout.  Censusing it
     # would report a plausible table for a program that does not compile —
     # a silent wrong answer, which this project does not ship.  Refuse.
@@ -359,7 +351,7 @@ def census(path):
     src = open(path, "rb").read()
     text = src.decode()
     lines = text.splitlines()
-    pp = run(["clang"] + CLANG_PROFILE + ["-E", path])
+    pp = clang_run(CLANG_PROFILE + ["-E", path])
 
     ops = dict(sorted(opcodes("BinaryOperator").items()))
     cops = dict(sorted(opcodes("CompoundAssignOperator").items()))
@@ -368,6 +360,8 @@ def census(path):
         + sum(uops.get(o, 0) for o in ("-", "++", "--")) \
         + sum(cops.get(o, 0) for o in ("+=", "-=", "*="))
 
+    pp_includes = source_includes(path)
+    pp_macros = source_macros(path)
     return {
         "instrument": "harness/c_construct_census.py",
         "profile": {"frontend": clang_version(), "flags": CLANG_PROFILE},
@@ -376,7 +370,7 @@ def census(path):
         "lines_total": len(lines),
         "lines_nonblank": sum(1 for l in lines if l.strip()),
         "preprocessed_lines": len(pp.stdout.splitlines()),
-        "includes": re.findall(r"^\s*#\s*include\s*[<\"]([^>\"]+)", text, re.M),
+        "includes": pp_includes,
         "functions_with_bodies": len(bodies),
         "functions_static": sum(1 for b in bodies if b.get("storageClass") == "static"),
         "file_scope_objects": st["file_scope"],
@@ -415,8 +409,10 @@ def census(path):
         "compound_literals": kinds.get("CompoundLiteralExpr", 0),
         "string_literals": kinds.get("StringLiteral", 0),
         "float_literals": kinds.get("FloatingLiteral", 0),
-        "function_like_macros": len(re.findall(r"^\s*#\s*define\s+\w+\(", text, re.M)),
-        "object_like_macros": len(re.findall(r"^\s*#\s*define\s+\w+\s+", text, re.M)),
+        "function_like_macros": sum(1 for macro in pp_macros
+                                     if "(" in macro.split(None, 1)[0]),
+        "object_like_macros": sum(1 for macro in pp_macros
+                                   if "(" not in macro.split(None, 1)[0]),
         "member_on_call_result": st["member_on_call"],
         # `&x` on an automatic object, and `&x.f` / `&x[i]` on a subobject.
         # Both are zero in Python by construction; both are why the C tier's
@@ -557,7 +553,7 @@ def selftest():
         src = os.path.join(tmp, "selftest.c")
         with open(src, "w") as fh:
             fh.write(SELFTEST_C)
-        ast = run(["clang"] + AST_FLAGS + [src])
+        ast = clang_run(AST_FLAGS + [src])
         if ast.returncode != 0 or not ast.stdout:
             sys.exit("c_construct_census --selftest: clang failed\n%s" % ast.stderr[:800])
         tree = json.loads(ast.stdout)

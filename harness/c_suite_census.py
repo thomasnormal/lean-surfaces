@@ -33,8 +33,10 @@ import collections
 import json
 import os
 import re
-import subprocess
 import sys
+
+from c_frontend import (ast as clang_ast, source_directives, source_includes,
+                        source_macros, source_nodes)
 
 PROFILE_FLAGS = ["-std=c23", "-D_FORTIFY_SOURCE=0"]
 AST_FLAGS = PROFILE_FLAGS + ["-fsyntax-only", "-Xclang", "-ast-dump=json"]
@@ -70,43 +72,31 @@ FREESTANDING = {
 
 def clang_kinds(path):
     """The AST node kinds a test produces, or a refusal category."""
-    out = subprocess.run(["clang"] + AST_FLAGS + [path],
-                         capture_output=True, text=True)
-    if out.returncode != 0:
-        return None, "parse-error"
-    if not out.stdout:
-        return None, "no-ast"
     try:
-        tu = json.loads(out.stdout)
-    except json.JSONDecodeError:
-        return None, "bad-json"
+        tu = clang_ast(path)
+    except (RuntimeError, ValueError) as error:
+        return None, "parse-error"
     kinds = collections.Counter()
     # The libc surface the test actually CALLS -- the number that prices the
     # libc rung.  A header a test includes is not a function it needs.
     externs = set()
     defined = set()
     formats = []
-    target = os.path.basename(path)
-    state = {"file": None}
-
-    def walk(n):
-        for slot in (n.get("loc") or {}, (n.get("range") or {}).get("begin") or {}):
-            if isinstance(slot, dict):
-                inner = slot.get("expansionLoc") or slot.get("spellingLoc") or slot
-                if inner.get("file"):
-                    state["file"] = inner["file"]
-        mine = state["file"] and os.path.basename(state["file"]) == target
-        if n.get("kind") and mine:
+    # The shared frontend walk has already applied Clang's sticky source-file
+    # attribution. Keep the local traversal only for the fields that depend on
+    # child order; each source node is visited once.
+    for n in source_nodes(tu, path):
+        if n.get("kind"):
             kinds[n["kind"]] += 1
         if n.get("kind") == "FunctionDecl" and n.get("name") \
                 and any((c or {}).get("kind") == "CompoundStmt"
                         for c in (n.get("inner") or [])):
             defined.add(n["name"])
-        if mine and n.get("kind") == "DeclRefExpr":
+        if n.get("kind") == "DeclRefExpr":
             d = n.get("referencedDecl") or {}
             if d.get("kind") == "FunctionDecl" and d.get("name"):
                 externs.add(d["name"])
-        if mine and n.get("kind") == "CallExpr":
+        if n.get("kind") == "CallExpr":
             kids = [c for c in (n.get("inner") or []) if isinstance(c, dict)]
             head = kids[0] if kids else {}
             while head.get("kind") in ("ImplicitCastExpr", "ParenExpr"):
@@ -121,18 +111,13 @@ def clang_kinds(path):
                     arg = sub[0] if sub else {}
                 if arg.get("kind") == "StringLiteral" and arg.get("value"):
                     formats.append((nm, arg["value"]))
-        for s in ("inner", "args"):
-            for c in n.get(s) or []:
-                if isinstance(c, dict):
-                    walk(c)
-    walk(tu)
     kinds.externs = sorted(externs - defined)
     kinds.formats = formats
     return kinds, "ok"
 
 
 def source_facts(path):
-    """Preprocessor and libc needs, read off the source text."""
+    """Preprocessor and libc needs, read from Clang's streams."""
     try:
         text = open(path, "r", errors="replace").read()
     except OSError as e:
@@ -143,11 +128,8 @@ def source_facts(path):
         raise SystemExit("c_suite_census: cannot read %s: %s\n"
                          "A census that silently drops a file it could not read "
                          "reports a wrong answer, not a smaller one." % (path, e))
-    includes = re.findall(r'^\s*#\s*include\s*[<"]([^>"]+)', text, re.M)
-    directives = re.findall(r'^\s*#\s*(\w+)', text, re.M)
-    macros = [d for d in directives if d in
-              ("define", "undef", "if", "ifdef", "ifndef", "elif", "else",
-               "endif", "include", "pragma", "line", "error", "embed")]
+    includes = source_includes(path)
+    directives = source_directives(path)
     hosted = sorted({h for h in includes if h not in FREESTANDING})
     return {
         "includes": sorted(set(includes)),
@@ -157,7 +139,7 @@ def source_facts(path):
         # `#include` alone is a translation-phase-4 need; a test that also
         # DEFINES macros or branches on them exercises the preprocessor as a
         # language, which is a different obligation.
-        "needs_cpp": bool(set(macros) - {"include"}),
+        "needs_cpp": bool(set(directives) - {"include"}),
     }
 
 

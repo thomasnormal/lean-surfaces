@@ -110,3 +110,14 @@ and stamps that line into the envelope. The Lean ingester retains and checks
 `frontend.version` against the same pin, so a family-only stamp cannot admit an
 envelope produced by a different point release. `harness/c_profile_probe.py`
 uses the same executable selection.
+
+## `c-census-regex`: AST/preprocessor census inputs
+
+**Closed 2026-11-11.** `harness/c_frontend.py` now owns the source-attributed
+Clang AST and preprocessor walks. `c_construct_census.py` derives includes,
+macro counts, function storage and all construct facts from those streams;
+`c_suite_census.py` derives includes/directives from preprocessor output and
+node/call/format facts from the AST; `c_api_census.py` derives API references,
+libc calls, floating use, and static objects from AST nodes plus the
+source-attributed macro stream. The previous source regexes and the
+non-reproducible private scratch-tree default are gone.

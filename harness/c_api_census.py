@@ -1,16 +1,19 @@
 #!/usr/bin/env python3
 """Static census of the CPython C API surface used by candidate extension modules.
 
-For each candidate module: every Py*/_Py*/METH_* identifier referenced (calls,
-macros, types), deduplicated, filtered against the identifiers actually declared
-in the pinned 3.9.19 Include/ headers, bucketed; plus libc calls, float usage,
-and file-scope mutable state.
+For each candidate module: every Py*/_Py*/METH_* identifier referenced by
+Clang's AST or the source-attributed preprocessor stream, deduplicated, filtered
+against the identifiers exposed by the pinned Include/ headers, bucketed; plus
+libc calls, float usage, and file-scope mutable state. No C source text is
+parsed with a hand-written regex.
 """
+import hashlib
 import json, re, sys, os
 from pathlib import Path
 
-SRC = Path(sys.argv[1]) if len(sys.argv) > 1 else Path(
-    "/private/tmp/claude-501/-Users-ahle-repos-sunfish/6054308f-1ef2-4051-b134-afb688cb98f9/scratchpad/Python-3.9.19")
+from c_frontend import ast as clang_ast, source_macros, source_nodes, run as clang_run
+
+SRC = Path(sys.argv[1]) if len(sys.argv) > 1 else Path(os.environ.get("PYTHON39_SRC", "."))
 
 MODULES = {
     "_bisect":      ["Modules/_bisectmodule.c"],
@@ -28,38 +31,18 @@ MODULES = {
     "_socket":      ["Modules/socketmodule.c", "Modules/socketmodule.h"],
 }
 
-IDENT = re.compile(r"\b_?Py[A-Za-z0-9_]+\b|\bMETH_[A-Z_]+\b")
-
-def strip_c(text):
-    """Remove comments and string/char literals from C source."""
-    out, i, n = [], 0, len(text)
-    while i < n:
-        c = text[i]
-        if c == '/' and i + 1 < n and text[i+1] == '*':
-            j = text.find('*/', i + 2)
-            i = n if j < 0 else j + 2
-            out.append(' ')
-        elif c == '/' and i + 1 < n and text[i+1] == '/':
-            j = text.find('\n', i)
-            i = n if j < 0 else j
-        elif c in '"\'':
-            q, j = c, i + 1
-            while j < n:
-                if text[j] == '\\': j += 2; continue
-                if text[j] == q: break
-                j += 1
-            i = j + 1
-            out.append('""' if q == '"' else "' '")
-        else:
-            out.append(c); i += 1
-    return ''.join(out)
-
 # --- 1. API identifier universe: everything declared in Include/ ------------
-api_universe = set()
-for h in SRC.glob("Include/**/*.h"):
-    api_universe |= set(IDENT.findall(strip_c(h.read_text(errors="replace"))))
-# structmember.h T_* member-type codes (used by PyMemberDef tables)
-TMEMBER = set(re.findall(r"\bT_[A-Z_]+\b", (SRC / "Include/structmember.h").read_text()))
+if not (SRC / "Include").is_dir():
+    raise SystemExit("c_api_census: source tree must contain Include/; "
+                     "pass the pinned Python 3.9 tree explicitly")
+headers = sorted(SRC.glob("Include/**/*.h"))
+include_text = "\n".join('#include "%s"' % h for h in headers)
+universe_pp = clang_run(["-E", "-dD", "-x", "c", "-"], input=include_text)
+if universe_pp.returncode:
+    raise SystemExit("c_api_census: clang could not preprocess Include/: " + universe_pp.stderr[:1000])
+IDENT = re.compile(r"\b_?Py[A-Za-z0-9_]+\b|\bMETH_[A-Z_]+\b")
+api_universe = set(IDENT.findall(universe_pp.stdout))
+TMEMBER = set(re.findall(r"\bT_[A-Z_]+\b", universe_pp.stdout))
 
 # --- 2. Buckets --------------------------------------------------------------
 BUCKETS = [
@@ -122,35 +105,56 @@ LIBC = ("memcpy memmove memset memcmp memchr strlen strcmp strncmp strcpy strncp
         "floor ceil fabs fmod pow sqrt exp log log2 log10 log1p expm1 sin cos tan asin acos atan atan2 sinh cosh "
         "tanh asinh acosh atanh erf erfc lgamma tgamma hypot copysign round nextafter frexp ldexp modf isalpha "
         "isdigit isspace toupper tolower time localtime gmtime mktime strftime getenv").split()
-LIBC_RE = re.compile(r"\b(" + "|".join(LIBC) + r")\s*\(")
-
 def analyze(files):
     raw = "\n".join((SRC / f).read_text(errors="replace") for f in files)
-    text = strip_c(raw)
     loc = sum(1 for line in raw.splitlines() if line.strip())
-    refs = set(IDENT.findall(text)) & api_universe
-    tmem = set(re.findall(r"\bT_[A-Z_]+\b", text)) & TMEMBER
+    refs, tmem, libc, floats, state = set(), set(), set(), 0, []
+    for relative in files:
+        path = SRC / relative
+        tree = clang_ast(path)
+        for node in source_nodes(tree, path):
+            kind = node.get("kind")
+            if kind == "DeclRefExpr":
+                name = (node.get("referencedDecl") or {}).get("name")
+                if name:
+                    refs.add(name)
+            if kind == "TypeRef":
+                name = node.get("name")
+                if name:
+                    refs.add(name)
+            if kind == "CallExpr":
+                kids = [c for c in (node.get("inner") or []) if isinstance(c, dict)]
+                head = kids[0] if kids else {}
+                while head.get("kind") in ("ImplicitCastExpr", "ParenExpr"):
+                    head = next((c for c in (head.get("inner") or []) if isinstance(c, dict)), {})
+                name = (head.get("referencedDecl") or {}).get("name")
+                if name in LIBC:
+                    libc.add(name)
+            if kind == "FloatingLiteral":
+                floats += 1
+            qual = (node.get("type") or {}).get("qualType", "")
+            if "float" in qual or "double" in qual:
+                floats += 1
+            if kind == "VarDecl" and node.get("storageClass") == "static":
+                if "const" not in qual and node.get("name"):
+                    state.append(node["name"])
+        for macro in source_macros(path):
+            refs.update(IDENT.findall(macro))
+            tmem.update(re.findall(r"\bT_[A-Z_]+\b", macro))
+    refs &= api_universe
+    tmem &= TMEMBER
     buckets, semantic, boiler = {}, set(), set()
     for name in refs:
         b, k = classify(name)
         buckets.setdefault(b, []).append(name)
         (semantic if k == "semantic" else boiler).add(name)
-    libc = sorted(set(LIBC_RE.findall(text)))
-    floats = len(re.findall(r"\b(?:double|float)\b", text))
-    # file-scope static mutable data: static decls, not const, not functions
-    state = []
-    for m in re.finditer(r"^static\s+(?!const\b)([^;{}()]*?)\b([A-Za-z_][A-Za-z0-9_]*)\s*(\[[^\]]*\])?\s*(=[^;]*)?;",
-                         text, re.M):
-        decl = m.group(0)
-        if "(" in decl or "const" in decl: continue
-        state.append(m.group(2))
     return {
         "files": files, "loc_nonblank": loc,
         "api_total": len(refs) + len(tmem),
         "api_semantic": sorted(semantic),
         "api_boilerplate": sorted(boiler | tmem),
         "buckets": {b: sorted(v) for b, v in sorted(buckets.items())},
-        "libc": libc, "float_mentions": floats,
+        "libc": sorted(libc), "float_mentions": floats,
         "static_mutable": sorted(set(state)),
     }
 

@@ -11,7 +11,7 @@ load_design_sv2 readmemhRom from
   "Examples/system-verilog/sem2/readmemh_rom/readmemh_rom.sv.json"
 
 #guard (match readmemhRom.pdesign.processes with
-  | .initial (.unsupported k msg) :: _ =>
+  | .initial (.block [.unsupported k msg]) :: _ =>
       k == "SystemTask:readmemh" &&
       msg == "file=rom.hex;target=rom;data=00,11,22,33"
   | _ => false)

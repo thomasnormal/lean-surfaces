@@ -10,7 +10,7 @@
   "source_files": [
     {
       "path": "Examples/system-verilog/sem2/readmemh_rom/readmemh_rom.sv",
-      "sha256": "b1699cdc8eb8ab3ca8e9ced209748843c5a78f72674d295ace3ffff983bd66c5"
+      "sha256": "b208673e0433ee8e1cde4aec68daba9dd1b733ab2e0aa2d474695f980b2c3830"
     }
   ],
   "packages": [],
@@ -22,7 +22,7 @@
         "span": {
           "line": 1,
           "col": 1,
-          "end_line": 8,
+          "end_line": 10,
           "end_col": 10
         },
         "name": "readmemh_rom",
@@ -297,35 +297,46 @@
             "span": {
               "line": 6,
               "col": 3,
-              "end_line": 6,
-              "end_col": 37
+              "end_line": 8,
+              "end_col": 6
             },
             "body": {
-              "kind": "Unsupported",
+              "kind": "Block",
               "span": {
-                "line": 6,
-                "col": 11,
-                "end_line": 6,
-                "end_col": 37
+                "line": 7,
+                "col": 5,
+                "end_line": 7,
+                "end_col": 31
               },
-              "sv_kind": "SystemTask:readmemh",
-              "text": "file=rom.hex;target=rom;data=00,11,22,33"
+              "stmts": [
+                {
+                  "kind": "Unsupported",
+                  "span": {
+                    "line": 7,
+                    "col": 5,
+                    "end_line": 7,
+                    "end_col": 31
+                  },
+                  "sv_kind": "SystemTask:readmemh",
+                  "text": "file=rom.hex;target=rom;data=00,11,22,33"
+                }
+              ]
             }
           },
           {
             "kind": "Assign",
             "span": {
-              "line": 7,
+              "line": 9,
               "col": 10,
-              "end_line": 7,
+              "end_line": 9,
               "end_col": 23
             },
             "target": {
               "kind": "Ident",
               "span": {
-                "line": 7,
+                "line": 9,
                 "col": 10,
-                "end_line": 7,
+                "end_line": 9,
                 "end_col": 11
               },
               "width": 8,
@@ -334,18 +345,18 @@
             "value": {
               "kind": "Ternary",
               "span": {
-                "line": 7,
+                "line": 9,
                 "col": 14,
-                "end_line": 7,
+                "end_line": 9,
                 "end_col": 23
               },
               "width": 8,
               "cond": {
                 "kind": "Binary",
                 "span": {
-                  "line": 7,
+                  "line": 9,
                   "col": 18,
-                  "end_line": 7,
+                  "end_line": 9,
                   "end_col": 22
                 },
                 "width": 1,
@@ -353,9 +364,9 @@
                 "left": {
                   "kind": "Ident",
                   "span": {
-                    "line": 7,
+                    "line": 9,
                     "col": 18,
-                    "end_line": 7,
+                    "end_line": 9,
                     "end_col": 22
                   },
                   "width": 2,
@@ -364,9 +375,9 @@
                 "right": {
                   "kind": "Literal",
                   "span": {
-                    "line": 7,
+                    "line": 9,
                     "col": 18,
-                    "end_line": 7,
+                    "end_line": 9,
                     "end_col": 22
                   },
                   "width": 2,
@@ -376,9 +387,9 @@
               "then": {
                 "kind": "Ident",
                 "span": {
-                  "line": 7,
+                  "line": 9,
                   "col": 14,
-                  "end_line": 7,
+                  "end_line": 9,
                   "end_col": 17
                 },
                 "width": 8,
@@ -387,18 +398,18 @@
               "else": {
                 "kind": "Ternary",
                 "span": {
-                  "line": 7,
+                  "line": 9,
                   "col": 14,
-                  "end_line": 7,
+                  "end_line": 9,
                   "end_col": 23
                 },
                 "width": 8,
                 "cond": {
                   "kind": "Binary",
                   "span": {
-                    "line": 7,
+                    "line": 9,
                     "col": 18,
-                    "end_line": 7,
+                    "end_line": 9,
                     "end_col": 22
                   },
                   "width": 1,
@@ -406,9 +417,9 @@
                   "left": {
                     "kind": "Ident",
                     "span": {
-                      "line": 7,
+                      "line": 9,
                       "col": 18,
-                      "end_line": 7,
+                      "end_line": 9,
                       "end_col": 22
                     },
                     "width": 2,
@@ -417,9 +428,9 @@
                   "right": {
                     "kind": "Literal",
                     "span": {
-                      "line": 7,
+                      "line": 9,
                       "col": 18,
-                      "end_line": 7,
+                      "end_line": 9,
                       "end_col": 22
                     },
                     "width": 2,
@@ -429,9 +440,9 @@
                 "then": {
                   "kind": "Ident",
                   "span": {
-                    "line": 7,
+                    "line": 9,
                     "col": 14,
-                    "end_line": 7,
+                    "end_line": 9,
                     "end_col": 17
                   },
                   "width": 8,
@@ -440,18 +451,18 @@
                 "else": {
                   "kind": "Ternary",
                   "span": {
-                    "line": 7,
+                    "line": 9,
                     "col": 14,
-                    "end_line": 7,
+                    "end_line": 9,
                     "end_col": 23
                   },
                   "width": 8,
                   "cond": {
                     "kind": "Binary",
                     "span": {
-                      "line": 7,
+                      "line": 9,
                       "col": 18,
-                      "end_line": 7,
+                      "end_line": 9,
                       "end_col": 22
                     },
                     "width": 1,
@@ -459,9 +470,9 @@
                     "left": {
                       "kind": "Ident",
                       "span": {
-                        "line": 7,
+                        "line": 9,
                         "col": 18,
-                        "end_line": 7,
+                        "end_line": 9,
                         "end_col": 22
                       },
                       "width": 2,
@@ -470,9 +481,9 @@
                     "right": {
                       "kind": "Literal",
                       "span": {
-                        "line": 7,
+                        "line": 9,
                         "col": 18,
-                        "end_line": 7,
+                        "end_line": 9,
                         "end_col": 22
                       },
                       "width": 2,
@@ -482,9 +493,9 @@
                   "then": {
                     "kind": "Ident",
                     "span": {
-                      "line": 7,
+                      "line": 9,
                       "col": 14,
-                      "end_line": 7,
+                      "end_line": 9,
                       "end_col": 17
                     },
                     "width": 8,
@@ -493,18 +504,18 @@
                   "else": {
                     "kind": "Ternary",
                     "span": {
-                      "line": 7,
+                      "line": 9,
                       "col": 14,
-                      "end_line": 7,
+                      "end_line": 9,
                       "end_col": 23
                     },
                     "width": 8,
                     "cond": {
                       "kind": "Binary",
                       "span": {
-                        "line": 7,
+                        "line": 9,
                         "col": 18,
-                        "end_line": 7,
+                        "end_line": 9,
                         "end_col": 22
                       },
                       "width": 1,
@@ -512,9 +523,9 @@
                       "left": {
                         "kind": "Ident",
                         "span": {
-                          "line": 7,
+                          "line": 9,
                           "col": 18,
-                          "end_line": 7,
+                          "end_line": 9,
                           "end_col": 22
                         },
                         "width": 2,
@@ -523,9 +534,9 @@
                       "right": {
                         "kind": "Literal",
                         "span": {
-                          "line": 7,
+                          "line": 9,
                           "col": 18,
-                          "end_line": 7,
+                          "end_line": 9,
                           "end_col": 22
                         },
                         "width": 2,
@@ -535,9 +546,9 @@
                     "then": {
                       "kind": "Ident",
                       "span": {
-                        "line": 7,
+                        "line": 9,
                         "col": 14,
-                        "end_line": 7,
+                        "end_line": 9,
                         "end_col": 17
                       },
                       "width": 8,
@@ -546,9 +557,9 @@
                     "else": {
                       "kind": "Literal",
                       "span": {
-                        "line": 7,
+                        "line": 9,
                         "col": 14,
-                        "end_line": 7,
+                        "end_line": 9,
                         "end_col": 23
                       },
                       "width": 8,
@@ -572,6 +583,28 @@
               "22",
               "33"
             ]
+          }
+        ],
+        "cell_refs": [
+          {
+            "name": "rom[0]",
+            "base": "rom",
+            "index": 0
+          },
+          {
+            "name": "rom[1]",
+            "base": "rom",
+            "index": 1
+          },
+          {
+            "name": "rom[2]",
+            "base": "rom",
+            "index": 2
+          },
+          {
+            "name": "rom[3]",
+            "base": "rom",
+            "index": 3
           }
         ]
       }

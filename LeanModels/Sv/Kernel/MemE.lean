@@ -29,6 +29,13 @@ structure MemEDesign where
   decls : List Decl
   memDecls : List PDecl
   processes : List PProcess
+  /-- Structured literal-file tasks retained by the parser frontend.  The
+      E profile consumes these at time zero; it never recovers them from an
+      Unsupported message. -/
+  readmemh : List PReadmemh := []
+  /-- Source declarations retained for fixed unpacked arrays whose cells are
+      represented as scalar declarations by the frontend. -/
+  sourceDecls : List PDecl := []
 deriving Repr, Inhabited
 
 structure MemEState where
@@ -65,6 +72,99 @@ def MemEDesign.init (d : MemEDesign) : MemEState :=
       match pd.memShape? d.env with
       | .ok (some shape) => some shape
       | _ => none) }
+
+/-! ## Literal-file initialization -/
+
+def memEReadmemhDigit (c : Char) : Option Nat :=
+  if c >= '0' && c <= '9' then some (c.toNat - '0'.toNat)
+  else if c >= 'a' && c <= 'f' then some (10 + c.toNat - 'a'.toNat)
+  else if c >= 'A' && c <= 'F' then some (10 + c.toNat - 'A'.toNat)
+  else none
+
+def memEReadmemhNat (s : String) : Option Nat :=
+  if s.isEmpty then none
+  else s.toList.foldlM (init := 0) fun n c => do
+    let digit ← memEReadmemhDigit c
+    return n * 16 + digit
+
+def MemEDesign.writeReadmemhMem (d : MemEDesign) (st : MemEState)
+    (pd : PDecl) (shape : MemShape) (index step : Int)
+    : List String → Except String MemEState
+  | [] => .ok st
+  | word :: rest => do
+      let n ← match memEReadmemhNat word with
+        | some n => .ok n
+        | none => .error "SystemTask:readmemh:xz-digit"
+      let value := LVec.ofNat shape.elemWidth n
+      let target := PLhs.arrayElem pd.name [.int index]
+      let memory ← match MemState.writeTarget d.env pd target value st.memory with
+        | .ok (some m) => .ok m
+        | .ok none => .error "SystemTask:readmemh target is outside the memory shape"
+        | .error e => .error e
+      writeReadmemhMem d { st with memory } pd shape (index + step) step rest
+
+def MemEDesign.flatIndices (target : String) : List PDecl → Except String (List Int)
+  | [] => .ok []
+  | pd :: rest => do
+      if pd.flatBase != some target then
+        .error s!"SystemTask:readmemh target '{target}' has a non-contiguous flat declaration"
+      let some index := pd.flatIndex
+        | .error s!"SystemTask:readmemh cell '{pd.name}' has no source index"
+      let tail ← MemEDesign.flatIndices target rest
+      .ok (index :: tail)
+
+def MemEDesign.flatOrderOk : List Int → Bool
+  | [] | [_] => true
+  | first :: second :: rest =>
+      let step := second - first
+      (step == 1 || step == -1) && go step second rest
+where
+  go (step previous : Int) : List Int → Bool
+    | [] => true
+    | index :: rest => index - previous == step && go step index rest
+
+def MemEDesign.writeReadmemhFlat (d : MemEDesign) (st : MemEState)
+    (target : String) : List PDecl → List String → Except String MemEState
+  | [], [] => .ok st
+  | pd :: cells, word :: words => do
+      let n ← match memEReadmemhNat word with
+        | some n => .ok n
+        | none => .error "SystemTask:readmemh:xz-digit"
+      let some dc := d.decls.find? (·.name == pd.name)
+        | .error s!"SystemTask:readmemh cell '{pd.name}' is not declared"
+      writeReadmemhFlat d
+        { st with scalar := SvState.set st.scalar pd.name (LVec.ofNat dc.width n) }
+        target cells words
+  | _, _ =>
+      .error s!"SystemTask:readmemh:short-file for target '{target}'"
+
+def MemEDesign.writeReadmemh (d : MemEDesign) (st : MemEState)
+    (task : PReadmemh) : Except String MemEState := do
+  match d.memDecl? task.target with
+  | some pd =>
+      let shape ← d.shape? pd
+      let count := (Int.natAbs (shape.msb - shape.lsb)) + 1
+      if task.words.length != count then
+        .error s!"SystemTask:readmemh:short-file: {task.words.length} words for {count} cells"
+      let step : Int := if shape.lsb >= shape.msb then 1 else -1
+      writeReadmemhMem d st pd shape shape.msb step task.words
+  | none =>
+      let cells := d.sourceDecls.filter (fun pd => pd.flatBase == some task.target)
+      if cells.isEmpty then
+        .error s!"SystemTask:readmemh target '{task.target}' is not a declared memory"
+      else
+        let indexes ← MemEDesign.flatIndices task.target cells
+        if !MemEDesign.flatOrderOk indexes then
+          .error s!"SystemTask:readmemh target '{task.target}' has non-contiguous source indices"
+        else
+          writeReadmemhFlat d st task.target cells task.words
+
+def MemEDesign.writeReadmemhList (d : MemEDesign) (st : MemEState) :
+    List PReadmemh → Except String MemEState
+  | [] => .ok st
+  | task :: rest => do
+      let st' ← d.writeReadmemh st task
+      d.writeReadmemhList st' rest
 
 def MemEDesign.applyInputs (d : MemEDesign) (inputs : SvState) (s : MemEState) : MemEState :=
   { s with scalar := d.decls.foldl (fun st dc =>
@@ -188,6 +288,43 @@ def commitMemE (s : MemEState) : List MemEUpdate → Except String MemEState
       | none => .error s!"memory '{n}' is not present in E state"
       | some m => commitMemE { s with memory := m } rest
 
+def MemEDesign.initialBodies : List PProcess → List PStmt
+  | [] => []
+  | .initial body :: rest => body :: MemEDesign.initialBodies rest
+  | _ :: rest => MemEDesign.initialBodies rest
+
+def MemEDesign.readmemhBodyCount : PStmt → Option Nat
+  | .unsupported "SystemTask:readmemh" _ => some 1
+  | .block body =>
+      body.foldlM (init := 0) fun n stmt => do
+        let k ← MemEDesign.readmemhBodyCount stmt
+        return n + k
+  | _ => none
+
+/-! The parser's structured `$readmemh` task is a time-zero memory write.  The
+    only initial process admitted here is the one source-shaped task body that
+    accompanies that metadata; every other initial form stays loud.  Multiple
+    initials are refused because §4.7 leaves their Active-region order open. -/
+def MemEDesign.timeZero (d : MemEDesign) : Except String MemEState := do
+  let bodies := MemEDesign.initialBodies d.processes
+  match bodies with
+  | [] =>
+      if d.readmemh.isEmpty then .ok d.init
+      else .error "SystemTask:readmemh metadata has no initial process"
+  | [body] =>
+      match MemEDesign.readmemhBodyCount body with
+      | some count =>
+          if count != d.readmemh.length || count == 0 then
+            .error "SystemTask:readmemh metadata does not match the initial process"
+          else d.writeReadmemhList d.init d.readmemh
+      | none =>
+          if !d.readmemh.isEmpty then
+            .error "SystemTask:readmemh metadata does not match the initial process"
+          else do
+            let updates ← execMemEStmt d d.init body
+            commitMemE d.init updates
+  | _ => .error "memory E time-zero route does not yet admit multiple initial processes"
+
 def edgeFires (p : PProcess) (old now : SvState) : Bool :=
   match p with
   | .alwaysFF clk _ | .alwaysPlain clk _ => isPosedge (old.bit0 clk) (now.bit0 clk)
@@ -241,7 +378,7 @@ def MemEDesign.ofPDesign (d : PDesign) (args : List Int) : Res MemEDesign := do
   match d.memShapesAt env with
   | .ok _ => pure ()
   | .error e => .unsupported e
-  .ok ⟨d.name, env, ds, mems, d.processes⟩
+  .ok ⟨d.name, env, ds, mems, d.processes, d.readmemh, d.decls⟩
 
 end Kernel
 

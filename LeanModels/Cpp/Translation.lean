@@ -732,6 +732,15 @@ private def nestedIntegralAlias : Raw → Except String Unit
           | _, _ => .error executionRefusal
       | _, _ => .error executionRefusal
 
+private def nestedFunctionPrototype : Raw → Except String Unit
+  | declaration =>
+      match declaration.text "name", declaration.field "type" with
+      | some _, some (.object fields) =>
+          match (Raw.object fields).text "qualType" with
+          | some _ => pure ()
+          | none => .error executionRefusal
+      | _, _ => .error executionRefusal
+
 private def executeNestedNamespaces : List Raw → Except String Unit
   | [] => pure ()
   | declaration :: rest =>
@@ -757,6 +766,12 @@ private def executeNestedNamespaces : List Raw → Except String Unit
           executeNestedNamespaces rest
       | some "TypedefDecl", some (.array [_]) => do
           let _ ← nestedIntegralAlias declaration
+          executeNestedNamespaces rest
+      | some "FunctionDecl", none => do
+          let _ ← nestedFunctionPrototype declaration
+          executeNestedNamespaces rest
+      | some "FunctionDecl", some (.array []) => do
+          let _ ← nestedFunctionPrototype declaration
           executeNestedNamespaces rest
       | some "LinkageSpecDecl", none =>
           match declaration.text "language" with

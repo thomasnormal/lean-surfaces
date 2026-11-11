@@ -15,6 +15,10 @@ required `ce2b760fec4f...`. Ordinary repeats differ at byte 21 because
 repeats are internally identical but use a different fixed address range. No
 probe or literal was regenerated. The README command now includes the required
 `-lstdc++` link when using `--no-default-config`.
+The freshness gate was also run against the reproducible ASLR-disabled probe;
+it exited `2` with `provenance.json IsUTF8Continuation.lean: committed
+literal differs from exporter output`, confirming that stale literals cannot be
+silently accepted.
 
 ## `cpp-target-profile-unchecked`: artifact profile gate
 

@@ -1,5 +1,13 @@
 # C++ lane backlog
 
+## `cpp-call-arg-order`: effectful call arguments
+
+**Closed 2026-11-11.** Direct-call admission now refuses any call argument
+with observable effects, matching the existing binary-operand guard and
+avoiding a fabricated left-to-right resolution for indeterminately sequenced
+parameter initializations. `CallableTests` pins the refusal for a postfix
+increment argument while the pure direct-call witness remains admitted.
+
 ## `cpp-diff-handwritten-twins`: source-derived differential execution
 
 **Open.** The C++ coverage harness evaluates checked-in Lean fixtures while

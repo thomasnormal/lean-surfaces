@@ -691,6 +691,8 @@ def parseCallableDirectCallExpression (profile : TargetProfile)
     parseCallableExpressionTyped profile parameters expressionRows expressionTypes argument none none)
   unless arguments.all (fun argument => callableBuiltin argument.type) do
     throw "callable: direct call arguments require builtin integral values"
+  unless arguments.all (fun argument => !argument.expression.hasEffects) do
+    throw "callable: side effects in call arguments are outside the body profile"
   let resultType := typeExpected.getD target.callee.signature.result
   unless resultType == target.callee.signature.result do
     throw "callable: direct call result disagrees with selected callee"

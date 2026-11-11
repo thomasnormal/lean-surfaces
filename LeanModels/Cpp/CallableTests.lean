@@ -1141,4 +1141,16 @@ private def directCallRaw : Raw := object [
 #guard (parseCallableDirectCallExpression .lp64 [narrowParameter] [] none []
   directCallRaw (some intType)) matches .error _
 
+private def directCallEffectRaw : Raw := object [
+  ("id", text "0x93"), ("kind", text "CallExpr"),
+  ("inner", .array [
+    declRefNode "0x94" "0x20" "helper",
+    object [("id", text "0x95"), ("kind", text "UnaryOperator"),
+      ("opcode", text "++"), ("isPostfix", .bool true),
+      ("inner", .array [declRefNode "0x96" "0x10" "value"])]])]
+
+#guard (parseCallableDirectCallExpression .lp64 [narrowParameter] [] none
+    [{declaration := directCallParameter, callee := directCallCallee}]
+    directCallEffectRaw (some intType)) matches .error _
+
 end LeanModels.Cpp.CallableTests

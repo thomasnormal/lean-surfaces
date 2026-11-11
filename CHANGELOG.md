@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Refused C++ direct calls whose arguments have side effects instead of
+  selecting a left-to-right evaluation order.
+
 - Made the C torture scorer treat nonzero `main` returns as failures.
 
 - Refused forward gotos that skip a declaration until block-entry binding is

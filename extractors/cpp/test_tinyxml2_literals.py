@@ -28,6 +28,9 @@ def fail(message):
 
 def manifest_entries():
     entries = []
+    callable_manifest = json.loads((EXAMPLE / "provenance.json").read_text(encoding="utf-8"))
+    entries.append(("provenance.json", "export_callable.lean", "IsUTF8Continuation.lean",
+                    callable_manifest["probe_ast_path"], callable_manifest["literal_sha256"]))
     for manifest_name, exporter, key in (
         ("member-getters-provenance.json", "export_member_getter.lean", "literal_sha256"),
         ("class-subobjects-provenance.json", "export_class_hierarchy.lean", "literal_sha256"),

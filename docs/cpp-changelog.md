@@ -19,6 +19,10 @@ coverage advance independently from the Python tier.
 
 ### Added
 
+- `using enum E;` now executes when Clang supplies a structured `EnumDecl`
+  target and an adjacent checked `UsingShadowDecl` for an enum constant;
+  unresolved or non-enum targets remain loud refusals.
+
 - `using B = bool;` and equivalent `typedef bool B;` declaration-only aliases
   now execute through their structured `BuiltinType` targets; unsupported
   alias targets remain loud refusals.

@@ -749,6 +749,14 @@ private def executeTopDeclaration (raw : Raw) : Except String Unit :=
           | _, _ => .error executionRefusal
       | none => .error executionRefusal
   | some "UsingDirectiveDecl", _ => .error executionRefusal
+  | some "UsingEnumDecl", none =>
+      match raw.field "target" with
+      | some target =>
+          match target.text "kind", target.text "id" with
+          | some "EnumDecl", some _ => pure ()
+          | _, _ => .error executionRefusal
+      | none => .error executionRefusal
+  | some "UsingEnumDecl", _ => .error executionRefusal
   | some "EnumDecl", none =>
       match raw.text "name", raw.field "fixedUnderlyingType" with
       | some _, none => pure ()
@@ -793,18 +801,56 @@ private def executeTopDeclaration (raw : Raw) : Except String Unit :=
 
 private def executeTopDeclarations : List Raw → Except String Unit
   | [] => pure ()
-  | usingDecl :: shadow :: rest =>
-      match usingDecl.text "kind", shadow.text "kind", shadow.field "target" with
-      | some "UsingDecl", some "UsingShadowDecl", some target =>
-          match target.text "kind", target.text "id" with
-          | some "FunctionDecl", some _ => executeTopDeclarations rest
-          | _, _ => .error executionRefusal
-      | _, _, _ => do
-          let _ ← executeTopDeclaration usingDecl
-          executeTopDeclarations (shadow :: rest)
-  | declaration :: rest => do
-      let _ ← executeTopDeclaration declaration
-      executeTopDeclarations rest
+  | declaration :: [] =>
+      match declaration.text "kind" with
+      | some "UsingEnumDecl" => do
+          let _ ← executeTopDeclaration declaration
+          pure ()
+      | some "UsingDecl" =>
+          executeTopDeclaration declaration
+      | some "UsingShadowDecl" =>
+          match declaration.field "target" with
+          | some target =>
+              match target.text "kind", target.text "id" with
+              | some "EnumConstantDecl", some _ => pure ()
+              | _, _ => .error executionRefusal
+          | none => .error executionRefusal
+      | _ => do
+          let _ ← executeTopDeclaration declaration
+          pure ()
+  | declaration :: shadow :: tail =>
+      match declaration.text "kind" with
+      | some "UsingEnumDecl" => do
+          let _ ← executeTopDeclaration declaration
+          match shadow.text "kind", shadow.field "target" with
+          | some "UsingShadowDecl", some target =>
+              match target.text "kind", target.text "id" with
+              | some "EnumConstantDecl", some _ => executeTopDeclarations (shadow :: tail)
+              | _, _ => .error executionRefusal
+          | _, _ => executeTopDeclarations (shadow :: tail)
+      | some "UsingDecl" =>
+          match shadow.field "target" with
+          | some target =>
+              match shadow.text "kind", target.text "kind", target.text "id" with
+              | some "UsingShadowDecl", some "FunctionDecl", some _ =>
+                  executeTopDeclarations tail
+              | some "UsingShadowDecl", some _, some _ => .error executionRefusal
+              | _, _, _ => do
+                  let _ ← executeTopDeclaration declaration
+                  executeTopDeclarations (shadow :: tail)
+          | none => do
+              let _ ← executeTopDeclaration declaration
+              executeTopDeclarations (shadow :: tail)
+      | some "UsingShadowDecl" =>
+          match declaration.field "target" with
+          | some target =>
+              match target.text "kind", target.text "id" with
+              | some "EnumConstantDecl", some _ => executeTopDeclarations (shadow :: tail)
+              | _, _ => .error executionRefusal
+          | none => .error executionRefusal
+      | _ => do
+          let _ ← executeTopDeclaration declaration
+          executeTopDeclarations (shadow :: tail)
 
 def execute (artifact : Artifact) (_declarationId : String) : Except String Unit := do
   let _ ← admitTranslationUnit artifact

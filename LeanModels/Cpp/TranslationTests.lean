@@ -437,6 +437,20 @@ private def usingEnumTranslation : Artifact := {emptyTranslation with
       .object [("id", .string "u"), ("kind", .string "UsingEnumDecl"),
         ("name", .string "Color"), ("inner", .array [])]])]}
 
+private def usingEnumExecutionTranslation : Artifact := {emptyTranslation with
+  ast := .object [
+    ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
+    ("inner", .array [
+      .object [("id", .string "u"), ("kind", .string "UsingEnumDecl"),
+        ("target", .object [("id", .string "e"), ("kind", .string "EnumDecl"),
+          ("name", .string "Color")])],
+      .object [("id", .string "s"), ("kind", .string "UsingShadowDecl"),
+        ("target", .object [("id", .string "red"), ("kind", .string "EnumConstantDecl"),
+          ("name", .string "red")])],
+      .object [("id", .string "t"), ("kind", .string "UsingShadowDecl"),
+        ("target", .object [("id", .string "blue"), ("kind", .string "EnumConstantDecl"),
+          ("name", .string "blue")])]])]}
+
 private def lifetimeExtendedTemporaryTranslation : Artifact := {emptyTranslation with
   ast := .object [
     ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
@@ -1830,6 +1844,9 @@ def nestedRequirementTranslationWitness : Except String Unit :=
 def usingEnumTranslationWitness : Except String Unit :=
   admitUsingEnumDeclaration usingEnumTranslation [0]
 
+def usingEnumTranslationExecution : Except String Unit :=
+  execute usingEnumExecutionTranslation "u"
+
 def lifetimeExtendedTemporaryTranslationWitness : Except String Unit :=
   admitLifetimeExtendedTemporaryDeclaration lifetimeExtendedTemporaryTranslation [0]
 
@@ -3073,6 +3090,7 @@ def staticAssertTranslationWitness : Except String Unit :=
 #guard execute usingExecutionTranslation "u" matches .ok ()
 #guard execute emptyEnumExecutionTranslation "e" matches .ok ()
 #guard execute boolTypeAliasExecutionTranslation "a" matches .ok ()
+#guard usingEnumTranslationExecution matches .ok ()
 #guard execute functionTranslation "f" matches .error "C++ translation-only tier: execution requires object, lifetime, type, expression and statement semantics"
 
 theorem empty_translation_admits : admitTranslationUnit emptyTranslation = .ok () := rfl
@@ -3108,6 +3126,9 @@ theorem using_translation_executes :
 
 theorem empty_enum_translation_executes :
     execute emptyEnumExecutionTranslation "e" = .ok () := rfl
+
+theorem using_enum_translation_executes :
+    usingEnumTranslationExecution = .ok () := rfl
 
 theorem bool_type_alias_translation_executes :
     execute boolTypeAliasExecutionTranslation "a" = .ok () := rfl

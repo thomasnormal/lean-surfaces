@@ -209,7 +209,8 @@ keeps provenance un-loseable. Measured: the corpus has zero
 integer↔pointer casts. -/
 abbrev ObjId := Nat
 
-/-- A pointer value: which object, and how many bytes into it.
+/-- A pointer value: which object, how many bytes into it, and (when known)
+the exclusive end of the array/subobject provenance range.
 
 C23 §6.3.2.3p3: a null pointer constant converts to a null pointer, which
 "is guaranteed to compare unequal to a pointer to any object or
@@ -218,12 +219,16 @@ distinguished object, so no arithmetic can accidentally reach one. -/
 structure Ptr where
   obj : Option ObjId
   off : Int
+  /-- Exclusive byte end of the array or subobject this pointer may walk.
+  `none` keeps the old whole-object fallback for pointers whose declaration
+  type has no layout entry. -/
+  bound : Option Int
 deriving Repr, Inhabited, BEq, DecidableEq
 
 namespace Ptr
 
 /-- C23 §6.3.2.3p3: the null pointer. -/
-def null : Ptr := ⟨none, 0⟩
+def null : Ptr := ⟨none, 0, none⟩
 
 def isNull (p : Ptr) : Bool := p.obj.isNone
 
@@ -232,7 +237,9 @@ def isNull (p : Ptr) : Bool := p.obj.isNone
 with two spellings, because the standard defines them that way
 (§6.5.4.2p3's `&*p == p` identity) and because pretending they differ
 would double every lemma about them. -/
-def toObject (o : ObjId) : Ptr := ⟨some o, 0⟩
+def toObject (o : ObjId) : Ptr := ⟨some o, 0, none⟩
+
+def toObjectBound (o : ObjId) (size : Nat) : Ptr := ⟨some o, 0, some size⟩
 
 end Ptr
 

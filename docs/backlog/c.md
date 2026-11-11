@@ -27,6 +27,14 @@ record containing one, so `_Alignas`, `#pragma pack`, and packed attributes
 refuse rather than receiving natural-alignment offsets. A Clang 21.1.8 row
 matches natively and refuses in the model.
 
+## 2026-11-11-c-subobject-bounds-unchecked — array-member provenance
+
+Pointers now carry an exclusive subobject end. Object declarations, member
+addresses, array decay, and allocated storage set that bound; `offsetPtr` and
+`resolve` enforce it while retaining the enclosing-object fallback for legacy
+unknown types. The `s.a[2]` row therefore refuses `outOfBounds` instead of
+reading the neighboring `s.b` field.
+
 ---
 
 ## 2026-11-11-c-torture-main-return-ignored — scorer exit status

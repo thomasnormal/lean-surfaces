@@ -639,13 +639,16 @@ fallthrough. -/
 def evalLValue (ctx : Ctx) : Expr → EvalM Ptr
   | .paren sub _ _ => evalLValue ctx sub
   -- §6.5.2p2: an identifier designating an object is an lvalue.
-  | .declRef name _ _ _ =>
+  | .declRef name _ ty _ =>
       match ctx.env.lookup? name with
-      | some o => pure (Ptr.toObject o)
+      | some o =>
+          pure (match ctx.layout.size (ctx.layout.normalizeTy ty) with
+            | some sz => Ptr.toObjectBound o sz
+            | none => Ptr.toObject o)
       | none => refuseUnsupported s!"unbound name '{name}'"
   -- §6.5.3.4p4: `p->f` is DEFINED as `(*p).f`, so the two spellings are
   -- ONE rule here. 226 arrow sites, 184 dot.
-  | .member base field arrow _ _ => memberAddr ctx base field arrow
+  | .member base field arrow ty _ => memberAddr ctx base field arrow ty
   -- §6.5.3.2p2: `a[i]` is DEFINED as `*(a + i)`. The base arrives already
   -- decayed (clang inserts ArrayToPointerDecay), so it is a VALUE here.
   | .index base idx ty _ => indexAddr ctx base idx ty
@@ -825,7 +828,7 @@ def evalExpr (ctx : Ctx) : Expr → EvalM CVal
   -- aggregate-valued cases; evaluating the address and loading is the rule
   -- either way (§6.3.2.1p2).
   | .member base field arrow ty _ => do
-      let p ← memberAddr ctx base field arrow
+      let p ← memberAddr ctx base field arrow ty
       loadAt p (ctx.layout.normalizeTy ty)
   | .index base idx ty _ => do
       let p ← indexAddr ctx base idx ty
@@ -923,11 +926,15 @@ def evalArgs (ctx : Ctx) : List Expr → EvalM (List CVal)
 Takes `base` — a strict SUBTERM — rather than the reassembled node. The
 node this replaces was rebuilt as `.member base field arrow ty sp`, which
 is not a subterm of anything, and that is what defeated the recursion. -/
-def memberAddr (ctx : Ctx) (base : Expr) (field : String) (arrow : Bool) : EvalM Ptr := do
+def memberAddr (ctx : Ctx) (base : Expr) (field : String) (arrow : Bool)
+    (fieldTy : CType) : EvalM Ptr := do
   let basePtr ← if arrow then (do let v ← evalExpr ctx base; asPtr v)
                 else evalLValue ctx base
   match ctx.layout.fieldOff base.ty field with
-  | some off => pure (Mem.member basePtr off)
+  | some off =>
+      match ctx.layout.size (ctx.layout.normalizeTy fieldTy) with
+      | some sz => pure (Mem.memberRange basePtr off sz)
+      | none => refuseUnsupported s!"no layout for field '{field}'"
   | none => refuseUnsupported s!"no layout for field '{field}'"
   termination_by 2 * base.size + 2
   decreasing_by all_goals (simp_wf <;> omega)
@@ -1480,8 +1487,9 @@ needs an induction of its own: both take strict SUBTERMS, which is the
 same property that made the termination measure work. -/
 
 theorem MemInvariant.memberAddr' {ctx : Ctx} {base : Expr} {field : String} {arrow : Bool}
+    {fieldTy : CType}
     (hv : MemInvariant (evalExpr ctx base)) (hl : MemInvariant (evalLValue ctx base)) :
-    MemInvariant (memberAddr ctx base field arrow) := by
+    MemInvariant (memberAddr ctx base field arrow fieldTy) := by
   first | simp only [memberAddr] | rw [memberAddr.eq_def]
   mem_inv
 
@@ -1536,10 +1544,10 @@ private theorem memInvariant_core (ctx : Ctx) : ∀ (n : Nat) (e : Expr), e.size
           obtain ⟨i1, i2⟩ := ih s (by simp only [Expr.size_cast] at he; omega)
             (Expr.isPure_cast hp)
           exact ⟨by open_eval; mem_inv, by open_lvalue; mem_inv⟩
-      | member b f a _ _ =>
+      | member b f a fieldTy _ =>
           obtain ⟨i1, i2⟩ := ih b (by simp only [Expr.size_member] at he; omega)
             (Expr.isPure_member hp)
-          have hma : MemInvariant (memberAddr ctx b f a) := MemInvariant.memberAddr' i1 i2
+          have hma : MemInvariant (memberAddr ctx b f a fieldTy) := MemInvariant.memberAddr' i1 i2
           exact ⟨by open_eval; mem_inv, by open_lvalue; mem_inv⟩
       | index b i ty _ =>
           obtain ⟨b1, _⟩ := ih b (by simp only [Expr.size_index] at he; omega)

@@ -45,6 +45,9 @@
 - Preserved record and field layout attributes as `Unsupported` evidence and
   refused packed or aligned records instead of assigning natural offsets.
 
+- Carried array and member subobject bounds in C pointer provenance so
+  pointer arithmetic cannot walk from an array member into a neighboring field.
+
 - Fixed the TinyXML-2 coverage caller's C++ runtime linkage so its
   provenance-verified native calls can run when the system runtime is older.
 

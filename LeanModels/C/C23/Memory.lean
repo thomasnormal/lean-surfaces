@@ -320,7 +320,11 @@ def resolve (m : Mem) (p : Ptr) (n : Nat) : MRes (ObjId × CObj × Nat) :=
     | none => .error (.memUB (.nullDeref p.off))
     | some c =>
       if !c.live then .error (.memUB (.deadObject o c.dur))
-      else if p.off < 0 || p.off + (n : Int) > (c.size : Int) then
+      else if p.off < 0 then
+        .error (.memUB (.outOfBounds o p.off n c.size))
+      else if p.off + (n : Int) > (c.size : Int) then
+        .error (.memUB (.outOfBounds o p.off n c.size))
+      else if p.off + (n : Int) > (p.bound.getD (c.size : Int)) then
         .error (.memUB (.outOfBounds o p.off n c.size))
       else .ok (o, c, p.off.toNat)
 
@@ -466,6 +470,10 @@ this one. -/
 def member (p : Ptr) (fieldOff : Nat) : Ptr :=
   { p with off := p.off + (fieldOff : Int) }
 
+def memberRange (p : Ptr) (fieldOff fieldSize : Nat) : Ptr :=
+  let start := p.off + (fieldOff : Int)
+  { p with off := start, bound := some (start + (fieldSize : Int)) }
+
 /-- **C23 §6.5.7p9 — pointer arithmetic**, and this is a constraint on
 FORMING the pointer, not only on using it: the result must point into the
 array or **one past its end**, else undefined (`J.2(43)`).
@@ -481,7 +489,12 @@ def offsetPtr (m : Mem) (p : Ptr) (elemSize : Nat) (i : Int) : MRes Ptr :=
     | none => .error (.memUB (.nullDeref p.off))
     | some c =>
       let off := p.off + i * (elemSize : Int)
-      if off < 0 || off > (c.size : Int) then     -- `=` size is one-past-the-end: legal
+      if off < 0 then
+        .error (.memUB (.outOfBounds o off elemSize c.size))
+      else if off > (c.size : Int) then
+        .error (.memUB (.outOfBounds o off elemSize c.size))
+      else if off > (p.bound.getD (c.size : Int)) then
+        -- `=` the subobject end is one-past-the-end: legal
         .error (.memUB (.outOfBounds o off elemSize c.size))
       else .ok { p with off := off }
 
@@ -502,7 +515,7 @@ objects is fully DEFINED; they simply compare unequal, except for the
 placement-dependent one-past/start case. The memory model has no concrete
 addresses, so that case is detected and refused rather than assigned a
 false result. -/
-def ptrEq (a b : Ptr) : Bool := a == b
+def ptrEq (a b : Ptr) : Bool := a.obj == b.obj && a.off == b.off
 
 def ptrEqBoundary (m : Mem) (a b : Ptr) : Bool :=
   match a.obj, b.obj with
@@ -511,7 +524,7 @@ def ptrEqBoundary (m : Mem) (a b : Ptr) : Bool :=
       else
         let onePast (p : Ptr) (o : ObjId) :=
           match m.get? o with
-          | some c => p.off == c.size
+          | some c => p.off == p.bound.getD (c.size : Int)
           | none => false
         (onePast a x && b.off == 0) || (onePast b y && a.off == 0)
   | _, _ => false
@@ -537,12 +550,12 @@ silently instead of failing (`docs/c23-spec-mirror.md` §4.3). -/
 /-- §7.24.3.6 `malloc`: indeterminate representation, no declared type. -/
 def malloc (m : Mem) (size : Nat) : Mem × Ptr :=
   let (m', o) := m.alloc .allocated size none
-  (m', Ptr.toObject o)
+  (m', Ptr.toObjectBound o size)
 
 /-- §7.24.3.2 `calloc`: all bits zero. -/
 def calloc (m : Mem) (n size : Nat) : Mem × Ptr :=
   let (m', o) := m.allocZeroed .allocated (n * size) none
-  (m', Ptr.toObject o)
+  (m', Ptr.toObjectBound o (n * size))
 
 /-- §7.24.3.3 `free`. Refuses a pointer no allocation returned, or one
 already freed (**`J.2(184)`**). A null pointer is accepted and does
@@ -579,7 +592,7 @@ def realloc (m : Mem) (p : Ptr) (size : Nat) : MRes (Mem × Ptr) :=
         let keep := c.bytes.take size
         let fresh := keep ++ List.replicate (size - keep.length) CByte.indet
         let m' : Mem := ⟨m.objs ++ [⟨.allocated, true, fresh, none⟩]⟩
-        .ok (m'.kill o, Ptr.toObject m.objs.length)
+        .ok (m'.kill o, Ptr.toObjectBound m.objs.length size)
       else .error (.memUB (.freeUnmatched p))
     | none => .error (.memUB (.freeUnmatched p))
 
@@ -603,8 +616,8 @@ theorem resolve_alloc (m : Mem) (dur : Duration) (size n : Nat) (ty : Option CTy
     (m.alloc dur size ty).1.resolve (Ptr.toObject (m.alloc dur size ty).2) n
       = .ok ((m.alloc dur size ty).2,
              ⟨dur, true, List.replicate size .indet, ty⟩, 0) := by
-  simp [resolve, Ptr.toObject, CObj.size]
-  omega
+  have hn : ¬ size < n := by omega
+  simp [resolve, Ptr.toObject, CObj.size, hn]
 
 /-- INVERSION for `resolve`: everything a successful access establishes.
 
@@ -615,7 +628,8 @@ them. -/
 theorem resolve_ok {m : Mem} {p : Ptr} {n : Nat} {o : ObjId} {c : CObj} {off : Nat}
     (h : m.resolve p n = .ok (o, c, off)) :
     p.obj = some o ∧ m.get? o = some c ∧ c.live = true
-      ∧ off = p.off.toNat ∧ 0 ≤ p.off ∧ off + n ≤ c.bytes.length := by
+      ∧ off = p.off.toNat ∧ 0 ≤ p.off ∧ off + n ≤ c.bytes.length
+      ∧ ((off + n : Nat) : Int) ≤ p.bound.getD (c.bytes.length : Int) := by
   unfold resolve at h
   cases hobj : p.obj with
   | none => rw [hobj] at h; simp only [] at h; exact absurd h (by simp)
@@ -629,18 +643,29 @@ theorem resolve_ok {m : Mem} {p : Ptr} {n : Nat} {o : ObjId} {c : CObj} {off : N
       simp only [] at h
       by_cases hlive : c'.live = true
       · rw [if_neg (by simp [hlive])] at h
-        by_cases hb : p.off < 0 ∨ p.off + (n : Int) > (c'.size : Int)
-        · rw [if_pos (by simpa using hb)] at h; exact absurd h (by simp)
-        · rw [if_neg (by simpa using hb)] at h
-          simp only [Except.ok.injEq, Prod.mk.injEq] at h
-          obtain ⟨h1, h2, h3⟩ := h
-          subst h1; subst h2; subst h3
-          simp only [not_or, Int.not_lt, gt_iff_lt] at hb
-          obtain ⟨hlo, hhi⟩ := hb
-          refine ⟨rfl, hget, hlive, rfl, hlo, ?_⟩
-          have he : (p.off.toNat : Int) = p.off := Int.toNat_of_nonneg hlo
-          simp only [CObj.size] at hhi
-          omega
+        by_cases hneg : p.off < 0
+        · rw [if_pos (by simp [hneg])] at h; exact absurd h (by simp)
+        · rw [if_neg (by simp [hneg])] at h
+          by_cases hsize : p.off + (n : Int) > (c'.size : Int)
+          · rw [if_pos (by simp [hsize])] at h; exact absurd h (by simp)
+          · rw [if_neg (by simp [hsize])] at h
+            by_cases hbound : p.off + (n : Int) > p.bound.getD (c'.size : Int)
+            · rw [if_pos (by simp [hbound])] at h; exact absurd h (by simp)
+            · rw [if_neg (by simp [hbound])] at h
+              simp only [Except.ok.injEq, Prod.mk.injEq] at h
+              obtain ⟨h1, h2, h3⟩ := h
+              subst h1; subst h2; subst h3
+              have hlo : 0 ≤ p.off := by omega
+              refine ⟨rfl, hget, hlive, rfl, hlo, ?_, ?_⟩
+              · have he : (p.off.toNat : Int) = p.off := Int.toNat_of_nonneg hlo
+                have hhi : p.off + (n : Int) ≤ (c'.size : Int) := by omega
+                simp only [CObj.size] at hhi
+                omega
+              · have hbound' : p.off + (n : Int) ≤ p.bound.getD (c'.size : Int) := by
+                  omega
+                have he : (p.off.toNat : Int) = p.off := Int.toNat_of_nonneg hlo
+                simp only [CObj.size] at hbound' ⊢
+                omega
       · rw [if_pos (by simp [hlive])] at h; exact absurd h (by simp)
 
 /-- Writing an object leaves it where it was. -/
@@ -672,7 +697,7 @@ theorem loadBytes_storeBytes {m m' : Mem} {p : Ptr} {bs : List CByte}
     (hr : m.resolve p bs.length = .ok (o, c, off))
     (h : m.storeBytes p bs = .ok m') :
     m'.loadBytes p bs.length = .ok bs := by
-  obtain ⟨hobj, hget, hlive, hoff, hlo, hhi⟩ := resolve_ok hr
+  obtain ⟨hobj, hget, hlive, hoff, hlo, hhi, hbound⟩ := resolve_ok hr
   subst hoff
   simp only [storeBytes, hr, bind, Except.bind, pure, Except.pure,
     Except.ok.injEq] at h
@@ -684,12 +709,18 @@ theorem loadBytes_storeBytes {m m' : Mem} {p : Ptr} {bs : List CByte}
     | .inr hge => rw [List.getElem?_eq_none hge] at hget; simp at hget
   have he : (p.off.toNat : Int) = p.off := Int.toNat_of_nonneg hlo
   have htk : (c.bytes.take p.off.toNat).length = p.off.toNat := by simp; omega
+  have hsize : ¬ p.off + (bs.length : Int) > (c.bytes.length : Int) := by
+    omega
+  have hnewSize :
+      min p.off.toNat c.bytes.length + bs.length +
+        (c.bytes.length - (p.off.toNat + bs.length)) = c.bytes.length := by
+    omega
   simp only [loadBytes, resolve, hobj, get?_set_self _ _ _ hidx, bind, Except.bind, pure, Except.pure]
-  rw [if_neg (by simp [hlive]), if_neg ?bnd]
+  simp only [CObj.size, List.length_append, List.length_take, List.length_drop]
+  rw [hnewSize]
+  rw [if_neg (by simp [hlive]), if_neg (by omega), if_neg hsize, if_neg ?bnd]
   case bnd =>
     intro hc
-    simp only [CObj.size, Bool.or_eq_true, decide_eq_true_eq,
-      List.length_append, List.length_take, List.length_drop] at hc
     omega
   simp only [Except.ok.injEq]
   rw [List.append_assoc, List.drop_left' htk, List.take_left' rfl]

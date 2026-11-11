@@ -16,11 +16,14 @@ with ids `YYYY-MM-DD-<lane>-<n>` that need no reservation. Everything before
 the split is in [`docs/backlog-archive.md`](../backlog-archive.md), frozen,
 and every existing `§Lnn` reference still resolves there.
 
-**1319 entries across 18 lanes.** Regenerate with
+**1348 entries across 19 lanes.** Regenerate with
 `tools/backlog-index.sh`; check with `--check` (exit 1 on drift).
 
 | id | class | title | lane |
 | --- | --- | --- | --- |
+| `2026-11-11-ls-sv2-477` |  | unify the E-core-0 and observation cones | ls-sv2 |
+| `2026-11-10-pyfoundation-23` |  | pin the leanpy quickstart admission | python-completeness |
+| `2026-11-10-pyfoundation-5` |  | eager non-iterable genexp creation check | python-completeness |
 | `2026-11-10-pyfoundation-2` |  | protocol census | python-completeness |
 | `2026-11-09-pycomplete-487` |  | revalidate static definition-delete audit | python-completeness |
 | `2026-11-09-pycomplete-486` |  | revalidate shape-specific ingestion audit | python-completeness |
@@ -1304,6 +1307,15 @@ and every existing `§Lnn` reference still resolves there.
 | `2026-08-22-audit-1` |  | AUDIT #2: adoption is real (6 lanes), the fixes hold 14/14, and a defect came BACK in a file written 3 hours after the fix | audit |
 | `2026-08-22-architecture-1` |  | NEW LAW — count the PATTERN POSITION, never the IDENTIFIER (§5.4a's constructive half) | architecture |
 | `2026-08-22-ada-1` |  | THE STANDING STRATEGY, adopted by touch: `DIFFER` was a conformance gap, and this lane was one of §9.4's drifted emitters | ada |
+| ``cpp-two-callable-evaluators`:` |  | one callable semantics | cpp |
+| ``cpp-target-profile-unchecked`:` |  | artifact profile gate | cpp |
+| ``cpp-switch-and-ir-lowering`:` |  | cleanup-node retention | cpp |
+| ``cpp-spelling-identity`:` |  | qualified-name suffix guard | cpp |
+| ``cpp-harness-oracle-misfile`:` |  | native oracle policy | cpp |
+| ``cpp-diff-handwritten-twins`:` |  | source-derived differential execution | cpp |
+| ``cpp-diff-handwritten-twins`:` |  | reporting boundary | cpp |
+| ``cpp-call-arg-order`:` |  | effectful call arguments | cpp |
+| ``c-name-resolution-by-string`:` |  | callee declaration-kind guard | cpp |
 | `G9` |  | THE AUDIT'S THREE ROWS, all fixed, and one of them caught this lane failing its own rule (2026-08-23) | go |
 | `G8` |  | THE LOOP INDUCTION IS NOT LANDED, and the selector question is an EXTRACTOR decision (2026-08-23) | go |
 | `G7` |  | INCH 4: `bitLen` gets its SPEC HALF proved, and the call census corrects §G6's reading (2026-08-23) | go |
@@ -1333,12 +1345,29 @@ and every existing `§Lnn` reference still resolves there.
 | `G12` |  | THE LOOP INDUCTION CLOSES: `len = l + bitLenSpec v`, proved (2026-08-23) | go |
 | `G11` |  | THE WALKER IS PROVED THROUGH A MUTATION, and the blocker moved again (2026-08-23) | go |
 | `G10` |  | THE SEAM: one lemma opens the stack, and §G8's three "unprovable" lemmas are four lines each (2026-08-23) | go |
+| `2026-11-11-c-union-init` |  | designated union members | c |
+| `2026-11-11-c-type-spelling-grammar` |  | guarded declarator boundary | c |
+| `2026-11-11-c-torture-main-return-ignored` |  | scorer exit status | c |
+| `2026-11-11-c-subobject-bounds-unchecked` |  | array-member provenance | c |
+| `2026-11-11-c-record-attributes-dropped` |  | packed and aligned records | c |
+| `2026-11-11-c-ptr-eq-adjacent` |  | one-past pointer equality | c |
+| `2026-11-11-c-profile-facts-ungated` |  | profile dependency gate | c |
+| `2026-11-11-c-goto-skips-decl` |  | declaration-scope boundary | c |
+| `2026-11-11-c-forward-record-size-zero` |  | complete record selection | c |
+| `2026-11-11-c-eval-order-unsequenced` |  | unsequenced side effects | c |
+| `2026-11-11-c-effective-type-unchecked` |  | pointer-punning boundary | c |
+| `2026-11-11-c-duplicate-file-scope-objects` |  | tentative declarations | c |
+| `2026-11-11-c-compound-assign-unpromoted` |  | usual arithmetic conversions | c |
+| `2026-11-11-c-charlit-unsigned-pattern` |  | ordinary character constants | c |
+| `2026-11-11-c-block-static-extern-ignored` |  | storage-class boundary | c |
+| `2026-11-11-c-auto-lifetime-never-ends` |  | automatic lifetime cleanup | c |
 | `2026-11-10-pyfoundation-3c` |  | separate raising index overflow from slice clamping | python-completeness |
 | `2026-11-10-pyfoundation-3b` |  | share the raising Py_ssize_t conversion | python-completeness |
 | `2026-11-10-pyfoundation-3a` |  | pin RichCompareBool observer sites | python-completeness |
 | `2026-11-10-pyfoundation-1d` |  | withdraw the unbounded `_bisect` accelerator admission | python-completeness |
 | `2026-11-10-pyfoundation-1c` |  | stop Py_ssize_t narrowing errors | python-completeness |
 | `2026-11-10-pyfoundation-1b` |  | stop platform-dependent integer powers | python-completeness |
+| `2026-11-10-c-array-filler-designators` |  | Clang array initializer positions | c |
 | `2026-08-26` |  | PARKED (indefinite). Read this first on resumption. | analog |
 
-**36 heading(s) do not use the §9.5 id scheme** and sort last.
+**62 heading(s) do not use the §9.5 id scheme** and sort last.

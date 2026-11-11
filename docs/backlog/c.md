@@ -59,7 +59,10 @@ layout path now has one conservative admission guard and refuses function
 pointers, postfix-qualified pointers, nested array spellings, and elaborated
 scope forms before any string peeling can assign them a meaning. Differential
 rows pin all three refusals. A future extractor revision can replace this
-guard with declaration-identity and complete Clang type trees.
+guard with declaration-identity and complete Clang type trees. Revalidated
+2026-11-11 against the pinned Clang/LLVM 21.1.8 oracle:
+`function-pointer REFUSE`, `nested-array REFUSE`, and
+`postfix-qualified-pointer REFUSE`.
 
 ## 2026-11-11-c-profile-facts-ungated — profile dependency gate
 

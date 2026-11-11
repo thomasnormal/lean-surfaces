@@ -164,4 +164,8 @@ macro counts, function storage and all construct facts from those streams;
 node/call/format facts from the AST; `c_api_census.py` derives API references,
 libc calls, floating use, and static objects from AST nodes plus the
 source-attributed macro stream. The previous source regexes and the
-non-reproducible private scratch-tree default are gone.
+non-reproducible private scratch-tree default are gone. Revalidated
+2026-11-11 with pinned Clang/LLVM 21.1.8: `c_construct_census.py --selftest`
+passed all 6 synthetic storage stubs (`&automatic=2`, `&static=1`), and
+`py_compile` passed for `c_frontend.py`, `c_api_census.py`,
+`c_construct_census.py`, and `c_suite_census.py`.

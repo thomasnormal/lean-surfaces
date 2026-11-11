@@ -35,6 +35,23 @@ syntax remain loud.
 DECIDED: retain loudness for the remaining format mini-language until its
 grammar is represented directly.
 
+## 2026-11-11-pyformat-2 — generalize admitted percent-format widths
+
+The width parser now reads arbitrary decimal widths up to the tier's bounded
+rendering budget, retaining the measured `%N…`, `%0N…`, and `%-N…` semantics
+for the scalar conversions. The former width-5 rows remain controls and new
+width-7/10 rows pin the generalized parser.
+
+| Measurement | Result |
+|---|---|
+| Generated edge battery | 54 cases, 91 calls |
+| Native runner | 76 MATCH, 15 documented refusals, 0 failures |
+| Proof interpreter | 76 MATCH, 15 loud refusals, 0 failures |
+| Managed build | `lake build leanmodels-run`, 40 jobs, passed |
+
+DECIDED: precision and unsupported flags remain loud; the width parser is the
+only newly admitted mini-language grammar.
+
 ## 2026-11-11-pyfoundation-31 — count `sorted` recursion and materialization
 
 The builtin recursion audit found that `sorted` was missing the nested call

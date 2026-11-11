@@ -6,7 +6,7 @@
     "version": "3.9.25"
   },
   "source_file": "harness/foundation_probe.py",
-  "source_sha256": "48fcb74b57ee6e13c4a88c99270bd8151beafcb1e76f7cfb9cd33fd7bd3786fc",
+  "source_sha256": "4e062ea39bfa17f63e95d00aa3ac695b46afa348362a641b189b07d29ec2417a",
   "module": {
     "kind": "Module",
     "body": [
@@ -6238,6 +6238,140 @@
                   "lineno": 250,
                   "col_offset": 20,
                   "end_lineno": 250,
+                  "end_col_offset": 25
+                },
+                "id": "value"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 253,
+          "col_offset": 0,
+          "end_lineno": 254,
+          "end_col_offset": 25
+        },
+        "name": "percent_wide",
+        "args": [
+          {
+            "arg": "value",
+            "span": {
+              "lineno": 253,
+              "col_offset": 17,
+              "end_lineno": 253,
+              "end_col_offset": 22
+            }
+          }
+        ],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 254,
+              "col_offset": 4,
+              "end_lineno": 254,
+              "end_col_offset": 25
+            },
+            "value": {
+              "kind": "BinOp",
+              "span": {
+                "lineno": 254,
+                "col_offset": 11,
+                "end_lineno": 254,
+                "end_col_offset": 25
+              },
+              "left": {
+                "kind": "Constant",
+                "span": {
+                  "lineno": 254,
+                  "col_offset": 11,
+                  "end_lineno": 254,
+                  "end_col_offset": 17
+                },
+                "value": {
+                  "type": "str",
+                  "value": "%10s"
+                }
+              },
+              "op": "Mod",
+              "right": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 254,
+                  "col_offset": 20,
+                  "end_lineno": 254,
+                  "end_col_offset": 25
+                },
+                "id": "value"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 257,
+          "col_offset": 0,
+          "end_lineno": 258,
+          "end_col_offset": 25
+        },
+        "name": "percent_wide_left",
+        "args": [
+          {
+            "arg": "value",
+            "span": {
+              "lineno": 257,
+              "col_offset": 22,
+              "end_lineno": 257,
+              "end_col_offset": 27
+            }
+          }
+        ],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 258,
+              "col_offset": 4,
+              "end_lineno": 258,
+              "end_col_offset": 25
+            },
+            "value": {
+              "kind": "BinOp",
+              "span": {
+                "lineno": 258,
+                "col_offset": 11,
+                "end_lineno": 258,
+                "end_col_offset": 25
+              },
+              "left": {
+                "kind": "Constant",
+                "span": {
+                  "lineno": 258,
+                  "col_offset": 11,
+                  "end_lineno": 258,
+                  "end_col_offset": 17
+                },
+                "value": {
+                  "type": "str",
+                  "value": "%-7d"
+                }
+              },
+              "op": "Mod",
+              "right": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 258,
+                  "col_offset": 20,
+                  "end_lineno": 258,
                   "end_col_offset": 25
                 },
                 "id": "value"

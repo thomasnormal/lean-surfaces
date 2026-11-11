@@ -2249,76 +2249,86 @@ def zeroPadFormatField (width : Nat) (s : String) : String :=
     | _ => zeros ++ s
   else s
 
-def strFormatWidthPiece (c : Char) (v : RVal) (left zero : Bool) : Res String := do
+def strFormatWidthPiece (width : Nat) (c : Char) (v : RVal) (left zero : Bool) : Res String := do
   let piece ← strFormatConv c v
   if left then
-    return padFormatFieldLeft 5 piece
+    return padFormatFieldLeft width piece
   else if zero && (c == 'd' || c == 'i' || c == 'u' || c == 'x' || c == 'o') then
-    return zeroPadFormatField 5 piece
+    return zeroPadFormatField width piece
   else
-    return padFormatField 5 piece
+    return padFormatField width piece
+
+def strFormatReadDigits : List Char → Nat → Option (Nat × List Char)
+  | [], _ => Option.none
+  | c :: rest, acc =>
+      if '0' ≤ c && c ≤ '9' then
+        let next := acc * 10 + (c.toNat - '0'.toNat)
+        if next > 10000 then Option.none
+        else
+          match strFormatReadDigits rest next with
+          | some result => some result
+          | Option.none => some (next, rest)
+      else if acc > 0 then some (acc, c :: rest)
+      else Option.none
+
+def strFormatWidthSpec (chars : List Char) : Option (Bool × Bool × Nat × Char × List Char) :=
+  let read := fun (left zero : Bool) (digits : List Char) =>
+    match strFormatReadDigits digits 0 with
+    | some (width, rest) =>
+        match rest with
+        | c :: tail => some (left, zero, width, c, tail)
+        | [] => Option.none
+    | Option.none => Option.none
+  match chars with
+  | '-' :: rest => read true false rest
+  | '0' :: rest => read false true rest
+  | _ => read false false chars
 
 /-- The single left-to-right pass. Literals copy; `%%` emits one `%` and
 consumes NOTHING; `%s`/`%r`/`%a`/`%c`/`%d`/`%i`/`%u`/`%x`/`%o` consume the next argument. Running out
 mid-walk is CPython's `not enough arguments` verbatim, and so are
 leftover arguments at the end — EXCEPT under `mapping`, the `ctx.dict`
 flag above, which is exactly the condition CPython guards that second
-check with. The admitted width slice is `%5…`, `%05…`, and `%-5…` for the
-existing scalar conversions; precision, other flags, and mapping keys remain
-loud. The invalid `%q` form and a trailing `%` carry CPython's faithful
+check with. The admitted width slice is decimal `%N…`, `%0N…`, and `%-N…`
+for the existing scalar conversions; precision, other flags, and mapping keys
+remain loud. The invalid `%q` form and a trailing `%` carry CPython's faithful
 `ValueError`s. -/
 def strFormatWalk : List Char → List RVal → Bool → String → Res String
   | [], args, mapping, acc =>
       if args.isEmpty || mapping then .ok acc
       else .exn (.typeError "not all arguments converted during string formatting")
   | '%' :: '%' :: cs, args, mapping, acc => strFormatWalk cs args mapping (acc ++ "%")
-  | '%' :: '5' :: c :: cs, args, mapping, acc =>
-      match args with
-      | [] => .exn (.typeError "not enough arguments for format string")
-      | a :: rest =>
-          match strFormatWidthPiece c a false false with
-          | .ok piece => strFormatWalk cs rest mapping (acc ++ piece)
-          | .exn e => .exn e
-          | .timeout => .timeout
-          | .unsupported msg => .unsupported msg
-  | '%' :: '0' :: '5' :: c :: cs, args, mapping, acc =>
-      match args with
-      | [] => .exn (.typeError "not enough arguments for format string")
-      | a :: rest =>
-          match strFormatWidthPiece c a false true with
-          | .ok piece => strFormatWalk cs rest mapping (acc ++ piece)
-          | .exn e => .exn e
-          | .timeout => .timeout
-          | .unsupported msg => .unsupported msg
-  | '%' :: '-' :: '5' :: c :: cs, args, mapping, acc =>
-      match args with
-      | [] => .exn (.typeError "not enough arguments for format string")
-      | a :: rest =>
-          match strFormatWidthPiece c a true false with
-          | .ok piece => strFormatWalk cs rest mapping (acc ++ piece)
-          | .exn e => .exn e
-          | .timeout => .timeout
-          | .unsupported msg => .unsupported msg
-  | '%' :: c :: cs, args, mapping, acc =>
-      if c == 's' || c == 'r' || c == 'a' || c == 'c' || c == 'd' || c == 'i' || c == 'u' || c == 'x' || c == 'o' then
-        match args with
-        | [] => .exn (.typeError "not enough arguments for format string")
-        -- the conversion is matched OPEN, not bound through `Res`'s
-        -- `bind`: a recursive call under the bind's lambda is invisible
-        -- to structural recursion, and this walker must stay
-        -- kernel-reducible (the mergeSort trap, AGENTS.md)
-        | a :: rest =>
-            match strFormatConv c a with
-            | .ok piece => strFormatWalk cs rest mapping (acc ++ piece)
-            | .exn e => .exn e
-            | .timeout => .timeout
-            | .unsupported msg => .unsupported msg
-      else if c == 'q' then
-        .exn (.valueError "unsupported format character 'q' (0x71) at index 1")
-      else
-        .unsupported s!"the '%{c}' conversion is outside the tier (only bare %s/%r/%a/%c/%d/%i/%u/%x/%o/%% — no flags, width, precision, or mapping key; docs/memory-model.md §`%`-formatting on strings)"
-  | ['%'], _, _, _ =>
-      .exn (.valueError "incomplete format")
+  | '%' :: cs, args, mapping, acc =>
+      match strFormatWidthSpec cs with
+      | some (left, zero, width, c, restChars) =>
+        if c == 's' || c == 'r' || c == 'a' || c == 'c' || c == 'd' || c == 'i' || c == 'u' || c == 'x' || c == 'o' then
+          match args with
+          | [] => .exn (.typeError "not enough arguments for format string")
+          | a :: rest =>
+              match strFormatWidthPiece width c a left zero with
+              | .ok piece => strFormatWalk restChars rest mapping (acc ++ piece)
+              | .exn e => .exn e
+              | .timeout => .timeout
+              | .unsupported msg => .unsupported msg
+        else
+          .unsupported s!"the '%{c}' conversion is outside the tier (only scalar conversions with width; precision, other flags, and mapping keys remain loud)"
+      | Option.none =>
+        match cs with
+        | [] => .exn (.valueError "incomplete format")
+        | c :: rest =>
+          if c == 's' || c == 'r' || c == 'a' || c == 'c' || c == 'd' || c == 'i' || c == 'u' || c == 'x' || c == 'o' then
+            match args with
+            | [] => .exn (.typeError "not enough arguments for format string")
+            | a :: restArgs =>
+                match strFormatConv c a with
+                | .ok piece => strFormatWalk rest restArgs mapping (acc ++ piece)
+                | .exn e => .exn e
+                | .timeout => .timeout
+                | .unsupported msg => .unsupported msg
+          else if c == 'q' then
+            .exn (.valueError "unsupported format character 'q' (0x71) at index 1")
+          else
+            .unsupported s!"the '%{c}' conversion is outside the tier (only scalar conversions with width; precision, other flags, and mapping keys remain loud)"
   | c :: cs, args, mapping, acc => strFormatWalk cs args mapping (acc ++ String.mk [c])
 
 /-- `str % args`. The argument LIST is the RHS spread when it is a tuple

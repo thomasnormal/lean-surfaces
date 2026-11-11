@@ -248,3 +248,11 @@ def percent_zero_width(value):
 
 def percent_left_width(value):
     return "%-5r" % value
+
+
+def percent_wide(value):
+    return "%10s" % value
+
+
+def percent_wide_left(value):
+    return "%-7d" % value

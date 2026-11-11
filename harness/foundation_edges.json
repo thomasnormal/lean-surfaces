@@ -561,6 +561,34 @@
   {
     "args": [
       [
+        "x"
+      ],
+      [
+        3
+      ]
+    ],
+    "expect": "match",
+    "file": "harness/foundation_probe.py",
+    "function": "percent_wide",
+    "note": "arbitrary decimal width for percent-format scalar conversions."
+  },
+  {
+    "args": [
+      [
+        3
+      ],
+      [
+        -3
+      ]
+    ],
+    "expect": "match",
+    "file": "harness/foundation_probe.py",
+    "function": "percent_wide_left",
+    "note": "arbitrary decimal width with left alignment."
+  },
+  {
+    "args": [
+      [
         0.0,
         0.0
       ],

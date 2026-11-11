@@ -74,7 +74,8 @@ passed.
 Forward goto handling now refuses when the skipped range contains a
 declaration. This prevents the old behavior from resolving a later write to
 an outer object; block-entry allocation remains a separate future extension.
-The differential row pins the refusal.
+The differential row pins the refusal. Revalidated 2026-11-11 against the
+pinned Clang/LLVM 21.1.8 oracle: `goto-skips-decl REFUSE`.
 
 ## 2026-11-11-c-union-init — designated union members
 

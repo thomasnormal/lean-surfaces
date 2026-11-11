@@ -525,6 +525,17 @@
     "rung": 0
   },
   {
+    "id": "translation.signed-char-type-alias-execution",
+    "kind": "translation",
+    "corpus": "translation witness",
+    "lean_module": "LeanModels.Cpp.TranslationTests",
+    "lean_namespace": "LeanModels.Cpp.TranslationTests",
+    "lean_expression": "signedCharTypeAliasTranslationExecution",
+    "cpp_source": "using SC = signed char;",
+    "expect": "match",
+    "rung": 0
+  },
+  {
     "id": "translation.empty-scoped-enum-execution",
     "kind": "translation",
     "corpus": "translation witness",

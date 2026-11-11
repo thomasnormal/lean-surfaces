@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Revalidated the `str_lab` specification guard against the pinned oracle; the
+  managed target is green on the public tip.
+
 - Revalidated the `gen_lab` specification guards against the pinned oracle;
   the managed target is green on the public tip.
 

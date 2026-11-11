@@ -94,6 +94,20 @@ no edit.
 DECIDED: treat the `gen_lab` guard item as revalidated and continue with the
 next inbox target after rereading the inbox.
 
+## 2026-11-11-pyfoundation-49 — revalidate str_lab guard
+
+The pre-rename failing `str_lab/spec.lean` guard is already resolved on the
+current integrated tree. A fresh managed build of the spec completed
+successfully, so the pinned-oracle expectation required no edit.
+
+| Measurement | Result |
+|---|---|
+| `Examples/python/str_lab/spec.lean` | managed build passed (317/317 targets) |
+| Oracle decision | guard passes; no expectation change |
+
+DECIDED: treat the `str_lab` guard item as revalidated and continue with the
+next inbox target after rereading the inbox.
+
 ## 2026-11-11-pyfoundation-43 — repair PayloadBlind comparison recursion transport
 
 The proof observer now transports the heap-aware rich-comparison recursion

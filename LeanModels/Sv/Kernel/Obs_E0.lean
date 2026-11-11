@@ -42,5 +42,10 @@ def E0 : ESig where
 /-- **`Obs_E0`**: E-core-0 as an observation backend. -/
 abbrev Obs_E0 : ObservationModel := Obs_E E0
 
+/- The E wrapper is reducible, so backend-specific proofs can rewrite the
+   observation directly instead of composing opaque `sample` facts. -/
+example (E : Elab) (st : SvState) :
+    Obs_E0.sample E st = (Obs_E E0).sample E st := rfl
+
 
 end LeanModels.Sv.Kernel

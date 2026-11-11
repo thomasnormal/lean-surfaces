@@ -722,7 +722,7 @@ structure ESig where
 
 /-- **`Obs_E`**: E as an observation backend. Cycle `c` observes the Preponed and the Postponed
 samples of the slot of the `c`-th clock edge. -/
-def Obs_E (E : ESig) : ObservationModel where
+@[reducible] def Obs_E (E : ESig) : ObservationModel where
   Design := E.Elab
   Choice := E.Choice
   Env := E.Env

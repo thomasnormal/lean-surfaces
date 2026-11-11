@@ -1496,3 +1496,49 @@ source `always @*` body (`pcpi_mul_wait`); no E execution or symbolic ADDI
 invariant is claimed.  The `$readmemh` landing does not move either the
 ordinary `cpuregs` wall or the E scheduler/event wall, and the old
 guard-bypassed `ok states=80` result remains **UNVALIDATED**.
+
+## 2026-11-11 re-probe on public master `ce83edbd8`
+
+The pinned source was re-extracted with the approved extractor after the
+public-master update.  The source remains YosysHQ commit
+`ef203c2b0a3fb793280f5114941416c425c5b461`, SHA-256
+`0836050971b3c6cdd28ac3b1e5719a67fb645161912bef1e472e63995ceb062`.  The
+fresh envelope `/tmp/picorv32-current-476.sv.json` is 2,991,593 bytes with
+SHA-256
+`b615142a6876a7e1ae1e64526769330aa90f3c7cf197e00d8281b76b77ac8738`.
+
+The three current routes report:
+
+* The ordinary `Design2` route has 216 declarations, 43 processes and three
+  generate entries, and first refuses at `picorv32.v:203`:
+
+  ```text
+  unsupported "Instantiate"
+    "decl 'cpuregs': unpacked array storage outside E (UnpackedDecl:memory)"
+  ```
+
+* The source-shaped provisional memory adapter constructs 223 scalar
+  declarations, one unpacked memory declaration and 52 processes.  Its
+  admission reports, in order, are:
+
+  ```text
+  Schedule:preemptive: processes 7 and 42 may observe an intermediate write under IEEE 1800-2023 §4.7; the memory route requires disjoint cross-process read/write windows
+  Schedule:comb-source-order: comb process 9 reads a signal written by later comb process 25; the source-order memory pass would need a second settle pass under IEEE 1800-2023 §10.3/§4.5
+  ```
+
+* E elaboration constructs 215 scalar declarations, one native unpacked
+  memory and 43 retained processes.  Its first retained unsupported process is
+  the generic `TimedStatement:ImplicitEventControl` boundary for the
+  source-shaped `always @*` body at `pcpi_mul_wait`:
+
+  ```text
+  always @*: R3: `pcpi_mul_wait` has a continuous time-zero driver; `always @*` does not run at time zero and its first wake-up is scheduler-dependent (always_comb does) -- always @* begin
+          pcpi_int_wr
+  ```
+
+No route yields an E execution or retirement trace for this core, and no
+symbolic ADDI invariant is claimed.  The guard-bypassed legacy result remains
+**UNVALIDATED**.  The public-master update between the preceding probe and
+this one touched only C files, so the unchanged source-shaped envelope is
+still the approved input; the three reports were re-evaluated with
+`LeanModels.Sv.MemPreemptGuard` imported.

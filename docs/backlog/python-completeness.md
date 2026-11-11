@@ -13606,3 +13606,23 @@ model receives only the integer trace for the refused path.
 
 DECIDED: close `py-clock-int-reading`; retain the loud boundary until the
 world trace is upgraded to binary64 readings.
+## 2026-11-11-pyfoundation-82 — close text-keyed semantics audit
+
+The medium `py-text-keyed-semantics` finding is already resolved in the current
+tree. `Global`, `Nonlocal`, and `AnnAssignNoValue` carry structured names;
+structured import fields feed `benignImportBindsStructured`; exception-handler
+names are arrays; and the old `globalNamesText`, `nonlocalNamesText`,
+`annNoValueName`, `importBinds`, and `excHandlerNamesAux` consumers are absent.
+The remaining `ast.unparse` helper supplies only the diagnostic payload of an
+`Unsupported` node. Namedtuple field splitting consumes a real string-literal
+value and is not a source-text parser.
+
+| Measurement | Result |
+|---|---|
+| Semantic text consumers | all reported names absent from active Lean/Python code |
+| Structured paths | declarations, imports, annotations, and handlers use AST fields |
+| Diagnostic text | `ast.unparse` appears only in `Unsupported.text` extraction |
+| Semantic change | none; audit closure only |
+
+DECIDED: close `py-text-keyed-semantics`; keep diagnostic text opaque and
+preserve structured AST data as the sole semantic input.

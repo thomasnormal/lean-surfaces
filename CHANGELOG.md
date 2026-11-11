@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Revalidated the text-keyed semantics audit: lexical declarations, imports,
+  value-less annotations, and exception-handler names are structured AST data;
+  `ast.unparse` remains diagnostic-only and no longer drives semantics.
+
 - Revalidated the trace-clock boundary: `time.time()` readings are refused
   until binary64 traces are modeled, and differential replay supplies CPython
   float readings rather than claiming integer values.

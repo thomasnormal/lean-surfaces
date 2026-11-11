@@ -67,7 +67,9 @@ classify independent handwritten Lean/native checks as `WITNESS`; only the
 verified TinyXML-2 capture path can produce `MATCH`. A regression test pins
 that a generic callable row cannot become `MATCH` by matching values alone.
 The broader source-derived capture pipeline remains separately documented as
-open work and is not represented as a differential match.
+open work and is not represented as a differential match. Revalidated
+2026-11-11 with the eight `test_cpp_diff_classification.py` cases and
+`test_cpp_diff_reporting.py` (all passed); `tools/docs_check.py` also passed.
 
 ## `cpp-call-arg-order`: effectful call arguments
 

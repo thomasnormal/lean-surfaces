@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Revalidated display/comprehension lowering boundaries: starred displays,
+  set/dict comprehensions, and starred targets remain source nodes or loud
+  refusals, so source-level shadows cannot alter synthesized builtin calls.
+
 - Revalidated extractor exception handling: `Try` and `Raise` remain source
   nodes with structured handlers and explicit loud reasons for unsupported
   cleanup/handler forms; the retired shape-specific rewrites have no active

@@ -13755,3 +13755,21 @@ loud in both interpreters.
 
 DECIDED: close `py-extractor-try-lowerings`; model full cleanup and handler
 protocols before widening admission.
+## 2026-11-11-pyfoundation-90 — close display/comprehension lowering audit
+
+The medium `py-extractor-display-lowerings` finding is closed for the risky
+source forms. The approved extractor keeps starred list/tuple/set displays,
+`DictComp`/`SetComp`, and starred assignment/`for` targets as structured nodes
+or explicit loud boundaries; it no longer spells them as calls to ordinary
+shadowable names or synthetic loop temporaries. The remaining `<star-arg>` call
+argument expansion is an internal argument protocol, and synthetic dict-view/
+delete helpers are tracked by the next general-rewrites audit.
+
+| Measurement | Result |
+|---|---|
+| Source audit | no active starred-display, set/dict-comprehension, or starred-target call lowering |
+| Shadow boundary | `star_shadow` source forms remain loud or match without source-name lookup |
+| Semantic change | none; audit closure only |
+
+DECIDED: close `py-extractor-display-lowerings`; retain loud boundaries until
+native display/comprehension semantics are implemented.

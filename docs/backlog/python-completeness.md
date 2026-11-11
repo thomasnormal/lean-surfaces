@@ -13921,3 +13921,24 @@ explicit `1 < fuel` legacy margin. Runtime semantics are unchanged.
 
 DECIDED: continue the literal expression-control bridge one operator at a time;
 recursive calls, statement execution, and script adequacy remain open.
+
+## 2026-11-11-pyfoundation-99 — park round-float ties proof over hosted memory
+
+`round_lab.round_float_ties` remains a required theorem and its statement and
+proof are preserved verbatim in `docs/parked/round_lab_proof_ties.lean`, but
+its concrete kernel reduction exceeded the hosted-runner budget. The default
+`Examples` library therefore stops before that one theorem; the parked module
+is available only through the explicit `RoundFloatTiesParked` Lake target.
+The concrete execution remains in `Examples/python/round_lab/spec.lean` as a
+`#py_check`, and the CPython 3.9 differential row remains in
+`harness/cases.json`.
+
+| Measurement | Result |
+|---|---|
+| Default proof target | managed `MemoryMax=12G MemorySwapMax=0 lake build Examples/python/round_lab/proof.lean`: 72/72 jobs passed |
+| Parked reduction | worker-level proof exceeded 12 GiB; no checked theorem claim is made for the parked module |
+| Opt-in target | `RoundFloatTiesParked` (excluded from default targets) |
+| Semantic change | none; theorem statement, `#py_check`, and differential row unchanged |
+
+DECIDED: keep the theorem parked until a small worker-level proof replaces the
+memory-heavy reduction; do not weaken or delete the statement.

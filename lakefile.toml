@@ -33,6 +33,12 @@ name = "Examples"
 globs = ["Examples.+"]
 needs = ["circuitSources", "verilogASources", "pythonEnvelopes", "cEnvelopes", "esEnvelopes", "svEnvelopes"]
 
+# Opt-in only: this concrete theorem's kernel reduction measured above 12 GiB
+# with swap disabled, so it must not be part of the public/default build.
+[[lean_lib]]
+name = "RoundFloatTiesParked"
+roots = ["docs.parked.round_lab_proof_ties"]
+
 [[input_dir]]
 name = "circuitSources"
 path = "Examples/spice"

@@ -272,3 +272,11 @@ def percent_numeric_precision(value):
 
 def percent_hex_precision(value):
     return "%.5x" % value
+
+
+def percent_plus(value):
+    return "%+d" % value
+
+
+def percent_space(value):
+    return "% d" % value

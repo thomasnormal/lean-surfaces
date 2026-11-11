@@ -6,7 +6,7 @@
     "version": "3.9.25"
   },
   "source_file": "harness/foundation_probe.py",
-  "source_sha256": "e0181440a778616be9cfe74d852d9f57f7c15252ac6603b974d6238e9f589bb9",
+  "source_sha256": "119f730ef2a99f1ba571803c21f30b2d0a0d959fe9015613ef9a20ea0a00ec7f",
   "module": {
     "kind": "Module",
     "body": [
@@ -6641,6 +6641,140 @@
                   "col_offset": 20,
                   "end_lineno": 274,
                   "end_col_offset": 25
+                },
+                "id": "value"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 277,
+          "col_offset": 0,
+          "end_lineno": 278,
+          "end_col_offset": 24
+        },
+        "name": "percent_plus",
+        "args": [
+          {
+            "arg": "value",
+            "span": {
+              "lineno": 277,
+              "col_offset": 17,
+              "end_lineno": 277,
+              "end_col_offset": 22
+            }
+          }
+        ],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 278,
+              "col_offset": 4,
+              "end_lineno": 278,
+              "end_col_offset": 24
+            },
+            "value": {
+              "kind": "BinOp",
+              "span": {
+                "lineno": 278,
+                "col_offset": 11,
+                "end_lineno": 278,
+                "end_col_offset": 24
+              },
+              "left": {
+                "kind": "Constant",
+                "span": {
+                  "lineno": 278,
+                  "col_offset": 11,
+                  "end_lineno": 278,
+                  "end_col_offset": 16
+                },
+                "value": {
+                  "type": "str",
+                  "value": "%+d"
+                }
+              },
+              "op": "Mod",
+              "right": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 278,
+                  "col_offset": 19,
+                  "end_lineno": 278,
+                  "end_col_offset": 24
+                },
+                "id": "value"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 281,
+          "col_offset": 0,
+          "end_lineno": 282,
+          "end_col_offset": 24
+        },
+        "name": "percent_space",
+        "args": [
+          {
+            "arg": "value",
+            "span": {
+              "lineno": 281,
+              "col_offset": 18,
+              "end_lineno": 281,
+              "end_col_offset": 23
+            }
+          }
+        ],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 282,
+              "col_offset": 4,
+              "end_lineno": 282,
+              "end_col_offset": 24
+            },
+            "value": {
+              "kind": "BinOp",
+              "span": {
+                "lineno": 282,
+                "col_offset": 11,
+                "end_lineno": 282,
+                "end_col_offset": 24
+              },
+              "left": {
+                "kind": "Constant",
+                "span": {
+                  "lineno": 282,
+                  "col_offset": 11,
+                  "end_lineno": 282,
+                  "end_col_offset": 16
+                },
+                "value": {
+                  "type": "str",
+                  "value": "% d"
+                }
+              },
+              "op": "Mod",
+              "right": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 282,
+                  "col_offset": 19,
+                  "end_lineno": 282,
+                  "end_col_offset": 24
                 },
                 "id": "value"
               }

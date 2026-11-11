@@ -645,6 +645,34 @@
   {
     "args": [
       [
+        3
+      ],
+      [
+        -3
+      ]
+    ],
+    "expect": "match",
+    "file": "harness/foundation_probe.py",
+    "function": "percent_plus",
+    "note": "numeric percent-format plus sign flag."
+  },
+  {
+    "args": [
+      [
+        3
+      ],
+      [
+        -3
+      ]
+    ],
+    "expect": "match",
+    "file": "harness/foundation_probe.py",
+    "function": "percent_space",
+    "note": "numeric percent-format space sign flag."
+  },
+  {
+    "args": [
+      [
         0.0,
         0.0
       ],

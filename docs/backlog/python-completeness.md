@@ -84,6 +84,22 @@ and `%o` are admitted; unsupported conversion precision remains loud.
 DECIDED: retain one shared precision worker and keep dynamic or unsupported
 precision forms outside the tier.
 
+## 2026-11-11-pyformat-5 — admit numeric percent-format sign flags
+
+The scalar percent-format worker now admits bare `+` and space sign flags for
+numeric conversions. Positive values receive the requested sign or leading
+space; negative values retain their minus sign. Text and character sign flags
+remain loud.
+
+| Measurement | Result |
+|---|---|
+| Generated edge battery | 60 cases, 103 calls |
+| Native runner | 88 MATCH, 15 documented refusals, 0 failures |
+| Proof interpreter | 88 MATCH, 15 loud refusals, 0 failures |
+| Managed build | `lake build leanmodels-run`, 40 jobs, passed |
+
+DECIDED: keep sign flags restricted to the measured numeric scalar domain.
+
 ## 2026-11-11-pyfoundation-31 — count `sorted` recursion and materialization
 
 The builtin recursion audit found that `sorted` was missing the nested call

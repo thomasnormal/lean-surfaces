@@ -2281,6 +2281,15 @@ def strFormatWidthPiece (width : Nat) (precision : Option Nat) (c : Char)
   else
     return padFormatField width piece
 
+def strFormatSignPiece (c : Char) (v : RVal) (space : Bool) : Res String := do
+  let piece ← strFormatConv c v
+  if c == 'd' || c == 'i' || c == 'u' || c == 'x' || c == 'o' then
+    match piece.toList with
+    | '-' :: _ => return piece
+    | _ => return (if space then " " else "+") ++ piece
+  else
+    return piece
+
 def strFormatReadDigits : List Char → Nat → Option (Nat × List Char)
   | [], _ => Option.none
   | c :: rest, acc =>
@@ -2337,6 +2346,28 @@ def strFormatWalk : List Char → List RVal → Bool → String → Res String
       if args.isEmpty || mapping then .ok acc
       else .exn (.typeError "not all arguments converted during string formatting")
   | '%' :: '%' :: cs, args, mapping, acc => strFormatWalk cs args mapping (acc ++ "%")
+  | '%' :: '+' :: c :: cs, args, mapping, acc =>
+      if c == 'd' || c == 'i' || c == 'u' || c == 'x' || c == 'o' then
+        match args with
+        | [] => .exn (.typeError "not enough arguments for format string")
+        | a :: rest =>
+            match strFormatSignPiece c a false with
+            | .ok piece => strFormatWalk cs rest mapping (acc ++ piece)
+            | .exn e => .exn e
+            | .timeout => .timeout
+            | .unsupported msg => .unsupported msg
+      else .unsupported "sign flags for this percent conversion are outside the tier"
+  | '%' :: ' ' :: c :: cs, args, mapping, acc =>
+      if c == 'd' || c == 'i' || c == 'u' || c == 'x' || c == 'o' then
+        match args with
+        | [] => .exn (.typeError "not enough arguments for format string")
+        | a :: rest =>
+            match strFormatSignPiece c a true with
+            | .ok piece => strFormatWalk cs rest mapping (acc ++ piece)
+            | .exn e => .exn e
+            | .timeout => .timeout
+            | .unsupported msg => .unsupported msg
+      else .unsupported "sign flags for this percent conversion are outside the tier"
   | '%' :: cs, args, mapping, acc =>
       match strFormatWidthSpec cs with
       | some (left, zero, width, precision, c, restChars) =>

@@ -19,6 +19,8 @@ coverage advance independently from the Python tier.
 
 ### Added
 
+- `typedef unsigned long UL;` now executes through matching structured `BuiltinType` evidence, completing the unsigned-long alias and typedef pair.
+
 - `using UL = unsigned long;` now executes through matching structured `BuiltinType` evidence; unsupported alias targets remain loud refusals.
 
 - `typedef long L;` now executes through matching structured `BuiltinType` evidence, completing the long alias and typedef pair.

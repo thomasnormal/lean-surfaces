@@ -522,6 +522,15 @@ private def shortTypeAliasExecutionTranslation : Artifact := {emptyTranslation w
         ("type", .object [("qualType", .string "short")]),
         ("inner", .array [shortBuiltinType])]])]}
 
+private def unsignedLongTypedefExecutionTranslation : Artifact := {emptyTranslation with
+  ast := .object [
+    ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
+    ("inner", .array [
+      .object [("id", .string "a"), ("kind", .string "TypedefDecl"),
+        ("name", .string "UL"),
+        ("type", .object [("qualType", .string "unsigned long")]),
+        ("inner", .array [unsignedLongBuiltinType])]])]}
+
 private def longTypedefExecutionTranslation : Artifact := {emptyTranslation with
   ast := .object [
     ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
@@ -2206,6 +2215,9 @@ def shortTypedefTranslationExecution : Except String Unit :=
 def longTypedefTranslationExecution : Except String Unit :=
   execute longTypedefExecutionTranslation "a"
 
+def unsignedLongTypedefTranslationExecution : Except String Unit :=
+  execute unsignedLongTypedefExecutionTranslation "a"
+
 def unsignedLongTypeAliasTranslationExecution : Except String Unit :=
   execute unsignedLongTypeAliasExecutionTranslation "a"
 
@@ -3618,6 +3630,7 @@ def staticAssertTranslationWitness : Except String Unit :=
 #guard shortTypeAliasTranslationExecution matches .ok ()
 #guard longTypeAliasTranslationExecution matches .ok ()
 #guard unsignedLongTypeAliasTranslationExecution matches .ok ()
+#guard unsignedLongTypedefTranslationExecution matches .ok ()
 #guard longTypedefTranslationExecution matches .ok ()
 #guard shortTypedefTranslationExecution matches .ok ()
 #guard unsignedTypedefTranslationExecution matches .ok ()
@@ -3735,6 +3748,9 @@ theorem long_type_alias_translation_executes :
 
 theorem unsigned_long_type_alias_translation_executes :
     unsignedLongTypeAliasTranslationExecution = .ok () := rfl
+
+theorem unsigned_long_typedef_translation_executes :
+    unsignedLongTypedefTranslationExecution = .ok () := rfl
 
 theorem long_typedef_translation_executes :
     longTypedefTranslationExecution = .ok () := rfl

@@ -481,6 +481,17 @@
     "rung": 0
   },
   {
+    "id": "translation.unsigned-long-typedef-execution",
+    "kind": "translation",
+    "corpus": "translation witness",
+    "lean_module": "LeanModels.Cpp.TranslationTests",
+    "lean_namespace": "LeanModels.Cpp.TranslationTests",
+    "lean_expression": "unsignedLongTypedefTranslationExecution",
+    "cpp_source": "typedef unsigned long UL;",
+    "expect": "match",
+    "rung": 0
+  },
+  {
     "id": "translation.empty-scoped-enum-execution",
     "kind": "translation",
     "corpus": "translation witness",

@@ -42,6 +42,7 @@ python3 "$ROOT/tools/c_corpus_fetch.py" --selftest || exit 1
 python3 "$ROOT/harness/c_torture_score.py" --selftest || exit 1
 python3 "$ROOT/extractors/c/extract.py" --selftest || exit 1
 python3 "$ROOT/harness/c_extract_determinism.py" || exit 1
+python3 "$ROOT/harness/c_survey.py" --self-test || exit 1
 python3 "$ROOT/harness/divergence_register.py" || exit 1
 python3 "$ROOT/harness/c_divergence_probe.py" || exit 1
 # --offline: verifies every cached file's sha256 against docs/c-torture-pin.json

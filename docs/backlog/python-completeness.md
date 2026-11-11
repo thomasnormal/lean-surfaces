@@ -122,6 +122,23 @@ no proof source change was needed in this item.
 DECIDED: treat the `ClockErase` proof item as revalidated and continue with
 the final inbox target after rereading the inbox.
 
+## 2026-11-11-pyfoundation-51 — revalidate coverage and documentation gates
+
+The final pre-rename item is already resolved on the integrated tree. Fresh
+checks report a current generated coverage page, all marked documentation
+blocks valid, and an in-sync generated backlog index. The index retains only
+the repository's pre-existing warnings for legacy C++ headings.
+
+| Measurement | Result |
+|---|---|
+| `python3 harness/coverage_page.py --check` | passed |
+| `python3 tools/docs_check.py` | 85/85 marked blocks passed |
+| `tools/backlog-index.sh --check` | passed; 1,402 entries |
+| Source change | none beyond this revalidation record |
+
+DECIDED: treat the coverage/docs item as revalidated and reread the inbox
+before the next goal item.
+
 ## 2026-11-11-pyfoundation-43 — repair PayloadBlind comparison recursion transport
 
 The proof observer now transports the heap-aware rich-comparison recursion

@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Revalidated the generated Python coverage page, documentation checks, and
+  backlog index on the current public tip; all freshness gates pass.
+
 - Revalidated the direct `ClockErase` proof target after the recursion and
   protocol repairs; the managed target is green on the public tip.
 

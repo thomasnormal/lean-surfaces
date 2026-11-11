@@ -19,6 +19,10 @@ coverage advance independently from the Python tier.
 
 ### Added
 
+- Qualified function using declarations now execute when the adjacent Clang
+  `UsingShadowDecl` carries a structured `FunctionDecl` target; unresolved or
+  non-function targets remain loud refusals.
+
 - `using namespace n;` now executes when Clang supplies a structured
   `NamespaceDecl` target; unresolved and malformed using directives remain
   loud refusals.

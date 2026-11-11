@@ -776,6 +776,15 @@ private def executeTopDeclaration (raw : Raw) : Except String Unit :=
 
 private def executeTopDeclarations : List Raw → Except String Unit
   | [] => pure ()
+  | usingDecl :: shadow :: rest =>
+      match usingDecl.text "kind", shadow.text "kind", shadow.field "target" with
+      | some "UsingDecl", some "UsingShadowDecl", some target =>
+          match target.text "kind", target.text "id" with
+          | some "FunctionDecl", some _ => executeTopDeclarations rest
+          | _, _ => .error executionRefusal
+      | _, _, _ => do
+          let _ ← executeTopDeclaration usingDecl
+          executeTopDeclarations (shadow :: rest)
   | declaration :: rest => do
       let _ ← executeTopDeclaration declaration
       executeTopDeclarations rest

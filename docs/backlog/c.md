@@ -112,7 +112,9 @@ The memory object records effective types, but the previous `BitCast` arm
 passed every object-pointer cast through and `loadInt` decoded its bytes.
 Non-character object-pointer casts now refuse at the cast boundary; the
 existing `void*` and character-pointer paths remain admitted. A differential
-row pins refusal of an `int` read through `short*`.
+row pins refusal of an `int` read through `short*`. Revalidated 2026-11-11
+against the pinned Clang/LLVM 21.1.8 oracle: `pointer-pun REFUSE`, with the
+native witness exiting 120.
 
 ## 2026-11-11-c-auto-lifetime-never-ends — automatic lifetime cleanup
 

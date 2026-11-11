@@ -140,7 +140,13 @@ result back to the lvalue type. Increment and decrement use the same promotion
 rule. `_Bool` is represented distinctly with a one-bit value range and
 one-byte storage. Differential rows cover defined narrow promotions,
 `_Bool++`, mixed signed/unsigned assignment, and UBSan-confirmed signed
-overflow refusal.
+overflow refusal. Revalidated 2026-11-11 against the pinned Clang/LLVM
+21.1.8 oracle: `signed-char-plus MATCH model=-128 exit=128`,
+`unsigned-char-shift MATCH model=0 exit=0`, `bool-increment MATCH model=1
+exit=1`, and `mixed-signed-unsigned MATCH model=-2147483648 exit=0`.
+`ushort-overflow` is `REFUSE` with native UBSan status 1. The envelope
+checks also confirmed that every compound node carries both promotion type
+fields.
 
 ## 2026-11-10-c-array-filler-designators — Clang array initializer positions
 

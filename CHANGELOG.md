@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Revalidated static definition deletion: `scriptStaticDeleteNoop` admits only
+  unobserved benign imports and excludes function/class/namedtuple names, so
+  deleted definitions cannot remain reachable through function bodies or
+  exception handlers.
+
 - Revalidated the shape-specific ingestion audit: builtin-alias, dead-value,
   immediate-genexp-drain, length-only repetition, and direct bare-reraise
   rewrites remain absent from active ingestion; source shapes use ordinary

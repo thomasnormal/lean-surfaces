@@ -13571,3 +13571,21 @@ definition-order admission, and oversized repetition remains loud.
 DECIDED: close `py-shape-specific-ingestion-rewrites`; retain loud boundaries
 until the underlying native semantics are modeled rather than reintroducing
 shape-specific rewrites.
+## 2026-11-11-pyfoundation-80 — close static-definition delete audit
+
+The high-priority `py-static-del-noop-census` finding is already fixed.
+`scriptStaticDeleteNoop` admits only an unobserved benign import and explicitly
+excludes functions, classes, and namedtuples; module execution therefore
+refuses definition deletion before a static table can answer a later call or
+exception-handler lookup. The call-delete, mid-delete, trailing-delete,
+partial-delete, and deleted-handler witnesses all hit the loud boundary.
+
+| Measurement | Result |
+|---|---|
+| Call-delete witness | `del_def_call.py`: model exit 3; CPython 3.9.25 raises `NameError` |
+| Handler-delete witness | deleted exception class: model exit 3; CPython raises `NameError` after the caught `ZeroDivisionError` |
+| Census guard | `isDefinition` excludes function/class/namedtuple names from no-op admission |
+| Semantic change | none; audit closure only |
+
+DECIDED: close `py-static-del-noop-census`; retain loud definition deletion
+until runtime-bound definition entries can be tombstoned faithfully.

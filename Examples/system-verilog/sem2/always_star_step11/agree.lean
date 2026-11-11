@@ -36,6 +36,10 @@ observation and the eleven common source rows from `check.py`.
 private def alwaysStarE : Elab :=
   Elab.ofEDesign2 (alwaysStarStep11.pdesign.instantiateDE2 [4])
 
+#guard match alwaysStarE.procs[0]? with
+  | some (LeanModels.Sv.Kernel.Proc0.implicit body) => alwaysStarE.sens 0 == body.rawReads
+  | _ => false
+
 private def showStar (E : Elab) (c : Config) : String :=
   SvState.showSignal (E.view c.store) "y_star" ++ " " ++
     SvState.showSignal (E.view c.store) "y_comb"

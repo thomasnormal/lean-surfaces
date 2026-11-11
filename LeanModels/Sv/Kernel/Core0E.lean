@@ -533,6 +533,19 @@ theorem Elab.mem_sens_of_raw {E : Elab} {q : ProcId} {body : Stmt2}
   simp only [Bool.not_eq_true', List.any_eq_false]
   exact fun W hW hov => by rw [hno W hW] at hov; cases hov
 
+/-! Plain `always @*` has the source rule's raw-read sensitivity. Unlike
+`always_comb`, its read set is not reduced by writes in the same body. -/
+
+theorem Elab.sens_implicit_eq {E : Elab} {q : ProcId} {body : Stmt2}
+    (hp : E.procs[q]? = some (.implicit body)) : E.sens q = body.rawReads := by
+  simp only [Elab.sens, hp]
+
+theorem Elab.mem_sens_of_raw_implicit {E : Elab} {q : ProcId} {body : Stmt2}
+    (hp : E.procs[q]? = some (.implicit body)) {r : ReadWin}
+    (hr : r ∈ body.rawReads) : r ∈ E.sens q := by
+  rw [Elab.sens_implicit_eq hp]
+  exact hr
+
 /-- `q` is triggered by the change from `st` to `st'`: an element of its
 sensitivity changed. -/
 def Elab.Triggered (E : Elab) (st st' : SvState) (q : ProcId) : Prop :=

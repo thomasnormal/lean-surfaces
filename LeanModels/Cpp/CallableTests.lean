@@ -589,6 +589,21 @@ def admitSwitch : Except String CallableFunction :=
 
 #guard admitSwitch.isOk
 
+def switchSourceHandles : Bool :=
+  match admitSwitch with
+  | .ok function =>
+      match function.body with
+      | .block (.sequence (.switch_ _ clauses) _) =>
+          match clauses with
+          | first :: _ =>
+              first.source == some {value := "0xe5"} &&
+                first.sourceItems.head? == some {value := "0xe5"}
+          | _ => false
+      | _ => false
+  | .error _ => false
+
+#guard switchSourceHandles
+
 private def parseSwitchClauses (clauses : List Raw) : Except String CallableStatement :=
   parseCallableStatement TargetProfile.lp64
     [{declaration := {value := "0x10"}, name := some "value", type := intType}]

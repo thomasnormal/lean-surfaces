@@ -15,8 +15,11 @@ pins the default match and profile-changing-flag refusal.
 **Partially closed 2026-11-11.** Callable admission now retains
 `ExprWithCleanups` as an explicit `CallableStatement.cleanups` node, and both
 callable evaluators execute its child while preserving the source boundary.
-Switch bodies still use the existing clause representation; replacing that
-regrouping with source `CaseStmt`/`DefaultStmt` items remains open.
+Switch clauses now also populate their retained `source` handle from the
+frontend label node (alongside every `sourceItems` handle), and a kernel guard
+pins that identity. Switch bodies still use the existing clause representation;
+replacing that regrouping with direct source `CaseStmt`/`DefaultStmt` item
+semantics remains open.
 
 ## `c-name-resolution-by-string`: callee declaration-kind guard
 

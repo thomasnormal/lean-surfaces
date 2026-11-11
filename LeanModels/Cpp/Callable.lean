@@ -775,7 +775,7 @@ mutual
         throw "callable: switch labels must be unique with at most one default"
       let clauses ← clauseRaws.mapM fun (label, raws, sourceItems) => do
         let body ← parseCallableSequence profile parameters expressionRows resultType raws
-        pure {label, body, source := none, sourceItems}
+        pure {label, body, source := sourceItems.head?, sourceItems}
       pure (.switch_ condition clauses)
   | "WhileStmt" =>
       let children ← rawChildren statement
@@ -1032,7 +1032,7 @@ partial def parseCallableStatementWithLocals (probe : DeclarationProbe)
       let clauses ← clauseRaws.mapM fun (label, raws, sourceItems) => do
         let (body, _) ← callableSequenceWithLocals probe typeRows variableRows expressionRows
           expressionTypes profile resultType scope raws
-        pure {label, body, source := none, sourceItems}
+        pure {label, body, source := sourceItems.head?, sourceItems}
       pure (.switch_ condition clauses, scope)
   | "WhileStmt" =>
       let children ← rawChildren statement

@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Revalidated expression-yield target safety: `global`/`nonlocal` targets are
+  refused before the old dead-target lowering can drop the resumed store;
+  the witness is loud against CPython 3.9.25's `None` result.
+
 - Revalidated augmented-repeat semantics: the former boundary rewrite is
   absent, heap-list `*=` mutates the existing address, and the script alias
   witness matches CPython 3.9.25.

@@ -13480,3 +13480,20 @@ contents through both names and matches CPython 3.9.25.
 
 DECIDED: close `py-boundary-augrepeat-rewrite`; retain the explicit mutable
 boundary refusal until list thawing is wired end to end.
+## 2026-11-11-pyfoundation-75 — close dead yield-target audit
+
+The high-priority `py-dead-yield-target-drop` finding is closed at the safe
+boundary. Before applying the narrow dead-target lowering, the extractor scans
+the enclosing scope for a declaration of the target as `global` or `nonlocal`
+and emits `YieldAssign:global-or-nonlocal`; this prevents silently dropping the
+send-time store. The witness now refuses loudly, while CPython 3.9.25 resumes
+the generator and prints `None`.
+
+| Measurement | Result |
+|---|---|
+| Global-target witness | `yield_global_target.py`: model exit 3; CPython 3.9.25 prints `None`, exit 0 |
+| Guard | extractor `declared_global` check covers `ast.Global` and `ast.Nonlocal` |
+| Semantic change | none; safety refusal only |
+
+DECIDED: close `py-dead-yield-target-drop`; retain the loud boundary until a
+real send channel represents expression-position yield stores.

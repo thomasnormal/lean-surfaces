@@ -3,6 +3,10 @@
 ## Unreleased
 
 - Added a kernel-checked binary-expression refinement theorem for integer
+  literal modulo, including the immediate-value fallback from the monadic
+  string-format dispatch.
+
+- Added a kernel-checked binary-expression refinement theorem for integer
   literal floor division, with explicit fuel and dispatch-guard premises.
 
 - Added a kernel-checked binary-expression refinement theorem for integer

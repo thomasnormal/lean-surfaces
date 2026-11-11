@@ -311,6 +311,22 @@ shown to remain on the shared pure worker path.
 DECIDED: continue literal binary refinement with explicit fuel margins before
 attempting recursive calls or scripts.
 
+## 2026-11-11-pyfoundation-62 — prove binary literal-modulo refinement
+
+The literal binary refinement family now covers integer modulo. The proof
+discharges the `.mod` dispatch guards, reduces the immediate-value fallback
+from the monadic string-format branch, and reuses the shared binary worker
+equation after transporting both children.
+
+| Measurement | Result |
+|---|---|
+| Target | managed `lake build LeanModels/Python/Monadic/Eval.lean` passed |
+| New theorem | `Monadic.twinAgrees_evalOpen_intMod` |
+| Semantic change | theorem only; no evaluator behavior change |
+
+DECIDED: continue the literal binary family with explicit fuel and source-node
+dispatch evidence; recursive and script adequacy remain open.
+
 ## 2026-11-11-pyfoundation-43 — repair PayloadBlind comparison recursion transport
 
 The proof observer now transports the heap-aware rich-comparison recursion

@@ -81,6 +81,8 @@ def main():
     ap.add_argument("log", nargs="?", help="c-torture-run output (default: stdin)")
     ap.add_argument("--expect", help="N/total — fail if the number moved")
     ap.add_argument("--emit", help="write the scoreboard as JSON to this path")
+    ap.add_argument("--commit", help="source commit measured (recorded in the scoreboard)")
+    ap.add_argument("--date", help="UTC date/time of the measurement")
     ap.add_argument("--selftest", action="store_true")
     a = ap.parse_args()
     if a.selftest:
@@ -97,7 +99,16 @@ def main():
         # test still failing?" on a machine with no corpus.  Every `failed` row
         # is listed by NAME, because a count cannot say WHICH.
         import json as _json
-        _json.dump({
+        # Keep the first refusal for every row, in log order, as a histogram.
+        # This is the useful frontier signal: a count of scored rows alone
+        # cannot say which refusal moved when a semantic commit changes it.
+        histogram = {}
+        for _name, token, detail in rows:
+            if token in SCORED:
+                continue
+            key = token if not detail else token + ": " + detail
+            histogram[key] = histogram.get(key, 0) + 1
+        payload = {
             "note": ("Written by harness/c_torture_score.py --emit, from a "
                      "`lake exe c-torture-run` log.  The pin is "
                      "docs/c-torture-pin.json.  This file is the tier's §9.0 "
@@ -110,7 +121,13 @@ def main():
             "failed_tests": [n for n, t, _ in rows if t == "failed"],
             "oracle_tests_compiler_tests":
                 [n for n, t, _ in rows if t == "oracle-tests-compiler"],
-        }, open(a.emit, "w"), indent=1, sort_keys=True)
+            "first_refusal_histogram": histogram,
+        }
+        if a.commit is not None:
+            payload["measured_commit"] = a.commit
+        if a.date is not None:
+            payload["measured_at_utc"] = a.date
+        _json.dump(payload, open(a.emit, "w"), indent=1, sort_keys=True)
         open(a.emit, "a").write("\n")
         print("c_torture_score: scoreboard written to %s" % a.emit)
     if a.expect:

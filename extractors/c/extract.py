@@ -77,6 +77,41 @@ TYPES = {"BuiltinType", "PointerType", "RecordType", "TypedefType",
 VOCAB = DECLS | STMTS | EXPRS | TYPES
 
 
+def canonicalize_ids(tree):
+    """Replace clang's process-address node IDs with traversal ordinals.
+
+    clang's JSON uses heap addresses (``0x…``) for ``id`` and for the
+    references which point back to a declaration.  Those addresses are not
+    part of the source program and change on every compiler invocation.  A
+    first-occurrence map preserves identity while making the input to the
+    envelope deterministic.  The walk also covers label and declaration
+    reference fields, including the nested ``referencedDecl`` records.
+    """
+    ids = {}
+
+    def canon(value):
+        if not isinstance(value, str) or not value.startswith("0x"):
+            return value
+        if value not in ids:
+            ids[value] = "id" + str(len(ids))
+        return ids[value]
+
+    def walk(value):
+        if isinstance(value, dict):
+            for key in list(value):
+                item = value[key]
+                if (key == "id" or key.endswith("Id")) and isinstance(item, str):
+                    value[key] = canon(item)
+                else:
+                    walk(item)
+        elif isinstance(value, list):
+            for item in value:
+                walk(item)
+
+    walk(tree)
+    return tree
+
+
 def die(msg):
     sys.exit("extract.py: " + msg)
 
@@ -571,7 +606,7 @@ def externals(tu, target, loc_cls):
 def extract(path, source_name=None):
     check_profile()
     src = open(path, "rb").read()
-    tu = clang_json(path)
+    tu = canonicalize_ids(clang_json(path))
     target = os.path.basename(path)
     ex = Extractor(target, src.decode())
     ex.collect_labels(tu)

@@ -1795,3 +1795,30 @@ flattened and no scalar sensitivity is fabricated.  This is an E admission
 result only: no PicoRV32 execution, retirement trace or symbolic ADDI
 invariant is claimed.  The old guard-bypassed run2/MemCycle 80-cycle result
 remains **UNVALIDATED**.
+
+## 2026-11-11 E re-probe after the implicit-event memory slice
+
+The pinned source remains YosysHQ commit
+`ef203c2b0a3fb793280f5114941416c425c5b461`, with source SHA-256
+`0836050971b3c6cdd28ac3b1e5719a67fb645161912bef1e472e63995ceb062`.  On
+public master `070c7ab63`, re-extracting that unchanged source with the
+approved command gives an envelope of SHA-256
+`b3c29c36ef9734737cad9cce0fa7f81e6c9493eb23ac8f834db8fde2fdd86352`.
+
+The source-shaped E memory route now retains and admits the acyclic blocking
+body of a plain `always @*`, including selected-cell/index sensitivity.  The
+next exact wall is the first retained case body, at `picorv32.v:325`
+(`pcpi_mul_wait`):
+
+```text
+E implicit body case execution is outside the current memory profile
+```
+
+The parser node is a source-shaped `case (1'b1)` with no default, covering
+lines 331--345.  Case execution remains loud until its own E rule is landed;
+the later `TimedStatement:ImplicitEventControl` at `picorv32.v:401` is not
+silently skipped because process admission rejects unsupported process nodes.
+The ordinary route still stops first at `picorv32.v:203` on the `cpuregs`
+unpacked memory declaration.  No whole-core E execution, retirement trace or
+symbolic ADDI invariant is claimed; the old guard-bypassed 80-cycle result
+remains **UNVALIDATED**.

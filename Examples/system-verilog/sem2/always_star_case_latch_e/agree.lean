@@ -18,11 +18,11 @@ load_design_sv2 alwaysStarCaseLatchE
       items.length == 2
   | _ => false
 
-/- The source process is retained by the parser, but the current memory
-   profile has no implicit-wait scheduler and refuses it rather than silently
+/- The source process is retained by the parser.  The admitted implicit-event
+   slice reaches the case node, then refuses its execution rather than silently
    skipping the latch. -/
 #guard match MemEDesign.ofPDesign alwaysStarCaseLatchE.pdesign [4] with
-  | .unsupported "E memory route does not yet admit implicit event-controlled processes" => true
+  | .unsupported "E implicit body case execution is outside the current memory profile" => true
   | _ => false
 
 end Examples.«system-verilog».sem2.always_star_case_latch_e

@@ -70,23 +70,26 @@ lake build 'Examples.«system-verilog».sem2.always_star_step11.agree'
 python3 Examples/system-verilog/sem2/always_star_step11/check.py
 ```
 
-## Proposed E rule and remaining boundary
+## E rule and remaining boundary
 
 The single source AST needs an implicit event-controlled process with its
-own style, body and source-derived read sensitivity. Process startup first
-suspends at this event control. A change in a watched read schedules the
-existing E body engine in Active; after the body completes, the process
-re-arms its implicit wait. An empty read set never wakes. Input-port
-propagation is an event if the source connection semantics generates one;
-the wait rule itself does not invent an initial activation.
+own style, body and source-derived read sensitivity. The memory E profile now
+implements the acyclic slice used by the runtime-memory receipt: process
+startup waits, a change in a watched read schedules the retained body in the
+active pass, and the body is blocking. A watched `mem[i]` contributes both
+the selected cell and the index expression, so a write to another cell does
+not wake it. Input changes are compared with the complete pre-slot state,
+before edge commits and continuous assignments are considered. A body runs at
+most once in one pass; if it changes one of its own watched reads, E refuses
+the re-arm instead of silently dropping an event.
 
-The mixed E scheduler must notify this wait after relevant Active writes and
-NBA commits. The same existing body meaning handles blocking assignments and
-case statements. Function sensitivity must consult retained call nodes;
-inlining a function would silently broaden `@*` sensitivity. The
-`always_comb` startup and function-read rules remain its own cases. A narrow
-one-writer profile can be a sufficient admission condition, without changing
-the source language's permissions.
+The admitted statement slice is blocking scalar or one-rank memory assignment
+inside `if` and source blocks. Case statements, procedural loops, NBAs and
+other statement nodes remain explicit boundaries. Function sensitivity must
+consult retained call nodes; inlining a function would silently broaden `@*`
+sensitivity. The `always_comb` startup and function-read rules remain their own
+cases. Input-port propagation is an event if the source connection semantics
+generates one; the wait rule itself does not invent an initial activation.
 
 Retained extraction emits `AlwaysEvent` with
 `event_kind: "ImplicitEventControl"`. `Ingest2` now retains that event as
@@ -101,13 +104,12 @@ The frozen `Process2` bridge still has no implicit-event process and reports
 retained; the frozen process AST has no event-list constructor`.
 `agree.lean` checks the retained case body, function fixture and both startup
 controls, malformed event metadata, and the exact refusal in each frozen
-view. The old memory adapter also explicitly refuses the retained constructor
-at elaboration, including generated occurrences, instead of skipping it.
-Function declarations/calls and
-initialization have their additional existing boundaries. No new body AST,
-interpreter, shared judgment, or legacy execution witness is introduced.
-The actual rule, event/frame proofs, loaded-source E traces and their
-simulator comparisons remain required.
+view. The source-shaped memory adapter now admits the narrow body slice and
+rejects every other process or statement shape before execution, so an
+unsupported process cannot be silently skipped. Function declarations/calls
+and initialization have their additional existing boundaries. The loaded
+source E trace and its simulator comparisons are covered by the memory-read
+receipt below; the full event/frame proof remains required.
 
 The older timed loader's `AlwaysImplicit` path currently starts with a ready
 body (`Load.lean`, `timedProcOfRaw`), like `always_comb`. That startup is not
@@ -133,37 +135,35 @@ startup order is selected as the language meaning.
 ## Runtime unpacked-memory read boundary
 
 [`always_star_memory_read_e`](../Examples/system-verilog/sem2/always_star_memory_read_e/)
-is the next source-shaped boundary: a plain `always @*` reads `mem[ridx]`
+is the source-shaped E receipt: a plain `always @*` reads `mem[ridx]`
 from a parameter-sized unpacked memory while an edge process writes
 `mem[widx]`. The extractor now retains the parser's `ArraySel` with its
 `unpacked` metadata and the implicit event node. It never expands the
 parameterized array into cells or fabricates scalar sensitivity.
 
-The current one-cycle E memory profile refuses the retained implicit event with
-`E memory route does not yet admit implicit event-controlled processes`; this
-is an explicit scheduler boundary, not an execution result. The nine-row
-fixture covers initial x state, two writes and runtime reads, an untouched
-cell, and x/z indices. Icarus Verilog 13.0 and readiness-gated Xcelium
-24.03-s004 agree on all nine rows. The E receipt and checker keep the parser
-admission and simulator evidence separate from the future implicit-wait
-scheduler work.
+The E memory profile retains the parser's body and executes it after the
+selected cell or index changes. Its nine-row receipt covers initial x state,
+two writes and runtime reads, an untouched cell, and x/z indices. Icarus
+Verilog 13.0 and readiness-gated Xcelium 24.03-s004 agree on all nine rows.
+This is the admitted acyclic scheduler slice; self-retriggering, case/loop
+bodies and other unsupported process shapes remain loud. The next PicoRV32
+probe records the first such boundary rather than bypassing it.
 
-## R5 case-latch retention boundary
+## Case execution boundary
 
 [`always_star_case_latch_e`](../Examples/system-verilog/sem2/always_star_case_latch_e/)
 is the next source-shaped boundary: a plain `always @*` with a `case` that
 has no `default`.  The extractor retains `AlwaysEvent` with
 `event_kind: "ImplicitEventControl"`, preserves the `PStmt.caseStmt` and its
 source-order arms, and carries the R5 missing-assignment reason.  It does not
-add a default arm or lower the case into an `if` chain.  This is the parser
-admission needed by the E scheduler; it is not a latch execution claim.
+add a default arm or lower the case into an `if` chain.  The retained case
+node is the next E execution wall; it is not lowered into an `if` chain.
 
-The one-cycle memory profile refuses this retained process explicitly because
-it has no implicit-wait scheduler or latch state.  The refusal is
-`E memory route does not yet admit implicit event-controlled processes`, which
-prevents `execMemEEdge` from silently skipping the process.  The fixture's
-rows cover a matching arm, unmatched selectors, an x/z selector, data changes
-while unmatched, and hold after the last capture.  Icarus Verilog 13.0 leaves
-the first `q` sample `xxxx`, while readiness-gated Xcelium 24.03-s004 reports
-`0011`; this is the same §4.7 startup-order split.  The remaining seven rows
-match exactly in both tools.
+The E memory profile admits the implicit process but still rejects its case
+body with `E implicit body case execution is outside the current memory
+profile`, before execution.  The fixture's rows cover a matching arm,
+unmatched selectors, an x/z selector, data changes while unmatched, and hold
+after the last capture.  Icarus Verilog 13.0 leaves the first `q` sample
+`xxxx`, while readiness-gated Xcelium 24.03-s004 reports `0011`; this is the
+same §4.7 startup-order split.  The remaining seven rows match exactly in
+both tools.

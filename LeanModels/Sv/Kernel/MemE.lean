@@ -271,6 +271,87 @@ def evalMemEExpr (d : MemEDesign) (s : MemEState) (ctx : Option Nat) : PExpr →
       else
         resToExcept (evalPure2 s.scalar (instExpr2 d.env d.elemWidths ctx e))
 
+/-! ## Implicit event controls
+
+Plain `always @*` is a waiting process (§9.4.2.2.2), unlike `always_comb`.
+The parser retains its source body and the memory profile keeps that body
+source-shaped.  Its sensitivity is therefore the values of the expressions
+read by the body.  In particular, a read of `mem[i]` is sensitive to the
+selected cell and to the index expression; treating the whole memory as one
+signal would wake the process for an unrelated cell and is observably wrong.
+The walkers below collect those parser expressions without lowering them.
+-/
+
+mutual
+
+def memEReadExprs : PExpr → List PExpr
+  | e@(.ident _) => [e]
+  | e@(.arrayElem _ indices) => e :: memEReadExprsList indices
+  | e@(.arrayPart _ indices _ a b) => e ::
+      (memEReadExprsList indices ++ memEReadExprs a ++ memEReadExprs b)
+  | .unary _ a | .resize _ a | .signedResize _ a | .squash2 _ a
+  | .sysCall _ a | .reduce _ a | .cast _ a => memEReadExprs a
+  | .binary _ a b | .bitSel a b | .repl a b => memEReadExprs a ++ memEReadExprs b
+  | .partSel a b c | .ternary a b c =>
+      memEReadExprs a ++ memEReadExprs b ++ memEReadExprs c
+  | .concat xs => memEReadExprsList xs
+  | .lit _ | .fill _ | .paramRef .. | .genvarRef _ | .enumRef .. | .int _
+  | .unsupported .. => []
+
+def memEReadExprsList : List PExpr → List PExpr
+  | [] => []
+  | e :: rest => memEReadExprs e ++ memEReadExprsList rest
+
+def memELhsReadExprs : PLhs → List PExpr
+  | .ident _ => []
+  | .bitSel _ i => memEReadExprs i
+  | .partSel _ a b => memEReadExprs a ++ memEReadExprs b
+  | .concat xs => memELhsReadExprsList xs
+  | .arrayElem _ indices => memEReadExprsList indices
+  | .arrayPart _ indices _ a b =>
+      memEReadExprsList indices ++ memEReadExprs a ++ memEReadExprs b
+
+def memELhsReadExprsList : List PLhs → List PExpr
+  | [] => []
+  | lhs :: rest => memELhsReadExprs lhs ++ memELhsReadExprsList rest
+
+def memEStmtReadExprs : PStmt → List PExpr
+  | .blockingAssign _ e | .nbaAssign _ e => memEReadExprs e
+  | .blockingAssignL lhs e | .nbaAssignL lhs e =>
+      memELhsReadExprs lhs ++ memEReadExprs e
+  | .ifStmt c yes no =>
+      memEReadExprs c ++ memEStmtReadExprs yes ++ memEStmtReadExprsOpt no
+  | .block body => memEStmtReadExprsList body
+  | .forLoop _ init condition step body =>
+      memEReadExprs init ++ memEReadExprs condition ++ memEReadExprs step ++
+        memEStmtReadExprs body
+  | .caseStmt subject items default? _ _ =>
+      memEReadExprs subject ++ memECaseReadExprs items ++ memEStmtReadExprsOpt default?
+  | .unsupported .. => []
+
+def memEStmtReadExprsOpt : Option PStmt → List PExpr
+  | none => []
+  | some body => memEStmtReadExprs body
+
+def memEStmtReadExprsList : List PStmt → List PExpr
+  | [] => []
+  | stmt :: rest => memEStmtReadExprs stmt ++ memEStmtReadExprsList rest
+
+def memECaseReadExprs : List (List PExpr × PStmt) → List PExpr
+  | [] => []
+  | (patterns, body) :: rest =>
+      memEReadExprsList patterns ++ memEStmtReadExprs body ++ memECaseReadExprs rest
+
+end
+
+def memEReadChanged (d : MemEDesign) (before after : MemEState) : List PExpr →
+    Except String Bool
+  | [] => .ok false
+  | expr :: rest => do
+      let old ← evalMemEExpr d before none expr
+      let now ← evalMemEExpr d after none expr
+      if old == now then memEReadChanged d before after rest else .ok true
+
 def memETarget (d : MemEDesign) (s : MemEState) : PLhs → Except String (Option (String × Int))
   | .arrayElem n [idx] =>
       match d.memDecl? n with
@@ -403,6 +484,201 @@ def execMemEStmtList (d : MemEDesign) (s : MemEState) : List PStmt → MemEExec
 
 end
 
+def memEEvalExprs (d : MemEDesign) (s : MemEState) : List PExpr →
+    Except String (List LVec)
+  | [] => .ok []
+  | expr :: rest => do
+      let value ← evalMemEExpr d s none expr
+      let tail ← memEEvalExprs d s rest
+      .ok (value :: tail)
+
+/-! Select one arm of a retained case in source order.  Selection is kept
+separate from body execution so the body recursion remains structural over
+the parser's `PStmt` node. -/
+
+def memESelectCase (d : MemEDesign) (s : MemEState) (subject : LVec)
+    (items : List (List PExpr × PStmt)) (default? : Option PStmt)
+    (mode : CaseMode) : Except String (Option PStmt) :=
+  match items with
+  | [] => .ok default?
+  | (patterns, body) :: rest => do
+      let values ← memEEvalExprs d s patterns
+      if values.any (fun value => caseHit mode subject value) then
+        .ok (some body)
+      else
+        memESelectCase d s subject rest default? mode
+
+/-! Execute one activation of a retained plain `always @*` body.  The body is
+blocking by construction; NBA statements belong to edge processes and remain
+a loud boundary here.  Case arms are walked in source order and use the
+parser's `CaseMode`/`caseHit`, so this is the case node's own rule rather than
+an if-chain lowering. -/
+
+mutual
+
+def execMemEImplicitBody (d : MemEDesign) (s : MemEState) : PStmt →
+    Except String MemEState
+  | .blockingAssign name value => do
+      let width ← d.scalarWidth? name
+      let v ← evalMemEExpr d s (some width) value
+      .ok { s with scalar := SvState.set s.scalar name v }
+  | .blockingAssignL target value =>
+      match target with
+      | .arrayElem name [_idx] => do
+          let some pd := d.memDecl? name
+            | .error s!"memory target '{name}' is not declared"
+          let target? ← memETarget d s target
+          match target? with
+          | none => .ok s
+          | some (memName, index) => do
+              let ctx ← (d.shape? pd).map (·.elemWidth)
+              let v ← evalMemEExpr d s (some ctx) value
+              match s.memory.write memName index v with
+              | some memory => .ok { s with memory }
+              | none => .error s!"memory '{memName}' is not present in E state"
+      | _ => .error "E implicit body target is outside the source-shaped memory profile"
+  | .ifStmt cond yes no => do
+      let cv ← evalMemEExpr d s (some 1) cond
+      if cv.condTrue then execMemEImplicitBody d s yes else
+        execMemEImplicitBodyOpt d s no
+  | .block body => execMemEImplicitBodyList d s body
+  | .caseStmt .. =>
+      .error "E implicit body case execution is outside the current memory profile"
+  | .forLoop .. => .error "E implicit body procedural loops are outside the memory profile"
+  | .nbaAssign .. | .nbaAssignL .. =>
+      .error "E implicit body requires blocking assignments"
+  | .unsupported k _ => .error s!"unsupported statement '{k}'"
+
+def execMemEImplicitBodyOpt (d : MemEDesign) (s : MemEState) : Option PStmt →
+    Except String MemEState
+  | none => .ok s
+  | some body => execMemEImplicitBody d s body
+
+def execMemEImplicitBodyList (d : MemEDesign) (s : MemEState) : List PStmt →
+    Except String MemEState
+  | [] => .ok s
+  | stmt :: rest => do
+      let s' ← execMemEImplicitBody d s stmt
+      execMemEImplicitBodyList d s' rest
+
+end
+
+/-! Admission mirrors the executable process dispatch above.  `execMemEEdge`
+and `execMemEAssign` are deliberately total over `PProcess`, so a missing arm
+would otherwise be a silent skip.  Check every retained process before
+building the design and keep the source-shaped statement boundary loud. -/
+
+mutual
+
+def memEImplicitBodyAdmission : PStmt → Except String Unit
+  | .blockingAssign _ _ | .blockingAssignL _ _ => .ok ()
+  | .ifStmt _ yes no => do
+      memEImplicitBodyAdmission yes
+      match no with
+      | none => .ok ()
+      | some body => memEImplicitBodyAdmission body
+  | .block body => memEImplicitBodyListAdmission body
+  | .caseStmt .. =>
+      .error "E implicit body case execution is outside the current memory profile"
+  | .forLoop .. =>
+      .error "E implicit body procedural loops are outside the current memory profile"
+  | .nbaAssign .. | .nbaAssignL .. =>
+      .error "E implicit body requires blocking assignments"
+  | .unsupported k _ => .error s!"unsupported statement '{k}'"
+
+def memEImplicitBodyListAdmission : List PStmt → Except String Unit
+  | [] => .ok ()
+  | stmt :: rest => do
+      memEImplicitBodyAdmission stmt
+      memEImplicitBodyListAdmission rest
+
+def memEForBodyAdmission : PStmt → Except String Unit
+  | .nbaAssign _ _ | .nbaAssignL _ _ => .ok ()
+  | .ifStmt _ yes no => do
+      memEForBodyAdmission yes
+      match no with
+      | none => .ok ()
+      | some body => memEForBodyAdmission body
+  | .block body => memEForBodyListAdmission body
+  | .blockingAssign .. | .blockingAssignL .. =>
+      .error "E memory edge loop body requires an NBA assignment"
+  | .caseStmt .. => .error "E memory edge loop case is outside the first memory profile"
+  | .forLoop .. => .error "nested E memory edge loops are outside the first memory profile"
+  | .unsupported k _ => .error s!"unsupported statement '{k}'"
+
+def memEForBodyListAdmission : List PStmt → Except String Unit
+  | [] => .ok ()
+  | stmt :: rest => do
+      memEForBodyAdmission stmt
+      memEForBodyListAdmission rest
+
+def memEEdgeBodyAdmission : PStmt → Except String Unit
+  | .nbaAssign _ _ | .nbaAssignL _ _ => .ok ()
+  | .ifStmt _ yes no => do
+      memEEdgeBodyAdmission yes
+      match no with
+      | none => .ok ()
+      | some body => memEEdgeBodyAdmission body
+  | .block body => memEEdgeBodyListAdmission body
+  | .forLoop _ _ _ _ body => memEForBodyAdmission body
+  | .blockingAssign .. | .blockingAssignL .. =>
+      .error "E memory edge body requires an NBA assignment"
+  | .caseStmt .. => .error "E memory edge case is outside the first memory profile"
+  | .unsupported k _ => .error s!"unsupported statement '{k}'"
+
+def memEEdgeBodyListAdmission : List PStmt → Except String Unit
+  | [] => .ok ()
+  | stmt :: rest => do
+      memEEdgeBodyAdmission stmt
+      memEEdgeBodyListAdmission rest
+
+end
+
+def memEProcessAdmission : PProcess → Except String Unit
+  | .alwaysFF _ body | .alwaysPlain _ body => memEEdgeBodyAdmission body
+  | .alwaysFFR _ _ body false => memEEdgeBodyAdmission body
+  | .alwaysFFR _ _ _ true =>
+      .error "E memory route does not yet admit active-high asynchronous reset events"
+  | .alwaysImplicit body => memEImplicitBodyAdmission body
+  | .assign _ _ => .ok ()
+  | .assignL _ _ =>
+      .error "E memory route does not yet admit select-target continuous assignments"
+  | .alwaysComb _ =>
+      .error "E memory route does not yet admit always_comb processes"
+  | .initial _ => .ok ()
+  | .unsupported k text => .error s!"unsupported process '{k}': {text}"
+
+def memEProcessAdmissions : List PProcess → Except String Unit
+  | [] => .ok ()
+  | p :: rest => do
+      memEProcessAdmission p
+      memEProcessAdmissions rest
+
+/-! A source-shaped active pass.  It evaluates every continuous assignment as
+the existing memory profile did, then wakes each retained implicit process
+whose parser-derived read expression changed.  A body is run at most once in
+this pass; a body that changes one of its own watched reads is rejected rather
+than silently dropping the re-arm that a full event scheduler would perform.
+This is the acyclic scheduler slice used by the memory profile; cyclic or
+multi-pass event graphs remain loud. -/
+
+def memEImplicitPass (d : MemEDesign) (before : MemEState) (current : MemEState) :
+    List PProcess → Except String MemEState
+  | [] => .ok current
+  | .alwaysImplicit body :: rest => do
+      let watched := memEStmtReadExprs body
+      let ready ← memEReadChanged d before current watched
+      if !ready then
+        memEImplicitPass d before current rest
+      else
+        let after ← execMemEImplicitBody d current body
+        let rearmed ← memEReadChanged d current after watched
+        if rearmed then
+          .error "E implicit event process re-triggered in one active pass"
+        else
+          memEImplicitPass d before after rest
+  | _ :: rest => memEImplicitPass d before current rest
+
 def commitMemE (s : MemEState) : List MemEUpdate → Except String MemEState
   | [] => .ok s
   | .scalar n v :: rest =>
@@ -482,20 +758,18 @@ def MemEDesign.step (d : MemEDesign) (s : MemEState) (inputs : SvState) : Except
   let sIn := d.applyInputs inputs s
   let us ← execMemEEdge d s.scalar sIn.scalar sIn d.processes
   let s' ← commitMemE sIn us
-  execMemEAssign d s' d.processes
+  let s'' ← execMemEAssign d s' d.processes
+  -- Sensitivity is measured against the complete pre-slot state: input
+  -- changes, edge commits, and continuous assignments all create events.
+  memEImplicitPass d s s'' d.processes
 
 def MemEDesign.ofPDesign (d : PDesign) (args : List Int) : Res MemEDesign := do
   let env ← d.paramEnv2 args
   if d.others.any (fun entry => !memEAllowedOther entry) then
     .unsupported "E memory route does not yet admit unsupported module members"
-  -- A retained plain `always @*` carries a source event control that this
-  -- one-cycle memory profile does not schedule.  Refuse it here instead of
-  -- letting `execMemEEdge` silently skip the process and fabricate a latch
-  -- value.  The parser node remains available to the mixed E scheduler.
-  if d.processes.any (fun p => match p with
-      | .alwaysImplicit _ => true
-      | _ => false) then
-    .unsupported "E memory route does not yet admit implicit event-controlled processes"
+  match memEProcessAdmissions d.processes with
+  | .ok () => pure ()
+  | .error e => .unsupported e
   let rec decls : List PDecl → Res (List Decl)
     | [] => .ok []
     | pd :: rest => do

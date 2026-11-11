@@ -35337,9 +35337,15 @@ def main(argv=None):
                         "parameter point (slang paramOverrides) and write the "
                         "cross-check sidecar <envelope minus .json>.probes.json "
                         "(the envelope itself is unchanged)")
-    parser.add_argument("--retain-loops", action="store_true", default=True,
-                        help="symbolic mode: retain literal counted for-loops "
-                        "as For nodes (the default)")
+    loop_group = parser.add_mutually_exclusive_group()
+    loop_group.add_argument("--retain-loops", dest="retain_loops",
+                            action="store_true",
+                            help="symbolic mode: retain literal counted for-loops "
+                            "as For nodes")
+    loop_group.add_argument("--no-retain-loops", dest="retain_loops",
+                            action="store_false",
+                            help="symbolic mode: keep the established unrolled loop path")
+    parser.set_defaults(retain_loops=False)
     parser.add_argument("--retain-proc-rewrites", action="store_true",
                         help="symbolic mode: retain source-level procedural "
                              "rewrites as named Unsupported nodes (default "

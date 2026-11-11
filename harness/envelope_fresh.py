@@ -221,6 +221,28 @@ def _argv_for(man: dict, env: dict) -> dict | None:
     return table.get(schema) or table.get("*")
 
 
+def _sv_retain_loops(env: dict) -> bool:
+    """Recover the symbolic loop mode from the source-shaped envelope.
+
+    Older sv-0.2 envelopes predate an explicit mode field; a retained loop is
+    still recorded as a `For` node, so that structural fact is the compatible
+    mode record for freshness checks.
+    """
+    if "retain_loops" in env:
+        return bool(env["retain_loops"])
+
+    def has_for(node):
+        if isinstance(node, dict):
+            if node.get("kind") == "For":
+                return True
+            return any(has_for(v) for v in node.values())
+        if isinstance(node, list):
+            return any(has_for(v) for v in node)
+        return False
+
+    return has_for(env)
+
+
 def check_tier(man: dict, root: str, frontend: str) -> tuple[int, list]:
     rows = []
     for envpath in sorted(glob.glob(os.path.join(root, man["corpus"]), recursive=True)):
@@ -292,6 +314,12 @@ def check_tier(man: dict, root: str, frontend: str) -> tuple[int, list]:
                 argv.extend(recorded)
             else:
                 argv.append(part.format(**subst))
+        if man is MANIFESTS["sv"] and env.get("schema_version") == "sv-0.2":
+            if _sv_retain_loops(env):
+                # Keep the option beside --top; argparse accepts it anywhere,
+                # but this mirrors the recorded symbolic invocation clearly.
+                top_pos = argv.index(subst["top"])
+                argv.insert(top_pos + 1, "--retain-loops")
         outp = recipe["out"].format(**subst)
         if not os.path.isabs(outp):
             outp = os.path.join(tmp, outp)

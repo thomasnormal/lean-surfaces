@@ -132,11 +132,20 @@ def envelopes():
 def plan(env_path):
     """Read the envelope's OWN record of how it was produced.
 
-    Returns (schema, top, [abs source paths]).  Raises Skip if a recorded
+    Returns (schema, top, retain_loops, [abs source paths]).  Raises Skip if a recorded
     source is not present in this tree.
     """
     with open(env_path, encoding="utf-8") as f:
         env = json.load(f)
+
+    def has_for(node):
+        if isinstance(node, dict):
+            if node.get("kind") == "For":
+                return True
+            return any(has_for(v) for v in node.values())
+        if isinstance(node, list):
+            return any(has_for(v) for v in node)
+        return False
 
     schema = env.get("schema_version")
     if schema not in ("sv-0.1", "sv-0.2"):
@@ -145,12 +154,17 @@ def plan(env_path):
     if schema == "sv-0.1":
         recorded = [env.get("source_file")]
         top = None
+        retain_loops = False
     else:
         top = env.get("top")
         if not top:
             raise ValueError("sv-0.2 envelope with no 'top' field")
         recorded = [s.get("path") if isinstance(s, dict) else s
                     for s in env.get("source_files") or []]
+        # The source-shaped envelope is the mode record: a retained loop has a
+        # `For` node. This keeps old envelopes reproducible after the CLI default
+        # returned to unrolling, without guessing from a filename or source.
+        retain_loops = bool(env.get("retain_loops", has_for(env)))
     if not recorded or any(s is None for s in recorded):
         raise ValueError("envelope records no usable source list")
 
@@ -168,10 +182,10 @@ def plan(env_path):
             resolved.append(sib)
             continue
         raise Skip(s)
-    return schema, top, recorded, resolved
+    return schema, top, retain_loops, recorded, resolved
 
 
-def regenerate(schema, top, recorded, sources, workdir):
+def regenerate(schema, top, retain_loops, recorded, sources, workdir):
     """Run the extractor as a subprocess; return the produced bytes.
 
     THE PATH STRING IS PART OF THE ENVELOPE.  ``source_file`` /
@@ -196,7 +210,10 @@ def regenerate(schema, top, recorded, sources, workdir):
 
     if schema == "sv-0.2":
         out_path = os.path.join(workdir, "out.json")
-        cmd = [SV_PYTHON, EXTRACT, "--top", top] + list(recorded) + ["-o", out_path]
+        cmd = [SV_PYTHON, EXTRACT, "--top", top]
+        if retain_loops:
+            cmd.append("--retain-loops")
+        cmd += list(recorded) + ["-o", out_path]
     else:
         # sv-0.1 has no -o: it writes <source>.json beside the source, which
         # inside the mirror is the scratch copy, not the committed file.
@@ -258,7 +275,7 @@ def main():
     for env_path in found:
         rel = os.path.relpath(env_path, REPO)
         try:
-            schema, top, recorded, sources = plan(env_path)
+            schema, top, retain_loops, recorded, sources = plan(env_path)
         except Skip as exc:
             rows.append(("REFUSE", False, rel,
                          "sources-not-in-tree: %s" % exc))
@@ -271,12 +288,14 @@ def main():
             continue
 
         if args.list:
-            rows.append((schema, True, rel, "--top %s" % top if top else "(single-file)"))
+            mode = "--retain-loops" if retain_loops else "--no-retain-loops"
+            rows.append((schema, True, rel,
+                         ("--top %s " % top if top else "(single-file) ") + mode))
             continue
 
         workdir = tempfile.mkdtemp(prefix="sv_round_trip.")
         try:
-            produced = regenerate(schema, top, recorded, sources, workdir)
+            produced = regenerate(schema, top, retain_loops, recorded, sources, workdir)
         except RuntimeError as exc:
             detail = str(exc)
             if "timed out" in detail:

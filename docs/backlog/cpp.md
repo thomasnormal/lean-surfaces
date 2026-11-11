@@ -68,7 +68,11 @@ friend-class refusal.
 while compile/run/environment failures remain `ORACLE`; the harness prints the
 pinned Clang version and now requires an available pinned oracle by default.
 Exploratory reports can opt out with `--allow-oracle`, but qualification runs
-cannot pass with missing oracle evidence.
+cannot pass with missing oracle evidence. Revalidated 2026-11-11 under the
+24 GiB cgroup: all 8 `test_cpp_diff_classification.py` tests passed, covering
+native assertion `DIVERGE`, capture mismatch `DIVERGE`, visible `ORACLE`, and
+the pinned-version check; `tools/docs_check.py` also passed (85 marked blocks
+OK).
 
 ## `cpp-diff-handwritten-twins`: reporting boundary
 

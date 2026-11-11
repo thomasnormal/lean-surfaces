@@ -1161,7 +1161,7 @@ witness produce the all-prefix result from reset.
 stream and post-state relation for callers that do not need the decoded
 certificate.
 
-## Clean-room repros for the two current walls
+## Clean-room repros for the original two walls
 
 The owner-lane request for the remaining PicoRV32 walls is backed by two
 minimal source-shaped fixtures in [`walls/`](walls/).  They use the approved
@@ -1183,16 +1183,16 @@ unsupported "Instantiate"
 has SHA-256
 `d040779e40a76d13d2fedcf826dd02726fca0565560a724f3173b1331024de09`;
 `pdesign.others` retains `NetSymbol:net-z` for `pcpi_mul_wr`, and
-`instantiateMemD2 [4]` returns:
+Before the E receipt below, `instantiateMemD2 [4]` returned:
 
 ```text
 unsupported "Instantiate"
   "memory cycle route does not yet admit unsupported module members"
 ```
 
-[`probe.lean`](walls/probe.lean) guards both exact results.  The corresponding
-dated `REQUEST ls-sv:` asks the owner lane to admit these constructs with exact
-IEEE 1800 semantics while preserving loud refusal outside the supported shape.
+[`probe.lean`](walls/probe.lean) guards both exact historical results.  The
+cpuregs declaration remains a canonical-E integration request; the net-z
+member is covered by the source-shaped E receipt below.
 
 ## Combined memory and parametric x/z clean-room repro
 
@@ -1657,3 +1657,22 @@ Integrating native `MemState` into the canonical `Core0E` store and its
 `instantiateE2` design view is a shared E/Step-12 architecture change.  It is
 filed as a generic request to ls-sv; no duplicate memory semantics are added in
 this lane.  The old guard-bypassed 80-cycle result remains **UNVALIDATED**.
+
+## 2026-11-11 clean-room E receipt for the undriven net
+
+The source-shaped E memory profile now retains the exact undriven scalar net
+beside a parameter-sized memory in
+[`sem2/unpacked_memory_netz_e`](../../sem2/unpacked_memory_netz_e/).  The
+source SHA-256 is
+`da36e6d6197f239cf43266c2ea44eafc0172ce5bc1f959b571cd5b33198e43df`; the
+approved envelope SHA-256 is
+`7457fd1bf9ccde10205f893c2ee7a5140b57f8f698c60d6fe26ce692998a6143`.
+
+`MemEDesign.ofPDesign` preserves the parser's `NetSymbol:net-z` marker as a
+one-bit net declaration initialized to `z` under IEEE 1800-2023 §6.6, while
+the memory remains native `MemState`.  The three-row receipt observes the
+undriven net through `zq` and a committed memory write through `q`.  Icarus
+Verilog 13.0 and readiness-gated Xcelium 24.03-s004 each match all three rows.
+The implementation rejects other unsupported module members instead of
+silently dropping them; the canonical `instantiateE2` route still stops at
+PicoRV32's unpacked `cpuregs` declaration.

@@ -30,6 +30,10 @@ structure MemEDesign where
   decls : List Decl
   memDecls : List PDecl
   processes : List PProcess
+  /-- Module-member markers retained by the symbolic frontend.  The E
+      profile consumes only the explicitly admitted markers below; every
+      other unsupported member remains a loud boundary. -/
+  others : List (String × String) := []
   /-- Structured literal-file tasks retained by the parser frontend.  The
       E profile consumes these at time zero; it never recovers them from an
       Unsupported message. -/
@@ -53,6 +57,31 @@ def resToExcept {α : Type} : Res α → Except String α
   | .ok v => .ok v
   | .timeout => .error "E memory expression exhausted"
   | .unsupported msg => .error msg
+
+/-! ## Retained module members
+
+The symbolic extractor keeps a declaration that is outside the ordinary
+declaration vocabulary as a structured `(sv_kind, text)` marker in
+`PDesign.others`.  The memory profile admits one such declaration: an
+undriven scalar four-state wire.  IEEE 1800-2023 §6.6 gives that net the
+high-impedance value `z` when it has no driver.  The parser has already
+identified the marker and supplied the net's name; this code does not recover
+or parse source text.  The two x/z literal markers are metadata for retained
+expression nodes handled by `evalMemEExpr` and therefore do not allocate a
+declaration here. -/
+
+def memEAllowedOther (entry : String × String) : Bool :=
+  entry.1 == "NetSymbol:net-z" ||
+    entry.1 == "IntegerLiteral:unsized-xz-parametric" ||
+    entry.1 == "ConversionExpression:xz-literal-parametric"
+
+def memEOtherDecls : List (String × String) → List Decl
+  | [] => []
+  | (kind, name) :: rest =>
+      (if kind == "NetSymbol:net-z" then
+        [{ name := name, width := 1, isNet := true,
+           init := some (LVec.replicate 1 .lz) }]
+       else []) ++ memEOtherDecls rest
 
 def MemEDesign.memDecl? (d : MemEDesign) (name : String) : Option PDecl :=
   d.memDecls.find? (fun p => p.name == name)
@@ -456,6 +485,8 @@ def MemEDesign.step (d : MemEDesign) (s : MemEState) (inputs : SvState) : Except
 
 def MemEDesign.ofPDesign (d : PDesign) (args : List Int) : Res MemEDesign := do
   let env ← d.paramEnv2 args
+  if d.others.any (fun entry => !memEAllowedOther entry) then
+    .unsupported "E memory route does not yet admit unsupported module members"
   let rec decls : List PDecl → Res (List Decl)
     | [] => .ok []
     | pd :: rest => do
@@ -469,11 +500,14 @@ def MemEDesign.ofPDesign (d : PDesign) (args : List Int) : Res MemEDesign := do
               let tail ← decls rest
               .ok (dc :: tail)
   let ds ← decls d.decls
+  let ds := ds ++ memEOtherDecls d.others
   let mems := d.decls.filter fun pd => !pd.unpackedDims.isEmpty
   match d.memShapesAt env with
   | .ok _ => pure ()
   | .error e => .unsupported e
-  .ok ⟨d.name, env, ds, mems, d.processes, d.readmemh, d.decls⟩
+  .ok { name := d.name, env := env, decls := ds, memDecls := mems,
+        processes := d.processes, others := d.others,
+        readmemh := d.readmemh, sourceDecls := d.decls }
 
 end Kernel
 

@@ -35,6 +35,14 @@ qualified identities refuse until the extractor's retained declaration
 handles are used. Exact unqualified spellings remain admitted. Full handle
 threading for class, enum, and friend identity remains open.
 
+## `cpp-harness-oracle-misfile`: native oracle policy
+
+**Closed 2026-11-11.** Native assertion failures are classified as `DIVERGE`,
+while compile/run/environment failures remain `ORACLE`; the harness prints the
+pinned Clang version and now requires an available pinned oracle by default.
+Exploratory reports can opt out with `--allow-oracle`, but qualification runs
+cannot pass with missing oracle evidence.
+
 ## `cpp-diff-handwritten-twins`: reporting boundary
 
 **Closed 2026-11-11 (reporting correction).** The harness and generated page

@@ -536,7 +536,12 @@ def main(argv=None):
     parser.add_argument("--grammar", default=str(GRAMMAR))
     parser.add_argument("--json", dest="json_path")
     parser.add_argument("--check", action="store_true")
-    parser.add_argument("--require-oracle", action="store_true", default=bool(os.environ.get("CI")))
+    # A missing or unpinned native oracle is a failed qualification by
+    # default. Local exploratory runs may opt out explicitly, but a green
+    # report must never silently pool ORACLE rows with a completed sweep.
+    parser.add_argument("--require-oracle", action="store_true", default=True)
+    parser.add_argument("--allow-oracle", action="store_false", dest="require_oracle",
+                        help="allow ORACLE rows for exploratory reporting")
     args = parser.parse_args(argv)
     os.chdir(ROOT)
     cases = load_json(pathlib.Path(args.cases))

@@ -72,6 +72,9 @@
   suffix matching; qualified identities now require retained declaration
   handles.
 
+- Made the C++ differential harness require a pinned native oracle by default;
+  exploratory runs must opt into `--allow-oracle` explicitly.
+
 - Fixed the TinyXML-2 coverage caller's C++ runtime linkage so its
   provenance-verified native calls can run when the system runtime is older.
 

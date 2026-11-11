@@ -280,6 +280,22 @@ the monadic dispatch after proving `.sub` is outside the heap-specialized
 DECIDED: continue literal binary control bridges while keeping recursive and
 script adequacy explicitly open.
 
+## 2026-11-11-pyfoundation-60 — prove binary literal-division refinement
+
+The literal binary control family now includes true division. Both children
+are rewritten through the constant bridge, and `.div` is shown to bypass the
+heap-specialized `bitAnd`/`mult`/`mod` branches before using the shared binary
+worker theorem.
+
+| Measurement | Result |
+|---|---|
+| Target | managed `lake build LeanModels/Python/Monadic/Eval.lean` passed |
+| New theorem | `Monadic.twinAgrees_evalOpen_intDiv` |
+| Semantic change | theorem only; no evaluator behavior change |
+
+DECIDED: continue literal binary control bridges with explicit fuel margins;
+recursive and script adequacy remain open.
+
 ## 2026-11-11-pyfoundation-43 — repair PayloadBlind comparison recursion transport
 
 The proof observer now transports the heap-aware rich-comparison recursion

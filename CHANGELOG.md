@@ -3,6 +3,9 @@
 ## Unreleased
 
 - Added a kernel-checked binary-expression refinement theorem for integer
+  literal true division, with explicit fuel and dispatch-guard premises.
+
+- Added a kernel-checked binary-expression refinement theorem for integer
   literal subtraction, preserving left-to-right child state and explicit fuel.
 
 - Added a kernel-checked binary-expression refinement theorem for integer

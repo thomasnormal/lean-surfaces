@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Revalidated the shape-specific ingestion audit: builtin-alias, dead-value,
+  immediate-genexp-drain, length-only repetition, and direct bare-reraise
+  rewrites remain absent from active ingestion; source shapes use ordinary
+  semantics or loud boundaries.
+
 - Revalidated set iteration-order boundaries: negative integer hashes and
   table-rebuilding operations remain loud, while the supported nonnegative
   integer order witness matches CPython 3.9.25.

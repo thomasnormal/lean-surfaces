@@ -13551,3 +13551,23 @@ is loud in the model.
 
 DECIDED: close `py-set-iteration-order`; retain loudness for signed hashes
 and table-building paths until the full CPython set table is represented.
+## 2026-11-11-pyfoundation-79 — close shape-specific ingestion audit
+
+The high-priority `py-shape-specific-ingestion-rewrites` finding remains
+closed. The five reported helper passes—builtin alias, dead value,
+immediate-generator drain, length-only repetition, and direct bare-reraise—have
+no active definitions or call sites in `Json.lean`. Source statements retain
+their parser AST shapes and reach ordinary evaluator behavior or an explicit
+loud boundary; the existing dead-value forward-reference witness refuses via
+definition-order admission, and oversized repetition remains loud.
+
+| Measurement | Result |
+|---|---|
+| Source audit | all five reported helper names absent from active ingestion |
+| Dead-value boundary | forward reference remains a loud `NameError`-equivalent refusal |
+| Allocation boundary | oversized repetition remains an explicit refusal |
+| Semantic change | none; audit closure only |
+
+DECIDED: close `py-shape-specific-ingestion-rewrites`; retain loud boundaries
+until the underlying native semantics are modeled rather than reintroducing
+shape-specific rewrites.

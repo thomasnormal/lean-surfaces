@@ -823,6 +823,8 @@ private def executeNestedNamespaces : List Raw → Except String Unit
 
 private def executeTopDeclaration (raw : Raw) : Except String Unit :=
   match raw.text "kind", raw.field "inner" with
+  | some "FunctionDecl", none => nestedFunctionPrototype raw
+  | some "FunctionDecl", some (.array []) => nestedFunctionPrototype raw
   | some "NamespaceDecl", some (.array []) => pure ()
   | some "NamespaceDecl", some (.array declarations) => executeNestedNamespaces declarations
   | some "NamespaceDecl", none => pure ()

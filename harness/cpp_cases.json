@@ -144,6 +144,17 @@
     "rung": 0
   },
   {
+    "id": "translation.function-prototype-execution",
+    "kind": "translation",
+    "corpus": "translation witness",
+    "lean_module": "LeanModels.Cpp.TranslationTests",
+    "lean_namespace": "LeanModels.Cpp.TranslationTests",
+    "lean_expression": "topFunctionPrototypeTranslationExecution",
+    "cpp_source": "void f();",
+    "expect": "match",
+    "rung": 0
+  },
+  {
     "id": "translation.namespace-alias-execution",
     "kind": "translation",
     "corpus": "translation witness",

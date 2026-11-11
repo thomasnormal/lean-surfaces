@@ -140,6 +140,13 @@ private def functionTranslation : Artifact := {emptyTranslation with
       .object [("id", .string "f"), ("kind", .string "FunctionDecl"),
         ("name", .string "f"), ("inner", .array [])]])]}
 
+private def topFunctionPrototypeExecutionTranslation : Artifact := {emptyTranslation with
+  ast := .object [
+    ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
+    ("inner", .array [
+      .object [("id", .string "f"), ("kind", .string "FunctionDecl"),
+        ("name", .string "f"), ("type", .object [("qualType", .string "void ()")])]])]}
+
 private def parameterTranslation : Artifact := {emptyTranslation with
   ast := .object [
     ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
@@ -1828,6 +1835,9 @@ def nestedFunctionPrototypeTranslationExecution : Except String Unit :=
 def nestedUsingFunctionTranslationExecution : Except String Unit :=
   execute nestedUsingFunctionExecutionTranslation "outer"
 
+def topFunctionPrototypeTranslationExecution : Except String Unit :=
+  execute topFunctionPrototypeExecutionTranslation "f"
+
 def namespaceAliasTranslationExecution : Except String Unit :=
   execute namespaceAliasExecutionTranslation "a"
 
@@ -3231,6 +3241,7 @@ def staticAssertTranslationWitness : Except String Unit :=
 #guard nestedUsingEnumTranslationExecution matches .ok ()
 #guard nestedFunctionPrototypeTranslationExecution matches .ok ()
 #guard nestedUsingFunctionTranslationExecution matches .ok ()
+#guard topFunctionPrototypeTranslationExecution matches .ok ()
 #guard execute namespaceAliasExecutionTranslation "a" matches .ok ()
 #guard execute typeAliasExecutionTranslation "a" matches .ok ()
 #guard execute typedefExecutionTranslation "a" matches .ok ()
@@ -3282,6 +3293,9 @@ theorem nested_function_prototype_translation_executes :
 
 theorem nested_using_function_translation_executes :
     nestedUsingFunctionTranslationExecution = .ok () := rfl
+
+theorem top_function_prototype_translation_executes :
+    topFunctionPrototypeTranslationExecution = .ok () := rfl
 
 theorem namespace_alias_translation_executes :
     execute namespaceAliasExecutionTranslation "a" = .ok () := rfl

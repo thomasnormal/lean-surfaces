@@ -7,9 +7,9 @@ language-neutral and mirrors `docs/envelope-schema.md` (Python) and
 JSON AST, `kind` names preserved exactly. Extractors must emit
 **deterministic** output: same input bytes ⇒ same output bytes.
 
-**Status: the C-tier charter's inch 4 (`docs/c-tier-charter.md` §4.4).
-The schema is fixed; `extractors/c/extract.py` is inch 5 and does not
-exist yet.** Every vocabulary table below is DERIVED from
+**Status: the C-tier charter's envelope is implemented by
+`extractors/c/extract.py` and the pinned differential battery.** Every
+vocabulary table below is DERIVED from
 `docs/c-construct-census.json` rather than chosen, so "what the ingester
 accepts" and "what the corpus contains" cannot silently drift apart.
 
@@ -43,7 +43,7 @@ census or the profile forced it:
 {
   "schema_version": "c-0.1",
   "language": "c",
-  "frontend": {"name": "clang-ast-json", "version": "apple-clang-17"},
+  "frontend": {"name": "clang-ast-json", "version": "clang version 21.1.8 (https://github.com/conda-forge/clangdev-feedstock 334cf9a5e6c0331e9f261eaf01fc3568724fcce9)"},
   "profile_id": "c-profile-0.1",
   "profile_flags": ["-std=c23", "-D_FORTIFY_SOURCE=0"],
   "source_file": "tools/ctwin/sunfish.c",
@@ -54,10 +54,10 @@ census or the profile forced it:
 }
 ```
 
-`frontend.version` is the compiler **FAMILY**, never the point release.
-That correction is recorded twice in `docs/backlog.md` (3.9.19 ↔ 3.9.25
-envelope churn, 53 files the second time) and reproducing it in a new
-lane, having read the entry, would be inexcusable.
+`frontend.version` is the complete pinned `clang --version` line, including
+the build revision. The extractor refuses a different compiler and the Lean
+ingester refuses an envelope with a different value; a family-only stamp would
+let point-release AST changes pass as the same program.
 
 `profile_id` names the schema in `docs/c-profile.json` — the ABSTRACT
 profile, a set of facts every host must satisfy, not a machine

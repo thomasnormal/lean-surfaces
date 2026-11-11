@@ -1,0 +1,32 @@
+[
+  {
+    "id": "return-zero",
+    "source": "int main(void) { return 0; }",
+    "expect": "match",
+    "return_value": 0
+  },
+  {
+    "id": "return-seven",
+    "source": "int main(void) { return 7; }",
+    "expect": "match",
+    "return_value": 7
+  },
+  {
+    "id": "unsigned-wrap",
+    "source": "int main(void) { unsigned char x = 255; x += 1; return x; }",
+    "expect": "match",
+    "return_value": 0
+  },
+  {
+    "id": "negative-return",
+    "source": "int main(void) { return -1; }",
+    "expect": "match",
+    "return_value": -1
+  },
+  {
+    "id": "signed-overflow",
+    "source": "int main(void) { int x = 2147483647; x += 1; return x; }",
+    "expect": "refuse",
+    "sanitize": true
+  }
+]

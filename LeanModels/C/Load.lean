@@ -11,9 +11,9 @@ it.
     load_c_program prog from "Examples/c/<name>/<name>.json"
 
 Missing files, malformed envelopes, a wrong `language`, and a wrong
-`schema_version` are all clear elaboration errors, never silent. The
-`profile_id` is REFUSED when it does not match the ingester's pin —
-unlike a frontend stamp, the profile is an INPUT to the AST
+`schema_version` are all clear elaboration errors, never silent. The complete
+`frontend.version` and the `profile_id` are REFUSED when they do not match the
+ingester's pins; the profile is an INPUT to the AST
 (`docs/c-envelope-schema.md` §0), so an envelope extracted under another
 profile is a different program and must not be quietly accepted.
 -/

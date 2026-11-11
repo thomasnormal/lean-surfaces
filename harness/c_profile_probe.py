@@ -35,6 +35,7 @@ import subprocess
 import sys
 
 STD = "-std=c23"
+CLANG_ENV = "LEAN_C_CLANG"
 
 # (id, C constant expression that must hold, depends?, witness / why,
 #  Annex J.3 item this is the implementation's answer to)
@@ -135,7 +136,8 @@ MACRO_FACTS = ["__STDC_VERSION__", "__CHAR_BIT__", "__SIZEOF_INT__",
 
 
 def clang(args, stdin=None):
-    return subprocess.run(["clang"] + args, capture_output=True, text=True,
+    return subprocess.run([os.environ.get(CLANG_ENV, "clang")] + args,
+                          capture_output=True, text=True,
                           input=stdin)
 
 

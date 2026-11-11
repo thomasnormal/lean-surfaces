@@ -43,7 +43,6 @@ import hashlib
 import importlib.util
 import json
 import os
-import re
 import subprocess
 import sys
 
@@ -51,6 +50,14 @@ SCHEMA_VERSION = "c-0.1"
 PROFILE_ID = "c-profile-0.1"
 PROFILE_FLAGS = ["-std=c23", "-D_FORTIFY_SOURCE=0"]
 AST_FLAGS = PROFILE_FLAGS + ["-fsyntax-only", "-Xclang", "-ast-dump=json"]
+# The C differential surface has one trusted compiler, including its build
+# revision.  A family-only stamp cannot tell two AST producers apart.
+PINNED_FRONTEND_VERSION = (
+    "clang version 21.1.8 "
+    "(https://github.com/conda-forge/clangdev-feedstock "
+    "334cf9a5e6c0331e9f261eaf01fc3568724fcce9)"
+)
+CLANG_ENV = "LEAN_C_CLANG"
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.abspath(os.path.join(HERE, "..", ".."))
@@ -74,8 +81,22 @@ def die(msg):
     sys.exit("extract.py: " + msg)
 
 
+def clang_executable():
+    return os.environ.get(CLANG_ENV, "clang")
+
+
+def frontend_version():
+    out = subprocess.run([clang_executable(), "--version"],
+                         capture_output=True, text=True)
+    first = (out.stdout or "").splitlines()[0] if out.stdout else ""
+    if out.returncode != 0 or first != PINNED_FRONTEND_VERSION:
+        die("frontend is not pinned to %s; got %s" %
+            (PINNED_FRONTEND_VERSION, first or "<no version>"))
+    return first
+
+
 def clang_json(path):
-    out = subprocess.run(["clang"] + AST_FLAGS + [path],
+    out = subprocess.run([clang_executable()] + AST_FLAGS + [path],
                          capture_output=True, text=True)
     if out.returncode != 0:
         die("clang rejected %s (exit %d).  A partial AST is a DIFFERENT "
@@ -103,14 +124,6 @@ def check_profile():
         if f["depended_on"] and mod.probe_fact(None, f["expr"]) != f["required"]:
             die("this host FAILS the profile on %s (%s); it cannot produce a "
                 "%s envelope.  %s" % (f["id"], f["expr"], PROFILE_ID, f["why"]))
-
-
-def frontend_family():
-    out = subprocess.run(["clang", "--version"], capture_output=True, text=True)
-    m = re.search(r"(Apple clang|clang) version (\d+)", out.stdout or "")
-    if not m:
-        die("cannot determine the clang version family")
-    return ("apple-clang-%s" if m.group(1) == "Apple clang" else "clang-%s") % m.group(2)
 
 
 class Loc:
@@ -588,7 +601,7 @@ def extract(path, source_name=None):
     return {
         "schema_version": SCHEMA_VERSION,
         "language": "c",
-        "frontend": {"name": "clang-ast-json", "version": frontend_family()},
+        "frontend": {"name": "clang-ast-json", "version": frontend_version()},
         "profile_id": PROFILE_ID,
         "profile_flags": PROFILE_FLAGS,
         "source_file": rel,

@@ -38,6 +38,13 @@ namespace LeanModels.C
 
 open LeanModels (Span)
 
+/-- Full compiler identity required by the C envelope ingester. A family stamp
+is insufficient because point releases and build revisions can change the AST
+that the model is shown. -/
+def pinnedFrontendVersion : String :=
+  "clang version 21.1.8 (https://github.com/conda-forge/clangdev-feedstock " ++
+    "334cf9a5e6c0331e9f261eaf01fc3568724fcce9)"
+
 /-- A type, as clang spells it (`"int"`, `"const char[121]"`,
 `"int (*)(Move, void *)"`). See the module docstring: this is the
 frontend's string, deliberately unparsed. -/
@@ -220,13 +227,13 @@ structure External where
   ty : Option CType
 deriving Repr, Inhabited, BEq
 
-/-- The `c-0.1` envelope. `frontend` is accepted and NOT retained, exactly
-as the Python lane does; `profileId` IS retained, because unlike a
-frontend stamp the profile is an input to the AST and a mismatch has to be
-refusable. -/
+/-- The `c-0.1` envelope. The full pinned frontend version is retained and
+checked by ingestion; `profileId` is retained because the profile is an input
+to the AST and a mismatch has to be refusable. -/
 structure Envelope where
   schemaVersion : String
   language : String
+  frontendVersion : String
   profileId : String
   profileFlags : List String
   sourceFile : String

@@ -94,3 +94,19 @@ evaluator.
 diagnostic. Existing whole-call refinement theorems now name the compatibility
 evaluator explicitly, so their scope is honest. The frame evaluator's call arm
 remains a loud boundary with its own cause.
+
+## `c-no-compiled-oracle`: pinned C differential battery
+
+**Closed 2026-11-11.** Added `harness/c_diff_test.py` and its five-row
+`harness/c_cases.json` battery. Each row compiles the unchanged C source with
+the full pinned Clang/LLVM 21.1.8 build line, `-std=c23 -O0 -g
+-D_FORTIFY_SOURCE=0 -fno-strict-aliasing`, extracts that same source, and runs
+the envelope through the Lean C model. Native signed-overflow sanitizer rows
+are recorded as model `REFUSE`; value rows compare the model's mathematical
+return with the native exit projection. Missing or unpinned compilers are
+`ORACLE` and fail the default run unless `--allow-oracle` is explicit.
+`extract.py` now selects `LEAN_C_CLANG`, refuses any other full version line,
+and stamps that line into the envelope. The Lean ingester retains and checks
+`frontend.version` against the same pin, so a family-only stamp cannot admit an
+envelope produced by a different point release. `harness/c_profile_probe.py`
+uses the same executable selection.

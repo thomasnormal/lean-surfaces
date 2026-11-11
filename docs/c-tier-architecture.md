@@ -551,7 +551,7 @@ Mirrors the other two lanes:
 ```
 schema_version : "c-0.1"
 language       : "c"
-frontend       : {name: "clang-ast-json", version: <FAMILY>}
+frontend       : {name: "clang-ast-json", version: <FULL-PINNED-CLANG-VERSION>}
 profile_id     : <the §3.3 profile's id>
 source_file    : <repo-relative>
 source_sha256  : <hex of source bytes>
@@ -584,13 +584,13 @@ byte-identical payloads — 3.9.25 ↔ 3.9.19 across two machines, 53 files
 of churn the second time, *"the INSTRUMENT FINDING recorded at the `%`
 landing, hitting for the second time."*
 
-**Two corrections, and the second is a C-specific hazard the Python lane
-never had:**
+**The C decision is different from the old Python churn fix:**
 
-1. **Stamp the compiler FAMILY, never the point release.**
-   `"apple-clang-17"`, not `"17.0.0 (clang-1700.6.4.2)"`. Reproducing
-   that churn bug in a new lane, having read the entry describing it
-   twice, would be inexcusable.
+1. **Pin the complete compiler identity.** The C extractor and ingester
+   require the full Clang/LLVM 21.1.8 `clang --version` line, including its
+   build revision. A family-only stamp would accept a point-release AST
+   change as the same program, so the differential harness refuses an
+   unpinned oracle and reports `ORACLE`.
 2. **The system headers change the PAYLOAD, not just the stamp.**
    Measured: with Apple's default headers, `memcpy`/`strcpy`/`sprintf`/
    `snprintf` are rewritten by `_FORTIFY_SOURCE` into

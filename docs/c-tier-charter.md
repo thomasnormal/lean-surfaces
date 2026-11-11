@@ -75,8 +75,10 @@ The profile is recorded in every output because it is an INPUT to the
 AST, not a stamp on the side of it — the architecture memo §4.3 measured
 that `_FORTIFY_SOURCE` rewrites four libc calls and injects
 `__builtin_object_size` nodes present in nobody's source. The instrument
-stamps the compiler FAMILY (`apple-clang-17`), never the point release,
-which is the correction `docs/backlog.md` records twice.
+stamps the complete pinned Clang version and build revision. The earlier
+family-only wording is superseded by `docs/backlog/cpp.md`'s
+`c-no-compiled-oracle` closure: this tier's AST oracle must be reproducible at
+the point-release and build-revision level.
 
 ### 1.2 The corpus, and the four pins that have to agree
 
@@ -500,8 +502,8 @@ this charter is not inventing:
   instance: the headline is suspect until an instrument re-derives it.
   §1.4 is that law paying for itself twice — it validated the
   instrument against the memo AND corrected the memo's sequencing split.
-* **Envelope discipline**: schema version, `source_sha256`, frontend
-  FAMILY, `Unsupported` leaves for anything outside a pinned vocabulary,
+* **Envelope discipline**: schema version, `source_sha256`, the complete
+  pinned frontend version, `Unsupported` leaves for anything outside a pinned vocabulary,
   deterministic double-run output, and the cache key
   `(source, extractor, PROFILE)`.
 * **The batch protocol**: `jobs.jsonl`, ONE runner process for the whole

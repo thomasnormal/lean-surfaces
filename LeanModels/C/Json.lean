@@ -22,9 +22,9 @@ structural decision for a rounding error.
 Notes:
 * Field names match the schema exactly (`schema_version`, `profile_id`,
   `translation_unit`, `c_kind`, `end_line`, …).
-* `frontend` is accepted and NOT retained. `profile_id` IS retained:
-  unlike a frontend stamp the profile is an INPUT to the AST, so a
-  mismatch has to be refusable downstream.
+* the full `frontend.version` is retained and checked against the pinned
+  compiler identity. `profile_id` is retained because the profile is an INPUT
+  to the AST, so a mismatch has to be refusable downstream.
 * An unknown `kind` is NOT an error — the extractor has already turned it
   into an `Unsupported` leaf, and this reproduces that faithfully. An
   unknown kind arriving here anyway means the extractor and the ingester
@@ -95,6 +95,10 @@ def getOptFieldName (j : Json) : Except String (Option String) :=
           match v.getObjValAs? String "name" with
           | .ok s => .ok (some s)
           | .error e => .error e
+
+def getFrontendVersion (j : Json) : Except String String := do
+  let frontend ← getField j "frontend"
+  withCtx "field 'frontend'" (getStr frontend "version")
 
 def getBool (j : Json) (name : String) : Except String Bool :=
   match j.getObjVal? name with
@@ -326,8 +330,12 @@ def parseEnvelope (j : Json) : Except String Envelope := withCtx "envelope" do
   unless ver == "c-0.1" do
     throw s!"unsupported schema_version {ver.quote} (this ingester reads 'c-0.1')"
   let tu ← getField j "translation_unit"
+  let frontendVersion ← getFrontendVersion j
+  unless frontendVersion == pinnedFrontendVersion do
+    throw s!"unsupported frontend.version {frontendVersion.quote} (this ingester pins {pinnedFrontendVersion.quote})"
   return { schemaVersion := ver
            language := ← getStr j "language"
+           frontendVersion
            profileId := ← getStr j "profile_id"
            profileFlags := ← (← getArr j "profile_flags").mapM (·.getStr?)
            sourceFile := ← getStr j "source_file"

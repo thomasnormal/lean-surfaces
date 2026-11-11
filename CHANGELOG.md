@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Revalidated list-comprehension shadowing: `ListComp` remains a structured
+  AST node with its own evaluator, so module or local bindings named `list`
+  cannot alter comprehension semantics; the shadow witness matches CPython
+  3.9.25.
+
 - Revalidated generator-expression creation-time iteration: scalar outer
   sources raise the faithful `TypeError` before the first resume, matching
   CPython 3.9.25.

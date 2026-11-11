@@ -13445,3 +13445,21 @@ the same `TypeError` at creation in the model and CPython 3.9.25.
 
 DECIDED: close `py-genexp-iter-deferred`; retain the explicit creation guard
 and lazy behavior for ordinary user generator functions.
+## 2026-11-11-pyfoundation-73 — close list-comprehension shadow audit
+
+The high-priority `py-listcomp-list-shadow` finding is already fixed by the
+structured comprehension path. Extraction and JSON ingestion preserve
+`ListComp`; both interpreter surfaces dispatch it through their dedicated
+list-comprehension workers, so the syntax performs no lookup of the ordinary
+name `list`. The module and local shadow witness prints `[1, 2]` and matches
+CPython 3.9.25.
+
+| Measurement | Result |
+|---|---|
+| Shadow witness | `listcomp_shadow.py`: model and CPython both print `[1, 2]`, exit 0 |
+| AST path | extractor emits `ListComp`; JSON parses `Expr.listComp` |
+| Evaluator path | monadic `K.listComp` and legacy `evalListCompStep` arms |
+| Semantic change | none; audit closure only |
+
+DECIDED: close `py-listcomp-list-shadow`; retain explicit loud boundaries for
+unsupported comprehension forms rather than synthesizing a `list` call.

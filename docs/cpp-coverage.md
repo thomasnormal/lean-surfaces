@@ -9,7 +9,7 @@ Reproducing captured TinyXML-2 rows requires `LEANCPP_TINYXML2_DIR` to point to 
 
 | rows | MATCH | WITNESS | DIVERGE | REFUSE | TIMEOUT | ORACLE |
 |---:|---:|---:|---:|---:|---:|---:|
-| 1750 | 4 | 1732 | 0 | 8 | 0 | 6 |
+| 1751 | 4 | 1733 | 0 | 8 | 0 | 6 |
 
 `WITNESS` records independent passing checks, without claiming source-to-IR correspondence. `DIVERGE` includes failures of either independent check and does not itself prove a source-derived mismatch. `ORACLE` is an environment or compilation boundary. Neither `WITNESS` nor `ORACLE` is a differential match.
 
@@ -47,6 +47,7 @@ Reproducing captured TinyXML-2 rows requires `LEANCPP_TINYXML2_DIR` to point to 
 | `translation.extern-bool-variable-execution` | 0 | `ok` | `NATIVE` | **WITNESS** | independent Lean fixture and native check passed; no source-to-IR correspondence established |
 | `translation.unsigned-type-alias-execution` | 0 | `ok` | `NATIVE` | **WITNESS** | independent Lean fixture and native check passed; no source-to-IR correspondence established |
 | `translation.unsigned-typedef-execution` | 0 | `ok` | `NATIVE` | **WITNESS** | independent Lean fixture and native check passed; no source-to-IR correspondence established |
+| `translation.short-type-alias-execution` | 0 | `ok` | `NATIVE` | **WITNESS** | independent Lean fixture and native check passed; no source-to-IR correspondence established |
 | `translation.namespace-alias-execution` | 0 | `ok` | `NATIVE` | **WITNESS** | independent Lean fixture and native check passed; no source-to-IR correspondence established |
 | `translation.int-type-alias-execution` | 0 | `ok` | `NATIVE` | **WITNESS** | independent Lean fixture and native check passed; no source-to-IR correspondence established |
 | `translation.int-typedef-execution` | 0 | `ok` | `NATIVE` | **WITNESS** | independent Lean fixture and native check passed; no source-to-IR correspondence established |
@@ -69,6 +70,7 @@ Reproducing captured TinyXML-2 rows requires `LEANCPP_TINYXML2_DIR` to point to 
 | `translation.extern-bool-variable-execution` | 0 | `ok` | `NATIVE` | **WITNESS** | independent Lean fixture and native check passed; no source-to-IR correspondence established |
 | `translation.unsigned-type-alias-execution` | 0 | `ok` | `NATIVE` | **WITNESS** | independent Lean fixture and native check passed; no source-to-IR correspondence established |
 | `translation.unsigned-typedef-execution` | 0 | `ok` | `NATIVE` | **WITNESS** | independent Lean fixture and native check passed; no source-to-IR correspondence established |
+| `translation.short-type-alias-execution` | 0 | `ok` | `NATIVE` | **WITNESS** | independent Lean fixture and native check passed; no source-to-IR correspondence established |
 | `translation.empty-scoped-enum-execution` | 0 | `ok` | `NATIVE` | **WITNESS** | independent Lean fixture and native check passed; no source-to-IR correspondence established |
 | `translation.bool-type-alias-execution` | 0 | `ok` | `NATIVE` | **WITNESS** | independent Lean fixture and native check passed; no source-to-IR correspondence established |
 | `translation.namespace-declaration` | 0 | `ok` | `NATIVE` | **WITNESS** | independent Lean fixture and native check passed; no source-to-IR correspondence established |

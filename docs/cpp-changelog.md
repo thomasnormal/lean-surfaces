@@ -19,6 +19,8 @@ coverage advance independently from the Python tier.
 
 ### Added
 
+- `using S = short;` now executes through matching structured `BuiltinType` evidence; unsupported alias targets remain loud refusals.
+
 - `typedef unsigned int U;` now executes through matching structured `BuiltinType` evidence, completing the unsigned-int alias and typedef pair.
 
 - `using U = unsigned int;` now executes through matching structured `BuiltinType` evidence; unsupported alias spellings and targets remain loud refusals.

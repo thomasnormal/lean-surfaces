@@ -426,6 +426,17 @@
     "rung": 0
   },
   {
+    "id": "translation.short-type-alias-execution",
+    "kind": "translation",
+    "corpus": "translation witness",
+    "lean_module": "LeanModels.Cpp.TranslationTests",
+    "lean_namespace": "LeanModels.Cpp.TranslationTests",
+    "lean_expression": "shortTypeAliasTranslationExecution",
+    "cpp_source": "using S = short;",
+    "expect": "match",
+    "rung": 0
+  },
+  {
     "id": "translation.empty-scoped-enum-execution",
     "kind": "translation",
     "corpus": "translation witness",

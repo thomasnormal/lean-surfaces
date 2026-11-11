@@ -13737,3 +13737,21 @@ method attributes, while preserving the existing creation-effect guards.
 
 DECIDED: keep `py-method-flattening` open as a medium rule-2 milestone; retain
 the current guarded static class representation.
+## 2026-11-11-pyfoundation-89 — close extractor try-lowering audit
+
+The medium `py-extractor-try-lowerings` finding is already fixed. The approved
+extractor preserves `Try` and `Raise` nodes, carries structured handler names
+and bodies, and records explicit reasons for unsupported `else`, `finally`,
+multiple-handler, non-name-handler, and generator-frame forms. The retired
+nested-try, finalizer-reordering, synthetic-success-flag, identifier-keyed
+`Stop`, and `raise N()` rewrites have no active path; unsupported forms remain
+loud in both interpreters.
+
+| Measurement | Result |
+|---|---|
+| Extractor boundary | structured `Try`/`Raise` nodes; no active pair lowerings |
+| Runtime boundary | unsupported cleanup/handler/generator forms refuse before control changes |
+| Semantic change | none; audit closure only |
+
+DECIDED: close `py-extractor-try-lowerings`; model full cleanup and handler
+protocols before widening admission.

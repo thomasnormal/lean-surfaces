@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Revalidated extractor exception handling: `Try` and `Raise` remain source
+  nodes with structured handlers and explicit loud reasons for unsupported
+  cleanup/handler forms; the retired shape-specific rewrites have no active
+  path.
+
 - Revalidated class-method flattening: admitted class creation and method rows
   match CPython 3.9.25, while runtime class namespaces/objects remain the
   explicit follow-up needed to remove qualified method entries and class

@@ -13532,3 +13532,22 @@ witness refuses in the model while CPython 3.9.25 raises `OverflowError`.
 
 DECIDED: close `py-lenmult-length-only`; retain loud materialization limits
 until environment-sensitive allocation behavior is modeled.
+## 2026-11-11-pyfoundation-78 — close integer-set order audit
+
+The high-priority `py-set-iteration-order` finding is already contained by
+the set order boundary. `setHashNat` refuses negative integer hashes instead of
+replaying a wrong signed value; set copy, dict-source construction, and
+intersection iteration are separately refused because CPython's table sizing
+and insertion layout are not represented. The supported nonnegative witness
+`iter_order(7)` returns `[8, 7]` on both interpreters, while `iter_order(-5)`
+is loud in the model.
+
+| Measurement | Result |
+|---|---|
+| Supported order | `iter_order(7)`: model and CPython 3.9.25 return `[8, 7]` |
+| Negative hash | `iter_order(-5)`: model refuses; CPython returns `[-5, -4]` |
+| Rebuild operations | `copy_order` and `intersection_order` remain explicit refusals |
+| Semantic change | none; audit closure only |
+
+DECIDED: close `py-set-iteration-order`; retain loudness for signed hashes
+and table-building paths until the full CPython set table is represented.

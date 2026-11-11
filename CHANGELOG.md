@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Revalidated set iteration-order boundaries: negative integer hashes and
+  table-rebuilding operations remain loud, while the supported nonnegative
+  integer order witness matches CPython 3.9.25.
+
 - Revalidated oversized sequence multiplication: the approved ingestion path
   no longer creates a length-only `<lenmult>` call, and oversized materialized
   products remain loud instead of fabricating a length.

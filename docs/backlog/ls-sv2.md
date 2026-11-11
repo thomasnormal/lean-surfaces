@@ -7715,3 +7715,33 @@ parameter/module/process counts, and the exact refusal strings.  `git diff
 so the symbolic `ADDI` invariant remains parked.  Re-probe after the owner
 admits `ConversionExpression:xz-literal-parametric`; then repeat the smaller
 core census after the declaration-initializer repair.
+
+## 2026-11-11-ls-sv2-477 — unify the E-core-0 and observation cones
+
+**PRIORITY: high, before svGolf's E combinational refutations move further.**
+`Kernel/Core0.lean` and `Kernel/Core0E.lean` currently define the same E-core-0
+names in disjoint import cones.  `Core0E` is the authority because it is the
+E executor's source-shaped kernel and retains `always @*` as a distinct
+`Proc0.implicit` process.  Rebase `Core0Comb`/`Core0Proc` onto `Core0E`, make
+`Core0.lean` a compatibility import with no duplicate definitions, and import
+`Comb2` directly where the legacy transport needs it.
+
+`Kernel/Core0Obs.lean` and `Kernel/Obs_E0.lean` likewise redeclare
+`Behaves0`, `E0`, and `Obs_E0` over two copies of the observation interface.
+Extract a run2-free `ObserveBase`, retain `Observe` and `ObserveE` as
+compatibility backends, and make `Obs_E0` canonical in the E cone.  Preserve
+the old E-to-run2 theorems as a transport layer until the run2 retirement;
+do not add a second observation semantics.  Add the small reducibility or
+named-simp surface needed for `Obs_E0.sample` proofs after the merge.
+
+**FOLLOW-UPS (medium):** add a hash-pinned load form that verifies the
+envelope's `source_sha256` against the source bytes before admitting a proof;
+then add a quantified generated-name audit over parameter points.  The latter
+must use the parser's `PInst.pathPrefix` identity (`label[genvar].instance`),
+prove distinct flattened names or refuse a collision, and never invent a
+suffix.  Existing `Design2.namesNodup` is only a point-local check, and no
+source-hash verification is currently performed by `load_design_sv2`.
+
+This entry changes architecture/proof imports and provenance checks only; it
+does not change `Stmt2`, the resolution relation, `DecisionKnown`, `Spec2`, or
+the run2 meaning.

@@ -130,3 +130,69 @@ The new theorem's axiom audit contains only the standard three axioms.
 There is no simulator claim: this item changes a proof bridge, not SV
 execution. Native `@*`, scoped blocking locals, mixed scheduling and E
 memory execution remain separate implementation obligations.
+
+## E-core-0 unification handoff
+
+The E migration currently has two physically separate definitions of the
+same core-0 names. `Kernel/Core0.lean` imports `Comb2`, while
+`Kernel/Core0E.lean` imports `CombEBase` and `Param2`; both define `Seg`,
+`VarId`, `VType`, `Val`, `Store`, `Proc0`, `Elab`, `Config`, `step`, and
+`SlotCloses`. The E file is the correct authority: it is used by the E
+executors and retains the parser's `always @*` node as `Proc0.implicit` with
+its distinct startup and raw-read sensitivity rules. `Core0Comb`,
+`Core0Proc`, and the E edge consumers should therefore be rebased onto
+`Core0E`; `Core0.lean` should become a compatibility import with no
+definitions. `Core0Comb` should import `Comb2` directly for its legacy
+transport theorems instead of receiving it through the old core file. This
+keeps the E definitions source-shaped and leaves the old `combSettle2`
+transport as a derived bridge while it is being retired.
+
+The observation collision needs a separate interface step. `Kernel/Core0Obs`
+currently owns the long E-to-`run2` transport and defines `Behaves0`, `E0`,
+and `Obs_E0` over `Observe`; `Kernel/Obs_E0` defines those names again over
+`ObserveE`. Importing both cones is therefore impossible even though the
+names describe the same E backend. The migration order is:
+
+1. Extract the interface-only declarations (`Iface`, `ESig`, `Obs_E`, and
+   the observation records) into one run2-free `ObserveBase` module. Make
+   `Observe` the compatibility module for the legacy `Obs_run2` backend and
+   make `ObserveE` the compatibility module for E-specific consumers; neither
+   compatibility module may redeclare the base names.
+2. Keep `Kernel/Obs_E0` as the canonical E-core-0 backend. Move its
+   `Behaves0`/`E0` definitions into the unified file, and change
+   `Kernel/Core0Obs` into the transport layer that imports that backend plus
+   the legacy `Obs_run2` compatibility module. Its theorem names and the
+   conditional E-to-`run2` statements remain source-compatible during the
+   run2 retirement.
+3. Delete the compatibility declarations from `Core0.lean` and
+   `Core0Obs.lean` only after the E-only cone (`RunE`, `Core1Obs`, and the
+   E-side refinement bridge) and the legacy transport cone each build from a
+   fresh checkout. The duplicate names disappear rather than being hidden
+   behind import order.
+
+The measured proof ergonomics issue in the current E-only cone is independent
+of the merge: `Obs_E0.Design` does not reduce to `Elab`, so `rw`/`simp` can
+fail at `Obs_E0.sample E st`. The base interface should mark `Obs_E` (or the
+canonical `Obs_E0` abbreviation) `@[reducible]`; if that exposes too much
+structure, add named `sample`/`step` simplification lemmas instead. This is a
+small proof-surface change, not a second observation semantics.
+
+Two follow-up provenance questions from the owner are not yet implemented.
+The JSON envelope already carries `source_sha256`, but `load_design_sv2` only
+reads the envelope and never verifies the source bytes named by that field; a
+future hash-pinned load form belongs in the ingestion/provenance backlog and
+must fail closed on a missing or mismatched source. Likewise,
+`PInst.pathPrefix` currently includes the Slang generate label and the current
+genvar value (`g[3].`), and `Design2.namesNodup` checks one flattened
+parameter point, but there is no separate stable identity/receipt proving
+distinct generated names across all parameter points. That generated-name
+audit belongs after the core-0 merge and before relying on hierarchy names in
+the R2 proof; it must preserve the parser's path and refuse a collision
+rather than inventing a suffix.
+
+The implementation order is therefore: **(i)** canonicalize `Core0E` and
+rebase `Core0Comb`/`Core0Proc`; **(ii)** extract `ObserveBase` and consolidate
+`Obs_E0`; **(iii)** add the reducibility/simp surface; **(iv)** add source-hash
+verification and a quantified generated-name collision check. No shared
+judgment, resolution relation, `Stmt2`, `DecisionKnown`, or run2 meaning is
+changed by this handoff document.

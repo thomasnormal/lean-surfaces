@@ -74,7 +74,7 @@ has an explicit release operation in this slice.
 
 `LeanModels/Cpp/Translation.execute` executes an empty translation unit, a
 namespace declaration whose `inner` array is empty or contains only nested empty
-namespace declarations, nested using-namespace directives, namespace aliases, and true static assertions and integral aliases and empty linkage specifications with structured targets, a namespace alias whose
+namespace declarations, nested using-namespace directives, namespace aliases, and true static assertions and integral aliases and empty linkage specifications and named empty enums with structured targets, a namespace alias whose
 structured target is a namespace, an `int` type alias or typedef with a `BuiltinType` child, and a `using enum` declaration whose structured enum target and checked enum-constant shadow are present. Other nonempty units still refuse until the store is connected to a typed
 expression/statement model
 and add initialization/destruction obligations before any compiled-execution

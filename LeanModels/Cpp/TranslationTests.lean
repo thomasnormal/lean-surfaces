@@ -88,6 +88,16 @@ private def nestedLinkageExecutionTranslation : Artifact := {emptyTranslation wi
           .object [("id", .string "l"), ("kind", .string "LinkageSpecDecl"),
             ("language", .string "C"), ("hasBraces", .bool true)]])]])]}
 
+private def nestedEnumExecutionTranslation : Artifact := {emptyTranslation with
+  ast := .object [
+    ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
+    ("inner", .array [
+      .object [("id", .string "outer"), ("kind", .string "NamespaceDecl"),
+        ("name", .string "outer"), ("inner", .array [
+          .object [("id", .string "e"), ("kind", .string "EnumDecl"),
+            ("name", .string "E"), ("fixedUnderlyingType", .object [
+              ("qualType", .string "int")])]])]])]}
+
 private def functionTranslation : Artifact := {emptyTranslation with
   ast := .object [
     ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
@@ -1771,6 +1781,9 @@ def nestedTypeAliasTranslationExecution : Except String Unit :=
 def nestedLinkageTranslationExecution : Except String Unit :=
   execute nestedLinkageExecutionTranslation "outer"
 
+def nestedEnumTranslationExecution : Except String Unit :=
+  execute nestedEnumExecutionTranslation "outer"
+
 def namespaceAliasTranslationExecution : Except String Unit :=
   execute namespaceAliasExecutionTranslation "a"
 
@@ -3170,6 +3183,7 @@ def staticAssertTranslationWitness : Except String Unit :=
 #guard nestedStaticAssertTranslationExecution matches .ok ()
 #guard nestedTypeAliasTranslationExecution matches .ok ()
 #guard nestedLinkageTranslationExecution matches .ok ()
+#guard nestedEnumTranslationExecution matches .ok ()
 #guard execute namespaceAliasExecutionTranslation "a" matches .ok ()
 #guard execute typeAliasExecutionTranslation "a" matches .ok ()
 #guard execute typedefExecutionTranslation "a" matches .ok ()
@@ -3209,6 +3223,9 @@ theorem nested_type_alias_translation_executes :
 
 theorem nested_linkage_translation_executes :
     nestedLinkageTranslationExecution = .ok () := rfl
+
+theorem nested_enum_translation_executes :
+    nestedEnumTranslationExecution = .ok () := rfl
 
 theorem namespace_alias_translation_executes :
     execute namespaceAliasExecutionTranslation "a" = .ok () := rfl

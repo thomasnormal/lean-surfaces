@@ -766,6 +766,22 @@ private def executeNestedNamespaces : List Raw → Except String Unit
           match declaration.text "language" with
           | some "C" | some "C++" => executeNestedNamespaces rest
           | _ => .error executionRefusal
+      | some "EnumDecl", none =>
+          match declaration.text "name", declaration.field "fixedUnderlyingType" with
+          | some _, none => executeNestedNamespaces rest
+          | some _, some (.object fields) =>
+              match (Raw.object fields).text "qualType" with
+              | some "int" => executeNestedNamespaces rest
+              | _ => .error executionRefusal
+          | _, _ => .error executionRefusal
+      | some "EnumDecl", some (.array []) =>
+          match declaration.text "name", declaration.field "fixedUnderlyingType" with
+          | some _, none => executeNestedNamespaces rest
+          | some _, some (.object fields) =>
+              match (Raw.object fields).text "qualType" with
+              | some "int" => executeNestedNamespaces rest
+              | _ => .error executionRefusal
+          | _, _ => .error executionRefusal
       | some "StaticAssertDecl", some (.array [condition, message]) =>
           match condition.text "kind", condition.field "value", message with
           | some "CXXBoolLiteralExpr", some (.bool true), .object [] =>

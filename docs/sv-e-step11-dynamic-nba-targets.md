@@ -65,3 +65,20 @@ not replace E's transition rule. The row proofs use kernel `decide` because
 they evaluate a fixed small source fixture. All new lemmas are axiom-audited.
 The x/z rows describe the four-state executor; no shared resolution relation,
 `DecisionKnown`, `Spec2` guard or binary-refinement premise is changed.
+
+## Current E review
+
+On 2026-11-11, public master `bfe33dfb` was checked with the complete
+source-shaped packet from `4e70a500c`.  The focused E target built in 50 jobs;
+the kernel-checked target and issue traces matched all seven and thirteen rows,
+respectively.  The differential checker then matched all twenty rows against
+Icarus Verilog 13.0 and readiness-gated Xcelium 24.03-s004.  The proof audit
+reported only `propext`, `Classical.choice`, and `Quot.sound`, as for the
+surrounding E packets.
+
+This review covers packed runtime selects on the retained `Lhs2.index` node,
+including x/z, signed negative, and out-of-range indices, pre-edge RHS
+sampling, overlapping issue-order updates, and the containment frame.  It does
+not admit unpacked storage, dynamic concatenations, or unsupported index/RHS
+expressions.  No `Stmt2` constructor, resolution relation, `DecisionKnown`,
+`Spec2` guard, run2 meaning, or MemCycle meaning was changed.

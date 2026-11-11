@@ -301,6 +301,15 @@ private def boolTypeAliasExecutionTranslation : Artifact := {emptyTranslation wi
         ("type", .object [("qualType", .string "bool")]),
         ("inner", .array [boolBuiltinType])]])]}
 
+private def boolTypedefExecutionTranslation : Artifact := {emptyTranslation with
+  ast := .object [
+    ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
+    ("inner", .array [
+      .object [("id", .string "a"), ("kind", .string "TypedefDecl"),
+        ("name", .string "B"),
+        ("type", .object [("qualType", .string "bool")]),
+        ("inner", .array [boolBuiltinType])]])]}
+
 private def usingDirectiveTranslation : Artifact := {emptyTranslation with
   ast := .object [
     ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
@@ -1853,6 +1862,9 @@ def topFunctionPrototypeTranslationExecution : Except String Unit :=
 def topUsingFunctionTranslationExecution : Except String Unit :=
   execute topUsingFunctionExecutionTranslation "u"
 
+def boolTypedefTranslationExecution : Except String Unit :=
+  execute boolTypedefExecutionTranslation "a"
+
 def namespaceAliasTranslationExecution : Except String Unit :=
   execute namespaceAliasExecutionTranslation "a"
 
@@ -3258,6 +3270,7 @@ def staticAssertTranslationWitness : Except String Unit :=
 #guard nestedUsingFunctionTranslationExecution matches .ok ()
 #guard topFunctionPrototypeTranslationExecution matches .ok ()
 #guard topUsingFunctionTranslationExecution matches .ok ()
+#guard boolTypedefTranslationExecution matches .ok ()
 #guard execute namespaceAliasExecutionTranslation "a" matches .ok ()
 #guard execute typeAliasExecutionTranslation "a" matches .ok ()
 #guard execute typedefExecutionTranslation "a" matches .ok ()
@@ -3315,6 +3328,9 @@ theorem top_function_prototype_translation_executes :
 
 theorem top_using_function_translation_executes :
     topUsingFunctionTranslationExecution = .ok () := rfl
+
+theorem bool_typedef_translation_executes :
+    boolTypedefTranslationExecution = .ok () := rfl
 
 theorem namespace_alias_translation_executes :
     execute namespaceAliasExecutionTranslation "a" = .ok () := rfl

@@ -724,15 +724,35 @@ private def executeTopDeclaration (raw : Raw) : Except String Unit :=
   match raw.text "kind", raw.field "inner" with
   | some "NamespaceDecl", some (.array []) => pure ()
   | some "NamespaceDecl", some (.array _) => .error executionRefusal
+  | some "NamespaceDecl", none => pure ()
   | some "NamespaceDecl", _ => .error "translation: namespace inner must be an array"
+  | some "NamespaceAliasDecl", none =>
+      match raw.field "aliasedNamespace" with
+      | some target =>
+          match target.text "kind", target.text "id" with
+          | some "NamespaceDecl", some _ => pure ()
+          | _, _ => .error executionRefusal
+      | none => .error "translation: namespace alias target is absent"
+  | some "NamespaceAliasDecl", some (.array []) =>
+      match raw.field "aliasedNamespace" with
+      | some target =>
+          match target.text "kind", target.text "id" with
+          | some "NamespaceDecl", some _ => pure ()
+          | _, _ => .error executionRefusal
+      | none => .error "translation: namespace alias target is absent"
+  | some "NamespaceAliasDecl", _ => .error executionRefusal
   | _, _ => .error executionRefusal
+
+private def executeTopDeclarations : List Raw → Except String Unit
+  | [] => pure ()
+  | declaration :: rest => do
+      let _ ← executeTopDeclaration declaration
+      executeTopDeclarations rest
 
 def execute (artifact : Artifact) (_declarationId : String) : Except String Unit := do
   let _ ← admitTranslationUnit artifact
   match artifact.ast.field "inner" with
-  | some (.array []) => pure ()
-  | some (.array [declaration]) => executeTopDeclaration declaration
-  | some (.array _) => .error executionRefusal
+  | some (.array declarations) => executeTopDeclarations declarations
   | some _ => .error "translation: root inner must be an array"
   | none => .error "translation: root has no inner array"
 

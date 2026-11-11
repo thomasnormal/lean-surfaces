@@ -342,6 +342,21 @@ heap-specialized branches before reusing the shared binary worker equation.
 DECIDED: continue literal binary refinement with explicit fuel and dispatch
 evidence; recursive and script adequacy remain open.
 
+## 2026-11-11-pyfoundation-64 — prove binary literal-bitwise-xor refinement
+
+The literal binary control family now covers bitwise-xor. The theorem
+transports both children through the constant bridge, proves `.bitXor` avoids
+heap-specialized dispatch, and reuses the shared binary worker refinement.
+
+| Measurement | Result |
+|---|---|
+| Target | managed `lake build LeanModels/Python/Monadic/Eval.lean` passed |
+| New theorem | `Monadic.twinAgrees_evalOpen_intBitXor` |
+| Semantic change | theorem only; no evaluator behavior change |
+
+DECIDED: continue literal binary refinement with explicit fuel and dispatch
+evidence; recursive and script adequacy remain open.
+
 ## 2026-11-11-pyfoundation-43 — repair PayloadBlind comparison recursion transport
 
 The proof observer now transports the heap-aware rich-comparison recursion

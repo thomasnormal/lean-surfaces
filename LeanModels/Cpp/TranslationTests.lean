@@ -262,6 +262,10 @@ private def intBuiltinType : Raw := .object [
   ("kind", .string "BuiltinType"),
   ("type", .object [("qualType", .string "int")])]
 
+private def unsignedIntBuiltinType : Raw := .object [
+  ("kind", .string "BuiltinType"),
+  ("type", .object [("qualType", .string "unsigned int")])]
+
 private def boolBuiltinType : Raw := .object [
   ("kind", .string "BuiltinType"),
   ("type", .object [("qualType", .string "bool")])]
@@ -478,6 +482,15 @@ private def externVariableExecutionTranslation : Artifact := {emptyTranslation w
       .object [("id", .string "v"), ("kind", .string "VarDecl"),
         ("name", .string "x"), ("type", .object [("qualType", .string "int")]),
         ("storageClass", .string "extern")]])]}
+
+private def unsignedTypeAliasExecutionTranslation : Artifact := {emptyTranslation with
+  ast := .object [
+    ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
+    ("inner", .array [
+      .object [("id", .string "a"), ("kind", .string "TypeAliasDecl"),
+        ("name", .string "U"),
+        ("type", .object [("qualType", .string "unsigned int")]),
+        ("inner", .array [unsignedIntBuiltinType])]])]}
 
 private def boolTypeAliasExecutionTranslation : Artifact := {emptyTranslation with
   ast := .object [
@@ -2118,6 +2131,9 @@ def topUsingEnumTranslationExecution : Except String Unit :=
 def externVariableTranslationExecution : Except String Unit :=
   execute externVariableExecutionTranslation "v"
 
+def unsignedTypeAliasTranslationExecution : Except String Unit :=
+  execute unsignedTypeAliasExecutionTranslation "a"
+
 def boolTypeAliasTranslationExecution : Except String Unit :=
   execute boolTypeAliasExecutionTranslation "a"
 
@@ -3514,6 +3530,7 @@ def staticAssertTranslationWitness : Except String Unit :=
 #guard topUsingEnumTranslationExecution matches .ok ()
 #guard externVariableTranslationExecution matches .ok ()
 #guard externBoolVariableTranslationExecution matches .ok ()
+#guard unsignedTypeAliasTranslationExecution matches .ok ()
 #guard execute namespaceAliasExecutionTranslation "a" matches .ok ()
 #guard execute typeAliasExecutionTranslation "a" matches .ok ()
 #guard execute typedefExecutionTranslation "a" matches .ok ()
@@ -3616,6 +3633,9 @@ theorem extern_variable_translation_executes :
 
 theorem extern_bool_variable_translation_executes :
     externBoolVariableTranslationExecution = .ok () := rfl
+
+theorem unsigned_type_alias_translation_executes :
+    unsignedTypeAliasTranslationExecution = .ok () := rfl
 
 theorem namespace_alias_translation_executes :
     execute namespaceAliasExecutionTranslation "a" = .ok () := rfl

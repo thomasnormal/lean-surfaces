@@ -19,6 +19,8 @@ coverage advance independently from the Python tier.
 
 ### Added
 
+- `using U = unsigned int;` now executes through matching structured `BuiltinType` evidence; unsupported alias spellings and targets remain loud refusals.
+
 - C++ linkage bodies now have an `extern int` variable witness alongside the bool case, completing the two structured integral types for both linkage tags.
 
 - C++ linkage bodies now have a direct declaration-only function-prototype witness alongside the C form; unsupported and defining declarations remain loud refusals.

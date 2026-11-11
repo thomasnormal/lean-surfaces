@@ -727,7 +727,8 @@ private def nestedIntegralAlias : Raw → Except String Unit
           match target.text "kind", target.field "type" with
           | some "BuiltinType", some (.object targetType) =>
               match (Raw.object targetType).text "qualType", (Raw.object aliasType).text "qualType" with
-              | some "int", some "int" | some "bool", some "bool" => pure ()
+              | some "int", some "int" | some "bool", some "bool" |
+                some "unsigned int", some "unsigned int" => pure ()
               | _, _ => .error executionRefusal
           | _, _ => .error executionRefusal
       | _, _ => .error executionRefusal
@@ -925,7 +926,8 @@ private def executeTopDeclaration (raw : Raw) : Except String Unit :=
       match target.text "kind", target.field "type", raw.field "type" with
       | some "BuiltinType", some (.object targetType), some (.object aliasType) =>
           match (Raw.object targetType).text "qualType", (Raw.object aliasType).text "qualType" with
-          | some "int", some "int" | some "bool", some "bool" => pure ()
+          | some "int", some "int" | some "bool", some "bool" |
+            some "unsigned int", some "unsigned int" => pure ()
           | _, _ => .error executionRefusal
       | _, _, _ => .error executionRefusal
   | some _, _ => .error executionRefusal

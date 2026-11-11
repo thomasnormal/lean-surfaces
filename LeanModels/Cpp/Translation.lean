@@ -720,6 +720,18 @@ def admitStaticAssertion (artifact : Artifact) (path : List Nat) :
 def executionRefusal : String :=
   "C++ translation-only tier: execution requires object, lifetime, type, expression and statement semantics"
 
+private def nestedIntegralAlias : Raw → Except String Unit
+  | declaration =>
+      match declaration.field "inner", declaration.field "type" with
+      | some (.array [target]), some (.object aliasType) =>
+          match target.text "kind", target.field "type" with
+          | some "BuiltinType", some (.object targetType) =>
+              match (Raw.object targetType).text "qualType", (Raw.object aliasType).text "qualType" with
+              | some "int", some "int" | some "bool", some "bool" => pure ()
+              | _, _ => .error executionRefusal
+          | _, _ => .error executionRefusal
+      | _, _ => .error executionRefusal
+
 private def executeNestedNamespaces : List Raw → Except String Unit
   | [] => pure ()
   | declaration :: rest =>
@@ -740,6 +752,12 @@ private def executeNestedNamespaces : List Raw → Except String Unit
               | some "NamespaceDecl", some _ => executeNestedNamespaces rest
               | _, _ => .error executionRefusal
           | none => .error executionRefusal
+      | some "TypeAliasDecl", some (.array [_]) => do
+          let _ ← nestedIntegralAlias declaration
+          executeNestedNamespaces rest
+      | some "TypedefDecl", some (.array [_]) => do
+          let _ ← nestedIntegralAlias declaration
+          executeNestedNamespaces rest
       | some "StaticAssertDecl", some (.array [condition, message]) =>
           match condition.text "kind", condition.field "value", message with
           | some "CXXBoolLiteralExpr", some (.bool true), .object [] =>

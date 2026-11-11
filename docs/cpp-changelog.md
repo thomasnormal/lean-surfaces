@@ -19,6 +19,8 @@ coverage advance independently from the Python tier.
 
 ### Added
 
+- Top-level `UsingDecl`/`UsingShadowDecl` pairs now execute when their shadow target is a structured function declaration; unresolved or non-function targets remain loud refusals.
+
 - Top-level declaration-only `FunctionDecl` prototypes now execute with the same structured, bodyless rule as namespace prototypes; definitions remain loud refusals.
 
 - Qualified function `UsingDecl`/`UsingShadowDecl` pairs now execute inside namespace bodies when the shadow target is a structured function declaration; unresolved or non-function targets remain loud refusals.

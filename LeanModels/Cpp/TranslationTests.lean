@@ -147,6 +147,18 @@ private def topFunctionPrototypeExecutionTranslation : Artifact := {emptyTransla
       .object [("id", .string "f"), ("kind", .string "FunctionDecl"),
         ("name", .string "f"), ("type", .object [("qualType", .string "void ()")])]])]}
 
+private def topUsingFunctionExecutionTranslation : Artifact := {emptyTranslation with
+  ast := .object [
+    ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
+    ("inner", .array [
+      .object [("id", .string "f"), ("kind", .string "FunctionDecl"),
+        ("name", .string "f"), ("type", .object [("qualType", .string "void ()")])],
+      .object [("id", .string "u"), ("kind", .string "UsingDecl"),
+        ("name", .string "::f")],
+      .object [("id", .string "s"), ("kind", .string "UsingShadowDecl"),
+        ("target", .object [("id", .string "f"), ("kind", .string "FunctionDecl"),
+          ("name", .string "f"), ("type", .object [("qualType", .string "void ()")])])]])]}
+
 private def parameterTranslation : Artifact := {emptyTranslation with
   ast := .object [
     ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
@@ -1838,6 +1850,9 @@ def nestedUsingFunctionTranslationExecution : Except String Unit :=
 def topFunctionPrototypeTranslationExecution : Except String Unit :=
   execute topFunctionPrototypeExecutionTranslation "f"
 
+def topUsingFunctionTranslationExecution : Except String Unit :=
+  execute topUsingFunctionExecutionTranslation "u"
+
 def namespaceAliasTranslationExecution : Except String Unit :=
   execute namespaceAliasExecutionTranslation "a"
 
@@ -3242,6 +3257,7 @@ def staticAssertTranslationWitness : Except String Unit :=
 #guard nestedFunctionPrototypeTranslationExecution matches .ok ()
 #guard nestedUsingFunctionTranslationExecution matches .ok ()
 #guard topFunctionPrototypeTranslationExecution matches .ok ()
+#guard topUsingFunctionTranslationExecution matches .ok ()
 #guard execute namespaceAliasExecutionTranslation "a" matches .ok ()
 #guard execute typeAliasExecutionTranslation "a" matches .ok ()
 #guard execute typedefExecutionTranslation "a" matches .ok ()
@@ -3296,6 +3312,9 @@ theorem nested_using_function_translation_executes :
 
 theorem top_function_prototype_translation_executes :
     topFunctionPrototypeTranslationExecution = .ok () := rfl
+
+theorem top_using_function_translation_executes :
+    topUsingFunctionTranslationExecution = .ok () := rfl
 
 theorem namespace_alias_translation_executes :
     execute namespaceAliasExecutionTranslation "a" = .ok () := rfl

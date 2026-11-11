@@ -207,7 +207,7 @@ def recordHasBitfield (fields : List Decl) : Bool :=
 def recordsOf (envl : Envelope) : List (String × List (String × CType)) :=
   envl.unit.items.filterMap fun i => match i with
     | .decl (.record (some nm) fields _) =>
-        if recordHasBitfield fields then none
+        if recordHasBitfield fields || fields.isEmpty then none
         else some (nm, fields.filterMap fun d => match d with
                     | .field fn fty _ _ => some (fn, fty)
                     | _ => none)

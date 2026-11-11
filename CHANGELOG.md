@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Ignored incomplete forward record declarations when selecting C record
+  layouts, so later complete definitions determine size and alignment.
+
 - Refused non-character pointer bit-casts across incompatible effective
   types instead of decoding a type-punned representation.
 

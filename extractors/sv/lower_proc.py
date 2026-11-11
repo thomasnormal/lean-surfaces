@@ -367,6 +367,8 @@ def hoist_local(ex, sm, stmt):
 #   R5  every target is assigned on every path (no latch: Yosys `proc` infers one silently for `@*`), and no target
 #       (or window of one) is read before a complete assignment defines it. Coverage is by bit window for a target of
 #       fixed width whose range is `[W-1:0]`, by whole assignment otherwise; a `case` covers only with a `default`.
+#       A plain `@*` whose external read is a source-shaped unpacked array cell is retained for E; the array read is
+#       not reinterpreted as an integral scalar signal here.
 #   R6  no other process writes a target, and no target has a declaration initializer (slang's MultipleAlwaysAssigns
 #       does not fire for `@*`; slang's own driver table is asked).
 #
@@ -429,6 +431,27 @@ def _const_int(node):
             return None
         return a + b if node["op"] == "+" else a - b if node["op"] == "-" else a * b
     return None
+
+
+def _unpacked_array_read_names(node, found=None):
+    """Names of parser-marked unpacked array cells read by the source body.
+
+    This is only an admission check for the retained E source node.  It does
+    not flatten cells, turn a runtime index into a finite choice, or otherwise
+    alter the parser AST.
+    """
+    found = [] if found is None else found
+    if isinstance(node, dict):
+        if node.get("kind") == "ArraySel" and node.get("unpacked") is True:
+            name = node.get("name")
+            if isinstance(name, str) and name not in found:
+                found.append(name)
+        for value in node.values():
+            _unpacked_array_read_names(value, found)
+    elif isinstance(node, list):
+        for value in node:
+            _unpacked_array_read_names(value, found)
+    return found
 
 
 class _Info:
@@ -706,7 +729,7 @@ def _instance_driver_target(owner, symbol):
     return None
 
 
-def _star_rules(ex, sm, m, converted, listed, form):
+def _star_rules(ex, sm, m, converted, listed, form, external_out=None):
     """The reason (text) this block cannot be an `always_comb`, or `None` when R1 to R6 hold."""
     star = _Star(ex, sm, listed, form)
     stmt = m.body.stmt
@@ -735,6 +758,8 @@ def _star_rules(ex, sm, m, converted, listed, form):
         if cov.get(name, 0) != star.info(name).full:
             return "R5: `%s` is not assigned on every path (an `if` without `else`, a `case` without `default`, " \
                    "or a partly assigned window): `always @*` would infer a latch" % name
+    if external_out is not None:
+        external_out.extend(star.ext)
     # R3
     if not star.ext:
         return "R3: the body reads no signal it does not write: an `@*` block would not run at time zero"
@@ -805,8 +830,9 @@ def star_block(ex, sm, m, module_level):
     node = {"kind": "AlwaysComb", "span": ex.sym_span(sm, m), "body": converted, "always_star_lowered": form}
     if _node_kinds(converted) & {"Unsupported", "LocalDecl"}:
         return node                 # refused inside, exactly as the same body of an always_comb would be
+    external_reads = []
     try:
-        why = _star_rules(ex, sm, m, converted, listed, form)
+        why = _star_rules(ex, sm, m, converted, listed, form, external_reads)
     except Exception as exc:        # noqa: BLE001  (fail closed)
         why = "the rules could not be decided (%s: %s)" % (type(exc).__name__, str(exc)[:120])
     if why is not None and form == "implicit" and "continuous time-zero driver" in why:
@@ -821,6 +847,26 @@ def star_block(ex, sm, m, module_level):
         # Xcelium rows instead of selecting one simulator result.  Other R3
         # failures (no external read or a 2-state read) remain loud because
         # they have no wake-up event to observe.
+        return {
+            "kind": "AlwaysEvent",
+            "span": ex.sym_span(sm, m),
+            "event_kind": "ImplicitEventControl",
+            "body": ex.convert_stmt(sm, body.stmt),
+            "text": ex.source_text(m),
+            "symbolic_event_retained": True,
+            "symbolic_event_reason": why,
+        }
+    # Only an external read justifies this boundary.  An ArraySel used solely
+    # as an assignment target must not make an unrelated R3 failure look like
+    # a memory-read admission.
+    array_reads = [name for name in _unpacked_array_read_names(converted)
+                   if name in external_reads]
+    if (why is not None and form == "implicit"
+            and any(("`%s` is not a module signal of integral type" % name) in why
+                    for name in array_reads)):
+        # A plain @* may read an unpacked memory cell.  Preserve the parser's
+        # event and array-select node for E's source-shaped memory scheduler;
+        # do not flatten the memory or pretend that it is a scalar signal.
         return {
             "kind": "AlwaysEvent",
             "span": ex.sym_span(sm, m),

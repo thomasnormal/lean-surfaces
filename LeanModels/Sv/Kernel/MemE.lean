@@ -488,6 +488,13 @@ def MemEDesign.ofPDesign (d : PDesign) (args : List Int) : Res MemEDesign := do
   let env ← d.paramEnv2 args
   if d.others.any (fun entry => !memEAllowedOther entry) then
     .unsupported "E memory route does not yet admit unsupported module members"
+  -- A retained plain `always @*` is a source event process.  This one-cycle
+  -- profile has no implicit-wait scheduler, so refuse it explicitly instead
+  -- of letting the edge/continuous walks silently skip its body.
+  if d.processes.any (fun p => match p with
+      | .alwaysImplicit _ => true
+      | _ => false) then
+    .unsupported "E memory route does not yet admit implicit event-controlled processes"
   let rec decls : List PDecl → Res (List Decl)
     | [] => .ok []
     | pd :: rest => do

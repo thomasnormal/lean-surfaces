@@ -753,6 +753,23 @@ class StarBlocks(Base):
     def test_r3_reads_only_its_own_targets(self):
         self.refused("always @* begin y = 4'd1; z = y; end", "R3")
 
+    def test_r3_unpacked_memory_read_retains_the_source_event(self):
+        procs, _ = self.proc(
+            "always @* y = mem[idx];",
+            # A parameter-dependent unpacked dimension exercises the
+            # source-shaped ArraySel path; a fixed array is intentionally
+            # flattened to cells at the default point by the legacy tier.
+            decls="logic [3:0] mem [0:N-1];",
+            params="#(parameter int N = 4) ",
+            ports="input logic [1:0] idx, output logic [3:0] y")
+        self.assertEqual(len(procs), 1)
+        self.assertEqual(procs[0]["kind"], "AlwaysEvent")
+        self.assertEqual(procs[0]["event_kind"], "ImplicitEventControl")
+        self.assertIn("not a module signal of integral type", procs[0]["symbolic_event_reason"])
+        self.assertEqual(procs[0]["body"]["kind"], "BlockingAssign")
+        self.assertEqual(procs[0]["body"]["value"]["kind"], "ArraySel")
+        self.assertTrue(procs[0]["body"]["value"].get("unpacked"))
+
     def test_r4_function_reading_a_module_signal(self):
         # the inliner (master) refuses a function that reads a module signal, so the call stays an inner refusal; R4 is
         # the second line, decided on slang's own tree

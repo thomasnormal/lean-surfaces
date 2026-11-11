@@ -129,3 +129,21 @@ Xcelium produces `0011`; all later known/x/z rows agree. This is the
 time-zero Active-region ordering freedom of §4.7. The receipt is therefore
 not an exact-equivalence claim for that first observation, and neither tool's
 startup order is selected as the language meaning.
+
+## Runtime unpacked-memory read boundary
+
+[`always_star_memory_read_e`](../Examples/system-verilog/sem2/always_star_memory_read_e/)
+is the next source-shaped boundary: a plain `always @*` reads `mem[ridx]`
+from a parameter-sized unpacked memory while an edge process writes
+`mem[widx]`. The extractor now retains the parser's `ArraySel` with its
+`unpacked` metadata and the implicit event node. It never expands the
+parameterized array into cells or fabricates scalar sensitivity.
+
+The current one-cycle E memory profile refuses the retained implicit event with
+`E memory route does not yet admit implicit event-controlled processes`; this
+is an explicit scheduler boundary, not an execution result. The nine-row
+fixture covers initial x state, two writes and runtime reads, an untouched
+cell, and x/z indices. Icarus Verilog 13.0 and readiness-gated Xcelium
+24.03-s004 agree on all nine rows. The E receipt and checker keep the parser
+admission and simulator evidence separate from the future implicit-wait
+scheduler work.

@@ -1732,3 +1732,38 @@ TimedStatement:ImplicitEventControl: R5: `mem_la_wdata` is not assigned on every
 This is an E admission result only; no PicoRV32 execution, retirement trace
 or symbolic ADDI invariant is claimed.  The old guard-bypassed run2/MemCycle
 80-cycle result remains **UNVALIDATED**.
+
+## 2026-11-11 E re-probe after source-shaped `always @*` memory-read retention
+
+The pinned source is unchanged at YosysHQ commit
+`ef203c2b0a3fb793280f5114941416c425c5b461` (source SHA-256
+`0836050971b3c6cdd28ac3b1e5719a67fb645161912bef1e472e63995ceb062`).  To
+regenerate the approved envelope from the read-only source checkout, set
+`PINNED_PICORV32` to that checkout and run:
+
+```text
+python3 extractors/sv/extract.py --top picorv32 \
+  -o picorv32-current-array.sv.json "$PINNED_PICORV32/picorv32.v"
+```
+
+The regenerated envelope is 3,040,958 bytes with SHA-256
+`c97fc19f7dcb7e24a59af1b24ff9a4aad63918f2de1d0a3c2c4d6d97e829f579`.
+The parser now retains two source-shaped `always @*` processes.  The first
+retained event is at `picorv32.v:325` (`pcpi_mul_wait`), whose continuous
+time-zero driver is a scheduler-order boundary.  The array-read event at
+`picorv32.v:1348` reads the parameterized unpacked cells
+`cpuregs[decoded_rs1]` and `cpuregs[decoded_rs2]`; its exact R3 reason is
+`cpuregs` is not a module signal of integral type.  The canonical E memory
+profile reaches the first retained event and stops at the scheduler boundary:
+
+```text
+E memory route does not yet admit implicit event-controlled processes
+```
+
+The ordinary `instantiateE2` view still stops first at
+`picorv32.v:203` (`UnpackedDecl:memory`).  The parser preserves the
+parameterized unpacked `ArraySel` and its runtime index; no array cells are
+flattened and no scalar sensitivity is fabricated.  This is an E admission
+result only: no PicoRV32 execution, retirement trace or symbolic ADDI
+invariant is claimed.  The old guard-bypassed run2/MemCycle 80-cycle result
+remains **UNVALIDATED**.

@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Rebuilt the pinned `leanmodels-run` artifact so runner-stamp admission and
+  the survey use current Lean sources; the refreshed survey reports zero
+  divergences.
+
 - Revalidated the pinned quickstart: leanpy reports CPython 3.9.25 for both
   frontend and oracle and the whole-file comparison matches.
 

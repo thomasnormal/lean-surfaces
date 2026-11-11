@@ -158,6 +158,25 @@ tree.
 DECIDED: treat the quickstart item as revalidated and reread the inbox before
 the next goal item.
 
+## 2026-11-11-pyfoundation-53 — refresh runner artifact and survey
+
+The acceptance sweep found a stale `.lake/build/bin/leanmodels-run` source
+stamp. Rebuilding `leanmodels-run` with the managed build rule restored the
+runner admission. The focused freshness and survey gates now pass; the broad
+`tools/check_python.py --no-build` sweep had already passed its differential
+and refusal gates but was interrupted during its long axiom census after
+reporting the stale-runner survey failure.
+
+| Measurement | Result |
+|---|---|
+| Managed `lake build leanmodels-run` | passed |
+| `harness/runner_stamp.py` | verified runner |
+| `harness/leanpy_survey.py` | 242 files: 217 MATCH, 25 REFUSE, 0 DIVERGE |
+| `tools/leanpy --compare harness/scripts/gen_script.py` | MATCH, exit 0 |
+
+DECIDED: keep runner freshness as a required gate before survey and continue
+with the next inbox item after rereading it.
+
 ## 2026-11-11-pyfoundation-43 — repair PayloadBlind comparison recursion transport
 
 The proof observer now transports the heap-aware rich-comparison recursion

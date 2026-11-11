@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Repaired the `sorted` generator proof boundary for CPython recursion-frame
+  guards and restored `py_simp`/`py_vcgen` reduction for heap-aware comparison
+  recursion checks.
+
 - Repair PayloadBlind's stateful rich-comparison recursion transport and its
   heap-depth swap proof so the proof observer compiles again.
 

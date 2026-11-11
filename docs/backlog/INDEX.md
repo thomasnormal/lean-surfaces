@@ -16,12 +16,13 @@ with ids `YYYY-MM-DD-<lane>-<n>` that need no reservation. Everything before
 the split is in [`docs/backlog-archive.md`](../backlog-archive.md), frozen,
 and every existing `§Lnn` reference still resolves there.
 
-**1394 entries across 19 lanes.** Regenerate with
+**1396 entries across 19 lanes.** Regenerate with
 `tools/backlog-index.sh`; check with `--check` (exit 1 on drift).
 
 | id | class | title | lane |
 | --- | --- | --- | --- |
 | `2026-11-11-ls-sv2-477` |  | unify the E-core-0 and observation cones | ls-sv2 |
+| `2026-11-11-pyfoundation-44` |  | repair fib proof after recursion guards | python-completeness |
 | `2026-11-11-pyfoundation-43` |  | repair PayloadBlind comparison recursion transport | python-completeness |
 | `2026-11-11-pyfoundation-42` |  | pin direct rendering recursion boundaries | python-completeness |
 | `2026-11-11-pyfoundation-41` |  | account nested comparison recursion | python-completeness |
@@ -1362,6 +1363,7 @@ and every existing `§Lnn` reference still resolves there.
 | ``cpp-call-arg-order`:` |  | effectful call arguments | cpp |
 | ``c-no-compiled-oracle`:` |  | pinned C differential battery | cpp |
 | ``c-name-resolution-by-string`:` |  | callee declaration-kind guard | cpp |
+| ``c-census-regex`:` |  | AST/preprocessor census inputs | cpp |
 | `G9` |  | THE AUDIT'S THREE ROWS, all fixed, and one of them caught this lane failing its own rule (2026-08-23) | go |
 | `G8` |  | THE LOOP INDUCTION IS NOT LANDED, and the selector question is an EXTRACTOR decision (2026-08-23) | go |
 | `G7` |  | INCH 4: `bitLen` gets its SPEC HALF proved, and the call census corrects §G6's reading (2026-08-23) | go |
@@ -1416,4 +1418,4 @@ and every existing `§Lnn` reference still resolves there.
 | `2026-11-10-c-array-filler-designators` |  | Clang array initializer positions | c |
 | `2026-08-26` |  | PARKED (indefinite). Read this first on resumption. | analog |
 
-**63 heading(s) do not use the §9.5 id scheme** and sort last.
+**64 heading(s) do not use the §9.5 id scheme** and sort last.

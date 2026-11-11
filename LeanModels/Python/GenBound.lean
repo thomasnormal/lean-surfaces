@@ -147,8 +147,13 @@ theorem EvalsIn.sortedDrainRev {m : Module} {st st₁ st₂ : FrameState}
     (hrev : EvalsIn m st₁ rev rv st₂)
     (hdesc : truthyH st₂.world.heap rv = .ok desc)
     (hobj : Heap.get? st₂.world.heap a = some (.generator qname locals cont status))
-    (hdrain : IterDrains m st₂.world a vs w')
-    (hsort : sortByLt desc vs = .ok sortedVs) :
+    (hdrain : IterDrains m
+      {st₂.world with callDepth := st₂.world.callDepth + 1} a vs
+      {w' with callDepth := st₂.world.callDepth + 1})
+    (hsort : sortByLt desc vs = .ok sortedVs)
+    (hroom : ¬pythonRecursionFull st₂.world.callDepth)
+    (hsortRoom : ¬pythonRecursionFull (st₂.world.callDepth + 1 + 2))
+    (hdepth : w'.callDepth = st₂.world.callDepth) :
     EvalsIn m st (.call (.name "sorted" sp) #[arg] #[("reverse", rev)] Option.none sp')
       (.ref w'.heap.size)
       ⟨{ w' with heap := w'.heap.push (.list sortedVs.toArray) }, st₂.locals⟩ := by
@@ -173,7 +178,8 @@ theorem EvalsIn.sortedDrainRev {m : Module} {st st₁ st₂ : FrameState}
     ht₁ F' (by omega), ht₂ F' (by omega), Run.ok_bind, Run.liftRes, hdesc, hobj,
     Run.withLocals, ht₃ F' (by omega), hstar, hformat, hunbound]
   simp [flattenStarRun, flattenStarCallArgs, ht₂ F' (by omega), hdesc, hobj,
-    ht₃ F' (by omega), hsort]
+    ht₃ F' (by omega), hsort, Run.withFrameRecursionUnit, Run.withRecursionUnit,
+    hroom, builtinSortedRecursionCheck, hsortRoom, Run.leaveCallDepth, hdepth]
 
 /-- **`sorted(<generator>)`** — the keyword-free arm, through the interpreter's
 other `sorted` dispatch (a call with no keywords never reaches the keyword
@@ -191,8 +197,13 @@ theorem EvalsIn.sortedDrain {m : Module} {st st₁ : FrameState}
     (hunbound : hasUnboundLocal st.locals "sorted" = false := by rfl)
     (harg : EvalsIn m st arg (.ref a) st₁)
     (hobj : Heap.get? st₁.world.heap a = some (.generator qname locals cont status))
-    (hdrain : IterDrains m st₁.world a vs w')
-    (hsort : sortByLt false vs = .ok sortedVs) :
+    (hdrain : IterDrains m
+      {st₁.world with callDepth := st₁.world.callDepth + 1} a vs
+      {w' with callDepth := st₁.world.callDepth + 1})
+    (hsort : sortByLt false vs = .ok sortedVs)
+    (hroom : ¬pythonRecursionFull st₁.world.callDepth)
+    (hsortRoom : ¬pythonRecursionFull (st₁.world.callDepth + 1 + 2))
+    (hdepth : w'.callDepth = st₁.world.callDepth) :
     EvalsIn m st (.call (.name "sorted" sp) #[arg] #[] Option.none sp')
       (.ref w'.heap.size)
       ⟨{ w' with heap := w'.heap.push (.list sortedVs.toArray) }, st₁.locals⟩ := by
@@ -212,7 +223,9 @@ theorem EvalsIn.sortedDrain {m : Module} {st st₁ : FrameState}
     ht₁ F' (by omega), Run.ok_bind, Run.liftRes, hobj,
     Run.withLocals, ht₃ F' (by omega), hstar, hformat, hunbound]
   simp [flattenStarRun, flattenStarCallArgs, ht₃ F' (by omega), hobj,
-    hstar, hformat, hunbound, hsort]
+    hstar, hformat, hunbound, hsort, Run.withFrameRecursionUnit,
+    Run.withRecursionUnit, hroom, builtinSortedRecursionCheck, hsortRoom,
+    Run.leaveCallDepth, hdepth]
 
 /-- **A generator call whose ARGUMENTS move the state** — `EvalsIn.genCall`
 over `EvalsInList`. The lowered genexp's first argument is the outer iterator

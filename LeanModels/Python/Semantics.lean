@@ -2753,8 +2753,11 @@ def evalBinOp (op : BinOp) (a b : RVal) : Res RVal :=
           s!"unsupported operand type(s) for @: '{a.typeName}' and '{b.typeName}'")
   | _, _ =>
     match op, a, b with
-    | .div, .float _, .float _ | .div, .int _, .float _ | .div, .float _, .int _
-    | .div, .bool _, .float _ | .div, .float _, .bool _ => evalFloatDivision a b
+    | .div, .float _, .float _ => evalFloatDivision a b
+    | .div, .int _, .float _ => evalFloatDivision a b
+    | .div, .float _, .int _ => evalFloatDivision a b
+    | .div, .bool _, .float _ => evalFloatDivision a b
+    | .div, .float _, .bool _ => evalFloatDivision a b
     | .add, .str s, .str t => .ok (.str (s ++ t))
     | .mod, .bytes fmt, rhs => bytesFormat fmt rhs
     | .pow, .float _, _ | .pow, _, .float _ => evalFloatPow a b

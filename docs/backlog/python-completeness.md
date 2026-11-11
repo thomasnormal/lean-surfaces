@@ -17,6 +17,26 @@ before built. `harness/refusal_census.py` is the scoreboard and the acceptance
 battery in one — it exits nonzero on drift, so a landing that moves the tier
 must move the census in the same commit.
 
+## 2026-11-11-pyfoundation-44 — repair fib proof after recursion guards
+
+The `sorted` generator-drain proof now states the drain at the incremented
+recursion-frame world, records the preserved `callDepth`, and requires the
+outer and nested `sorted` recursion checks to have room. The symbolic proof
+inventories also unfold the heap-aware rich-comparison recursion boundary and
+its bounded container-depth helpers. Equivalent explicit division arms keep
+symbolic integer arithmetic reducible after the shared float-conversion worker
+was introduced.
+
+| Measurement | Result |
+|---|---|
+| `GenBound` target | managed build passed |
+| `VCTests` target | managed build passed |
+| `Examples/python/fib/proof.lean` | managed build passed |
+| Semantic change | proof hypotheses and simplifier inventory; no runtime behavior change |
+
+DECIDED: keep recursion guards represented in proof statements and symbolic
+execution; the next item must reread the inbox before continuing.
+
 ## 2026-11-11-pyfoundation-43 — repair PayloadBlind comparison recursion transport
 
 The proof observer now transports the heap-aware rich-comparison recursion

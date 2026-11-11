@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Revalidated structured `global` declarations with the long-name witness;
+  the extractor carries `node.names` directly and the runner matches CPython
+  3.9.25, with no text-truncation path remaining in global scope handling.
+
 - Revalidated the module-definition ordering audit: forward reachability and
   redefinition witnesses remain loud refusals, preserving CPython's sequential
   `NameError` and rebinding behavior until runtime-bound definitions land.

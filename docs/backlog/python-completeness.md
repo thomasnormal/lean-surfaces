@@ -13392,3 +13392,21 @@ and `1`/`2`, respectively. No semantics change is needed in this item.
 
 DECIDED: close `py-def-table-position-independent`; retain the loud boundary
 until definitions become runtime-bound AST nodes.
+## 2026-11-11-pyfoundation-70 — close structured-global declaration audit
+
+The high-priority `py-global-text-truncation` finding is already fixed. The
+approved extractor emits `Global`/`Nonlocal` nodes with structured `names`
+arrays, and both interpreters consume `globalDecl` names directly through
+`globalNamesBody`; the old `globalNamesText`/`nonlocalNamesText` workers are
+absent. The long declaration witness preserves its eleventh name and prints
+`5`, matching CPython 3.9.25.
+
+| Measurement | Result |
+|---|---|
+| Extractor witness | `foundation_global_text.py` contains a structured `Global` node with all 11 names |
+| Differential | model and CPython 3.9.25 both print `5`, exit 0 |
+| Stale workers | no `globalNamesText` or `nonlocalNamesText` definitions remain |
+| Semantic change | none; audit closure only |
+
+DECIDED: close `py-global-text-truncation`; retain structured declaration
+nodes as the sole lexical source.

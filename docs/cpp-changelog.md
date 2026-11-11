@@ -19,6 +19,8 @@ coverage advance independently from the Python tier.
 
 ### Added
 
+- Nested `using namespace` directives now execute when their structured namespace target is present; malformed targets remain loud refusals.
+
 - Namespace execution now accepts a namespace body containing only nested
   empty namespace declarations; unrelated or nonempty children remain loudly
   refused.

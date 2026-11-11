@@ -9,7 +9,7 @@ Reproducing captured TinyXML-2 rows requires `LEANCPP_TINYXML2_DIR` to point to 
 
 | rows | MATCH | WITNESS | DIVERGE | REFUSE | TIMEOUT | ORACLE |
 |---:|---:|---:|---:|---:|---:|---:|
-| 1722 | 4 | 1704 | 0 | 8 | 0 | 6 |
+| 1723 | 4 | 1705 | 0 | 8 | 0 | 6 |
 
 `WITNESS` records independent passing checks, without claiming source-to-IR correspondence. `DIVERGE` includes failures of either independent check and does not itself prove a source-derived mismatch. `ORACLE` is an environment or compilation boundary. Neither `WITNESS` nor `ORACLE` is a differential match.
 
@@ -19,6 +19,7 @@ Reproducing captured TinyXML-2 rows requires `LEANCPP_TINYXML2_DIR` to point to 
 | `translation.empty-execution` | 0 | `ok` | `NATIVE` | **WITNESS** | independent Lean fixture and native check passed; no source-to-IR correspondence established |
 | `translation.empty-namespace-execution` | 0 | `ok` | `NATIVE` | **WITNESS** | independent Lean fixture and native check passed; no source-to-IR correspondence established |
 | `translation.nested-namespace-execution` | 0 | `ok` | `NATIVE` | **WITNESS** | independent Lean fixture and native check passed; no source-to-IR correspondence established |
+| `translation.nested-using-namespace-execution` | 0 | `ok` | `NATIVE` | **WITNESS** | independent Lean fixture and native check passed; no source-to-IR correspondence established |
 | `translation.namespace-alias-execution` | 0 | `ok` | `NATIVE` | **WITNESS** | independent Lean fixture and native check passed; no source-to-IR correspondence established |
 | `translation.int-type-alias-execution` | 0 | `ok` | `NATIVE` | **WITNESS** | independent Lean fixture and native check passed; no source-to-IR correspondence established |
 | `translation.int-typedef-execution` | 0 | `ok` | `NATIVE` | **WITNESS** | independent Lean fixture and native check passed; no source-to-IR correspondence established |

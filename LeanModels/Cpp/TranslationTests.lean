@@ -32,6 +32,18 @@ private def nestedNamespaceExecutionTranslation : Artifact := {emptyTranslation 
           .object [("id", .string "inner"), ("kind", .string "NamespaceDecl"),
             ("name", .string "inner"), ("inner", .array [])]])]])]}
 
+private def nestedUsingDirectiveExecutionTranslation : Artifact := {emptyTranslation with
+  ast := .object [
+    ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
+    ("inner", .array [
+      .object [("id", .string "outer"), ("kind", .string "NamespaceDecl"),
+        ("name", .string "outer"), ("inner", .array [
+          .object [("id", .string "inner"), ("kind", .string "NamespaceDecl"),
+            ("name", .string "inner"), ("inner", .array [])],
+          .object [("id", .string "u"), ("kind", .string "UsingDirectiveDecl"),
+            ("nominatedNamespace", .object [("id", .string "inner"),
+              ("kind", .string "NamespaceDecl"), ("name", .string "inner")])]])]])]}
+
 private def functionTranslation : Artifact := {emptyTranslation with
   ast := .object [
     ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
@@ -1700,6 +1712,9 @@ def namespaceTranslationExecution : Except String Unit :=
 def nestedNamespaceTranslationExecution : Except String Unit :=
   execute nestedNamespaceExecutionTranslation "outer"
 
+def nestedUsingDirectiveTranslationExecution : Except String Unit :=
+  execute nestedUsingDirectiveExecutionTranslation "outer"
+
 def namespaceAliasTranslationExecution : Except String Unit :=
   execute namespaceAliasExecutionTranslation "a"
 
@@ -3094,6 +3109,7 @@ def staticAssertTranslationWitness : Except String Unit :=
 #guard execute emptyTranslation "" matches .ok ()
 #guard execute namespaceTranslation "ns" matches .ok ()
 #guard nestedNamespaceTranslationExecution matches .ok ()
+#guard nestedUsingDirectiveTranslationExecution matches .ok ()
 #guard execute namespaceAliasExecutionTranslation "a" matches .ok ()
 #guard execute typeAliasExecutionTranslation "a" matches .ok ()
 #guard execute typedefExecutionTranslation "a" matches .ok ()
@@ -3118,6 +3134,9 @@ theorem namespace_translation_executes : execute namespaceTranslation "ns" = .ok
 
 theorem nested_namespace_translation_executes :
     nestedNamespaceTranslationExecution = .ok () := rfl
+
+theorem nested_using_directive_translation_executes :
+    nestedUsingDirectiveTranslationExecution = .ok () := rfl
 
 theorem namespace_alias_translation_executes :
     execute namespaceAliasExecutionTranslation "a" = .ok () := rfl

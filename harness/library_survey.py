@@ -553,7 +553,9 @@ def survey(opts):
 
     cache = leanpy.default_cache()
     os.makedirs(cache, exist_ok=True)
-    runner = opts.runner.split() if opts.runner else leanpy.runner_command(build=False)
+    runner = opts.runner.split() if opts.runner else leanpy.runner_command(build=False, strict=True)
+    if runner is None:
+        raise SystemExit("library_survey: refusing an unverified runner")
     # The stdlib sweep's safety list is a CORPUS invariant, not a suggestion:
     # those modules' bodies open a browser, a window or a socket, and library
     # mode IMPORTS bodies for a living.

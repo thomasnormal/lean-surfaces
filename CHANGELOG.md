@@ -93,6 +93,9 @@
 - Add a structured statement smoke gate that differentially checks curated
   proof-example domains through both Python interpreters.
 
+- Make survey and library harnesses fail closed on stale or unstamped runner
+  binaries, with a dedicated runner-stamp acceptance check.
+
 - Count `round`'s builtin and numeric `__round__` recursion frames after
   successful argument binding, preserving CPython's pre-frame arity errors.
 

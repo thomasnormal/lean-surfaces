@@ -395,7 +395,9 @@ def main(argv=None):
 
     cache = default_cache()
     os.makedirs(cache, exist_ok=True)
-    runner = runner_command(build=False)
+    runner = runner_command(build=False, strict=True)
+    if runner is None:
+        raise SystemExit("leanpy_survey: refusing an unverified runner")
 
     oracle_version = "(not run)"
     if not opts.no_cpython:

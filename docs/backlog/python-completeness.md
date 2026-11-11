@@ -152,6 +152,23 @@ source text. It is wired into the Python acceptance plan as
 DECIDED: keep statement smoke domains structured and add a row to the shared
 case manifest whenever a new proof statement becomes a foundation witness.
 
+## 2026-11-11-pyfoundation-38 — fail closed on stale runner binaries
+
+The runner source digest is now a hard harness precondition. `leanpy_survey`
+and `library_survey` request strict stamp validation, and
+`harness/runner_stamp.py` is a Python acceptance gate. A missing stamp or a
+digest mismatch refuses before any corpus result is reported; the interactive
+`tools/leanpy` path keeps its rebuild guidance for direct users.
+
+| Measurement | Result |
+|---|---|
+| Strict current-runner check | verified after a managed `leanmodels-run` build |
+| Stale behavior | stale source digest returns exit 3 and one refusal line |
+| Regression tests | 15 leanpy tests and 18 Python-check tests pass |
+
+DECIDED: no differential or survey result counts unless the runner carries a
+current source-content stamp.
+
 ## 2026-11-10-pyfoundation-23 — pin the leanpy quickstart admission
 
 The public quickstart's Python 3.9 pin is now enforced at the runner boundary.

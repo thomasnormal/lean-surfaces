@@ -140,7 +140,7 @@ def lean_source_digest():
 STAMP = BIN + ".srcdigest"
 
 
-def runner_command(build, quiet=False):
+def runner_command(build, quiet=False, strict=False):
     """The runner argv, plus a loud staleness warning when the built binary
     does not carry the current semantics (never a silently stale answer).
 
@@ -190,6 +190,11 @@ def runner_command(build, quiet=False):
     if digest is not None and stamped == digest:
         return [BIN]  # touched, not changed
 
+    if strict:
+        sys.stderr.write(
+            "leanpy: ERROR runner binary is stale or has no trustworthy source stamp; "
+            "rebuild leanmodels-run before running a harness\n")
+        return None
     if not quiet:
         rel = os.path.relpath(path, REPO_ROOT)
         if stamped is not None:

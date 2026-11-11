@@ -26,6 +26,7 @@ refused if it resolves inside this repository, and the check is on the
 RESOLVED path so that a symlink or a `..` cannot walk back in.
 """
 import argparse, hashlib, json, os, subprocess, sys, urllib.request
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parent.parent
@@ -167,6 +168,8 @@ def main():
     ap.add_argument("--cache", default=None)
     ap.add_argument("--git-repo", default=None,
                     help="external partial clone to read at the pinned revision")
+    ap.add_argument("--jobs", type=int, default=1,
+                    help="parallel extractor workers (sources remain in manifest order)")
     ap.add_argument("--limit", type=int, default=300,
                     help="first N by name — the census's own sample rule (default 300)")
     ap.add_argument("--offline", action="store_true",
@@ -200,10 +203,14 @@ def main():
         names = sorted(x["name"] for x in listing if x["name"].endswith(".c"))[:a.limit]
         want = {x["name"]: {"blob_sha1": x.get("sha")} for x in listing}
 
+    if a.jobs < 1:
+        die("--jobs must be positive")
     tests = []
+    pending = []
     for n in names:
         f = src / n
         rec = {"name": n}
+        f.parent.mkdir(parents=True, exist_ok=True)
         if a.offline:
             if not f.exists():
                 rec.update(status="absent", envelope=None, why="not in cache")
@@ -229,7 +236,12 @@ def main():
         rec.update(blob_sha1=b, sha256=s)
         if n in ORACLE_TESTS_COMPILER:
             rec["oracle_tests_compiler"] = ORACLE_TESTS_COMPILER[n]
-        out = env / (n[:-2] + ".json")
+        pending.append((n, f, rec, env))
+
+    def extract_one(item):
+        n, f, rec, env_dir = item
+        out = env_dir / (n[:-2] + ".json")
+        out.parent.mkdir(parents=True, exist_ok=True)
         r = subprocess.run([sys.executable, str(REPO / "extractors" / "c" / "extract.py"),
                             str(f), "--source-name", "%s/%s" % (SUBDIR, n),
                             "-o", str(out)], capture_output=True, text=True)
@@ -239,7 +251,15 @@ def main():
             first = next((l for l in r.stderr.splitlines() if ": error:" in l), "")
             rec.update(status="rejected", envelope=None,
                        why=(first.strip() or "clang rejected it under the pinned profile"))
-        tests.append(rec)
+        return rec
+
+    if a.jobs == 1:
+        tests.extend(extract_one(item) for item in pending)
+    else:
+        with ThreadPoolExecutor(max_workers=a.jobs) as pool:
+            tests.extend(pool.map(extract_one, pending))
+    order = {name: i for i, name in enumerate(names)}
+    tests.sort(key=lambda t: order[t["name"]])
 
     manifest = {"pin": {"slug": slug, "rev": rev, "subdir": SUBDIR},
                 "cache": str(cache), "tests": tests}

@@ -3215,6 +3215,44 @@ theorem twinAgrees_binOpHM_intBitAnd (a b : Int) (st : FrameState) :
   simpa [twinAgrees_binOp, evalBinOpH, setLikeRefH, evalBinOp, asInt,
     hmult, Run.liftRes]
 
+/- The expression-control bridge for a literal integer bitwise-and.  The
+   heap-aware dispatch theorem above supplies the state-preserving worker
+   equation after both literal children have crossed the shared constant
+   bridge. -/
+theorem twinAgrees_evalOpen_intBitAnd (K : Kont) (m : Module) (st : FrameState)
+    (a b : Int) (sp : Span) (fuel : Nat) (hfuel : 1 < fuel) :
+    LeanModels.Python.Monadic.toRun (evalOpen K m
+      (.binOp (.constant (.int a) sp) .bitAnd (.constant (.int b) sp) sp)) st =
+      evalExpr m fuel st
+        (.binOp (.constant (.int a) sp) .bitAnd (.constant (.int b) sp) sp) := by
+  cases fuel with
+  | zero => omega
+  | succ fuel =>
+    cases fuel with
+    | zero => omega
+    | succ fuel =>
+      rw [evalExpr]
+      have hca := twinAgrees_evalOpen_constant K m st (.int a) sp (fuel + 1) (by omega)
+      have hcb : ∀ st' : FrameState,
+          LeanModels.Python.Monadic.toRun (evalOpen K m
+            (.constant (.int b) sp)) st' =
+            evalExpr m (fuel + 1) st' (.constant (.int b) sp) := by
+        intro st'
+        exact twinAgrees_evalOpen_constant K m st' (.int b) sp (fuel + 1) (by omega)
+      rw [← hca]
+      have hcb' : ∀ st' : FrameState,
+          evalExpr m (fuel + 1) st' (.constant (.int b) sp) =
+            LeanModels.Python.Monadic.toRun (evalOpen K m
+              (.constant (.int b) sp)) st' := by
+        intro st'
+        exact (hcb st').symm
+      simp only [hcb']
+      have handAnd : (BinOp.bitAnd == BinOp.bitAnd) = true := by decide
+      have handMult : (BinOp.bitAnd == BinOp.mult) = false := by decide
+      simp only [evalOpen, toRun_bind, toRun_pure, Run.bind, handAnd, handMult,
+        Bool.true_or, if_true]
+      exact twinAgrees_binOpHM_intBitAnd a b st
+
 /- `x + 5 = 12`, through the fuel-free evaluator, decided by the KERNEL. -/
 #guard (match toRun (evalOpen K0 emptyModule
           (.binOp (.name "x" sp0) .add (.constant (.int 5) sp0) sp0)) st0 with

@@ -13885,3 +13885,21 @@ changed.
 DECIDED: keep the census as the source inventory for the next protocol or
 refinement item; every new admission must identify its CPython call order,
 shared worker, observer domain, and boundary row.
+
+## 2026-11-11-pyfoundation-97 — prove literal bitwise-and control refinement
+
+The expression-level refinement family now includes integer bitwise-and. The
+new `Monadic.twinAgrees_evalOpen_intBitAnd` theorem transports both literal
+children through the constant bridge, then reuses the heap-aware
+`twinAgrees_binOpHM_intBitAnd` equation. Its `1 < fuel` premise records the
+legacy evaluator's two child steps, and the result preserves the exact frame
+state and `Run` outcome.
+
+| Measurement | Result |
+|---|---|
+| Target | managed `lake build LeanModels/Python/Monadic/Eval.lean` passed (11/11 jobs) |
+| New theorem | `Monadic.twinAgrees_evalOpen_intBitAnd` |
+| Semantic change | theorem only; no evaluator behavior change |
+
+DECIDED: keep extending the expression-control bridge one source operator at a
+time; recursive calls, statement execution, and script adequacy remain open.

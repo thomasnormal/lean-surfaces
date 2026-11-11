@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Added the kernel-checked `twinAgrees_evalOpen_intBitAnd` control bridge for
+  literal integer bitwise-and expressions. It composes the constant-child
+  transport with the existing heap-aware worker refinement and preserves the
+  explicit legacy fuel margin; runtime behavior is unchanged.
+
 - Refreshed the Python protocol census with the CPython 3.9 entry point and
   ordered protocol calls for every operator, builtin, and admitted method arm.
   The census now names the five multi-worker protocol families and records the

@@ -16,12 +16,13 @@ with ids `YYYY-MM-DD-<lane>-<n>` that need no reservation. Everything before
 the split is in [`docs/backlog-archive.md`](../backlog-archive.md), frozen,
 and every existing `§Lnn` reference still resolves there.
 
-**1449 entries across 19 lanes.** Regenerate with
+**1451 entries across 19 lanes.** Regenerate with
 `tools/backlog-index.sh`; check with `--check` (exit 1 on drift).
 
 | id | class | title | lane |
 | --- | --- | --- | --- |
 | `2026-11-11-ls-sv2-477` |  | unify the E-core-0 and observation cones | ls-sv2 |
+| `2026-11-11-pyfoundation-97` |  | prove literal bitwise-and control refinement | python-completeness |
 | `2026-11-11-pyfoundation-96` |  | refresh the CPython protocol census | python-completeness |
 | `2026-11-11-pyfoundation-95` |  | close float-round unrolling audit | python-completeness |
 | `2026-11-11-pyfoundation-94` |  | close differential row-coverage audit | python-completeness |
@@ -1406,6 +1407,7 @@ and every existing `§Lnn` reference still resolves there.
 | `2026-08-22-architecture-1` |  | NEW LAW — count the PATTERN POSITION, never the IDENTIFIER (§5.4a's constructive half) | architecture |
 | `2026-08-22-ada-1` |  | THE STANDING STRATEGY, adopted by touch: `DIFFER` was a conformance gap, and this lane was one of §9.4's drifted emitters | ada |
 | ``cpp-two-callable-evaluators`:` |  | one callable semantics | cpp |
+| ``cpp-tinyxml2-probe-regeneration`:` |  | pinned capture prerequisite | cpp |
 | ``cpp-target-profile-unchecked`:` |  | artifact profile gate | cpp |
 | ``cpp-switch-and-ir-lowering`:` |  | source-item switch semantics | cpp |
 | ``cpp-spelling-identity`:` |  | structured base and result identity | cpp |
@@ -1471,4 +1473,4 @@ and every existing `§Lnn` reference still resolves there.
 | `2026-11-10-c-array-filler-designators` |  | Clang array initializer positions | c |
 | `2026-08-26` |  | PARKED (indefinite). Read this first on resumption. | analog |
 
-**65 heading(s) do not use the §9.5 id scheme** and sort last.
+**66 heading(s) do not use the §9.5 id scheme** and sort last.

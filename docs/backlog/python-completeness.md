@@ -51,6 +51,20 @@ completed without errors, so no proof source change was needed in this item.
 DECIDED: treat `bench_bisect` as revalidated and continue with the next inbox
 target after rereading the inbox.
 
+## 2026-11-11-pyfoundation-46 — revalidate bench_statistics proof
+
+The second pre-rename red target is also already fixed on the current
+integrated tree. A fresh managed build of the proof target completed without
+errors, so no proof source change was needed in this item.
+
+| Measurement | Result |
+|---|---|
+| `Examples/python/bench_statistics/proof.lean` | managed build passed (620/620 targets) |
+| Source change | none; this packet records the revalidation |
+
+DECIDED: treat `bench_statistics` as revalidated and continue with the next
+inbox target after rereading the inbox.
+
 ## 2026-11-11-pyfoundation-43 — repair PayloadBlind comparison recursion transport
 
 The proof observer now transports the heap-aware rich-comparison recursion

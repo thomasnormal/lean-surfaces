@@ -2249,9 +2249,19 @@ def zeroPadFormatField (width : Nat) (s : String) : String :=
     | _ => zeros ++ s
   else s
 
-def strFormatWidthPiece (width : Nat) (c : Char) (v : RVal) (left zero : Bool) : Res String := do
+def strFormatWidthPiece (width : Nat) (precision : Option Nat) (c : Char)
+    (v : RVal) (left zero : Bool) : Res String := do
   let piece ← strFormatConv c v
-  if left then
+  let piece :=
+    match precision with
+    | some n =>
+        if c == 's' || c == 'r' || c == 'a' then
+          String.ofList (piece.toList.take n)
+        else piece
+    | Option.none => piece
+  if precision.isSome && !(c == 's' || c == 'r' || c == 'a') then
+    .unsupported "precision for this percent conversion is outside the tier"
+  else if left then
     return padFormatFieldLeft width piece
   else if zero && (c == 'd' || c == 'i' || c == 'u' || c == 'x' || c == 'o') then
     return zeroPadFormatField width piece
@@ -2271,17 +2281,32 @@ def strFormatReadDigits : List Char → Nat → Option (Nat × List Char)
       else if acc > 0 then some (acc, c :: rest)
       else Option.none
 
-def strFormatWidthSpec (chars : List Char) : Option (Bool × Bool × Nat × Char × List Char) :=
+def strFormatWidthSpec (chars : List Char) :
+    Option (Bool × Bool × Nat × Option Nat × Char × List Char) :=
   let read := fun (left zero : Bool) (digits : List Char) =>
     match strFormatReadDigits digits 0 with
     | some (width, rest) =>
         match rest with
-        | c :: tail => some (left, zero, width, c, tail)
+        | '.' :: precisionChars =>
+            match strFormatReadDigits precisionChars 0 with
+            | some (precision, afterPrecision) =>
+                match afterPrecision with
+                | c :: tail => some (left, zero, width, some precision, c, tail)
+                | [] => Option.none
+            | Option.none => Option.none
+        | c :: tail => some (left, zero, width, Option.none, c, tail)
         | [] => Option.none
     | Option.none => Option.none
   match chars with
   | '-' :: rest => read true false rest
   | '0' :: rest => read false true rest
+  | '.' :: precisionChars =>
+      match strFormatReadDigits precisionChars 0 with
+      | some (precision, afterPrecision) =>
+          match afterPrecision with
+          | c :: tail => some (false, false, 0, some precision, c, tail)
+          | [] => Option.none
+      | Option.none => Option.none
   | _ => read false false chars
 
 /-- The single left-to-right pass. Literals copy; `%%` emits one `%` and
@@ -2289,9 +2314,10 @@ consumes NOTHING; `%s`/`%r`/`%a`/`%c`/`%d`/`%i`/`%u`/`%x`/`%o` consume the next 
 mid-walk is CPython's `not enough arguments` verbatim, and so are
 leftover arguments at the end — EXCEPT under `mapping`, the `ctx.dict`
 flag above, which is exactly the condition CPython guards that second
-check with. The admitted width slice is decimal `%N…`, `%0N…`, and `%-N…`
-for the existing scalar conversions; precision, other flags, and mapping keys
-remain loud. The invalid `%q` form and a trailing `%` carry CPython's faithful
+check with. The admitted slice is decimal `%N…`, `%0N…`, and `%-N…` widths,
+plus `%.N` precision for string, repr, and ASCII-repr conversions; numeric
+precision, other flags, and mapping keys remain loud. The invalid `%q` form
+and a trailing `%` carry CPython's faithful
 `ValueError`s. -/
 def strFormatWalk : List Char → List RVal → Bool → String → Res String
   | [], args, mapping, acc =>
@@ -2300,12 +2326,12 @@ def strFormatWalk : List Char → List RVal → Bool → String → Res String
   | '%' :: '%' :: cs, args, mapping, acc => strFormatWalk cs args mapping (acc ++ "%")
   | '%' :: cs, args, mapping, acc =>
       match strFormatWidthSpec cs with
-      | some (left, zero, width, c, restChars) =>
+      | some (left, zero, width, precision, c, restChars) =>
         if c == 's' || c == 'r' || c == 'a' || c == 'c' || c == 'd' || c == 'i' || c == 'u' || c == 'x' || c == 'o' then
           match args with
           | [] => .exn (.typeError "not enough arguments for format string")
           | a :: rest =>
-              match strFormatWidthPiece width c a left zero with
+              match strFormatWidthPiece width precision c a left zero with
               | .ok piece => strFormatWalk restChars rest mapping (acc ++ piece)
               | .exn e => .exn e
               | .timeout => .timeout

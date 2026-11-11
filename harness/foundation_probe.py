@@ -256,3 +256,11 @@ def percent_wide(value):
 
 def percent_wide_left(value):
     return "%-7d" % value
+
+
+def percent_precision(value):
+    return "%.3s" % value
+
+
+def percent_precision_repr(value):
+    return "%.4r" % value

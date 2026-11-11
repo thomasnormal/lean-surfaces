@@ -52,6 +52,22 @@ width-7/10 rows pin the generalized parser.
 DECIDED: precision and unsupported flags remain loud; the width parser is the
 only newly admitted mini-language grammar.
 
+## 2026-11-11-pyformat-3 — admit string percent-format precision
+
+The parser now admits `%.N` precision for `%s`, `%r`, and `%a`, truncating the
+rendered scalar text before applying any width padding. Numeric precision,
+dynamic precision, and the remaining format flags stay loud.
+
+| Measurement | Result |
+|---|---|
+| Generated edge battery | 56 cases, 95 calls |
+| Native runner | 80 MATCH, 15 documented refusals, 0 failures |
+| Proof interpreter | 80 MATCH, 15 loud refusals, 0 failures |
+| Managed build | `lake build leanmodels-run`, 40 jobs, passed |
+
+DECIDED: keep precision restricted to the three scalar text conversions until
+numeric precision has an exact CPython 3.9 implementation.
+
 ## 2026-11-11-pyfoundation-31 — count `sorted` recursion and materialization
 
 The builtin recursion audit found that `sorted` was missing the nested call

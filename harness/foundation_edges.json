@@ -589,6 +589,34 @@
   {
     "args": [
       [
+        "abcdef"
+      ],
+      [
+        "x"
+      ]
+    ],
+    "expect": "match",
+    "file": "harness/foundation_probe.py",
+    "function": "percent_precision",
+    "note": "string percent-format precision truncation."
+  },
+  {
+    "args": [
+      [
+        "abcdef"
+      ],
+      [
+        3
+      ]
+    ],
+    "expect": "match",
+    "file": "harness/foundation_probe.py",
+    "function": "percent_precision_repr",
+    "note": "repr percent-format precision truncation."
+  },
+  {
+    "args": [
+      [
         0.0,
         0.0
       ],

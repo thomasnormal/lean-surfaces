@@ -13665,3 +13665,23 @@ admission.
 
 DECIDED: keep `py-namedtuple-recognition` open as a medium rule-2 milestone;
 do not broaden the static table or claim the ingestion rewrite is removed.
+## 2026-11-11-pyfoundation-85 — revalidate module-level alias boundary
+
+The medium `py-def-alias-copy` finding remains open. Ingestion still recognizes
+the narrow direct `alias = name` shape and copies the target function into a
+static table entry while replacing the assignment with `pass`. The admitted
+alias, forward-reference, direct rebinding, callee-shadow, and bisect-shaped
+consumer witnesses match CPython 3.9.25 because the source-order fold and live
+alias-shadow view guard the copied entry. Removing the rewrite safely requires
+first-class function values, identity, and function metadata semantics in both
+interpreters.
+
+| Measurement | Result |
+|---|---|
+| Alias battery | `alias_script.py`, `alias_rebound.py`, `alias_rebound_callee.py`, and `alias_bisect_shape.py` match |
+| Forward boundary | `alias_before_def.py` raises `NameError` on both runners |
+| Remaining debt | runtime function objects; delete `recognizeDefAliases` afterward |
+| Semantic change | none; audit confirmation only |
+
+DECIDED: keep `py-def-alias-copy` open as a medium rule-2 milestone; do not
+broadly admit function-valued assignments beyond the guarded static slice.

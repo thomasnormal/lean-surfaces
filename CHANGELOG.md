@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Revalidated module-level function aliasing: admitted aliases and their
+  source-order/rebinding guards match CPython 3.9.25, while first-class
+  function values and identity semantics remain the explicit follow-up needed
+  to remove the static copied-entry rewrite.
+
 - Revalidated the namedtuple recognition boundary: the admitted structured
   static-table slice still matches CPython 3.9.25, import-order hazards remain
   loud, and runtime `namedtuple` class values remain an explicit architectural

@@ -128,7 +128,10 @@ The evaluator previously chose left-to-right for every operand and argument.
 It now conservatively refuses a binary expression, assignment, compound
 assignment, or call whose two sides can write, before either side runs. The
 canonical order remains available for pure arguments; four differential rows
-pin the refusal and one pure call pins agreement with Clang.
+pin the refusal and one pure call pins agreement with Clang. Revalidated
+2026-11-11 against Clang/LLVM 21.1.8: `binary-write-write REFUSE`,
+`assignment-write REFUSE`, `index-write REFUSE`, and `call-write-write
+REFUSE`; the pure-call row is `MATCH 3`.
 
 ## 2026-11-11-c-compound-assign-unpromoted — usual arithmetic conversions
 

@@ -151,8 +151,11 @@ legacy initializer lists without this required field are refused at ingestion.
 The C initializer uses positional entries and admits an implicit-zero default;
 other filler shapes remain loud. Differential checks cover actual extracted C
 and compare the model's returned value against pinned Clang, including an old
-lossy-envelope refusal. Union initialization and the other audit findings are
-separate open obligations.
+lossy-envelope refusal. Revalidated 2026-11-11 against Clang/LLVM 21.1.8:
+`designated-gap` MATCH 28, `mixed-gap` MATCH 46, `partial-tail` MATCH 14,
+`full` MATCH 20, `all-zero` MATCH 0, and the deleted-field legacy envelope
+REFUSE. Union initialization and the other audit findings are separate open
+obligations.
 
 ## 2026-08-22-c-1 — §L83's TRIAD CLOSES GREEN, the standing strategy is adopted by touch, and inch 4 opens with fuel
 

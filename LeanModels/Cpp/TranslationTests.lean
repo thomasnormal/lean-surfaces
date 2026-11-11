@@ -509,6 +509,15 @@ private def shortTypeAliasExecutionTranslation : Artifact := {emptyTranslation w
         ("type", .object [("qualType", .string "short")]),
         ("inner", .array [shortBuiltinType])]])]}
 
+private def longTypedefExecutionTranslation : Artifact := {emptyTranslation with
+  ast := .object [
+    ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
+    ("inner", .array [
+      .object [("id", .string "a"), ("kind", .string "TypedefDecl"),
+        ("name", .string "L"),
+        ("type", .object [("qualType", .string "long")]),
+        ("inner", .array [longBuiltinType])]])]}
+
 private def shortTypedefExecutionTranslation : Artifact := {emptyTranslation with
   ast := .object [
     ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
@@ -2181,6 +2190,9 @@ def unsignedTypedefTranslationExecution : Except String Unit :=
 def shortTypedefTranslationExecution : Except String Unit :=
   execute shortTypedefExecutionTranslation "a"
 
+def longTypedefTranslationExecution : Except String Unit :=
+  execute longTypedefExecutionTranslation "a"
+
 def longTypeAliasTranslationExecution : Except String Unit :=
   execute longTypeAliasExecutionTranslation "a"
 
@@ -3589,6 +3601,7 @@ def staticAssertTranslationWitness : Except String Unit :=
 #guard unsignedTypeAliasTranslationExecution matches .ok ()
 #guard shortTypeAliasTranslationExecution matches .ok ()
 #guard longTypeAliasTranslationExecution matches .ok ()
+#guard longTypedefTranslationExecution matches .ok ()
 #guard shortTypedefTranslationExecution matches .ok ()
 #guard unsignedTypedefTranslationExecution matches .ok ()
 #guard execute namespaceAliasExecutionTranslation "a" matches .ok ()
@@ -3702,6 +3715,9 @@ theorem short_type_alias_translation_executes :
 
 theorem long_type_alias_translation_executes :
     longTypeAliasTranslationExecution = .ok () := rfl
+
+theorem long_typedef_translation_executes :
+    longTypedefTranslationExecution = .ok () := rfl
 
 theorem short_typedef_translation_executes :
     shortTypedefTranslationExecution = .ok () := rfl

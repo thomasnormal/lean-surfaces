@@ -1,0 +1,307 @@
+[
+  {
+    "args": [
+      [
+        {
+          "bits": "9221120237041090560",
+          "t": "float"
+        }
+      ]
+    ],
+    "expect": "unsupported",
+    "file": "harness/foundation_probe.py",
+    "function": "nan_contains",
+    "note": "RichCompareBool edge pool: non-finite float identity is loud."
+  },
+  {
+    "args": [
+      [
+        {
+          "bits": "9221120237041090560",
+          "t": "float"
+        }
+      ]
+    ],
+    "expect": "unsupported",
+    "file": "harness/foundation_probe.py",
+    "function": "nan_list_equal",
+    "note": "RichCompareBool edge pool: non-finite float identity is loud."
+  },
+  {
+    "args": [
+      [
+        {
+          "bits": "9221120237041090560",
+          "t": "float"
+        }
+      ]
+    ],
+    "expect": "unsupported",
+    "file": "harness/foundation_probe.py",
+    "function": "nan_tuple_order",
+    "note": "RichCompareBool edge pool: non-finite float identity is loud."
+  },
+  {
+    "args": [
+      [
+        {
+          "bits": "9221120237041090560",
+          "t": "float"
+        }
+      ]
+    ],
+    "expect": "unsupported",
+    "file": "harness/foundation_probe.py",
+    "function": "nan_sorted",
+    "note": "RichCompareBool edge pool: non-finite float identity is loud."
+  },
+  {
+    "args": [
+      [
+        {
+          "bits": "9221120237041090560",
+          "t": "float"
+        }
+      ]
+    ],
+    "expect": "unsupported",
+    "file": "harness/foundation_probe.py",
+    "function": "nan_max",
+    "note": "RichCompareBool edge pool: non-finite float identity is loud."
+  },
+  {
+    "args": [
+      [
+        {
+          "bits": "9221120237041090560",
+          "t": "float"
+        }
+      ]
+    ],
+    "expect": "unsupported",
+    "file": "harness/foundation_probe.py",
+    "function": "nan_dict_key",
+    "note": "RichCompareBool edge pool: non-finite float identity is loud."
+  },
+  {
+    "args": [
+      [
+        23,
+        1
+      ],
+      [
+        9007199254740993,
+        1
+      ]
+    ],
+    "expect": "unsupported",
+    "file": "harness/foundation_probe.py",
+    "function": "int_pow_negative",
+    "note": "platform pow edge pool: non-unit integer bases are loud."
+  },
+  {
+    "args": [
+      [
+        2,
+        1
+      ],
+      [
+        -2,
+        3
+      ]
+    ],
+    "expect": "match",
+    "file": "harness/foundation_probe.py",
+    "function": "int_pow_negative",
+    "note": "exact binary-base control pool."
+  },
+  {
+    "args": [
+      [
+        9223372036854775808
+      ],
+      [
+        -9223372036854775809
+      ]
+    ],
+    "expect": "match",
+    "file": "harness/foundation_probe.py",
+    "function": "list_insert_huge",
+    "note": "raising Py_ssize_t edge pool."
+  },
+  {
+    "args": [
+      [
+        9223372036854775808
+      ],
+      [
+        -9223372036854775809
+      ]
+    ],
+    "expect": "match",
+    "file": "harness/foundation_probe.py",
+    "function": "list_pop_huge",
+    "note": "raising Py_ssize_t edge pool."
+  },
+  {
+    "args": [
+      [
+        9223372036854775808
+      ],
+      [
+        -9223372036854775809
+      ]
+    ],
+    "expect": "match",
+    "file": "harness/foundation_probe.py",
+    "function": "list_pop_empty_huge",
+    "note": "raising Py_ssize_t edge pool."
+  },
+  {
+    "args": [
+      [
+        9223372036854775808
+      ],
+      [
+        -9223372036854775809
+      ]
+    ],
+    "expect": "match",
+    "file": "harness/foundation_probe.py",
+    "function": "list_subscript_huge",
+    "note": "raising Py_ssize_t edge pool."
+  },
+  {
+    "args": [
+      [
+        9223372036854775808
+      ],
+      [
+        -9223372036854775809
+      ]
+    ],
+    "expect": "match",
+    "file": "harness/foundation_probe.py",
+    "function": "tuple_subscript_huge",
+    "note": "raising Py_ssize_t edge pool."
+  },
+  {
+    "args": [
+      [
+        9223372036854775808
+      ],
+      [
+        -9223372036854775809
+      ]
+    ],
+    "expect": "match",
+    "file": "harness/foundation_probe.py",
+    "function": "string_subscript_huge",
+    "note": "raising Py_ssize_t edge pool."
+  },
+  {
+    "args": [
+      [
+        9223372036854775808
+      ],
+      [
+        -9223372036854775809
+      ]
+    ],
+    "expect": "match",
+    "file": "harness/foundation_probe.py",
+    "function": "bytes_subscript_huge",
+    "note": "raising Py_ssize_t edge pool."
+  },
+  {
+    "args": [
+      [
+        9223372036854775808
+      ],
+      [
+        -9223372036854775809
+      ]
+    ],
+    "expect": "match",
+    "file": "harness/foundation_probe.py",
+    "function": "range_subscript_huge",
+    "note": "raising Py_ssize_t edge pool."
+  },
+  {
+    "args": [
+      [
+        9223372036854775807
+      ],
+      [
+        -9223372036854775808
+      ]
+    ],
+    "expect": "match",
+    "file": "harness/foundation_probe.py",
+    "function": "list_insert_boundary",
+    "note": "signed Py_ssize_t endpoint pool."
+  },
+  {
+    "args": [
+      [
+        9223372036854775807
+      ],
+      [
+        -9223372036854775808
+      ]
+    ],
+    "expect": "match",
+    "file": "harness/foundation_probe.py",
+    "function": "list_pop_boundary",
+    "note": "signed Py_ssize_t endpoint pool."
+  },
+  {
+    "args": [
+      []
+    ],
+    "expect": "match",
+    "file": "harness/foundation_probe.py",
+    "function": "range_len_huge",
+    "note": "range length conversion control."
+  },
+  {
+    "args": [
+      []
+    ],
+    "expect": "match",
+    "file": "harness/foundation_probe.py",
+    "function": "bisect_fallback_negative_hi",
+    "note": "pure fallback control."
+  },
+  {
+    "args": [
+      [
+        100
+      ],
+      [
+        1000
+      ]
+    ],
+    "expect": "match",
+    "file": "harness/recursion_limit_probe.py",
+    "function": "depth_compare",
+    "note": "recursion-limit edge pool."
+  },
+  {
+    "args": [
+      [
+        100
+      ],
+      [
+        1000
+      ],
+      [
+        1100
+      ]
+    ],
+    "expect": "match",
+    "file": "harness/foundation_probe.py",
+    "function": "deep_linear",
+    "note": "linear recursion-limit edge pool."
+  }
+]

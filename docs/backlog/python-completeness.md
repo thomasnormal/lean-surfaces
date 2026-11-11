@@ -97,6 +97,24 @@ the observer and platform record required before widening a protocol.
 DECIDED: require every future admission to name its observer and platform
 domain in this ledger before claiming exactness.
 
+## 2026-11-11-pyfoundation-35 — generate protocol edge-pool evidence
+
+`harness/foundation_edges.py` now generates a deterministic edge manifest from
+shared pools for non-finite floats, negative powers, signed `Py_ssize_t`
+endpoints, the pure bisect control, and recursion boundaries. The Python
+acceptance plan runs the generated rows through both the monadic runner and the
+proof interpreter; a stale manifest or decided mismatch fails the gate.
+
+| Measurement | Result |
+|---|---|
+| Generated rows | 37 differential calls from 22 generated cases |
+| Native runner | 29 MATCH, 8 documented refusals, 0 failures |
+| Proof interpreter | 29 MATCH, 8 loud refusals, 0 failures |
+| Gate wiring | `tools/check_python.py` includes `py-foundation-edge-generator` |
+
+DECIDED: keep edge pools as the source of foundation evidence and require new
+protocol admissions to add their boundary values to the generator.
+
 ## 2026-11-10-pyfoundation-23 — pin the leanpy quickstart admission
 
 The public quickstart's Python 3.9 pin is now enforced at the runner boundary.

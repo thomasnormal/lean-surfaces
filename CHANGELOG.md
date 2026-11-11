@@ -84,6 +84,9 @@
 
 - Made the C++ differential harness require a pinned native oracle by default;
   exploratory runs must opt into `--allow-oracle` explicitly.
+- Run the generated protocol edge-pool battery in the Python acceptance check
+  through both interpreter modes.
+
 - Count `round`'s builtin and numeric `__round__` recursion frames after
   successful argument binding, preserving CPython's pre-frame arity errors.
 

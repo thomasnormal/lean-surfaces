@@ -1486,7 +1486,7 @@ class ImportFromTests(unittest.TestCase):
         self.assertEqual(s["py_kind"], "ImportFrom:accelerator-unmeasured")
         self.assertEqual(s["text"], "from binascii import a2b_qp, b2a_qp")
 
-    def test_guarded_diverging_accelerator_refuses_under_its_own_name(self):
+    def test_guarded_domainless_accelerator_refuses_under_domain_name(self):
         # stat.py 192-195: MEASURED non-equivalent, 21 of 104 calls
         s = self._try_body(
             "try:\n"
@@ -1494,9 +1494,9 @@ class ImportFromTests(unittest.TestCase):
             "except ImportError:\n"
             "    pass\n")[0]
         self.assertEqual(s["kind"], "Unsupported")
-        self.assertEqual(s["py_kind"], "ImportFrom:accelerator-diverges")
+        self.assertEqual(s["py_kind"], "ImportFrom:accelerator-outside-domain")
 
-    def test_opcode_binds_a_name_the_fallback_does_not(self):
+    def test_opcode_domainless_import_refuses_before_name_binding(self):
         # opcode.py 18-21: the branches differ by INSPECTION -- CPython
         # binds `stack_effect`, the `pass` handler binds nothing
         body = self._try_body(
@@ -1506,7 +1506,7 @@ class ImportFromTests(unittest.TestCase):
             "except ImportError:\n"
             "    pass\n")
         self.assertEqual(body[0]["kind"], "Unsupported")
-        self.assertEqual(body[0]["py_kind"], "ImportFrom:accelerator-diverges")
+        self.assertEqual(body[0]["py_kind"], "ImportFrom:accelerator-outside-domain")
 
     def test_guarded_absent_module_needs_no_registry_entry(self):
         # the raise is CPython's OWN behavior, so there is no fallback

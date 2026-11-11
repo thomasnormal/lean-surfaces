@@ -1123,6 +1123,24 @@ WHITELIST_CLASS.update({
     'tuple_repeat::repeat_right_length': 'op.Mult-repetition',
     'tuple_repeat::repeat_right_length': 'op.Mult-repetition',
     'dict_lab::keys_set_len': 'set.order',
+    # Recursion-unit batteries classify their deliberately loud unsupported
+    # call shapes so the whitelist census remains closed as those rows grow.
+    'sum_recursion::keyword': 'builtin.sum',
+    'round_recursion::bad_type': 'builtin.round',
+    'round_recursion::extra': 'builtin.round',
+    'round_recursion::keyword': 'builtin.round',
+    'round_recursion::keyword_effect': 'builtin.round',
+    'sorted_recursion::sorted_valid': 'builtin.sorted',
+    'sorted_recursion::sorted_empty': 'builtin.sorted',
+    'sorted_recursion::sorted_singleton': 'builtin.sorted',
+    'sorted_recursion::sorted_bad_type': 'builtin.sorted',
+    'sorted_recursion::sorted_missing': 'builtin.sorted',
+    'sorted_recursion::sorted_extra': 'builtin.sorted',
+    'sorted_recursion::sorted_reverse': 'builtin.sorted',
+    'sorted_recursion::sorted_bad_kw': 'builtin.sorted',
+    'sorted_recursion::sorted_rev_bad_type': 'builtin.sorted',
+    'sorted_recursion::sorted_effect': 'builtin.sorted',
+    'sorted_recursion::sorted_bad_keyword_noniterable': 'builtin.sorted',
 })
 
 # The two-model window is CLOSED. `MONO_OPENED` listed rows the trunk refused

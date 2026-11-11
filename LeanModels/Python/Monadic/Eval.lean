@@ -1473,7 +1473,7 @@ def evalCompareChainM (K : Kont) (m : Module) (lhs : RVal) :
       let h ← frameHeap
       let _ ← checkBytesCompareM m h op lhs rhs
       let st ← get
-      let _ ← liftRes (richCompareRecursionCheck st.world.callDepth op)
+      let _ ← liftRes (richCompareRecursionCheckH h st.world.callDepth op lhs rhs)
       let b ← liftRes (evalCompareOpH h K.fuel op lhs rhs)
       if b then evalCompareChainM K m rhs ops' rest else pure (.bool false)
   | _, _ => refuse "Compare with mismatched ops/comparators"

@@ -180,3 +180,43 @@ def float_power_big_zero():
 
 def negative_pow_unit_boundary(base, shift):
     return base ** -(1 << shift)
+
+
+def nested_equal(n):
+    """Build two equal nested lists and compare them through RichCompareBool."""
+    left = []
+    right = []
+    for _ in range(n):
+        left = [left]
+        right = [right]
+    return left == right
+
+
+def nested_mismatch(n):
+    """A deep shape whose first compared element differs, so no recursion error."""
+    left = []
+    right = []
+    for _ in range(n):
+        left = [left]
+        right = [right]
+    right[0] = 1
+    return left == right
+
+
+def nested_tuple_order(n):
+    """Tuple ordering performs recursive equality probes at each level."""
+    left = ()
+    right = ()
+    for _ in range(n):
+        left = (left,)
+        right = (right,)
+    return left < right
+
+
+def nested_print(n):
+    """Exercise recursive container repr through the ordinary print builtin."""
+    value = 0
+    for _ in range(n):
+        value = [value]
+    print(value)
+    return 1

@@ -204,6 +204,26 @@ platform `pow` and complex-result cases remain explicitly loud.
 DECIDED: keep portable special cases admitted and platform-dependent `pow`
 outside the decided domain until an explicit libm/oracle input is modeled.
 
+## 2026-11-11-pyfoundation-41 — account nested comparison recursion
+
+The recursive container comparison path now measures the longest nested
+container chain before `heapEq` dispatches.  The same guard is used by the
+trunk and monadic interpreters, so a nested list comparison reaches CPython's
+pinned `RecursionError` boundary instead of returning a value.  Rendering is
+covered at both sides of its fixed `reprFuel` boundary: shallow recursive
+containers match, while deeper rendering remains an explicit loud refusal.
+
+| Measurement | Result |
+|---|---|
+| Generated cases/calls | 45 cases, 75 calls |
+| Native runner | 64 MATCH, 11 documented refusals, 0 failures |
+| Proof interpreter | 64 MATCH, 11 loud refusals, 0 failures |
+| Wrong answers stopped | 1 (`nested_equal(999)`: `True` → `RecursionError`) |
+| Semantic change | shared nested `Py_EnterRecursiveCall` accounting for `heapEq` |
+
+DECIDED: keep general rendering beyond the fixed budget loud until the
+renderer carries CPython's recursive call units directly.
+
 ## 2026-11-10-pyfoundation-23 — pin the leanpy quickstart admission
 
 The public quickstart's Python 3.9 pin is now enforced at the runner boundary.

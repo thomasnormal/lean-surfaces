@@ -5113,6 +5113,60 @@ def instanceEqMarkerH (h : Heap) : RVal → Option Bool
       | _ => none
   | _ => none
 
+/-! CPython's `PyObject_RichCompareBool` enters a recursion unit for every
+recursive container comparison, not only for the outer `COMPARE_OP`.  The
+heap walker below keeps the same active-path rule as `heapEq`, but measures
+the longest container path before dispatch.  A fixed traversal budget is
+used only to make the check total; it is one larger than the pinned
+recursion limit, so a path that can reach the limit is never silently
+accepted.  Cycles stop at the active address and are handled by `heapEq`'s
+existing cycle rule. -/
+def compareContainerDepthFuel : Nat := pythonRecursionLimit + 1
+
+mutual
+  def compareContainerDepth (h : Heap) (fuel : Nat) (active : List Addr) : RVal → Nat
+    | .tuple xs =>
+        match fuel with
+        | 0 => 0
+        | fuel + 1 => Nat.succ (compareContainerDepthList h fuel active xs.toList)
+    | .listV xs =>
+        match fuel with
+        | 0 => 0
+        | fuel + 1 => Nat.succ (compareContainerDepthList h fuel active xs.toList)
+    | .ntuple _ _ xs =>
+        match fuel with
+        | 0 => 0
+        | fuel + 1 => Nat.succ (compareContainerDepthList h fuel active xs.toList)
+    | .ref a =>
+        match fuel with
+        | 0 => 0
+        | fuel + 1 =>
+            if active.contains a then 0
+            else
+              match Heap.get? h a with
+              | some (.list xs) =>
+                  Nat.succ (compareContainerDepthList h fuel (a :: active) xs.toList)
+              | some (.dict entries _) =>
+                  Nat.succ (compareContainerDepthEntries h fuel (a :: active) entries.toList)
+              | _ => 0
+    | _ => 0
+
+  def compareContainerDepthList (h : Heap) (fuel : Nat) (active : List Addr) :
+      List RVal → Nat
+    | [] => 0
+    | value :: rest =>
+        Nat.max (compareContainerDepth h fuel active value)
+          (compareContainerDepthList h fuel active rest)
+
+  def compareContainerDepthEntries (h : Heap) (fuel : Nat) (active : List Addr) :
+      List (RVal × RVal) → Nat
+    | [] => 0
+    | (key, value) :: rest =>
+        Nat.max (Nat.max (compareContainerDepth h fuel active key)
+          (compareContainerDepth h fuel active value))
+          (compareContainerDepthEntries h fuel active rest)
+end
+
 mutual
   /-- Python `==` over the heap (docs/memory-model.md §identity) — the
   H1-complete equality. Ref/ref: (1) identity shortcut (`d == d` holds
@@ -5207,6 +5261,22 @@ mutual
           let e ← heapEq h fuel active v w
           if e then heapEqEntries h fuel active rest right else return false
 end
+
+def heapEqRecursionCheck (h : Heap) (depth : Nat) (a b : RVal) : Res Unit :=
+  let nested := Nat.max
+    (compareContainerDepth h compareContainerDepthFuel [] a)
+    (compareContainerDepth h compareContainerDepthFuel [] b)
+  if pythonRecursionFull (depth + nested) then
+    -- A depth estimate alone would raise on a comparison that fails at its
+    -- first element.  Re-run the bounded equality only at the boundary so
+    -- an early mismatch remains the ordinary `False` that CPython returns.
+    match heapEq h compareContainerDepthFuel [] a b with
+    | .ok true => .exn .recursionError
+    | .ok false => .ok ()
+    | .exn e => .exn e
+    | .timeout => .exn .recursionError
+    | .unsupported msg => .unsupported msg
+  else .ok ()
 
 /-- One `x in lst` scan step (H2): CPython's `list.__contains__` compares
 `element == probe` (element on the LEFT) per element, first hit wins —
@@ -10390,6 +10460,16 @@ def richCompareRecursionCheck (depth : Nat) (op : CmpOp) : Res Unit :=
       if pythonRecursionFull depth then .exn .recursionError else .ok ()
   | .is | .isNot | .inOp | .notIn => .ok ()
 
+def richCompareRecursionCheckH (h : Heap) (depth : Nat) (op : CmpOp)
+    (a b : RVal) : Res Unit := do
+  let _ ← richCompareRecursionCheck depth op
+  -- Tuple/list ordering uses `PyObject_RichCompareBool(..., Py_EQ)` to
+  -- decide whether to continue to the next element.  The same nested
+  -- equality probe therefore accounts for both equality and ordering sites;
+  -- an early mismatch remains `False`, while an equal chain reaches the
+  -- pinned recursive boundary.
+  heapEqRecursionCheck h depth a b
+
 /-- Chained comparison `a < b < c …`: each operand is evaluated exactly once,
 left to right; short-circuits to `False` on the first failing link (the
 remaining comparators are not evaluated). `lhs` is the already-evaluated
@@ -10404,7 +10484,8 @@ def evalCompareChain (m : Module) (fuel : Nat) (st : FrameState) (lhs : RVal)
     | op :: ops', e :: rest =>
         evalExpr m fuel st e ⤳ fun st rhs =>
         Run.liftRes st (checkBytesCompare m st.world.heap op lhs rhs) ⤳ fun st _ =>
-        Run.liftRes st (richCompareRecursionCheck st.world.callDepth op) ⤳ fun st _ =>
+        Run.liftRes st
+          (richCompareRecursionCheckH st.world.heap st.world.callDepth op lhs rhs) ⤳ fun st _ =>
         Run.liftRes st (evalCompareOpH st.world.heap fuel op lhs rhs) ⤳ fun st b =>
         if b then evalCompareChain m fuel st rhs ops' rest
         else .ok st (.bool false)

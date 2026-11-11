@@ -405,6 +405,70 @@
   {
     "args": [
       [
+        990
+      ],
+      [
+        999
+      ]
+    ],
+    "expect": "match",
+    "file": "harness/foundation_probe.py",
+    "function": "nested_equal",
+    "note": "nested RichCompareBool recursion boundary."
+  },
+  {
+    "args": [
+      [
+        999
+      ]
+    ],
+    "expect": "match",
+    "file": "harness/foundation_probe.py",
+    "function": "nested_mismatch",
+    "note": "early container mismatch avoids descending to the recursion limit."
+  },
+  {
+    "args": [
+      [
+        990
+      ],
+      [
+        999
+      ]
+    ],
+    "expect": "match",
+    "file": "harness/foundation_probe.py",
+    "function": "nested_tuple_order",
+    "note": "tuple ordering recursion boundary through RichCompareBool equality probes."
+  },
+  {
+    "args": [
+      [
+        510
+      ]
+    ],
+    "expect": "match",
+    "file": "harness/foundation_probe.py",
+    "function": "nested_print",
+    "note": "recursive rendering control below the fixed repr budget."
+  },
+  {
+    "args": [
+      [
+        513
+      ],
+      [
+        999
+      ]
+    ],
+    "expect": "unsupported",
+    "file": "harness/foundation_probe.py",
+    "function": "nested_print",
+    "note": "recursive rendering remains loud beyond the fixed repr budget."
+  },
+  {
+    "args": [
+      [
         0.0,
         0.0
       ],

@@ -879,8 +879,12 @@ understand, the refusal is the LOUD unsupported, never a binding
 * the builtin `sorted`: `reverse=<expr>` is accepted (truthiness
   decides the direction, as CPython's does); `key=` is REFUSED loudly —
   it gates on first-class callable values (a bound method as a value is
-  loud under H3), not on draining, and is recorded in the backlog; any
-  other keyword name on `sorted` is CPython's faithful `TypeError`.
+  loud under H3), not on draining, and is recorded in the backlog. Other
+  keywords also refuse: CPython materializes the iterable before validating
+  them, as `sorted_bad_keyword_noniterable` in `harness/sorted_recursion.py`
+  demonstrates. The builtin's recursion unit remains active while it drains
+  a generator (`sorted_deep_generator`); calls near the unmodeled nested
+  `list.sort` recursion boundary refuse (`sorted_valid`, `sorted_bad_kw`).
 
 `float(...)` also preserves the ordinary positional-then-keyword evaluation
 order before reporting CPython's faithful `TypeError: float() takes no

@@ -5497,6 +5497,17 @@ unit. Both paths observe the same boundary after argument evaluation
 def builtinMethORecursionCheck (depth : Nat) : Res Unit :=
   if pythonRecursionFull depth then .exn .recursionError else .ok ()
 
+/-- `sorted` calls into `list.sort` after materializing its input
+(`Python/bltinmodule.c:builtin_sorted`). Argument errors and sorting reach
+different nested recursion checks, and generator materialization may execute
+Python code. Until those call frames are threaded through the operation,
+refuse at their observed boundary rather than returning a fabricated value
+or exception. Both evaluators use this check after argument evaluation. -/
+def builtinSortedRecursionCheck (depth : Nat) : Res Unit :=
+  if pythonRecursionFull (depth + 2) then
+    .unsupported "sorted() near the recursion limit is outside the tier"
+  else .ok ()
+
 /-- Subscript read over the heap: a `.ref` container is a dict read
 (`KeyError` faithful); a `.ref` INDEX into a value container is a faithful
 `TypeError` (every H1 heap object is a dict — `lst[d]`); everything else
@@ -9183,6 +9194,8 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                     -- (`sorted` is outside `heapFree`, so worldInv never
                     -- sees this arm).
                     flattenStarRun (evalExprs m fuel st args.toList) ⤳ fun st vs =>
+                    Run.withFrameRecursionUnit st fun st =>
+                    Run.liftRes st (builtinSortedRecursionCheck st.world.callDepth) ⤳ fun st _ =>
                     match vs with
                     | [v] =>
                       (match v with
@@ -9967,20 +9980,24 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                     else if fname == "sorted" then
                       -- reverse= accepted (truthiness decides the
                       -- direction); key= gates on FIRST-CLASS CALLABLE
-                      -- values — loud; any other keyword is CPython's
-                      -- faithful TypeError, raised AFTER the arguments
-                      -- evaluate (CPython's order)
+                      -- values — loud; other keywords stay loud because
+                      -- CPython materializes the iterable before list.sort
+                      -- validates those keywords.
                       if kwargs.toList.any (·.1 == "key") then
                         .unsupported "sorted(key=…) is outside the tier — the key callable is a first-class function value (bound methods are loud under H3; docs/backlog.md)"
                       else
                         (match kwargs.toList.find? (fun kv => kv.1 != "reverse") with
-                         | some (k, _) =>
+                         | some _ =>
                            flattenStarRun (evalExprs m fuel st args.toList) ⤳ fun st _ =>
                            evalExprs m fuel st (kwargs.toList.map (·.2)) ⤳ fun st _ =>
-                           .exn st (.typeError s!"'{k}' is an invalid keyword argument for sorted()")
+                           Run.withFrameRecursionUnit st fun st =>
+                           Run.liftRes st (builtinSortedRecursionCheck st.world.callDepth) ⤳ fun st _ =>
+                           .unsupported "sorted() with unsupported keywords is outside the tier"
                          | Option.none =>
                            flattenStarRun (evalExprs m fuel st args.toList) ⤳ fun st vs =>
                            evalExprs m fuel st (kwargs.toList.map (·.2)) ⤳ fun st kvs =>
+                           Run.withFrameRecursionUnit st fun st =>
+                           Run.liftRes st (builtinSortedRecursionCheck st.world.callDepth) ⤳ fun st _ =>
                            (match vs, kvs with
                             | [v], [rv] =>
                               Run.liftRes st (truthyH st.world.heap rv) ⤳ fun st desc =>

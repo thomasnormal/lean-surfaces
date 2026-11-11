@@ -17,6 +17,27 @@ before built. `harness/refusal_census.py` is the scoreboard and the acceptance
 battery in one — it exits nonzero on drift, so a landing that moves the tier
 must move the census in the same commit.
 
+## 2026-11-11-pyfoundation-31 — count `sorted` recursion and materialization
+
+The builtin recursion audit found that `sorted` was missing the nested call
+boundary used by CPython's `Python/bltinmodule.c:builtin_sorted` and the list
+sort path. The evaluator now enters one recursion unit after positional and
+keyword argument evaluation, while generator materialization remains inside
+that unit. Unsupported keyword forms stay loud after the iterable has been
+materialized, preserving CPython's evaluation order without fabricating its
+keyword error. The same guard is transported through the proof interpreter,
+clock erasure, and payload-blind observer.
+
+| Measurement | Result |
+|---|---|
+| Focused runner differential | 107 rows: 73 MATCH, 34 documented refusals, 0 failures against CPython 3.9.25 |
+| Focused proof-interpreter differential | 107 rows: 73 MATCH, 34 documented refusals, 0 failures |
+| Build | `leanmodels-run`, `LeanModels.Python.ClockErase`, and `LeanModels.Python.PayloadBlind` compile in 45 jobs |
+| Semantic change | shared `sorted` recursion guard, generator-state and keyword-order coverage |
+
+DECIDED: keep `sorted` calls near the unmodeled nested sort boundary loud, and
+keep the recursion unit active through iterable materialization.
+
 ## 2026-11-10-pyfoundation-23 — pin the leanpy quickstart admission
 
 The public quickstart's Python 3.9 pin is now enforced at the runner boundary.

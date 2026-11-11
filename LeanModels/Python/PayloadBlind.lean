@@ -5274,55 +5274,58 @@ theorem pbEvalExpr_succ (htwin : PayloadTwin o₀ o) (ih : PBAll pa o₀ o fuel)
                                     -- sorted
                                     · refine PBF.bind (PBF.flattenStarRun (ihEs m st args.toList hslot))
                                         fun s1 vs _ hs1 => ?_
+                                      refine PBF.withFrameRecursionUnit hs1 fun s1 hs1 => ?_
+                                      simp only [FrameState.swapAt_world, World.swapAt_callDepth]
+                                      refine PBF.bind (PBF.liftRes hs1 _) fun sGuard _ _ hsGuard => ?_
                                       cases vs with
-                                      | nil => exact PBF.exn hs1 _
+                                      | nil => exact PBF.exn hsGuard _
                                       | cons v rest =>
                                           cases rest with
-                                          | cons _ _ => exact PBF.exn hs1 _
+                                          | cons _ _ => exact PBF.exn hsGuard _
                                           | nil =>
                                               simp only []
                                               cases v with
                                               | ref b =>
-                                                  rcases Heap.get?_swapAt_twin (b := b) hs1 htwin with
+                                                  rcases Heap.get?_swapAt_twin (b := b) hsGuard htwin with
                                                     heq | ⟨_, _, _, _, _, h1, h2⟩
                                                   · simp only [FrameState.swapAt_world,
                                                       World.swapAt_heap, heq]
-                                                    cases hget : Heap.get? s1.world.heap b with
+                                                    cases hget : Heap.get? sGuard.world.heap b with
                                                     | none =>
-                                                        simp only [hget, sortedValH_swapAt hs1 htwin]
-                                                        refine PBF.liftMapOk hs1 fun x hw => ?_
+                                                        simp only [hget, sortedValH_swapAt hsGuard htwin]
+                                                        refine PBF.liftMapOk hsGuard fun x hw => ?_
                                                         obtain ⟨h', r⟩ := x
                                                         exact PBF.okWrite
-                                                          (sortedValH_slot hs1 hw) _
+                                                          (sortedValH_slot hsGuard hw) _
                                                     | some obj =>
                                                         cases obj with
                                                         | generator qn l cnt stt =>
                                                             refine PBF.bind (PBW.withLocals
-                                                              (ihDrain m s1.world b hs1))
+                                                              (ihDrain m sGuard.world b hsGuard))
                                                               fun s2 vals _ hs2 => ?_
                                                             refine PBF.bind (PBF.liftRes hs2 _)
                                                               fun s3 srt _ hs3 => ?_
                                                             exact PBF.pushRef hs3 _
                                                         | _ =>
-                                                            simp only [sortedValH_swapAt hs1 htwin]
-                                                            refine PBF.liftMapOk hs1 fun x hw => ?_
+                                                            simp only [sortedValH_swapAt hsGuard htwin]
+                                                            refine PBF.liftMapOk hsGuard fun x hw => ?_
                                                             obtain ⟨h', r⟩ := x
                                                             exact PBF.okWrite
-                                                              (sortedValH_slot hs1 hw) _
+                                                              (sortedValH_slot hsGuard hw) _
                                                   · simp only [FrameState.swapAt_world,
                                                       World.swapAt_heap, h1, h2]
                                                     refine PBF.bind (PBW.withLocals
-                                                      (ihDrain m s1.world b hs1))
+                                                      (ihDrain m sGuard.world b hsGuard))
                                                       fun s2 vals _ hs2 => ?_
                                                     refine PBF.bind (PBF.liftRes hs2 _)
                                                       fun s3 srt _ hs3 => ?_
                                                     exact PBF.pushRef hs3 _
                                               | _ =>
                                                   simp only [FrameState.swapAt_world,
-                                                    World.swapAt_heap, sortedValH_swapAt hs1 htwin]
-                                                  refine PBF.liftMapOk hs1 fun x hw => ?_
+                                                    World.swapAt_heap, sortedValH_swapAt hsGuard htwin]
+                                                  refine PBF.liftMapOk hsGuard fun x hw => ?_
                                                   obtain ⟨h', r⟩ := x
-                                                  exact PBF.okWrite (sortedValH_slot hs1 hw) _
+                                                  exact PBF.okWrite (sortedValH_slot hsGuard hw) _
                                     refine PBF.ite (fun _ => ?_) fun _ => ?_
                                     -- max
                                     · refine PBF.bind (PBF.flattenStarRun (ihEs m st args.toList hslot)) fun s1 vs _ hs1 => ?_
@@ -6373,17 +6376,23 @@ theorem pbEvalExpr_succ (htwin : PayloadTwin o₀ o) (ih : PBAll pa o₀ o fuel)
                                     fun s1 vs _ hs1 => ?_
                                   refine PBF.bind (ihEs m s1 (kwargs.toList.map (·.2)) hs1)
                                     fun s2 kvs _ hs2 => ?_
-                                  exact PBF.exn hs2 _
+                                  refine PBF.withFrameRecursionUnit hs2 fun s2 hs2 => ?_
+                                  simp only [FrameState.swapAt_world, World.swapAt_callDepth]
+                                  refine PBF.bind (PBF.liftRes hs2 _) fun sGuard _ _ hsGuard => ?_
+                                  exact PBF.unsupported
                               | none =>
                                   refine PBF.bind (PBF.flattenStarRun (ihEs m st args.toList hslot))
                                     fun s1 vs _ hs1 => ?_
                                   refine PBF.bind (ihEs m s1 (kwargs.toList.map (·.2)) hs1)
                                     fun s2 kvs _ hs2 => ?_
+                                  refine PBF.withFrameRecursionUnit hs2 fun s2 hs2 => ?_
+                                  simp only [FrameState.swapAt_world, World.swapAt_callDepth]
+                                  refine PBF.bind (PBF.liftRes hs2 _) fun sGuard _ _ hsGuard => ?_
                                   cases vs with
-                                  | nil => exact PBF.exn hs2 _
+                                  | nil => exact PBF.exn hsGuard _
                                   | cons v rest =>
                                       cases rest with
-                                      | cons _ _ => exact PBF.exn hs2 _
+                                      | cons _ _ => exact PBF.exn hsGuard _
                                       | nil =>
                                           cases kvs with
                                           | nil => exact PBF.unsupported
@@ -6392,8 +6401,8 @@ theorem pbEvalExpr_succ (htwin : PayloadTwin o₀ o) (ih : PBAll pa o₀ o fuel)
                                               | cons _ _ => exact PBF.unsupported
                                               | nil =>
                                                   simp only [FrameState.swapAt_world,
-                                                    World.swapAt_heap, truthyH_swapAt hs2 htwin]
-                                                  refine PBF.bind (PBF.liftRes hs2 _)
+                                                    World.swapAt_heap, truthyH_swapAt hsGuard htwin]
+                                                  refine PBF.bind (PBF.liftRes hsGuard _)
                                                     fun s3 desc _ hs3 => ?_
                                                   cases v with
                                                   | ref b =>

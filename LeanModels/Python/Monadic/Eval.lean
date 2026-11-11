@@ -598,21 +598,24 @@ def applyBuiltin (K : Kont) (m : Module) (fname : String) (vs : List RVal) :
         | _ => do liftRes (extremumValH (← frameHeap) (fname == "max") [.ref a])
     | vs => do liftRes (extremumValH (← frameHeap) (fname == "max") vs)
   else if fname == "sorted" then
-    match vs with
-    | [.ref a] => do
-        match Heap.get? (← frameHeap) a with
-        | some (.generator ..) => do
-            let vals ← inFrame (K.drainIter a)
-            let sorted_ ← liftRes (sortByLt false vals)
-            let ad ← heapPush (.list sorted_.toArray)
-            pure (.ref ad)
-        | _ => do
-            let hr ← liftRes (sortedValH (← frameHeap) (.ref a))
-            heapPut hr.1; pure hr.2
-    | [v] => do
-        let hr ← liftRes (sortedValH (← frameHeap) v)
-        heapPut hr.1; pure hr.2
-    | _ => raisePy (.typeError s!"sorted expected 1 argument, got {vs.length}")
+    withFrameRecursionUnit do
+      let st ← get
+      let _ ← liftRes (builtinSortedRecursionCheck st.world.callDepth)
+      match vs with
+      | [.ref a] => do
+          match Heap.get? (← frameHeap) a with
+          | some (.generator ..) => do
+              let vals ← inFrame (K.drainIter a)
+              let sorted_ ← liftRes (sortByLt false vals)
+              let ad ← heapPush (.list sorted_.toArray)
+              pure (.ref ad)
+          | _ => do
+              let hr ← liftRes (sortedValH (← frameHeap) (.ref a))
+              heapPut hr.1; pure hr.2
+      | [v] => do
+          let hr ← liftRes (sortedValH (← frameHeap) v)
+          heapPut hr.1; pure hr.2
+      | _ => raisePy (.typeError s!"sorted expected 1 argument, got {vs.length}")
   else if fname == "sum" then
     let st ← get
     let _ ← liftRes (builtinMethORecursionCheck st.world.callDepth)
@@ -1203,39 +1206,46 @@ def evalOpen (K : Kont) (m : Module) : Expr → SemF RVal
                     -- `reverse=` is accepted (truthiness decides the direction,
                     -- and descending is a STABLE descending insertion — never
                     -- sort-then-reverse). `key=` gates on a FIRST-CLASS callable
-                    -- value and stays loud. Any other keyword is CPython's
-                    -- faithful TypeError, raised AFTER the arguments evaluate.
+                    -- value and stays loud. Other keywords stay loud because
+                    -- CPython materializes the iterable before list.sort
+                    -- validates them.
                     if kwargs.toList.any (·.1 == "key") then
                       refuse "sorted(key=…) is outside the tier — the key callable is a first-class function value (bound methods are loud under H3; docs/backlog.md)"
                     else
                       match kwargs.toList.find? (fun kv => kv.1 != "reverse") with
-                      | some (k, _) => do
+                      | some _ => do
                           let _ ← evalOpenCallList (K, m, args.toList)
                           let _ ← K.kwArgs kwargs.toList
-                          raisePy (.typeError s!"'{k}' is an invalid keyword argument for sorted()")
+                          withFrameRecursionUnit do
+                            let st ← get
+                            let _ ← liftRes (builtinSortedRecursionCheck st.world.callDepth)
+                            refuse "sorted() with unsupported keywords is outside the tier"
                       | Option.none => do
                           let vs ← evalOpenCallList (K, m, args.toList)
                           let kvs ← K.kwArgs kwargs.toList
-                          match vs, kvs.map (·.2) with
-                          | [v], [rv] => do
-                              let desc ← truthyM rv
-                              match v with
-                              | .ref a => do
-                                  match Heap.get? (← frameHeap) a with
-                                  | some (.generator ..) => do
-                                      let vals ← inFrame (K.drainIter a)
-                                      let sorted_ ← liftRes (sortByLt desc vals)
-                                      let ad ← heapPush (.list sorted_.toArray)
-                                      pure (.ref ad)
-                                  | _ => do
-                                      let hr ← liftRes (sortedValH (← frameHeap) (.ref a) desc)
-                                      heapPut hr.1; pure hr.2
-                              | v => do
-                                  let hr ← liftRes (sortedValH (← frameHeap) v desc)
-                                  heapPut hr.1; pure hr.2
-                          | [_], _ =>
-                              refuse "duplicate keyword argument 'reverse' (unreachable through ingestion — CPython rejects it at compile time)"
-                          | vs, _ => raisePy (.typeError s!"sorted expected 1 argument, got {vs.length}")
+                          withFrameRecursionUnit do
+                            let st ← get
+                            let _ ← liftRes (builtinSortedRecursionCheck st.world.callDepth)
+                            match vs, kvs.map (·.2) with
+                            | [v], [rv] => do
+                                let desc ← truthyM rv
+                                match v with
+                                | .ref a => do
+                                    match Heap.get? (← frameHeap) a with
+                                    | some (.generator ..) => do
+                                        let vals ← inFrame (K.drainIter a)
+                                        let sorted_ ← liftRes (sortByLt desc vals)
+                                        let ad ← heapPush (.list sorted_.toArray)
+                                        pure (.ref ad)
+                                    | _ => do
+                                        let hr ← liftRes (sortedValH (← frameHeap) (.ref a) desc)
+                                        heapPut hr.1; pure hr.2
+                                | v => do
+                                    let hr ← liftRes (sortedValH (← frameHeap) v desc)
+                                    heapPut hr.1; pure hr.2
+                            | [_], _ =>
+                                refuse "duplicate keyword argument 'reverse' (unreachable through ingestion — CPython rejects it at compile time)"
+                            | vs, _ => raisePy (.typeError s!"sorted expected 1 argument, got {vs.length}")
                   else if name == "float" || name == "len" || name == "bool" || name == "any" || name == "all" then
                     -- CPython's float, len, and bool constructors accept no keyword
                     -- arguments. Evaluate both argument lists before their

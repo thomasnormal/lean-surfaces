@@ -2471,134 +2471,136 @@ theorem ceEvalExpr_succ (ih : CE fuel) : CEEvalExpr (fuel + 1) := by
                         | cons d t2 => exact .exn hs3 _
                     case bsorted =>
                       refine .bind (ClockErasedF.flattenStarRun (ihEs m st args.toList h)) fun s2 vs hs2 => ?_
+                      refine ClockErasedF.withFrameRecursionUnit hs2 fun s2 hs2 => ?_
+                      refine .bind (.liftRes hs2 _) fun sGuard _ hsGuard => ?_
                       cases vs with
-                      | nil => exact .exn hs2 _
+                      | nil => exact .exn hsGuard _
                       | cons v t =>
                         cases t with
-                        | cons d t2 => exact .exn hs2 _
+                        | cons d t2 => exact .exn hsGuard _
                         | nil =>
                           cases v
                           case none =>
                             ce_norm
-                            refine .bind (.liftRes hs2 _) fun s9 hr hs9 => ?_
+                            refine .bind (.liftRes hsGuard _) fun s9 hr hs9 => ?_
                             obtain ⟨h9, r9⟩ := hr
                             exact .of_seed (fun tr => by first | rfl | simp) (by first | rfl | simp [FrameState.withClock_self hs9, hs9])
                           case ellipsis =>
                             ce_norm
-                            refine .bind (.liftRes hs2 _) fun s9 hr hs9 => ?_
+                            refine .bind (.liftRes hsGuard _) fun s9 hr hs9 => ?_
                             obtain ⟨h9, r9⟩ := hr
                             exact .of_seed (fun tr => by first | rfl | simp) (by first | rfl | simp [FrameState.withClock_self hs9, hs9])
                           case notImplemented =>
                             ce_norm
-                            refine .bind (.liftRes hs2 _) fun s9 hr hs9 => ?_
+                            refine .bind (.liftRes hsGuard _) fun s9 hr hs9 => ?_
                             obtain ⟨h9, r9⟩ := hr
                             exact .of_seed (fun tr => by first | rfl | simp) (by first | rfl | simp [FrameState.withClock_self hs9, hs9])
                           case surrogate code =>
                             ce_norm
-                            refine .bind (.liftRes hs2 _) fun s9 hr hs9 => ?_
+                            refine .bind (.liftRes hsGuard _) fun s9 hr hs9 => ?_
                             obtain ⟨h9, r9⟩ := hr
                             exact .of_seed (fun tr => by first | rfl | simp) (by first | rfl | simp [FrameState.withClock_self hs9, hs9])
                           case callable name =>
                             ce_norm
-                            refine .bind (.liftRes hs2 _) fun s9 hr hs9 => ?_
+                            refine .bind (.liftRes hsGuard _) fun s9 hr hs9 => ?_
                             obtain ⟨h9, r9⟩ := hr
                             exact .of_seed (fun tr => by first | rfl | simp) (by first | rfl | simp [FrameState.withClock_self hs9, hs9])
                           case bool b =>
                             ce_norm
-                            refine .bind (.liftRes hs2 _) fun s9 hr hs9 => ?_
+                            refine .bind (.liftRes hsGuard _) fun s9 hr hs9 => ?_
                             obtain ⟨h9, r9⟩ := hr
                             exact .of_seed (fun tr => by first | rfl | simp) (by first | rfl | simp [FrameState.withClock_self hs9, hs9])
                           case int n =>
                             ce_norm
-                            refine .bind (.liftRes hs2 _) fun s9 hr hs9 => ?_
+                            refine .bind (.liftRes hsGuard _) fun s9 hr hs9 => ?_
                             obtain ⟨h9, r9⟩ := hr
                             exact .of_seed (fun tr => by first | rfl | simp) (by first | rfl | simp [FrameState.withClock_self hs9, hs9])
                           case float value =>
                             ce_norm
-                            refine .bind (.liftRes hs2 _) fun s9 hr hs9 => ?_
+                            refine .bind (.liftRes hsGuard _) fun s9 hr hs9 => ?_
                             obtain ⟨h9, r9⟩ := hr
                             exact .of_seed (fun tr => by first | rfl | simp) (by first | rfl | simp [FrameState.withClock_self hs9, hs9])
                           case str s0 =>
                             ce_norm
-                            refine .bind (.liftRes hs2 _) fun s9 hr hs9 => ?_
+                            refine .bind (.liftRes hsGuard _) fun s9 hr hs9 => ?_
                             obtain ⟨h9, r9⟩ := hr
                             exact .of_seed (fun tr => by first | rfl | simp) (by first | rfl | simp [FrameState.withClock_self hs9, hs9])
                           case bytes values =>
                             ce_norm
-                            refine .bind (.liftRes hs2 _) fun nextState result invariant => ?_
+                            refine .bind (.liftRes hsGuard _) fun nextState result invariant => ?_
                             obtain ⟨nextHeap, value⟩ := result
                             exact .of_seed (fun trace => by first | rfl | simp)
                               (by first | rfl | simp [FrameState.withClock_self invariant, invariant])
                           case tuple xs0 =>
                             ce_norm
-                            refine .bind (.liftRes hs2 _) fun s9 hr hs9 => ?_
+                            refine .bind (.liftRes hsGuard _) fun s9 hr hs9 => ?_
                             obtain ⟨h9, r9⟩ := hr
                             exact .of_seed (fun tr => by first | rfl | simp) (by first | rfl | simp [FrameState.withClock_self hs9, hs9])
                           case listV xs0 =>
                             ce_norm
-                            refine .bind (.liftRes hs2 _) fun s9 hr hs9 => ?_
+                            refine .bind (.liftRes hsGuard _) fun s9 hr hs9 => ?_
                             obtain ⟨h9, r9⟩ := hr
                             exact .of_seed (fun tr => by first | rfl | simp) (by first | rfl | simp [FrameState.withClock_self hs9, hs9])
                           case ntuple tn0 fs0 xs0 =>
                             ce_norm
-                            refine .bind (.liftRes hs2 _) fun s9 hr hs9 => ?_
+                            refine .bind (.liftRes hsGuard _) fun s9 hr hs9 => ?_
                             obtain ⟨h9, r9⟩ := hr
                             exact .of_seed (fun tr => by first | rfl | simp) (by first | rfl | simp [FrameState.withClock_self hs9, hs9])
                           case rangeV lo0 hi0 st0 =>
                             ce_norm
-                            refine .bind (.liftRes hs2 _) fun s9 hr hs9 => ?_
+                            refine .bind (.liftRes hsGuard _) fun s9 hr hs9 => ?_
                             obtain ⟨h9, r9⟩ := hr
                             exact .of_seed (fun tr => by first | rfl | simp) (by first | rfl | simp [FrameState.withClock_self hs9, hs9])
                           case ref a =>
                             ce_norm
-                            cases hh : Heap.get? s2.world.heap a with
+                            cases hh : Heap.get? sGuard.world.heap a with
                             | some obj =>
                               cases obj
                               case cell cv0 =>
                                 ce_norm
-                                refine .bind (.liftRes hs2 _) fun s9 hr hs9 => ?_
+                                refine .bind (.liftRes hsGuard _) fun s9 hr hs9 => ?_
                                 obtain ⟨h9, r9⟩ := hr
                                 exact .of_seed (fun tr => by first | rfl | simp) (by first | rfl | simp [FrameState.withClock_self hs9, hs9])
                               case list xs0 =>
                                 ce_norm
-                                refine .bind (.liftRes hs2 _) fun s9 hr hs9 => ?_
+                                refine .bind (.liftRes hsGuard _) fun s9 hr hs9 => ?_
                                 obtain ⟨h9, r9⟩ := hr
                                 exact .of_seed (fun tr => by first | rfl | simp) (by first | rfl | simp [FrameState.withClock_self hs9, hs9])
                               case dict entries ver =>
                                 ce_norm
-                                refine .bind (.liftRes hs2 _) fun s9 hr hs9 => ?_
+                                refine .bind (.liftRes hsGuard _) fun s9 hr hs9 => ?_
                                 obtain ⟨h9, r9⟩ := hr
                                 exact .of_seed (fun tr => by first | rfl | simp) (by first | rfl | simp [FrameState.withClock_self hs9, hs9])
                               case dictView da kind =>
                                 ce_norm
-                                refine .bind (.liftRes hs2 _) fun s9 hr hs9 => ?_
+                                refine .bind (.liftRes hsGuard _) fun s9 hr hs9 => ?_
                                 obtain ⟨h9, r9⟩ := hr
                                 exact .of_seed (fun tr => by first | rfl | simp) (by first | rfl | simp [FrameState.withClock_self hs9, hs9])
                               case «instance» cid attrs =>
                                 ce_norm
-                                refine .bind (.liftRes hs2 _) fun s9 hr hs9 => ?_
+                                refine .bind (.liftRes hsGuard _) fun s9 hr hs9 => ?_
                                 obtain ⟨h9, r9⟩ := hr
                                 exact .of_seed (fun tr => by first | rfl | simp) (by first | rfl | simp [FrameState.withClock_self hs9, hs9])
                               case closure nm ps ao lo hg2 ig bd cap =>
                                 ce_norm
-                                refine .bind (.liftRes hs2 _) fun s9 hr hs9 => ?_
+                                refine .bind (.liftRes hsGuard _) fun s9 hr hs9 => ?_
                                 obtain ⟨h9, r9⟩ := hr
                                 exact .of_seed (fun tr => by first | rfl | simp) (by first | rfl | simp [FrameState.withClock_self hs9, hs9])
                               case pyset xs0 =>
                                 ce_norm
-                                refine .bind (.liftRes hs2 _) fun s9 hr hs9 => ?_
+                                refine .bind (.liftRes hsGuard _) fun s9 hr hs9 => ?_
                                 obtain ⟨h9, r9⟩ := hr
                                 exact .of_seed (fun tr => by first | rfl | simp) (by first | rfl | simp [FrameState.withClock_self hs9, hs9])
                               case generator qn l k stat =>
                                 refine .bind
-                                  (ClockErasedW.withLocals (ihDrain m s2.world a hs2))
+                                  (ClockErasedW.withLocals (ihDrain m sGuard.world a hsGuard))
                                   fun s3 vals hs3 => ?_
                                 ce_norm
                                 refine .bind (.liftRes hs3 _) fun s4 sorted2 hs4 => ?_
                                 exact .of_seed (fun tr => by first | rfl | simp) (by first | rfl | simp [FrameState.withClock_self hs4, hs4])
                             | none =>
                               ce_norm
-                              refine .bind (.liftRes hs2 _) fun s3 hr hs3 => ?_
+                              refine .bind (.liftRes hsGuard _) fun s3 hr hs3 => ?_
                               obtain ⟨h2, r2⟩ := hr
                               exact .of_seed (fun tr => by first | rfl | simp) (by first | rfl | simp [FrameState.withClock_self hs3, hs3])
                     case bmax =>
@@ -3298,15 +3300,18 @@ theorem ceEvalExpr_succ (ih : CE fuel) : CEEvalExpr (fuel + 1) := by
                     obtain ⟨k0, v0⟩ := kv
                     exact .bind (ClockErasedF.flattenStarRun (ihEs m st args.toList h)) fun s2 vs hs2 =>
                       .bind (ihEs m s2 (kwargs.toList.map (·.2)) hs2) fun s3 kvs hs3 =>
-                        .exn hs3 _
+                        ClockErasedF.withFrameRecursionUnit hs3 fun s3 hs3 =>
+                          .bind (.liftRes hs3 _) fun sGuard _ hsGuard => .unsupported
                   | none =>
                     refine .bind (ClockErasedF.flattenStarRun (ihEs m st args.toList h)) fun s2 vs hs2 =>
                       .bind (ihEs m s2 (kwargs.toList.map (·.2)) hs2) fun s3 kvs hs3 => ?_
+                    refine ClockErasedF.withFrameRecursionUnit hs3 fun s3 hs3 => ?_
+                    refine .bind (.liftRes hs3 _) fun sGuard _ hsGuard => ?_
                     cases vs with
-                    | nil => exact .exn hs3 _
+                    | nil => exact .exn hsGuard _
                     | cons v t =>
                       cases t with
-                      | cons d t2 => exact .exn hs3 _
+                      | cons d t2 => exact .exn hsGuard _
                       | nil =>
                         cases kvs with
                         | nil => exact .unsupported
@@ -3315,7 +3320,7 @@ theorem ceEvalExpr_succ (ih : CE fuel) : CEEvalExpr (fuel + 1) := by
                           | cons rv2 t3 => exact .unsupported
                           | nil =>
                             ce_norm
-                            refine .bind (.liftRes hs3 _) fun s4 desc hs4 => ?_
+                            refine .bind (.liftRes hsGuard _) fun s4 desc hs4 => ?_
                             cases v
                             case none =>
                               ce_norm

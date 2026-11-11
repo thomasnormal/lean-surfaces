@@ -738,10 +738,13 @@ theorem fuelMono (fuel : Nat) :
                       | some kv =>
                         exact Run.le_bind (flattenStarRun_mono (ihEs m st cargs.toList k hk)) fun st _ =>
                           Run.le_bind (ihEs m st (ckw.toList.map (·.2)) k hk) fun st _ =>
-                            Run.le_refl _
+                            Run.le_withFrameRecursionUnit fun st =>
+                              Run.le_bind (Run.le_refl _) fun st _ => Run.le_refl _
                       | none =>
                         refine Run.le_bind (flattenStarRun_mono (ihEs m st cargs.toList k hk)) fun st vs => ?_
                         refine Run.le_bind (ihEs m st (ckw.toList.map (·.2)) k hk) fun st kvs => ?_
+                        refine Run.le_withFrameRecursionUnit fun st => ?_
+                        refine Run.le_bind (Run.le_refl _) fun st _ => ?_
                         cases vs with
                         | nil => exact Run.le_refl _
                         | cons v vtail =>
@@ -1078,6 +1081,8 @@ theorem fuelMono (fuel : Nat) :
                                 | cons _ _ => exact Run.le_refl _
                           -- sorted
                           · refine Run.le_bind (flattenStarRun_mono (ihEs m st cargs.toList k hk)) fun st vs => ?_
+                            refine Run.le_withFrameRecursionUnit fun st => ?_
+                            refine Run.le_bind (Run.le_refl _) fun st _ => ?_
                             cases vs with
                             | nil => exact Run.le_refl _
                             | cons v vtail =>

@@ -22,6 +22,7 @@ and every existing `§Lnn` reference still resolves there.
 | id | class | title | lane |
 | --- | --- | --- | --- |
 | `2026-11-11-ls-sv2-477` |  | unify the E-core-0 and observation cones | ls-sv2 |
+| `2026-11-11-pyfoundation-31` |  | count `sorted` recursion and materialization | python-completeness |
 | `2026-11-10-pyfoundation-30` |  | refresh the generated backlog index | python-completeness |
 | `2026-11-10-pyfoundation-29` |  | revalidate clock erasure | python-completeness |
 | `2026-11-10-pyfoundation-28` |  | revalidate string specification guard | python-completeness |
@@ -48,6 +49,8 @@ and every existing `§Lnn` reference still resolves there.
 | `2026-11-10-pyfoundation-6` |  | finish CPython recursion units | python-completeness |
 | `2026-11-10-pyfoundation-5` |  | eager non-iterable genexp creation check | python-completeness |
 | `2026-11-10-pyfoundation-2` |  | protocol census | python-completeness |
+| `2026-11-10-cpp-2` |  | `cpp-two-callable-evaluators`: one callable semantics | cpp |
+| `2026-11-10-cpp-1` |  | `cpp-diff-handwritten-twins`: source-derived differential execution | cpp |
 | `2026-11-09-pycomplete-487` |  | revalidate static definition-delete audit | python-completeness |
 | `2026-11-09-pycomplete-486` |  | revalidate shape-specific ingestion audit | python-completeness |
 | `2026-11-09-pycomplete-485` |  | revalidate signed set-order audit | python-completeness |

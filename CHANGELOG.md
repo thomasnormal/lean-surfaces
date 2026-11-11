@@ -84,6 +84,12 @@
 
 - Made the C++ differential harness require a pinned native oracle by default;
   exploratory runs must opt into `--allow-oracle` explicitly.
+- Count `sorted`'s builtin and nested list-sort recursion after argument
+  evaluation, including generator materialization and unsupported keyword
+  ordering; refuse calls at the unmodeled boundary.
+
+- Assign dated IDs to two C++ backlog records so the generated index passes
+  its freshness and heading checks after the lane merge.
 
 - Fixed the TinyXML-2 coverage caller's C++ runtime linkage so its
   provenance-verified native calls can run when the system runtime is older.

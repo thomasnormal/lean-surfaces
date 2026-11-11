@@ -57,6 +57,7 @@ import os
 import subprocess
 import struct
 import sys
+import tempfile
 
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -283,8 +284,10 @@ def run_lean_batch(runner_cmd, jobs, on_result, batch_flags=()):
     caller can record it and print progress. A runner that dies early
     yields explicit ``runner-error`` entries for the missing tail, never
     a silently shortened table."""
-    jobs_path = os.path.join(REPO_ROOT, "harness", ".batch_jobs.jsonl")
-    with open(jobs_path, "w", encoding="utf-8") as f:
+    fd, jobs_path = tempfile.mkstemp(
+        prefix=".batch_jobs-", suffix=".jsonl", dir=os.path.join(REPO_ROOT, "harness")
+    )
+    with os.fdopen(fd, "w", encoding="utf-8") as f:
         f.write("\n".join(jobs) + "\n")
     cmd = list(runner_cmd) + ["--batch", jobs_path] + list(batch_flags)
     n = 0

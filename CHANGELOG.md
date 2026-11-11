@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Added a kernel-checked binary-expression refinement theorem for integer
+  literal addition, including explicit dispatch guards and left-to-right
+  child-state threading.
+
 - Added a kernel-checked unary-expression refinement theorem that composes
   the constant-child bridge with the shared unary worker bridge and records the
   legacy evaluator's child-fuel requirement.

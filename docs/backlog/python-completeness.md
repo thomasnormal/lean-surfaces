@@ -247,6 +247,23 @@ fuel-free. The proof preserves left-to-right state and closes the exact
 DECIDED: continue the control-level refinement one AST arm at a time, keeping
 fuel hypotheses explicit; recursive calls and script execution remain open.
 
+## 2026-11-11-pyfoundation-58 — prove binary literal-add control refinement
+
+The control bridge now covers integer literal addition. The proof rewrites
+both legacy child evaluations through the constant theorem, preserves their
+left-to-right state threading, and closes the monadic `binOpHM` dispatch after
+discharging its `bitAnd`, `mult`, and `mod` guards. The fuel hypothesis remains
+explicit because the monadic expression half is fuel-free.
+
+| Measurement | Result |
+|---|---|
+| Target | managed `lake build LeanModels/Python/Monadic/Eval.lean` passed |
+| New theorem | `Monadic.twinAgrees_evalOpen_intAdd` |
+| Semantic change | theorem only; no evaluator behavior change |
+
+DECIDED: keep extending the control refinement through literal expression
+arms before attempting recursive calls or scripts.
+
 ## 2026-11-11-pyfoundation-43 — repair PayloadBlind comparison recursion transport
 
 The proof observer now transports the heap-aware rich-comparison recursion

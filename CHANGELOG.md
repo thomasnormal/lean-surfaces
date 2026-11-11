@@ -3,6 +3,9 @@
 ## Unreleased
 
 - Added a kernel-checked binary-expression refinement theorem for integer
+  literal right-shift, preserving explicit fuel and dispatch decisions.
+
+- Added a kernel-checked binary-expression refinement theorem for integer
   literal left-shift, preserving explicit fuel and dispatch decisions.
 
 - Added a kernel-checked binary-expression refinement theorem for integer

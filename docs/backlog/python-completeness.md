@@ -372,6 +372,21 @@ guards, and reuses the shared binary worker refinement.
 DECIDED: continue literal binary refinement with explicit fuel and dispatch
 evidence; recursive and script adequacy remain open.
 
+## 2026-11-11-pyfoundation-66 — prove binary literal-right-shift refinement
+
+The literal binary control family now covers right-shift. Both literal
+children are transported through the constant bridge, heap-specialized guards
+are discharged, and the shared binary worker equation closes the result.
+
+| Measurement | Result |
+|---|---|
+| Target | managed `lake build LeanModels/Python/Monadic/Eval.lean` passed |
+| New theorem | `Monadic.twinAgrees_evalOpen_intRShift` |
+| Semantic change | theorem only; no evaluator behavior change |
+
+DECIDED: continue literal binary refinement with explicit fuel and dispatch
+evidence; recursive and script adequacy remain open.
+
 ## 2026-11-11-pyfoundation-43 — repair PayloadBlind comparison recursion transport
 
 The proof observer now transports the heap-aware rich-comparison recursion

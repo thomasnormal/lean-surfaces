@@ -34,6 +34,7 @@ and every existing `§Lnn` reference still resolves there.
 | `2026-11-11-pyfoundation-33` |  | reconfirm protocol findings on the current runner | python-completeness |
 | `2026-11-11-pyfoundation-32` |  | count `round` recursion and binder order | python-completeness |
 | `2026-11-11-pyfoundation-31` |  | count `sorted` recursion and materialization | python-completeness |
+| `2026-11-11-pyformat-1` |  | admit measured percent-format width flags | python-completeness |
 | `2026-11-10-pyfoundation-30` |  | refresh the generated backlog index | python-completeness |
 | `2026-11-10-pyfoundation-29` |  | revalidate clock erasure | python-completeness |
 | `2026-11-10-pyfoundation-28` |  | revalidate string specification guard | python-completeness |

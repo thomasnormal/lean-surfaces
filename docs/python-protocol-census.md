@@ -25,7 +25,7 @@ marks a control/transport wrapper that still needs an adequacy theorem.
 
 | Source arm | Trunk | Runner | Protocol route |
 |---|---|---|---|
-| `+`, `-`, `*`, `/`, `//`, `%`, `**`, shifts, bitwise ops | `evalBinOp`; heap `evalBinOpH` for refs | `binOpM` / `evalOpen` | shared arithmetic workers; `**` uses the declared exact-base slice |
+| `+`, `-`, `*`, `/`, `//`, `%`, `**`, shifts, bitwise ops | `evalBinOp`; heap `evalBinOpH` for refs | `binOpM` / `evalOpen` | shared arithmetic workers; string `%` admits bare conversions plus measured `%5…`/`%05…`/`%-5…` width forms; precision, other flags, and mapping keys remain loud; `**` uses the declared exact-base slice |
 | unary `+`, `-`, `~`, `not` | `evalUnaryOp`, `evalUnaryOpH` | `unaryOpM` | `not` delegates to shared truthiness |
 | `==`, `!=`, `<`, `<=`, `>`, `>=` | `evalCompareOpH`, `ordFromLt` | `evalCompareChainM` → shared `evalCompareOpH` | equality/order workers; non-finite container comparisons refuse |
 | `is`, `is not` | `evalCompareOpH` identity arms | `evalCompareChainM` identity arms | refs/None/singletons; other immediate identity is loud |

@@ -236,3 +236,15 @@ def nested_str(n):
     for _ in range(n):
         value = [value]
     return str(value)
+
+
+def percent_width(value):
+    return "%5s" % value
+
+
+def percent_zero_width(value):
+    return "%05d" % value
+
+
+def percent_left_width(value):
+    return "%-5r" % value

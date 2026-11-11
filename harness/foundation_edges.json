@@ -519,6 +519,48 @@
   {
     "args": [
       [
+        "x"
+      ],
+      [
+        3
+      ]
+    ],
+    "expect": "match",
+    "file": "harness/foundation_probe.py",
+    "function": "percent_width",
+    "note": "percent-format width flag over admitted scalar conversions."
+  },
+  {
+    "args": [
+      [
+        3
+      ],
+      [
+        -3
+      ]
+    ],
+    "expect": "match",
+    "file": "harness/foundation_probe.py",
+    "function": "percent_zero_width",
+    "note": "percent-format zero-padding flag over integer conversions."
+  },
+  {
+    "args": [
+      [
+        "x"
+      ],
+      [
+        3
+      ]
+    ],
+    "expect": "match",
+    "file": "harness/foundation_probe.py",
+    "function": "percent_left_width",
+    "note": "percent-format left-alignment flag over admitted conversions."
+  },
+  {
+    "args": [
+      [
         0.0,
         0.0
       ],

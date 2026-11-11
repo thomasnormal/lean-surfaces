@@ -17,6 +17,24 @@ before built. `harness/refusal_census.py` is the scoreboard and the acceptance
 battery in one — it exits nonzero on drift, so a landing that moves the tier
 must move the census in the same commit.
 
+## 2026-11-11-pyformat-1 — admit measured percent-format width flags
+
+The string modulo worker now handles CPython 3.9's `%5…`, `%05…`, and
+`%-5…` width forms for every conversion already admitted by the scalar tier:
+`c`, `s`, `r`, `a`, `d`, `i`, `u`, `x`, and `o`. Zero padding applies only to
+numeric conversions, matching CPython; precision, other flags, and mapping-key
+syntax remain loud.
+
+| Measurement | Result |
+|---|---|
+| Generated edge battery | 52 cases, 87 calls |
+| Native runner | 72 MATCH, 15 documented refusals, 0 failures |
+| Proof interpreter | 72 MATCH, 15 loud refusals, 0 failures |
+| Managed build | `lake build leanmodels-run`, 40 jobs, passed |
+
+DECIDED: retain loudness for the remaining format mini-language until its
+grammar is represented directly.
+
 ## 2026-11-11-pyfoundation-31 — count `sorted` recursion and materialization
 
 The builtin recursion audit found that `sorted` was missing the nested call

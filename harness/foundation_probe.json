@@ -6,7 +6,7 @@
     "version": "3.9.25"
   },
   "source_file": "harness/foundation_probe.py",
-  "source_sha256": "28e1d9de08c68ad3f236f74afac6da33554a50a1a2cc861e8897d3349ca4fc99",
+  "source_sha256": "48fcb74b57ee6e13c4a88c99270bd8151beafcb1e76f7cfb9cd33fd7bd3786fc",
   "module": {
     "kind": "Module",
     "body": [
@@ -6041,6 +6041,207 @@
               ],
               "keywords": [],
               "call_unsupported": null
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 241,
+          "col_offset": 0,
+          "end_lineno": 242,
+          "end_col_offset": 24
+        },
+        "name": "percent_width",
+        "args": [
+          {
+            "arg": "value",
+            "span": {
+              "lineno": 241,
+              "col_offset": 18,
+              "end_lineno": 241,
+              "end_col_offset": 23
+            }
+          }
+        ],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 242,
+              "col_offset": 4,
+              "end_lineno": 242,
+              "end_col_offset": 24
+            },
+            "value": {
+              "kind": "BinOp",
+              "span": {
+                "lineno": 242,
+                "col_offset": 11,
+                "end_lineno": 242,
+                "end_col_offset": 24
+              },
+              "left": {
+                "kind": "Constant",
+                "span": {
+                  "lineno": 242,
+                  "col_offset": 11,
+                  "end_lineno": 242,
+                  "end_col_offset": 16
+                },
+                "value": {
+                  "type": "str",
+                  "value": "%5s"
+                }
+              },
+              "op": "Mod",
+              "right": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 242,
+                  "col_offset": 19,
+                  "end_lineno": 242,
+                  "end_col_offset": 24
+                },
+                "id": "value"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 245,
+          "col_offset": 0,
+          "end_lineno": 246,
+          "end_col_offset": 25
+        },
+        "name": "percent_zero_width",
+        "args": [
+          {
+            "arg": "value",
+            "span": {
+              "lineno": 245,
+              "col_offset": 23,
+              "end_lineno": 245,
+              "end_col_offset": 28
+            }
+          }
+        ],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 246,
+              "col_offset": 4,
+              "end_lineno": 246,
+              "end_col_offset": 25
+            },
+            "value": {
+              "kind": "BinOp",
+              "span": {
+                "lineno": 246,
+                "col_offset": 11,
+                "end_lineno": 246,
+                "end_col_offset": 25
+              },
+              "left": {
+                "kind": "Constant",
+                "span": {
+                  "lineno": 246,
+                  "col_offset": 11,
+                  "end_lineno": 246,
+                  "end_col_offset": 17
+                },
+                "value": {
+                  "type": "str",
+                  "value": "%05d"
+                }
+              },
+              "op": "Mod",
+              "right": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 246,
+                  "col_offset": 20,
+                  "end_lineno": 246,
+                  "end_col_offset": 25
+                },
+                "id": "value"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 249,
+          "col_offset": 0,
+          "end_lineno": 250,
+          "end_col_offset": 25
+        },
+        "name": "percent_left_width",
+        "args": [
+          {
+            "arg": "value",
+            "span": {
+              "lineno": 249,
+              "col_offset": 23,
+              "end_lineno": 249,
+              "end_col_offset": 28
+            }
+          }
+        ],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 250,
+              "col_offset": 4,
+              "end_lineno": 250,
+              "end_col_offset": 25
+            },
+            "value": {
+              "kind": "BinOp",
+              "span": {
+                "lineno": 250,
+                "col_offset": 11,
+                "end_lineno": 250,
+                "end_col_offset": 25
+              },
+              "left": {
+                "kind": "Constant",
+                "span": {
+                  "lineno": 250,
+                  "col_offset": 11,
+                  "end_lineno": 250,
+                  "end_col_offset": 17
+                },
+                "value": {
+                  "type": "str",
+                  "value": "%-5r"
+                }
+              },
+              "op": "Mod",
+              "right": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 250,
+                  "col_offset": 20,
+                  "end_lineno": 250,
+                  "end_col_offset": 25
+                },
+                "id": "value"
+              }
             }
           }
         ]

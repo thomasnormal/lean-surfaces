@@ -78,6 +78,25 @@ is intentionally narrower.
 DECIDED: keep the existing loud boundaries and exact admissions while the
 protocol census proceeds.
 
+## 2026-11-11-pyfoundation-34 — publish the abstraction and platform ledger
+
+The foundation ledger is now explicit in `docs/python-abstraction-ledger.md`.
+It lists each deliberate simplification, its observable operations, its exact
+domain or refusal, and the battery that pins the boundary. A second table
+records the CPython 3.9 frontend/oracle, 64-bit `Py_ssize_t`, binary64,
+Unicode 13.0.0, recursion limit, libm, hash, locale, allocation, and clock
+choices. The protocol census remains the call-site inventory; the ledger is
+the observer and platform record required before widening a protocol.
+
+| Measurement | Result |
+|---|---|
+| Ledger rows | 10 semantic abstractions and 9 platform/input assumptions |
+| Cross-references | protocol census, memory model, float docs, foundation and differential batteries |
+| Semantic change | none; declared-observation documentation |
+
+DECIDED: require every future admission to name its observer and platform
+domain in this ledger before claiming exactness.
+
 ## 2026-11-10-pyfoundation-23 — pin the leanpy quickstart admission
 
 The public quickstart's Python 3.9 pin is now enforced at the runner boundary.

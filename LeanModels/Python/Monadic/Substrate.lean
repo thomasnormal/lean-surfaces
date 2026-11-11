@@ -251,6 +251,9 @@ theorem bind_apply {σ α β : Type} (x : PyM σ α) (f : α → PyM σ β) (s :
 theorem toRun_pure {σ α : Type} (a : α) (s : σ) :
     toRun (pure a : PyM σ α) s = .ok s a := rfl
 
+theorem toRun_get {σ : Type} (s : σ) :
+    toRun (get : PyM σ σ) s = .ok s s := rfl
+
 theorem toRun_bind {σ α β : Type} (x : PyM σ α) (f : α → PyM σ β) (s : σ) :
     toRun (x >>= f) s = Run.bind (toRun x s) (fun s' a => toRun (f a) s') := by
   simp only [toRun, bind_apply]

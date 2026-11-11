@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Added a kernel-checked `toRun` bridge for the monadic heap-aware unary
+  worker, so unary expression refinement proofs can reuse one state-read
+  equation instead of expanding the frame monad at every site.
+
 - Added a kernel-checked control-level refinement seed relating monadic and
   legacy expression evaluation for constant AST nodes, while keeping the
   recursive and script-layer adequacy boundary explicit.

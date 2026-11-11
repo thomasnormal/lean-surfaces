@@ -16,12 +16,13 @@ with ids `YYYY-MM-DD-<lane>-<n>` that need no reservation. Everything before
 the split is in [`docs/backlog-archive.md`](../backlog-archive.md), frozen,
 and every existing `§Lnn` reference still resolves there.
 
-**1407 entries across 19 lanes.** Regenerate with
+**1408 entries across 19 lanes.** Regenerate with
 `tools/backlog-index.sh`; check with `--check` (exit 1 on drift).
 
 | id | class | title | lane |
 | --- | --- | --- | --- |
 | `2026-11-11-ls-sv2-477` |  | unify the E-core-0 and observation cones | ls-sv2 |
+| `2026-11-11-pyfoundation-56` |  | share the unary worker refinement edge | python-completeness |
 | `2026-11-11-pyfoundation-55` |  | add the first control refinement bridge | python-completeness |
 | `2026-11-11-pyfoundation-54` |  | revalidate foundation evidence sequentially | python-completeness |
 | `2026-11-11-pyfoundation-53` |  | refresh runner artifact and survey | python-completeness |
@@ -1367,7 +1368,7 @@ and every existing `§Lnn` reference still resolves there.
 | ``cpp-two-callable-evaluators`:` |  | one callable semantics | cpp |
 | ``cpp-target-profile-unchecked`:` |  | artifact profile gate | cpp |
 | ``cpp-switch-and-ir-lowering`:` |  | source-item switch semantics | cpp |
-| ``cpp-spelling-identity`:` |  | qualified-name suffix guard | cpp |
+| ``cpp-spelling-identity`:` |  | structured base and result identity | cpp |
 | ``cpp-harness-oracle-misfile`:` |  | native oracle policy | cpp |
 | ``cpp-diff-handwritten-twins`:` |  | source-derived differential execution | cpp |
 | ``cpp-diff-handwritten-twins`:` |  | reporting boundary | cpp |

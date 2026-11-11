@@ -375,7 +375,23 @@ theorem twinAgrees_binOp (op : BinOp) (a b : RVal) (st : FrameState) :
   unfold binOpM
   exact twinAgrees_liftRes (evalBinOp op a b) st
 
+/- The heap-aware unary worker has the same single-door refinement edge as the
+   pure binary worker. Keeping this equation here prevents expression-control
+   proofs from re-expanding the StateT frame-heap read at every unary arm. -/
+theorem twinAgrees_unaryOp (op : UnaryOp) (v : RVal) (st : FrameState) :
+    LeanModels.Python.Monadic.toRun (unaryOpM op v) st =
+      Run.liftRes st (evalUnaryOpH st.world.heap op v) := by
+  unfold unaryOpM
+  rw [toRun_bind]
+  unfold frameHeap
+  rw [toRun_bind]
+  rw [toRun_get]
+  simp only [toRun_pure]
+  simpa [Run.liftRes] using
+    (twinAgrees_liftRes (evalUnaryOpH st.world.heap op v) st)
+
 #print axioms twinAgrees_liftRes
 #print axioms twinAgrees_binOp
+#print axioms twinAgrees_unaryOp
 
 end LeanModels.Python.Monadic

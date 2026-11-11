@@ -213,6 +213,23 @@ explicitly open rather than being implied by this seed.
 DECIDED: retain the explicit control-level adequacy boundary and extend the
 bridge one AST control arm at a time.
 
+## 2026-11-11-pyfoundation-56 — share the unary worker refinement edge
+
+The next refinement seam is the heap-aware unary worker used by the monadic
+expression evaluator. Added `toRun_get` to the shared substrate and a
+kernel-checked `twinAgrees_unaryOp` equation. The theorem preserves the
+frame-state read and the exact `Run.liftRes` result, so future unary expression
+control proofs do not re-expand the StateT plumbing.
+
+| Measurement | Result |
+|---|---|
+| `lake build LeanModels/Python/Monadic/Prim.lean` | managed build passed |
+| `lake build LeanModels/Python/Monadic/Eval.lean` | managed build passed |
+| Semantic change | theorem/substrate bridge only |
+
+DECIDED: reuse the shared unary bridge in the next expression-control proof;
+recursive and script-level adequacy remain open.
+
 ## 2026-11-11-pyfoundation-43 — repair PayloadBlind comparison recursion transport
 
 The proof observer now transports the heap-aware rich-comparison recursion

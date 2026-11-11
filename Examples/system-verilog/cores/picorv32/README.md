@@ -1676,3 +1676,19 @@ Verilog 13.0 and readiness-gated Xcelium 24.03-s004 each match all three rows.
 The implementation rejects other unsupported module members instead of
 silently dropping them; the canonical `instantiateE2` route still stops at
 PicoRV32's unpacked `cpuregs` declaration.
+
+## 2026-11-11 E receipt for an input-only empty task
+
+The next retained member in the source-shaped E memory profile is covered by
+the clean-room fixture
+[`sem2/task_memory_e`](../../sem2/task_memory_e/).  It keeps the parser's
+`SubroutineSymbol:empty-task` marker for a referenced task whose body is an
+empty statement.  The task call is a no-op, while the neighboring
+parameter-sized memory still receives its nonblocking write.  Other task
+markers remain loud; the canonical E route is not changed by this receipt.
+
+The Lean receipt covers the retained marker, the unsupported-task guard, and
+the three-row trace.  Icarus Verilog 13.0 and readiness-gated Xcelium
+24.03-s004 each match all three rows.  This is a source-shaped E memory
+receipt; it does not claim a whole-core PicoRV32 execution or refinement
+theorem.

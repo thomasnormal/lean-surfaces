@@ -60,18 +60,20 @@ def resToExcept {α : Type} : Res α → Except String α
 
 /-! ## Retained module members
 
-The symbolic extractor keeps a declaration that is outside the ordinary
-declaration vocabulary as a structured `(sv_kind, text)` marker in
-`PDesign.others`.  The memory profile admits one such declaration: an
-undriven scalar four-state wire.  IEEE 1800-2023 §6.6 gives that net the
-high-impedance value `z` when it has no driver.  The parser has already
-identified the marker and supplied the net's name; this code does not recover
-or parse source text.  The two x/z literal markers are metadata for retained
-expression nodes handled by `evalMemEExpr` and therefore do not allocate a
-declaration here. -/
+The symbolic extractor keeps module members outside the ordinary declaration
+vocabulary as structured `(sv_kind, text)` markers in `PDesign.others`.  The
+memory profile admits only the exact shapes modelled here: an undriven scalar
+four-state wire and a referenced input-only task whose body is the empty
+statement.  IEEE 1800-2023 §6.6 gives an undriven net the high-impedance value
+`z`; the empty task has no effect when its parser-retained call is executed.
+The parser has already identified each marker and supplied its source-shaped
+metadata; this code does not recover or parse source text.  The two x/z literal
+markers are metadata for retained expression nodes handled by `evalMemEExpr`
+and therefore do not allocate a declaration here. -/
 
 def memEAllowedOther (entry : String × String) : Bool :=
-  entry.1 == "NetSymbol:net-z" ||
+  entry.1 == "SubroutineSymbol:empty-task" ||
+    entry.1 == "NetSymbol:net-z" ||
     entry.1 == "IntegerLiteral:unsized-xz-parametric" ||
     entry.1 == "ConversionExpression:xz-literal-parametric"
 

@@ -9,5 +9,5 @@ parameterized destination is wider.  The source marker is not lowered.
 
 The Lean guard runs the E memory profile at `N=40` and `N=8`, checking the
 parser payload, both widths, x-condition merging, and the x-valued memory
-read.  `check.py` compares the same rows against Icarus and, when the refsim
-readiness gate answers, Xcelium.
+read.  `check.py` compares the same rows against Icarus and, when the
+simulator readiness gate answers, Xcelium.

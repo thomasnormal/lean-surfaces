@@ -11,7 +11,7 @@ The source follows IEEE 1800-2023 §§9.2.2.2.1, 9.2.2.4 and 10.4.2. The
 fixture's parser/profile proof confirms three retained processes and the
 existing mixed profile. `agree.lean` deliberately makes no E execution claim:
 the mixed executor is the Step 10 semantic work. `check.py` compares the
-source rows from Icarus 13.0 with Xcelium through the refsim readiness gate;
+source rows from Icarus 13.0 with Xcelium through the simulator readiness gate;
 rows that change `q` at an edge must also show the post-edge `n` and `post`
 values after comb re-settling.
 

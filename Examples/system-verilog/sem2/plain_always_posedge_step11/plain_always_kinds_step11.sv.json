@@ -1,0 +1,562 @@
+{
+  "schema_version": "sv-0.2",
+  "language": "systemverilog",
+  "frontend": {
+    "name": "pyslang",
+    "family": "pyslang-11"
+  },
+  "mode": "symbolic",
+  "top": "plain_always_kinds_step11",
+  "source_files": [
+    {
+      "path": "Examples/system-verilog/sem2/plain_always_posedge_step11/plain_always_kinds_step11.sv",
+      "sha256": "ca52620f78b5502756acfe980866e92a2aa85e6728a408cf721b332b1d0e735b"
+    }
+  ],
+  "packages": [],
+  "design": {
+    "kind": "Design",
+    "modules": [
+      {
+        "kind": "Module",
+        "span": {
+          "line": 2,
+          "col": 1,
+          "end_line": 23,
+          "end_col": 10
+        },
+        "name": "plain_always_kinds_step11",
+        "imports": [],
+        "params": [],
+        "types": [],
+        "ports": [
+          {
+            "kind": "Port",
+            "span": {
+              "line": 3,
+              "col": 17,
+              "end_line": 3,
+              "end_col": 20
+            },
+            "name": "clk",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 4,
+              "col": 23,
+              "end_line": 4,
+              "end_col": 26
+            },
+            "name": "sel",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 4,
+                      "col": 18,
+                      "end_line": 4,
+                      "end_col": 19
+                    },
+                    "value": 1,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 4,
+                      "col": 20,
+                      "end_line": 4,
+                      "end_col": 21
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 2
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 5,
+              "col": 23,
+              "end_line": 5,
+              "end_col": 24
+            },
+            "name": "d",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 5,
+                      "col": 18,
+                      "end_line": 5,
+                      "end_col": 19
+                    },
+                    "value": 3,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 5,
+                      "col": 20,
+                      "end_line": 5,
+                      "end_col": 21
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 4
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 6,
+              "col": 24,
+              "end_line": 6,
+              "end_col": 25
+            },
+            "name": "q",
+            "dir": "out",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 6,
+                      "col": 19,
+                      "end_line": 6,
+                      "end_col": 20
+                    },
+                    "value": 3,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 6,
+                      "col": 21,
+                      "end_line": 6,
+                      "end_col": 22
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 4
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 7,
+              "col": 24,
+              "end_line": 7,
+              "end_col": 29
+            },
+            "name": "q_old",
+            "dir": "out",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 7,
+                      "col": 19,
+                      "end_line": 7,
+                      "end_col": 20
+                    },
+                    "value": 3,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 7,
+                      "col": 21,
+                      "end_line": 7,
+                      "end_col": 22
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 4
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 8,
+              "col": 24,
+              "end_line": 8,
+              "end_col": 30
+            },
+            "name": "q_case",
+            "dir": "out",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 8,
+                      "col": 19,
+                      "end_line": 8,
+                      "end_col": 20
+                    },
+                    "value": 3,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 8,
+                      "col": 21,
+                      "end_line": 8,
+                      "end_col": 22
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 4
+            }
+          }
+        ],
+        "decls": [],
+        "processes": [
+          {
+            "kind": "AlwaysPosedge",
+            "span": {
+              "line": 10,
+              "col": 5,
+              "end_line": 18,
+              "end_col": 8
+            },
+            "style": "always",
+            "clock": "clk",
+            "body": {
+              "kind": "Block",
+              "span": {
+                "line": 10,
+                "col": 27,
+                "end_line": 18,
+                "end_col": 8
+              },
+              "stmts": [
+                {
+                  "kind": "NonblockingAssign",
+                  "span": {
+                    "line": 11,
+                    "col": 9,
+                    "end_line": 11,
+                    "end_col": 16
+                  },
+                  "target": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 11,
+                      "col": 9,
+                      "end_line": 11,
+                      "end_col": 10
+                    },
+                    "width": 4,
+                    "name": "q"
+                  },
+                  "value": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 11,
+                      "col": 14,
+                      "end_line": 11,
+                      "end_col": 15
+                    },
+                    "width": 4,
+                    "name": "d"
+                  }
+                },
+                {
+                  "kind": "NonblockingAssign",
+                  "span": {
+                    "line": 12,
+                    "col": 9,
+                    "end_line": 12,
+                    "end_col": 17
+                  },
+                  "target": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 12,
+                      "col": 9,
+                      "end_line": 12,
+                      "end_col": 10
+                    },
+                    "width": 4,
+                    "name": "q"
+                  },
+                  "value": {
+                    "kind": "Unary",
+                    "span": {
+                      "line": 12,
+                      "col": 14,
+                      "end_line": 12,
+                      "end_col": 16
+                    },
+                    "width": 4,
+                    "op": "~",
+                    "operand": {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 12,
+                        "col": 15,
+                        "end_line": 12,
+                        "end_col": 16
+                      },
+                      "width": 4,
+                      "name": "d"
+                    }
+                  }
+                },
+                {
+                  "kind": "Case",
+                  "span": {
+                    "line": 13,
+                    "col": 9,
+                    "end_line": 17,
+                    "end_col": 16
+                  },
+                  "check": "none",
+                  "match": "normal",
+                  "subject": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 13,
+                      "col": 15,
+                      "end_line": 13,
+                      "end_col": 18
+                    },
+                    "width": 2,
+                    "name": "sel"
+                  },
+                  "items": [
+                    {
+                      "kind": "CaseItem",
+                      "patterns": [
+                        {
+                          "kind": "Literal",
+                          "span": {
+                            "line": 14,
+                            "col": 13,
+                            "end_line": 14,
+                            "end_col": 18
+                          },
+                          "width": 2,
+                          "bits": "00"
+                        }
+                      ],
+                      "body": {
+                        "kind": "NonblockingAssign",
+                        "span": {
+                          "line": 14,
+                          "col": 20,
+                          "end_line": 14,
+                          "end_col": 32
+                        },
+                        "target": {
+                          "kind": "Ident",
+                          "span": {
+                            "line": 14,
+                            "col": 20,
+                            "end_line": 14,
+                            "end_col": 26
+                          },
+                          "width": 4,
+                          "name": "q_case"
+                        },
+                        "value": {
+                          "kind": "Ident",
+                          "span": {
+                            "line": 14,
+                            "col": 30,
+                            "end_line": 14,
+                            "end_col": 31
+                          },
+                          "width": 4,
+                          "name": "d"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "CaseItem",
+                      "patterns": [
+                        {
+                          "kind": "Literal",
+                          "span": {
+                            "line": 15,
+                            "col": 13,
+                            "end_line": 15,
+                            "end_col": 18
+                          },
+                          "width": 2,
+                          "bits": "1x"
+                        }
+                      ],
+                      "body": {
+                        "kind": "NonblockingAssign",
+                        "span": {
+                          "line": 15,
+                          "col": 20,
+                          "end_line": 15,
+                          "end_col": 35
+                        },
+                        "target": {
+                          "kind": "Ident",
+                          "span": {
+                            "line": 15,
+                            "col": 20,
+                            "end_line": 15,
+                            "end_col": 26
+                          },
+                          "width": 4,
+                          "name": "q_case"
+                        },
+                        "value": {
+                          "kind": "Literal",
+                          "span": {
+                            "line": 15,
+                            "col": 30,
+                            "end_line": 15,
+                            "end_col": 34
+                          },
+                          "width": 4,
+                          "bits": "1010"
+                        }
+                      }
+                    }
+                  ],
+                  "default": {
+                    "kind": "NonblockingAssign",
+                    "span": {
+                      "line": 16,
+                      "col": 22,
+                      "end_line": 16,
+                      "end_col": 37
+                    },
+                    "target": {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 16,
+                        "col": 22,
+                        "end_line": 16,
+                        "end_col": 28
+                      },
+                      "width": 4,
+                      "name": "q_case"
+                    },
+                    "value": {
+                      "kind": "Literal",
+                      "span": {
+                        "line": 16,
+                        "col": 32,
+                        "end_line": 16,
+                        "end_col": 36
+                      },
+                      "width": 4,
+                      "bits": "0101"
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "kind": "AlwaysPosedge",
+            "span": {
+              "line": 20,
+              "col": 5,
+              "end_line": 22,
+              "end_col": 8
+            },
+            "style": "always_ff",
+            "clock": "clk",
+            "body": {
+              "kind": "Block",
+              "span": {
+                "line": 21,
+                "col": 9,
+                "end_line": 21,
+                "end_col": 20
+              },
+              "stmts": [
+                {
+                  "kind": "NonblockingAssign",
+                  "span": {
+                    "line": 21,
+                    "col": 9,
+                    "end_line": 21,
+                    "end_col": 20
+                  },
+                  "target": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 21,
+                      "col": 9,
+                      "end_line": 21,
+                      "end_col": 14
+                    },
+                    "width": 4,
+                    "name": "q_old"
+                  },
+                  "value": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 21,
+                      "col": 18,
+                      "end_line": 21,
+                      "end_col": 19
+                    },
+                    "width": 4,
+                    "name": "q"
+                  }
+                }
+              ]
+            }
+          }
+        ],
+        "generates": [],
+        "others": []
+      }
+    ],
+    "others": []
+  },
+  "lean_blocks": []
+}

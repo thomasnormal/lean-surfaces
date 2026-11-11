@@ -906,6 +906,33 @@ class NetsAsVariables(Base):
             p["dir"] == "out" and p["target"]["kind"] == "ArraySel"
             for g in instances for p in g["ports"] if p["dir"] == "out"))
 
+    def test_non_ascii_source_before_wire_driver_keeps_net_lowering(self):
+        # Slang source offsets are UTF-8 byte offsets.  A decoded Unicode
+        # slice used to shift after this em dash and falsely refuse both
+        # output-wire drivers as PortSymbol:net-z.
+        child = (
+            "// header — deliberately non-ASCII\n"
+            "module leaf #(parameter integer W = 4) "
+            "(input wire [W-1:0] a, output wire [W-1:0] y); "
+            "assign y = a; endmodule\n"
+        )
+        top = (
+            "module top #(parameter integer W = 8) "
+            "(input wire [W-1:0] a, output wire [W-1:0] y); "
+            "leaf #(.W(W/2)) lo(.a(a[W/2-1:0]), .y(y[W/2-1:0])); "
+            "leaf #(.W(W/2)) hi(.a(a[W-1:W/2]), .y(y[W-1:W/2])); "
+            "endmodule\n"
+        )
+        design = self.extract(top, top="top", more=(child,))
+        modules = {m["name"]: m for m in design["modules"]}
+        for name in ("leaf", "top"):
+            module = modules[name]
+            self.assertNotIn("PortSymbol:net-z", sv_kinds(module), name)
+            outputs = [p for p in module["ports"]
+                       if p.get("name") == "y"]
+            self.assertEqual(len(outputs), 1, name)
+            self.assertTrue(outputs[0].get("net_as_variable"), name)
+
     # ---- what stays refused (the tag is the old one)
     def refused_net(self, body, ports="input [3:0] a, b, output [3:0] y", params="", more=()):
         m = self.top(body, ports, params, more)

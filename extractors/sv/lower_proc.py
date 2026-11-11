@@ -831,7 +831,39 @@ def star_block(ex, sm, m, module_level):
 # scope (it may not exist at every point), an explicit drive strength, a net in a generate scope, a net type other
 # than `wire`, a 2-state or signed net.
 
+import os
 import re
+
+
+def _driver_source_text(ex, sm, rng):
+    """Return a driver's source spelling using slang's byte offsets.
+
+    ``SourceManager.getSourceText`` returns decoded Unicode, while slang's
+    ``SourceLocation.offset`` is a byte offset.  Slicing the decoded string
+    therefore shifts the range after any non-ASCII source character.  The
+    symbolic context already retains the original UTF-8 bytes for every
+    source, so decode the byte slice only after applying the offsets.
+    """
+    try:
+        # ``getSourceText`` is decoded, but re-encoding it restores the byte
+        # indexing contract for valid UTF-8 source files.
+        data = sm.getSourceText(rng.start.buffer).encode("utf-8")
+        start, end = rng.start.offset, rng.end.offset
+        if 0 <= start <= end <= len(data):
+            return data[start:end].decode("utf-8", errors="replace").strip()
+    except Exception:
+        pass
+    try:
+        sym = ex._SYM
+        fname = os.path.normpath(sym.sm.getFileName(rng.start))
+        data = sym.source_map.get(fname)
+        if data is not None:
+            start, end = rng.start.offset, rng.end.offset
+            if 0 <= start <= end <= len(data):
+                return data[start:end].decode("utf-8", errors="replace").strip()
+    except Exception:
+        pass
+    return ""
 
 _NET_OWNERS = ("ContinuousAssignSymbol", "InstanceSymbol")
 
@@ -910,7 +942,7 @@ def net_driver_reason(ex, sm, symbol, dtype):
             lo, hi = d.bounds
             intervals.append((lo, hi))
             rng = d.sourceRange
-            texts.append(sm.getSourceText(rng.start.buffer)[rng.start.offset:rng.end.offset].strip())
+            texts.append(_driver_source_text(ex, sm, rng))
         intervals.sort()
         edge = 0
         for lo, hi in intervals:

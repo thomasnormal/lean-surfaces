@@ -405,7 +405,9 @@ unsafe def mkHierTwin (tac : String) (pd lib : Lean.Expr) :
   let r ← evalExpr (Except String (LeanModels.Sv.PDesign × List (LeanModels.Sv.PInst × LeanModels.Sv.PDesign))) ty
     (mkApp2 (mkConst ``LeanModels.Sv.CombHier.hierTwin) pd lib)
   match r with
-  | .error msg => throwError "{tac}: this design instantiates modules, and the hierarchy summary (`CombHier.lean`) does not read it: {msg}"
+  | .error msg =>
+      let note ← evalExpr String (mkConst ``String) (mkApp2 (mkConst ``LeanModels.Sv.CombHier.hierWallNote) pd lib)
+      throwError "{tac}: this design instantiates modules, and the hierarchy summary (`CombHier.lean`) does not read it: {msg}{note}"
   | .ok (dF, pl) =>
       let pdV ← evalExpr LeanModels.Sv.PDesign (mkConst ``LeanModels.Sv.PDesign) pd
       return (toExpr dF, toExpr pl, LeanModels.Sv.CombHier.parentNames pdV, pl)

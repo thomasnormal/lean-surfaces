@@ -22,6 +22,10 @@ v1 does not read are refused, each with its reason:
   width-changing connection, the lowering `connProcs` gives it (`fitExpr2`, `portOut`: the port read at its own width, then
   zero-extended or truncated, the shape `Sk.fit` has inside a shift operand), with its shape theorem and the per-site
   obligations of a top-level `Sk.fit`.
+* `neg/hier_param_utf8.sv`: `hier_param.sv` byte for byte below a header with one non-ASCII character. The extractor
+  keeps the parent's `wire` output as the loud member `PortSymbol:net-z` instead of a net-as-variable: it compares the
+  driver's text sliced from the DECODED source with slang's BYTE offsets, so the character shifts the slice (ls-sv's
+  `lower_proc.py`, `net_driver_reason`; reported). The refusal names that cause.
 -/
 
 open LeanModels.Sv LeanModels.Sv.CombView
@@ -30,6 +34,7 @@ namespace Examples.«system-verilog».comb_hier.comb_errors
 
 load_design_sv2 gen_loop from "Examples/system-verilog/comb_hier/neg/gen_loop.sv.json"
 load_design_sv2 odd_split from "Examples/system-verilog/comb_hier/neg/odd_split.sv.json"
+load_design_sv2 hier_param_utf8 from "Examples/system-verilog/comb_hier/neg/hier_param_utf8.sv.json"
 
 /--
 error: sv_structure: this design instantiates modules, and the hierarchy summary (`CombHier.lean`) does not read it: an instance sits inside the generate loop `g` (genvar `i`): v1 of the hierarchy summary reads module-level instances only (one instance per loop iteration would make the child's sites a generate family whose names carry the loop index, which the summary does not build yet); the structure of such a design can be proved by hand (`Examples/system-verilog/ripple_fa` is a worked by-hand proof)
@@ -52,6 +57,14 @@ error: sv_structure: the flat twin's width obligation fails at site `plain#3` (i
 #guard_msgs (whitespace := lax) in
 example (K : Nat) (hK : 1 ≤ K) (hR : (2 * K + 1 : Int) < 2147483648) :
     CombDesign (gen.hier_param.sem (2 * K + 1)) := by
+  sv_structure
+
+-- One non-ASCII character in a comment: the extractor keeps `y` loud.
+/--
+error: sv_structure: this design instantiates modules, and the hierarchy summary (`CombHier.lean`) does not read it: the module has a member outside the semantic tier (`PortSymbol:net-z`: y), which the instantiation keeps as a loud process (`PortSymbol:net-z` is the extractor's refusal of a `wire` port it did not read as one driven variable; it reads a `wire` output driven by continuous assignments, or by instance output ports that tile it at the default point, as a net-as-variable, and `y` has such a driver here. A known cause: a non-ASCII character in the source above the driver — the extractor compares the driver's text sliced from the DECODED source with slang's BYTE offsets (ls-sv's `lower_proc.py`, `net_driver_reason`), so the character shifts the slice)
+-/
+#guard_msgs (whitespace := lax) in
+example (K : Nat) (hK : 1 ≤ K) (hR : (2 * K : Int) < 2147483648) : CombDesign (hier_param_utf8.sem (2 * K)) := by
   sv_structure
 
 end Examples.«system-verilog».comb_hier.comb_errors

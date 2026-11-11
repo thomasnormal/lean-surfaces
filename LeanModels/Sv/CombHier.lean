@@ -50,12 +50,15 @@ A parent's `wire` output tiled by the instances' output ports (`.y(y[W/2-1:0])`,
 variable port: the extractor checks that each instance output targets the net and that the windows cover it without
 overlap at the default point, and marks it a net-as-variable; the loader reads it as an output declaration, so the twin's
 assignments `target = p ++ y` are the instantiation's (`conn_out_eq`), and the one-driver rule at each parameter point is
-the twin's disjointness obligation, decided like any other. What this does not give is ls-sv's (reported): the
-extractor checks that the windows COVER the net at the default point only, and `driversOk` re-checks overlaps at every
-point but not holes. At a point where the windows leave a bit undriven, the output declaration starts at x and the bit
-reads x, where the standard (an undriven `wire` is z) and Icarus give z (measured: `run2` gives `y = 1010x010`, Icarus 12
-`1010z010`, for windows `y[P-1:0]`, `y[W-1:W/2]` at `W = 8`, `P = 3`, `a = 8'hAA`). The summary states no equation for an
-undriven bit, so no theorem the tactics prove speaks of its value.
+the twin's disjointness obligation, decided like any other. Two things this does not give, both ls-sv's (reported):
+* the extractor checks that the windows COVER the net at the default point only, and `driversOk` re-checks overlaps at
+  every point but not holes. At a point where the windows leave a bit undriven, the output declaration starts at x and
+  the bit reads x, where the standard (an undriven `wire` is z) and Icarus give z (measured: `run2` gives `y = 1010x010`,
+  Icarus 12 `1010z010`, for windows `y[P-1:0]`, `y[W-1:W/2]` at `W = 8`, `P = 3`, `a = 8'hAA`). The summary states no
+  equation for an undriven bit, so no theorem the tactics prove speaks of its value.
+* the extractor compares the driver's text sliced from the decoded source with slang's byte offsets, so one non-ASCII
+  character above the driver leaves the net the loud member `PortSymbol:net-z` (the refusal says so,
+  `PDesign.netZNoteIn`; `comb_hier/neg/hier_param_utf8.sv`).
 -/
 
 namespace LeanModels.Sv
@@ -885,6 +888,20 @@ def twinRefusedOrigin (d : PDesign) (lib : List PDesign) : String :=
           match (dF.processes.zipIdx.find? fun (p, k) => (siteOf? ds k p).toOption.isNone) with
           | some (_, k) => twinOrigin d pl k
           | none => ""
+
+/-- (Refusal text only; no theorem reads it.) What the tactics' refusal of a design with module instances adds about the
+markers below them (`PDesign.wallNote`): the parent's, or else the first instantiated child module's that has one, the
+module named. -/
+def hierWallNote (d : PDesign) (lib : List PDesign) : String :=
+  let n := d.wallNote
+  if !n.isEmpty then n
+  else
+    let kids := lib.filter fun c => d.generates.any fun it => match it with
+      | .inst i => i.module == c.name
+      | _ => false
+    (kids.findSome? fun c =>
+      let m := c.wallNoteIn s!"in module `{c.name}`: "
+      if m.isEmpty then none else some m).getD ""
 
 /-- **The hierarchy summary**: the summary of the flat twin (module docstring). -/
 def summaryH (d : PDesign) (lib : List PDesign) : Except String Summary := do

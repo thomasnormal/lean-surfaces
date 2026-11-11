@@ -1799,30 +1799,61 @@ end
 it). A time-zero ROM load (the extractor's `SystemTask:readmemh` marker, ls-sv 539ad6172): `X.sem` (`instProcess2`) keeps
 it as the loud process `T2:Initial` and the ROM's cells as uninitialized declarations, and only the source-shaped memory
 route (`Kernel.MemCycle`, `runMem2`'s initial phase) loads the file, so the cells hold no constants the tactics could
-read. A `SystemTask:readmemh:<wall>` marker is the extractor's own refusal of the task. `""` for any other design. -/
-def _root_.LeanModels.Sv.PDesign.romNote (d : PDesign) : String :=
+read. A `SystemTask:readmemh:<wall>` marker is the extractor's own refusal of the task. The `initial` is one of the
+module's own processes (the loader refuses an `initial` inside a generate block: "unknown generate member kind"). `pre`
+names the module when the note is about a child of the design (`CombHier.hierWallNote`). `""` for any other design. -/
+def _root_.LeanModels.Sv.PDesign.romNoteIn (pre : String) (d : PDesign) : String :=
   match d.processes.findSome? (fun p => match p with | .initial (.unsupported k t) => some (k, t) | _ => none) with
   | some (k, t) =>
       if k == "SystemTask:readmemh" then
-        " (the `initial` is a `$readmemh` ROM load, which the semantic-tier family `X.sem` keeps as the loud process `T2:Initial`, the ROM's cells uninitialized declarations; the file contents are loaded only on the source-shaped memory route, `runMem2`, which has no proof layer the tactics could be sound against)"
+        s!" ({pre}the `initial` is a `$readmemh` ROM load, which the semantic-tier family `X.sem` keeps as the loud process `T2:Initial`, the ROM's cells uninitialized declarations; the file contents are loaded only on the source-shaped memory route, `runMem2`, which has no proof layer the tactics could be sound against)"
       else if k.startsWith "SystemTask:readmemh:" then
-        s!" (the `initial` is a `$readmemh` the extractor refuses, below the tactics: `{k}`: {t})"
+        s!" ({pre}the `initial` is a `$readmemh` the extractor refuses, below the tactics: `{k}`: {t})"
       else ""
   | none => ""
+
+/-- `PDesign.romNoteIn` about the design itself. -/
+def _root_.LeanModels.Sv.PDesign.romNote (d : PDesign) : String := d.romNoteIn ""
 
 /-- (Refusal text only.) What a refusal adds when the module has a loud `ElementSelect:default-point-index` member (a
 process or a generate item, at any depth): the extractor's refusal of a constant index into a FIXED-size unpacked array
 that names a genvar or a parameter. -/
-def _root_.LeanModels.Sv.PDesign.cellIndexNote (d : PDesign) : String :=
+def _root_.LeanModels.Sv.PDesign.cellIndexNoteIn (pre : String) (d : PDesign) : String :=
   let ks := d.processes.filterMap (fun p => match p with | .unsupported k _ => some k | _ => none) ++
     GenItem.loudKindsL d.generates
   if ks.contains "ElementSelect:default-point-index" then
-    " (`ElementSelect:default-point-index` is the extractor's refusal of a constant index into a FIXED-size unpacked array that names a genvar or a parameter: such an array reaches `X.sem` as one declaration per cell, `m[0]`, `m[1]`, …, and an index that changes with the generate iteration or the parameter point has no per-cell form short of unrolling; reading it needs the array in `X.sem` as ONE declaration, its cells laid out as a 2-D packed array, with such indices lowered as constant slices — ls-sv's step)"
+    s!" ({pre}`ElementSelect:default-point-index` is the extractor's refusal of a constant index into a FIXED-size unpacked array that names a genvar or a parameter: such an array reaches `X.sem` as one declaration per cell, `m[0]`, `m[1]`, …, and an index that changes with the generate iteration or the parameter point has no per-cell form short of unrolling; reading it needs the array in `X.sem` as ONE declaration, its cells laid out as a 2-D packed array, with such indices lowered as constant slices — ls-sv's step)"
   else ""
 
+/-- (Refusal text only.) What a refusal adds when the module has a loud `PortSymbol:net-z` port that it drives
+continuously (an `assign`, or an instance output port connected to it): the extractor reads such a `wire` output as a
+net-as-variable, and a known cause of its falling back to the loud member is a non-ASCII character above the driver in the
+source (ls-sv's extractor slices the decoded source text with slang's byte offsets to compare the driver,
+`lower_proc.py`, `net_driver_reason`). -/
+def _root_.LeanModels.Sv.PDesign.netZNoteIn (pre : String) (d : PDesign) : String :=
+  let driven (n : String) : Bool :=
+    d.processes.any (fun p => match p with
+      | .assign t _ => t == n
+      | .assignL l _ => l.name == n
+      | _ => false) ||
+    d.generates.any (fun it => match it with
+      | .inst i => i.conns.any (fun c => match c with
+          | .output _ (some l) => l.name == n
+          | _ => false)
+      | _ => false)
+  match d.others.find? (fun (k, t) => k == "PortSymbol:net-z" && driven t) with
+  | some (_, t) =>
+      s!" ({pre}`PortSymbol:net-z` is the extractor's refusal of a `wire` port it did not read as one driven variable; it reads a `wire` output driven by continuous assignments, or by instance output ports that tile it at the default point, as a net-as-variable, and `{t}` has such a driver here. A known cause: a non-ASCII character in the source above the driver — the extractor compares the driver's text sliced from the DECODED source with slang's BYTE offsets (ls-sv's `lower_proc.py`, `net_driver_reason`), so the character shifts the slice)"
+  | none => ""
+
 /-- What the tactics' refusal of a design adds about the markers below them (messages only; no theorem reads it): a ROM
-load (`romNote`), a fixed unpacked array indexed by a genvar or a parameter (`cellIndexNote`). -/
-def _root_.LeanModels.Sv.PDesign.wallNote (d : PDesign) : String := d.romNote ++ d.cellIndexNote
+load (`romNoteIn`), a fixed unpacked array indexed by a genvar or a parameter (`cellIndexNoteIn`), a continuously driven
+`wire` port the extractor kept loud (`netZNoteIn`). -/
+def _root_.LeanModels.Sv.PDesign.wallNoteIn (pre : String) (d : PDesign) : String :=
+  d.romNoteIn pre ++ d.cellIndexNoteIn pre ++ d.netZNoteIn pre
+
+/-- `PDesign.wallNoteIn` about the design itself. -/
+def _root_.LeanModels.Sv.PDesign.wallNote (d : PDesign) : String := d.wallNoteIn ""
 
 /-- The recognizer of a process list, GENERIC in the recognizer `so` of one process (`siteOf?`; the
 proc-aware layer, `CombProcSummary.lean`, instantiates it with `siteOfP?`). -/

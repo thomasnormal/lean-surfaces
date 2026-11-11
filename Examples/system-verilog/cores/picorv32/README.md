@@ -1404,3 +1404,33 @@ executor returns `ok states=80` for the alternating-clock, two-reset-cycle
 stimulus.  That trace is **UNVALIDATED**: the two schedule reports are the
 current wall, and they belong to the E scheduler/memory work rather than a
 `MemCycle` patch in this lane.  The symbolic ADDI invariant remains parked.
+
+## 2026-11-11 re-probe on public master `9d4d68334`
+
+The pinned source was re-extracted with the approved extractor after the
+public E changes.  The source SHA-256 remains
+`0836050971b3c6cdd28ac3b1e5719a67fb645161912bef1e472e63995ceb062`; the fresh
+envelope `/tmp/picorv32-current-463.sv.json` has SHA-256
+`45533947d14682922a58bec67f98f812896daafa18cf5a437043a425d46e269d` and is
+2,991,600 bytes.
+
+The ordinary route still has its first refusal at `picorv32.v:203`:
+
+```text
+unsupported "Instantiate"
+  "decl 'cpuregs': unpacked array storage outside E (UnpackedDecl:memory)"
+```
+
+The source-shaped **provisional** memory adapter constructs 223 scalar
+declarations, one unpacked memory declaration, no declaration initializers,
+and 52 processes.  Its E-migration admission reports remain:
+
+```text
+Schedule:preemptive: processes 0 and 26 may observe an intermediate write under IEEE 1800-2023 §4.7; the preemptive profile requires disjoint cross-process reads/writes
+Schedule:comb-source-order: comb process 9 reads a signal written by later comb process 25; the source-order memory pass would need a second settle pass under IEEE 1800-2023 §10.3/§4.5
+```
+
+The legacy executor returns `ok states=80` only when those guards are
+bypassed.  This is **UNVALIDATED** and is not an E execution or a retirement
+trace; the scheduler and memory admission belong to the E migration.  No
+symbolic ADDI invariant is claimed.

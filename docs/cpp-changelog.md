@@ -19,6 +19,8 @@ coverage advance independently from the Python tier.
 
 ### Added
 
+- Empty `extern "C"` and `extern "C++"` linkage specifications now execute inside namespace bodies; unsupported languages and nonempty bodies remain loud refusals.
+
 - Integral `using` aliases inside namespace bodies now execute through matching structured `BuiltinType` nodes for `int` and `bool`; other alias targets remain loud refusals.
 
 - True empty-message `static_assert` declarations now execute inside namespace bodies; false, malformed, and message-bearing assertions remain loud refusals.

@@ -758,6 +758,14 @@ private def executeNestedNamespaces : List Raw → Except String Unit
       | some "TypedefDecl", some (.array [_]) => do
           let _ ← nestedIntegralAlias declaration
           executeNestedNamespaces rest
+      | some "LinkageSpecDecl", none =>
+          match declaration.text "language" with
+          | some "C" | some "C++" => executeNestedNamespaces rest
+          | _ => .error executionRefusal
+      | some "LinkageSpecDecl", some (.array []) =>
+          match declaration.text "language" with
+          | some "C" | some "C++" => executeNestedNamespaces rest
+          | _ => .error executionRefusal
       | some "StaticAssertDecl", some (.array [condition, message]) =>
           match condition.text "kind", condition.field "value", message with
           | some "CXXBoolLiteralExpr", some (.bool true), .object [] =>

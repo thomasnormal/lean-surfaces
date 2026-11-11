@@ -224,6 +224,24 @@ containers match, while deeper rendering remains an explicit loud refusal.
 DECIDED: keep general rendering beyond the fixed budget loud until the
 renderer carries CPython's recursive call units directly.
 
+## 2026-11-11-pyfoundation-42 — pin direct rendering recursion boundaries
+
+The generated recursion pool now crosses the public `repr()` and `str()`
+paths as well as `print()`.  The shallow 510-level containers match
+CPython; the 513- and 999-level cases remain loud at the fixed renderer
+budget, before CPython's own limit, so no platform-dependent stack behavior
+is claimed.
+
+| Measurement | Result |
+|---|---|
+| Generated cases/calls | 49 cases, 81 calls |
+| Native runner | 66 MATCH, 15 documented refusals, 0 failures |
+| Proof interpreter | 66 MATCH, 15 loud refusals, 0 failures |
+| Semantic change | none; direct rendering recursion evidence |
+
+DECIDED: keep `str`/`repr`/`print` recursion beyond `reprFuel` refused until
+the renderer models CPython's recursive entry units directly.
+
 ## 2026-11-10-pyfoundation-23 — pin the leanpy quickstart admission
 
 The public quickstart's Python 3.9 pin is now enforced at the runner boundary.

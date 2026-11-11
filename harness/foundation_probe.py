@@ -220,3 +220,19 @@ def nested_print(n):
         value = [value]
     print(value)
     return 1
+
+
+def nested_repr(n):
+    """Exercise the public repr builtin's recursive container path."""
+    value = 0
+    for _ in range(n):
+        value = [value]
+    return repr(value)
+
+
+def nested_str(n):
+    """Exercise str() on the same recursively rendered container."""
+    value = 0
+    for _ in range(n):
+        value = [value]
+    return str(value)

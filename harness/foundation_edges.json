@@ -469,6 +469,56 @@
   {
     "args": [
       [
+        510
+      ]
+    ],
+    "expect": "match",
+    "file": "harness/foundation_probe.py",
+    "function": "nested_repr",
+    "note": "repr recursion control below the fixed rendering budget."
+  },
+  {
+    "args": [
+      [
+        513
+      ],
+      [
+        999
+      ]
+    ],
+    "expect": "unsupported",
+    "file": "harness/foundation_probe.py",
+    "function": "nested_repr",
+    "note": "repr recursion remains loud beyond the fixed rendering budget."
+  },
+  {
+    "args": [
+      [
+        510
+      ]
+    ],
+    "expect": "match",
+    "file": "harness/foundation_probe.py",
+    "function": "nested_str",
+    "note": "str recursion control below the fixed rendering budget."
+  },
+  {
+    "args": [
+      [
+        513
+      ],
+      [
+        999
+      ]
+    ],
+    "expect": "unsupported",
+    "file": "harness/foundation_probe.py",
+    "function": "nested_str",
+    "note": "str recursion remains loud beyond the fixed rendering budget."
+  },
+  {
+    "args": [
+      [
         0.0,
         0.0
       ],

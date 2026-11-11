@@ -87,6 +87,9 @@
 - Run the generated protocol edge-pool battery in the Python acceptance check
   through both interpreter modes.
 
+- Record explicit non-admission domains for divergent Python accelerator
+  fallbacks and check the registry for domain/equivalence consistency.
+
 - Count `round`'s builtin and numeric `__round__` recursion frames after
   successful argument binding, preserving CPython's pre-frame arity errors.
 

@@ -308,7 +308,7 @@ ACCELERATOR_ADMISSIONS = {
     },
     "_stat": {
         "equivalent": False,
-        "domain_admitted": True,
+        "domain_admitted": False,
         "fallback": "stat.py (`from _stat import *`, 3.9.19 lines 192-195)",
         "evidence": "library mode 2026-08-16: 21 of 104 battery calls DIVERGE. "
                     "C `_stat` converts its argument to an unsigned int, so "
@@ -321,7 +321,7 @@ ACCELERATOR_ADMISSIONS = {
     },
     "_opcode": {
         "equivalent": False,
-        "domain_admitted": True,
+        "domain_admitted": False,
         "fallback": "opcode.py (`from _opcode import stack_effect` + "
                     "`__all__.append('stack_effect')`, 3.9.19 lines 18-21)",
         "evidence": "NO BATTERY NEEDED -- the two branches differ in the NAMES "

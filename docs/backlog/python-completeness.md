@@ -115,6 +115,24 @@ proof interpreter; a stale manifest or decided mismatch fails the gate.
 DECIDED: keep edge pools as the source of foundation evidence and require new
 protocol admissions to add their boundary values to the generator.
 
+## 2026-11-11-pyfoundation-36 — make accelerator domains executable
+
+The accelerator registry now marks `_bisect`, `_stat`, and `_opcode` as
+outside the admitted domain when their C and pure-Python branches diverge.
+`harness/accelerator_domains.py` checks that every registry entry has evidence
+and that `equivalent` and `domain_admitted` cannot claim a contradictory
+combination; it is part of the Python acceptance plan.
+
+| Measurement | Result |
+|---|---|
+| Registry entries | 3, all with explicit evidence and consistent domains |
+| Boundary evidence | `_bisect` `hi=-1`, `_stat` negative/non-int arguments, `_opcode` namespace binding |
+| Semantic change | admission metadata and consistency gate; existing divergent imports remain loud |
+
+DECIDED: an accelerator is admitted only when its recorded equivalence and
+domain are both true; otherwise extraction refuses by the named accelerator
+boundary.
+
 ## 2026-11-10-pyfoundation-23 — pin the leanpy quickstart admission
 
 The public quickstart's Python 3.9 pin is now enforced at the runner boundary.

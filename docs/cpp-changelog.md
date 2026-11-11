@@ -19,6 +19,8 @@ coverage advance independently from the Python tier.
 
 ### Added
 
+- Nested namespace aliases now execute when their structured namespace target is present; malformed targets remain loud refusals.
+
 - Nested `using namespace` directives now execute when their structured namespace target is present; malformed targets remain loud refusals.
 
 - Namespace execution now accepts a namespace body containing only nested

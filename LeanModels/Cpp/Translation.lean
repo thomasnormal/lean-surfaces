@@ -733,6 +733,13 @@ private def executeNestedNamespaces : List Raw → Except String Unit
               | some "NamespaceDecl", some _ => executeNestedNamespaces rest
               | _, _ => .error executionRefusal
           | none => .error executionRefusal
+      | some "NamespaceAliasDecl", none =>
+          match declaration.field "aliasedNamespace" with
+          | some target =>
+              match target.text "kind", target.text "id" with
+              | some "NamespaceDecl", some _ => executeNestedNamespaces rest
+              | _, _ => .error executionRefusal
+          | none => .error executionRefusal
       | _, _ => .error executionRefusal
 
 private def executeTopDeclaration (raw : Raw) : Except String Unit :=

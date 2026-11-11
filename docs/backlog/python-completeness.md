@@ -13773,3 +13773,23 @@ delete helpers are tracked by the next general-rewrites audit.
 
 DECIDED: close `py-extractor-display-lowerings`; retain loud boundaries until
 native display/comprehension semantics are implemented.
+## 2026-11-11-pyfoundation-91 — revalidate remaining general ingestion bridges
+
+The medium `py-general-ingestion-rewrites` finding remains partially open.
+Retired list/display, raise-cause, yield-from, and try lowerings have no active
+path. Remaining compatibility bridges are f-string format workers,
+multi-item-`with` nesting, delete-target markers, chained-assignment splitting,
+consuming dict-view markers, and synthetic `TypeErrorHandler` markers. Each is
+named, unspellable where it reaches runtime resolution, and covered by a
+dedicated MATCH or loud row, but none is yet a native source-node semantic
+case.
+
+| Measurement | Result |
+|---|---|
+| Retired paths | absent from active ingestion |
+| Residual bridges | present with pinned differential boundaries |
+| Semantic change | none; audit triage only |
+
+DECIDED: keep `py-general-ingestion-rewrites` open as a medium rule-2
+refactoring queue; replace each bridge with a native source-node case before
+widening admission.

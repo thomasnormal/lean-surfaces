@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Revalidated the general ingestion bridge audit: retired display/raise-cause/
+  yield-from/try rewrites remain absent, while f-string format workers,
+  multi-item `with`, delete markers, chain splitting, consuming dict-view
+  markers, and `TypeErrorHandler` remain explicit representation debt.
+
 - Revalidated display/comprehension lowering boundaries: starred displays,
   set/dict comprehensions, and starred targets remain source nodes or loud
   refusals, so source-level shadows cannot alter synthesized builtin calls.

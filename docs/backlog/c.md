@@ -70,6 +70,10 @@ The profile probe now marks all fourteen facts consumed by Lean as
 depended-on. Long-long, pointer, and short widths, byte order, and signed
 right-shift behavior are checked before an envelope is accepted; the
 generated profile reports 14/14 depended-on facts and all hosts agree.
+Revalidated 2026-11-11 with the pinned Clang/LLVM 21.1.8 frontend:
+`c_profile_probe.py --check docs/c-profile.json` satisfied all 14 depended-on
+facts, and `--check-lean docs/c-profile.json` found agreement on all 9
+width/signedness points (9 `IntTy` definitions parsed).
 
 ---
 

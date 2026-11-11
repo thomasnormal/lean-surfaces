@@ -2310,6 +2310,16 @@ def strFormatDynamicWidthPiece (c : Char) (width value : RVal) : Res String :=
   | Option.none =>
       .exn (.typeError "'*' format requires an integer width")
 
+def strFormatDynamicPrecisionPiece (c : Char) (precision value : RVal) : Res String :=
+  match asInt precision with
+  | some n =>
+      if n < 0 || n.natAbs > 10000 then
+        .unsupported "dynamic percent-format precision beyond the tier budget"
+      else
+        strFormatWidthPiece 0 (some n.toNat) c value false false
+  | Option.none =>
+      .exn (.typeError "'*' format requires an integer precision")
+
 def strFormatReadDigits : List Char → Nat → Option (Nat × List Char)
   | [], _ => Option.none
   | c :: rest, acc =>
@@ -2399,6 +2409,18 @@ def strFormatWalk : List Char → List RVal → Bool → String → Res String
             | .timeout => .timeout
             | .unsupported msg => .unsupported msg
       else .unsupported "alternate form for this percent conversion is outside the tier"
+  | '%' :: '.' :: '*' :: c :: cs, args, mapping, acc =>
+      if c == 's' || c == 'r' || c == 'a' || c == 'd' || c == 'i' ||
+          c == 'u' || c == 'x' || c == 'o' then
+        match args with
+        | precision :: value :: rest =>
+            match strFormatDynamicPrecisionPiece c precision value with
+            | .ok piece => strFormatWalk cs rest mapping (acc ++ piece)
+            | .exn e => .exn e
+            | .timeout => .timeout
+            | .unsupported msg => .unsupported msg
+        | _ => .exn (.typeError "not enough arguments for format string")
+      else .unsupported "dynamic precision for this percent conversion is outside the tier"
   | '%' :: '*' :: c :: cs, args, mapping, acc =>
       if c == 's' || c == 'r' || c == 'a' || c == 'c' || c == 'd' || c == 'i' ||
           c == 'u' || c == 'x' || c == 'o' then

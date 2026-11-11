@@ -292,3 +292,7 @@ def percent_alternate_oct(value):
 
 def percent_dynamic_width(width, value):
     return "%*d" % (width, value)
+
+
+def percent_dynamic_precision(precision, value):
+    return "%.*s" % (precision, value)

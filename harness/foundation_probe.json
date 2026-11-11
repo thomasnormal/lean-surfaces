@@ -6,7 +6,7 @@
     "version": "3.9.25"
   },
   "source_file": "harness/foundation_probe.py",
-  "source_sha256": "d9a38b72bf689fede0b836b957a5aea6c349308497fdf86bbacd69be9c7ecacf",
+  "source_sha256": "00f9ca2607e51b964ad439ef54a625b85aac5971f3ea1f618203ee626f1e232e",
   "module": {
     "kind": "Module",
     "body": [
@@ -7004,6 +7004,103 @@
                       "col_offset": 27,
                       "end_lineno": 294,
                       "end_col_offset": 32
+                    },
+                    "id": "value"
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 297,
+          "col_offset": 0,
+          "end_lineno": 298,
+          "end_col_offset": 38
+        },
+        "name": "percent_dynamic_precision",
+        "args": [
+          {
+            "arg": "precision",
+            "span": {
+              "lineno": 297,
+              "col_offset": 30,
+              "end_lineno": 297,
+              "end_col_offset": 39
+            }
+          },
+          {
+            "arg": "value",
+            "span": {
+              "lineno": 297,
+              "col_offset": 41,
+              "end_lineno": 297,
+              "end_col_offset": 46
+            }
+          }
+        ],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 298,
+              "col_offset": 4,
+              "end_lineno": 298,
+              "end_col_offset": 38
+            },
+            "value": {
+              "kind": "BinOp",
+              "span": {
+                "lineno": 298,
+                "col_offset": 11,
+                "end_lineno": 298,
+                "end_col_offset": 38
+              },
+              "left": {
+                "kind": "Constant",
+                "span": {
+                  "lineno": 298,
+                  "col_offset": 11,
+                  "end_lineno": 298,
+                  "end_col_offset": 17
+                },
+                "value": {
+                  "type": "str",
+                  "value": "%.*s"
+                }
+              },
+              "op": "Mod",
+              "right": {
+                "kind": "Tuple",
+                "span": {
+                  "lineno": 298,
+                  "col_offset": 20,
+                  "end_lineno": 298,
+                  "end_col_offset": 38
+                },
+                "elts": [
+                  {
+                    "kind": "Name",
+                    "span": {
+                      "lineno": 298,
+                      "col_offset": 21,
+                      "end_lineno": 298,
+                      "end_col_offset": 30
+                    },
+                    "id": "precision"
+                  },
+                  {
+                    "kind": "Name",
+                    "span": {
+                      "lineno": 298,
+                      "col_offset": 32,
+                      "end_lineno": 298,
+                      "end_col_offset": 37
                     },
                     "id": "value"
                   }

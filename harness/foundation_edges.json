@@ -717,6 +717,22 @@
   {
     "args": [
       [
+        3,
+        "abcdef"
+      ],
+      [
+        0,
+        "x"
+      ]
+    ],
+    "expect": "match",
+    "file": "harness/foundation_probe.py",
+    "function": "percent_dynamic_precision",
+    "note": "dynamic percent-format precision over scalar text."
+  },
+  {
+    "args": [
+      [
         0.0,
         0.0
       ],

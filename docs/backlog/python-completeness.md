@@ -132,6 +132,22 @@ the bounded tier budget and dynamic precision remain loud.
 DECIDED: keep dynamic width restricted to the measured scalar conversion
 domain until full argument Clinic error paths are modeled.
 
+## 2026-11-11-pyformat-8 — admit dynamic percent-format precision
+
+The scalar format worker now admits `%.*` precision for the existing text and
+numeric conversion domain, with bounded nonnegative integer precision values.
+Dynamic precision outside that domain remains loud.
+
+| Measurement | Result |
+|---|---|
+| Generated edge battery | 64 cases, 111 calls |
+| Native runner | 96 MATCH, 15 documented refusals, 0 failures |
+| Proof interpreter | 96 MATCH, 15 loud refusals, 0 failures |
+| Managed build | `lake build leanmodels-run`, 40 jobs, passed |
+
+DECIDED: keep dynamic precision bounded and share its conversion worker with
+literal precision.
+
 ## 2026-11-11-pyfoundation-31 — count `sorted` recursion and materialization
 
 The builtin recursion audit found that `sorted` was missing the nested call

@@ -111,6 +111,8 @@ def generated_rows():
             "octal percent-format alternate form."),
         row("percent_dynamic_width", [[5, 3], [-5, 3]], "match",
             "dynamic percent-format width with positive and negative widths."),
+        row("percent_dynamic_precision", [[3, "abcdef"], [0, "x"]], "match",
+            "dynamic percent-format precision over scalar text."),
         row("float_power_special", [[0.0, 0.0], [-0.0, 2.0], [1.0, 3.5]],
             "match", "portable float-power special-case pool."),
         row("float_power_special", [[-1.0, 0.5]], "unsupported",

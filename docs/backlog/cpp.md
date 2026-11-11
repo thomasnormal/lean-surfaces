@@ -1,5 +1,17 @@
 # C++ lane backlog
 
+## `cpp-tinyxml2-probe-regeneration`: pinned capture prerequisite
+
+**Blocked by a missing pinned development input (measured 2026-11-11).** The
+TinyXML-2 revision `321ea883b7190d4e85cae5512a12e5eaa8f8731f` was fetched and
+both source hashes matched `provenance.json` exactly. The prescribed Clang
+21.1.8 plugin build cannot start in the pinned runtime: `libclang-cpp.so.21.1`
+and `libLLVM.so.21.1` are present, but the matching development headers are
+absent, and Clang fails immediately with `fatal error: 'clang/AST/ASTConsumer.h'
+file not found`. No probe or literal was regenerated. The README already
+contains the exact reproducible plugin/capture command; rerun it once matching
+Clang 21.1.8 headers are available.
+
 ## `cpp-target-profile-unchecked`: artifact profile gate
 
 **Closed 2026-11-11.** The C++ extractor now validates Clang's recorded

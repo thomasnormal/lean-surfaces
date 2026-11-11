@@ -13811,3 +13811,20 @@ run reports CPython 3.9.25 for both and MATCHes.
 
 DECIDED: close `py-leanpy-oracle-unpinned`; retain explicit alternate-oracle
 selection only when requested via `LEANPY_CPYTHON`/`--cpython`.
+## 2026-11-11-pyfoundation-93 — close stale frontend/envelope audit
+
+The low `py-frontend-unchecked-stale-envelopes` finding is already fixed.
+Python envelope ingestion retains the schema/frontend metadata, the extractor
+is pinned to CPython 3.9, and `tools/leanpy` keys its cache by frontend family
+while refusing stale runner/source stamps. The current freshness instrument
+reports all 83 Python envelopes fresh under the CPython 3.9 family.
+
+| Measurement | Result |
+|---|---|
+| Freshness gate | `python3.9 harness/envelope_fresh.py --tier python`: FRESH 83, exit 0 |
+| Frontend pin | `cpython-ast`, family 3.9 retained and checked |
+| Stale behavior | stale envelopes/runners produce loud refusal, never a decided answer |
+| Semantic change | none; audit closure only |
+
+DECIDED: close `py-frontend-unchecked-stale-envelopes`; keep freshness and
+frontend-family checks in the normal documentation/CI gates.

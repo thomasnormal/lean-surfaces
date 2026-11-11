@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Revalidated frontend/envelope freshness: all 83 Python envelopes regenerate
+  under the pinned CPython 3.9 family, with frontend metadata retained and
+  stale cache/runner inputs rejected loudly.
+
 - Revalidated leanpy pinning: the runner requires CPython 3.9 for frontend and
   default oracle, reports both versions, and the pinned whole-file comparison
   matches; survey fallbacks remain explicit warnings.

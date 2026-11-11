@@ -79,6 +79,21 @@ completed successfully, so the pinned-oracle expectations required no edit.
 DECIDED: treat the `dictcomp_lab` guard item as revalidated and continue with
 the next inbox target after rereading the inbox.
 
+## 2026-11-11-pyfoundation-48 — revalidate gen_lab guards
+
+The four pre-rename failing guards in `gen_lab/spec.lean` are already
+resolved on the current integrated tree. A fresh managed build of the proof
+and spec completed successfully, so the pinned-oracle expectations required
+no edit.
+
+| Measurement | Result |
+|---|---|
+| `Examples/python/gen_lab/spec.lean` | managed build passed (318/318 targets) |
+| Oracle decision | all four guards pass; no expectation change |
+
+DECIDED: treat the `gen_lab` guard item as revalidated and continue with the
+next inbox target after rereading the inbox.
+
 ## 2026-11-11-pyfoundation-43 — repair PayloadBlind comparison recursion transport
 
 The proof observer now transports the heap-aware rich-comparison recursion

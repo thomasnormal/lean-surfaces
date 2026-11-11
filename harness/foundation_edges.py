@@ -52,6 +52,12 @@ def generated_rows():
     for function in ("list_insert_boundary", "list_pop_boundary"):
         rows.append(row(function, [[index] for index in BOUNDARY_POOL],
                         "match", "signed Py_ssize_t endpoint pool."))
+    for function in ("list_subscript_huge", "tuple_subscript_huge",
+                     "string_subscript_huge", "bytes_subscript_huge",
+                     "range_subscript_huge", "list_slice_huge",
+                     "string_slice_huge"):
+        rows.append(row(function, [[index] for index in BOUNDARY_POOL],
+                        "match", "signed Py_ssize_t endpoint pool."))
     rows.extend([
         row("range_len_huge", [[]], "match", "range length conversion control."),
         row("bisect_fallback_negative_hi", [[]], "match", "pure fallback control."),

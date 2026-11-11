@@ -169,6 +169,24 @@ digest mismatch refuses before any corpus result is reported; the interactive
 DECIDED: no differential or survey result counts unless the runner carries a
 current source-content stamp.
 
+## 2026-11-11-pyfoundation-39 — cover index conversion endpoints
+
+The generated edge battery now crosses both signed 64-bit `Py_ssize_t`
+endpoints at every admitted subscript and slice site, in addition to the
+outside-range values and the list insertion/pop wrappers. This pins the split
+between `pySsizeIndex`'s raising overflow path and `pySsizeClamping`'s slice
+path instead of sampling only one large positive index.
+
+| Measurement | Result |
+|---|---|
+| Generated cases/calls | 29 cases, 51 calls |
+| Native runner | 43 MATCH, 8 documented refusals, 0 failures |
+| Proof interpreter | 43 MATCH, 8 loud refusals, 0 failures |
+| Semantic change | none; index protocol boundary evidence |
+
+DECIDED: retain the separate raising and clamping workers; endpoint rows are
+required evidence for future sequence-index admissions.
+
 ## 2026-11-10-pyfoundation-23 — pin the leanpy quickstart admission
 
 The public quickstart's Python 3.9 pin is now enforced at the runner boundary.

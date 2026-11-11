@@ -257,6 +257,104 @@
   },
   {
     "args": [
+      [
+        9223372036854775807
+      ],
+      [
+        -9223372036854775808
+      ]
+    ],
+    "expect": "match",
+    "file": "harness/foundation_probe.py",
+    "function": "list_subscript_huge",
+    "note": "signed Py_ssize_t endpoint pool."
+  },
+  {
+    "args": [
+      [
+        9223372036854775807
+      ],
+      [
+        -9223372036854775808
+      ]
+    ],
+    "expect": "match",
+    "file": "harness/foundation_probe.py",
+    "function": "tuple_subscript_huge",
+    "note": "signed Py_ssize_t endpoint pool."
+  },
+  {
+    "args": [
+      [
+        9223372036854775807
+      ],
+      [
+        -9223372036854775808
+      ]
+    ],
+    "expect": "match",
+    "file": "harness/foundation_probe.py",
+    "function": "string_subscript_huge",
+    "note": "signed Py_ssize_t endpoint pool."
+  },
+  {
+    "args": [
+      [
+        9223372036854775807
+      ],
+      [
+        -9223372036854775808
+      ]
+    ],
+    "expect": "match",
+    "file": "harness/foundation_probe.py",
+    "function": "bytes_subscript_huge",
+    "note": "signed Py_ssize_t endpoint pool."
+  },
+  {
+    "args": [
+      [
+        9223372036854775807
+      ],
+      [
+        -9223372036854775808
+      ]
+    ],
+    "expect": "match",
+    "file": "harness/foundation_probe.py",
+    "function": "range_subscript_huge",
+    "note": "signed Py_ssize_t endpoint pool."
+  },
+  {
+    "args": [
+      [
+        9223372036854775807
+      ],
+      [
+        -9223372036854775808
+      ]
+    ],
+    "expect": "match",
+    "file": "harness/foundation_probe.py",
+    "function": "list_slice_huge",
+    "note": "signed Py_ssize_t endpoint pool."
+  },
+  {
+    "args": [
+      [
+        9223372036854775807
+      ],
+      [
+        -9223372036854775808
+      ]
+    ],
+    "expect": "match",
+    "file": "harness/foundation_probe.py",
+    "function": "string_slice_huge",
+    "note": "signed Py_ssize_t endpoint pool."
+  },
+  {
+    "args": [
       []
     ],
     "expect": "match",

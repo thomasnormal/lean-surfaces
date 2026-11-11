@@ -16,12 +16,13 @@ with ids `YYYY-MM-DD-<lane>-<n>` that need no reservation. Everything before
 the split is in [`docs/backlog-archive.md`](../backlog-archive.md), frozen,
 and every existing `§Lnn` reference still resolves there.
 
-**1405 entries across 19 lanes.** Regenerate with
+**1406 entries across 19 lanes.** Regenerate with
 `tools/backlog-index.sh`; check with `--check` (exit 1 on drift).
 
 | id | class | title | lane |
 | --- | --- | --- | --- |
 | `2026-11-11-ls-sv2-477` |  | unify the E-core-0 and observation cones | ls-sv2 |
+| `2026-11-11-pyfoundation-54` |  | revalidate foundation evidence sequentially | python-completeness |
 | `2026-11-11-pyfoundation-53` |  | refresh runner artifact and survey | python-completeness |
 | `2026-11-11-pyfoundation-52` |  | revalidate pinned quickstart | python-completeness |
 | `2026-11-11-pyfoundation-51` |  | revalidate coverage and documentation gates | python-completeness |
@@ -1371,7 +1372,7 @@ and every existing `§Lnn` reference still resolves there.
 | ``cpp-diff-handwritten-twins`:` |  | reporting boundary | cpp |
 | ``cpp-call-arg-order`:` |  | effectful call arguments | cpp |
 | ``c-no-compiled-oracle`:` |  | pinned C differential battery | cpp |
-| ``c-name-resolution-by-string`:` |  | callee declaration-kind guard | cpp |
+| ``c-name-resolution-by-string`:` |  | declaration-id resolution | cpp |
 | ``c-census-regex`:` |  | AST/preprocessor census inputs | cpp |
 | `G9` |  | THE AUDIT'S THREE ROWS, all fixed, and one of them caught this lane failing its own rule (2026-08-23) | go |
 | `G8` |  | THE LOOP INDUCTION IS NOT LANDED, and the selector question is an EXTRACTOR decision (2026-08-23) | go |

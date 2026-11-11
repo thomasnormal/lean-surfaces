@@ -177,6 +177,24 @@ reporting the stale-runner survey failure.
 DECIDED: keep runner freshness as a required gate before survey and continue
 with the next inbox item after rereading it.
 
+## 2026-11-11-pyfoundation-54 — revalidate foundation evidence sequentially
+
+Reread the inbox before this item. The first parallel evidence attempt exposed
+only a harness race because native and proof differential runs shared the batch
+job file; rerunning each gate sequentially on the refreshed runner removed the
+artifact. The foundation evidence is clean in both interpreter modes.
+
+| Measurement | Result |
+|---|---|
+| `foundation_edges.py --diff` | 125 cases: 106 MATCH, 19 refusals, 0 failures |
+| `statement_smoke.py` | 34/34 MATCH in both modes |
+| Native differential | 5,195 cases: 4,968 MATCH, 227 whitelisted refusals, 0 failures |
+| Proof differential | 5,195 cases: 4,845 MATCH, 350 refusals, 0 failures |
+| `accelerator_domains.py` | 3 registry entries, explicit domains |
+
+DECIDED: keep shared batch-file harness runs sequential in acceptance checks;
+the foundation evidence now has zero decided mismatches on the current runner.
+
 ## 2026-11-11-pyfoundation-43 — repair PayloadBlind comparison recursion transport
 
 The proof observer now transports the heap-aware rich-comparison recursion

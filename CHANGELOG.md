@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Revalidated the foundation evidence sequentially after refreshing the runner:
+  edge pools, statement smoke, native differential, and proof differential all
+  pass with zero decided mismatches.
+
 - Rebuilt the pinned `leanmodels-run` artifact so runner-stamp admission and
   the survey use current Lean sources; the refreshed survey reports zero
   divergences.

@@ -474,6 +474,16 @@ def hasDeclareCallDefine (envl : Envelope) (sym : String) : Bool :=
       let body := (f.body.map LeanModels.C.Stmt.substmts).getD []
       calls envl.unit.exprs sym && calls (body.flatMap LeanModels.C.Stmt.ownExprs) "abort"
 
+/-- The one execution path shared by the batch scorer and single-file CLI. -/
+def runEnvelope (fuel : Nat) (envl : Envelope) : ExecM CVal :=
+  let lay := layoutFor envl
+  let prog : Program := { fns := envl.unit.functionDefns }
+  let prog := { prog with layout := lay }
+  let prog := { prog with enumIds := envl.unit.enumBindings }
+  do
+    let genv ← setupGlobalsWithIds fuel lay envl.unit.fileScopeObjects [] []
+    callByName fuel { prog with globals := genv.1, globalIds := genv.2 } "main" []
+
 /-- Run one ingested test: call its `main` with no arguments, from an
 empty memory, and read the outcome.
 
@@ -483,20 +493,11 @@ speaking — `docs/c23-goal.md` §1.2. Neither is modelled and neither ever
 will be by widening the slice. -/
 def scoreEnvelope (fuel : Nat) (envl : Envelope)
     (oracleSym : Option String) (oracleWhy : String) : Verdict :=
-  let lay := layoutFor envl
-  let prog : Program := { fns := envl.unit.functionDefns }
-  let prog := { prog with layout := lay }
-  let prog := { prog with enumIds := envl.unit.enumBindings }
-  let run : ExecM CVal := do
-    let genv ← setupGlobalsWithIds fuel lay envl.unit.fileScopeObjects [] []
-    callByName fuel { prog with globals := genv.1, globalIds := genv.2 } "main" []
-  match ExecM.verdict Mem.empty run with
+  let outcome := ExecM.verdict Mem.empty (runEnvelope fuel envl)
+  match outcome with
   | .ok (.int _ 0) | .ok .undef => .passed
   | .ok (.int _ _) => .failed
   | .ok (.ptr _) => .failed
-  -- `abort` is the oracle's FAILURE channel — unless the test is one the
-  -- oracle wrote to convict a compiler, in which case reaching it is the
-  -- conforming outcome and the row leaves the score entirely.
   | .refused (.libc "abort") =>
       match oracleSym with
       | some sym =>
@@ -511,6 +512,18 @@ def scoreEnvelope (fuel : Nat) (envl : Envelope)
   | .refused (.memUB f) => .refusedUB (toString (repr f))
   | .unsupported w => .unsupported w
   | .timeout => .timeout
+
+def singleMain (path : String) (fuel : Nat) : IO UInt32 := do
+  let contents ← IO.FS.readFile ⟨path⟩
+  match parseEnvelopeString contents with
+  | .error reason => IO.eprintln s!"ingestion: {reason}"; return 2
+  | .ok envl =>
+      match ExecM.verdict Mem.empty (runEnvelope fuel envl) with
+      | .ok (.int _ value) => IO.println s!"ok\t{value}"; return 0
+      | .ok value => IO.println s!"ok\t{repr value}"; return 0
+      | .refused reason => IO.eprintln s!"refused\t{repr reason}"; return 3
+      | .unsupported reason => IO.eprintln s!"unsupported\t{reason}"; return 3
+      | .timeout => IO.eprintln "timeout"; return 4
 
 /-! ## The manifest
 
@@ -598,13 +611,17 @@ def summarise (rows : List (String × Verdict)) : List String := Id.run do
   pure out
 
 def tortureMain (args : List String) : IO UInt32 := do
+  match args with
+  | ["--single", path] => return ← singleMain path 512
+  | ["--single", path, f] => return ← singleMain path (f.toNat?.getD 512)
+  | _ => pure ()
   let (manifestPath, fuel) :=
     match args with
     | [p] => (p, 64)
     | [p, f] => (p, f.toNat?.getD 64)
     | _ => ("", 64)
   if manifestPath.isEmpty then
-    IO.eprintln "usage: c-torture-run <manifest.json> [fuel]"
+    IO.eprintln "usage: c-torture-run <manifest.json> [fuel] | --single <envelope.json> [fuel]"
     return 2
   let contents ← IO.FS.readFile ⟨manifestPath⟩
   let j ← IO.ofExcept (Lean.Json.parse contents)

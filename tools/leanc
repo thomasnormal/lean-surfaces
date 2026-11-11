@@ -1,0 +1,216 @@
+#!/usr/bin/env python3
+"""Run one C source through the pinned extractor and C semantics.
+
+The supported C surface returns an integer from ``main`` and emits no
+stdout.  ``--compare`` compiles the unchanged source at -O0, -O2 and with
+the sanitizer profile, then compares the model's returned integer and the
+native termination.  Refusals remain loud and never become matches.
+"""
+
+import argparse
+import hashlib
+import json
+import os
+import shutil
+import subprocess
+import sys
+import tempfile
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parent.parent
+EXTRACTOR = ROOT / "extractors" / "c" / "extract.py"
+PINNED = "clang version 21.1.8 (https://github.com/conda-forge/clangdev-feedstock 334cf9a5e6c0331e9f261eaf01fc3568724fcce9)"
+COMPILE = ["-std=c23", "-g", "-D_FORTIFY_SOURCE=0", "-fno-strict-aliasing"]
+
+
+def clang_path():
+    requested = os.environ.get("LEAN_C_CLANG", "clang")
+    return requested if os.path.sep in requested else shutil.which(requested)
+
+
+def pinned_clang():
+    exe = clang_path()
+    if not exe:
+        return None, "pinned clang is unavailable"
+    p = subprocess.run([exe, "--version"], capture_output=True, text=True)
+    first = p.stdout.splitlines()[0] if p.stdout else ""
+    if p.returncode or first != PINNED:
+        return None, "expected %s, got %s" % (PINNED, first or "<none>")
+    return exe, first
+
+
+def source_digest(path):
+    h = hashlib.sha256()
+    h.update(Path(path).read_bytes())
+    h.update(EXTRACTOR.read_bytes())
+    h.update(PINNED.encode())
+    return h.hexdigest()
+
+
+def envelope(path, cache):
+    out = Path(cache) / (source_digest(path) + ".json")
+    if out.exists():
+        return out, None
+    out.parent.mkdir(parents=True, exist_ok=True)
+    fd, tmp = tempfile.mkstemp(prefix="." + out.name + ".", suffix=".json",
+                                dir=str(out.parent))
+    os.close(fd)
+    try:
+        p = subprocess.run([sys.executable, str(EXTRACTOR), str(path),
+                            "--source-name", Path(path).name, "-o", tmp],
+                           cwd=str(ROOT), capture_output=True, text=True)
+        if p.returncode:
+            return None, p.stderr or p.stdout
+        os.replace(tmp, out)
+        return out, None
+    finally:
+        if os.path.exists(tmp):
+            os.unlink(tmp)
+
+
+def runner(opts):
+    binary = ROOT / ".lake" / "build" / "bin" / "c-torture-run"
+    if opts.build:
+        p = subprocess.run(["lake", "build", "c-torture-run"], cwd=ROOT)
+        if p.returncode:
+            return None
+    if binary.exists():
+        return [str(binary)]
+    return ["lake", "exe", "c-torture-run"]
+
+
+def model_run(env, opts):
+    cmd = runner(opts) 
+    if cmd is None:
+        return {"verdict": "ORACLE", "detail": "lake build c-torture-run failed"}
+    p = subprocess.run(cmd + ["--single", str(env), str(opts.fuel)], cwd=ROOT,
+                       capture_output=True, text=True, timeout=opts.timeout)
+    if p.returncode == 0:
+        line = next((x for x in reversed(p.stdout.splitlines()) if x.strip()), "")
+        if line.startswith("ok\t"):
+            return {"verdict": "MODEL", "value": line.split("\t", 1)[1],
+                    "stdout": p.stdout, "stderr": p.stderr}
+        return {"verdict": "RUNNER", "detail": "malformed single-run output",
+                "stdout": p.stdout, "stderr": p.stderr}
+    if p.returncode == 3:
+        return {"verdict": "REFUSE", "detail": p.stderr.strip(),
+                "stdout": p.stdout, "stderr": p.stderr}
+    if p.returncode == 4:
+        return {"verdict": "TIMEOUT", "detail": p.stderr.strip()}
+    return {"verdict": "RUNNER", "detail": p.stderr.strip() or p.stdout.strip()}
+
+
+def native_run(clang, source, opt, sanitizer, timeout):
+    with tempfile.TemporaryDirectory(prefix="leanc-native-") as d:
+        binary = Path(d) / "a.out"
+        flags = COMPILE + [opt]
+        if sanitizer:
+            flags += ["-fsanitize=undefined,address", "-fno-sanitize-recover=all"]
+        p = subprocess.run([clang] + flags + [str(source), "-o", str(binary)],
+                           cwd=ROOT, capture_output=True, text=True, timeout=timeout)
+        if p.returncode:
+            return {"verdict": "ORACLE", "detail": p.stderr[-1000:]}
+        r = subprocess.run([str(binary)], cwd=ROOT, env={}, capture_output=True,
+                           text=True,
+                           timeout=timeout)
+        return {"returncode": r.returncode, "stdout": r.stdout,
+                "stderr": r.stderr}
+
+
+def compare(clang, source, model, timeout):
+    o0 = native_run(clang, source, "-O0", False, timeout)
+    o2 = native_run(clang, source, "-O2", False, timeout)
+    san = native_run(clang, source, "-O0", True, timeout)
+    if any(x.get("verdict") == "ORACLE" for x in (o0, o2, san)):
+        return "ORACLE", {"o0": o0, "o2": o2, "sanitizer": san}
+    if o0["stdout"] != o2["stdout"] or o0["returncode"] != o2["returncode"]:
+        return "NONDET", {"o0": o0, "o2": o2, "sanitizer": san}
+    if san["returncode"] != o0["returncode"] or san["stdout"] != o0["stdout"]:
+        return "DIVERGE", {"o0": o0, "o2": o2, "sanitizer": san}
+    if model["verdict"] != "MODEL":
+        return model["verdict"], {"native": o0, "sanitizer": san, "model": model}
+    try:
+        value = int(model["value"])
+    except ValueError:
+        return "DIVERGE", {"native": o0, "model": model}
+    if o0["stdout"] != "" or o0["returncode"] != (value & 0xff):
+        return "DIVERGE", {"native": o0, "sanitizer": san, "model": model}
+    return "MATCH", {"native": o0, "sanitizer": san, "model": model}
+
+
+def main(argv=None):
+    ap = argparse.ArgumentParser(prog="leanc")
+    ap.add_argument("file", nargs="?")
+    ap.add_argument("--lang", choices=("c", "c++"), default="c")
+    ap.add_argument("--compare", action="store_true")
+    ap.add_argument("--fuel", type=int, default=512)
+    ap.add_argument("--cache", default=os.path.join(tempfile.gettempdir(), "leanc-cache"))
+    ap.add_argument("--build", action="store_true")
+    ap.add_argument("--timeout", type=int, default=120)
+    ap.add_argument("--json", action="store_true")
+    ap.add_argument("--self-test", action="store_true")
+    opts = ap.parse_args(argv)
+    if opts.self_test:
+        with tempfile.TemporaryDirectory(prefix="leanc-selftest-") as d:
+            source = Path(d) / "ok.c"
+            source.write_text("int main(void) { return 0; }\n")
+            clang, why = pinned_clang()
+            if clang is None:
+                print("leanc --self-test: %s" % why, file=sys.stderr)
+                return 1
+            env, why = envelope(source, Path(d) / "cache")
+            if env is None:
+                print("leanc --self-test: extraction failed: %s" % why,
+                      file=sys.stderr)
+                return 1
+            payload = json.loads(env.read_text())
+            if payload.get("language") != "c":
+                print("leanc --self-test: wrong envelope language", file=sys.stderr)
+                return 1
+        print("leanc --self-test: ok")
+        return 0
+    if not opts.file:
+        ap.error("file is required unless --self-test is used")
+    if opts.lang != "c":
+        detail = "C++ uses the G2 shared pipeline; no C++ runner is admitted yet"
+        print(detail, file=sys.stderr)
+        return 3
+    source = Path(opts.file)
+    if not source.is_file():
+        print("leanc: no such source: %s" % source, file=sys.stderr)
+        return 2
+    clang, detail = pinned_clang()
+    if not clang:
+        print("leanc: ORACLE: %s" % detail, file=sys.stderr)
+        return 2
+    env, why = envelope(source, opts.cache)
+    if env is None:
+        print("leanc: EXTRACT: %s" % why, file=sys.stderr)
+        return 2
+    try:
+        model = model_run(env, opts)
+    except subprocess.TimeoutExpired:
+        model = {"verdict": "TIMEOUT", "detail": "model wall timeout"}
+    if not opts.compare:
+        if opts.json:
+            print(json.dumps({"verdict": model["verdict"], "model": model}, sort_keys=True))
+        elif model["verdict"] == "MODEL":
+            print(model["value"])
+        else:
+            print(model.get("detail", model["verdict"]), file=sys.stderr)
+        return 0 if model["verdict"] == "MODEL" else (4 if model["verdict"] == "TIMEOUT" else 3)
+    try:
+        verdict, evidence = compare(clang, source, model, opts.timeout)
+    except subprocess.TimeoutExpired:
+        verdict, evidence = "TIMEOUT", {"detail": "native wall timeout"}
+    result = {"verdict": verdict, "compiler": detail, "envelope": str(env),
+              "evidence": evidence}
+    if opts.json:
+        print(json.dumps(result, sort_keys=True))
+    else:
+        print("leanc: %s" % verdict, file=sys.stderr)
+    return {"MATCH": 0, "REFUSE": 3, "TIMEOUT": 4}.get(verdict, 5)
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

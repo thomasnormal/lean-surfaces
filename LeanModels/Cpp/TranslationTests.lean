@@ -262,6 +262,10 @@ private def intBuiltinType : Raw := .object [
   ("kind", .string "BuiltinType"),
   ("type", .object [("qualType", .string "int")])]
 
+private def unsignedCharBuiltinType : Raw := .object [
+  ("kind", .string "BuiltinType"),
+  ("type", .object [("qualType", .string "unsigned char")])]
+
 private def charBuiltinType : Raw := .object [
   ("kind", .string "BuiltinType"),
   ("type", .object [("qualType", .string "char")])]
@@ -498,6 +502,15 @@ private def externVariableExecutionTranslation : Artifact := {emptyTranslation w
       .object [("id", .string "v"), ("kind", .string "VarDecl"),
         ("name", .string "x"), ("type", .object [("qualType", .string "int")]),
         ("storageClass", .string "extern")]])]}
+
+private def unsignedCharTypeAliasExecutionTranslation : Artifact := {emptyTranslation with
+  ast := .object [
+    ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
+    ("inner", .array [
+      .object [("id", .string "a"), ("kind", .string "TypeAliasDecl"),
+        ("name", .string "UC"),
+        ("type", .object [("qualType", .string "unsigned char")]),
+        ("inner", .array [unsignedCharBuiltinType])]])]}
 
 private def charTypeAliasExecutionTranslation : Artifact := {emptyTranslation with
   ast := .object [
@@ -2231,6 +2244,9 @@ def longTypedefTranslationExecution : Except String Unit :=
 def unsignedLongTypedefTranslationExecution : Except String Unit :=
   execute unsignedLongTypedefExecutionTranslation "a"
 
+def unsignedCharTypeAliasTranslationExecution : Except String Unit :=
+  execute unsignedCharTypeAliasExecutionTranslation "a"
+
 def charTypeAliasTranslationExecution : Except String Unit :=
   execute charTypeAliasExecutionTranslation "a"
 
@@ -3647,6 +3663,7 @@ def staticAssertTranslationWitness : Except String Unit :=
 #guard longTypeAliasTranslationExecution matches .ok ()
 #guard unsignedLongTypeAliasTranslationExecution matches .ok ()
 #guard charTypeAliasTranslationExecution matches .ok ()
+#guard unsignedCharTypeAliasTranslationExecution matches .ok ()
 #guard unsignedLongTypedefTranslationExecution matches .ok ()
 #guard longTypedefTranslationExecution matches .ok ()
 #guard shortTypedefTranslationExecution matches .ok ()
@@ -3768,6 +3785,9 @@ theorem unsigned_long_type_alias_translation_executes :
 
 theorem char_type_alias_translation_executes :
     charTypeAliasTranslationExecution = .ok () := rfl
+
+theorem unsigned_char_type_alias_translation_executes :
+    unsignedCharTypeAliasTranslationExecution = .ok () := rfl
 
 theorem unsigned_long_typedef_translation_executes :
     unsignedLongTypedefTranslationExecution = .ok () := rfl

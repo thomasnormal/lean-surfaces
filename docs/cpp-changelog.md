@@ -19,6 +19,8 @@ coverage advance independently from the Python tier.
 
 ### Added
 
+- `using UC = unsigned char;` now executes through matching structured `BuiltinType` evidence; unsupported alias targets remain loud refusals.
+
 - `using C = char;` now executes through matching structured `BuiltinType` evidence; unsupported alias targets remain loud refusals.
 
 - `typedef unsigned long UL;` now executes through matching structured `BuiltinType` evidence, completing the unsigned-long alias and typedef pair.

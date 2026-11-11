@@ -19,6 +19,10 @@ coverage advance independently from the Python tier.
 
 ### Added
 
+- Empty named scoped and unscoped enum declarations now execute when Clang
+  supplies no enumerators and, when present, an `int` fixed underlying type;
+  enumerated values and other underlying types remain loud refusals.
+
 - Qualified function using declarations now execute when the adjacent Clang
   `UsingShadowDecl` carries a structured `FunctionDecl` target; unresolved or
   non-function targets remain loud refusals.

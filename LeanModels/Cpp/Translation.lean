@@ -749,6 +749,23 @@ private def executeTopDeclaration (raw : Raw) : Except String Unit :=
           | _, _ => .error executionRefusal
       | none => .error executionRefusal
   | some "UsingDirectiveDecl", _ => .error executionRefusal
+  | some "EnumDecl", none =>
+      match raw.text "name", raw.field "fixedUnderlyingType" with
+      | some _, none => pure ()
+      | some _, some (.object fields) =>
+          match (Raw.object fields).text "qualType" with
+          | some "int" => pure ()
+          | _ => .error executionRefusal
+      | _, _ => .error executionRefusal
+  | some "EnumDecl", some (.array []) =>
+      match raw.text "name", raw.field "fixedUnderlyingType" with
+      | some _, none => pure ()
+      | some _, some (.object fields) =>
+          match (Raw.object fields).text "qualType" with
+          | some "int" => pure ()
+          | _ => .error executionRefusal
+      | _, _ => .error executionRefusal
+  | some "EnumDecl", _ => .error executionRefusal
   | some "LinkageSpecDecl", none =>
       match raw.text "language" with
       | some "C" | some "C++" => pure ()

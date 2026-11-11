@@ -150,6 +150,15 @@ private def usingExecutionTranslation : Artifact := {emptyTranslation with
           ("id", .string "f"), ("kind", .string "FunctionDecl"),
           ("name", .string "f")])]]) ]}
 
+private def emptyEnumExecutionTranslation : Artifact := {emptyTranslation with
+  ast := .object [
+    ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
+    ("inner", .array [
+      .object [("id", .string "e"), ("kind", .string "EnumDecl"),
+        ("name", .string "E"),
+        ("fixedUnderlyingType", .object [
+          ("qualType", .string "int")])]]) ]}
+
 private def usingDirectiveTranslation : Artifact := {emptyTranslation with
   ast := .object [
     ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
@@ -1673,6 +1682,9 @@ def usingDirectiveTranslationExecution : Except String Unit :=
 def usingTranslationExecution : Except String Unit :=
   execute usingExecutionTranslation "u"
 
+def emptyEnumTranslationExecution : Except String Unit :=
+  execute emptyEnumExecutionTranslation "e"
+
 def nonemptyTranslationExecution : Except String Unit :=
   execute functionTranslation "f"
 
@@ -3043,6 +3055,7 @@ def staticAssertTranslationWitness : Except String Unit :=
 #guard execute staticAssertExecutionTranslation "s" matches .ok ()
 #guard execute usingDirectiveExecutionTranslation "u" matches .ok ()
 #guard execute usingExecutionTranslation "u" matches .ok ()
+#guard execute emptyEnumExecutionTranslation "e" matches .ok ()
 #guard execute functionTranslation "f" matches .error "C++ translation-only tier: execution requires object, lifetime, type, expression and statement semantics"
 
 theorem empty_translation_admits : admitTranslationUnit emptyTranslation = .ok () := rfl
@@ -3076,6 +3089,9 @@ theorem using_directive_translation_executes :
 theorem using_translation_executes :
     execute usingExecutionTranslation "u" = .ok () := rfl
 
+theorem empty_enum_translation_executes :
+    execute emptyEnumExecutionTranslation "e" = .ok () := rfl
+
 theorem nonempty_execution_remains_loud : execute functionTranslation "f" = .error executionRefusal := rfl
 
 theorem namespace_translation_witness : namespaceTranslationWitness = true := by
@@ -3092,6 +3108,7 @@ theorem namespace_translation_witness : namespaceTranslationWitness = true := by
 #print axioms static_assert_translation_executes
 #print axioms using_directive_translation_executes
 #print axioms using_translation_executes
+#print axioms empty_enum_translation_executes
 #print axioms nonempty_execution_remains_loud
 #print axioms namespace_translation_witness
 

@@ -2920,6 +2920,40 @@ theorem twinAgrees_evalOpen_intAdd (K : Kont) (m : Module) (st : FrameState)
       simp [evalOpen, binOpHM, haddAnd, haddMult, haddMod, toRun_bind, toRun_pure,
         twinAgrees_binOp, Run.bind, Run.liftRes]
 
+theorem twinAgrees_evalOpen_intSub (K : Kont) (m : Module) (st : FrameState)
+    (a b : Int) (sp : Span) (fuel : Nat) (hfuel : 1 < fuel) :
+    LeanModels.Python.Monadic.toRun (evalOpen K m
+      (.binOp (.constant (.int a) sp) .sub (.constant (.int b) sp) sp)) st =
+      evalExpr m fuel st
+        (.binOp (.constant (.int a) sp) .sub (.constant (.int b) sp) sp) := by
+  cases fuel with
+  | zero => omega
+  | succ fuel =>
+    cases fuel with
+    | zero => omega
+    | succ fuel =>
+      rw [evalExpr]
+      have hca := twinAgrees_evalOpen_constant K m st (.int a) sp (fuel + 1) (by omega)
+      have hcb : ∀ st' : FrameState,
+          LeanModels.Python.Monadic.toRun (evalOpen K m
+            (.constant (.int b) sp)) st' =
+            evalExpr m (fuel + 1) st' (.constant (.int b) sp) := by
+        intro st'
+        exact twinAgrees_evalOpen_constant K m st' (.int b) sp (fuel + 1) (by omega)
+      rw [← hca]
+      have hcb' : ∀ st' : FrameState,
+          evalExpr m (fuel + 1) st' (.constant (.int b) sp) =
+            LeanModels.Python.Monadic.toRun (evalOpen K m
+              (.constant (.int b) sp)) st' := by
+        intro st'
+        exact (hcb st').symm
+      simp only [hcb']
+      have hsubAnd : (BinOp.sub == BinOp.bitAnd) = false := by decide
+      have hsubMult : (BinOp.sub == BinOp.mult) = false := by decide
+      have hsubMod : (BinOp.sub == BinOp.mod) = false := by decide
+      simp [evalOpen, binOpHM, hsubAnd, hsubMult, hsubMod, toRun_bind, toRun_pure,
+        twinAgrees_binOp, Run.bind, Run.liftRes]
+
 /- `x + 5 = 12`, through the fuel-free evaluator, decided by the KERNEL. -/
 #guard (match toRun (evalOpen K0 emptyModule
           (.binOp (.name "x" sp0) .add (.constant (.int 5) sp0) sp0)) st0 with

@@ -264,6 +264,22 @@ explicit because the monadic expression half is fuel-free.
 DECIDED: keep extending the control refinement through literal expression
 arms before attempting recursive calls or scripts.
 
+## 2026-11-11-pyfoundation-59 — prove binary literal-sub control refinement
+
+The control bridge now also covers integer literal subtraction. It rewrites
+both children through the constant theorem, preserves state order, and closes
+the monadic dispatch after proving `.sub` is outside the heap-specialized
+`bitAnd`/`mult`/`mod` branches.
+
+| Measurement | Result |
+|---|---|
+| Target | managed `lake build LeanModels/Python/Monadic/Eval.lean` passed |
+| New theorem | `Monadic.twinAgrees_evalOpen_intSub` |
+| Semantic change | theorem only; no evaluator behavior change |
+
+DECIDED: continue literal binary control bridges while keeping recursive and
+script adequacy explicitly open.
+
 ## 2026-11-11-pyfoundation-43 — repair PayloadBlind comparison recursion transport
 
 The proof observer now transports the heap-aware rich-comparison recursion

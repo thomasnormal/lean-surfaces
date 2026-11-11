@@ -27,7 +27,7 @@ def arrayCells (s : Store) : Nat → Array Val
 
 def arrayStore (a : Array Val) (fallback : Store) (x : VarId) : Val :=
   match x.path with
-  | [] => a[x.decl]?.getD (fallback x)
+  | [] => a.getD x.decl (fallback x)
   | _ :: _ => fallback x
 
 theorem arrayCells_size (s : Store) :
@@ -59,12 +59,22 @@ theorem arrayStore_cells (s : Store) (n : Nat) :
   | nil =>
       simp only [arrayStore]
       by_cases h : decl < n
-      · rw [arrayCells_get s n decl h]
-        rfl
+      · simp only [Array.getD]
+        split
+        · rename_i hget
+          have hget' : decl < n := by simpa [arrayCells_size s n] using hget
+          have hv := arrayCells_get s n decl hget'
+          rw [Array.getElem?_eq_getElem hget] at hv
+          exact Option.some.inj hv
+        · rename_i hget
+          exact (hget (by simpa [arrayCells_size s n] using h)).elim
       · have hs : (arrayCells s n).size ≤ decl := by
           simpa [arrayCells_size s n] using h
-        rw [Array.getElem?_eq_none hs]
-        rfl
+        simp only [Array.getD]
+        split
+        · rename_i hget
+          exact (h (by simpa [arrayCells_size s n] using hget)).elim
+        · rfl
   | cons seg rest => rfl
 
 def rebase (E : Elab) (c : Config) : Config :=

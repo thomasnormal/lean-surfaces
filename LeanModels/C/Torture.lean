@@ -173,9 +173,11 @@ profiled hosts fold true, exactly as `int_32` and `long_64` are pinned.
 > makes it ATTRIBUTABLE — and the distance between "we may not compute
 > this" and "we compute it from a stated rule" is one probed fact.**
 
-What is still a named zero: `_Alignas`, `#pragma pack` and bit-fields are
-outside the pin and outside the modelled vocabulary, so they arrive as
-`unsupported` and never as a wrong offset. -/
+What is still a named zero: `_Alignas` and `#pragma pack` are outside the pin
+and outside the modelled vocabulary. The extractor retains their clang
+attribute nodes as `unsupported` children of the record, and `recordsOf`
+omits any record containing one, so every use refuses rather than receiving a
+natural-alignment offset. Bit-fields follow the same omission path. -/
 
 /-- Round `off` up to a multiple of `al`. `al = 0` is not a alignment and is
 returned unchanged rather than dividing by zero. -/
@@ -204,10 +206,15 @@ def recordHasBitfield (fields : List Decl) : Bool :=
     | .field _ _ (some _) _ => true
     | _ => false
 
+def recordHasUnsupported (fields : List Decl) : Bool :=
+  fields.any fun d => match d with
+    | .unsupported .. => true
+    | _ => false
+
 def recordsOf (envl : Envelope) : List (String × List (String × CType)) :=
   envl.unit.items.filterMap fun i => match i with
     | .decl (.record (some nm) fields _) =>
-        if recordHasBitfield fields || fields.isEmpty then none
+        if recordHasBitfield fields || recordHasUnsupported fields || fields.isEmpty then none
         else some (nm, fields.filterMap fun d => match d with
                     | .field fn fty _ _ => some (fn, fty)
                     | _ => none)

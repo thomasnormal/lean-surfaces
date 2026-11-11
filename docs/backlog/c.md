@@ -19,6 +19,14 @@ object pointers still compare unequal, and equality within one object keeps
 its existing identity-and-offset behavior. The differential row pins the
 refusal against Clang 21.1.8.
 
+## 2026-11-11-c-record-attributes-dropped — packed and aligned records
+
+The C extractor now retains non-field record children and non-bit-field
+attribute children as `Unsupported` declarations. The layout census omits any
+record containing one, so `_Alignas`, `#pragma pack`, and packed attributes
+refuse rather than receiving natural-alignment offsets. A Clang 21.1.8 row
+matches natively and refuses in the model.
+
 ---
 
 ## 2026-11-11-c-torture-main-return-ignored — scorer exit status

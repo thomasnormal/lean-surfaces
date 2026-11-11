@@ -294,9 +294,26 @@ class Extractor:
         return out
 
     def e_RecordDecl(self, n):
-        return {"name": n.get("name"),
-                "fields": self.seq([c for c in kids(n)
-                                    if c.get("kind") == "FieldDecl"])}
+        # Record and field attributes change the layout, so they cannot be
+        # dropped while retaining an apparently ordinary record. Keep every
+        # non-field child as an Unsupported declaration. For a field, retain
+        # the field only when its children are the already-modelled bit-field
+        # width ConstantExpr; any other child (PackedAttr, AlignedAttr, …)
+        # becomes an Unsupported declaration and the layout walker refuses
+        # the containing record. This preserves the AST evidence and prevents
+        # natural-alignment layout for a packed or aligned record.
+        members = []
+        for child in kids(n):
+            if child.get("kind") != "FieldDecl":
+                members.append(self.node(child))
+                continue
+            allowed = {"ConstantExpr"} if child.get("isBitfield") else set()
+            extras = [c for c in kids(child) if c.get("kind") not in allowed]
+            if extras:
+                members.extend(self.node(c) for c in extras)
+            else:
+                members.append(self.node(child))
+        return {"name": n.get("name"), "fields": members}
 
     def e_TypedefDecl(self, n):
         under = next((c for c in kids(n) if c.get("kind") in TYPES), None)

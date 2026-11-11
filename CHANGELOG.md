@@ -42,6 +42,9 @@
 - Refused C pointer equality when a one-past pointer is compared with the
   start of a different object, whose result depends on unspecified placement.
 
+- Preserved record and field layout attributes as `Unsupported` evidence and
+  refused packed or aligned records instead of assigning natural offsets.
+
 - Fixed the TinyXML-2 coverage caller's C++ runtime linkage so its
   provenance-verified native calls can run when the system runtime is older.
 

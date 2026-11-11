@@ -121,11 +121,17 @@ Counts are today's corpus and are informative, not normative.
 | `FunctionDecl` | 59 | `name`, `type`, `storage` (`static` \| null), `params`: [`ParmVarDecl`…], `body`: `CompoundStmt` \| null (null = a prototype) |
 | `VarDecl` | 321 | `name`, `type`, `storage`, `init`: expr \| null |
 | `ParmVarDecl` | 113 | `name`, `type` |
-| `FieldDecl` | 62 | `name`, `type` |
-| `RecordDecl` | 13 | `name` \| null (anonymous), `fields`: [`FieldDecl`…] |
+| `FieldDecl` | 62 | `name`, `type`, `bits`: nat \| null |
+| `RecordDecl` | 13 | `name` \| null (anonymous), `fields`: [`FieldDecl` \| `Unsupported`…] |
 | `TypedefDecl` | 7 | `name`, `type` |
 | `EnumDecl` | 3 | `name` \| null, `constants`: [`EnumConstantDecl`…] |
 | `EnumConstantDecl` | 11 | `name`, `value`: str (decimal). clang wraps the value in a `ConstantExpr`; it is FLATTENED here, because an enum constant's meaning is the folded integer. **All 11 in-corpus `ConstantExpr` nodes are exactly these**, so the emitted vocabulary is 44 kinds + this flattening |
+
+Record and field layout attributes are retained as `Unsupported` children of
+the containing `RecordDecl` (for example `PackedAttr`,
+`MaxFieldAlignmentAttr`, and `AlignedAttr`). The layout walker omits any
+record containing such a child, so packed and aligned records refuse instead
+of receiving natural-alignment offsets.
 
 ### 3.2 Statements (11)
 

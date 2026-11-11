@@ -114,6 +114,9 @@ inductive Expr where
   | implicitCast (cast : String) (sub : Expr) (ty : CType) (span : CSpan)
   | cast (cast : String) (sub : Expr) (ty : CType) (span : CSpan)
   | initList (inits : List Expr) (ty : CType) (span : CSpan)
+  /-- Clang's `InitListExpr` retains both `inner` and `array_filler` fields. -/
+  | arrayInitList (inits filler : List Expr) (ty : CType) (span : CSpan)
+  | implicitValueInit (ty : CType) (span : CSpan)
   | compoundLit (init : Expr) (ty : CType) (span : CSpan)
   /-- `sizeof`/`alignof`, over a type or over an expression. -/
   | typeTrait (trait : String) (argType : Option CType) (sub : Option Expr)
@@ -249,7 +252,8 @@ def Expr.ty : Expr → CType
   | .binop _ _ _ t _ | .compoundAssign _ _ _ t _ => t
   | .unop _ _ _ t _ | .cond _ _ _ t _ | .paren _ t _ => t
   | .implicitCast _ _ t _ | .cast _ _ t _ => t
-  | .initList _ t _ | .compoundLit _ t _ => t
+  | .initList _ t _ | .compoundLit _ t _ | .implicitValueInit t _ => t
+  | .arrayInitList _ _ t _ => t
   | .typeTrait _ _ _ t _ | .constExpr _ _ t _ => t
   | .unsupported .. => ""
 
@@ -272,6 +276,8 @@ def Expr.kindName : Expr → String
   | .implicitCast .. => "ImplicitCastExpr"
   | .cast .. => "CStyleCastExpr"
   | .initList .. => "InitListExpr"
+  | .arrayInitList .. => "InitListExpr"
+  | .implicitValueInit .. => "ImplicitValueInitExpr"
   | .compoundLit .. => "CompoundLiteralExpr"
   | .typeTrait .. => "UnaryExprOrTypeTraitExpr"
   | .constExpr .. => "ConstantExpr"
@@ -290,6 +296,7 @@ def Expr.subexprs : Expr → List Expr
   | e@(.implicitCast _ s _ _) => e :: s.subexprs
   | e@(.cast _ s _ _) => e :: s.subexprs
   | e@(.initList xs _ _) => e :: xs.flatMap Expr.subexprs
+  | e@(.arrayInitList xs filler _ _) => e :: (xs.flatMap Expr.subexprs ++ filler.flatMap Expr.subexprs)
   | e@(.compoundLit i _ _) => e :: i.subexprs
   | e@(.typeTrait _ _ (some s) _ _) => e :: s.subexprs
   | e@(.constExpr _ (some s) _ _) => e :: s.subexprs

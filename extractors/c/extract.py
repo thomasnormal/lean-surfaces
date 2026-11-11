@@ -63,7 +63,7 @@ EXPRS = {"IntegerLiteral", "CharacterLiteral", "StringLiteral", "FloatingLiteral
          "DeclRefExpr", "MemberExpr", "ArraySubscriptExpr", "CallExpr",
          "BinaryOperator", "CompoundAssignOperator", "UnaryOperator",
          "ConditionalOperator", "ParenExpr", "ImplicitCastExpr", "CStyleCastExpr",
-         "InitListExpr", "CompoundLiteralExpr", "UnaryExprOrTypeTraitExpr",
+         "InitListExpr", "ImplicitValueInitExpr", "CompoundLiteralExpr", "UnaryExprOrTypeTraitExpr",
          "ConstantExpr"}
 TYPES = {"BuiltinType", "PointerType", "RecordType", "TypedefType",
          "ElaboratedType", "ParenType", "FunctionProtoType"}
@@ -456,23 +456,16 @@ class Extractor:
     e_CStyleCastExpr = e_ImplicitCastExpr
 
     def e_InitListExpr(self, n):
-        # clang's JSON dumper puts a PARTIALLY initialised array's elements
-        # under `array_filler` -- with the implicit filler PREPENDED -- and
-        # leaves `inner` empty.  Reading only `inner` therefore emits
-        # `"inits": []` for `int16_t masktab[6] = {1,2,3,4,5}`: a well-formed
-        # envelope of a DIFFERENT program, which the ingester accepts and the
-        # model then runs to a confidently wrong answer.  Measured: 4 of 270
-        # torture envelopes, and one of them is 2026-08-24-c-22's `c-div-2`.
-        #
-        # The filler itself is DROPPED, not carried: §6.7.11p21's zero-fill of
-        # the unmentioned elements is the MODEL's job (`initElems` performs it
-        # from the extent), so keeping clang's `ImplicitValueInitExpr` would be
-        # a second answer to one question.
-        cs = kids(n)
-        if not cs:
-            cs = [c for c in (n.get("array_filler") or [])
-                  if isinstance(c, dict) and c.get("kind") != "ImplicitValueInitExpr"]
-        return {"inits": self.seq(cs), "type": qual(n)}
+        # Preserve both clang fields, including the leading filler and every
+        # positional ImplicitValueInitExpr. Missing means the field was absent,
+        # not an empty array. Old envelopes lack this required evidence.
+        filler = n.get("array_filler")
+        return {"inits": self.seq(kids(n)),
+                "array_filler": None if filler is None else self.seq(filler),
+                "type": qual(n)}
+
+    def e_ImplicitValueInitExpr(self, n):
+        return {"type": qual(n)}
 
     def e_CompoundLiteralExpr(self, n):
         c = kids(n)

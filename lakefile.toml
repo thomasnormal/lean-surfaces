@@ -104,5 +104,5 @@ name = "circuit-dc-runner"
 root = "LeanModels.Circuit.DCRunner"
 [[lean_exe]]
 name = "c-torture-run"
-root = "LeanModels.C.Torture"
+root = "LeanModels.C.TortureMain"
 

@@ -548,7 +548,7 @@ def summarise (rows : List (String × Verdict)) : List String := Id.run do
       out := out ++ [s!"  FIRST FAILURE (log order, verbatim): {n}  {v.token}  {v.detail}"]
   pure out
 
-def main (args : List String) : IO UInt32 := do
+def tortureMain (args : List String) : IO UInt32 := do
   let (manifestPath, fuel) :=
     match args with
     | [p] => (p, 64)
@@ -571,6 +571,3 @@ def main (args : List String) : IO UInt32 := do
   return 0
 
 end LeanModels.C.C23.Torture
-
-/-- The `lean_exe` root. -/
-def main (args : List String) : IO UInt32 := LeanModels.C.C23.Torture.main args

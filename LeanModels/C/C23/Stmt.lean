@@ -153,20 +153,15 @@ expression is compared unequal to 0). -/
 def evalCond (ctx : Ctx) (e : Expr) : ExecM Bool :=
   liftEval (do let v ← evalExpr ctx e; truthy v)
 
-/-! ## §6.7.11 — initialization, and the rule that fires on NOTHING
+/-! ## §6.7.11 — initialization of omitted members
 
-**Measured, on all 75 `InitListExpr` nodes in the corpus: every one is
-FULL.** Not one array initializer is shorter than its extent and not one
-structure initializer omits a member. So §6.7.11p10's rule — *the
-unmentioned members are initialized as objects with static storage
-duration*, i.e. to zero — **fires on zero corpus sites.**
+The original census reported every corpus initializer as full. That claim
+missed Clang's `array_filler` representation and is not evidence that partial
+initialization is absent. §6.7.11p10 initializes unmentioned members as
+objects with static storage duration, i.e. to zero.
 
-That is exactly the condition under which the memory model installed
-effective types (§2.5): a rule is cheap to install correctly while
-nothing exercises it and expensive to retrofit afterwards, and **no
-instrument in this project would otherwise notice it was missing.** So it
-is implemented, and gated on a SYNTHETIC partial initializer, because the
-corpus cannot exercise it and a rule nobody ran is a rule nobody checked.
+The interpreter implements this rule and tests partial initializers against
+the native compiler.
 
 **Zero-initialization is TYPE-DIRECTED, not a memset.** §6.7.11p10 says
 the unmentioned members are initialized *as if by `= 0`*, and for a
@@ -234,6 +229,17 @@ def initObject : Nat → Ctx → Ptr → CType → Expr → ExecM Unit
   | 0, _, _, _, _ => exhausted
   | fuel + 1, ctx, p, ty, e =>
     match e with
+    | .implicitValueInit _ _ => zeroInit fuel ctx p ty
+    | .arrayInitList inits filler _ _ =>
+        -- Clang's array_filler is [default filler, positional entries...].
+        -- Only its implicit-zero default is in tier; retain and refuse other
+        -- shapes rather than guessing their repeated initialization semantics.
+        match inits, filler, ctx.layout.elem ty with
+        | [], .implicitValueInit _ _ :: entries, some (et, n) =>
+            match ctx.layout.size et with
+            | some esz => initElems fuel ctx p et esz n 0 entries
+            | none => refuseUnsupported s!"no size for element type '{et}'"
+        | _, _, _ => refuseUnsupported "unsupported Clang array_filler initializer"
     | .initList inits _ _ =>
         match ctx.layout.elem ty with
         -- an ARRAY: elements at i * sizeof(elem), then §6.7.11p10 on the tail

@@ -825,6 +825,8 @@ def evalExpr (ctx : Ctx) : Expr → EvalM CVal
       | some n => pure (.int t n)
       | none => refuseUnsupported s!"constant expression '{v}'"
   | .initList .. => refuseUnsupported "initializer list (inch 4)"
+  | .arrayInitList .. => refuseUnsupported "initializer list in value position"
+  | .implicitValueInit .. => refuseUnsupported "implicit value initialization in value position"
   | .compoundLit .. => refuseUnsupported "compound literal (inch 4)"
   | .unsupported k _ _ => refuseUnsupported s!"out of tier: {k}"
   termination_by e => 2 * e.size + 1
@@ -1065,7 +1067,7 @@ def Expr.nodeIsPure : Expr → Bool
   -- J.1(16) domain non-empty, and inch 5's repair is what made it REACHABLE.
   | .call .. => false
   -- §6.7.11 — aggregate initialization writes through the layout.
-  | .initList .. | .compoundLit .. => false
+  | .initList .. | .arrayInitList .. | .implicitValueInit .. | .compoundLit .. => false
   -- Out of tier: unknown, therefore not pure.
   | .unsupported .. => false
   | _ => true
@@ -1522,6 +1524,8 @@ private theorem memInvariant_core (ctx : Ctx) : ∀ (n : Nat) (e : Expr), e.size
       | call _ _ _ _ => simp [Expr.nodeIsPure] at hnode
       | compoundAssign _ _ _ _ _ => simp [Expr.nodeIsPure] at hnode
       | initList _ _ _ => simp [Expr.nodeIsPure] at hnode
+      | arrayInitList _ _ _ _ => simp [Expr.nodeIsPure] at hnode
+      | implicitValueInit _ _ => simp [Expr.nodeIsPure] at hnode
       | compoundLit _ _ _ => simp [Expr.nodeIsPure] at hnode
       | unsupported _ _ _ => simp [Expr.nodeIsPure] at hnode
 

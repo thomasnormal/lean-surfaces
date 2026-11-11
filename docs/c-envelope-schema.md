@@ -167,10 +167,17 @@ rung rather than a v0 hole.
 | `ParenExpr` | 237 | `sub`, `type` |
 | `ImplicitCastExpr` | 3123 | `cast` (§3.6), `sub`, `type` |
 | `CStyleCastExpr` | 95 | `cast` (§3.6), `sub`, `type` |
-| `InitListExpr` | 75 | `inits`: [expr…], `type` |
+| `InitListExpr` | 75 | `inits`: [expr…] from Clang `inner`, `array_filler`: [expr…] \| null, `type` |
+| `ImplicitValueInitExpr` | — | `type` |
 | `CompoundLiteralExpr` | 1 | `init`: `InitListExpr`, `type` |
 | `UnaryExprOrTypeTraitExpr` | 12 | `trait`: `"sizeof"` \| `"alignof"`, `arg_type` \| `sub`, `type` |
 | `ConstantExpr` | 11 | `value`: str, `sub`, `type` — emitted as a NODE only where it is not flattened into `EnumConstantDecl.value` (0 such sites today; bit-field widths at rung R2) |
+
+`array_filler` preserves Clang's entire field, including its leading default
+and every positional implicit initializer. It is required even when null:
+older envelopes omitted this evidence and may have lost positions, so the
+ingester refuses their initializer lists until they are re-extracted. The
+interpreter admits the implicit-zero default and refuses other filler shapes.
 
 ### 3.4 Types — a STRING almost everywhere, a tree only on typedefs
 

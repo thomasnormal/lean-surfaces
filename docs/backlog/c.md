@@ -13,6 +13,18 @@ one of those references keeps resolving.
 
 ---
 
+## 2026-11-10-c-array-filler-designators — Clang array initializer positions
+
+The previous extractor removed every `ImplicitValueInitExpr` from Clang's
+`array_filler`, so a designated element could move to a different index. The
+envelope now retains the full field and the implicit initialization nodes;
+legacy initializer lists without this required field are refused at ingestion.
+The C initializer uses positional entries and admits an implicit-zero default;
+other filler shapes remain loud. Differential checks cover actual extracted C
+and compare the model's returned value against pinned Clang, including an old
+lossy-envelope refusal. Union initialization and the other audit findings are
+separate open obligations.
+
 ## 2026-08-22-c-1 — §L83's TRIAD CLOSES GREEN, the standing strategy is adopted by touch, and inch 4 opens with fuel
 
 ### §L83's owed triad — ALL FOUR LEGS GREEN

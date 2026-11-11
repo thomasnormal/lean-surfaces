@@ -188,7 +188,14 @@ partial def parseExpr (j : Json) : Except String Expr := do
     | "CStyleCastExpr" =>
         return .cast (← getStr j "cast") (← sub "sub") (← ty) span
     | "InitListExpr" =>
-        return .initList (← (← getArr j "inits").mapM parseExpr) (← ty) span
+        let inits ← (← getArr j "inits").mapM parseExpr
+        -- This field is mandatory: legacy c-0.1 envelopes silently dropped
+        -- positional fillers, so accepting an absent field can change a program.
+        match ← getField j "array_filler" with
+        | .null => return .initList inits (← ty) span
+        | .arr filler => return .arrayInitList inits (← filler.toList.mapM parseExpr) (← ty) span
+        | _ => throw "field 'array_filler' is not an array or null"
+    | "ImplicitValueInitExpr" => return .implicitValueInit (← ty) span
     | "CompoundLiteralExpr" => return .compoundLit (← sub "init") (← ty) span
     | "UnaryExprOrTypeTraitExpr" =>
         return .typeTrait (← getStr j "trait") (← getOptStr j "arg_type")

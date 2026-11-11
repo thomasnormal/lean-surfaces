@@ -112,6 +112,13 @@ private def typedefExecutionTranslation : Artifact := {emptyTranslation with
         ("type", .object [("qualType", .string "int")]),
         ("inner", .array [intBuiltinType])]])]}
 
+private def linkageExecutionTranslation : Artifact := {emptyTranslation with
+  ast := .object [
+    ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
+    ("inner", .array [
+      .object [("id", .string "l"), ("kind", .string "LinkageSpecDecl"),
+        ("language", .string "C"), ("hasBraces", .bool true)]]) ]}
+
 private def usingDirectiveTranslation : Artifact := {emptyTranslation with
   ast := .object [
     ("id", .string "tu"), ("kind", .string "TranslationUnitDecl"),
@@ -1623,6 +1630,9 @@ def typeAliasTranslationExecution : Except String Unit :=
 def typedefTranslationExecution : Except String Unit :=
   execute typedefExecutionTranslation "a"
 
+def linkageTranslationExecution : Except String Unit :=
+  execute linkageExecutionTranslation "l"
+
 def nonemptyTranslationExecution : Except String Unit :=
   execute functionTranslation "f"
 
@@ -2989,6 +2999,7 @@ def staticAssertTranslationWitness : Except String Unit :=
 #guard execute namespaceAliasExecutionTranslation "a" matches .ok ()
 #guard execute typeAliasExecutionTranslation "a" matches .ok ()
 #guard execute typedefExecutionTranslation "a" matches .ok ()
+#guard execute linkageExecutionTranslation "l" matches .ok ()
 #guard execute functionTranslation "f" matches .error "C++ translation-only tier: execution requires object, lifetime, type, expression and statement semantics"
 
 theorem empty_translation_admits : admitTranslationUnit emptyTranslation = .ok () := rfl
@@ -3010,6 +3021,9 @@ theorem type_alias_translation_executes :
 theorem typedef_translation_executes :
     execute typedefExecutionTranslation "a" = .ok () := rfl
 
+theorem linkage_translation_executes :
+    execute linkageExecutionTranslation "l" = .ok () := rfl
+
 theorem nonempty_execution_remains_loud : execute functionTranslation "f" = .error executionRefusal := rfl
 
 theorem namespace_translation_witness : namespaceTranslationWitness = true := by
@@ -3022,6 +3036,7 @@ theorem namespace_translation_witness : namespaceTranslationWitness = true := by
 #print axioms namespace_alias_translation_executes
 #print axioms type_alias_translation_executes
 #print axioms typedef_translation_executes
+#print axioms linkage_translation_executes
 #print axioms nonempty_execution_remains_loud
 #print axioms namespace_translation_witness
 

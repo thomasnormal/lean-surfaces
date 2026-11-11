@@ -70,6 +70,18 @@
     "rung": 0
   },
   {
+    "id": "translation.empty-linkage-execution",
+    "kind": "translation",
+    "corpus": "translation witness",
+    "lean_module": "LeanModels.Cpp.TranslationTests",
+    "lean_namespace": "LeanModels.Cpp.TranslationTests",
+    "lean_expression": "linkageTranslationExecution",
+    "render": "unit",
+    "cpp_source": "extern \"C\" {}",
+    "expect": "match",
+    "rung": 0
+  },
+  {
     "id": "translation.namespace-declaration",
     "kind": "translation",
     "corpus": "translation witness",

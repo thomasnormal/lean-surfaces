@@ -19,6 +19,10 @@ coverage advance independently from the Python tier.
 
 ### Added
 
+- Empty `extern "C" {}` and `extern "C++" {}` linkage declarations now
+  execute as declaration-only translation nodes when their bodies are empty;
+  unsupported languages and nonempty linkage bodies remain loud refusals.
+
 - Empty C++ translation units now execute through the translation boundary;
   empty namespace declarations, namespace aliases, `int` type aliases, and `typedef int` aliases execute as declaration-only nodes; other
   nonempty units retain the named refusal until declaration and body semantics

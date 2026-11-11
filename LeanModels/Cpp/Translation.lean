@@ -741,6 +741,15 @@ private def executeTopDeclaration (raw : Raw) : Except String Unit :=
           | _, _ => .error executionRefusal
       | none => .error "translation: namespace alias target is absent"
   | some "NamespaceAliasDecl", _ => .error executionRefusal
+  | some "LinkageSpecDecl", none =>
+      match raw.text "language" with
+      | some "C" | some "C++" => pure ()
+      | _ => .error executionRefusal
+  | some "LinkageSpecDecl", some (.array []) =>
+      match raw.text "language" with
+      | some "C" | some "C++" => pure ()
+      | _ => .error executionRefusal
+  | some "LinkageSpecDecl", _ => .error executionRefusal
   | some kind, some (.array [target]) =>
       if kind != "TypeAliasDecl" && kind != "TypedefDecl" then .error executionRefusal else
       match target.text "kind", target.field "type", raw.field "type" with

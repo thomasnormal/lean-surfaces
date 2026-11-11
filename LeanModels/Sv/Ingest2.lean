@@ -610,6 +610,15 @@ def parsePProcess (j : Json) : Except String PProcess := do
             | s => throw s!"unknown AlwaysPosedge style {s.quote}"
     | "AlwaysComb" => return .alwaysComb (← parsePStmt (← getField j "body"))
     | "AlwaysEvent" =>
+        if getOptStr j "event_kind" == some "ImplicitEventControl" then
+          -- Do not let an explicit event list or guard masquerade as @*.
+          -- These fields cannot belong to the parser's implicit control.
+          if ["events", "edge", "iff", "clock", "areset", "areset_n", "reset_iff"].any
+              (fun f => (getOptField j f).isSome) then
+            throw "AlwaysEvent:implicit-metadata — explicit event fields on an implicit event control"
+          if (getOptField j "style").isSome && getOptStr j "style" != some "always" then
+            throw "AlwaysEvent:implicit-style — an implicit event control is retained as plain always"
+          return .alwaysImplicit (← parsePStmt (← getField j "body"))
         return .unsupported "ProceduralBlockSymbol:Always"
           "source-level event-controlled always is retained; the frozen process AST has no event-list constructor"
     | "Initial" =>

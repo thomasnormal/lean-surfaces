@@ -1,0 +1,700 @@
+{
+  "schema_version": "sv-0.2",
+  "language": "systemverilog",
+  "frontend": {
+    "name": "pyslang",
+    "family": "pyslang-11"
+  },
+  "mode": "symbolic",
+  "top": "always_star_startup_step11",
+  "source_files": [
+    {
+      "path": "Examples/system-verilog/sem2/always_star_step11/always_star_startup_step11.sv",
+      "sha256": "d21a5b0a8a462be806b2cce0a0f2d574370a2f3216deb2e9f104d9ea2b3563bf"
+    }
+  ],
+  "packages": [],
+  "design": {
+    "kind": "Design",
+    "modules": [
+      {
+        "kind": "Module",
+        "span": {
+          "line": 2,
+          "col": 1,
+          "end_line": 12,
+          "end_col": 10
+        },
+        "name": "always_star_startup_step11",
+        "imports": [],
+        "params": [
+          {
+            "kind": "ParameterDecl",
+            "span": {
+              "line": 2,
+              "col": 51,
+              "end_line": 2,
+              "end_col": 56
+            },
+            "name": "W",
+            "type": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 2,
+                      "col": 51,
+                      "end_line": 2,
+                      "end_col": 56
+                    },
+                    "value": 31,
+                    "resolved_width": 32
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 2,
+                      "col": 51,
+                      "end_line": 2,
+                      "end_col": 56
+                    },
+                    "value": 0,
+                    "resolved_width": 32
+                  }
+                }
+              ],
+              "resolved": 32
+            },
+            "default": {
+              "kind": "Int",
+              "span": {
+                "line": 2,
+                "col": 55,
+                "end_line": 2,
+                "end_col": 56
+              },
+              "value": 4,
+              "resolved_width": 32
+            },
+            "resolved": 4
+          }
+        ],
+        "types": [],
+        "ports": [
+          {
+            "kind": "Port",
+            "span": {
+              "line": 3,
+              "col": 26,
+              "end_line": 3,
+              "end_col": 32
+            },
+            "name": "y_star",
+            "dir": "out",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Binary",
+                    "span": {
+                      "line": 3,
+                      "col": 19,
+                      "end_line": 3,
+                      "end_col": 22
+                    },
+                    "width": null,
+                    "op": "-",
+                    "left": {
+                      "kind": "ParamRef",
+                      "span": {
+                        "line": 3,
+                        "col": 19,
+                        "end_line": 3,
+                        "end_col": 20
+                      },
+                      "name": "W"
+                    },
+                    "right": {
+                      "kind": "Int",
+                      "span": {
+                        "line": 3,
+                        "col": 21,
+                        "end_line": 3,
+                        "end_col": 22
+                      },
+                      "value": 1,
+                      "resolved_width": null
+                    }
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 3,
+                      "col": 23,
+                      "end_line": 3,
+                      "end_col": 24
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 4
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 3,
+              "col": 34,
+              "end_line": 3,
+              "end_col": 40
+            },
+            "name": "y_comb",
+            "dir": "out",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Binary",
+                    "span": {
+                      "line": 3,
+                      "col": 19,
+                      "end_line": 3,
+                      "end_col": 22
+                    },
+                    "width": null,
+                    "op": "-",
+                    "left": {
+                      "kind": "ParamRef",
+                      "span": {
+                        "line": 3,
+                        "col": 19,
+                        "end_line": 3,
+                        "end_col": 20
+                      },
+                      "name": "W"
+                    },
+                    "right": {
+                      "kind": "Int",
+                      "span": {
+                        "line": 3,
+                        "col": 21,
+                        "end_line": 3,
+                        "end_col": 22
+                      },
+                      "value": 1,
+                      "resolved_width": null
+                    }
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 3,
+                      "col": 23,
+                      "end_line": 3,
+                      "end_col": 24
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 4
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 3,
+              "col": 42,
+              "end_line": 3,
+              "end_col": 57
+            },
+            "name": "y_constant_star",
+            "dir": "out",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Binary",
+                    "span": {
+                      "line": 3,
+                      "col": 19,
+                      "end_line": 3,
+                      "end_col": 22
+                    },
+                    "width": null,
+                    "op": "-",
+                    "left": {
+                      "kind": "ParamRef",
+                      "span": {
+                        "line": 3,
+                        "col": 19,
+                        "end_line": 3,
+                        "end_col": 20
+                      },
+                      "name": "W"
+                    },
+                    "right": {
+                      "kind": "Int",
+                      "span": {
+                        "line": 3,
+                        "col": 21,
+                        "end_line": 3,
+                        "end_col": 22
+                      },
+                      "value": 1,
+                      "resolved_width": null
+                    }
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 3,
+                      "col": 23,
+                      "end_line": 3,
+                      "end_col": 24
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 4
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 3,
+              "col": 59,
+              "end_line": 3,
+              "end_col": 74
+            },
+            "name": "y_constant_comb",
+            "dir": "out",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Binary",
+                    "span": {
+                      "line": 3,
+                      "col": 19,
+                      "end_line": 3,
+                      "end_col": 22
+                    },
+                    "width": null,
+                    "op": "-",
+                    "left": {
+                      "kind": "ParamRef",
+                      "span": {
+                        "line": 3,
+                        "col": 19,
+                        "end_line": 3,
+                        "end_col": 20
+                      },
+                      "name": "W"
+                    },
+                    "right": {
+                      "kind": "Int",
+                      "span": {
+                        "line": 3,
+                        "col": 21,
+                        "end_line": 3,
+                        "end_col": 22
+                      },
+                      "value": 1,
+                      "resolved_width": null
+                    }
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 3,
+                      "col": 23,
+                      "end_line": 3,
+                      "end_col": 24
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 4
+            }
+          }
+        ],
+        "decls": [
+          {
+            "kind": "Var",
+            "span": {
+              "line": 5,
+              "col": 19,
+              "end_line": 5,
+              "end_col": 30
+            },
+            "name": "a",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Binary",
+                    "span": {
+                      "line": 5,
+                      "col": 12,
+                      "end_line": 5,
+                      "end_col": 15
+                    },
+                    "width": null,
+                    "op": "-",
+                    "left": {
+                      "kind": "ParamRef",
+                      "span": {
+                        "line": 5,
+                        "col": 12,
+                        "end_line": 5,
+                        "end_col": 13
+                      },
+                      "name": "W"
+                    },
+                    "right": {
+                      "kind": "Int",
+                      "span": {
+                        "line": 5,
+                        "col": 14,
+                        "end_line": 5,
+                        "end_col": 15
+                      },
+                      "value": 1,
+                      "resolved_width": null
+                    }
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 5,
+                      "col": 16,
+                      "end_line": 5,
+                      "end_col": 17
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 4
+            },
+            "init": {
+              "kind": "Int",
+              "span": {
+                "line": 5,
+                "col": 23,
+                "end_line": 5,
+                "end_col": 30
+              },
+              "value": 3,
+              "resolved_width": null
+            }
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 5,
+              "col": 32,
+              "end_line": 5,
+              "end_col": 43
+            },
+            "name": "b",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Binary",
+                    "span": {
+                      "line": 5,
+                      "col": 12,
+                      "end_line": 5,
+                      "end_col": 15
+                    },
+                    "width": null,
+                    "op": "-",
+                    "left": {
+                      "kind": "ParamRef",
+                      "span": {
+                        "line": 5,
+                        "col": 12,
+                        "end_line": 5,
+                        "end_col": 13
+                      },
+                      "name": "W"
+                    },
+                    "right": {
+                      "kind": "Int",
+                      "span": {
+                        "line": 5,
+                        "col": 14,
+                        "end_line": 5,
+                        "end_col": 15
+                      },
+                      "value": 1,
+                      "resolved_width": null
+                    }
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 5,
+                      "col": 16,
+                      "end_line": 5,
+                      "end_col": 17
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 4
+            },
+            "init": {
+              "kind": "Int",
+              "span": {
+                "line": 5,
+                "col": 36,
+                "end_line": 5,
+                "end_col": 43
+              },
+              "value": 5,
+              "resolved_width": null
+            }
+          }
+        ],
+        "processes": [
+          {
+            "kind": "AlwaysEvent",
+            "span": {
+              "line": 6,
+              "col": 5,
+              "end_line": 6,
+              "end_col": 30
+            },
+            "event_kind": "ImplicitEventControl",
+            "body": {
+              "kind": "BlockingAssign",
+              "span": {
+                "line": 6,
+                "col": 15,
+                "end_line": 6,
+                "end_col": 30
+              },
+              "target": {
+                "kind": "Ident",
+                "span": {
+                  "line": 6,
+                  "col": 15,
+                  "end_line": 6,
+                  "end_col": 21
+                },
+                "width": 4,
+                "name": "y_star"
+              },
+              "value": {
+                "kind": "Binary",
+                "span": {
+                  "line": 6,
+                  "col": 24,
+                  "end_line": 6,
+                  "end_col": 29
+                },
+                "width": 4,
+                "op": "^",
+                "left": {
+                  "kind": "Ident",
+                  "span": {
+                    "line": 6,
+                    "col": 24,
+                    "end_line": 6,
+                    "end_col": 25
+                  },
+                  "width": 4,
+                  "name": "a"
+                },
+                "right": {
+                  "kind": "Ident",
+                  "span": {
+                    "line": 6,
+                    "col": 28,
+                    "end_line": 6,
+                    "end_col": 29
+                  },
+                  "width": 4,
+                  "name": "b"
+                }
+              }
+            },
+            "text": "always @* y_star = a ^ b;",
+            "symbolic_event_retained": true
+          },
+          {
+            "kind": "AlwaysComb",
+            "span": {
+              "line": 7,
+              "col": 5,
+              "end_line": 7,
+              "end_col": 32
+            },
+            "body": {
+              "kind": "BlockingAssign",
+              "span": {
+                "line": 7,
+                "col": 17,
+                "end_line": 7,
+                "end_col": 32
+              },
+              "target": {
+                "kind": "Ident",
+                "span": {
+                  "line": 7,
+                  "col": 17,
+                  "end_line": 7,
+                  "end_col": 23
+                },
+                "width": 4,
+                "name": "y_comb"
+              },
+              "value": {
+                "kind": "Binary",
+                "span": {
+                  "line": 7,
+                  "col": 26,
+                  "end_line": 7,
+                  "end_col": 31
+                },
+                "width": 4,
+                "op": "^",
+                "left": {
+                  "kind": "Ident",
+                  "span": {
+                    "line": 7,
+                    "col": 26,
+                    "end_line": 7,
+                    "end_col": 27
+                  },
+                  "width": 4,
+                  "name": "a"
+                },
+                "right": {
+                  "kind": "Ident",
+                  "span": {
+                    "line": 7,
+                    "col": 30,
+                    "end_line": 7,
+                    "end_col": 31
+                  },
+                  "width": 4,
+                  "name": "b"
+                }
+              }
+            }
+          },
+          {
+            "kind": "AlwaysEvent",
+            "span": {
+              "line": 10,
+              "col": 5,
+              "end_line": 10,
+              "end_col": 41
+            },
+            "event_kind": "ImplicitEventControl",
+            "body": {
+              "kind": "BlockingAssign",
+              "span": {
+                "line": 10,
+                "col": 15,
+                "end_line": 10,
+                "end_col": 41
+              },
+              "target": {
+                "kind": "Ident",
+                "span": {
+                  "line": 10,
+                  "col": 15,
+                  "end_line": 10,
+                  "end_col": 30
+                },
+                "width": 4,
+                "name": "y_constant_star"
+              },
+              "value": {
+                "kind": "Literal",
+                "span": {
+                  "line": 10,
+                  "col": 33,
+                  "end_line": 10,
+                  "end_col": 40
+                },
+                "width": 4,
+                "bits": "0110"
+              }
+            },
+            "text": "always @* y_constant_star = 4'b0110;",
+            "symbolic_event_retained": true
+          },
+          {
+            "kind": "AlwaysComb",
+            "span": {
+              "line": 11,
+              "col": 5,
+              "end_line": 11,
+              "end_col": 43
+            },
+            "body": {
+              "kind": "BlockingAssign",
+              "span": {
+                "line": 11,
+                "col": 17,
+                "end_line": 11,
+                "end_col": 43
+              },
+              "target": {
+                "kind": "Ident",
+                "span": {
+                  "line": 11,
+                  "col": 17,
+                  "end_line": 11,
+                  "end_col": 32
+                },
+                "width": 4,
+                "name": "y_constant_comb"
+              },
+              "value": {
+                "kind": "Literal",
+                "span": {
+                  "line": 11,
+                  "col": 35,
+                  "end_line": 11,
+                  "end_col": 42
+                },
+                "width": 4,
+                "bits": "0110"
+              }
+            }
+          }
+        ],
+        "generates": [],
+        "others": []
+      }
+    ],
+    "others": []
+  },
+  "lean_blocks": []
+}

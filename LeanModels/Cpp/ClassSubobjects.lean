@@ -82,13 +82,14 @@ private def lastName : List String → Option String
   | [name] => some name
   | _ :: rest => lastName rest
 
-private def sourceTypeName (spelling : String) : Option String :=
-  if spelling.contains "::" then none else
-  let spelling :=
-    if spelling.startsWith "class " then (spelling.drop 6).toString
-    else if spelling.startsWith "struct " then (spelling.drop 7).toString
-    else spelling
-  lastName (spelling.splitOn "::")
+private def declarationName (probe : DeclarationProbe) (handle : FrontendHandle) :
+    Except String String := do
+  let candidates := probe.declarations.filter (fun row =>
+    (row.id == handle || row.canonical == handle) && row.kind == "CXXRecordDecl")
+  let some name := candidates.findSome? (fun row => row.raw.text "name")
+    | throw "class hierarchy: structured base declaration has no name"
+  unless cppIdentifier name do throw "class hierarchy: malformed structured class name"
+  pure name
 
 private def friendName (raw : Raw) : Except String String := do
   let some type := raw.field "type"
@@ -214,12 +215,9 @@ private def shape (artifact : Artifact) (probe : DeclarationProbe)
     let typeSpelling ← evidenceText base "type_spelling"
     unless sourceType.text "qualType" == some typeSpelling do
       throw "class hierarchy: base source spelling disagrees"
-    let some baseName := sourceTypeName typeSpelling
-      | throw "class hierarchy: base source spelling has no class name"
-    unless cppIdentifier baseName do
-      throw "class hierarchy: malformed base source name"
     let .record parent ← parseCppTypeEvidence (← evidenceField base "type")
       | throw "class hierarchy: requires a concrete class base type"
+    let baseName ← declarationName probe parent
     parents := parents ++ [{target := parent, access, writtenAccess := written, name := baseName}]
   let sourceFields := (← children raw).filter (·.text "kind" == some "FieldDecl")
   unless sourceFields.length == (← evidenceNat row.raw "record_field_count") do

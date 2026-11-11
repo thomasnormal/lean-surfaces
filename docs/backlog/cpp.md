@@ -37,13 +37,15 @@ program semantics no longer redoes declaration lookup by spelling. The schema
 table, C runners, and a compiled two-function/local-shadow probe cover the
 new identity path.
 
-## `cpp-spelling-identity`: qualified-name suffix guard
+## `cpp-spelling-identity`: structured base and result identity
 
 **Partially closed 2026-11-11.** Enum and class admission no longer accepts a
-qualified spelling merely because it ends with the expected bare name;
-qualified identities refuse until the extractor's retained declaration
-handles are used. Exact unqualified spellings remain admitted. Full handle
-threading for class, enum, and friend identity remains open.
+qualified spelling merely because it ends with the expected bare name.
+Class-base names now come from the retained structured record declaration
+handle in `CppTypeEvidence`, and enum member-call result matching rejects
+qualified suffixes instead of accepting a spelling-only identity. Exact
+unqualified spellings remain admitted. Friend, setter, and remaining enum
+parameter checks still need full declaration-handle threading.
 
 ## `cpp-harness-oracle-misfile`: native oracle policy
 

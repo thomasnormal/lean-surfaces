@@ -1037,8 +1037,7 @@ private def receiverType (projection : ClassReceiverProjection) (isArrow : Bool)
   pure (shape.name ++ if isArrow then " *" else "")
 
 private def resultMatches (profile : IntegralMemberEnumProfile) (spelling : String) : Bool :=
-  spelling == profile.name || spelling == "enum " ++ profile.name ||
-    spelling.endsWith ("::" ++ profile.name)
+  spelling == profile.name || spelling == "enum " ++ profile.name
 
 /-- Bind an already selected enum-valued call to an existing receiver. No
 overload lookup, enum conversion, object construction, or layout is inferred.

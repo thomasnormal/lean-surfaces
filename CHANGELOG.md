@@ -133,6 +133,11 @@
   extracted object, enum, and direct function references by `DeclarationId`
   instead of redoing name lookup by spelling; name-only lookup remains only for
   compatibility fixtures and the public name entry point.
+
+- Used structured C++ record handles for class-base names and refused qualified
+  enum member-call result spellings instead of accepting a matching suffix;
+  remaining friend and setter identity paths stay loud until their handles are
+  threaded.
 - Admit space-padded combinations of percent-format sign and alternate flags
   with widths; zero-padded combinations remain loud until their prefix order is
   modeled.

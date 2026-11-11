@@ -295,6 +295,10 @@ the store as a tombstone — see `CObj.live`. -/
 def kill (m : Mem) (o : ObjId) : Mem :=
   ⟨m.objs.modify o (fun c => { c with live := false })⟩
 
+/-- End the lifetime of every object allocated at or after `start`. -/
+def killFrom (m : Mem) (start : Nat) : Mem :=
+  (List.range (m.count - start)).foldl (fun acc i => acc.kill (start + i)) m
+
 /-! ### The one place the structural refusals are raised -/
 
 /-- Resolve a pointer to a live object and an in-bounds byte range.

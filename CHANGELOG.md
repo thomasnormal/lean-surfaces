@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Ended automatic-object lifetimes at compound-block and function exit so
+  dangling accesses raise `deadObject`.
+
 - Refused C expressions and calls with two potentially writing
   unsequenced operands or arguments instead of choosing left-to-right.
 

@@ -326,7 +326,13 @@ def execStmt : Nat → Ctx → Stmt → ExecM Flow
   | fuel + 1, ctx, s => match s with
     -- §6.8.3 — a block. Declarations inside it extend the environment,
     -- which is why the block threads a context rather than reading one.
-    | .compound body _ => execBlock fuel ctx body
+    | .compound body _ => do
+        let m₀ ← get
+        let base := m₀.count
+        let f ← execBlock fuel ctx body
+        let m₁ ← get
+        set (m₁.killFrom base)
+        pure f
     -- §6.8.4 — an expression statement: evaluated for its EFFECTS, value
     -- discarded. 297 sites, the largest statement class in the corpus.
     | .expr e _ => do let _ ← evalE ctx e; pure .normal
@@ -560,6 +566,8 @@ def callFn : Nat → Program → LeanModels.C.FunctionDefn → List CVal → Exe
     match f.body with
     | none => refuseUnsupported s!"'{f.name}' is a prototype, not a definition"
     | some body => do
+        let m₀ ← get
+        let base := m₀.count
         -- The callee's own call handler: one fuel less, so the recursion
         -- terminates on the fuel and on nothing else.
         let handler : CallHandler := fun callee vs =>
@@ -587,6 +595,8 @@ def callFn : Nat → Program → LeanModels.C.FunctionDefn → List CVal → Exe
             call := handler }
         let ctx ← bindParams prog.layout ctx0 f.params args
         let flow ← execStmt fuel ctx body
+        let m₁ ← get
+        set (m₁.killFrom base)
         match flow with
         | .ret (some v) => pure v
         | .ret none => pure .undef

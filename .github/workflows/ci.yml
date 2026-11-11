@@ -92,3 +92,39 @@ jobs:
         run: |
           lake build leanmodels-run
           tools/leanpy --compare harness/scripts/gen_script.py
+
+  # Preserve the outcome of every scheduled/manual run even when a lane is
+  # red.  This is the machine-readable red list used by the rename gate.
+  red-list:
+    if: always()
+    needs: [check, quickstart]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Write red-list artifact
+        env:
+          CHECK_RESULT: ${{ needs.check.result }}
+          QUICKSTART_RESULT: ${{ needs.quickstart.result }}
+          RUN_ID: ${{ github.run_id }}
+          SHA: ${{ github.sha }}
+          EVENT: ${{ github.event_name }}
+        run: |
+          python3 - <<'PY'
+          import json, os
+          results = {
+              "check": os.environ["CHECK_RESULT"],
+              "quickstart": os.environ["QUICKSTART_RESULT"],
+          }
+          red = [name for name, result in results.items() if result != "success"]
+          with open("ci-red-list.json", "w", encoding="utf-8") as out:
+              json.dump({"run_id": int(os.environ["RUN_ID"]),
+                         "sha": os.environ["SHA"],
+                         "event": os.environ["EVENT"],
+                         "jobs": results, "red": red}, out, indent=2,
+                        sort_keys=True)
+              out.write("\n")
+          PY
+      - name: Upload red-list artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ci-red-list-${{ github.run_id }}
+          path: ci-red-list.json

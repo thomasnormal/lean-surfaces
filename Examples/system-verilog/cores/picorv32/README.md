@@ -1628,3 +1628,32 @@ The next wall is the E route's `cpuregs` unpacked-memory declaration at
 `picorv32.v:203`; the legacy source-shaped memory route also has its explicit
 retained-event guard, but it is not an E meaning.  The old guard-bypassed
 80-cycle result remains **UNVALIDATED**.
+
+## 2026-11-11 clean-room E memory receipt for `cpuregs`
+
+The existing source-shaped E memory profile was exercised on the exact
+one-rank register-file shape in
+[`sem2/unpacked_cpuregs_e`](../../sem2/unpacked_cpuregs_e/).  The generated
+source SHA-256 is
+`9aa805b7915a24fa431333f9415da78b29f493b4643cb10b87212ad4ef60a189`; its
+approved envelope SHA-256 is
+`e99315a8d2dcc734d0d4cc9cd9b1e1e35fd71fa30d87a0a57c9c596a843a655c`.
+
+`MemEDesign.ofPDesign` retains one `cpuregs` declaration and two source
+processes, and its native `MemState` executes run-time read and write indices.
+The eleven-row receipt includes x/z read indices, an x-index write and an
+x-valued write enable.  Icarus Verilog 13.0 and Xcelium 24.03-s004 each match
+all eleven rows.  This is a clean-room proof of the existing source-shaped E
+memory profile; it does not change the ordinary `instantiateE2` boundary.
+
+The ordinary route still reports at `picorv32.v:203`:
+
+```text
+unsupported "Instantiate"
+  "decl 'cpuregs': unpacked array storage outside E (UnpackedDecl:memory)"
+```
+
+Integrating native `MemState` into the canonical `Core0E` store and its
+`instantiateE2` design view is a shared E/Step-12 architecture change.  It is
+filed as a generic request to ls-sv; no duplicate memory semantics are added in
+this lane.  The old guard-bypassed 80-cycle result remains **UNVALIDATED**.

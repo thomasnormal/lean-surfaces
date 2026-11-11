@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Revalidated oversized sequence multiplication: the approved ingestion path
+  no longer creates a length-only `<lenmult>` call, and oversized materialized
+  products remain loud instead of fabricating a length.
+
 - Revalidated non-simple annotated-assignment ordering: value and target
   evaluation precede module/class annotations, while function annotations are
   skipped, matching CPython 3.9.25's effect order.

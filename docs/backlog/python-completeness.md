@@ -13514,3 +13514,21 @@ witness prints `val`, `ann`, `val`, `1` on both interpreters.
 
 DECIDED: close `py-annassign-nonsimple-order`; retain the existing loud
 boundaries for unsupported annotation-table/class shapes.
+## 2026-11-11-pyfoundation-77 — close length-only repetition audit
+
+The high-priority `py-lenmult-length-only` finding is already fixed. The
+approved ingestion path contains no `lowerLenRepeatPairs` fusion; source
+`len(sequence * count)` evaluates ordinary multiplication first. Oversized
+materialization remains a loud boundary through the sequence repetition budget,
+so it cannot answer with a length CPython never constructs. The oversized string
+witness refuses in the model while CPython 3.9.25 raises `OverflowError`.
+
+| Measurement | Result |
+|---|---|
+| Oversized witness | `len_repeat_oversize.py`: model exit 3 refusal; CPython 3.9.25 `OverflowError` exit 1 |
+| Source audit | no `lowerLenRepeatPairs` definition or approved call remains |
+| Compatibility arm | `<lenmult>` is retained only for hand-built AST compatibility and still materializes/falls back safely |
+| Semantic change | none; audit closure only |
+
+DECIDED: close `py-lenmult-length-only`; retain loud materialization limits
+until environment-sensitive allocation behavior is modeled.

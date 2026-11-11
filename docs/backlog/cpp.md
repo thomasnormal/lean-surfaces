@@ -10,16 +10,18 @@ Lean artifact ingester applies the same check. `-m32`, `-m64`,
 artifact evaluated under a different profile. `harness/cpp_profile_guard_test.py`
 pins the default match and profile-changing-flag refusal.
 
-## `cpp-switch-and-ir-lowering`: cleanup-node retention
+## `cpp-switch-and-ir-lowering`: source-item switch semantics
 
-**Partially closed 2026-11-11.** Callable admission now retains
-`ExprWithCleanups` as an explicit `CallableStatement.cleanups` node, and both
-callable evaluators execute its child while preserving the source boundary.
-Switch clauses now also populate their retained `source` handle from the
-frontend label node (alongside every `sourceItems` handle), and a kernel guard
-pins that identity. Switch bodies still use the existing clause representation;
-replacing that regrouping with direct source `CaseStmt`/`DefaultStmt` item
-semantics remains open.
+**Closed 2026-11-11.** Callable admission retains `ExprWithCleanups` as an
+explicit `CallableStatement.cleanups` node, and both callable evaluators
+execute its child while preserving the source boundary. Switch admission now
+retains each source `CaseStmt`, `DefaultStmt`, and ordinary sibling as a
+`CallableSwitchItem` in frontend order, with its source handle and its own body;
+it no longer groups statements into synthetic clauses. Both callable
+evaluators select a matching label and execute the retained suffix for faithful
+fallthrough, and kernel guards pin the source-item shape and sibling boundary.
+The older clause constructor remains only for existing hand-built evaluator
+fixtures; source admission and execution use the direct item representation.
 
 ## `c-name-resolution-by-string`: callee declaration-kind guard
 

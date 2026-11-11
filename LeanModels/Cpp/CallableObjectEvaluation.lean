@@ -350,6 +350,38 @@ private def evalSwitch
       | .ok .break_ => success current.frame .normal
       | .ok execution => success current.frame execution
 
+private def evalSwitchItems
+    (evaluate : IntegralObjectFrame → CallableStatement → Outcome Execution)
+    (frame : IntegralObjectFrame) : List CallableSwitchItem → Outcome Execution
+  | [] => success frame .normal
+  | item :: rest =>
+      let body := match item with
+        | .statement _ body | .case_ _ _ body | .default_ _ body => body
+      let current := evaluate frame body
+      match current.result with
+      | .error reason => failure current.frame reason
+      | .ok .normal => evalSwitchItems evaluate current.frame rest
+      | .ok .break_ => success current.frame .normal
+      | .ok execution => success current.frame execution
+
+private def callableSwitchItemCaseSuffix (value : Int) :
+    List CallableSwitchItem → Option (List CallableSwitchItem)
+  | [] => none
+  | item :: rest =>
+      match item with
+      | .case_ _ label _ =>
+          if label == value then some (item :: rest)
+          else callableSwitchItemCaseSuffix value rest
+      | .statement _ _ | .default_ _ _ => callableSwitchItemCaseSuffix value rest
+
+private def callableSwitchItemDefaultSuffix : List CallableSwitchItem →
+    Option (List CallableSwitchItem)
+  | [] => none
+  | item :: rest =>
+      match item with
+      | .default_ _ _ => some (item :: rest)
+      | .statement _ _ | .case_ _ _ _ => callableSwitchItemDefaultSuffix rest
+
 mutual
   private def evalStatement (fuel : Nat) (profile : TargetProfile)
       (frame : IntegralObjectFrame) (statement : CallableStatement) :
@@ -459,6 +491,26 @@ mutual
                     let selected := (callableSwitchCaseSuffix value.value clauses).orElse
                       (fun _ => callableSwitchDefaultSuffix clauses) |>.getD []
                     let switched := evalSwitch (evalStatement fuel profile) entered.frame selected
+                    match switched.result with
+                    | .error reason => failure switched.frame reason
+                    | .ok execution =>
+                        let exited := switched.frame.exitScope
+                        match exited.result with
+                        | .error reason => frameFailure exited.frame reason
+                        | .ok _ => success exited.frame execution
+            | .ok result => success evaluated.frame (.failed result)
+        | .switchItems_ condition items =>
+            let evaluated := evalExpression fuel profile frame condition
+            match evaluated.result with
+            | .error reason => failure evaluated.frame reason
+            | .ok (.ok value) =>
+                let entered := evaluated.frame.enterScope
+                match entered.result with
+                | .error reason => frameFailure entered.frame reason
+                | .ok _ =>
+                    let selected := (callableSwitchItemCaseSuffix value.value items).orElse
+                      (fun _ => callableSwitchItemDefaultSuffix items) |>.getD []
+                    let switched := evalSwitchItems (evalStatement fuel profile) entered.frame selected
                     match switched.result with
                     | .error reason => failure switched.frame reason
                     | .ok execution =>

@@ -87,6 +87,11 @@
 
 - Made the C++ differential harness require a pinned native oracle by default;
   exploratory runs must opt into `--allow-oracle` explicitly.
+
+- Retained C++ switch `CaseStmt`, `DefaultStmt`, and ordinary sibling nodes as
+  ordered source items instead of regrouping them into synthetic clauses;
+  callable evaluators now select and fall through over that direct item
+  sequence.
 - Admit space-padded combinations of percent-format sign and alternate flags
   with widths; zero-padded combinations remain loud until their prefix order is
   modeled.

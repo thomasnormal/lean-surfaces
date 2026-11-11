@@ -175,6 +175,39 @@ private def evaluateSwitchClauses
       | .break_ updated => pure (.normal updated)
       | .returned _ _ | .failed _ _ | .continue_ _ | .goto_ _ _ => pure result
 
+private def evaluateSwitchItems
+    (evaluate : List IntegralValue → CallableStatement →
+      Except CallableEvaluationError CallableExecution)
+    (arguments : List IntegralValue) :
+    List CallableSwitchItem → Except CallableEvaluationError CallableExecution
+  | [] => .ok (.normal arguments)
+  | item :: rest => do
+      let body := match item with
+        | .statement _ body | .case_ _ _ body | .default_ _ body => body
+      let result ← evaluate arguments body
+      match result with
+      | .normal updated => evaluateSwitchItems evaluate updated rest
+      | .break_ updated => pure (.normal updated)
+      | .returned _ _ | .failed _ _ | .continue_ _ | .goto_ _ _ => pure result
+
+private def callableSwitchItemCaseSuffix (value : Int) :
+    List CallableSwitchItem → Option (List CallableSwitchItem)
+  | [] => none
+  | item :: rest =>
+      match item with
+      | .case_ _ label _ =>
+          if label == value then some (item :: rest)
+          else callableSwitchItemCaseSuffix value rest
+      | .statement _ _ | .default_ _ _ => callableSwitchItemCaseSuffix value rest
+
+private def callableSwitchItemDefaultSuffix : List CallableSwitchItem →
+    Option (List CallableSwitchItem)
+  | [] => none
+  | item :: rest =>
+      match item with
+      | .default_ _ _ => some (item :: rest)
+      | .statement _ _ | .case_ _ _ _ => callableSwitchItemDefaultSuffix rest
+
 mutual
   private def evaluateCallArguments (fuel : Nat) (profile : TargetProfile)
       (parameters : List CallableParameter) (arguments : List IntegralValue)
@@ -446,6 +479,15 @@ mutual
               let selected := (callableSwitchCaseSuffix value.value clauses).orElse
                 (fun _ => callableSwitchDefaultSuffix clauses) |>.getD []
               evaluateSwitchClauses (evaluateCallableStatement fuel profile parameters)
+                afterCondition selected
+          | result => pure (.failed result afterCondition)
+      | .switchItems_ condition items => do
+          let (result, afterCondition) ← evaluateTyped fuel profile parameters arguments condition
+          match result with
+          | .ok value =>
+              let selected := (callableSwitchItemCaseSuffix value.value items).orElse
+                (fun _ => callableSwitchItemDefaultSuffix items) |>.getD []
+              evaluateSwitchItems (evaluateCallableStatement fuel profile parameters)
                 afterCondition selected
           | result => pure (.failed result afterCondition)
       | .whileLoop condition body => do

@@ -62,6 +62,10 @@ mutual
     | conditional (condition : TypedCallableExpression)
         (whenTrue whenFalse : CallableStatement)
     | switch_ (condition : TypedCallableExpression) (clauses : List CallableSwitchClause)
+    /-- A source-shaped switch body. Each source `CaseStmt`, `DefaultStmt`, and
+    ordinary sibling is retained as its own item; fallthrough is evaluated over
+    this item sequence rather than an ingestion-created clause grouping. -/
+    | switchItems_ (condition : TypedCallableExpression) (items : List CallableSwitchItem)
     | whileLoop (condition : TypedCallableExpression) (body : CallableStatement)
     | doWhile (body : CallableStatement) (condition : TypedCallableExpression)
     | forLoop (initializer : CallableStatement) (condition : TypedCallableExpression)
@@ -73,6 +77,15 @@ mutual
     | sequence (first second : CallableStatement)
     deriving Repr, BEq, Inhabited
 
+  inductive CallableSwitchItem where
+    | statement (source : FrontendHandle) (body : CallableStatement)
+    | case_ (source : FrontendHandle) (label : Int) (body : CallableStatement)
+    | default_ (source : FrontendHandle) (body : CallableStatement)
+    deriving Repr, BEq, Inhabited
+
+/- A compatibility shape for hand-built evaluator fixtures. Source admission
+   uses `CallableSwitchItem`, which keeps the frontend's switch siblings in
+   order instead of constructing clauses. -/
 structure CallableSwitchClause where
   label : Option Int
   body : CallableStatement
@@ -159,10 +172,6 @@ private def rawChildren (raw : Raw) : Except String (List Raw) :=
 private def rawId (raw : Raw) : Except String FrontendHandle :=
   evidenceHandle raw "id"
 
-private def switchLabelKind (raw : Raw) : Except String Bool := do
-  let kind ← evidenceText raw "kind"
-  pure (kind == "CaseStmt" || kind == "DefaultStmt")
-
 private def callableLabelName (raw : Raw) : Except String String :=
   match raw.text "name" <|> raw.text "label" with
   | some name => .ok name
@@ -179,43 +188,6 @@ private def switchCaseValue (raw : Raw) : Except String Int := do
   match value.toInt? with
   | some value => pure value
   | none => throw "callable: switch case label is not an integer"
-
-private def switchClauseRaws (raws : List Raw) : Except String (List Raw × List Raw) :=
-  match raws with
-  | [] => .ok ([], [])
-  | raw :: rest => do
-      if ← switchLabelKind raw then
-        pure ([], raw :: rest)
-      else
-        let (body, remaining) ← switchClauseRaws rest
-        pure (raw :: body, remaining)
-
-private partial def switchClauses (raws : List Raw) :
-    Except String (List (Option Int × List Raw × List FrontendHandle)) := do
-  match raws with
-  | [] => pure []
-  | raw :: rest =>
-      let kind ← evidenceText raw "kind"
-      let inner ← rawChildren raw
-      let (label, initialBody) ← match kind with
-        | "CaseStmt" =>
-            let labelRaw :: body := inner
-              | throw "callable: case statement requires a label"
-            pure (some (← switchCaseValue labelRaw), body)
-        | "DefaultStmt" => pure (none, inner)
-        | _ => throw "callable: switch body must contain only case/default labels"
-      let (tailBody, remaining) ← switchClauseRaws rest
-      let clauses ← switchClauses remaining
-      let sourceItems := (raw :: initialBody ++ tailBody).filterMap (fun item =>
-        item.text "id" |>.map FrontendHandle.mk)
-      pure ((label, initialBody ++ tailBody, sourceItems) :: clauses)
-
-private def switchLabelsValid : List (Option Int × List Raw × List FrontendHandle) → Bool
-  | [] => true
-  | (label, _, _) :: rest =>
-      (match label with
-      | none => !rest.any (fun clause => clause.1.isNone)
-      | some value => !rest.any (fun clause => clause.1 == some value)) && switchLabelsValid rest
 
 private def callableBuiltin : CppTypeEvidence → Bool
   | .builtin _ => true
@@ -657,6 +629,20 @@ partial def parseCallableExpressionTyped (profile : TargetProfile)
       pure {expression := .unary operator operand, sourceType := type, type}
   | _ => throw s!"callable: unsupported return expression {kind}"
 
+private def switchItemLabel : CallableSwitchItem → Option (Option Int)
+  | .statement _ _ => none
+  | .case_ _ label _ => some (some label)
+  | .default_ _ _ => some none
+
+private def switchItemsLabelsValid : List CallableSwitchItem → Bool
+  | [] => true
+  | item :: rest =>
+      match switchItemLabel item with
+      | none => switchItemsLabelsValid rest
+      | some label =>
+          !rest.any (fun other => switchItemLabel other == some label) &&
+            switchItemsLabelsValid rest
+
 /-- Legacy expression entry point. Unknown cast destinations remain loud. -/
 def parseCallableExpression (profile : TargetProfile) (parameters : List CallableParameter)
     (expressionRows : List CppBinaryExpressionEvidence) (raw : Raw)
@@ -725,6 +711,33 @@ mutual
           let parsed ← parseCallableStatement profile parameters expressionRows resultType child
           pure (.sequence accumulated parsed)
 
+  private partial def switchItems (profile : TargetProfile)
+      (parameters : List CallableParameter)
+      (expressionRows : List CppBinaryExpressionEvidence)
+      (resultType : CppTypeEvidence) : List Raw →
+      Except String (List CallableSwitchItem)
+    | [] => pure []
+    | raw :: rest => do
+        let kind ← evidenceText raw "kind"
+        let source ← rawId raw
+        let item ← match kind with
+          | "CaseStmt" =>
+              let inner ← rawChildren raw
+              let labelRaw :: bodyRaws := inner
+                | throw "callable: case statement requires a label"
+              let label ← switchCaseValue labelRaw
+              let body ← parseCallableSequence profile parameters expressionRows resultType bodyRaws
+              pure (.case_ source label body)
+          | "DefaultStmt" =>
+              let body ← parseCallableSequence profile parameters expressionRows resultType
+                (← rawChildren raw)
+              pure (.default_ source body)
+          | _ =>
+              pure (.statement source
+                (← parseCallableStatement profile parameters expressionRows resultType raw))
+        let tail ← switchItems profile parameters expressionRows resultType rest
+        pure (item :: tail)
+
   partial def parseCallableStatement (profile : TargetProfile)
       (parameters : List CallableParameter)
       (expressionRows : List CppBinaryExpressionEvidence)
@@ -770,13 +783,10 @@ mutual
       unless bodyRaw.text "kind" == some "CompoundStmt" do
         throw "callable: switch body must be a compound statement"
       let bodyRaws ← rawChildren bodyRaw
-      let clauseRaws ← switchClauses bodyRaws
-      unless switchLabelsValid clauseRaws do
+      let items ← switchItems profile parameters expressionRows resultType bodyRaws
+      unless switchItemsLabelsValid items do
         throw "callable: switch labels must be unique with at most one default"
-      let clauses ← clauseRaws.mapM fun (label, raws, sourceItems) => do
-        let body ← parseCallableSequence profile parameters expressionRows resultType raws
-        pure {label, body, source := sourceItems.head?, sourceItems}
-      pure (.switch_ condition clauses)
+      pure (.switchItems_ condition items)
   | "WhileStmt" =>
       let children ← rawChildren statement
       let [condition, body] := children
@@ -972,6 +982,37 @@ partial def parseCallableSubstatementWithLocals (probe : DeclarationProbe)
   else
     pure (.block parsed.1, scope)
 
+partial def switchItemsWithLocals (probe : DeclarationProbe)
+    (typeRows : List TypeEvidenceRow) (variableRows : List CppVariableEvidence)
+    (expressionRows : List CppBinaryExpressionEvidence)
+    (expressionTypes : Option (List CppExpressionTypeEvidence)) (profile : TargetProfile)
+    (resultType : CppTypeEvidence) (scope : List CallableParameter) : List Raw →
+    Except String (List CallableSwitchItem × List CallableParameter)
+  | [] => pure ([], scope)
+  | raw :: rest => do
+      let kind ← evidenceText raw "kind"
+      let source ← rawId raw
+      let (item, updated) ← match kind with
+        | "CaseStmt" =>
+            let inner ← rawChildren raw
+            let labelRaw :: bodyRaws := inner
+              | throw "callable: case statement requires a label"
+            let label ← switchCaseValue labelRaw
+            let (body, updated) ← callableSequenceWithLocals probe typeRows variableRows
+              expressionRows expressionTypes profile resultType scope bodyRaws
+            pure (.case_ source label body, updated)
+        | "DefaultStmt" =>
+            let (body, updated) ← callableSequenceWithLocals probe typeRows variableRows
+              expressionRows expressionTypes profile resultType scope (← rawChildren raw)
+            pure (.default_ source body, updated)
+        | _ =>
+            let (body, updated) ← parseCallableStatementWithLocals probe typeRows variableRows
+              expressionRows expressionTypes profile resultType scope raw
+            pure (.statement source body, updated)
+      let (tail, finalScope) ← switchItemsWithLocals probe typeRows variableRows expressionRows
+        expressionTypes profile resultType updated rest
+      pure (item :: tail, finalScope)
+
 partial def parseCallableStatementWithLocals (probe : DeclarationProbe)
     (typeRows : List TypeEvidenceRow) (variableRows : List CppVariableEvidence)
     (expressionRows : List CppBinaryExpressionEvidence)
@@ -1026,14 +1067,11 @@ partial def parseCallableStatementWithLocals (probe : DeclarationProbe)
       unless bodyRaw.text "kind" == some "CompoundStmt" do
         throw "callable: switch body must be a compound statement"
       let bodyRaws ← rawChildren bodyRaw
-      let clauseRaws ← switchClauses bodyRaws
-      unless switchLabelsValid clauseRaws do
+      let items ← switchItemsWithLocals probe typeRows variableRows expressionRows expressionTypes
+        profile resultType scope bodyRaws
+      unless switchItemsLabelsValid items.1 do
         throw "callable: switch labels must be unique with at most one default"
-      let clauses ← clauseRaws.mapM fun (label, raws, sourceItems) => do
-        let (body, _) ← callableSequenceWithLocals probe typeRows variableRows expressionRows
-          expressionTypes profile resultType scope raws
-        pure {label, body, source := sourceItems.head?, sourceItems}
-      pure (.switch_ condition clauses, scope)
+      pure (.switchItems_ condition items.1, items.2)
   | "WhileStmt" =>
       let children ← rawChildren statement
       let [condition, body] := children

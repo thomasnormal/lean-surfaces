@@ -593,11 +593,9 @@ def switchSourceHandles : Bool :=
   match admitSwitch with
   | .ok function =>
       match function.body with
-      | .block (.sequence (.switch_ _ clauses) _) =>
-          match clauses with
-          | first :: _ =>
-              first.source == some {value := "0xe5"} &&
-                first.sourceItems.head? == some {value := "0xe5"}
+      | .block (.sequence (.switchItems_ _ items) _) =>
+          match items with
+          | .case_ source 0 _ :: _ => source == {value := "0xe5"}
           | _ => false
       | _ => false
   | .error _ => false
@@ -610,6 +608,19 @@ private def parseSwitchClauses (clauses : List Raw) : Except String CallableStat
     [] intType (fields switchStatement [
       ("inner", .array [implicitCast "0xe2" (declRefNode "0xe3" "0x10" "value"),
         fields switchBody [("inner", .array clauses)]])])
+
+def switchKeepsSiblingItems : Bool :=
+  match parseSwitchClauses [
+    caseRaw "0x130" "0" [],
+    object [("id", text "0x131"), ("kind", text "BreakStmt")],
+    defaultRaw "0x132" []] with
+  | .ok (.switchItems_ _ [
+      .case_ {value := "0x130"} 0 _,
+      .statement {value := "0x131"} .break_,
+      .default_ {value := "0x132"} _]) => true
+  | _ => false
+
+#guard switchKeepsSiblingItems
 
 private def switchRefuses (clauses : List Raw) (message : String) : Bool :=
   match parseSwitchClauses clauses with

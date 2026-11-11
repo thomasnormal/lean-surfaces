@@ -77,11 +77,6 @@ private def children (raw : Raw) : Except String (List Raw) :=
   | some (.array values) => .ok values
   | _ => .error "class hierarchy: malformed source children"
 
-private def lastName : List String → Option String
-  | [] => none
-  | [name] => some name
-  | _ :: rest => lastName rest
-
 private def declarationName (probe : DeclarationProbe) (handle : FrontendHandle) :
     Except String String := do
   let candidates := probe.declarations.filter (fun row =>
@@ -90,29 +85,6 @@ private def declarationName (probe : DeclarationProbe) (handle : FrontendHandle)
     | throw "class hierarchy: structured base declaration has no name"
   unless cppIdentifier name do throw "class hierarchy: malformed structured class name"
   pure name
-
-private def friendName (raw : Raw) : Except String String := do
-  let some type := raw.field "type"
-    | throw "class hierarchy: friend declaration has no type"
-  let some spelling := type.text "qualType"
-    | throw "class hierarchy: friend declaration has no source type"
-  unless !spelling.contains "::" do
-    throw "class hierarchy: qualified friend identity requires declaration handles"
-  unless spelling.startsWith "class " do
-    throw "class hierarchy: only class friend declarations are supported"
-  let some name := lastName ((spelling.drop 6).toString.splitOn "::")
-    | throw "class hierarchy: friend declaration has no class name"
-  unless cppIdentifier name do throw "class hierarchy: malformed friend class name"
-  pure name
-
-private def friendHandle (probe : DeclarationProbe) (name : String) : Except String FrontendHandle := do
-  let candidates := probe.declarations.filter (fun row =>
-    row.kind == "CXXRecordDecl" && row.raw.text "name" == some name &&
-      row.raw.field "record_complete" == some (.bool true))
-  let canonicals := (candidates.map (·.canonical)).eraseDups
-  let [handle] := canonicals
-    | throw "class hierarchy: friend class is absent or ambiguous"
-  pure handle
 
 private def friendFunctionTarget (raw : Raw) : Except String Raw := do
   let some (.array [child]) := raw.field "inner"
@@ -238,7 +210,7 @@ private def shape (artifact : Artifact) (probe : DeclarationProbe)
     let some spelling := type.text "qualType"
       | throw "class hierarchy: friend declaration has no source type"
     if spelling.startsWith "class " then
-      friends := friends ++ [← friendHandle probe (← friendName friend)]
+      throw "class hierarchy: friend class identity requires a retained declaration handle"
     else
       friends := friends ++ [← resolveFriendFunction probe friend]
   let name ← evidenceText row.raw "name"

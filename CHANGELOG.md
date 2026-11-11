@@ -140,8 +140,8 @@
 
 - Used structured C++ record handles for class-base names and refused qualified
   enum member-call result spellings instead of accepting a matching suffix;
-  remaining friend and setter identity paths stay loud until their handles are
-  threaded.
+  friend-class admission also stays loud until its target handle is threaded;
+  setter and enum-parameter paths remain open.
 - Admit space-padded combinations of percent-format sign and alternate flags
   with widths; zero-padded combinations remain loud until their prefix order is
   modeled.

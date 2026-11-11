@@ -44,7 +44,8 @@ qualified spelling merely because it ends with the expected bare name.
 Class-base names now come from the retained structured record declaration
 handle in `CppTypeEvidence`, and enum member-call result matching rejects
 qualified suffixes instead of accepting a spelling-only identity. Exact
-unqualified spellings remain admitted. Friend, setter, and remaining enum
+unqualified spellings remain admitted. Friend-class admission now refuses
+until Clang's friend target handle is retained; setter and remaining enum
 parameter checks still need full declaration-handle threading.
 
 ## `cpp-harness-oracle-misfile`: native oracle policy

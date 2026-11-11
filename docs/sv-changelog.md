@@ -10,6 +10,14 @@ cycle Icarus trace at `W=8,N=4`; nested ranks, compound memory expressions,
 and other process forms remain named refusals. `MemCycle` remains only the
 labelled provisional executor while the general memory step is built.
 
+## First loaded-RTL F2 invariant seam — 2026-11-11
+
+`sem2/clk_cnt_e` now instantiates the real `clk_cnt` envelope at `N=4`,
+transports its edge process through E-core-1, discharges the concrete edge
+profile, and proves that every closed process-atomic slot preserves E's typed
+state invariant. This is the first F2 base/step theorem over a loaded RTL;
+the value-level counter safety statement remains the next refinement.
+
 ## Guarded asynchronous reset events — 2026-11-10
 
 The symbolic loader now keeps an explicit `AlwaysPosedge:reset-iff`

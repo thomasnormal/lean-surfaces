@@ -455,6 +455,15 @@ every finite `SafetyTrace`. The example sits beside the replay theorem; it is a
 proof-shape witness until an OpenTitan E elaborator supplies the concrete state
 and transition relation.
 
+The first invariant statement over a loaded RTL is now
+`Examples/system-verilog/sem2/clk_cnt_e/proof.lean`. It instantiates the
+source `clk_cnt` envelope at `N=4`, transports its `always_ff` body through
+`Elab1.ofEdgeDesign2`, discharges `EdgeProfile` from the concrete E checks,
+and proves the typed-state invariant after every closed process-atomic slot
+using `Steps1.typed`. This is the base and one-cycle preservation seam for a
+value-level counter safety property; it does not replace the RTL with the
+abstract `SafetySmoke` counter.
+
 The same seam now has a parameterized FIFO occupancy model,
 `SafetySmoke.fifoCounter`. Its reset base and one-cycle step prove
 `occupancy ≤ depth`, including the full/empty no-op cases for push/pop inputs.

@@ -39,6 +39,20 @@ def validateFrontend (json : Lean.Json) : Except String Unit := do
     unless (← textField json name).startsWith "/" do
       throw s!"frontend {name} must be absolute"
   requireHash (← textField json "sha256")
+  let macros ← textField json "predefined_macros"
+  let lines := macros.splitOn "\n"
+  let required := [
+    "#define __CHAR_BIT__ 8",
+    "#define __SIZEOF_SHORT__ 2",
+    "#define __SIZEOF_INT__ 4",
+    "#define __SIZEOF_LONG__ 8",
+    "#define __SIZEOF_LONG_LONG__ 8",
+    "#define __SIZEOF_POINTER__ 8"]
+  for marker in required do
+    unless lines.contains marker do
+      throw s!"frontend profile disagrees with LP64: missing {marker}"
+  if lines.contains "#define __CHAR_UNSIGNED__" then
+    throw "frontend profile disagrees with LP64: plain char is unsigned"
   let argv ← (← json.getObjVal? "argv").getArr?
   unless !argv.isEmpty do throw "frontend argv must not be empty"
   for argument in argv do

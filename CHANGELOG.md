@@ -58,6 +58,9 @@
   layers read, including scalar widths, pointer width, byte order, and signed
   right shift.
 
+- Required C++ artifacts to record and match the LP64/signed-char predefined
+  macro profile; profile-changing ABI and char-signedness flags are refused.
+
 - Fixed the TinyXML-2 coverage caller's C++ runtime linkage so its
   provenance-verified native calls can run when the system runtime is older.
 

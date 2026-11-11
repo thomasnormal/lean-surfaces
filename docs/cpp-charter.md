@@ -71,6 +71,13 @@ exhaustion. Refusals name clauses/constructs and never count as agreement.
 Compare result, reachable state, effects and termination. Optimization/sanitizer
 runs detect bugs; they do not define semantics.
 
+The current C++ scalar profile is explicit LP64 with signed plain `char`:
+8-bit bytes, 16-bit `short`, 32-bit `int`, 64-bit `long` and `long long`, and
+64-bit pointers. The extractor records Clang's predefined macros and refuses
+an artifact unless they state those values and omit `__CHAR_UNSIGNED__`.
+Profile-changing flags such as `-m32`, `-m64`, `-fsigned-char`, and
+`-funsigned-char` are outside the admitted flag set.
+
 ## Three evidence corpora
 
 Sources stay external/read-only; drivers call the original declarations.

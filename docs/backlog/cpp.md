@@ -1,5 +1,15 @@
 # C++ lane backlog
 
+## `cpp-target-profile-unchecked`: artifact profile gate
+
+**Closed 2026-11-11.** The C++ extractor now validates Clang's recorded
+predefined macros against the admitted LP64/signed-char profile (8-bit bytes,
+16-bit short, 32-bit int, 64-bit long and long long, 64-bit pointers) and the
+Lean artifact ingester applies the same check. `-m32`, `-m64`,
+`-fsigned-char`, and `-funsigned-char` are refused instead of producing an
+artifact evaluated under a different profile. `harness/cpp_profile_guard_test.py`
+pins the default match and profile-changing-flag refusal.
+
 ## `cpp-diff-handwritten-twins`: reporting boundary
 
 **Closed 2026-11-11 (reporting correction).** The harness and generated page

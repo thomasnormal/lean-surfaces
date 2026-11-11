@@ -20,7 +20,7 @@ VALUE_FLAGS = {
 }
 SWITCH_FLAGS = {
     "-pthread", "-nostdinc", "-nostdinc++", "-fexceptions", "-fno-exceptions",
-    "-frtti", "-fno-rtti", "-fsigned-char", "-funsigned-char", "-m32", "-m64",
+    "-frtti", "-fno-rtti",
     "-Wall", "-Wextra", "-stdlib=libc++", "-stdlib=libstdc++",
 }
 ENVIRONMENT_KEYS = {
@@ -167,6 +167,32 @@ def parse_ast(contents):
     return ast
 
 
+def validate_profile_macros(predefines):
+    """The Lean evaluator is LP64 with signed 8-bit plain char.
+
+    These are artifact inputs, not host assumptions: the frontend's own
+    predefines must state every width and signedness choice the evaluator
+    consumes. Flag-level attempts to select another ABI are rejected before
+    an envelope is written.
+    """
+    required = {
+        "__CHAR_BIT__": "8",
+        "__SIZEOF_SHORT__": "2",
+        "__SIZEOF_INT__": "4",
+        "__SIZEOF_LONG__": "8",
+        "__SIZEOF_LONG_LONG__": "8",
+        "__SIZEOF_POINTER__": "8",
+    }
+    for name, value in required.items():
+        marker = f"#define {name} {value}"
+        if marker not in predefines.splitlines():
+            raise ExtractionError(
+                f"frontend profile disagrees with LP64: missing {marker}")
+    if "#define __CHAR_UNSIGNED__" in predefines.splitlines():
+        raise ExtractionError(
+            "frontend profile disagrees with LP64: plain char is unsigned")
+
+
 def refuse_numeric_token(token):
     raise ExtractionError(f"non-integer JSON numeric token outside {PROFILE_ID}: {token}")
 
@@ -202,6 +228,7 @@ def extract(source, *, clang="clang++", flags=None):
         ast = parse_ast(result.stdout)
         after_paths = dependency_paths(depfile.read_text(), cwd)
         predefines = run([*command, "-dM", "-E", "-"], environment)
+        validate_profile_macros(predefines.stdout)
         after = manifest(after_paths)
     if paths != after_paths or before != after or compiler_hash != digest(executable):
         raise ExtractionError("translation inputs changed during extraction")

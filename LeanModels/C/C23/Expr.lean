@@ -750,9 +750,8 @@ def evalExpr (ctx : Ctx) : Expr → EvalM CVal
   -- produced never exists — there is nothing to speak about, which is
   -- precisely what the amendment forbids concluding. 181 sites in all.
   | .binop op l r ty _ =>
-      if (op == "=" && mayWrite r) ||
-          (op != "&&" && op != "||" && op != "," && op != "=" &&
-           mayWrite l && mayWrite r) then
+      if op != "&&" && op != "||" && op != "," && op != "=" &&
+          mayWrite l && mayWrite r then
         refuseUnsupported "unsequenced side effects in binary operands"
       else
       if op == "&&" then do

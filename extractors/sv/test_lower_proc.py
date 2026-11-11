@@ -801,12 +801,21 @@ class StarBlocks(Base):
 
     def test_r5_latches(self):
         self.refused("always @* if (s[0]) y = a;", "R5")
-        self.refused("always @* case (s) 2'd0: y = a; 2'd1: y = b; endcase", "R5")
+        procs, m = self.proc("always @* case (s) 2'd0: y = a; 2'd1: y = b; endcase")
+        self.assertEqual(len(procs), 1)
+        self.assertEqual(procs[0]["kind"], "AlwaysEvent")
+        self.assertEqual(procs[0]["event_kind"], "ImplicitEventControl")
+        self.assertIn("R5", procs[0]["symbolic_event_reason"])
+        self.assertEqual(procs[0]["body"]["kind"], "Case")
         self.refused("always @* begin y[1:0] = a[1:0]; end", "R5")
         self.refused("always @* begin y[s] = a[0]; end", "R5")
 
-    def test_r5_complete_case_without_default_is_refused(self):
-        self.refused("always @* case (s) 2'd0: y = a; 2'd1: y = b; 2'd2: y = a; 2'd3: y = b; endcase", "R5")
+    def test_r5_complete_case_without_default_retains_the_case_node(self):
+        procs, _ = self.proc(
+            "always @* case (s) 2'd0: y = a; 2'd1: y = b; 2'd2: y = a; 2'd3: y = b; endcase")
+        self.assertEqual(procs[0]["kind"], "AlwaysEvent")
+        self.assertEqual(procs[0]["body"]["kind"], "Case")
+        self.assertIn("case", procs[0]["symbolic_event_reason"])
 
     def test_r5_read_before_write(self):
         self.refused("always @* begin y = y + a; end", "R5")

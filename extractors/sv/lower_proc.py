@@ -352,7 +352,8 @@ def hoist_local(ex, sm, stmt):
 # that satisfies all six computes, after every settle, what `always_comb` computes, and is converted as an
 # `AlwaysComb`. Every rule is decided on the CONVERTED body (what the Lean loader reads: unrolled loops, inlined
 # functions, hoisted locals) and on slang's own symbols, and a failure keeps the process-level `Unsupported` it always
-# had (same `sv_kind`, so the register row and the census still count it), with the rule in its text.
+# had (same `sv_kind`, so the register row and the census still count it), with the rule in its text.  The narrow
+# plain implicit `@*` case-without-`default` R5 shape is retained as an `AlwaysEvent` source node for E instead.
 #
 #   R1  no edge term and no `iff` in the event control; the body is `Block`/`If`/`Case`/blocking assignments only (no
 #       nonblocking assignment, no delay or event control, which the converter refuses anyway).
@@ -369,6 +370,8 @@ def hoist_local(ex, sm, stmt):
 #       fixed width whose range is `[W-1:0]`, by whole assignment otherwise; a `case` covers only with a `default`.
 #       A plain `@*` whose external read is a source-shaped unpacked array cell is retained for E; the array read is
 #       not reinterpreted as an integral scalar signal here.
+#       The implicit plain-`@*` case-without-`default` shape is retained with its R5 reason; other R5 failures remain
+#       loud.
 #   R6  no other process writes a target, and no target has a declaration initializer (slang's MultipleAlwaysAssigns
 #       does not fire for `@*`; slang's own driver table is asked).
 #
@@ -416,6 +419,23 @@ def _node_kinds(node):
         elif isinstance(n, list):
             stack.extend(n)
     return found
+
+
+def _has_case_without_default(node):
+    """Whether the retained source tree contains a plain case without default.
+
+    This is deliberately a structural check on slang's converted AST.  It is
+    used only to retain the parser node at the R5 latch boundary; it does not
+    infer a default arm or lower the case into an if-chain.
+    """
+    if isinstance(node, dict):
+        if (node.get("kind") == "Case" and node.get("match") == "normal"
+                and node.get("default") is None):
+            return True
+        return any(_has_case_without_default(value) for value in node.values())
+    if isinstance(node, list):
+        return any(_has_case_without_default(value) for value in node)
+    return False
 
 
 def _const_int(node):
@@ -867,6 +887,22 @@ def star_block(ex, sm, m, module_level):
         # A plain @* may read an unpacked memory cell.  Preserve the parser's
         # event and array-select node for E's source-shaped memory scheduler;
         # do not flatten the memory or pretend that it is a scalar signal.
+        return {
+            "kind": "AlwaysEvent",
+            "span": ex.sym_span(sm, m),
+            "event_kind": "ImplicitEventControl",
+            "body": ex.convert_stmt(sm, body.stmt),
+            "text": ex.source_text(m),
+            "symbolic_event_retained": True,
+            "symbolic_event_reason": why,
+        }
+    if (why is not None and form == "implicit"
+            and "not assigned on every path" in why
+            and _has_case_without_default(converted)):
+        # A plain @* case without a default is a source-shaped latch (§12.5).
+        # Keep the parser's implicit event and case node so the E scheduler can
+        # give the hold path its own rule.  Retention is intentionally narrow:
+        # other R5 failures remain loud, and no default arm is invented here.
         return {
             "kind": "AlwaysEvent",
             "span": ex.sym_span(sm, m),

@@ -72715,6 +72715,23 @@
       "measured": "2026-11-04: replication count at E=12; Lean and Icarus agree with the multi-point cross-check."
     },
     {
+      "name": "memory_edge_loop_e",
+      "example": "sem2/memory_edge_loop_e",
+      "top": "memory_edge_loop",
+      "params": {"W": 8, "N": 4},
+      "memory": true,
+      "clock": "clk",
+      "signals": ["rstn", "d", "q"],
+      "stimulus": [
+        {"rstn": "0", "d": "00000011"},
+        {"rstn": "1", "d": "00010001"},
+        {"rstn": "1", "d": "00010001"},
+        {"rstn": "1", "d": "00010001"},
+        {"rstn": "1", "d": "00100010"}
+      ],
+      "measured": "2026-11-11: canonical parameter-bound for loops in an E memory edge body retain PStmt.forLoop, issue one unpacked-cell NBA per trip, and match the five-row source trace in Icarus and Xcelium."
+    },
+    {
       "name": "unpacked_generate_array_memory",
       "example": "sem2/unpacked_generate_array",
       "top": "unpacked_generate_array",

@@ -11,6 +11,16 @@ active-low-reset edge body; its five rows match Icarus 13.0 and Xcelium
 24.03-s004 through the readiness gate. Blocking assignments and unsupported
 targets remain loud.
 
+## Canonical memory edge loops in E — 2026-11-11
+
+The first E memory loop packet retains canonical parameter-bound `for` headers
+as `PStmt.forLoop` and derives their signed 32-bit trip schema without semantic
+fuel. Each source trip issues its unpacked-cell NBA from the pre-edge state;
+the updates commit together before the continuous memory read. The
+`memory_edge_loop_e` receipt matches five rows in Icarus 13.0 and
+readiness-gated Xcelium 24.03-s004. Noncanonical, nested, and non-NBA loop
+forms remain loud.
+
 ## First unpacked-memory cycle in E — 2026-11-11
 
 `LeanModels.Sv.Kernel.MemE` now executes the narrow source-shaped FIFO memory

@@ -96,6 +96,14 @@ and `mem[0]` together and matches five rows in Icarus 13.0 and Xcelium
 24.03-s004 through the readiness gate. Blocking assignments and unsupported
 targets remain loud.
 
+The E memory profile now also executes canonical source-shaped `for` loops in
+clocked memory bodies. `Loop2.headerSchema` derives the finite trip schema from
+the signed 32-bit iterator header without semantic fuel; the loop remains a
+`PStmt.forLoop`, and each trip issues its cell NBA before the single commit.
+`sem2/memory_edge_loop_e` covers reset and data-write loops at `N=4`, with five
+rows matching Icarus 13.0 and readiness-gated Xcelium 24.03-s004. Noncanonical
+headers, nested loops, and non-NBA loop bodies remain named refusals.
+
 `MemElab` now resolves one-rank `PLhs.arrayElem` targets against source labels
 and delegates their reads and writes to `MemState`, with guards for an updated
 cell and an out-of-range all-x/no-op access. Dynamic indices, partial array

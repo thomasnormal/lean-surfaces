@@ -1,6 +1,7 @@
 import LeanModels.Sv.Kernel.Core1Edge
 import LeanModels.Sv.Kernel.MemElab
 import LeanModels.Sv.Gen2
+import LeanModels.Sv.Loop2
 
 /-!
 # The first source-shaped memory step in E
@@ -239,23 +240,98 @@ def MemEDesign.scalarWidth? (d : MemEDesign) (name : String) : Except String Nat
   | some dc => .ok dc.width
   | none => .error s!"scalar NBA target '{name}' is not a declared scalar"
 
+abbrev MemEExec := Except String (MemEState × List MemEUpdate)
+
 mutual
 
-def execMemEStmt (d : MemEDesign) (s : MemEState) : PStmt → Except String (List MemEUpdate)
+def execMemEForBody (d : MemEDesign) (s : MemEState) : PStmt → MemEExec
   | .nbaAssign name value => do
       let width ← d.scalarWidth? name
       let v ← evalMemEExpr d s (some width) value
-      .ok [.scalar name v]
+      .ok (s, [.scalar name v])
   | .nbaAssignL target value => do
       let target? ← memETarget d s target
       match target? with
-      | none => .ok []
+      | none => .ok (s, [])
       | some (name, index) =>
           let ctx ← match d.memDecl? name with
             | none => .error s!"memory target '{name}' is not declared"
             | some pd => (d.shape? pd).map (·.elemWidth)
           let v ← evalMemEExpr d s (some ctx) value
-          .ok [.cell name index v]
+          .ok (s, [.cell name index v])
+  | .ifStmt cond yes no => do
+      let cv ← evalMemEExpr d s (some 1) cond
+      if cv.condTrue then execMemEForBody d s yes else
+        match no with
+        | none => .ok (s, [])
+        | some stmt => execMemEForBody d s stmt
+  | .block body => execMemEForBodyList d s body
+  | .blockingAssign _ _ | .blockingAssignL _ _ =>
+      .error "E memory edge loop body requires an NBA assignment"
+  | .caseStmt .. => .error "E memory edge loop case is outside the first memory profile"
+  | .forLoop .. => .error "nested E memory edge loops are outside the first memory profile"
+  | .unsupported k _ => .error s!"unsupported statement '{k}'"
+
+def execMemEForBodyList (d : MemEDesign) (s : MemEState) : List PStmt → MemEExec
+  | [] => .ok (s, [])
+  | stmt :: rest => do
+      let (s1, us) ← execMemEForBody d s stmt
+      let (s2, vs) ← execMemEForBodyList d s1 rest
+      .ok (s2, us ++ vs)
+
+end
+
+def memEHeaderEnv (env : IEnv) (condition : PExpr) : IEnv :=
+  match condition with
+  | .binary _ _ (.paramRef n none) =>
+      match env.intVal? n with
+      | some v => env.bindVal n v
+      | none => env
+  | _ => env
+
+def execMemEFor (d : MemEDesign) (s : MemEState) (iterator : String)
+    (init condition step : PExpr) (body : PStmt) : MemEExec := do
+  let env0 := memEHeaderEnv d.env condition
+  let schema ← match Loop2.headerSchema env0 iterator init condition step with
+    | .ok schema => .ok schema
+    | .error e => .error s!"E memory edge loop: {e}"
+  -- A procedural `integer i;` iterator is retained in the loop header by the
+  -- parser and is not a module declaration.  The source type is nevertheless
+  -- the signed 32-bit `integer` type (§6.11), so it has a local 32-bit slot.
+  let width := (d.decls.find? (fun dc => dc.name == iterator)).map (·.width) |>.getD 32
+  let rec go : List Int → MemEState → MemEExec
+    | [], state => .ok (state, [])
+    | i :: rest, state => do
+        let env := env0.bindVal iterator i
+        let di := { d with env }
+        let si := { state with scalar := SvState.set state.scalar iterator (LVec.ofInt width i) }
+        let (sBody, us) ← execMemEForBody di si body
+        let nextVec ← evalMemEExpr di sBody (some width) step
+        let next ← match nextVec.toInt? with
+          | some next => .ok next
+          | none => .error "E memory edge loop step is not a known integer"
+        let sNext := { sBody with scalar := SvState.set sBody.scalar iterator (LVec.ofInt width next) }
+        let (sTail, vs) ← go rest sNext
+        .ok (sTail, us ++ vs)
+  go schema.toList s
+
+mutual
+
+def execMemEStmt (d : MemEDesign) (s : MemEState) : PStmt → MemEExec
+  | .nbaAssign name value => do
+      let width ← d.scalarWidth? name
+      let v ← evalMemEExpr d s (some width) value
+      .ok (s, [.scalar name v])
+  | .nbaAssignL target value => do
+      let target? ← memETarget d s target
+      match target? with
+      | none => .ok (s, [])
+      | some (name, index) =>
+          let ctx ← match d.memDecl? name with
+            | none => .error s!"memory target '{name}' is not declared"
+            | some pd => (d.shape? pd).map (·.elemWidth)
+          let v ← evalMemEExpr d s (some ctx) value
+          .ok (s, [.cell name index v])
   | .ifStmt cond yes no => do
       let cv ← evalMemEExpr d s (some 1) cond
       if cv.condTrue then execMemEStmt d s yes else execMemEStmtOpt d s no
@@ -263,19 +339,20 @@ def execMemEStmt (d : MemEDesign) (s : MemEState) : PStmt → Except String (Lis
   | .blockingAssign _ _ | .blockingAssignL _ _ =>
       .error "E memory edge body requires an NBA assignment"
   | .caseStmt .. => .error "E memory edge case is outside the first memory profile"
-  | .forLoop .. => .error "E memory edge loop is outside the first memory profile"
+  | .forLoop iterator init condition step body =>
+      execMemEFor d s iterator init condition step body
   | .unsupported k _ => .error s!"unsupported statement '{k}'"
 
-def execMemEStmtOpt (d : MemEDesign) (s : MemEState) : Option PStmt → Except String (List MemEUpdate)
-  | none => .ok []
+def execMemEStmtOpt (d : MemEDesign) (s : MemEState) : Option PStmt → MemEExec
+  | none => .ok (s, [])
   | some body => execMemEStmt d s body
 
-def execMemEStmtList (d : MemEDesign) (s : MemEState) : List PStmt → Except String (List MemEUpdate)
-  | [] => .ok []
+def execMemEStmtList (d : MemEDesign) (s : MemEState) : List PStmt → MemEExec
+  | [] => .ok (s, [])
   | st :: rest => do
-      let us ← execMemEStmt d s st
-      let vs ← execMemEStmtList d s rest
-      .ok (us ++ vs)
+      let (s1, us) ← execMemEStmt d s st
+      let (s2, vs) ← execMemEStmtList d s1 rest
+      .ok (s2, us ++ vs)
 
 end
 
@@ -321,7 +398,7 @@ def MemEDesign.timeZero (d : MemEDesign) : Except String MemEState := do
           if !d.readmemh.isEmpty then
             .error "SystemTask:readmemh metadata does not match the initial process"
           else do
-            let updates ← execMemEStmt d d.init body
+            let (_, updates) ← execMemEStmt d d.init body
             commitMemE d.init updates
   | _ => .error "memory E time-zero route does not yet admit multiple initial processes"
 
@@ -338,10 +415,11 @@ def execMemEEdge (d : MemEDesign) (old now : SvState) (s : MemEState) :
   | p :: ps => do
       let here ← match p with
         | .alwaysFF _ body | .alwaysPlain _ body | .alwaysFFR _ _ body false =>
-            if edgeFires p old now then execMemEStmt d s body else .ok []
-        | _ => .ok []
+            if edgeFires p old now then execMemEStmt d s body else .ok (s, [])
+        | _ => .ok (s, [])
+      let (_, hereUpdates) := here
       let rest ← execMemEEdge d old now s ps
-      .ok (here ++ rest)
+      .ok (hereUpdates ++ rest)
 
 def execMemEAssign (d : MemEDesign) (s : MemEState) : List PProcess → Except String MemEState
   | [] => .ok s

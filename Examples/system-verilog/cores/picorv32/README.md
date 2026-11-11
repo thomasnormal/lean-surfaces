@@ -1553,6 +1553,24 @@ this one touched only C files, so the unchanged source-shaped envelope is
 still the approved input; the three reports were re-evaluated with
 `LeanModels.Sv.MemPreemptGuard` imported.
 
+## 2026-11-11 re-probe after generic unsized-x/z conversion in E
+
+Public master was `1b9516c9dda5fb2a4cc5313bd1db8274b9ef3de2` when the pinned
+YosysHQ source was re-extracted.  The source remains commit
+`ef203c2b0a3fb793280f5114941416c425c5b461`, with SHA-256
+`0836050971b3c6cdd28ac3b1e5719a67fb645161912bef1e472e63995ceb062`.  The
+approved envelope is 3,178,052 bytes with SHA-256
+`5ded55e501fb2738cb974ad7c808db6176989436a80bf4b1a78987cac97293b5`.
+
+The E memory elaborator constructs 215 scalar declarations, one native
+unpacked memory, and 43 retained processes.  The parser's
+`ConversionExpression:unsized-xz` nodes in the clocked body now evaluate
+through the generic §5.7.1 conversion rule (the clean-room fixture covers
+`'bx`, `'bz`, `'hx0`, and `'hz1` at `N=40` and `N=8`); they are no longer an
+admission wall.  The first retained unsupported process is still the earlier
+`TimedStatement:ImplicitEventControl` boundary for `always @*` at
+`pcpi_mul_wait`, so no E execution or retirement trace is claimed yet.
+
 ## Current rung state
 
 * **R0 — ISA:** the executable RV32I model and byte-memory lemmas compile;

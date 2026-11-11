@@ -202,6 +202,21 @@ def evalMemEIndex (d : MemEDesign) (s : MemEState) (e : PExpr) : Except String (
       | .error _ => .ok none
       | .ok v => .ok (indexInt? idx v)
 
+/-- Evaluate the parser's point-dependent unsized x/z conversion marker.
+
+The symbolic extractor keeps the literal's canonical 32-bit, MSB-first
+payload in `ConversionExpression:unsized-xz`; the destination width is only
+known after this E memory design has been instantiated.  Reuse the generic
+`unsizedXZ2` rule here so the E route applies IEEE 1800-2023 §5.7.1 (low-bit
+truncation and most-significant x/z extension) without lowering the source
+node into a fill or an ordinary literal before the context is known.
+-/
+def evalMemEUnsizedXZ (ctx : Option Nat) (payload : String) : Except String LVec :=
+  match unsizedXZ2 ctx payload with
+  | .lit value => .ok value
+  | .unsupported _ message => .error message
+  | _ => .error "unsized x/z conversion did not produce a literal"
+
 def evalMemEExpr (d : MemEDesign) (s : MemEState) (ctx : Option Nat) : PExpr → Except String LVec
   | .arrayElem n [idx] => do
       match d.memDecl? n with
@@ -218,6 +233,8 @@ def evalMemEExpr (d : MemEDesign) (s : MemEState) (ctx : Option Nat) : PExpr →
       match ctx with
       | some w => .ok (LVec.replicate w bit)
       | none => .error "fill expression has no destination width"
+  | .unsupported "ConversionExpression:unsized-xz" payload =>
+      evalMemEUnsizedXZ ctx payload
   | e =>
       if memEReadsArray e then
         .error "memory expression is not a direct cell read"

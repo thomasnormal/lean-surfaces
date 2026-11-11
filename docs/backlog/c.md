@@ -37,7 +37,9 @@ Pointers now carry an exclusive subobject end. Object declarations, member
 addresses, array decay, and allocated storage set that bound; `offsetPtr` and
 `resolve` enforce it while retaining the enclosing-object fallback for legacy
 unknown types. The `s.a[2]` row therefore refuses `outOfBounds` instead of
-reading the neighboring `s.b` field.
+reading the neighboring `s.b` field. Revalidated 2026-11-11 against the
+pinned Clang/LLVM 21.1.8 oracle: `array-member-overrun REFUSE`, with the
+native witness exiting 3.
 
 ## 2026-11-11-c-charlit-unsigned-pattern — ordinary character constants
 

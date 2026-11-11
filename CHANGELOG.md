@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Revalidated the namedtuple recognition boundary: the admitted structured
+  static-table slice still matches CPython 3.9.25, import-order hazards remain
+  loud, and runtime `namedtuple` class values remain an explicit architectural
+  follow-up.
+
 - Added a kernel-checked control refinement edge for the monadic heap-aware
   `bitAnd` worker on immediate integer operands, including the frame-heap
   read and unchanged heap/value-pair transport.

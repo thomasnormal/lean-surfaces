@@ -13644,3 +13644,24 @@ previously established pure `twinAgrees_binOp` bridge.
 
 DECIDED: continue the control-level refinement one heap-aware expression arm at
 a time; recursive calls and the script layer remain explicit debt.
+## 2026-11-11-pyfoundation-84 — revalidate namedtuple static recognition
+
+The medium `py-namedtuple-recognition` finding remains open. Ingestion still
+recognizes the narrow structured import plus assignment shape into
+`Module.namedtuples` and replaces those two statements with span-preserving
+`pass` nodes. The admitted `namedtuple_script.py` battery matches CPython
+3.9.25, and `namedtuple_import_order.py` remains a loud refusal before the
+import, matching CPython's `NameError`. Removing the rewrite safely requires a
+runtime namedtuple-class value and constructor dispatch in both interpreters;
+this audit packet makes that dependency explicit without broadening the static
+admission.
+
+| Measurement | Result |
+|---|---|
+| Admitted battery | `namedtuple_script.py`: model and CPython 3.9.25 match, exit 0 |
+| Ordering boundary | `namedtuple_import_order.py`: model exit 3; CPython `NameError` exit 1 |
+| Remaining debt | runtime `collections.namedtuple` class value; delete static recognition afterward |
+| Semantic change | none; audit confirmation only |
+
+DECIDED: keep `py-namedtuple-recognition` open as a medium rule-2 milestone;
+do not broaden the static table or claim the ingestion rewrite is removed.

@@ -60,6 +60,24 @@ arguments.
 DECIDED: count the builtin and numeric method frames for valid `round` calls;
 raise missing or excess-argument errors before entering either frame.
 
+## 2026-11-11-pyfoundation-33 — reconfirm protocol findings on the current runner
+
+The five audit findings remain stopped or exact on the current rebased runner.
+The generated foundation battery covers NaN identity, negative power, signed
+`Py_ssize_t` bounds, the pure-Python bisect control, and recursion limits; the
+generator-capture rows remain loud in the proof tier where its closure bridge
+is intentionally narrower.
+
+| Measurement | Result |
+|---|---|
+| Native differential | 38 rows: 28 MATCH, 10 documented refusals, 0 failures |
+| Proof differential | 38 rows: 27 MATCH, 11 loud refusals, 0 failures |
+| Oracle | CPython 3.9.25, recursion limit 1000 |
+| Semantic change | none; current-runner confirmation |
+
+DECIDED: keep the existing loud boundaries and exact admissions while the
+protocol census proceeds.
+
 ## 2026-11-10-pyfoundation-23 — pin the leanpy quickstart admission
 
 The public quickstart's Python 3.9 pin is now enforced at the runner boundary.

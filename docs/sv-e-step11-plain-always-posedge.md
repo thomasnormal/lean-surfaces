@@ -25,12 +25,22 @@ NBA RHS from the same pre-edge view and commits the issue-order queue; plain
 
 Async-reset source preservation is outside this packet. The legacy loader's
 `alwaysFFR` node does not retain whether the source was plain `always` or
-`always_ff`, and it drops the source event's `reset_iff` guard. The loaded
-source therefore cannot satisfy a source-preserving round trip for an
-async-reset process. Until that metadata is retained, the source-preserving
-E entry must refuse those forms; no async-reset execution or preservation
-result is claimed here. The positive-edge, single-event packet below is the
-complete scope of this review.
+`always_ff`. A reset-event `iff` guard is now checked before that lossy node is
+constructed: `parsePProcess` returns the named
+`AlwaysPosedge:reset-iff` refusal instead of silently executing an
+unconditional reset. The source-shaped receipt is
+[`sem2/reset_event_iff/`](../Examples/system-verilog/sem2/reset_event_iff/);
+its two guarded controls remain loud while the two unguarded controls retain
+their existing `alwaysFFR` nodes. The positive-edge, single-event packet below
+is the complete executable scope of this review.
+
+The reset-event fixture is also a differential boundary check for IEEE
+1800-2023 §9.4.2.3. Xcelium 24.03-s004 reports `1100` when `en=0` (the
+guarded reset edges are ignored and the unguarded resets fire) and `0000` when
+`en=1`; Icarus Verilog 13.0 rejects the guarded event syntax with its exact
+malformed-event diagnostic. The loader proof checks the exact refusal kind and
+both unguarded reset polarities. No async-reset E execution or source-style
+round-trip result is claimed.
 
 The rows cover the first unknown state (printed by the testbench), disabled and
 enabled updates, x/z enable values, x/z data, and the default branch.  Icarus

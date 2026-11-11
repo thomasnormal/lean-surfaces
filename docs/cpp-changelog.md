@@ -19,6 +19,8 @@ coverage advance independently from the Python tier.
 
 ### Added
 
+- The extern-variable boundary now has a direct `extern bool flag;` witness in addition to `extern int x;`; both require structured integral type evidence.
+
 - `extern` integral variable declarations now execute as storage-free translation nodes when Clang supplies `storageClass: extern` and a structured `int` or `bool` type; initialized or non-integral variables remain loud refusals.
 
 - Top-level `using enum E;` now executes for an empty named enum target supplied through Clang's structured handle; unresolved targets remain loud refusals.

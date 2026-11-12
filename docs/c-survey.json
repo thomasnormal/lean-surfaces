@@ -12,10 +12,10 @@
   "gcc.c-torture/execute": {
    "not-ingested": 19,
    "not-parsed": 321,
-   "passed": 583,
-   "refused-libc": 88,
+   "passed": 585,
+   "refused-libc": 85,
    "refused-ub": 33,
-   "refused-unsupported": 828,
+   "refused-unsupported": 829,
    "timeout": 46
   },
   "gcc.c23-run": {
@@ -31,10 +31,10 @@
  "counts": {
   "not-ingested": 25,
   "not-parsed": 350,
-  "passed": 694,
-  "refused-libc": 97,
+  "passed": 696,
+  "refused-libc": 94,
   "refused-ub": 36,
-  "refused-unsupported": 964,
+  "refused-unsupported": 965,
   "timeout": 48
  },
  "dynamic_wall_ranking": [
@@ -1094,6 +1094,25 @@
   },
   {
    "files": [
+    "20011121-1.c",
+    "941014-1.c",
+    "980526-2.c",
+    "alloca-1.c",
+    "loop-2c.c",
+    "pr22098-1.c",
+    "pr22098-2.c",
+    "pr22098-3.c",
+    "pr23467.c",
+    "pr36339.c",
+    "pr58209.c",
+    "pr97421-3.c"
+   ],
+   "present": 12,
+   "sole": 12,
+   "wall": "cast:PointerToIntegral"
+  },
+  {
+   "files": [
     "20000622-1.c",
     "20010329-1.c",
     "20021010-2.c",
@@ -1109,24 +1128,6 @@
    "present": 11,
    "sole": 11,
    "wall": "cast:IntegralToPointer"
-  },
-  {
-   "files": [
-    "20011121-1.c",
-    "941014-1.c",
-    "980526-2.c",
-    "loop-2c.c",
-    "pr22098-1.c",
-    "pr22098-2.c",
-    "pr22098-3.c",
-    "pr23467.c",
-    "pr36339.c",
-    "pr58209.c",
-    "pr97421-3.c"
-   ],
-   "present": 11,
-   "sole": 11,
-   "wall": "cast:PointerToIntegral"
   },
   {
    "files": [
@@ -1234,6 +1235,19 @@
   },
   {
    "files": [
+    "00179.c",
+    "00180.c",
+    "20120207-1.c",
+    "980707-1.c",
+    "built-in-setjmp.c",
+    "string-opt-17.c"
+   ],
+   "present": 6,
+   "sole": 6,
+   "wall": "libc-call: strcpy"
+  },
+  {
+   "files": [
     "20040302-1.c",
     "20071210-1.c",
     "920501-4.c",
@@ -1273,18 +1287,6 @@
   },
   {
    "files": [
-    "20021113-1.c",
-    "20070824-1.c",
-    "alloca-1.c",
-    "built-in-setjmp.c",
-    "frame-address.c"
-   ],
-   "present": 5,
-   "sole": 5,
-   "wall": "libc-call: __builtin_alloca"
-  },
-  {
-   "files": [
     "20071018-1.c",
     "20071120-1.c",
     "pr36765.c",
@@ -1294,18 +1296,6 @@
    "present": 5,
    "sole": 5,
    "wall": "libc-call: __builtin_malloc"
-  },
-  {
-   "files": [
-    "00179.c",
-    "00180.c",
-    "20120207-1.c",
-    "980707-1.c",
-    "string-opt-17.c"
-   ],
-   "present": 5,
-   "sole": 5,
-   "wall": "libc-call: strcpy"
   },
   {
    "files": [
@@ -2063,6 +2053,14 @@
    "present": 1,
    "sole": 1,
    "wall": "libc-call: __builtin_constant_p"
+  },
+  {
+   "files": [
+    "frame-address.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "libc-call: __builtin_frame_address"
   },
   {
    "files": [
@@ -4290,7 +4288,7 @@
   }
  ],
  "manifest_hash": "1de1a60c299d5bb51dae7ca001b0a008010cad0b25670cde2090c08bfc1a84ce",
- "measured_at_utc": "2026-11-12T08:45:28Z",
+ "measured_at_utc": "2026-11-12T08:50:35Z",
  "measured_commit": "e8e8f7a5d",
  "pin": null,
  "rows": [
@@ -9125,15 +9123,15 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "__builtin_alloca",
-   "dynamic_wall": "libc-call: __builtin_alloca",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "20021113-1.c",
    "sha256": "32dd9b3148cb09953d724b4180308c24ae13375f5a62100554a63ff497280bd8",
    "static_walls": [
     "libc-call"
    ],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -11177,8 +11175,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "__builtin_alloca",
-   "dynamic_wall": "libc-call: __builtin_alloca",
+   "detail": "",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "20070824-1.c",
    "sha256": "37762fbd1a61a1de6e9a4fe878f1a033a39e97cf6d5aa575258b8082cc73e631",
@@ -11186,7 +11184,7 @@
     "libc-call",
     "type-layout"
    ],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -15723,8 +15721,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "__builtin_alloca",
-   "dynamic_wall": "libc-call: __builtin_alloca",
+   "detail": "castKind 'PointerToIntegral'",
+   "dynamic_wall": "cast:PointerToIntegral",
    "manifest_status": "parsed",
    "name": "alloca-1.c",
    "sha256": "2af69a1caaac8c57db3ae9e61d97a7237d6830ab8972c2fb9cd9ae3da60ad9f1",
@@ -15733,7 +15731,7 @@
     "libc-call",
     "unsupported:AlignedAttr"
    ],
-   "verdict": "refused-libc"
+   "verdict": "refused-unsupported"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -16065,8 +16063,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "__builtin_alloca",
-   "dynamic_wall": "libc-call: __builtin_alloca",
+   "detail": "strcpy",
+   "dynamic_wall": "libc-call: strcpy",
    "manifest_status": "parsed",
    "name": "built-in-setjmp.c",
    "sha256": "d2487c4a7733f29b51ab3db27fd7918589b4da586360772c994b53f88497497e",
@@ -18346,8 +18344,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "__builtin_alloca",
-   "dynamic_wall": "libc-call: __builtin_alloca",
+   "detail": "__builtin_frame_address",
+   "dynamic_wall": "libc-call: __builtin_frame_address",
    "manifest_status": "parsed",
    "name": "frame-address.c",
    "sha256": "5dbc8c3ac2cc9a3ed71b68f0af8af7e50821db30d44ac34c0fa97aea20412ffd",

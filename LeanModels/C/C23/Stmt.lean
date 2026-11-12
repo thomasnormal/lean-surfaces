@@ -746,6 +746,17 @@ def callFn : Nat → Program → LeanModels.C.FunctionDefn → List CVal → Exe
                 liftEval (writeMem (fun m => m.storeBytes dp bs))
                 pure (.ptr dp)
           | _ => refuseUnsupported "memcpy: wrong argument count"
+        let runAlloca : List CVal → ExecM CVal := fun vs =>
+          match vs with
+          | [size] => do
+              let (_, n) ← asInt size
+              if n < 0 then refuseUnsupported "alloca: negative size"
+              else do
+                let m ← get
+                let (m', o) := m.alloc .automatic n.toNat none
+                set m'
+                pure (.ptr (Ptr.toObject o))
+          | _ => refuseUnsupported "alloca: wrong argument count"
         let runFfs : List CVal → ExecM CVal := fun vs =>
           match vs with
           | [value] => do
@@ -797,6 +808,7 @@ def callFn : Nat → Program → LeanModels.C.FunctionDefn → List CVal → Exe
                 | none =>
                     if nm == "memset" || nm == "__builtin_memset" then runMemset vs
                     else if nm == "memcpy" || nm == "__builtin_memcpy" then runMemcpy vs
+                    else if nm == "__builtin_alloca" then runAlloca vs
                     else if nm == "__builtin_ffs" then runFfs vs
                     else if nm == "__builtin_mul_overflow" then runArithOverflow "mul" vs
                     else if nm == "__builtin_add_overflow" then runArithOverflow "add" vs
@@ -816,6 +828,7 @@ def callFn : Nat → Program → LeanModels.C.FunctionDefn → List CVal → Exe
             | none =>
               if nm == "memset" || nm == "__builtin_memset" then runMemset vs
               else if nm == "memcpy" || nm == "__builtin_memcpy" then runMemcpy vs
+              else if nm == "__builtin_alloca" then runAlloca vs
               else if nm == "__builtin_ffs" then runFfs vs
               else if nm == "__builtin_mul_overflow" then runArithOverflow "mul" vs
               else if nm == "__builtin_add_overflow" then runArithOverflow "add" vs

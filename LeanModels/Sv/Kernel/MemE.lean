@@ -465,10 +465,18 @@ def execMemEFor (d : MemEDesign) (s : MemEState) (iterator : String)
         let di := { d with env }
         let si := { state with scalar := SvState.set state.scalar iterator (LVec.ofInt width i) }
         let (sBody, us) ← execMemEForBody di si body
-        let nextVec ← evalMemEExpr di sBody (some width) step
-        let next ← match nextVec.toInt? with
-          | some next => .ok next
-          | none => .error "E memory edge loop step is not a known integer"
+        let next ← match step with
+          | .unary .inc (.genvarRef n) =>
+              if n == iterator then .ok (i + 1)
+              else .error "E memory edge loop step increments a different iterator"
+          | .unary .dec (.genvarRef n) =>
+              if n == iterator then .ok (i - 1)
+              else .error "E memory edge loop step decrements a different iterator"
+          | _ =>
+              let nextVec ← evalMemEExpr di sBody (some width) step
+              match nextVec.toInt? with
+              | some next => .ok next
+              | none => .error "E memory edge loop step is not a known integer"
         let sNext := { sBody with scalar := SvState.set sBody.scalar iterator (LVec.ofInt width next) }
         let (sTail, vs) ← go rest sNext
         .ok (sTail, us ++ vs)

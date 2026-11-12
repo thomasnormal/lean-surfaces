@@ -1,38 +1,38 @@
 {
  "by_corpus": {
   "c-testsuite/single-exec": {
-   "passed": 160,
+   "passed": 163,
    "refused-libc": 2,
    "refused-ub": 8,
-   "refused-unsupported": 48,
+   "refused-unsupported": 45,
    "timeout": 2
   },
   "gcc.c-torture/execute": {
    "not-parsed": 267,
    "oracle-tests-compiler": 1,
-   "passed": 751,
-   "refused-libc": 29,
-   "refused-ub": 66,
-   "refused-unsupported": 743,
-   "timeout": 61
+   "passed": 761,
+   "refused-libc": 36,
+   "refused-ub": 63,
+   "refused-unsupported": 728,
+   "timeout": 62
   },
   "gcc.c23-run": {
    "not-parsed": 27,
-   "passed": 2,
+   "passed": 3,
    "refused-libc": 2,
    "refused-ub": 1,
-   "refused-unsupported": 44
+   "refused-unsupported": 43
   }
  },
  "corpus": "C1-C3 (gcc torture, c-testsuite, gcc c23-run)",
  "counts": {
   "not-parsed": 294,
   "oracle-tests-compiler": 1,
-  "passed": 913,
-  "refused-libc": 33,
-  "refused-ub": 75,
-  "refused-unsupported": 835,
-  "timeout": 63
+  "passed": 927,
+  "refused-libc": 40,
+  "refused-ub": 72,
+  "refused-unsupported": 816,
+  "timeout": 64
  },
  "dynamic_wall_ranking": [
   {
@@ -518,13 +518,10 @@
     "return-addr.c",
     "strcpy-2.c",
     "strlen-2.c",
-    "strlen-6.c",
-    "va-arg-1.c",
-    "va-arg-17.c",
-    "va-arg-20.c"
+    "strlen-6.c"
    ],
-   "present": 75,
-   "sole": 75,
+   "present": 72,
+   "sole": 72,
    "wall": "undefined-behavior"
   },
   {
@@ -559,7 +556,6 @@
     "memcpy-1.c",
     "memcpy-bi.c",
     "mode-dependent-address.c",
-    "multi-ix.c",
     "nestfunc-4.c",
     "pr107881-1.c",
     "pr110252-1.c",
@@ -568,6 +564,8 @@
     "pr126405.c",
     "pr19005.c",
     "pr27260.c",
+    "pr28982a.c",
+    "pr28982b.c",
     "pr37573.c",
     "pr42512.c",
     "pr45034.c",
@@ -593,9 +591,132 @@
     "subcmp-1.c",
     "usad-run.c"
    ],
+   "present": 64,
+   "sole": 64,
+   "wall": "timeout"
+  },
+  {
+   "files": [
+    "00123.c",
+    "00175.c",
+    "00195.c",
+    "20000603-1.c",
+    "20000731-1.c",
+    "20001017-1.c",
+    "20011217-1.c",
+    "20020213-1.c",
+    "20021118-2.c",
+    "20030216-1.c",
+    "20031003-1.c",
+    "20040831-1.c",
+    "20041113-1.c",
+    "20120919-1.c",
+    "920710-1.c",
+    "921019-2.c",
+    "930614-1.c",
+    "960513-1.c",
+    "961223-1.c",
+    "980709-1.c",
+    "990829-1.c",
+    "991030-1.c",
+    "cbrt.c",
+    "float-floor.c",
+    "ieee/20001122-1.c",
+    "ieee/20011123-1.c",
+    "ieee/20030331-1.c",
+    "ieee/20041213-1.c",
+    "ieee/930529-1.c",
+    "ieee/980619-1.c",
+    "ieee/acc1.c",
+    "ieee/acc2.c",
+    "ieee/fp-cmp-1.c",
+    "ieee/fp-cmp-2.c",
+    "ieee/fp-cmp-5.c",
+    "ieee/fp-cmp-6.c",
+    "ieee/fp-cmp-8.c",
+    "ieee/fp-cmp-9.c",
+    "ieee/hugeval.c",
+    "ieee/mzero2.c",
+    "ieee/mzero3.c",
+    "ieee/mzero5.c",
+    "ieee/pr28634.c",
+    "ieee/pr30704.c",
+    "ieee/pr72824.c",
+    "ieee/pr84235.c",
+    "ieee/unsafe-fp-assoc-1.c",
+    "ieee/unsafe-fp-assoc.c",
+    "loop-8.c",
+    "packed-aligned.c",
+    "postmod-1.c",
+    "pr107879.c",
+    "pr23324.c",
+    "pr29798.c",
+    "pr35456.c",
+    "pr38048-2.c",
+    "pr44683.c",
+    "pr47538.c",
+    "pr58574.c",
+    "pr59643.c",
+    "pr93434.c",
+    "struct-ret-1.c",
+    "va-arg-26.c"
+   ],
    "present": 63,
    "sole": 63,
-   "wall": "timeout"
+   "wall": "unsupported:floating literal lacks parser-native bits"
+  },
+  {
+   "files": [
+    "00140.c",
+    "20000519-1.c",
+    "20071213-1.c",
+    "920501-8.c",
+    "920726-1.c",
+    "931004-10.c",
+    "931004-12.c",
+    "931004-14.c",
+    "931004-2.c",
+    "931004-4.c",
+    "931004-6.c",
+    "931004-8.c",
+    "980205.c",
+    "980608-1.c",
+    "980716-1.c",
+    "991216-2.c",
+    "gcc/testsuite/gcc.dg/c23-stdarg-9.c",
+    "multi-ix.c",
+    "pr117432.c",
+    "pr44575.c",
+    "pr64979.c",
+    "stdarg-2.c",
+    "stdarg-3.c",
+    "stdarg-4.c",
+    "strct-stdarg-1.c",
+    "strct-varg-1.c",
+    "va-arg-1.c",
+    "va-arg-10.c",
+    "va-arg-11.c",
+    "va-arg-12.c",
+    "va-arg-13.c",
+    "va-arg-15.c",
+    "va-arg-16.c",
+    "va-arg-17.c",
+    "va-arg-18.c",
+    "va-arg-19.c",
+    "va-arg-2.c",
+    "va-arg-20.c",
+    "va-arg-21.c",
+    "va-arg-23.c",
+    "va-arg-24.c",
+    "va-arg-5.c",
+    "va-arg-7.c",
+    "va-arg-8.c",
+    "va-arg-9.c",
+    "va-arg-trap-1.c"
+   ],
+   "present": 46,
+   "sole": 46,
+   "wall": "unsupported:more arguments than parameters"
   },
   {
    "files": [
@@ -646,38 +767,34 @@
   },
   {
    "files": [
-    "00178.c",
-    "20000731-1.c",
-    "20011217-1.c",
-    "20040831-1.c",
-    "20190901-1.c",
-    "921019-2.c",
-    "980604-1.c",
-    "990117-1.c",
+    "00174.c",
+    "20000605-1.c",
+    "20020413-1.c",
+    "920618-1.c",
+    "930614-2.c",
     "990413-2.c",
-    "990829-1.c",
-    "float-floor.c",
-    "ieee/20001122-1.c",
-    "ieee/20011123-1.c",
-    "ieee/inf-4.c",
-    "ieee/mzero2.c",
-    "ieee/mzero5.c",
-    "ieee/pr84235.c",
+    "align-2.c",
+    "complex-3.c",
+    "gofast.c",
+    "ieee/20000320-1.c",
+    "ieee/20010114-2.c",
+    "ieee/920518-1.c",
+    "ieee/compare-fp-1.c",
+    "ieee/compare-fp-4.c",
+    "ieee/copysign1.c",
+    "ieee/copysign2.c",
+    "ieee/fp-cmp-cond-1.c",
+    "ieee/pr67218.c",
     "ieee/rbug.c",
-    "loop-8.c",
-    "pr107879.c",
+    "loop-ivopts-1.c",
+    "pr15262-1.c",
+    "pr15262.c",
     "pr23941.c",
-    "pr29798.c",
-    "pr35456.c",
-    "pr44683.c",
-    "pr58574.c",
-    "pr68390.c",
-    "pr92618.c",
-    "va-arg-15.c"
+    "pr36343.c"
    ],
-   "present": 28,
-   "sole": 28,
-   "wall": "unsupported:no layout for declared type 'double'"
+   "present": 24,
+   "sole": 24,
+   "wall": "cast:FloatingCast"
   },
   {
    "files": [
@@ -688,8 +805,6 @@
     "20060412-1.c",
     "980617-1.c",
     "alias-1.c",
-    "ieee/fp-cmp-1.c",
-    "ieee/fp-cmp-2.c",
     "ieee/fp-cmp-3.c",
     "mayalias-1.c",
     "mayalias-2.c",
@@ -705,15 +820,14 @@
     "pta-field-2.c",
     "struct-aliasing-1.c"
    ],
-   "present": 23,
-   "sole": 23,
+   "present": 21,
+   "sole": 21,
    "wall": "unsupported:pointer bit-cast across incompatible effective types"
   },
   {
    "files": [
     "00087.c",
     "20050107-1.c",
-    "20081103-1.c",
     "20100708-1.c",
     "20171008-1.c",
     "20230630-1.c",
@@ -722,7 +836,6 @@
     "20230630-4.c",
     "pr101188.c",
     "pr108498-2.c",
-    "pr47538.c",
     "pr49123.c",
     "pr52979-1.c",
     "pr52979-2.c",
@@ -734,19 +847,19 @@
     "pr89195.c",
     "pr97764.c"
    ],
-   "present": 22,
-   "sole": 22,
+   "present": 20,
+   "sole": 20,
    "wall": "unsupported:no layout for declared type 'struct S'"
   },
   {
    "files": [
     "20001228-1.c",
+    "20021120-1.c",
     "20050218-1.c",
     "20051021-1.c",
     "20060929-1.c",
     "20230802-1.c",
     "920501-6.c",
-    "920726-1.c",
     "930930-2.c",
     "bswap-1.c",
     "builtin-bitops-1.c",
@@ -756,35 +869,11 @@
     "pr57875.c",
     "pr58943.c",
     "pr91635.c",
-    "pr93213.c",
-    "va-arg-10.c",
-    "va-arg-9.c"
+    "pr93213.c"
    ],
-   "present": 19,
-   "sole": 19,
+   "present": 17,
+   "sole": 17,
    "wall": "unsequenced-effects"
-  },
-  {
-   "files": [
-    "20020720-1.c",
-    "920501-8.c",
-    "941021-1.c",
-    "980205.c",
-    "980605-1.c",
-    "990127-2.c",
-    "cvt-1.c",
-    "ieee/920810-1.c",
-    "ieee/compare-fp-2.c",
-    "ieee/fp-cmp-7.c",
-    "ieee/mzero6.c",
-    "ieee/pr108540-1.c",
-    "ieee/pr108540-2.c",
-    "ieee/pr109008.c",
-    "va-arg-7.c"
-   ],
-   "present": 15,
-   "sole": 15,
-   "wall": "unsupported:no layout for parameter type 'double'"
   },
   {
    "files": [
@@ -827,6 +916,7 @@
   {
    "files": [
     "20011121-1.c",
+    "20060420-1.c",
     "941014-1.c",
     "980526-2.c",
     "alloca-1.c",
@@ -838,8 +928,8 @@
     "pr58209.c",
     "pr97421-3.c"
    ],
-   "present": 11,
-   "sole": 11,
+   "present": 12,
+   "sole": 12,
    "wall": "unsupported:pointer-to-integer conversion outside uintptr_t/intptr_t"
   },
   {
@@ -860,22 +950,6 @@
   },
   {
    "files": [
-    "00113.c",
-    "00174.c",
-    "20050121-1.c",
-    "ieee/920518-1.c",
-    "ieee/980619-1.c",
-    "ieee/fp-cmp-cond-1.c",
-    "ieee/inf-1.c",
-    "pr15262-1.c",
-    "pr15262.c"
-   ],
-   "present": 9,
-   "sole": 9,
-   "wall": "unsupported:no layout for declared type 'float'"
-  },
-  {
-   "files": [
     "20040302-1.c",
     "20071210-1.c",
     "920302-1.c",
@@ -888,36 +962,6 @@
    "present": 8,
    "sole": 8,
    "wall": "unsupported:AddrLabelExpr"
-  },
-  {
-   "files": [
-    "20030914-1.c",
-    "20080502-1.c",
-    "gcc/testsuite/gcc.dg/c23-float-1.c",
-    "ieee/20010226-1.c",
-    "ieee/pr36332.c",
-    "pr44942.c",
-    "va-arg-5.c",
-    "va-arg-6.c"
-   ],
-   "present": 8,
-   "sole": 8,
-   "wall": "unsupported:long double floating literal"
-  },
-  {
-   "files": [
-    "931004-10.c",
-    "931004-12.c",
-    "931004-14.c",
-    "931004-2.c",
-    "931004-4.c",
-    "931004-6.c",
-    "931004-8.c",
-    "strct-stdarg-1.c"
-   ],
-   "present": 8,
-   "sole": 8,
-   "wall": "unsupported:va_arg requested unsupported value type 'struct tiny'"
   },
   {
    "files": [
@@ -935,17 +979,17 @@
   },
   {
    "files": [
-    "00043.c",
-    "20040625-1.c",
-    "930126-1.c",
-    "961223-1.c",
-    "pr110165-1.c",
-    "pr110166-1.c",
-    "pr29006.c"
+    "20030914-1.c",
+    "20080502-1.c",
+    "gcc/testsuite/gcc.dg/c23-float-1.c",
+    "ieee/20010226-1.c",
+    "ieee/pr36332.c",
+    "pr44942.c",
+    "va-arg-6.c"
    ],
    "present": 7,
    "sole": 7,
-   "wall": "unsupported:no layout for declared type 'struct s'"
+   "wall": "unsupported:long double floating literal"
   },
   {
    "files": [
@@ -960,20 +1004,6 @@
    "present": 7,
    "sole": 7,
    "wall": "unsupported:no layout for declared type 'va_list'"
-  },
-  {
-   "files": [
-    "20020321-1.c",
-    "20080529-1.c",
-    "conversion.c",
-    "gofast.c",
-    "ieee/compare-fp-3.c",
-    "pr39501.c",
-    "pr67929_1.c"
-   ],
-   "present": 7,
-   "sole": 7,
-   "wall": "unsupported:no layout for parameter type 'float'"
   },
   {
    "files": [
@@ -1016,29 +1046,16 @@
   },
   {
    "files": [
-    "00175.c",
-    "20031003-1.c",
-    "920710-1.c",
-    "960513-1.c",
-    "pr38048-2.c",
-    "va-arg-26.c"
+    "00043.c",
+    "20040625-1.c",
+    "930126-1.c",
+    "pr110165-1.c",
+    "pr110166-1.c",
+    "pr29006.c"
    ],
    "present": 6,
    "sole": 6,
-   "wall": "unsupported:floating literal lacks parser-native bits"
-  },
-  {
-   "files": [
-    "20010325-1.c",
-    "980608-1.c",
-    "printf-1.c",
-    "va-arg-21.c",
-    "wchar_t-1.c",
-    "widechar-3.c"
-   ],
-   "present": 6,
-   "sole": 6,
-   "wall": "unsupported:string literal with escape or non-ASCII spelling"
+   "wall": "unsupported:no layout for declared type 'struct s'"
   },
   {
    "files": [
@@ -1078,25 +1095,15 @@
   },
   {
    "files": [
-    "20020413-1.c",
-    "920618-1.c",
-    "ieee/pr67218.c",
-    "pr36343.c"
+    "20010325-1.c",
+    "980605-1.c",
+    "printf-1.c",
+    "wchar_t-1.c",
+    "widechar-3.c"
    ],
-   "present": 4,
-   "sole": 4,
-   "wall": "cast:FloatingCast"
-  },
-  {
-   "files": [
-    "gcc/testsuite/gcc.dg/c23-bool-1.c",
-    "gcc/testsuite/gcc.dg/c23-float-2.c",
-    "gcc/testsuite/gcc.dg/c23-float-3.c",
-    "gcc/testsuite/gcc.dg/c23-float-4.c"
-   ],
-   "present": 4,
-   "sole": 4,
-   "wall": "unsupported:GenericSelectionExpr"
+   "present": 5,
+   "sole": 5,
+   "wall": "unsupported:string literal with escape or non-ASCII spelling"
   },
   {
    "files": [
@@ -1111,14 +1118,14 @@
   },
   {
    "files": [
-    "cbrt.c",
-    "ieee/hugeval.c",
-    "ieee/unsafe-fp-assoc-1.c",
-    "ieee/unsafe-fp-assoc.c"
+    "20041212-1.c",
+    "20101011-1.c",
+    "pr42231.c",
+    "pr68390.c"
    ],
    "present": 4,
    "sole": 4,
-   "wall": "unsupported:no layout for declared type 'const double'"
+   "wall": "unsupported:function-to-pointer decay (inch 5)"
   },
   {
    "files": [
@@ -1143,6 +1150,16 @@
   },
   {
    "files": [
+    "ieee/fp-cmp-7.c",
+    "ieee/inf-2.c",
+    "ieee/inf-4.c"
+   ],
+   "present": 3,
+   "sole": 3,
+   "wall": "libc-call: __builtin_inf"
+  },
+  {
+   "files": [
     "20041124-1.c",
     "950628-1.c",
     "pr30185.c"
@@ -1150,16 +1167,6 @@
    "present": 3,
    "sole": 3,
    "wall": "unsupported:ExprWithCleanups"
-  },
-  {
-   "files": [
-    "20041212-1.c",
-    "20101011-1.c",
-    "pr42231.c"
-   ],
-   "present": 3,
-   "sole": 3,
-   "wall": "unsupported:function-to-pointer decay (inch 5)"
   },
   {
    "files": [
@@ -1223,16 +1230,6 @@
   },
   {
    "files": [
-    "00140.c",
-    "bf-pack-1.c",
-    "gcc/testsuite/gcc.dg/c23-tag-alias-7.c"
-   ],
-   "present": 3,
-   "sole": 3,
-   "wall": "unsupported:no layout for declared type 'struct foo'"
-  },
-  {
-   "files": [
     "20000113-1.c",
     "20020227-1.c",
     "bitfld-1.c"
@@ -1250,16 +1247,6 @@
    "present": 3,
    "sole": 3,
    "wall": "unsupported:type trait '__alignof'"
-  },
-  {
-   "files": [
-    "00119.c",
-    "00123.c",
-    "20090623-1.c"
-   ],
-   "present": 3,
-   "sole": 3,
-   "wall": "unsupported:unbound declaration 'id15' (name 'x')"
   },
   {
    "files": [
@@ -1283,16 +1270,6 @@
   },
   {
    "files": [
-    "20030209-1.c",
-    "960405-1.c",
-    "991030-1.c"
-   ],
-   "present": 3,
-   "sole": 3,
-   "wall": "unsupported:unbound declaration 'id27' (name 'x')"
-  },
-  {
-   "files": [
     "00040.c",
     "ipa-sra-2.c"
    ],
@@ -1308,6 +1285,24 @@
    "present": 2,
    "sole": 2,
    "wall": "libc-call: open"
+  },
+  {
+   "files": [
+    "gcc/testsuite/gcc.dg/c23-bool-1.c",
+    "gcc/testsuite/gcc.dg/c23-float-2.c"
+   ],
+   "present": 2,
+   "sole": 2,
+   "wall": "unsupported:GenericSelectionExpr"
+  },
+  {
+   "files": [
+    "gcc/testsuite/gcc.dg/c23-float-4.c",
+    "gcc/testsuite/gcc.dg/c23-float-5.c"
+   ],
+   "present": 2,
+   "sole": 2,
+   "wall": "unsupported:call to '__builtin_nanf' in a context with no program \u2014 call it through 'callByName'"
   },
   {
    "files": [
@@ -1347,12 +1342,12 @@
   },
   {
    "files": [
-    "gcc/testsuite/gcc.dg/c23-stdarg-9.c",
-    "va-arg-2.c"
+    "930622-2.c",
+    "conversion.c"
    ],
    "present": 2,
    "sole": 2,
-   "wall": "unsupported:more arguments than parameters"
+   "wall": "unsupported:long double integer-to-floating conversion"
   },
   {
    "files": [
@@ -1380,33 +1375,6 @@
    "present": 2,
    "sole": 2,
    "wall": "unsupported:no layout for declared type 'bitmap_iterator'"
-  },
-  {
-   "files": [
-    "ieee/20010114-2.c",
-    "ieee/20030331-1.c"
-   ],
-   "present": 2,
-   "sole": 2,
-   "wall": "unsupported:no layout for declared type 'const float'"
-  },
-  {
-   "files": [
-    "ieee/fp-cmp-4.c",
-    "ieee/fp-cmp-5.c"
-   ],
-   "present": 2,
-   "sole": 2,
-   "wall": "unsupported:no layout for declared type 'const struct try[6]'"
-  },
-  {
-   "files": [
-    "ieee/acc1.c",
-    "ieee/acc2.c"
-   ],
-   "present": 2,
-   "sole": 2,
-   "wall": "unsupported:no layout for declared type 'double[4]'"
   },
   {
    "files": [
@@ -1464,15 +1432,6 @@
   },
   {
    "files": [
-    "pr60017.c",
-    "stdarg-3.c"
-   ],
-   "present": 2,
-   "sole": 2,
-   "wall": "unsupported:no layout for declared type 'struct S1'"
-  },
-  {
-   "files": [
     "pr22141-1.c",
     "pr22141-2.c"
    ],
@@ -1482,12 +1441,12 @@
   },
   {
    "files": [
-    "990326-1.c",
-    "packed-aligned.c"
+    "bf-pack-1.c",
+    "gcc/testsuite/gcc.dg/c23-tag-alias-7.c"
    ],
    "present": 2,
    "sole": 2,
-   "wall": "unsupported:no layout for declared type 'struct c'"
+   "wall": "unsupported:no layout for declared type 'struct foo'"
   },
   {
    "files": [
@@ -1527,15 +1486,6 @@
   },
   {
    "files": [
-    "va-arg-12.c",
-    "va-arg-18.c"
-   ],
-   "present": 2,
-   "sole": 2,
-   "wall": "unsupported:no layout for parameter type 'L'"
-  },
-  {
-   "files": [
     "00213.c",
     "00215.c"
    ],
@@ -1545,21 +1495,21 @@
   },
   {
    "files": [
-    "ieee/20000320-1.c",
-    "pr44468.c"
-   ],
-   "present": 2,
-   "sole": 2,
-   "wall": "unsupported:sizeof: no layout for operand type 'float'"
-  },
-  {
-   "files": [
     "bitfld-2.c",
     "strlen-7.c"
    ],
    "present": 2,
    "sole": 2,
    "wall": "unsupported:sizeof: no layout for operand type 'struct A'"
+  },
+  {
+   "files": [
+    "ieee/920810-1.c",
+    "pr79327.c"
+   ],
+   "present": 2,
+   "sole": 2,
+   "wall": "unsupported:sprintf"
   },
   {
    "files": [
@@ -1578,15 +1528,6 @@
    "present": 2,
    "sole": 2,
    "wall": "unsupported:unbound declaration 'id15' (name 'a')"
-  },
-  {
-   "files": [
-    "ieee/fp-cmp-6.c",
-    "ieee/fp-cmp-9.c"
-   ],
-   "present": 2,
-   "sole": 2,
-   "wall": "unsupported:unbound declaration 'id15' (name 'dnan')"
   },
   {
    "files": [
@@ -1617,21 +1558,21 @@
   },
   {
    "files": [
-    "ieee/compare-fp-1.c",
-    "ieee/compare-fp-4.c"
-   ],
-   "present": 2,
-   "sole": 2,
-   "wall": "unsupported:unbound declaration 'id21' (name 'pinf')"
-  },
-  {
-   "files": [
     "pr67781.c",
     "pr78436.c"
    ],
    "present": 2,
    "sole": 2,
    "wall": "unsupported:unbound declaration 'id22' (name 's')"
+  },
+  {
+   "files": [
+    "20050604-1.c",
+    "991228-1.c"
+   ],
+   "present": 2,
+   "sole": 2,
+   "wall": "unsupported:unbound declaration 'id30' (name 'u')"
   },
   {
    "files": [
@@ -1712,6 +1653,14 @@
   },
   {
    "files": [
+    "ieee/mzero6.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "libc-call: __builtin_copysign"
+  },
+  {
+   "files": [
     "frame-address.c"
    ],
    "present": 1,
@@ -1728,11 +1677,27 @@
   },
   {
    "files": [
-    "ieee/inf-2.c"
+    "ieee/inf-1.c"
    ],
    "present": 1,
    "sole": 1,
-   "wall": "libc-call: __builtin_inf"
+   "wall": "libc-call: __builtin_inff"
+  },
+  {
+   "files": [
+    "ieee/pr108540-1.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "libc-call: __builtin_isinf"
+  },
+  {
+   "files": [
+    "ieee/compare-fp-3.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "libc-call: __builtin_isunordered"
   },
   {
    "files": [
@@ -1773,6 +1738,14 @@
    "present": 1,
    "sole": 1,
    "wall": "libc-call: f"
+  },
+  {
+   "files": [
+    "20020720-1.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "libc-call: fabs"
   },
   {
    "files": [
@@ -1840,6 +1813,14 @@
   },
   {
    "files": [
+    "pr44468.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "unsupported:OffsetOfExpr"
+  },
+  {
+   "files": [
     "builtin-types-compatible-p.c"
    ],
    "present": 1,
@@ -1861,6 +1842,22 @@
    "present": 1,
    "sole": 1,
    "wall": "unsupported:call through an incompatible function-pointer cast"
+  },
+  {
+   "files": [
+    "gcc/testsuite/gcc.dg/c23-float-3.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "unsupported:call to '__builtin_inff' in a context with no program \u2014 call it through 'callByName'"
+  },
+  {
+   "files": [
+    "ieee/builtin-nan-1.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "unsupported:call to '__builtin_nan' in a context with no program \u2014 call it through 'callByName'"
   },
   {
    "files": [
@@ -1917,14 +1914,6 @@
    "present": 1,
    "sole": 1,
    "wall": "unsupported:function instrumentation is outside the tier"
-  },
-  {
-   "files": [
-    "930622-2.c"
-   ],
-   "present": 1,
-   "sole": 1,
-   "wall": "unsupported:long double integer-to-floating conversion"
   },
   {
    "files": [
@@ -2000,22 +1989,6 @@
   },
   {
    "files": [
-    "20000605-1.c"
-   ],
-   "present": 1,
-   "sole": 1,
-   "wall": "unsupported:no layout for declared type 'RenderInfo'"
-  },
-  {
-   "files": [
-    "va-arg-13.c"
-   ],
-   "present": 1,
-   "sole": 1,
-   "wall": "unsupported:no layout for declared type 'ScanfState'"
-  },
-  {
-   "files": [
     "991016-1.c"
    ],
    "present": 1,
@@ -2072,14 +2045,6 @@
   },
   {
    "files": [
-    "struct-ret-1.c"
-   ],
-   "present": 1,
-   "sole": 1,
-   "wall": "unsupported:no layout for declared type 'X'"
-  },
-  {
-   "files": [
     "pr49644.c"
    ],
    "present": 1,
@@ -2125,6 +2090,14 @@
    "present": 1,
    "sole": 1,
    "wall": "unsupported:no layout for declared type '__attribute__((__vector_size__(8 * sizeof(short)))) short'"
+  },
+  {
+   "files": [
+    "pr92618.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "unsupported:no layout for declared type '__m128i'"
   },
   {
    "files": [
@@ -2232,14 +2205,6 @@
   },
   {
    "files": [
-    "ieee/copysign1.c"
-   ],
-   "present": 1,
-   "sole": 1,
-   "wall": "unsupported:no layout for declared type 'const struct Df[8]'"
-  },
-  {
-   "files": [
     "pr100453.c"
    ],
    "present": 1,
@@ -2248,27 +2213,11 @@
   },
   {
    "files": [
-    "gcc/testsuite/gcc.dg/c23-constexpr-2a.c"
+    "ieee/fp-cmp-4.c"
    ],
    "present": 1,
    "sole": 1,
-   "wall": "unsupported:no layout for declared type 'const struct s'"
-  },
-  {
-   "files": [
-    "ieee/fp-cmp-8.c"
-   ],
-   "present": 1,
-   "sole": 1,
-   "wall": "unsupported:no layout for declared type 'const struct try[14]'"
-  },
-  {
-   "files": [
-    "pr93434.c"
-   ],
-   "present": 1,
-   "sole": 1,
-   "wall": "unsupported:no layout for declared type 'creal_T[16]'"
+   "wall": "unsupported:no layout for declared type 'const struct try[6]'"
   },
   {
    "files": [
@@ -2285,30 +2234,6 @@
    "present": 1,
    "sole": 1,
    "wall": "unsupported:no layout for declared type 'double (*)(float)'"
-  },
-  {
-   "files": [
-    "20001017-1.c"
-   ],
-   "present": 1,
-   "sole": 1,
-   "wall": "unsupported:no layout for declared type 'double[1]'"
-  },
-  {
-   "files": [
-    "pr59643.c"
-   ],
-   "present": 1,
-   "sole": 1,
-   "wall": "unsupported:no layout for declared type 'double[32]'"
-  },
-  {
-   "files": [
-    "930614-1.c"
-   ],
-   "present": 1,
-   "sole": 1,
-   "wall": "unsupported:no layout for declared type 'double[6]'"
   },
   {
    "files": [
@@ -2333,46 +2258,6 @@
    "present": 1,
    "sole": 1,
    "wall": "unsupported:no layout for declared type 'enum fred'"
-  },
-  {
-   "files": [
-    "loop-ivopts-1.c"
-   ],
-   "present": 1,
-   "sole": 1,
-   "wall": "unsupported:no layout for declared type 'float[16]'"
-  },
-  {
-   "files": [
-    "ieee/pr72824.c"
-   ],
-   "present": 1,
-   "sole": 1,
-   "wall": "unsupported:no layout for declared type 'float[32]'"
-  },
-  {
-   "files": [
-    "20021118-2.c"
-   ],
-   "present": 1,
-   "sole": 1,
-   "wall": "unsupported:no layout for declared type 'float[3]'"
-  },
-  {
-   "files": [
-    "ieee/copysign2.c"
-   ],
-   "present": 1,
-   "sole": 1,
-   "wall": "unsupported:no layout for declared type 'float[8]'"
-  },
-  {
-   "files": [
-    "930614-2.c"
-   ],
-   "present": 1,
-   "sole": 1,
-   "wall": "unsupported:no layout for declared type 'float[8][2][8][2]'"
   },
   {
    "files": [
@@ -2520,14 +2405,6 @@
   },
   {
    "files": [
-    "pr15262-2.c"
-   ],
-   "present": 1,
-   "sole": 1,
-   "wall": "unsupported:no layout for declared type 'struct B'"
-  },
-  {
-   "files": [
     "20050613-1.c"
    ],
    "present": 1,
@@ -2549,6 +2426,14 @@
    "present": 1,
    "sole": 1,
    "wall": "unsupported:no layout for declared type 'struct S0'"
+  },
+  {
+   "files": [
+    "pr60017.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "unsupported:no layout for declared type 'struct S1'"
   },
   {
    "files": [
@@ -2592,11 +2477,11 @@
   },
   {
    "files": [
-    "complex-3.c"
+    "990326-1.c"
    ],
    "present": 1,
    "sole": 1,
-   "wall": "unsupported:no layout for declared type 'struct complex'"
+   "wall": "unsupported:no layout for declared type 'struct c'"
   },
   {
    "files": [
@@ -2653,14 +2538,6 @@
    "present": 1,
    "sole": 1,
    "wall": "unsupported:no layout for declared type 'struct reg_stat'"
-  },
-  {
-   "files": [
-    "pr29156.c"
-   ],
-   "present": 1,
-   "sole": 1,
-   "wall": "unsupported:no layout for declared type 'struct test2'"
   },
   {
    "files": [
@@ -2784,22 +2661,6 @@
   },
   {
    "files": [
-    "pr42691.c"
-   ],
-   "present": 1,
-   "sole": 1,
-   "wall": "unsupported:no layout for declared type 'union _D_rep'"
-  },
-  {
-   "files": [
-    "pr23324.c"
-   ],
-   "present": 1,
-   "sole": 1,
-   "wall": "unsupported:no layout for declared type 'union at6'"
-  },
-  {
-   "files": [
     "bswap-2.c"
    ],
    "present": 1,
@@ -2808,19 +2669,19 @@
   },
   {
    "files": [
+    "20190901-1.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "unsupported:no layout for declared type 'union ieee_double_extract'"
+  },
+  {
+   "files": [
     "00218.c"
    ],
    "present": 1,
    "sole": 1,
    "wall": "unsupported:no layout for declared type 'union tree_node'"
-  },
-  {
-   "files": [
-    "20000603-1.c"
-   ],
-   "present": 1,
-   "sole": 1,
-   "wall": "unsupported:no layout for declared type 'union u'"
   },
   {
    "files": [
@@ -2864,14 +2725,6 @@
   },
   {
    "files": [
-    "980709-1.c"
-   ],
-   "present": 1,
-   "sole": 1,
-   "wall": "unsupported:no layout for declared type 'volatile double'"
-  },
-  {
-   "files": [
     "20030903-1.c"
    ],
    "present": 1,
@@ -2909,14 +2762,6 @@
    "present": 1,
    "sole": 1,
    "wall": "unsupported:no layout for field 'y'"
-  },
-  {
-   "files": [
-    "va-arg-16.c"
-   ],
-   "present": 1,
-   "sole": 1,
-   "wall": "unsupported:no layout for parameter type 'TYPE'"
   },
   {
    "files": [
@@ -2984,11 +2829,11 @@
   },
   {
    "files": [
-    "stdarg-4.c"
+    "pr15262-2.c"
    ],
    "present": 1,
    "sole": 1,
-   "wall": "unsupported:not an integer type: 'double'"
+   "wall": "unsupported:not an integer type: 'float'"
   },
   {
    "files": [
@@ -3048,14 +2893,6 @@
   },
   {
    "files": [
-    "991228-1.c"
-   ],
-   "present": 1,
-   "sole": 1,
-   "wall": "unsupported:sizeof: no layout for operand type 'double'"
-  },
-  {
-   "files": [
     "941014-2.c"
    ],
    "present": 1,
@@ -3104,27 +2941,11 @@
   },
   {
    "files": [
-    "pr79327.c"
-   ],
-   "present": 1,
-   "sole": 1,
-   "wall": "unsupported:sprintf"
-  },
-  {
-   "files": [
     "20000412-5.c"
    ],
    "present": 1,
    "sole": 1,
    "wall": "unsupported:src/20000412-5.c"
-  },
-  {
-   "files": [
-    "20020225-2.c"
-   ],
-   "present": 1,
-   "sole": 1,
-   "wall": "unsupported:src/20020225-2.c"
   },
   {
    "files": [
@@ -3192,35 +3013,11 @@
   },
   {
    "files": [
-    "ieee/930529-1.c"
-   ],
-   "present": 1,
-   "sole": 1,
-   "wall": "unsupported:src/ieee/930529-1.c"
-  },
-  {
-   "files": [
-    "ieee/minuszero.c"
-   ],
-   "present": 1,
-   "sole": 1,
-   "wall": "unsupported:src/ieee/minuszero.c"
-  },
-  {
-   "files": [
     "ieee/mul-subnormal-single-1.c"
    ],
    "present": 1,
    "sole": 1,
    "wall": "unsupported:src/ieee/mul-subnormal-single-1.c"
-  },
-  {
-   "files": [
-    "ieee/pr30704.c"
-   ],
-   "present": 1,
-   "sole": 1,
-   "wall": "unsupported:src/ieee/pr30704.c"
   },
   {
    "files": [
@@ -3320,43 +3117,19 @@
   },
   {
    "files": [
+    "20050121-1.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "unsupported:unary operator '__real'"
+  },
+  {
+   "files": [
     "pr71083.c"
    ],
    "present": 1,
    "sole": 1,
    "wall": "unsupported:unbound declaration 'id103' (name 'test')"
-  },
-  {
-   "files": [
-    "gcc/testsuite/gcc.dg/c23-float-5.c"
-   ],
-   "present": 1,
-   "sole": 1,
-   "wall": "unsupported:unbound declaration 'id126' (name 'f')"
-  },
-  {
-   "files": [
-    "pr36034-2.c"
-   ],
-   "present": 1,
-   "sole": 1,
-   "wall": "unsupported:unbound declaration 'id137' (name 'tmp')"
-  },
-  {
-   "files": [
-    "pr36034-1.c"
-   ],
-   "present": 1,
-   "sole": 1,
-   "wall": "unsupported:unbound declaration 'id142' (name 'tmp')"
-  },
-  {
-   "files": [
-    "postmod-1.c"
-   ],
-   "present": 1,
-   "sole": 1,
-   "wall": "unsupported:unbound declaration 'id15' (name 'array0')"
   },
   {
    "files": [
@@ -3384,11 +3157,11 @@
   },
   {
    "files": [
-    "20120919-1.c"
+    "20090623-1.c"
    ],
    "present": 1,
    "sole": 1,
-   "wall": "unsupported:unbound declaration 'id15' (name 'vd')"
+   "wall": "unsupported:unbound declaration 'id15' (name 'x')"
   },
   {
    "files": [
@@ -3616,14 +3389,6 @@
   },
   {
    "files": [
-    "20020213-1.c"
-   ],
-   "present": 1,
-   "sole": 1,
-   "wall": "unsupported:unbound declaration 'id26' (name 'a')"
-  },
-  {
-   "files": [
     "pr87053.c"
    ],
    "present": 1,
@@ -3648,14 +3413,6 @@
   },
   {
    "files": [
-    "20001121-1.c"
-   ],
-   "present": 1,
-   "sole": 1,
-   "wall": "unsupported:unbound declaration 'id27' (name 'd')"
-  },
-  {
-   "files": [
     "921208-1.c"
    ],
    "present": 1,
@@ -3664,19 +3421,19 @@
   },
   {
    "files": [
-    "20021120-1.c"
-   ],
-   "present": 1,
-   "sole": 1,
-   "wall": "unsupported:unbound declaration 'id27' (name 'gd')"
-  },
-  {
-   "files": [
     "pr38151.c"
    ],
    "present": 1,
    "sole": 1,
    "wall": "unsupported:unbound declaration 'id27' (name 's2848')"
+  },
+  {
+   "files": [
+    "960405-1.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "unsupported:unbound declaration 'id27' (name 'x')"
   },
   {
    "files": [
@@ -3736,30 +3493,6 @@
   },
   {
    "files": [
-    "pr44575.c"
-   ],
-   "present": 1,
-   "sole": 1,
-   "wall": "unsupported:unbound declaration 'id29' (name 'a')"
-  },
-  {
-   "files": [
-    "floatunsisf-1.c"
-   ],
-   "present": 1,
-   "sole": 1,
-   "wall": "unsupported:unbound declaration 'id29' (name 'f1')"
-  },
-  {
-   "files": [
-    "stdarg-2.c"
-   ],
-   "present": 1,
-   "sole": 1,
-   "wall": "unsupported:unbound declaration 'id29' (name 'gap')"
-  },
-  {
-   "files": [
     "20051012-1.c"
    ],
    "present": 1,
@@ -3784,35 +3517,11 @@
   },
   {
    "files": [
-    "20050604-1.c"
-   ],
-   "present": 1,
-   "sole": 1,
-   "wall": "unsupported:unbound declaration 'id30' (name 'u')"
-  },
-  {
-   "files": [
     "20011019-1.c"
    ],
    "present": 1,
    "sole": 1,
    "wall": "unsupported:unbound declaration 'id30' (name 'x')"
-  },
-  {
-   "files": [
-    "ieee/pr28634.c"
-   ],
-   "present": 1,
-   "sole": 1,
-   "wall": "unsupported:unbound declaration 'id30' (name 'y')"
-  },
-  {
-   "files": [
-    "va-arg-trap-1.c"
-   ],
-   "present": 1,
-   "sole": 1,
-   "wall": "unsupported:unbound declaration 'id31' (name 'ap')"
   },
   {
    "files": [
@@ -3864,14 +3573,6 @@
   },
   {
    "files": [
-    "ieee/builtin-nan-1.c"
-   ],
-   "present": 1,
-   "sole": 1,
-   "wall": "unsupported:unbound declaration 'id33' (name 'n1')"
-  },
-  {
-   "files": [
     "packed-1.c"
    ],
    "present": 1,
@@ -3901,14 +3602,6 @@
    "present": 1,
    "sole": 1,
    "wall": "unsupported:unbound declaration 'id34' (name 'foo')"
-  },
-  {
-   "files": [
-    "ieee/mzero3.c"
-   ],
-   "present": 1,
-   "sole": 1,
-   "wall": "unsupported:unbound declaration 'id34' (name 'zerod')"
   },
   {
    "files": [
@@ -3960,27 +3653,11 @@
   },
   {
    "files": [
-    "ieee/20041213-1.c"
-   ],
-   "present": 1,
-   "sole": 1,
-   "wall": "unsupported:unbound declaration 'id42' (name 'x')"
-  },
-  {
-   "files": [
     "20010904-1.c"
    ],
    "present": 1,
    "sole": 1,
    "wall": "unsupported:unbound declaration 'id42' (name 'y')"
-  },
-  {
-   "files": [
-    "20060420-1.c"
-   ],
-   "present": 1,
-   "sole": 1,
-   "wall": "unsupported:unbound declaration 'id420' (name 'buffer')"
   },
   {
    "files": [
@@ -4048,27 +3725,11 @@
   },
   {
    "files": [
-    "align-2.c"
-   ],
-   "present": 1,
-   "sole": 1,
-   "wall": "unsupported:unbound declaration 'id49' (name 's_c_f')"
-  },
-  {
-   "files": [
     "widechar-2.c"
    ],
    "present": 1,
    "sole": 1,
    "wall": "unsupported:unbound declaration 'id50' (name 'ws')"
-  },
-  {
-   "files": [
-    "00195.c"
-   ],
-   "present": 1,
-   "sole": 1,
-   "wall": "unsupported:unbound declaration 'id515' (name 'point_array')"
   },
   {
    "files": [
@@ -4104,35 +3765,11 @@
   },
   {
    "files": [
-    "pr28982a.c"
-   ],
-   "present": 1,
-   "sole": 1,
-   "wall": "unsupported:unbound declaration 'id725' (name 'input')"
-  },
-  {
-   "files": [
     "pr64242.c"
    ],
    "present": 1,
    "sole": 1,
    "wall": "unsupported:unbound declaration 'id74' (name 'p')"
-  },
-  {
-   "files": [
-    "pr28982b.c"
-   ],
-   "present": 1,
-   "sole": 1,
-   "wall": "unsupported:unbound declaration 'id751' (name 'input')"
-  },
-  {
-   "files": [
-    "20041113-1.c"
-   ],
-   "present": 1,
-   "sole": 1,
-   "wall": "unsupported:unbound declaration 'id84' (name 'a')"
   },
   {
    "files": [
@@ -4189,19 +3826,11 @@
    "present": 1,
    "sole": 1,
    "wall": "unsupported:unnamed pointer parameter (array-bound effects are not retained by clang)"
-  },
-  {
-   "files": [
-    "strct-varg-1.c"
-   ],
-   "present": 1,
-   "sole": 1,
-   "wall": "unsupported:va_arg requested unsupported value type 'struct s'"
   }
  ],
- "manifest_hash": "48c9925f3aded9fbda4cd5ea5539d5c5c4aafd5dd5f0621f0edaacba58370bfa",
- "measured_at_utc": "2026-11-12T23:40:00Z",
- "measured_commit": "7fc434865",
+ "manifest_hash": "eb2ea162993fd287a86d680d539ca5a9bba4f09b045a6ad663aaf88cdc3f445d",
+ "measured_at_utc": "2026-11-13T00:00:00Z",
+ "measured_commit": "1c89d8f7b",
  "pin": {
   "corpora": [
    "C1",
@@ -5418,8 +5047,8 @@
   },
   {
    "corpus": "c-testsuite/single-exec",
-   "detail": "no layout for declared type 'float'",
-   "dynamic_wall": "unsupported:no layout for declared type 'float'",
+   "detail": "",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "00113.c",
    "sha256": "d12643c2a0f7204727d317604e4cb96124e2e96d5e78039f451bb579b34c113f",
@@ -5427,7 +5056,7 @@
     "cast:IntegralToFloating",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "c-testsuite/single-exec",
@@ -5488,8 +5117,8 @@
   },
   {
    "corpus": "c-testsuite/single-exec",
-   "detail": "unbound declaration 'id15' (name 'x')",
-   "dynamic_wall": "unsupported:unbound declaration 'id15' (name 'x')",
+   "detail": "",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "00119.c",
    "sha256": "f9547c4ff49b462dd3b255c407499447f76f5c425fc074e96a4d40e1ca33369e",
@@ -5497,7 +5126,7 @@
     "cast:IntegralToFloating",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "c-testsuite/single-exec",
@@ -5535,8 +5164,8 @@
   },
   {
    "corpus": "c-testsuite/single-exec",
-   "detail": "unbound declaration 'id15' (name 'x')",
-   "dynamic_wall": "unsupported:unbound declaration 'id15' (name 'x')",
+   "detail": "floating literal lacks parser-native bits",
+   "dynamic_wall": "unsupported:floating literal lacks parser-native bits",
    "manifest_status": "parsed",
    "name": "00123.c",
    "sha256": "08de725058f8cf389e5aa5f87d53ff3c4570d92df8eeafeb29b871d722ead304",
@@ -5732,8 +5361,8 @@
   },
   {
    "corpus": "c-testsuite/single-exec",
-   "detail": "no layout for declared type 'struct foo'",
-   "dynamic_wall": "unsupported:no layout for declared type 'struct foo'",
+   "detail": "more arguments than parameters",
+   "dynamic_wall": "unsupported:more arguments than parameters",
    "manifest_status": "parsed",
    "name": "00140.c",
    "sha256": "84adaccee870947000971d7e35d97786165c66258c094fec92756aa9594c2bad",
@@ -6164,8 +5793,8 @@
   },
   {
    "corpus": "c-testsuite/single-exec",
-   "detail": "no layout for declared type 'float'",
-   "dynamic_wall": "unsupported:no layout for declared type 'float'",
+   "detail": "castKind 'FloatingCast'",
+   "dynamic_wall": "cast:FloatingCast",
    "manifest_status": "parsed",
    "name": "00174.c",
    "sha256": "179432fa8f0ffd84d95e44c410d6203fede9a8cb439ddd0e5710d413e30ae80b",
@@ -6225,8 +5854,8 @@
   },
   {
    "corpus": "c-testsuite/single-exec",
-   "detail": "no layout for declared type 'double'",
-   "dynamic_wall": "unsupported:no layout for declared type 'double'",
+   "detail": "",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "00178.c",
    "sha256": "07fa819c5235994beee3d5da11aed588484948371cb353677b13bdd7897d19ee",
@@ -6235,7 +5864,7 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "c-testsuite/single-exec",
@@ -6463,8 +6092,8 @@
   },
   {
    "corpus": "c-testsuite/single-exec",
-   "detail": "unbound declaration 'id515' (name 'point_array')",
-   "dynamic_wall": "unsupported:unbound declaration 'id515' (name 'point_array')",
+   "detail": "floating literal lacks parser-native bits",
+   "dynamic_wall": "unsupported:floating literal lacks parser-native bits",
    "manifest_status": "parsed",
    "name": "00195.c",
    "sha256": "7ce62ef70e5360efcad044f5342f90d16bd1b7f8b2b17e4ee27106c1f0904c9b",
@@ -7114,16 +6743,17 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "",
-   "dynamic_wall": null,
+   "detail": "more arguments than parameters",
+   "dynamic_wall": "unsupported:more arguments than parameters",
    "manifest_status": "parsed",
    "name": "20000519-1.c",
    "sha256": "52e57c1675511bacccab6a6a6af556a225ccf0d0094ebe36d76d0a5ce202c6ea",
    "static_walls": [
     "libc-call",
-    "type-layout"
+    "type-layout",
+    "unsupported:VAArgExpr"
    ],
-   "verdict": "passed"
+   "verdict": "refused-unsupported"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -7157,8 +6787,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "no layout for declared type 'union u'",
-   "dynamic_wall": "unsupported:no layout for declared type 'union u'",
+   "detail": "floating literal lacks parser-native bits",
+   "dynamic_wall": "unsupported:floating literal lacks parser-native bits",
    "manifest_status": "parsed",
    "name": "20000603-1.c",
    "sha256": "bb432b670b6713008c4bd880e5efdd5c7944334d52a92caaf13b11ca462875d0",
@@ -7169,8 +6799,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "no layout for declared type 'RenderInfo'",
-   "dynamic_wall": "unsupported:no layout for declared type 'RenderInfo'",
+   "detail": "castKind 'FloatingCast'",
+   "dynamic_wall": "cast:FloatingCast",
    "manifest_status": "parsed",
    "name": "20000605-1.c",
    "sha256": "0201957d2776e0467c21a5428affeae829962f43c4ab93ebe71ad375e5939bf1",
@@ -7405,8 +7035,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "no layout for declared type 'double'",
-   "dynamic_wall": "unsupported:no layout for declared type 'double'",
+   "detail": "floating literal lacks parser-native bits",
+   "dynamic_wall": "unsupported:floating literal lacks parser-native bits",
    "manifest_status": "parsed",
    "name": "20000731-1.c",
    "sha256": "476361fed8a09c4236a8f1513a036c4c9f9318ff00374adc98af3c6041eb2cd0",
@@ -7631,8 +7261,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "no layout for declared type 'double[1]'",
-   "dynamic_wall": "unsupported:no layout for declared type 'double[1]'",
+   "detail": "floating literal lacks parser-native bits",
+   "dynamic_wall": "unsupported:floating literal lacks parser-native bits",
    "manifest_status": "parsed",
    "name": "20001017-1.c",
    "sha256": "24686eb61a08cb232ae4b2c232eed5a54cd754fec9f8ffd69667219359ae8bd2",
@@ -7741,15 +7371,15 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "unbound declaration 'id27' (name 'd')",
-   "dynamic_wall": "unsupported:unbound declaration 'id27' (name 'd')",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "20001121-1.c",
    "sha256": "99066dd1517463627d7991c95b6a2c2f0e18d881db3609ec18e754275df69a4b",
    "static_walls": [
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -8379,8 +8009,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "no layout for declared type 'double'",
-   "dynamic_wall": "unsupported:no layout for declared type 'double'",
+   "detail": "floating literal lacks parser-native bits",
+   "dynamic_wall": "unsupported:floating literal lacks parser-native bits",
    "manifest_status": "parsed",
    "name": "20011217-1.c",
    "sha256": "f7587313713572270fdf254e5df681abf79287e2835ed0e1ffe5d65ad3b57686",
@@ -8511,8 +8141,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "unbound declaration 'id26' (name 'a')",
-   "dynamic_wall": "unsupported:unbound declaration 'id26' (name 'a')",
+   "detail": "floating literal lacks parser-native bits",
+   "dynamic_wall": "unsupported:floating literal lacks parser-native bits",
    "manifest_status": "parsed",
    "name": "20020213-1.c",
    "sha256": "153845b47ddb0d3ebc7e4bf6f0bfb3abac63562ed84cac21a821418e831c1297",
@@ -8565,8 +8195,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "src/20020225-2.c:7:3)'",
-   "dynamic_wall": "unsupported:src/20020225-2.c",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "20020225-2.c",
    "sha256": "172508d3dff2b47fa12bee6de0b8f6a4dffba3ab8cf088e7cca89df5db7cc86e",
@@ -8574,7 +8204,7 @@
     "cast:IntegralToFloating",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -8636,8 +8266,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "no layout for parameter type 'float'",
-   "dynamic_wall": "unsupported:no layout for parameter type 'float'",
+   "detail": "",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "20020321-1.c",
    "sha256": "06a7d47f62e7ba826936f4624ab481b7457858ccfc335959525d0d2e41ba2fd0",
@@ -8645,7 +8275,7 @@
     "cast:IntegralToFloating",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -8912,8 +8542,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "no layout for parameter type 'double'",
-   "dynamic_wall": "unsupported:no layout for parameter type 'double'",
+   "detail": "fabs",
+   "dynamic_wall": "libc-call: fabs",
    "manifest_status": "parsed",
    "name": "20020720-1.c",
    "sha256": "fa967332a209a596d6a8ef38a38d9ac2348073fb0087d597294abeb9010b9584",
@@ -8921,7 +8551,7 @@
     "libc-call",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "refused-libc"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -9094,8 +8724,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "no layout for declared type 'float[3]'",
-   "dynamic_wall": "unsupported:no layout for declared type 'float[3]'",
+   "detail": "floating literal lacks parser-native bits",
+   "dynamic_wall": "unsupported:floating literal lacks parser-native bits",
    "manifest_status": "parsed",
    "name": "20021118-2.c",
    "sha256": "5403880bca6352d2e126d1ca98b42cf7f3076901536ac40dd3410aed9be2726e",
@@ -9126,8 +8756,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "unbound declaration 'id27' (name 'gd')",
-   "dynamic_wall": "unsupported:unbound declaration 'id27' (name 'gd')",
+   "detail": "unsequenced side effects in compound assignment",
+   "dynamic_wall": "unsequenced-effects",
    "manifest_status": "parsed",
    "name": "20021120-1.c",
    "sha256": "fd35d6e5ec5fcb01655f03844bed5aa884c774699e3f5f28081a35201aa2a612",
@@ -9286,8 +8916,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "unbound declaration 'id27' (name 'x')",
-   "dynamic_wall": "unsupported:unbound declaration 'id27' (name 'x')",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "20030209-1.c",
    "sha256": "a39032cf4413e86dc02402f7b6a7f9410c71a24219b348273a4fc0122c76fd51",
@@ -9295,19 +8925,19 @@
     "cast:IntegralToFloating",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "",
-   "dynamic_wall": null,
+   "detail": "floating literal lacks parser-native bits",
+   "dynamic_wall": "unsupported:floating literal lacks parser-native bits",
    "manifest_status": "parsed",
    "name": "20030216-1.c",
    "sha256": "0fa5fc61ea684e0deeccfa6c2c61b435ffe06359e23a5d8aac87101f864dc927",
    "static_walls": [
     "type-layout"
    ],
-   "verdict": "passed"
+   "verdict": "refused-unsupported"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -10255,8 +9885,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "no layout for declared type 'double'",
-   "dynamic_wall": "unsupported:no layout for declared type 'double'",
+   "detail": "floating literal lacks parser-native bits",
+   "dynamic_wall": "unsupported:floating literal lacks parser-native bits",
    "manifest_status": "parsed",
    "name": "20040831-1.c",
    "sha256": "eadcb4dbc48ac8cb3942508bd824657d941a581874d7394ec46833a06268c599",
@@ -10313,8 +9943,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "unbound declaration 'id84' (name 'a')",
-   "dynamic_wall": "unsupported:unbound declaration 'id84' (name 'a')",
+   "detail": "floating literal lacks parser-native bits",
+   "dynamic_wall": "unsupported:floating literal lacks parser-native bits",
    "manifest_status": "parsed",
    "name": "20041113-1.c",
    "sha256": "d40b2c94b2f3748b538b251eeffc3b1d944680e75e42eba841aea43d2cadfaf1",
@@ -10520,8 +10150,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "no layout for declared type 'float'",
-   "dynamic_wall": "unsupported:no layout for declared type 'float'",
+   "detail": "unary operator '__real'",
+   "dynamic_wall": "unsupported:unary operator '__real'",
    "manifest_status": "parsed",
    "name": "20050121-1.c",
    "sha256": "d308d6526bbd2687d22dca160e57d124b28db42bb5ee6ffc5e5b861671d137d1",
@@ -10912,8 +10542,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "unbound declaration 'id420' (name 'buffer')",
-   "dynamic_wall": "unsupported:unbound declaration 'id420' (name 'buffer')",
+   "detail": "pointer-to-integer conversion outside uintptr_t/intptr_t",
+   "dynamic_wall": "unsupported:pointer-to-integer conversion outside uintptr_t/intptr_t",
    "manifest_status": "parsed",
    "name": "20060420-1.c",
    "sha256": "cd7d81ae9a017a0c0c308153fdb88bc5aa1992cca079b468821cbe62a288a828",
@@ -11276,16 +10906,17 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "",
-   "dynamic_wall": null,
+   "detail": "more arguments than parameters",
+   "dynamic_wall": "unsupported:more arguments than parameters",
    "manifest_status": "parsed",
    "name": "20071213-1.c",
    "sha256": "9b95dc93a8a8244f9f0fb97cb71013b229e361c542e51e1783bc4610f39c462b",
    "static_walls": [
     "libc-call",
-    "type-layout"
+    "type-layout",
+    "unsupported:VAArgExpr"
    ],
-   "verdict": "passed"
+   "verdict": "refused-unsupported"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -11444,15 +11075,15 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "no layout for parameter type 'float'",
-   "dynamic_wall": "unsupported:no layout for parameter type 'float'",
+   "detail": "",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "20080529-1.c",
    "sha256": "7ea372bac1906fde771ed43ef5baf5c63dfc77ea941f6da4d0d9611fae4d7029",
    "static_walls": [
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -11492,8 +11123,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "no layout for declared type 'struct S'",
-   "dynamic_wall": "unsupported:no layout for declared type 'struct S'",
+   "detail": "",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "20081103-1.c",
    "sha256": "f01355e1a5829fb1eac721c0f5bd45ba730faeb49cf444e5369ed660fef94f52",
@@ -11501,7 +11132,7 @@
     "libc-call",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -11906,8 +11537,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "unbound declaration 'id15' (name 'vd')",
-   "dynamic_wall": "unsupported:unbound declaration 'id15' (name 'vd')",
+   "detail": "floating literal lacks parser-native bits",
+   "dynamic_wall": "unsupported:floating literal lacks parser-native bits",
    "manifest_status": "parsed",
    "name": "20120919-1.c",
    "sha256": "ce4e751620ea08602a3cae21044fcc3b42baf252bdca8c2eaa4da8e700d63f39",
@@ -12211,8 +11842,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "no layout for declared type 'double'",
-   "dynamic_wall": "unsupported:no layout for declared type 'double'",
+   "detail": "no layout for declared type 'union ieee_double_extract'",
+   "dynamic_wall": "unsupported:no layout for declared type 'union ieee_double_extract'",
    "manifest_status": "parsed",
    "name": "20190901-1.c",
    "sha256": "1a26bfd6faf94ca757cbd11d36a5a35eb6acc4f8a08edda0086e10f3f451d650",
@@ -12555,15 +12186,16 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "no layout for parameter type 'double'",
-   "dynamic_wall": "unsupported:no layout for parameter type 'double'",
+   "detail": "more arguments than parameters",
+   "dynamic_wall": "unsupported:more arguments than parameters",
    "manifest_status": "parsed",
    "name": "920501-8.c",
    "sha256": "cb8282773b7c14ebe4c0d9bc436fc102145e62f43f2358affa849f01cd6ac1e6",
    "static_walls": [
     "libc-call",
     "string-literal",
-    "type-layout"
+    "type-layout",
+    "unsupported:VAArgExpr"
    ],
    "verdict": "refused-unsupported"
   },
@@ -12732,15 +12364,16 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "unsequenced side effects in compound assignment",
-   "dynamic_wall": "unsequenced-effects",
+   "detail": "more arguments than parameters",
+   "dynamic_wall": "unsupported:more arguments than parameters",
    "manifest_status": "parsed",
    "name": "920726-1.c",
    "sha256": "af90ff5eeb8799ed0e0d255bd276fbcac8bf6d890785a7fe998b82758e59d393",
    "static_walls": [
     "libc-call",
     "string-literal",
-    "type-layout"
+    "type-layout",
+    "unsupported:VAArgExpr"
    ],
    "verdict": "refused-unsupported"
   },
@@ -12939,8 +12572,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "no layout for declared type 'double'",
-   "dynamic_wall": "unsupported:no layout for declared type 'double'",
+   "detail": "floating literal lacks parser-native bits",
+   "dynamic_wall": "unsupported:floating literal lacks parser-native bits",
    "manifest_status": "parsed",
    "name": "921019-2.c",
    "sha256": "6335f9c2b7c227693fc2e843009637193cf1a4915f3f2de0134271a0aba10b65",
@@ -13357,8 +12990,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "no layout for declared type 'double[6]'",
-   "dynamic_wall": "unsupported:no layout for declared type 'double[6]'",
+   "detail": "floating literal lacks parser-native bits",
+   "dynamic_wall": "unsupported:floating literal lacks parser-native bits",
    "manifest_status": "parsed",
    "name": "930614-1.c",
    "sha256": "815196512bb1727e32158a913fd49c179a185314b541a4aa3253f8729aa4aa99",
@@ -13370,8 +13003,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "no layout for declared type 'float[8][2][8][2]'",
-   "dynamic_wall": "unsupported:no layout for declared type 'float[8][2][8][2]'",
+   "detail": "castKind 'FloatingCast'",
+   "dynamic_wall": "cast:FloatingCast",
    "manifest_status": "parsed",
    "name": "930614-2.c",
    "sha256": "9cb6c24688f1c331be79a4a0d6e9db2156627670b7cf3774c3635e875bb87a66",
@@ -13581,14 +13214,15 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "va_arg requested unsupported value type 'struct tiny'",
-   "dynamic_wall": "unsupported:va_arg requested unsupported value type 'struct tiny'",
+   "detail": "more arguments than parameters",
+   "dynamic_wall": "unsupported:more arguments than parameters",
    "manifest_status": "parsed",
    "name": "931004-10.c",
    "sha256": "e309602b58651c94a95591af48d56495187a0ecaef392cc9d6dbaf0c96c674df",
    "static_walls": [
     "libc-call",
-    "type-layout"
+    "type-layout",
+    "unsupported:VAArgExpr"
    ],
    "verdict": "refused-unsupported"
   },
@@ -13606,14 +13240,15 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "va_arg requested unsupported value type 'struct tiny'",
-   "dynamic_wall": "unsupported:va_arg requested unsupported value type 'struct tiny'",
+   "detail": "more arguments than parameters",
+   "dynamic_wall": "unsupported:more arguments than parameters",
    "manifest_status": "parsed",
    "name": "931004-12.c",
    "sha256": "2e8eb60038e1cebb1439745893fcd9c285639180177dcc2b9de0f818c6814099",
    "static_walls": [
     "libc-call",
-    "type-layout"
+    "type-layout",
+    "unsupported:VAArgExpr"
    ],
    "verdict": "refused-unsupported"
   },
@@ -13631,27 +13266,29 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "va_arg requested unsupported value type 'struct tiny'",
-   "dynamic_wall": "unsupported:va_arg requested unsupported value type 'struct tiny'",
+   "detail": "more arguments than parameters",
+   "dynamic_wall": "unsupported:more arguments than parameters",
    "manifest_status": "parsed",
    "name": "931004-14.c",
    "sha256": "690c04d80d7a571ca5e94777e2939f0e7c20004a7e328397b9f692b20e167673",
    "static_walls": [
     "libc-call",
-    "type-layout"
+    "type-layout",
+    "unsupported:VAArgExpr"
    ],
    "verdict": "refused-unsupported"
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "va_arg requested unsupported value type 'struct tiny'",
-   "dynamic_wall": "unsupported:va_arg requested unsupported value type 'struct tiny'",
+   "detail": "more arguments than parameters",
+   "dynamic_wall": "unsupported:more arguments than parameters",
    "manifest_status": "parsed",
    "name": "931004-2.c",
    "sha256": "f00e81760f99222bac9d543f2868031bbc5cd7fc5a539eaf674c66e2a3cfad95",
    "static_walls": [
     "libc-call",
-    "type-layout"
+    "type-layout",
+    "unsupported:VAArgExpr"
    ],
    "verdict": "refused-unsupported"
   },
@@ -13669,14 +13306,15 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "va_arg requested unsupported value type 'struct tiny'",
-   "dynamic_wall": "unsupported:va_arg requested unsupported value type 'struct tiny'",
+   "detail": "more arguments than parameters",
+   "dynamic_wall": "unsupported:more arguments than parameters",
    "manifest_status": "parsed",
    "name": "931004-4.c",
    "sha256": "bf6f0ae1dd87118dcfc921f5faff4ff122f041f9ec0ed04b8f7c2ff3496f8be3",
    "static_walls": [
     "libc-call",
-    "type-layout"
+    "type-layout",
+    "unsupported:VAArgExpr"
    ],
    "verdict": "refused-unsupported"
   },
@@ -13694,14 +13332,15 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "va_arg requested unsupported value type 'struct tiny'",
-   "dynamic_wall": "unsupported:va_arg requested unsupported value type 'struct tiny'",
+   "detail": "more arguments than parameters",
+   "dynamic_wall": "unsupported:more arguments than parameters",
    "manifest_status": "parsed",
    "name": "931004-6.c",
    "sha256": "7299d2123bddad05c27e6147221863db907004007218f97ac78d36caa57e3973",
    "static_walls": [
     "libc-call",
-    "type-layout"
+    "type-layout",
+    "unsupported:VAArgExpr"
    ],
    "verdict": "refused-unsupported"
   },
@@ -13719,14 +13358,15 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "va_arg requested unsupported value type 'struct tiny'",
-   "dynamic_wall": "unsupported:va_arg requested unsupported value type 'struct tiny'",
+   "detail": "more arguments than parameters",
+   "dynamic_wall": "unsupported:more arguments than parameters",
    "manifest_status": "parsed",
    "name": "931004-8.c",
    "sha256": "ee628a68257bb72e28c09060828905f40a21d55aba748cf7e7d45f05a2fc3bf9",
    "static_walls": [
     "libc-call",
-    "type-layout"
+    "type-layout",
+    "unsupported:VAArgExpr"
    ],
    "verdict": "refused-unsupported"
   },
@@ -13927,15 +13567,15 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "no layout for parameter type 'double'",
-   "dynamic_wall": "unsupported:no layout for parameter type 'double'",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "941021-1.c",
    "sha256": "02edbb4e717f3304408d76c8d1a181af0965167073e4d94b16a4dc5d3a19a136",
    "static_walls": [
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -14682,8 +14322,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "no layout for declared type 'struct s'",
-   "dynamic_wall": "unsupported:no layout for declared type 'struct s'",
+   "detail": "floating literal lacks parser-native bits",
+   "dynamic_wall": "unsupported:floating literal lacks parser-native bits",
    "manifest_status": "parsed",
    "name": "961223-1.c",
    "sha256": "46501b824f2ecd0efdd8168ed271fdfd62542e6707f5a2fa2d58ae58cd17b654",
@@ -14736,14 +14376,15 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "no layout for parameter type 'double'",
-   "dynamic_wall": "unsupported:no layout for parameter type 'double'",
+   "detail": "more arguments than parameters",
+   "dynamic_wall": "unsupported:more arguments than parameters",
    "manifest_status": "parsed",
    "name": "980205.c",
    "sha256": "12b700b76e4f3efe5726e041f39d370f71140cea0a6da7e7a84581af34845ce3",
    "static_walls": [
     "libc-call",
-    "type-layout"
+    "type-layout",
+    "unsupported:VAArgExpr"
    ],
    "verdict": "refused-unsupported"
   },
@@ -14895,8 +14536,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "no layout for declared type 'double'",
-   "dynamic_wall": "unsupported:no layout for declared type 'double'",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "980604-1.c",
    "sha256": "20d7fd6d765d8bcba277fbc6b2b20ea5757cc189311eb10251c3642298b55e68",
@@ -14904,12 +14545,12 @@
     "cast:IntegralToFloating",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "no layout for parameter type 'double'",
-   "dynamic_wall": "unsupported:no layout for parameter type 'double'",
+   "detail": "string literal with escape or non-ASCII spelling",
+   "dynamic_wall": "unsupported:string literal with escape or non-ASCII spelling",
    "manifest_status": "parsed",
    "name": "980605-1.c",
    "sha256": "4fce18a15b8674a4eb025d68f5c154bbfc61a066445526ef60ba52cfc22abfaf",
@@ -14924,15 +14565,16 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "string literal with escape or non-ASCII spelling",
-   "dynamic_wall": "unsupported:string literal with escape or non-ASCII spelling",
+   "detail": "more arguments than parameters",
+   "dynamic_wall": "unsupported:more arguments than parameters",
    "manifest_status": "parsed",
    "name": "980608-1.c",
    "sha256": "588cf65bb572c64a84b3dcd18c3c078973b97cb6365308c146077c6623dd7412",
    "static_walls": [
     "libc-call",
     "string-literal",
-    "type-layout"
+    "type-layout",
+    "unsupported:VAArgExpr"
    ],
    "verdict": "refused-unsupported"
   },
@@ -14996,8 +14638,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "no layout for declared type 'volatile double'",
-   "dynamic_wall": "unsupported:no layout for declared type 'volatile double'",
+   "detail": "floating literal lacks parser-native bits",
+   "dynamic_wall": "unsupported:floating literal lacks parser-native bits",
    "manifest_status": "parsed",
    "name": "980709-1.c",
    "sha256": "54368958f8fa7dce11630041f1333e5cf9f3ab65a056ddcb49b4265d1ecdf411",
@@ -15009,17 +14651,18 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
-   "dynamic_wall": null,
+   "detail": "more arguments than parameters",
+   "dynamic_wall": "unsupported:more arguments than parameters",
    "manifest_status": "parsed",
    "name": "980716-1.c",
    "sha256": "d189e2baf735a74eac5e1e25df6337877b239b370e5307eebb93078a74c20576",
    "static_walls": [
     "libc-call",
     "string-literal",
-    "type-layout"
+    "type-layout",
+    "unsupported:VAArgExpr"
    ],
-   "verdict": "passed"
+   "verdict": "refused-unsupported"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -15095,8 +14738,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "no layout for declared type 'double'",
-   "dynamic_wall": "unsupported:no layout for declared type 'double'",
+   "detail": "",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "990117-1.c",
    "sha256": "d789caf1863763a3aac9b470180c9150f6b04508aa4e19965e8f159e883e2f0a",
@@ -15104,7 +14747,7 @@
     "cast:IntegralToFloating",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -15118,15 +14761,15 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "no layout for parameter type 'double'",
-   "dynamic_wall": "unsupported:no layout for parameter type 'double'",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "990127-2.c",
    "sha256": "d0291b07a00ebc50e3ff23c7730f992cca9d2f455266e45039bdf2dad4c34d78",
    "static_walls": [
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -15221,8 +14864,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "no layout for declared type 'double'",
-   "dynamic_wall": "unsupported:no layout for declared type 'double'",
+   "detail": "castKind 'FloatingCast'",
+   "dynamic_wall": "cast:FloatingCast",
    "manifest_status": "parsed",
    "name": "990413-2.c",
    "sha256": "74e56d5f5fce2487ccf3831832494ddb3ec37f1d8f113905d559879b34d62660",
@@ -15375,8 +15018,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "no layout for declared type 'double'",
-   "dynamic_wall": "unsupported:no layout for declared type 'double'",
+   "detail": "floating literal lacks parser-native bits",
+   "dynamic_wall": "unsupported:floating literal lacks parser-native bits",
    "manifest_status": "parsed",
    "name": "990829-1.c",
    "sha256": "575c60c6af37d89dd7922784a88dbfc329131fe89ff78d6a8dd9a75cd02658c6",
@@ -15439,8 +15082,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "unbound declaration 'id27' (name 'x')",
-   "dynamic_wall": "unsupported:unbound declaration 'id27' (name 'x')",
+   "detail": "floating literal lacks parser-native bits",
+   "dynamic_wall": "unsupported:floating literal lacks parser-native bits",
    "manifest_status": "parsed",
    "name": "991030-1.c",
    "sha256": "fdf005e93cd153deac7321581a22a035cbccc3e035a8e20ffbf0b6fdcb50ff2d",
@@ -15529,16 +15172,17 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
-   "dynamic_wall": null,
+   "detail": "more arguments than parameters",
+   "dynamic_wall": "unsupported:more arguments than parameters",
    "manifest_status": "parsed",
    "name": "991216-2.c",
    "sha256": "6da27e5d003c8d1270f7a3daad574d2e138e218ab4b071c533e89f050b4a16ea",
    "static_walls": [
     "libc-call",
-    "type-layout"
+    "type-layout",
+    "unsupported:VAArgExpr"
    ],
-   "verdict": "passed"
+   "verdict": "refused-unsupported"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -15575,8 +15219,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "sizeof: no layout for operand type 'double'",
-   "dynamic_wall": "unsupported:sizeof: no layout for operand type 'double'",
+   "detail": "unbound declaration 'id30' (name 'u')",
+   "dynamic_wall": "unsupported:unbound declaration 'id30' (name 'u')",
    "manifest_status": "parsed",
    "name": "991228-1.c",
    "sha256": "ddb3f0d3698b8055a946ed2c464068448eb30893d5e6f5af6a6b89e269304b88",
@@ -15674,8 +15318,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "unbound declaration 'id49' (name 's_c_f')",
-   "dynamic_wall": "unsupported:unbound declaration 'id49' (name 's_c_f')",
+   "detail": "castKind 'FloatingCast'",
+   "dynamic_wall": "cast:FloatingCast",
    "manifest_status": "parsed",
    "name": "align-2.c",
    "sha256": "f61db3f451d76e6ef7fe4c475f3acf0f217f35781ddd21cfe85cb1747bb5c292",
@@ -17817,8 +17461,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "no layout for declared type 'const double'",
-   "dynamic_wall": "unsupported:no layout for declared type 'const double'",
+   "detail": "floating literal lacks parser-native bits",
+   "dynamic_wall": "unsupported:floating literal lacks parser-native bits",
    "manifest_status": "parsed",
    "name": "cbrt.c",
    "sha256": "5af344d4e08d8326268b026f474dbc63d51f5528aa5fa97b5e0fa7ebaa982b14",
@@ -17953,8 +17597,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "no layout for declared type 'struct complex'",
-   "dynamic_wall": "unsupported:no layout for declared type 'struct complex'",
+   "detail": "castKind 'FloatingCast'",
+   "dynamic_wall": "cast:FloatingCast",
    "manifest_status": "parsed",
    "name": "complex-3.c",
    "sha256": "f75c328ec0bd6fef7b9ac76aa0b5363bcb7af77c69159e5ce6a1bcf68ffc6c54",
@@ -18045,8 +17689,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "no layout for parameter type 'float'",
-   "dynamic_wall": "unsupported:no layout for parameter type 'float'",
+   "detail": "long double integer-to-floating conversion",
+   "dynamic_wall": "unsupported:long double integer-to-floating conversion",
    "manifest_status": "parsed",
    "name": "conversion.c",
    "sha256": "c71be59f131b7f95cd2ae58238422b205bc599446d9ed77fdfad68730bf2947b",
@@ -18060,8 +17704,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "no layout for parameter type 'double'",
-   "dynamic_wall": "unsupported:no layout for parameter type 'double'",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "cvt-1.c",
    "sha256": "17d830397cc66136b817f163dac53d86078c8dea4776592b1659625b7474837f",
@@ -18071,7 +17715,7 @@
     "type-layout",
     "unsequenced-effects"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -18276,8 +17920,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "no layout for declared type 'double'",
-   "dynamic_wall": "unsupported:no layout for declared type 'double'",
+   "detail": "floating literal lacks parser-native bits",
+   "dynamic_wall": "unsupported:floating literal lacks parser-native bits",
    "manifest_status": "parsed",
    "name": "float-floor.c",
    "sha256": "7058e692773c39351cfbdf99abcf3c6245437bb7c32b57ec972914009cee83ad",
@@ -18291,8 +17935,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "unbound declaration 'id29' (name 'f1')",
-   "dynamic_wall": "unsupported:unbound declaration 'id29' (name 'f1')",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "floatunsisf-1.c",
    "sha256": "ec3c5354fbc75cbae1addd762ace8de45c3f1995ff3fb610b7721fb1ec7ccb7e",
@@ -18300,7 +17944,7 @@
     "cast:IntegralToFloating",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -18483,8 +18127,8 @@
   },
   {
    "corpus": "gcc.c23-run",
-   "detail": "no layout for declared type 'const struct s'",
-   "dynamic_wall": "unsupported:no layout for declared type 'const struct s'",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "gcc/testsuite/gcc.dg/c23-constexpr-2a.c",
    "sha256": "d810fb2107626c1db8e26b5527ce508d881c49851709a510f71b8327c78c3375",
@@ -18492,7 +18136,7 @@
     "cast:IntegralToFloating",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c23-run",
@@ -18771,8 +18415,8 @@
   },
   {
    "corpus": "gcc.c23-run",
-   "detail": "out of tier: GenericSelectionExpr",
-   "dynamic_wall": "unsupported:GenericSelectionExpr",
+   "detail": "call to '__builtin_inff' in a context with no program \u2014 call it through 'callByName'",
+   "dynamic_wall": "unsupported:call to '__builtin_inff' in a context with no program \u2014 call it through 'callByName'",
    "manifest_status": "parsed",
    "name": "gcc/testsuite/gcc.dg/c23-float-3.c",
    "sha256": "3a69ae019b8f68f08dbb340f40eea80a880e7377add063468cb47b91cc81f1bd",
@@ -18785,8 +18429,8 @@
   },
   {
    "corpus": "gcc.c23-run",
-   "detail": "out of tier: GenericSelectionExpr",
-   "dynamic_wall": "unsupported:GenericSelectionExpr",
+   "detail": "call to '__builtin_nanf' in a context with no program \u2014 call it through 'callByName'",
+   "dynamic_wall": "unsupported:call to '__builtin_nanf' in a context with no program \u2014 call it through 'callByName'",
    "manifest_status": "parsed",
    "name": "gcc/testsuite/gcc.dg/c23-float-4.c",
    "sha256": "12aabedf9fbd84b9370e91c289de10780ee1a836053382cb381e8e60883d6648",
@@ -18800,8 +18444,8 @@
   },
   {
    "corpus": "gcc.c23-run",
-   "detail": "unbound declaration 'id126' (name 'f')",
-   "dynamic_wall": "unsupported:unbound declaration 'id126' (name 'f')",
+   "detail": "call to '__builtin_nanf' in a context with no program \u2014 call it through 'callByName'",
+   "dynamic_wall": "unsupported:call to '__builtin_nanf' in a context with no program \u2014 call it through 'callByName'",
    "manifest_status": "parsed",
    "name": "gcc/testsuite/gcc.dg/c23-float-5.c",
    "sha256": "c225f025b3d1be6f438035a66eaecef7f9ce1c2fd998848c8f09d2393eda3434",
@@ -19242,8 +18886,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "no layout for parameter type 'float'",
-   "dynamic_wall": "unsupported:no layout for parameter type 'float'",
+   "detail": "castKind 'FloatingCast'",
+   "dynamic_wall": "cast:FloatingCast",
    "manifest_status": "parsed",
    "name": "gofast.c",
    "sha256": "c4d952febd2fc7563328cf549014014dc0690357242491b7a333162502fcda20",
@@ -19259,8 +18903,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "sizeof: no layout for operand type 'float'",
-   "dynamic_wall": "unsupported:sizeof: no layout for operand type 'float'",
+   "detail": "castKind 'FloatingCast'",
+   "dynamic_wall": "cast:FloatingCast",
    "manifest_status": "parsed",
    "name": "ieee/20000320-1.c",
    "sha256": "1962f7d153967ef122ea59be1d2df91c527e465e16c0863876f68d8d3b6f10cf",
@@ -19272,8 +18916,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "no layout for declared type 'double'",
-   "dynamic_wall": "unsupported:no layout for declared type 'double'",
+   "detail": "floating literal lacks parser-native bits",
+   "dynamic_wall": "unsupported:floating literal lacks parser-native bits",
    "manifest_status": "parsed",
    "name": "ieee/20001122-1.c",
    "sha256": "0a5874e451d4814910b999fce4018548afbf669532f37fd60700ab2fa4219256",
@@ -19285,8 +18929,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "no layout for declared type 'const float'",
-   "dynamic_wall": "unsupported:no layout for declared type 'const float'",
+   "detail": "castKind 'FloatingCast'",
+   "dynamic_wall": "cast:FloatingCast",
    "manifest_status": "parsed",
    "name": "ieee/20010114-2.c",
    "sha256": "fa1cc9944dd41cf27dd9406f6e27621bf4d45a15abaadb2850c700713cfba192",
@@ -19312,8 +18956,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "no layout for declared type 'double'",
-   "dynamic_wall": "unsupported:no layout for declared type 'double'",
+   "detail": "floating literal lacks parser-native bits",
+   "dynamic_wall": "unsupported:floating literal lacks parser-native bits",
    "manifest_status": "parsed",
    "name": "ieee/20011123-1.c",
    "sha256": "a4be6338ce9fd5ab7db5e410ef6f4372c5167341f5128b29c5eae4ca885e9030",
@@ -19325,8 +18969,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "no layout for declared type 'const float'",
-   "dynamic_wall": "unsupported:no layout for declared type 'const float'",
+   "detail": "floating literal lacks parser-native bits",
+   "dynamic_wall": "unsupported:floating literal lacks parser-native bits",
    "manifest_status": "parsed",
    "name": "ieee/20030331-1.c",
    "sha256": "d52fa029a9083725230aecafc1227829a9465ba0a4da49b254ece90eb85c5d79",
@@ -19339,8 +18983,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "unbound declaration 'id42' (name 'x')",
-   "dynamic_wall": "unsupported:unbound declaration 'id42' (name 'x')",
+   "detail": "floating literal lacks parser-native bits",
+   "dynamic_wall": "unsupported:floating literal lacks parser-native bits",
    "manifest_status": "parsed",
    "name": "ieee/20041213-1.c",
    "sha256": "625aa7e6b26a3f201c47803734a8bd6a5dadfe65b8a7d21e00f586f6f43e6fd9",
@@ -19352,8 +18996,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "no layout for declared type 'float'",
-   "dynamic_wall": "unsupported:no layout for declared type 'float'",
+   "detail": "castKind 'FloatingCast'",
+   "dynamic_wall": "cast:FloatingCast",
    "manifest_status": "parsed",
    "name": "ieee/920518-1.c",
    "sha256": "e8323edad389fed178fc5d5fe07518b2cb414e1b16735367046f94fa6c0d169f",
@@ -19366,8 +19010,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "no layout for parameter type 'double'",
-   "dynamic_wall": "unsupported:no layout for parameter type 'double'",
+   "detail": "sprintf: unsupported format",
+   "dynamic_wall": "unsupported:sprintf",
    "manifest_status": "parsed",
    "name": "ieee/920810-1.c",
    "sha256": "e0b670c899b3364a884f07ef9f25c4f91da6ec0026cf5112ffd3f1d691fcfa6c",
@@ -19381,8 +19025,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "src/ieee/930529-1.c:8:3)'",
-   "dynamic_wall": "unsupported:src/ieee/930529-1.c",
+   "detail": "floating literal lacks parser-native bits",
+   "dynamic_wall": "unsupported:floating literal lacks parser-native bits",
    "manifest_status": "parsed",
    "name": "ieee/930529-1.c",
    "sha256": "a2a42c2b6c74554e0b4ac24d6fb06a913d308a02c1c7857fc9ff0e7580731bee",
@@ -19393,8 +19037,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "no layout for declared type 'float'",
-   "dynamic_wall": "unsupported:no layout for declared type 'float'",
+   "detail": "floating literal lacks parser-native bits",
+   "dynamic_wall": "unsupported:floating literal lacks parser-native bits",
    "manifest_status": "parsed",
    "name": "ieee/980619-1.c",
    "sha256": "4220cff5847b9c581d9340dc07214a809807f265b51528389adbb45e4cac9ffc",
@@ -19405,8 +19049,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "no layout for declared type 'double[4]'",
-   "dynamic_wall": "unsupported:no layout for declared type 'double[4]'",
+   "detail": "floating literal lacks parser-native bits",
+   "dynamic_wall": "unsupported:floating literal lacks parser-native bits",
    "manifest_status": "parsed",
    "name": "ieee/acc1.c",
    "sha256": "4b93c4ad83a28c752e2ac4db3c4d98299ed494e7c6436e46af421ede1feda1d7",
@@ -19417,8 +19061,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "no layout for declared type 'double[4]'",
-   "dynamic_wall": "unsupported:no layout for declared type 'double[4]'",
+   "detail": "floating literal lacks parser-native bits",
+   "dynamic_wall": "unsupported:floating literal lacks parser-native bits",
    "manifest_status": "parsed",
    "name": "ieee/acc2.c",
    "sha256": "577c882fb2947be8f837a8ec0a1669703897db01dadc43f7eeb0bc43d52d0b9e",
@@ -19449,8 +19093,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "unbound declaration 'id33' (name 'n1')",
-   "dynamic_wall": "unsupported:unbound declaration 'id33' (name 'n1')",
+   "detail": "call to '__builtin_nan' in a context with no program \u2014 call it through 'callByName'",
+   "dynamic_wall": "unsupported:call to '__builtin_nan' in a context with no program \u2014 call it through 'callByName'",
    "manifest_status": "parsed",
    "name": "ieee/builtin-nan-1.c",
    "sha256": "baeec4a1386bb5005c3e65f940ebb02cdb87223e71c5de6d7f03b57f5e72ed43",
@@ -19507,8 +19151,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "unbound declaration 'id21' (name 'pinf')",
-   "dynamic_wall": "unsupported:unbound declaration 'id21' (name 'pinf')",
+   "detail": "castKind 'FloatingCast'",
+   "dynamic_wall": "cast:FloatingCast",
    "manifest_status": "parsed",
    "name": "ieee/compare-fp-1.c",
    "sha256": "752695b303780fedbd8706f16e710ddb068acb61ba36f9dcbef6b5b25276fb86",
@@ -19523,8 +19167,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "no layout for parameter type 'double'",
-   "dynamic_wall": "unsupported:no layout for parameter type 'double'",
+   "detail": "",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "ieee/compare-fp-2.c",
    "sha256": "bd72beeee5dfdf2087d9b595ae2e1f192cdb1591a9357b166d79156c47ef2756",
@@ -19532,12 +19176,12 @@
     "cast:FloatingToIntegral",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "no layout for parameter type 'float'",
-   "dynamic_wall": "unsupported:no layout for parameter type 'float'",
+   "detail": "__builtin_isunordered",
+   "dynamic_wall": "libc-call: __builtin_isunordered",
    "manifest_status": "parsed",
    "name": "ieee/compare-fp-3.c",
    "sha256": "0365e0cd9e0720d086b9ac13416572c4f748b1da5687779adeecd127106f2bf1",
@@ -19546,12 +19190,12 @@
     "libc-call",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "refused-libc"
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "unbound declaration 'id21' (name 'pinf')",
-   "dynamic_wall": "unsupported:unbound declaration 'id21' (name 'pinf')",
+   "detail": "castKind 'FloatingCast'",
+   "dynamic_wall": "cast:FloatingCast",
    "manifest_status": "parsed",
    "name": "ieee/compare-fp-4.c",
    "sha256": "33c04dbf76f3f260476158b437555b048e938f71c5e7feb0c6c301832cea2232",
@@ -19566,8 +19210,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "no layout for declared type 'const struct Df[8]'",
-   "dynamic_wall": "unsupported:no layout for declared type 'const struct Df[8]'",
+   "detail": "castKind 'FloatingCast'",
+   "dynamic_wall": "cast:FloatingCast",
    "manifest_status": "parsed",
    "name": "ieee/copysign1.c",
    "sha256": "eaa559171205738e58dbe5e0bb0c390594e9193c8845b1b3d2d479d7746acae6",
@@ -19581,8 +19225,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "no layout for declared type 'float[8]'",
-   "dynamic_wall": "unsupported:no layout for declared type 'float[8]'",
+   "detail": "castKind 'FloatingCast'",
+   "dynamic_wall": "cast:FloatingCast",
    "manifest_status": "parsed",
    "name": "ieee/copysign2.c",
    "sha256": "fc8e48ba90e3146485d7acb6dede7c977cef18360756eb43f160238e4892b35c",
@@ -19666,8 +19310,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "pointer bit-cast across incompatible effective types",
-   "dynamic_wall": "unsupported:pointer bit-cast across incompatible effective types",
+   "detail": "floating literal lacks parser-native bits",
+   "dynamic_wall": "unsupported:floating literal lacks parser-native bits",
    "manifest_status": "parsed",
    "name": "ieee/fp-cmp-1.c",
    "sha256": "8a7bfcc539016effffd02dd0a10ebadc609fc0d801553f479c6963747a6c47c9",
@@ -19679,8 +19323,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "pointer bit-cast across incompatible effective types",
-   "dynamic_wall": "unsupported:pointer bit-cast across incompatible effective types",
+   "detail": "floating literal lacks parser-native bits",
+   "dynamic_wall": "unsupported:floating literal lacks parser-native bits",
    "manifest_status": "parsed",
    "name": "ieee/fp-cmp-2.c",
    "sha256": "eca8e59a0d72a02cac0b6fbc982d22d46d34c65ac9e84436e59f4635de09394b",
@@ -19750,8 +19394,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "no layout for declared type 'const struct try[6]'",
-   "dynamic_wall": "unsupported:no layout for declared type 'const struct try[6]'",
+   "detail": "floating literal lacks parser-native bits",
+   "dynamic_wall": "unsupported:floating literal lacks parser-native bits",
    "manifest_status": "parsed",
    "name": "ieee/fp-cmp-5.c",
    "sha256": "3287dadc1c6a407b00841baa398829495ee9863d5890a5ab25ea234e70752920",
@@ -19763,8 +19407,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "unbound declaration 'id15' (name 'dnan')",
-   "dynamic_wall": "unsupported:unbound declaration 'id15' (name 'dnan')",
+   "detail": "floating literal lacks parser-native bits",
+   "dynamic_wall": "unsupported:floating literal lacks parser-native bits",
    "manifest_status": "parsed",
    "name": "ieee/fp-cmp-6.c",
    "sha256": "bb2db5d54e40b3fa35470bace930e27eb3b3fe65b1a7b3d95f6ea5c20c42597d",
@@ -19775,8 +19419,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "no layout for parameter type 'double'",
-   "dynamic_wall": "unsupported:no layout for parameter type 'double'",
+   "detail": "__builtin_inf",
+   "dynamic_wall": "libc-call: __builtin_inf",
    "manifest_status": "parsed",
    "name": "ieee/fp-cmp-7.c",
    "sha256": "4c5e4fd4f70ee0a7ad465f6b3c9bf2e55dbd156ad9fdc60aea0ba7ddfb6541e4",
@@ -19784,12 +19428,12 @@
     "libc-call",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "refused-libc"
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "no layout for declared type 'const struct try[14]'",
-   "dynamic_wall": "unsupported:no layout for declared type 'const struct try[14]'",
+   "detail": "floating literal lacks parser-native bits",
+   "dynamic_wall": "unsupported:floating literal lacks parser-native bits",
    "manifest_status": "parsed",
    "name": "ieee/fp-cmp-8.c",
    "sha256": "ff577c6ffef173008f543040c4da071a51d9002644d38a080d05c1ea126c4e87",
@@ -19831,8 +19475,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "unbound declaration 'id15' (name 'dnan')",
-   "dynamic_wall": "unsupported:unbound declaration 'id15' (name 'dnan')",
+   "detail": "floating literal lacks parser-native bits",
+   "dynamic_wall": "unsupported:floating literal lacks parser-native bits",
    "manifest_status": "parsed",
    "name": "ieee/fp-cmp-9.c",
    "sha256": "3a58c9a824af0093e78a986f226c21c4510c754d673a69683412b2bf8a6e8953",
@@ -19843,8 +19487,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "no layout for declared type 'float'",
-   "dynamic_wall": "unsupported:no layout for declared type 'float'",
+   "detail": "castKind 'FloatingCast'",
+   "dynamic_wall": "cast:FloatingCast",
    "manifest_status": "parsed",
    "name": "ieee/fp-cmp-cond-1.c",
    "sha256": "d2a50a6e55336715dae5056141bf7ecac07b39097c27eb1f6d05727925697cbe",
@@ -19859,8 +19503,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "no layout for declared type 'const double'",
-   "dynamic_wall": "unsupported:no layout for declared type 'const double'",
+   "detail": "floating literal lacks parser-native bits",
+   "dynamic_wall": "unsupported:floating literal lacks parser-native bits",
    "manifest_status": "parsed",
    "name": "ieee/hugeval.c",
    "sha256": "cc39c196f7ed4ba25775b5de74fd939d082402f82b20d3136cfb3c70cbe31677",
@@ -19872,8 +19516,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "no layout for declared type 'float'",
-   "dynamic_wall": "unsupported:no layout for declared type 'float'",
+   "detail": "__builtin_inff",
+   "dynamic_wall": "libc-call: __builtin_inff",
    "manifest_status": "parsed",
    "name": "ieee/inf-1.c",
    "sha256": "cd2bf9634f13f6b6e233c6ef6ae1dcedc871ffbf85d93fe724dbec04f1169153",
@@ -19882,7 +19526,7 @@
     "libc-call",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "refused-libc"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -19912,8 +19556,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "no layout for declared type 'double'",
-   "dynamic_wall": "unsupported:no layout for declared type 'double'",
+   "detail": "__builtin_inf",
+   "dynamic_wall": "libc-call: __builtin_inf",
    "manifest_status": "parsed",
    "name": "ieee/inf-4.c",
    "sha256": "76765d088eb8c2d3a8ad82a8844d98a8d64b871ab6f144c077be493c06615b50",
@@ -19922,12 +19566,12 @@
     "libc-call",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "refused-libc"
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "src/ieee/minuszero.c:8:3)'",
-   "dynamic_wall": "unsupported:src/ieee/minuszero.c",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "ieee/minuszero.c",
    "sha256": "88a6ec71324f6c3b6c5845b165185041d06bcc9d6f3728312880767a01653bb4",
@@ -19935,7 +19579,7 @@
     "cast:IntegralToFloating",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -19951,8 +19595,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "no layout for declared type 'double'",
-   "dynamic_wall": "unsupported:no layout for declared type 'double'",
+   "detail": "floating literal lacks parser-native bits",
+   "dynamic_wall": "unsupported:floating literal lacks parser-native bits",
    "manifest_status": "parsed",
    "name": "ieee/mzero2.c",
    "sha256": "b1bacef006256f3ef92cf8c10b2e8aa55376c81ac399c1b06fcc6ca3034ca8d9",
@@ -19964,8 +19608,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "unbound declaration 'id34' (name 'zerod')",
-   "dynamic_wall": "unsupported:unbound declaration 'id34' (name 'zerod')",
+   "detail": "floating literal lacks parser-native bits",
+   "dynamic_wall": "unsupported:floating literal lacks parser-native bits",
    "manifest_status": "parsed",
    "name": "ieee/mzero3.c",
    "sha256": "d53f19ddc2a725234cc027113020e7d42af95b9599a7e6bcc1a4cbbd0f2fc228",
@@ -19991,8 +19635,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "no layout for declared type 'double'",
-   "dynamic_wall": "unsupported:no layout for declared type 'double'",
+   "detail": "floating literal lacks parser-native bits",
+   "dynamic_wall": "unsupported:floating literal lacks parser-native bits",
    "manifest_status": "parsed",
    "name": "ieee/mzero5.c",
    "sha256": "f3f1e0a190ddac55d529d702e9d7505b35389e4d39530dd8c126869f73b94e48",
@@ -20005,8 +19649,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "no layout for parameter type 'double'",
-   "dynamic_wall": "unsupported:no layout for parameter type 'double'",
+   "detail": "__builtin_copysign",
+   "dynamic_wall": "libc-call: __builtin_copysign",
    "manifest_status": "parsed",
    "name": "ieee/mzero6.c",
    "sha256": "45b8dcb2138a1adb7dd09143de4f340feb9df5d3dea08d5b0f74e3be295c5ab7",
@@ -20014,12 +19658,12 @@
     "libc-call",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "refused-libc"
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "no layout for parameter type 'double'",
-   "dynamic_wall": "unsupported:no layout for parameter type 'double'",
+   "detail": "__builtin_isinf",
+   "dynamic_wall": "libc-call: __builtin_isinf",
    "manifest_status": "parsed",
    "name": "ieee/pr108540-1.c",
    "sha256": "c3a36f26713ef8442f46e4536dba02335743f21093a375da5cac2c1fa8f5c0c0",
@@ -20029,12 +19673,12 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "refused-libc"
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "no layout for parameter type 'double'",
-   "dynamic_wall": "unsupported:no layout for parameter type 'double'",
+   "detail": "",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "ieee/pr108540-2.c",
    "sha256": "63cfae9c4ba2854693e84b520b2f3f96b8e3196c5e96ed2cf7eeac36805bad1c",
@@ -20042,12 +19686,12 @@
     "libc-call",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "no layout for parameter type 'double'",
-   "dynamic_wall": "unsupported:no layout for parameter type 'double'",
+   "detail": "",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "ieee/pr109008.c",
    "sha256": "727ae59f67a8660f37ea16709cf059a5fc1f72f8a3350d4de1a50b95733f74ed",
@@ -20055,7 +19699,7 @@
     "libc-call",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -20087,8 +19731,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "unbound declaration 'id30' (name 'y')",
-   "dynamic_wall": "unsupported:unbound declaration 'id30' (name 'y')",
+   "detail": "floating literal lacks parser-native bits",
+   "dynamic_wall": "unsupported:floating literal lacks parser-native bits",
    "manifest_status": "parsed",
    "name": "ieee/pr28634.c",
    "sha256": "26b484351490de1bd2cdb5f968a3258c61bb5d980473450aae9053527e90a7d3",
@@ -20114,8 +19758,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "src/ieee/pr30704.c:33:3)'",
-   "dynamic_wall": "unsupported:src/ieee/pr30704.c",
+   "detail": "floating literal lacks parser-native bits",
+   "dynamic_wall": "unsupported:floating literal lacks parser-native bits",
    "manifest_status": "parsed",
    "name": "ieee/pr30704.c",
    "sha256": "69e9e465770fdeb58624c8050bb90a150228d5972e4405d2062dd122b6640715",
@@ -20188,8 +19832,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "no layout for declared type 'float[32]'",
-   "dynamic_wall": "unsupported:no layout for declared type 'float[32]'",
+   "detail": "floating literal lacks parser-native bits",
+   "dynamic_wall": "unsupported:floating literal lacks parser-native bits",
    "manifest_status": "parsed",
    "name": "ieee/pr72824.c",
    "sha256": "f2e081e169d6313652e22b6423123b584957f411d60949aee9d5b76bad9f8158",
@@ -20202,8 +19846,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "no layout for declared type 'double'",
-   "dynamic_wall": "unsupported:no layout for declared type 'double'",
+   "detail": "floating literal lacks parser-native bits",
+   "dynamic_wall": "unsupported:floating literal lacks parser-native bits",
    "manifest_status": "parsed",
    "name": "ieee/pr84235.c",
    "sha256": "d98635f47584257120157627bd02ef5564e00aa96b875fd29b20b71a3adedd75",
@@ -20215,8 +19859,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "no layout for declared type 'double'",
-   "dynamic_wall": "unsupported:no layout for declared type 'double'",
+   "detail": "castKind 'FloatingCast'",
+   "dynamic_wall": "cast:FloatingCast",
    "manifest_status": "parsed",
    "name": "ieee/rbug.c",
    "sha256": "09986cf0fdefc44a3f039b7e623f93138a64c59a993b46fd5dc1135f317e85d8",
@@ -20230,8 +19874,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "no layout for declared type 'const double'",
-   "dynamic_wall": "unsupported:no layout for declared type 'const double'",
+   "detail": "floating literal lacks parser-native bits",
+   "dynamic_wall": "unsupported:floating literal lacks parser-native bits",
    "manifest_status": "parsed",
    "name": "ieee/unsafe-fp-assoc-1.c",
    "sha256": "34e1637d933dfffa381a748d759c1ed4851cc108711507dbb79dcc68232ef4e3",
@@ -20243,8 +19887,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "no layout for declared type 'const double'",
-   "dynamic_wall": "unsupported:no layout for declared type 'const double'",
+   "detail": "floating literal lacks parser-native bits",
+   "dynamic_wall": "unsupported:floating literal lacks parser-native bits",
    "manifest_status": "parsed",
    "name": "ieee/unsafe-fp-assoc.c",
    "sha256": "cf44021837b1fb2c4a13cfa6728192ae185a6004a732aacb1c70dead7b3db0d6",
@@ -20588,8 +20232,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "no layout for declared type 'double'",
-   "dynamic_wall": "unsupported:no layout for declared type 'double'",
+   "detail": "floating literal lacks parser-native bits",
+   "dynamic_wall": "unsupported:floating literal lacks parser-native bits",
    "manifest_status": "parsed",
    "name": "loop-8.c",
    "sha256": "e17724fa2e13e071cb75e798fff87d846fd36734fd40fbd5d3c58131318f1650",
@@ -20610,8 +20254,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "no layout for declared type 'float[16]'",
-   "dynamic_wall": "unsupported:no layout for declared type 'float[16]'",
+   "detail": "castKind 'FloatingCast'",
+   "dynamic_wall": "cast:FloatingCast",
    "manifest_status": "parsed",
    "name": "loop-ivopts-1.c",
    "sha256": "af3d6814164cd9af9c07374db2af3fb3daccad3ef974ed2c51225916c279717b",
@@ -20931,16 +20575,17 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "",
-   "dynamic_wall": "timeout",
+   "detail": "more arguments than parameters",
+   "dynamic_wall": "unsupported:more arguments than parameters",
    "manifest_status": "parsed",
    "name": "multi-ix.c",
    "sha256": "c419fe0b5c2f4ba23408553432f6a8fef6ea671ec815146fb8e08a11c9940fd1",
    "static_walls": [
     "libc-call",
-    "type-layout"
+    "type-layout",
+    "unsupported:VAArgExpr"
    ],
-   "verdict": "timeout"
+   "verdict": "refused-unsupported"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -21074,8 +20719,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "no layout for declared type 'struct c'",
-   "dynamic_wall": "unsupported:no layout for declared type 'struct c'",
+   "detail": "floating literal lacks parser-native bits",
+   "dynamic_wall": "unsupported:floating literal lacks parser-native bits",
    "manifest_status": "parsed",
    "name": "packed-aligned.c",
    "sha256": "b05af614cb3d96f7077aa86d23754c241e7e9632f20b5f470e0debff51001be6",
@@ -21098,8 +20743,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "unbound declaration 'id15' (name 'array0')",
-   "dynamic_wall": "unsupported:unbound declaration 'id15' (name 'array0')",
+   "detail": "floating literal lacks parser-native bits",
+   "dynamic_wall": "unsupported:floating literal lacks parser-native bits",
    "manifest_status": "parsed",
    "name": "postmod-1.c",
    "sha256": "f681a8610186c63caee06160883642ced6bb41bac20755d2b9a966f185f94a5d",
@@ -21362,8 +21007,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "no layout for declared type 'double'",
-   "dynamic_wall": "unsupported:no layout for declared type 'double'",
+   "detail": "floating literal lacks parser-native bits",
+   "dynamic_wall": "unsupported:floating literal lacks parser-native bits",
    "manifest_status": "parsed",
    "name": "pr107879.c",
    "sha256": "38af7839f7d7752343dbd042917b5e1c2202685d71220bcaccb5e1298409f039",
@@ -21932,16 +21577,17 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "",
-   "dynamic_wall": null,
+   "detail": "more arguments than parameters",
+   "dynamic_wall": "unsupported:more arguments than parameters",
    "manifest_status": "parsed",
    "name": "pr117432.c",
    "sha256": "358d4a6891006ad25eb04f99e55096f70dba93ef0056a8a30f1da268b73025af",
    "static_walls": [
     "libc-call",
-    "type-layout"
+    "type-layout",
+    "unsupported:VAArgExpr"
    ],
-   "verdict": "passed"
+   "verdict": "refused-unsupported"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -22233,8 +21879,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "no layout for declared type 'float'",
-   "dynamic_wall": "unsupported:no layout for declared type 'float'",
+   "detail": "castKind 'FloatingCast'",
+   "dynamic_wall": "cast:FloatingCast",
    "manifest_status": "parsed",
    "name": "pr15262-1.c",
    "sha256": "a66685499f0d76065c6c1a8afc0a7c9cf36de932ee7807911fc84822b7d2af33",
@@ -22248,8 +21894,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "no layout for declared type 'struct B'",
-   "dynamic_wall": "unsupported:no layout for declared type 'struct B'",
+   "detail": "not an integer type: 'float'",
+   "dynamic_wall": "unsupported:not an integer type: 'float'",
    "manifest_status": "parsed",
    "name": "pr15262-2.c",
    "sha256": "a97399092d6dc7b06b43ceb3f86a6940aa371c44bee2c6f453529be8c093bffb",
@@ -22260,8 +21906,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "no layout for declared type 'float'",
-   "dynamic_wall": "unsupported:no layout for declared type 'float'",
+   "detail": "castKind 'FloatingCast'",
+   "dynamic_wall": "cast:FloatingCast",
    "manifest_status": "parsed",
    "name": "pr15262.c",
    "sha256": "89ee2a24ca23b44d71e28ac3578fa8095341728c36b1097b7fdadadbd53cbdfa",
@@ -22682,8 +22328,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "no layout for declared type 'union at6'",
-   "dynamic_wall": "unsupported:no layout for declared type 'union at6'",
+   "detail": "floating literal lacks parser-native bits",
+   "dynamic_wall": "unsupported:floating literal lacks parser-native bits",
    "manifest_status": "parsed",
    "name": "pr23324.c",
    "sha256": "8b6c8e94d29e9bf08299873ef44903f8bf907525465bcac25a5f90a6501fce22",
@@ -22720,8 +22366,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "no layout for declared type 'double'",
-   "dynamic_wall": "unsupported:no layout for declared type 'double'",
+   "detail": "castKind 'FloatingCast'",
+   "dynamic_wall": "cast:FloatingCast",
    "manifest_status": "parsed",
    "name": "pr23941.c",
    "sha256": "0bb15827ccdd9dd80cd6766562d040c4613cc2fcec5b5634e4354cedca5d80a4",
@@ -22922,8 +22568,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "unbound declaration 'id725' (name 'input')",
-   "dynamic_wall": "unsupported:unbound declaration 'id725' (name 'input')",
+   "detail": "",
+   "dynamic_wall": "timeout",
    "manifest_status": "parsed",
    "name": "pr28982a.c",
    "sha256": "7fa896d2f4c4deb42265759ddc905bfaf7f9f1f64d9083caba86e357624a76ac",
@@ -22931,12 +22577,12 @@
     "cast:IntegralToFloating",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "timeout"
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "unbound declaration 'id751' (name 'input')",
-   "dynamic_wall": "unsupported:unbound declaration 'id751' (name 'input')",
+   "detail": "",
+   "dynamic_wall": "timeout",
    "manifest_status": "parsed",
    "name": "pr28982b.c",
    "sha256": "ac8687e81ae8fe0460f5c6eb559896cbd180ea41f9e89617598e3aaa09af5d99",
@@ -22944,7 +22590,7 @@
     "cast:IntegralToFloating",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "timeout"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -22961,15 +22607,15 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "no layout for declared type 'struct test2'",
-   "dynamic_wall": "unsupported:no layout for declared type 'struct test2'",
+   "detail": "",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "pr29156.c",
    "sha256": "2551915978c07c6adccf061873dada18452ef1200083f0dd3eee2e9ae8471864",
    "static_walls": [
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -23013,8 +22659,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "no layout for declared type 'double'",
-   "dynamic_wall": "unsupported:no layout for declared type 'double'",
+   "detail": "floating literal lacks parser-native bits",
+   "dynamic_wall": "unsupported:floating literal lacks parser-native bits",
    "manifest_status": "parsed",
    "name": "pr29798.c",
    "sha256": "c2c8752fa5868b5e5d188eb4944586c6ab3cd5e0ca2649b474d1bd346511b97e",
@@ -23439,8 +23085,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "no layout for declared type 'double'",
-   "dynamic_wall": "unsupported:no layout for declared type 'double'",
+   "detail": "floating literal lacks parser-native bits",
+   "dynamic_wall": "unsupported:floating literal lacks parser-native bits",
    "manifest_status": "parsed",
    "name": "pr35456.c",
    "sha256": "439a70fd3b4e169b9fa8e152cbfefa747f1d1fed58e6e7f96c59b244df6baf5d",
@@ -23478,8 +23124,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "unbound declaration 'id142' (name 'tmp')",
-   "dynamic_wall": "unsupported:unbound declaration 'id142' (name 'tmp')",
+   "detail": "",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "pr36034-1.c",
    "sha256": "431c621ede26106e0685ed2516ae5126240e6922af64e1c67458b82f2d26fbb8",
@@ -23487,12 +23133,12 @@
     "cast:IntegralToFloating",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "unbound declaration 'id137' (name 'tmp')",
-   "dynamic_wall": "unsupported:unbound declaration 'id137' (name 'tmp')",
+   "detail": "",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "pr36034-2.c",
    "sha256": "7c1716ae8e21f95aa58d3fd00974a2f69079aa6febd944247900a2208fbcec6d",
@@ -23500,7 +23146,7 @@
     "cast:IntegralToFloating",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -23864,15 +23510,15 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "no layout for parameter type 'float'",
-   "dynamic_wall": "unsupported:no layout for parameter type 'float'",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "pr39501.c",
    "sha256": "12ef655565b9df299b5e2a23cea6b5a8e248ac30c37e502aeab9f0c70e0ff112",
    "static_walls": [
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -24192,8 +23838,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "no layout for declared type 'union _D_rep'",
-   "dynamic_wall": "unsupported:no layout for declared type 'union _D_rep'",
+   "detail": "",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "pr42691.c",
    "sha256": "12f670ae69af2f42e3cb81261746c0beeb3f2b1e6ea749783dd37f49cc657633",
@@ -24201,7 +23847,7 @@
     "cast:IntegralToFloating",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -24376,8 +24022,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "sizeof: no layout for operand type 'float'",
-   "dynamic_wall": "unsupported:sizeof: no layout for operand type 'float'",
+   "detail": "out of tier: OffsetOfExpr",
+   "dynamic_wall": "unsupported:OffsetOfExpr",
    "manifest_status": "parsed",
    "name": "pr44468.c",
    "sha256": "454ced8916e33045ddb729461bde8e1ee9a62e4ae2cb4a35f30f9020430adc62",
@@ -24401,8 +24047,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "unbound declaration 'id29' (name 'a')",
-   "dynamic_wall": "unsupported:unbound declaration 'id29' (name 'a')",
+   "detail": "more arguments than parameters",
+   "dynamic_wall": "unsupported:more arguments than parameters",
    "manifest_status": "parsed",
    "name": "pr44575.c",
    "sha256": "8fc674bb4a65450dfdaea5a7238d752ecdce2dfbfb3376ab3fc451ef170e0929",
@@ -24416,8 +24062,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "no layout for declared type 'double'",
-   "dynamic_wall": "unsupported:no layout for declared type 'double'",
+   "detail": "floating literal lacks parser-native bits",
+   "dynamic_wall": "unsupported:floating literal lacks parser-native bits",
    "manifest_status": "parsed",
    "name": "pr44683.c",
    "sha256": "016c5bd32e7d9885030a194c02c0742ae1a2bca5a0d9af761f8150ae1f4b312a",
@@ -24624,8 +24270,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "no layout for declared type 'struct S'",
-   "dynamic_wall": "unsupported:no layout for declared type 'struct S'",
+   "detail": "floating literal lacks parser-native bits",
+   "dynamic_wall": "unsupported:floating literal lacks parser-native bits",
    "manifest_status": "parsed",
    "name": "pr47538.c",
    "sha256": "7ddc400661a1d3c0585c8a1e3c93d6aa4a0ec3410b9e099eaf7a9c2331f9fbb0",
@@ -25612,8 +25258,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "no layout for declared type 'double'",
-   "dynamic_wall": "unsupported:no layout for declared type 'double'",
+   "detail": "floating literal lacks parser-native bits",
+   "dynamic_wall": "unsupported:floating literal lacks parser-native bits",
    "manifest_status": "parsed",
    "name": "pr58574.c",
    "sha256": "0d9ee9991bbcee2af0713c8f6846241e491e0ca8bdbc806bb9ccaae162d2f960",
@@ -25823,8 +25469,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "no layout for declared type 'double[32]'",
-   "dynamic_wall": "unsupported:no layout for declared type 'double[32]'",
+   "detail": "floating literal lacks parser-native bits",
+   "dynamic_wall": "unsupported:floating literal lacks parser-native bits",
    "manifest_status": "parsed",
    "name": "pr59643.c",
    "sha256": "9b103825a04442bb465f754a33ad4788b5138f6189cf87fbc0422f9bfdd55a23",
@@ -26203,16 +25849,17 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "",
-   "dynamic_wall": null,
+   "detail": "more arguments than parameters",
+   "dynamic_wall": "unsupported:more arguments than parameters",
    "manifest_status": "parsed",
    "name": "pr64979.c",
    "sha256": "ebc80502935f4fca2dd98ae330c1da1e7e06d88ac8fa25d9f0a108ecc601e066",
    "static_walls": [
     "libc-call",
-    "type-layout"
+    "type-layout",
+    "unsupported:VAArgExpr"
    ],
-   "verdict": "passed"
+   "verdict": "refused-unsupported"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -26521,8 +26168,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "no layout for parameter type 'float'",
-   "dynamic_wall": "unsupported:no layout for parameter type 'float'",
+   "detail": "",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "pr67929_1.c",
    "sha256": "7564232499a44eab571882bed7b328ea5d95920939bc2231bb6f510621c242cd",
@@ -26531,7 +26178,7 @@
     "libc-call",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -26642,8 +26289,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "no layout for declared type 'double'",
-   "dynamic_wall": "unsupported:no layout for declared type 'double'",
+   "detail": "function-to-pointer decay (inch 5)",
+   "dynamic_wall": "unsupported:function-to-pointer decay (inch 5)",
    "manifest_status": "parsed",
    "name": "pr68390.c",
    "sha256": "bab36ab4474180ee6b3e51c921e2b9322995f4da27066febed276f13b5e3bebf",
@@ -28214,8 +27861,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "no layout for declared type 'double'",
-   "dynamic_wall": "unsupported:no layout for declared type 'double'",
+   "detail": "no layout for declared type '__m128i'",
+   "dynamic_wall": "unsupported:no layout for declared type '__m128i'",
    "manifest_status": "parsed",
    "name": "pr92618.c",
    "sha256": "b14f56ce7c1d8f56996de35257f0d3e8f1948e64d030ad74a41fe89ceb3ac8d1",
@@ -28282,8 +27929,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "no layout for declared type 'creal_T[16]'",
-   "dynamic_wall": "unsupported:no layout for declared type 'creal_T[16]'",
+   "detail": "floating literal lacks parser-native bits",
+   "dynamic_wall": "unsupported:floating literal lacks parser-native bits",
    "manifest_status": "parsed",
    "name": "pr93434.c",
    "sha256": "6ecc8ddf38cbd2d69b38cc301b3fbb9860b980e49059dea9552573b788dd68cc",
@@ -29133,21 +28780,22 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "unbound declaration 'id29' (name 'gap')",
-   "dynamic_wall": "unsupported:unbound declaration 'id29' (name 'gap')",
+   "detail": "more arguments than parameters",
+   "dynamic_wall": "unsupported:more arguments than parameters",
    "manifest_status": "parsed",
    "name": "stdarg-2.c",
    "sha256": "560b59b0eeaa2d180429fb10e96bb98373fcde1c85aa0601bc915bfc57546b73",
    "static_walls": [
     "libc-call",
-    "type-layout"
+    "type-layout",
+    "unsupported:VAArgExpr"
    ],
    "verdict": "refused-unsupported"
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "no layout for declared type 'struct S1'",
-   "dynamic_wall": "unsupported:no layout for declared type 'struct S1'",
+   "detail": "more arguments than parameters",
+   "dynamic_wall": "unsupported:more arguments than parameters",
    "manifest_status": "parsed",
    "name": "stdarg-3.c",
    "sha256": "41807d647a4c4e20031c2bfedb1f37b6509863637fb45e6c12ef60412cf04bd3",
@@ -29161,15 +28809,16 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "not an integer type: 'double'",
-   "dynamic_wall": "unsupported:not an integer type: 'double'",
+   "detail": "more arguments than parameters",
+   "dynamic_wall": "unsupported:more arguments than parameters",
    "manifest_status": "parsed",
    "name": "stdarg-4.c",
    "sha256": "df92949fcdfbb1dec3c0d7fdad72e494a01ab6d678bd237196fa300234673e54",
    "static_walls": [
     "cast:FloatingToIntegral",
     "libc-call",
-    "type-layout"
+    "type-layout",
+    "unsupported:VAArgExpr"
    ],
    "verdict": "refused-unsupported"
   },
@@ -29276,27 +28925,29 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "va_arg requested unsupported value type 'struct tiny'",
-   "dynamic_wall": "unsupported:va_arg requested unsupported value type 'struct tiny'",
+   "detail": "more arguments than parameters",
+   "dynamic_wall": "unsupported:more arguments than parameters",
    "manifest_status": "parsed",
    "name": "strct-stdarg-1.c",
    "sha256": "ec51bc0af8c8f24d46dbac8bdd811e120c7e5fd3b81648a48c7163d4280a4d78",
    "static_walls": [
     "libc-call",
-    "type-layout"
+    "type-layout",
+    "unsupported:VAArgExpr"
    ],
    "verdict": "refused-unsupported"
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "va_arg requested unsupported value type 'struct s'",
-   "dynamic_wall": "unsupported:va_arg requested unsupported value type 'struct s'",
+   "detail": "more arguments than parameters",
+   "dynamic_wall": "unsupported:more arguments than parameters",
    "manifest_status": "parsed",
    "name": "strct-varg-1.c",
    "sha256": "8b9d0f63a946ddf96a8693c67ea786314140c055e72b1cf2b36b9f30b121a2b1",
    "static_walls": [
     "libc-call",
-    "type-layout"
+    "type-layout",
+    "unsupported:VAArgExpr"
    ],
    "verdict": "refused-unsupported"
   },
@@ -29526,8 +29177,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "no layout for declared type 'X'",
-   "dynamic_wall": "unsupported:no layout for declared type 'X'",
+   "detail": "floating literal lacks parser-native bits",
+   "dynamic_wall": "unsupported:floating literal lacks parser-native bits",
    "manifest_status": "parsed",
    "name": "struct-ret-1.c",
    "sha256": "cc8d3fc1dcaa9721231f0fcde3544356f5d859785219755cc649e9c7ead8fe78",
@@ -29628,67 +29279,72 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "LeanModels.C.C23.UB.vaArgTypeMismatch \"L\" \"true:64\"",
-   "dynamic_wall": "undefined-behavior",
+   "detail": "more arguments than parameters",
+   "dynamic_wall": "unsupported:more arguments than parameters",
    "manifest_status": "parsed",
    "name": "va-arg-1.c",
    "sha256": "0f7f0d1e757998090be6c94dd8920fd0e2a1c94e0162d670dd777814e026080f",
    "static_walls": [
     "libc-call",
-    "type-layout"
+    "type-layout",
+    "unsupported:VAArgExpr"
    ],
-   "verdict": "refused-ub"
+   "verdict": "refused-unsupported"
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "unsequenced side effects in binary operands",
-   "dynamic_wall": "unsequenced-effects",
+   "detail": "more arguments than parameters",
+   "dynamic_wall": "unsupported:more arguments than parameters",
    "manifest_status": "parsed",
    "name": "va-arg-10.c",
    "sha256": "5cb2d6ed423c050aaa81f9a50ce99c3dd43e88f2757c460a46a8b5836b09c4df",
    "static_walls": [
     "libc-call",
     "string-literal",
-    "type-layout"
+    "type-layout",
+    "unsupported:VAArgExpr"
    ],
    "verdict": "refused-unsupported"
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
-   "dynamic_wall": null,
+   "detail": "more arguments than parameters",
+   "dynamic_wall": "unsupported:more arguments than parameters",
    "manifest_status": "parsed",
    "name": "va-arg-11.c",
    "sha256": "d45a0dfea3dca4640a8b8f01cdc27f77c513ef6dcb2ee54f4c0aea98fb7d21b4",
    "static_walls": [
     "libc-call",
-    "type-layout"
-   ],
-   "verdict": "passed"
-  },
-  {
-   "corpus": "gcc.c-torture/execute",
-   "detail": "no layout for parameter type 'L'",
-   "dynamic_wall": "unsupported:no layout for parameter type 'L'",
-   "manifest_status": "parsed",
-   "name": "va-arg-12.c",
-   "sha256": "3ac1c4f014534ca3b3c10d0fc66df11b7d2fe0e97fff567fd00560029e470662",
-   "static_walls": [
-    "libc-call",
-    "type-layout"
+    "type-layout",
+    "unsupported:VAArgExpr"
    ],
    "verdict": "refused-unsupported"
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "no layout for declared type 'ScanfState'",
-   "dynamic_wall": "unsupported:no layout for declared type 'ScanfState'",
+   "detail": "more arguments than parameters",
+   "dynamic_wall": "unsupported:more arguments than parameters",
+   "manifest_status": "parsed",
+   "name": "va-arg-12.c",
+   "sha256": "3ac1c4f014534ca3b3c10d0fc66df11b7d2fe0e97fff567fd00560029e470662",
+   "static_walls": [
+    "libc-call",
+    "type-layout",
+    "unsupported:VAArgExpr"
+   ],
+   "verdict": "refused-unsupported"
+  },
+  {
+   "corpus": "gcc.c-torture/execute",
+   "detail": "more arguments than parameters",
+   "dynamic_wall": "unsupported:more arguments than parameters",
    "manifest_status": "parsed",
    "name": "va-arg-13.c",
    "sha256": "279279f98774c877ba8c2915b734a42166ab4f90ec7fba6b5f569b6ce3890d92",
    "static_walls": [
     "libc-call",
-    "type-layout"
+    "type-layout",
+    "unsupported:VAArgExpr"
    ],
    "verdict": "refused-unsupported"
   },
@@ -29708,8 +29364,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "no layout for declared type 'double'",
-   "dynamic_wall": "unsupported:no layout for declared type 'double'",
+   "detail": "more arguments than parameters",
+   "dynamic_wall": "unsupported:more arguments than parameters",
    "manifest_status": "parsed",
    "name": "va-arg-15.c",
    "sha256": "bc9aefd3656145f3f3e0110bab4fe674903e26cdb8c23b474e6f185e5d705a3d",
@@ -29717,63 +29373,68 @@
     "cast:IntegralToFloating",
     "libc-call",
     "string-literal",
-    "type-layout"
+    "type-layout",
+    "unsupported:VAArgExpr"
    ],
    "verdict": "refused-unsupported"
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "no layout for parameter type 'TYPE'",
-   "dynamic_wall": "unsupported:no layout for parameter type 'TYPE'",
+   "detail": "more arguments than parameters",
+   "dynamic_wall": "unsupported:more arguments than parameters",
    "manifest_status": "parsed",
    "name": "va-arg-16.c",
    "sha256": "214db61e9e8a8749953ce90aa8d439142f6e51cca19d298af7cf268eb448b00a",
    "static_walls": [
     "libc-call",
-    "type-layout"
+    "type-layout",
+    "unsupported:VAArgExpr"
    ],
    "verdict": "refused-unsupported"
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "LeanModels.C.C23.UB.vaArgTypeMismatch \"TYPE\" \"binary64\"",
-   "dynamic_wall": "undefined-behavior",
+   "detail": "more arguments than parameters",
+   "dynamic_wall": "unsupported:more arguments than parameters",
    "manifest_status": "parsed",
    "name": "va-arg-17.c",
    "sha256": "e3bd464100e2fc2a2657d338e921a84ff7e2626e1b04ca51fde765b56fd3f046",
    "static_walls": [
     "libc-call",
     "string-literal",
-    "type-layout"
-   ],
-   "verdict": "refused-ub"
-  },
-  {
-   "corpus": "gcc.c-torture/execute",
-   "detail": "no layout for parameter type 'L'",
-   "dynamic_wall": "unsupported:no layout for parameter type 'L'",
-   "manifest_status": "parsed",
-   "name": "va-arg-18.c",
-   "sha256": "5164ef08accb5ddac18b0d27f4406fded13ae687a456aaeb76df3ba8f8cde462",
-   "static_walls": [
-    "libc-call",
-    "type-layout"
+    "type-layout",
+    "unsupported:VAArgExpr"
    ],
    "verdict": "refused-unsupported"
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
-   "dynamic_wall": null,
+   "detail": "more arguments than parameters",
+   "dynamic_wall": "unsupported:more arguments than parameters",
+   "manifest_status": "parsed",
+   "name": "va-arg-18.c",
+   "sha256": "5164ef08accb5ddac18b0d27f4406fded13ae687a456aaeb76df3ba8f8cde462",
+   "static_walls": [
+    "libc-call",
+    "type-layout",
+    "unsupported:VAArgExpr"
+   ],
+   "verdict": "refused-unsupported"
+  },
+  {
+   "corpus": "gcc.c-torture/execute",
+   "detail": "more arguments than parameters",
+   "dynamic_wall": "unsupported:more arguments than parameters",
    "manifest_status": "parsed",
    "name": "va-arg-19.c",
    "sha256": "e0251e5c3506f5909a206d4523019424f7890dc5033296693ddd7cf35d165331",
    "static_walls": [
     "libc-call",
     "string-literal",
-    "type-layout"
+    "type-layout",
+    "unsupported:VAArgExpr"
    ],
-   "verdict": "passed"
+   "verdict": "refused-unsupported"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -29792,21 +29453,22 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "LeanModels.C.C23.UB.vaArgTypeMismatch \"unsigned long long\" \"true:64\"",
-   "dynamic_wall": "undefined-behavior",
+   "detail": "more arguments than parameters",
+   "dynamic_wall": "unsupported:more arguments than parameters",
    "manifest_status": "parsed",
    "name": "va-arg-20.c",
    "sha256": "5a664bf0f0e716f4534dc388535e562b4976cd06cffbd96a2fd2a6a7c3a7e5b7",
    "static_walls": [
     "libc-call",
-    "type-layout"
+    "type-layout",
+    "unsupported:VAArgExpr"
    ],
-   "verdict": "refused-ub"
+   "verdict": "refused-unsupported"
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "string literal with escape or non-ASCII spelling",
-   "dynamic_wall": "unsupported:string literal with escape or non-ASCII spelling",
+   "detail": "more arguments than parameters",
+   "dynamic_wall": "unsupported:more arguments than parameters",
    "manifest_status": "parsed",
    "name": "va-arg-21.c",
    "sha256": "dedc44188f3fd1c561cd63e1d964c7f0beb5c077b4802c961b0eb7f4a6c7fbd9",
@@ -29833,30 +29495,32 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "",
-   "dynamic_wall": null,
+   "detail": "more arguments than parameters",
+   "dynamic_wall": "unsupported:more arguments than parameters",
    "manifest_status": "parsed",
    "name": "va-arg-23.c",
    "sha256": "3a2323c7449a4fb47db61e20103522b204413ba862aafa78a145e23b74a171d6",
    "static_walls": [
     "libc-call",
-    "type-layout"
+    "type-layout",
+    "unsupported:VAArgExpr"
    ],
-   "verdict": "passed"
+   "verdict": "refused-unsupported"
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
-   "dynamic_wall": null,
+   "detail": "more arguments than parameters",
+   "dynamic_wall": "unsupported:more arguments than parameters",
    "manifest_status": "parsed",
    "name": "va-arg-24.c",
    "sha256": "8233497b9ce5e3bfb95e0904a1dcc22fe247159184cbad4aa312712884f1bc7e",
    "static_walls": [
     "libc-call",
     "string-literal",
-    "type-layout"
+    "type-layout",
+    "unsupported:VAArgExpr"
    ],
-   "verdict": "passed"
+   "verdict": "refused-unsupported"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -29890,14 +29554,15 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "long double floating literal",
-   "dynamic_wall": "unsupported:long double floating literal",
+   "detail": "more arguments than parameters",
+   "dynamic_wall": "unsupported:more arguments than parameters",
    "manifest_status": "parsed",
    "name": "va-arg-5.c",
    "sha256": "c4f21f1570c49976849ab2d5cb5fe9a49ae430ff19d27a3dd9069c0c6df8f2dd",
    "static_walls": [
     "libc-call",
-    "type-layout"
+    "type-layout",
+    "unsupported:VAArgExpr"
    ],
    "verdict": "refused-unsupported"
   },
@@ -29917,41 +29582,44 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "no layout for parameter type 'double'",
-   "dynamic_wall": "unsupported:no layout for parameter type 'double'",
+   "detail": "more arguments than parameters",
+   "dynamic_wall": "unsupported:more arguments than parameters",
    "manifest_status": "parsed",
    "name": "va-arg-7.c",
    "sha256": "d566662a26a3f877293048b058ac53e7ed8ccdb93717ded2a73ed96a836d4226",
    "static_walls": [
     "libc-call",
-    "type-layout"
+    "type-layout",
+    "unsupported:VAArgExpr"
    ],
    "verdict": "refused-unsupported"
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
-   "dynamic_wall": null,
+   "detail": "more arguments than parameters",
+   "dynamic_wall": "unsupported:more arguments than parameters",
    "manifest_status": "parsed",
    "name": "va-arg-8.c",
    "sha256": "d3d69b63bca0f643c44af9e58cc010b11f952aa646e5cccf135d45563d26813b",
    "static_walls": [
     "libc-call",
-    "type-layout"
+    "type-layout",
+    "unsupported:VAArgExpr"
    ],
-   "verdict": "passed"
+   "verdict": "refused-unsupported"
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "unsequenced side effects in binary operands",
-   "dynamic_wall": "unsequenced-effects",
+   "detail": "more arguments than parameters",
+   "dynamic_wall": "unsupported:more arguments than parameters",
    "manifest_status": "parsed",
    "name": "va-arg-9.c",
    "sha256": "d81cf4ba2a988b659534a2037ecff6039bac090a41e316dad99cfd094c743cba",
    "static_walls": [
     "libc-call",
     "string-literal",
-    "type-layout"
+    "type-layout",
+    "unsupported:VAArgExpr"
    ],
    "verdict": "refused-unsupported"
   },
@@ -29967,14 +29635,15 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "unbound declaration 'id31' (name 'ap')",
-   "dynamic_wall": "unsupported:unbound declaration 'id31' (name 'ap')",
+   "detail": "more arguments than parameters",
+   "dynamic_wall": "unsupported:more arguments than parameters",
    "manifest_status": "parsed",
    "name": "va-arg-trap-1.c",
    "sha256": "6fbbc2681a834c531d94a5e7c2d29fc13ce41857d726387ab0c7ef6e0f7e7dad",
    "static_walls": [
     "libc-call",
-    "type-layout"
+    "type-layout",
+    "unsupported:VAArgExpr"
    ],
    "verdict": "refused-unsupported"
   },
@@ -32594,6 +32263,71 @@
   },
   {
    "files": [
+    "00204.c",
+    "20000519-1.c",
+    "20041113-1.c",
+    "20041214-1.c",
+    "20071213-1.c",
+    "920501-8.c",
+    "920625-1.c",
+    "920726-1.c",
+    "920908-1.c",
+    "931004-10.c",
+    "931004-12.c",
+    "931004-14.c",
+    "931004-2.c",
+    "931004-4.c",
+    "931004-6.c",
+    "931004-8.c",
+    "980205.c",
+    "980608-1.c",
+    "980716-1.c",
+    "991216-2.c",
+    "gcc/testsuite/gcc.dg/c23-stdarg-9.c",
+    "multi-ix.c",
+    "pr117432.c",
+    "pr38151.c",
+    "pr44575.c",
+    "pr44942.c",
+    "pr64979.c",
+    "pr92904.c",
+    "stdarg-1.c",
+    "stdarg-2.c",
+    "stdarg-3.c",
+    "stdarg-4.c",
+    "strct-stdarg-1.c",
+    "strct-varg-1.c",
+    "va-arg-1.c",
+    "va-arg-10.c",
+    "va-arg-11.c",
+    "va-arg-12.c",
+    "va-arg-13.c",
+    "va-arg-14.c",
+    "va-arg-15.c",
+    "va-arg-16.c",
+    "va-arg-17.c",
+    "va-arg-18.c",
+    "va-arg-19.c",
+    "va-arg-2.c",
+    "va-arg-20.c",
+    "va-arg-22.c",
+    "va-arg-23.c",
+    "va-arg-24.c",
+    "va-arg-26.c",
+    "va-arg-4.c",
+    "va-arg-5.c",
+    "va-arg-6.c",
+    "va-arg-7.c",
+    "va-arg-8.c",
+    "va-arg-9.c",
+    "va-arg-trap-1.c"
+   ],
+   "present": 58,
+   "sole": 0,
+   "wall": "unsupported:VAArgExpr"
+  },
+  {
+   "files": [
     "00174.c",
     "00175.c",
     "00204.c",
@@ -32723,31 +32457,6 @@
    "present": 27,
    "sole": 0,
    "wall": "unsupported:PackedAttr"
-  },
-  {
-   "files": [
-    "00204.c",
-    "20041113-1.c",
-    "20041214-1.c",
-    "920625-1.c",
-    "920908-1.c",
-    "gcc/testsuite/gcc.dg/c23-stdarg-9.c",
-    "pr38151.c",
-    "pr44575.c",
-    "pr44942.c",
-    "pr92904.c",
-    "stdarg-1.c",
-    "stdarg-3.c",
-    "va-arg-14.c",
-    "va-arg-2.c",
-    "va-arg-22.c",
-    "va-arg-26.c",
-    "va-arg-4.c",
-    "va-arg-6.c"
-   ],
-   "present": 18,
-   "sole": 0,
-   "wall": "unsupported:VAArgExpr"
   },
   {
    "files": [

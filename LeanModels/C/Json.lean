@@ -72,6 +72,14 @@ def getOptNat (j : Json) (name : String) : Except String (Option Nat) :=
   | .ok .null => .ok none
   | .ok v => withCtx s!"field '{name}'" (some <$> v.getNat?)
 
+def getOptNatList (j : Json) (name : String) : Except String (Option (List Nat)) :=
+  match j.getObjVal? name with
+  | .error _ | .ok .null => .ok none
+  | .ok (.arr values) => do
+      let result ← values.toList.mapM (fun v => withCtx s!"field '{name}'" v.getNat?)
+      pure (some result)
+  | .ok _ => .error s!"field '{name}' is not an array"
+
 /-- A required array field, as a list. -/
 def getArr (j : Json) (name : String) : Except String (List Json) := do
   match ← getField j name with
@@ -170,7 +178,11 @@ partial def parseExpr (j : Json) : Except String Expr := do
         return .charLit (match v with
                          | .num n => toString n
                          | _ => v.compress) (← ty) span
-    | "StringLiteral" => return .strLit (← getStr j "value") (← ty) span
+    | "StringLiteral" =>
+        let value ← getStr j "value"
+        let decoded ← getOptNatList j "decoded_bytes"
+        let typ ← ty
+        return .strLit value decoded typ span
     | "FloatingLiteral" =>
         let v ← getField j "value"
         return .floatLit (match v with

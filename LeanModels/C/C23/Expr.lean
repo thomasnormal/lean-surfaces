@@ -754,10 +754,13 @@ same kinds. Anything else in lvalue position is a refusal, never a
 fallthrough. -/
 def evalLValue (ctx : Ctx) : Expr → EvalM Ptr
   | .paren sub _ _ => evalLValue ctx sub
-  | .strLit value _ _ => do
-      let bs ← match plainStringBytes value with
-        | some bs => pure bs
-        | none => refuseUnsupported "string literal with escape or non-ASCII spelling"
+  | .strLit value decoded _ _ => do
+      let bs ← match decoded with
+        | some bytes => pure ((bytes.map (fun b => CByte.conc (UInt8.ofNat b))) ++
+            [CByte.conc 0])
+        | none => match plainStringBytes value with
+          | some bs => pure bs
+          | none => refuseUnsupported "string literal with escape or non-ASCII spelling"
       let m ← get
       let (m', o) := m.alloc .static_ bs.length (some "char[]")
       set m'
@@ -1715,7 +1718,7 @@ private theorem memInvariant_core (ctx : Ctx) : ∀ (n : Nat) (e : Expr), e.size
       | boolLit _ _ _ => exact ⟨by open_eval; mem_inv, by open_lvalue; mem_inv⟩
       | choose _ _ _ _ _ => exact ⟨by open_eval; mem_inv, by open_lvalue; mem_inv⟩
       | charLit _ _ _ => exact ⟨by open_eval; mem_inv, by open_lvalue; mem_inv⟩
-      | strLit _ _ _ => exact ⟨by open_eval; mem_inv, by open_lvalue; mem_inv⟩
+      | strLit _ _ _ _ => exact ⟨by open_eval; mem_inv, by open_lvalue; mem_inv⟩
       | floatLit _ _ _ => exact ⟨by open_eval; mem_inv, by open_lvalue; mem_inv⟩
       | declRef _ _ _ _ => exact ⟨by open_eval; mem_inv, by open_lvalue; mem_inv⟩
       | typeTrait _ _ _ _ _ => exact ⟨by open_eval; mem_inv, by open_lvalue; mem_inv⟩

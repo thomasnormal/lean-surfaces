@@ -58,6 +58,7 @@ PINNED_FRONTEND_VERSION = (
     "334cf9a5e6c0331e9f261eaf01fc3568724fcce9)"
 )
 CLANG_ENV = "LEAN_C_CLANG"
+STRING_BYTES_PLUGIN_ENV = "LEAN_C_STRING_BYTES_PLUGIN"
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.abspath(os.path.join(HERE, "..", ".."))
@@ -145,6 +146,46 @@ def clang_json(path):
     return json.loads(out.stdout)
 
 
+def string_byte_records(path):
+    """Observe decoded literal bytes through Clang's own AST API.
+
+    The normal extractor remains usable without the optional plugin.  When it
+    is supplied, every StringLiteral must be observed and records are joined
+    by Clang's source offsets; no spelling is decoded here.
+    """
+    plugin = os.environ.get(STRING_BYTES_PLUGIN_ENV)
+    if not plugin:
+        return None
+    if not os.path.isfile(plugin):
+        die("%s does not name a plugin file" % STRING_BYTES_PLUGIN_ENV)
+    command = ([clang_executable()] + PROFILE_FLAGS + ["-fsyntax-only",
+               "-Xclang", "-load", "-Xclang", plugin,
+               "-Xclang", "-plugin", "-Xclang", "lean-c-string-bytes",
+               path])
+    out = subprocess.run(command, capture_output=True)
+    if out.returncode:
+        die("string byte probe rejected %s: %s" %
+            (path, out.stderr.decode(errors="replace")[:2000]))
+    try:
+        records = json.loads(out.stdout.decode("utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError) as error:
+        die("string byte probe returned invalid JSON: %s" % error)
+    if not isinstance(records, list):
+        die("string byte probe returned a non-array")
+    by_offset = {}
+    for record in records:
+        if not isinstance(record, dict) or record.get("kind") != "StringLiteral":
+            die("string byte probe returned an invalid record")
+        offset = record.get("offset")
+        bytes_ = record.get("bytes")
+        if type(offset) is not int or not isinstance(bytes_, list):
+            die("string byte probe returned an invalid offset/bytes record")
+        if any(type(byte) is not int or byte < 0 or byte > 255 for byte in bytes_):
+            die("string byte probe returned a byte outside 0..255")
+        by_offset.setdefault(offset, []).append(record)
+    return by_offset
+
+
 def check_profile():
     """The envelope ASSERTS a profile; refuse to assert one this host fails."""
     probe_py = os.path.join(ROOT, "harness", "c_profile_probe.py")
@@ -230,9 +271,10 @@ def nonempty(node):
 
 
 class Extractor:
-    def __init__(self, target, source_text):
+    def __init__(self, target, source_text, string_bytes=None):
         self.loc = Loc(target)
         self.text = source_text
+        self.string_bytes = string_bytes
         self.lines = source_text.splitlines()
         self.labels = {}
         self.unsupported = 0
@@ -503,7 +545,21 @@ class Extractor:
         return {"value": n.get("value"), "type": qual(n)}
 
     def e_StringLiteral(self, n):
-        return {"value": n.get("value"), "type": qual(n)}
+        out = {"value": n.get("value"), "type": qual(n)}
+        if self.string_bytes is not None:
+            begin = (n.get("range") or {}).get("begin") or {}
+            offset = begin.get("offset")
+            # Macro-generated literals can be present in Clang's semantic AST
+            # without a file offset in the JSON envelope.  They remain loud;
+            # there is no stable envelope identity to join to.
+            if offset is None:
+                return out
+            if offset not in self.string_bytes:
+                die("string byte probe did not observe StringLiteral at offset %r" % offset)
+            record = self.string_bytes[offset].pop(0)
+            if record.get("kind_name") == "ordinary" and record.get("char_byte_width") == 1:
+                out["decoded_bytes"] = record.get("bytes")
+        return out
 
     def e_FloatingLiteral(self, n):
         return {"value": n.get("value"), "type": qual(n)}
@@ -673,7 +729,8 @@ def extract(path, source_name=None):
     src = open(path, "rb").read()
     tu = canonicalize_ids(clang_json(path))
     target = os.path.basename(path)
-    ex = Extractor(target, src.decode())
+    string_bytes = string_byte_records(path)
+    ex = Extractor(target, src.decode(), string_bytes)
     ex.collect_labels(tu)
 
     # Top-level decls attributed to the censused file, in document order.

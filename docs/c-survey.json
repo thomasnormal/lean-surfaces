@@ -4,19 +4,19 @@
    "not-ingested": 5,
    "not-parsed": 1,
    "passed": 111,
-   "refused-libc": 7,
+   "refused-libc": 49,
    "refused-ub": 3,
-   "refused-unsupported": 91,
+   "refused-unsupported": 49,
    "timeout": 2
   },
   "gcc.c-torture/execute": {
    "not-ingested": 19,
    "not-parsed": 321,
    "oracle-tests-compiler": 1,
-   "passed": 639,
-   "refused-libc": 44,
+   "passed": 644,
+   "refused-libc": 46,
    "refused-ub": 36,
-   "refused-unsupported": 810,
+   "refused-unsupported": 803,
    "timeout": 48
   },
   "gcc.c23-run": {
@@ -33,10 +33,10 @@
   "not-ingested": 25,
   "not-parsed": 350,
   "oracle-tests-compiler": 1,
-  "passed": 751,
-  "refused-libc": 52,
+  "passed": 756,
+  "refused-libc": 96,
   "refused-ub": 40,
-  "refused-unsupported": 945,
+  "refused-unsupported": 896,
   "timeout": 50
  },
  "dynamic_wall_ranking": [
@@ -503,69 +503,6 @@
   },
   {
    "files": [
-    "00056.c",
-    "00125.c",
-    "00131.c",
-    "00132.c",
-    "00154.c",
-    "00156.c",
-    "00157.c",
-    "00158.c",
-    "00159.c",
-    "00160.c",
-    "00161.c",
-    "00163.c",
-    "00164.c",
-    "00165.c",
-    "00166.c",
-    "00167.c",
-    "00168.c",
-    "00169.c",
-    "00171.c",
-    "00172.c",
-    "00173.c",
-    "00175.c",
-    "00177.c",
-    "00181.c",
-    "00183.c",
-    "00184.c",
-    "00185.c",
-    "00186.c",
-    "00188.c",
-    "00190.c",
-    "00191.c",
-    "00192.c",
-    "00193.c",
-    "00196.c",
-    "00197.c",
-    "00199.c",
-    "00201.c",
-    "00202.c",
-    "00203.c",
-    "00206.c",
-    "00211.c",
-    "00215.c",
-    "20000121-1.c",
-    "20001130-2.c",
-    "20010325-1.c",
-    "20030626-1.c",
-    "20030920-1.c",
-    "20111208-1.c",
-    "921007-1.c",
-    "980608-1.c",
-    "991227-1.c",
-    "loop-12.c",
-    "pr111863-1.c",
-    "pr80153.c",
-    "va-arg-21.c",
-    "widechar-3.c"
-   ],
-   "present": 56,
-   "sole": 56,
-   "wall": "unsupported:string literal with escape or non-ASCII spelling"
-  },
-  {
-   "files": [
     "00041.c",
     "00128.c",
     "20000412-2.c",
@@ -620,6 +557,57 @@
    "present": 50,
    "sole": 50,
    "wall": "timeout"
+  },
+  {
+   "files": [
+    "00056.c",
+    "00125.c",
+    "00131.c",
+    "00132.c",
+    "00154.c",
+    "00156.c",
+    "00157.c",
+    "00158.c",
+    "00159.c",
+    "00160.c",
+    "00161.c",
+    "00163.c",
+    "00164.c",
+    "00165.c",
+    "00166.c",
+    "00167.c",
+    "00168.c",
+    "00169.c",
+    "00171.c",
+    "00172.c",
+    "00173.c",
+    "00175.c",
+    "00176.c",
+    "00177.c",
+    "00181.c",
+    "00183.c",
+    "00184.c",
+    "00185.c",
+    "00188.c",
+    "00190.c",
+    "00191.c",
+    "00192.c",
+    "00193.c",
+    "00194.c",
+    "00196.c",
+    "00197.c",
+    "00199.c",
+    "00201.c",
+    "00202.c",
+    "00203.c",
+    "00206.c",
+    "00211.c",
+    "00215.c",
+    "printf-1.c"
+   ],
+   "present": 44,
+   "sole": 44,
+   "wall": "libc-call: printf"
   },
   {
    "files": [
@@ -804,6 +792,78 @@
   },
   {
    "files": [
+    "20000519-1.c",
+    "20071213-1.c",
+    "920726-1.c",
+    "931004-10.c",
+    "931004-12.c",
+    "931004-14.c",
+    "931004-2.c",
+    "931004-4.c",
+    "931004-6.c",
+    "931004-8.c",
+    "980608-1.c",
+    "980716-1.c",
+    "991216-2.c",
+    "gcc/testsuite/gcc.dg/c23-stdarg-9.c",
+    "multi-ix.c",
+    "pr117432.c",
+    "stdarg-2.c",
+    "strct-stdarg-1.c",
+    "strct-varg-1.c",
+    "va-arg-1.c",
+    "va-arg-11.c",
+    "va-arg-13.c",
+    "va-arg-19.c",
+    "va-arg-20.c",
+    "va-arg-21.c",
+    "va-arg-23.c",
+    "va-arg-24.c",
+    "va-arg-8.c",
+    "va-arg-trap-1.c"
+   ],
+   "present": 29,
+   "sole": 29,
+   "wall": "unsupported:more arguments than parameters"
+  },
+  {
+   "files": [
+    "00032.c",
+    "00182.c",
+    "20000412-6.c",
+    "20000801-1.c",
+    "20000910-1.c",
+    "20011126-2.c",
+    "20020503-1.c",
+    "20030606-1.c",
+    "20030920-1.c",
+    "20050502-1.c",
+    "20060910-1.c",
+    "20070201-1.c",
+    "20100827-1.c",
+    "20111208-1.c",
+    "20120808-1.c",
+    "20140828-1.c",
+    "930429-1.c",
+    "931110-2.c",
+    "950714-1.c",
+    "961125-1.c",
+    "990222-1.c",
+    "loop-12.c",
+    "pr116799.c",
+    "pr20601-1.c",
+    "pr27073.c",
+    "pr34176.c",
+    "pr34415.c",
+    "pr54985.c",
+    "pr71631.c"
+   ],
+   "present": 29,
+   "sole": 29,
+   "wall": "unsupported:pointer used as an integer (no ptr\u2194int cast in tier)"
+  },
+  {
+   "files": [
     "00121.c",
     "20001228-1.c",
     "20051021-1.c",
@@ -835,40 +895,6 @@
    "present": 27,
    "sole": 27,
    "wall": "unsequenced-effects"
-  },
-  {
-   "files": [
-    "20000519-1.c",
-    "20071213-1.c",
-    "920726-1.c",
-    "931004-10.c",
-    "931004-12.c",
-    "931004-14.c",
-    "931004-2.c",
-    "931004-4.c",
-    "931004-6.c",
-    "931004-8.c",
-    "980716-1.c",
-    "991216-2.c",
-    "gcc/testsuite/gcc.dg/c23-stdarg-9.c",
-    "multi-ix.c",
-    "pr117432.c",
-    "stdarg-2.c",
-    "strct-stdarg-1.c",
-    "strct-varg-1.c",
-    "va-arg-1.c",
-    "va-arg-11.c",
-    "va-arg-13.c",
-    "va-arg-19.c",
-    "va-arg-20.c",
-    "va-arg-23.c",
-    "va-arg-24.c",
-    "va-arg-8.c",
-    "va-arg-trap-1.c"
-   ],
-   "present": 27,
-   "sole": 27,
-   "wall": "unsupported:more arguments than parameters"
   },
   {
    "files": [
@@ -936,39 +962,6 @@
    "present": 26,
    "sole": 26,
    "wall": "unsupported:declaration outside a block"
-  },
-  {
-   "files": [
-    "00032.c",
-    "00182.c",
-    "20000412-6.c",
-    "20000801-1.c",
-    "20000910-1.c",
-    "20011126-2.c",
-    "20020503-1.c",
-    "20030606-1.c",
-    "20050502-1.c",
-    "20060910-1.c",
-    "20070201-1.c",
-    "20100827-1.c",
-    "20120808-1.c",
-    "20140828-1.c",
-    "930429-1.c",
-    "931110-2.c",
-    "950714-1.c",
-    "961125-1.c",
-    "990222-1.c",
-    "pr116799.c",
-    "pr20601-1.c",
-    "pr27073.c",
-    "pr34176.c",
-    "pr34415.c",
-    "pr54985.c",
-    "pr71631.c"
-   ],
-   "present": 26,
-   "sole": 26,
-   "wall": "unsupported:pointer used as an integer (no ptr\u2194int cast in tier)"
   },
   {
    "files": [
@@ -1423,13 +1416,13 @@
   },
   {
    "files": [
-    "00176.c",
-    "00194.c",
-    "printf-1.c"
+    "00186.c",
+    "20030626-1.c",
+    "20030626-2.c"
    ],
    "present": 3,
    "sole": 3,
-   "wall": "libc-call: printf"
+   "wall": "libc-call: sprintf"
   },
   {
    "files": [
@@ -1779,6 +1772,15 @@
   },
   {
    "files": [
+    "20010325-1.c",
+    "widechar-3.c"
+   ],
+   "present": 2,
+   "sole": 2,
+   "wall": "unsupported:string literal with escape or non-ASCII spelling"
+  },
+  {
+   "files": [
     "gcc/testsuite/gcc.dg/c23-imaginary-constants-1.c",
     "gcc/testsuite/gcc.dg/c23-imaginary-constants-7.c"
    ],
@@ -1942,6 +1944,14 @@
   },
   {
    "files": [
+    "pr111863-1.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "libc-call: __builtin_printf"
+  },
+  {
+   "files": [
     "pr78622.c"
    ],
    "present": 1,
@@ -2011,14 +2021,6 @@
    "present": 1,
    "sole": 1,
    "wall": "libc-call: mempcpy"
-  },
-  {
-   "files": [
-    "20030626-2.c"
-   ],
-   "present": 1,
-   "sole": 1,
-   "wall": "libc-call: sprintf"
   },
   {
    "files": [
@@ -4094,8 +4096,8 @@
   }
  ],
  "manifest_hash": "1de1a60c299d5bb51dae7ca001b0a008010cad0b25670cde2090c08bfc1a84ce",
- "measured_at_utc": "2026-11-12T10:57:34Z",
- "measured_commit": "4bf37d4f132d2808ef37c4ee90e565ca88cc53b1",
+ "measured_at_utc": "2026-11-12T11:49:19Z",
+ "measured_commit": "d10226b6728937472c1a1a07459d39cb0768fe6a",
  "pin": null,
  "rows": [
   {
@@ -4697,8 +4699,8 @@
   },
   {
    "corpus": "c-testsuite/single-exec",
-   "detail": "string literal with escape or non-ASCII spelling",
-   "dynamic_wall": "unsupported:string literal with escape or non-ASCII spelling",
+   "detail": "printf",
+   "dynamic_wall": "libc-call: printf",
    "manifest_status": "parsed",
    "name": "00056.c",
    "sha256": "00c4a038a3b12b353e5115c122b136eb175a7dc1dba5d36bec5ad6878c16f4ae",
@@ -4707,7 +4709,7 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "refused-libc"
   },
   {
    "corpus": "c-testsuite/single-exec",
@@ -5447,8 +5449,8 @@
   },
   {
    "corpus": "c-testsuite/single-exec",
-   "detail": "string literal with escape or non-ASCII spelling",
-   "dynamic_wall": "unsupported:string literal with escape or non-ASCII spelling",
+   "detail": "printf",
+   "dynamic_wall": "libc-call: printf",
    "manifest_status": "parsed",
    "name": "00125.c",
    "sha256": "b3d7c7a17e8c9d4e0c15a435f32e0fe288bd154f1b250bcb323ac227a59245f0",
@@ -5457,7 +5459,7 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "refused-libc"
   },
   {
    "corpus": "c-testsuite/single-exec",
@@ -5515,8 +5517,8 @@
   },
   {
    "corpus": "c-testsuite/single-exec",
-   "detail": "string literal with escape or non-ASCII spelling",
-   "dynamic_wall": "unsupported:string literal with escape or non-ASCII spelling",
+   "detail": "printf",
+   "dynamic_wall": "libc-call: printf",
    "manifest_status": "parsed",
    "name": "00131.c",
    "sha256": "213dcb02fe9c196840dd91ea3eb2c81ca13d8b3a216414cde713dfd02eb879be",
@@ -5525,12 +5527,12 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "refused-libc"
   },
   {
    "corpus": "c-testsuite/single-exec",
-   "detail": "string literal with escape or non-ASCII spelling",
-   "dynamic_wall": "unsupported:string literal with escape or non-ASCII spelling",
+   "detail": "printf",
+   "dynamic_wall": "libc-call: printf",
    "manifest_status": "parsed",
    "name": "00132.c",
    "sha256": "6baff8442e410d6bd98e6dc4f1ff0b61db0fab15ef2ec7ae51b6ab777b32bfb9",
@@ -5539,7 +5541,7 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "refused-libc"
   },
   {
    "corpus": "c-testsuite/single-exec",
@@ -5779,8 +5781,8 @@
   },
   {
    "corpus": "c-testsuite/single-exec",
-   "detail": "string literal with escape or non-ASCII spelling",
-   "dynamic_wall": "unsupported:string literal with escape or non-ASCII spelling",
+   "detail": "printf",
+   "dynamic_wall": "libc-call: printf",
    "manifest_status": "parsed",
    "name": "00154.c",
    "sha256": "bf05a27879ccb6e512501c95c368e2f3f2b4bcb96aeccfe3f6a57847385e6369",
@@ -5789,7 +5791,7 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "refused-libc"
   },
   {
    "corpus": "c-testsuite/single-exec",
@@ -5803,8 +5805,8 @@
   },
   {
    "corpus": "c-testsuite/single-exec",
-   "detail": "string literal with escape or non-ASCII spelling",
-   "dynamic_wall": "unsupported:string literal with escape or non-ASCII spelling",
+   "detail": "printf",
+   "dynamic_wall": "libc-call: printf",
    "manifest_status": "parsed",
    "name": "00156.c",
    "sha256": "54ab4ae99d7d1f7afa2bdacf9296012a7776cc000ad6e4877f29ef32075a820d",
@@ -5813,12 +5815,12 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "refused-libc"
   },
   {
    "corpus": "c-testsuite/single-exec",
-   "detail": "string literal with escape or non-ASCII spelling",
-   "dynamic_wall": "unsupported:string literal with escape or non-ASCII spelling",
+   "detail": "printf",
+   "dynamic_wall": "libc-call: printf",
    "manifest_status": "parsed",
    "name": "00157.c",
    "sha256": "998a4efb891cc3fd13762abae41f1de8ce293081608c0638c2960274ae74c0fa",
@@ -5827,12 +5829,12 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "refused-libc"
   },
   {
    "corpus": "c-testsuite/single-exec",
-   "detail": "string literal with escape or non-ASCII spelling",
-   "dynamic_wall": "unsupported:string literal with escape or non-ASCII spelling",
+   "detail": "printf",
+   "dynamic_wall": "libc-call: printf",
    "manifest_status": "parsed",
    "name": "00158.c",
    "sha256": "abf44e80a4a0cad8d2214cc1cdb8fe1a550755ddde8c729bd667ac2f24cdc5b2",
@@ -5841,12 +5843,12 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "refused-libc"
   },
   {
    "corpus": "c-testsuite/single-exec",
-   "detail": "string literal with escape or non-ASCII spelling",
-   "dynamic_wall": "unsupported:string literal with escape or non-ASCII spelling",
+   "detail": "printf",
+   "dynamic_wall": "libc-call: printf",
    "manifest_status": "parsed",
    "name": "00159.c",
    "sha256": "3a2cde505ed84255947fa24a6df17bc03636f7af215505eebc92ca6a7c4212c4",
@@ -5855,12 +5857,12 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "refused-libc"
   },
   {
    "corpus": "c-testsuite/single-exec",
-   "detail": "string literal with escape or non-ASCII spelling",
-   "dynamic_wall": "unsupported:string literal with escape or non-ASCII spelling",
+   "detail": "printf",
+   "dynamic_wall": "libc-call: printf",
    "manifest_status": "parsed",
    "name": "00160.c",
    "sha256": "12c491bee3cbe26de274402a5813a664be5d32f5ad82147d0d9eb71cc609f447",
@@ -5869,12 +5871,12 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "refused-libc"
   },
   {
    "corpus": "c-testsuite/single-exec",
-   "detail": "string literal with escape or non-ASCII spelling",
-   "dynamic_wall": "unsupported:string literal with escape or non-ASCII spelling",
+   "detail": "printf",
+   "dynamic_wall": "libc-call: printf",
    "manifest_status": "parsed",
    "name": "00161.c",
    "sha256": "f330014c7302b5d7e30b7ba902dc8130dde283d77d94e4a5df5dffb0901fd73d",
@@ -5883,7 +5885,7 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "refused-libc"
   },
   {
    "corpus": "c-testsuite/single-exec",
@@ -5897,8 +5899,8 @@
   },
   {
    "corpus": "c-testsuite/single-exec",
-   "detail": "string literal with escape or non-ASCII spelling",
-   "dynamic_wall": "unsupported:string literal with escape or non-ASCII spelling",
+   "detail": "printf",
+   "dynamic_wall": "libc-call: printf",
    "manifest_status": "parsed",
    "name": "00163.c",
    "sha256": "f56173b08aa78d2ce2c8753f9ca89542ced73a831a5fb3343cf23280b3f6a3f5",
@@ -5907,12 +5909,12 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "refused-libc"
   },
   {
    "corpus": "c-testsuite/single-exec",
-   "detail": "string literal with escape or non-ASCII spelling",
-   "dynamic_wall": "unsupported:string literal with escape or non-ASCII spelling",
+   "detail": "printf",
+   "dynamic_wall": "libc-call: printf",
    "manifest_status": "parsed",
    "name": "00164.c",
    "sha256": "1a7a3d700f1509890f6175aaad92ff4c923ab401a0f2619ef3727ced7d8497dd",
@@ -5921,12 +5923,12 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "refused-libc"
   },
   {
    "corpus": "c-testsuite/single-exec",
-   "detail": "string literal with escape or non-ASCII spelling",
-   "dynamic_wall": "unsupported:string literal with escape or non-ASCII spelling",
+   "detail": "printf",
+   "dynamic_wall": "libc-call: printf",
    "manifest_status": "parsed",
    "name": "00165.c",
    "sha256": "9118968eeccc74e136784555281ffe5eea6f6c615a10c88d4e0428a871afe507",
@@ -5935,12 +5937,12 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "refused-libc"
   },
   {
    "corpus": "c-testsuite/single-exec",
-   "detail": "string literal with escape or non-ASCII spelling",
-   "dynamic_wall": "unsupported:string literal with escape or non-ASCII spelling",
+   "detail": "printf",
+   "dynamic_wall": "libc-call: printf",
    "manifest_status": "parsed",
    "name": "00166.c",
    "sha256": "82a17c717f3d85d66c4b7b5f73dff4a4544a8303431345fece4dd86f24011305",
@@ -5949,12 +5951,12 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "refused-libc"
   },
   {
    "corpus": "c-testsuite/single-exec",
-   "detail": "string literal with escape or non-ASCII spelling",
-   "dynamic_wall": "unsupported:string literal with escape or non-ASCII spelling",
+   "detail": "printf",
+   "dynamic_wall": "libc-call: printf",
    "manifest_status": "parsed",
    "name": "00167.c",
    "sha256": "4e8838ecb463243d245df0db6c8851081be8ffc50858a04cbbe4e1852a90ba4c",
@@ -5963,12 +5965,12 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "refused-libc"
   },
   {
    "corpus": "c-testsuite/single-exec",
-   "detail": "string literal with escape or non-ASCII spelling",
-   "dynamic_wall": "unsupported:string literal with escape or non-ASCII spelling",
+   "detail": "printf",
+   "dynamic_wall": "libc-call: printf",
    "manifest_status": "parsed",
    "name": "00168.c",
    "sha256": "f222fef343f1d0f86da59e1da77bd7b93b3dcde04cc4d1d73195cf0df65ad4f2",
@@ -5977,12 +5979,12 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "refused-libc"
   },
   {
    "corpus": "c-testsuite/single-exec",
-   "detail": "string literal with escape or non-ASCII spelling",
-   "dynamic_wall": "unsupported:string literal with escape or non-ASCII spelling",
+   "detail": "printf",
+   "dynamic_wall": "libc-call: printf",
    "manifest_status": "parsed",
    "name": "00169.c",
    "sha256": "69cfb00323c7ab414844a6e6dd5c4262e5175a8d4b73d1ac2dbdb9385b93b90d",
@@ -5991,7 +5993,7 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "refused-libc"
   },
   {
    "corpus": "c-testsuite/single-exec",
@@ -6009,8 +6011,8 @@
   },
   {
    "corpus": "c-testsuite/single-exec",
-   "detail": "string literal with escape or non-ASCII spelling",
-   "dynamic_wall": "unsupported:string literal with escape or non-ASCII spelling",
+   "detail": "printf",
+   "dynamic_wall": "libc-call: printf",
    "manifest_status": "parsed",
    "name": "00171.c",
    "sha256": "d3e31f6c40eb64eabcabf795cb470332fd085dc31eddef77c83586e3d4e46201",
@@ -6019,12 +6021,12 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "refused-libc"
   },
   {
    "corpus": "c-testsuite/single-exec",
-   "detail": "string literal with escape or non-ASCII spelling",
-   "dynamic_wall": "unsupported:string literal with escape or non-ASCII spelling",
+   "detail": "printf",
+   "dynamic_wall": "libc-call: printf",
    "manifest_status": "parsed",
    "name": "00172.c",
    "sha256": "5cdbe48598d505f93a3b16a164bb4f5350c52019642bf08688517f696998d49e",
@@ -6033,12 +6035,12 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "refused-libc"
   },
   {
    "corpus": "c-testsuite/single-exec",
-   "detail": "string literal with escape or non-ASCII spelling",
-   "dynamic_wall": "unsupported:string literal with escape or non-ASCII spelling",
+   "detail": "printf",
+   "dynamic_wall": "libc-call: printf",
    "manifest_status": "parsed",
    "name": "00173.c",
    "sha256": "e762670518c9ae8a9e4cc594e51b1fe0d5a6b90b0036d2ab91ace347d5bfa446",
@@ -6047,7 +6049,7 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "refused-libc"
   },
   {
    "corpus": "c-testsuite/single-exec",
@@ -6067,8 +6069,8 @@
   },
   {
    "corpus": "c-testsuite/single-exec",
-   "detail": "string literal with escape or non-ASCII spelling",
-   "dynamic_wall": "unsupported:string literal with escape or non-ASCII spelling",
+   "detail": "printf",
+   "dynamic_wall": "libc-call: printf",
    "manifest_status": "parsed",
    "name": "00175.c",
    "sha256": "9140671105335599b144512673237a8ce1faf1e251840708a8c1999c9601dcee",
@@ -6080,7 +6082,7 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "refused-libc"
   },
   {
    "corpus": "c-testsuite/single-exec",
@@ -6098,8 +6100,8 @@
   },
   {
    "corpus": "c-testsuite/single-exec",
-   "detail": "string literal with escape or non-ASCII spelling",
-   "dynamic_wall": "unsupported:string literal with escape or non-ASCII spelling",
+   "detail": "printf",
+   "dynamic_wall": "libc-call: printf",
    "manifest_status": "parsed",
    "name": "00177.c",
    "sha256": "f474a1ac98c29fdf810538b5593c91496f8aeb45c17af641c3feeb7cd3634b61",
@@ -6108,7 +6110,7 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "refused-libc"
   },
   {
    "corpus": "c-testsuite/single-exec",
@@ -6154,8 +6156,8 @@
   },
   {
    "corpus": "c-testsuite/single-exec",
-   "detail": "string literal with escape or non-ASCII spelling",
-   "dynamic_wall": "unsupported:string literal with escape or non-ASCII spelling",
+   "detail": "printf",
+   "dynamic_wall": "libc-call: printf",
    "manifest_status": "parsed",
    "name": "00181.c",
    "sha256": "3ac82fb82f9af999590e8c0d15094126d4f7ec132d7f2c7c1e714278496c28e7",
@@ -6164,7 +6166,7 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "refused-libc"
   },
   {
    "corpus": "c-testsuite/single-exec",
@@ -6182,8 +6184,8 @@
   },
   {
    "corpus": "c-testsuite/single-exec",
-   "detail": "string literal with escape or non-ASCII spelling",
-   "dynamic_wall": "unsupported:string literal with escape or non-ASCII spelling",
+   "detail": "printf",
+   "dynamic_wall": "libc-call: printf",
    "manifest_status": "parsed",
    "name": "00183.c",
    "sha256": "03d7d13d543951d43a945546cfdbee4589a96fca840c76780e71bfb3e2d60c0d",
@@ -6192,12 +6194,12 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "refused-libc"
   },
   {
    "corpus": "c-testsuite/single-exec",
-   "detail": "string literal with escape or non-ASCII spelling",
-   "dynamic_wall": "unsupported:string literal with escape or non-ASCII spelling",
+   "detail": "printf",
+   "dynamic_wall": "libc-call: printf",
    "manifest_status": "parsed",
    "name": "00184.c",
    "sha256": "706f51eee7da050fdb28acacb269f3b0a20aa78d6270b4bf365d18e5d10d8b98",
@@ -6206,12 +6208,12 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "refused-libc"
   },
   {
    "corpus": "c-testsuite/single-exec",
-   "detail": "string literal with escape or non-ASCII spelling",
-   "dynamic_wall": "unsupported:string literal with escape or non-ASCII spelling",
+   "detail": "printf",
+   "dynamic_wall": "libc-call: printf",
    "manifest_status": "parsed",
    "name": "00185.c",
    "sha256": "e5fe44c73d1daafdcae71aca64a3e420df631063d9e1863338f8441eadfd7664",
@@ -6220,12 +6222,12 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "refused-libc"
   },
   {
    "corpus": "c-testsuite/single-exec",
-   "detail": "string literal with escape or non-ASCII spelling",
-   "dynamic_wall": "unsupported:string literal with escape or non-ASCII spelling",
+   "detail": "sprintf",
+   "dynamic_wall": "libc-call: sprintf",
    "manifest_status": "parsed",
    "name": "00186.c",
    "sha256": "313641d23d56c9837e9b93096521374a6de5a2a9a08053090527808fdd5fb130",
@@ -6234,7 +6236,7 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "refused-libc"
   },
   {
    "corpus": "c-testsuite/single-exec",
@@ -6252,8 +6254,8 @@
   },
   {
    "corpus": "c-testsuite/single-exec",
-   "detail": "string literal with escape or non-ASCII spelling",
-   "dynamic_wall": "unsupported:string literal with escape or non-ASCII spelling",
+   "detail": "printf",
+   "dynamic_wall": "libc-call: printf",
    "manifest_status": "parsed",
    "name": "00188.c",
    "sha256": "1277cb2b5213a471d003fa2d04452501de72034914bcf081b2178acd0b92b7a7",
@@ -6262,7 +6264,7 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "refused-libc"
   },
   {
    "corpus": "c-testsuite/single-exec",
@@ -6280,8 +6282,8 @@
   },
   {
    "corpus": "c-testsuite/single-exec",
-   "detail": "string literal with escape or non-ASCII spelling",
-   "dynamic_wall": "unsupported:string literal with escape or non-ASCII spelling",
+   "detail": "printf",
+   "dynamic_wall": "libc-call: printf",
    "manifest_status": "parsed",
    "name": "00190.c",
    "sha256": "81c9704a64902514cdbc4a93862c1a0d263b70a977bd2065e2a155e04426462f",
@@ -6290,12 +6292,12 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "refused-libc"
   },
   {
    "corpus": "c-testsuite/single-exec",
-   "detail": "string literal with escape or non-ASCII spelling",
-   "dynamic_wall": "unsupported:string literal with escape or non-ASCII spelling",
+   "detail": "printf",
+   "dynamic_wall": "libc-call: printf",
    "manifest_status": "parsed",
    "name": "00191.c",
    "sha256": "833b3339452c7a7300fdaebd68f4ea08d0d58aae7ab2667ef273d2fdb02ef1b3",
@@ -6304,12 +6306,12 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "refused-libc"
   },
   {
    "corpus": "c-testsuite/single-exec",
-   "detail": "string literal with escape or non-ASCII spelling",
-   "dynamic_wall": "unsupported:string literal with escape or non-ASCII spelling",
+   "detail": "printf",
+   "dynamic_wall": "libc-call: printf",
    "manifest_status": "parsed",
    "name": "00192.c",
    "sha256": "88e1581109fa61483e3da940ee731df2da124d50a99fd5abcdc4057c9d3dde08",
@@ -6318,12 +6320,12 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "refused-libc"
   },
   {
    "corpus": "c-testsuite/single-exec",
-   "detail": "string literal with escape or non-ASCII spelling",
-   "dynamic_wall": "unsupported:string literal with escape or non-ASCII spelling",
+   "detail": "printf",
+   "dynamic_wall": "libc-call: printf",
    "manifest_status": "parsed",
    "name": "00193.c",
    "sha256": "b5ee395e0fbddc3e95750fd6a7e9ee240ef46334dc7f03f693a4e41b5242a56d",
@@ -6332,7 +6334,7 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "refused-libc"
   },
   {
    "corpus": "c-testsuite/single-exec",
@@ -6364,8 +6366,8 @@
   },
   {
    "corpus": "c-testsuite/single-exec",
-   "detail": "string literal with escape or non-ASCII spelling",
-   "dynamic_wall": "unsupported:string literal with escape or non-ASCII spelling",
+   "detail": "printf",
+   "dynamic_wall": "libc-call: printf",
    "manifest_status": "parsed",
    "name": "00196.c",
    "sha256": "36fa4c77a0cbb5055d92def9affaba99d90611eefd135628fff16577a381bda2",
@@ -6374,12 +6376,12 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "refused-libc"
   },
   {
    "corpus": "c-testsuite/single-exec",
-   "detail": "string literal with escape or non-ASCII spelling",
-   "dynamic_wall": "unsupported:string literal with escape or non-ASCII spelling",
+   "detail": "printf",
+   "dynamic_wall": "libc-call: printf",
    "manifest_status": "parsed",
    "name": "00197.c",
    "sha256": "681552c8a2b0f917a3fc10ea0ac32fe7808b0e03a93ba9ef4ca6c547ce9c5e0f",
@@ -6388,7 +6390,7 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "refused-libc"
   },
   {
    "corpus": "c-testsuite/single-exec",
@@ -6406,8 +6408,8 @@
   },
   {
    "corpus": "c-testsuite/single-exec",
-   "detail": "string literal with escape or non-ASCII spelling",
-   "dynamic_wall": "unsupported:string literal with escape or non-ASCII spelling",
+   "detail": "printf",
+   "dynamic_wall": "libc-call: printf",
    "manifest_status": "parsed",
    "name": "00199.c",
    "sha256": "f6bd6978742eccc62d87eab0458c2c47dfcc4cc5e7b411017d65961fc64c4185",
@@ -6416,7 +6418,7 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "refused-libc"
   },
   {
    "corpus": "c-testsuite/single-exec",
@@ -6434,8 +6436,8 @@
   },
   {
    "corpus": "c-testsuite/single-exec",
-   "detail": "string literal with escape or non-ASCII spelling",
-   "dynamic_wall": "unsupported:string literal with escape or non-ASCII spelling",
+   "detail": "printf",
+   "dynamic_wall": "libc-call: printf",
    "manifest_status": "parsed",
    "name": "00201.c",
    "sha256": "935e90c432c89b4503281e9755ae71a3c272c529ab05be9ba335a83b239bf84f",
@@ -6444,12 +6446,12 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "refused-libc"
   },
   {
    "corpus": "c-testsuite/single-exec",
-   "detail": "string literal with escape or non-ASCII spelling",
-   "dynamic_wall": "unsupported:string literal with escape or non-ASCII spelling",
+   "detail": "printf",
+   "dynamic_wall": "libc-call: printf",
    "manifest_status": "parsed",
    "name": "00202.c",
    "sha256": "fd59bba67fcf1338a92826076779863807cdd16561655fb0747716b507ec2812",
@@ -6458,12 +6460,12 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "refused-libc"
   },
   {
    "corpus": "c-testsuite/single-exec",
-   "detail": "string literal with escape or non-ASCII spelling",
-   "dynamic_wall": "unsupported:string literal with escape or non-ASCII spelling",
+   "detail": "printf",
+   "dynamic_wall": "libc-call: printf",
    "manifest_status": "parsed",
    "name": "00203.c",
    "sha256": "67e9ea6d27a1879495dba564b3a452ccf8a2eb74fc55b95a8444abc4f4bfc862",
@@ -6472,7 +6474,7 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "refused-libc"
   },
   {
    "corpus": "c-testsuite/single-exec",
@@ -6507,8 +6509,8 @@
   },
   {
    "corpus": "c-testsuite/single-exec",
-   "detail": "string literal with escape or non-ASCII spelling",
-   "dynamic_wall": "unsupported:string literal with escape or non-ASCII spelling",
+   "detail": "printf",
+   "dynamic_wall": "libc-call: printf",
    "manifest_status": "parsed",
    "name": "00206.c",
    "sha256": "ffe817a4f1b8e449cc44a792c9bc56d7444b1a43ae458a172771b052dd504f7f",
@@ -6517,7 +6519,7 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "refused-libc"
   },
   {
    "corpus": "c-testsuite/single-exec",
@@ -6574,8 +6576,8 @@
   },
   {
    "corpus": "c-testsuite/single-exec",
-   "detail": "string literal with escape or non-ASCII spelling",
-   "dynamic_wall": "unsupported:string literal with escape or non-ASCII spelling",
+   "detail": "printf",
+   "dynamic_wall": "libc-call: printf",
    "manifest_status": "parsed",
    "name": "00211.c",
    "sha256": "4a9e8c5692db416b17cc78d755f16d3eae8c177a06584fc4aa8bd5a17127c39f",
@@ -6584,7 +6586,7 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "refused-libc"
   },
   {
    "corpus": "c-testsuite/single-exec",
@@ -6633,8 +6635,8 @@
   },
   {
    "corpus": "c-testsuite/single-exec",
-   "detail": "string literal with escape or non-ASCII spelling",
-   "dynamic_wall": "unsupported:string literal with escape or non-ASCII spelling",
+   "detail": "printf",
+   "dynamic_wall": "libc-call: printf",
    "manifest_status": "parsed",
    "name": "00215.c",
    "sha256": "e4a5fb421df978c45734fcda23c74233a72bcecc9df977e6556f55d9a2f4583c",
@@ -6643,7 +6645,7 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "refused-libc"
   },
   {
    "corpus": "c-testsuite/single-exec",
@@ -6741,8 +6743,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "string literal with escape or non-ASCII spelling",
-   "dynamic_wall": "unsupported:string literal with escape or non-ASCII spelling",
+   "detail": "",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "20000121-1.c",
    "sha256": "5b93de04401f74c32ca0163f36e2d0c2c517e7fe3b4f0588b7c4f6258ec6a835",
@@ -6750,7 +6752,7 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -7639,8 +7641,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "string literal with escape or non-ASCII spelling",
-   "dynamic_wall": "unsupported:string literal with escape or non-ASCII spelling",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "20001130-2.c",
    "sha256": "9a2999d2605dab5e7d7ff9530d141b5fe96d5e408c9d7b4724908ed2ec3cdffd",
@@ -7648,7 +7650,7 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -9351,8 +9353,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "string literal with escape or non-ASCII spelling",
-   "dynamic_wall": "unsupported:string literal with escape or non-ASCII spelling",
+   "detail": "sprintf",
+   "dynamic_wall": "libc-call: sprintf",
    "manifest_status": "parsed",
    "name": "20030626-1.c",
    "sha256": "54d8cd932e3da3af64d53090514a9f615a0ea3eef956a98902a218a6ec5daf1f",
@@ -9361,7 +9363,7 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "refused-libc"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -9551,8 +9553,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "string literal with escape or non-ASCII spelling",
-   "dynamic_wall": "unsupported:string literal with escape or non-ASCII spelling",
+   "detail": "pointer used as an integer (no ptr\u2194int cast in tier)",
+   "dynamic_wall": "unsupported:pointer used as an integer (no ptr\u2194int cast in tier)",
    "manifest_status": "parsed",
    "name": "20030920-1.c",
    "sha256": "c8df090a4028952f82cb0c3ce035b69bea04a4e89599feb15271b4eec1a52f0a",
@@ -11632,8 +11634,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "string literal with escape or non-ASCII spelling",
-   "dynamic_wall": "unsupported:string literal with escape or non-ASCII spelling",
+   "detail": "pointer used as an integer (no ptr\u2194int cast in tier)",
+   "dynamic_wall": "unsupported:pointer used as an integer (no ptr\u2194int cast in tier)",
    "manifest_status": "parsed",
    "name": "20111208-1.c",
    "sha256": "92723158d592c7c9b386233062c8faede652bc2a9189b6af138ff322ae6fc5ce",
@@ -12716,8 +12718,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "string literal with escape or non-ASCII spelling",
-   "dynamic_wall": "unsupported:string literal with escape or non-ASCII spelling",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "921007-1.c",
    "sha256": "a5d368d43255b295a41f89061557d5f9edf7125baab0f4805dd952c98048fb5b",
@@ -12726,7 +12728,7 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -14743,8 +14745,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "string literal with escape or non-ASCII spelling",
-   "dynamic_wall": "unsupported:string literal with escape or non-ASCII spelling",
+   "detail": "more arguments than parameters",
+   "dynamic_wall": "unsupported:more arguments than parameters",
    "manifest_status": "parsed",
    "name": "980608-1.c",
    "sha256": "588cf65bb572c64a84b3dcd18c3c078973b97cb6365308c146077c6623dd7412",
@@ -15382,8 +15384,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "string literal with escape or non-ASCII spelling",
-   "dynamic_wall": "unsupported:string literal with escape or non-ASCII spelling",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "991227-1.c",
    "sha256": "7d4eaa0209fc478b2cb84ae4c54bc94c81959c4be3af0fdb167ee65a358eed9c",
@@ -15391,7 +15393,7 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -20158,8 +20160,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "string literal with escape or non-ASCII spelling",
-   "dynamic_wall": "unsupported:string literal with escape or non-ASCII spelling",
+   "detail": "pointer used as an integer (no ptr\u2194int cast in tier)",
+   "dynamic_wall": "unsupported:pointer used as an integer (no ptr\u2194int cast in tier)",
    "manifest_status": "parsed",
    "name": "loop-12.c",
    "sha256": "635996f6b8c74d18d9d72e801ac39dfda7c3c93d4c40e2aef8c329bb5f4da644",
@@ -21559,8 +21561,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "string literal with escape or non-ASCII spelling",
-   "dynamic_wall": "unsupported:string literal with escape or non-ASCII spelling",
+   "detail": "__builtin_printf",
+   "dynamic_wall": "libc-call: __builtin_printf",
    "manifest_status": "parsed",
    "name": "pr111863-1.c",
    "sha256": "00dff7816a81b80f8c11d196f9c46352bffa362847c2658147b55a65b7bd1d98",
@@ -21569,7 +21571,7 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "refused-libc"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -27168,8 +27170,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "string literal with escape or non-ASCII spelling",
-   "dynamic_wall": "unsupported:string literal with escape or non-ASCII spelling",
+   "detail": "",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "pr80153.c",
    "sha256": "154f48197e7d777dab2c8347e7ffa399cc0b1643b5430454c59d754981f331b7",
@@ -27178,7 +27180,7 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -29598,8 +29600,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "string literal with escape or non-ASCII spelling",
-   "dynamic_wall": "unsupported:string literal with escape or non-ASCII spelling",
+   "detail": "more arguments than parameters",
+   "dynamic_wall": "unsupported:more arguments than parameters",
    "manifest_status": "parsed",
    "name": "va-arg-21.c",
    "sha256": "dedc44188f3fd1c561cd63e1d964c7f0beb5c077b4802c961b0eb7f4a6c7fbd9",

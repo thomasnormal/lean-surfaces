@@ -2,6 +2,7 @@
 """Generate the public REAL-DESIGNS admission table from pinned receipts."""
 
 from pathlib import Path
+import argparse
 
 ROOT = Path(__file__).resolve().parents[2]
 OUT = ROOT / "docs" / "sv-real-designs.md"
@@ -32,5 +33,16 @@ lines = [
 for row in ROWS:
     lines.append("| `%s` | %s | %s | %s | `%s` |" % row)
 lines += ["", "The three OpenTitan rows use the F1-retention census in `docs/sv-frontier.md`; CV32E40P and the RISC-V scouting rows use `Examples/system-verilog/cores/README.md` and `docs/cv32e40p-census.json`. The table is an admission census, not a proof claim.", ""]
-OUT.write_text("\n".join(lines))
-print(OUT)
+generated = "\n".join(lines)
+parser = argparse.ArgumentParser(description=__doc__)
+parser.add_argument("--check", action="store_true",
+                    help="verify the checked-in page is exactly generated")
+args = parser.parse_args()
+if args.check:
+    current = OUT.read_text() if OUT.exists() else None
+    if current != generated:
+        raise SystemExit(f"generated page is stale: {OUT}")
+    print(f"checked {OUT}")
+else:
+    OUT.write_text(generated)
+    print(OUT)

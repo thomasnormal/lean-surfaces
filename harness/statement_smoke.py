@@ -29,6 +29,18 @@ TARGETS = (
     ("Examples/python/bench_bisect/bench_bisect.py", "bisect_left"),
 )
 
+def validate_registry(rows):
+    """Validate the structured statement-domain registry without parsing Lean."""
+    if len({(f, n) for f, n in TARGETS}) != len(TARGETS):
+        raise SystemExit("statement_smoke: duplicate statement registry entry")
+    for row in rows:
+        if not row.get("args"):
+            raise SystemExit("statement_smoke: empty sampled domain for %s::%s" %
+                             (row["file"], row["function"]))
+        if row.get("expect") != "match":
+            raise SystemExit("statement_smoke: non-matching oracle row for %s::%s" %
+                             (row["file"], row["function"]))
+
 
 def smoke_cases():
     cases = json.loads(CASES.read_text(encoding="utf-8"))
@@ -43,10 +55,16 @@ def smoke_cases():
         case["expect"] = "match"
         case["note"] = "statement smoke domain sampled from the proof example"
         out.append(case)
+    validate_registry(out)
     return out
 
 
 def main():
+    if "--self-test" in sys.argv:
+        rows = smoke_cases()
+        print("statement_smoke: registry self-test passed (%d statements, %d samples)" %
+              (len(rows), sum(len(row["args"]) for row in rows)))
+        return 0
     path = ROOT / "harness" / ".statement_smoke_cases.json"
     path.write_text(json.dumps(smoke_cases(), indent=2) + "\n", encoding="utf-8")
     try:

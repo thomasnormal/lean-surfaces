@@ -123,8 +123,8 @@
   "refused-unsupported: unsequenced side effects in binary operands": 1,
   "timeout": 4
  },
- "measured_at_utc": "2026-11-12T19:14:55Z",
- "measured_commit": "d6eac44b0487e6ad663f3ab272d1cdd9e2a843fa",
+ "measured_at_utc": "2026-11-12T20:33:01Z",
+ "measured_commit": "75d619457aa147114e935eeea0d3d228c0241f1a",
  "note": "Written by harness/c_torture_score.py --emit, from a `lake exe c-torture-run` log.  The pin is docs/c-torture-pin.json.  This file is the tier's \u00a79.0 number as a second artifact: correcting the instrument corrects the next run, and the published figure is corrected where it was published.",
  "oracle_tests_compiler_tests": [
   "20021127-1.c"

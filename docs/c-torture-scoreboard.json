@@ -3,19 +3,18 @@
  "counts": {
   "failed": 0,
   "not-fetched": 0,
-  "not-ingested": 1,
+  "not-ingested": 0,
   "not-parsed": 30,
   "oracle-tests-compiler": 1,
-  "passed": 153,
-  "refused-libc": 4,
+  "passed": 157,
+  "refused-libc": 3,
   "refused-ub": 9,
-  "refused-unsupported": 99,
+  "refused-unsupported": 96,
   "runner-error": 0,
-  "timeout": 3
+  "timeout": 4
  },
  "failed_tests": [],
  "first_refusal_histogram": {
-  "not-ingested: envelope: TypedefDecl: ElaboratedType: missing 'inner'": 1,
   "not-parsed: clang rejected it under the pinned profile": 1,
   "not-parsed: src/20000112-1.c:7:17: error: unknown type name 'fmt'": 1,
   "not-parsed: src/20000314-3.c:24:10: error: unknown type name 'name'": 1,
@@ -49,7 +48,6 @@
   "oracle-tests-compiler: declare-call-define of `llabs` (\u00a77.24.6.1): the file declares `long long llabs (long long);`, calls `llabs(-1)`, and defines `long long llabs (long long b) { abort (); }`. It passes only under builtin recognition, which is a compiler optimisation and not a rule of C. Modelling the <stdlib.h> builtins by name to satisfy it would adopt GCC's optimiser behaviour as if it were C semantics.": 1,
   "refused-libc: __builtin_expect": 1,
   "refused-libc: malloc": 1,
-  "refused-libc: sprintf": 1,
   "refused-libc: strchr": 1,
   "refused-ub: LeanModels.C.C23.MemFault.indetAutomatic 1 0": 1,
   "refused-ub: LeanModels.C.C23.MemFault.nonValueRepresentation 0 0": 1,
@@ -65,13 +63,14 @@
   "refused-unsupported: castKind 'IntegralToPointer'": 3,
   "refused-unsupported: castKind 'PointerToIntegral'": 1,
   "refused-unsupported: extern object 'aa' has no definition in the translation unit": 1,
-  "refused-unsupported: fewer arguments than parameters": 7,
   "refused-unsupported: floating literal (floats are a named decision)": 2,
   "refused-unsupported: indirect call through a non-FunctionDecl reference": 1,
   "refused-unsupported: integer-to-floating conversion (floats: a named decision)": 1,
   "refused-unsupported: more arguments than parameters": 1,
   "refused-unsupported: no definition for 'main'": 3,
+  "refused-unsupported: no layout for compound literal type 'A'": 1,
   "refused-unsupported: no layout for declared type 'A'": 1,
+  "refused-unsupported: no layout for declared type 'DB_TXNLIST'": 1,
   "refused-unsupported: no layout for declared type 'Data[4]'": 1,
   "refused-unsupported: no layout for declared type 'RenderInfo'": 1,
   "refused-unsupported: no layout for declared type '_Complex double'": 1,
@@ -96,7 +95,7 @@
   "refused-unsupported: no layout for parameter type 'const struct b *restrict'": 1,
   "refused-unsupported: not an integer type: 'int *'": 1,
   "refused-unsupported: not an lvalue: PredefinedExpr": 1,
-  "refused-unsupported: operator '-' on two pointers": 1,
+  "refused-unsupported: operator '-' on two pointers": 2,
   "refused-unsupported: out of tier: AddrLabelExpr": 1,
   "refused-unsupported: out of tier: StmtExpr": 4,
   "refused-unsupported: pointer bit-cast across incompatible effective types": 1,
@@ -121,16 +120,17 @@
   "refused-unsupported: unbound declaration 'id38' (name 's')": 1,
   "refused-unsupported: unbound declaration 'id42' (name 'y')": 1,
   "refused-unsupported: unbound declaration 'id43' (name 'y')": 1,
+  "refused-unsupported: unbound declaration 'id487' (name 'MyPte')": 1,
   "refused-unsupported: unknown enum declaration 'id41' (name 'N')": 1,
   "refused-unsupported: unsequenced side effects in binary operands": 1,
-  "timeout": 3
+  "timeout": 4
  },
- "note": "Written by harness/c_torture_score.py --emit, from a `lake exe c-torture-run` log.  The pin is docs/c-torture-pin.json.  This file is the tier's \u00a79.0 number as a second artifact: correcting the instrument corrects the next run, and the published figure is corrected where it was published. The current-master G0 run used the relocated external cache; the shared gate preflight was stopped by pre-existing cross-language divergence-register guards, so its C stages were run unchanged after that preflight.",
+ "measured_at_utc": "2026-11-12T13:15:59Z",
+ "measured_commit": "e4001e8aa137d650c915dc032ea10e5483359f33",
+ "note": "Written by harness/c_torture_score.py --emit, from a `lake exe c-torture-run` log.  The pin is docs/c-torture-pin.json.  This file is the tier's \u00a79.0 number as a second artifact: correcting the instrument corrects the next run, and the published figure is corrected where it was published.",
  "oracle_tests_compiler_tests": [
   "20021127-1.c"
  ],
- "scored": 153,
- "total": 300,
- "measured_at_utc": "2026-11-12T10:33:21Z",
- "measured_commit": "f4299e11e69af655eb4fe7f3735d678f878730ba"
+ "scored": 157,
+ "total": 300
 }

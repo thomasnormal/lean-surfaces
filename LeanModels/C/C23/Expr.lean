@@ -178,6 +178,23 @@ def writeMem (f : Mem → MRes Mem) : EvalM Unit := do
   | .ok m => set m
   | .error e => throw e
 
+/-- Decode the parser's canonical value for the first string-object slice.
+Only printable ASCII characters are admitted here; escape spellings stay
+loud until the envelope carries their parser-decoded bytes.  The quotes are
+the value delimiters supplied by Clang, not source text reparsed by Lean. -/
+def plainStringBytes (s : String) : Option (List CByte) :=
+  match s.toList with
+  | '"' :: rest =>
+      match rest.reverse with
+      | '"' :: revBody =>
+          let body := revBody.reverse
+          if body.all (fun c => c.toNat >= 32 && c.toNat < 127 && c != '\\') then
+            some ((body.map (fun c => CByte.conc (UInt8.ofNat c.toNat))) ++
+              [CByte.conc 0])
+          else none
+      | _ => none
+  | _ => none
+
 /-! ## §6.2.5 — resolving a type spelling to an integer type
 
 **The census found a real problem here.** `CType` is clang's unparsed
@@ -720,6 +737,15 @@ same kinds. Anything else in lvalue position is a refusal, never a
 fallthrough. -/
 def evalLValue (ctx : Ctx) : Expr → EvalM Ptr
   | .paren sub _ _ => evalLValue ctx sub
+  | .strLit value _ _ => do
+      let bs ← match plainStringBytes value with
+        | some bs => pure bs
+        | none => refuseUnsupported "string literal with escape or non-ASCII spelling"
+      let m ← get
+      let (m', o) := m.alloc .static_ bs.length (some "char[]")
+      set m'
+      writeMem (fun m => m.storeBytes (Ptr.toObjectBound o bs.length) bs)
+      pure (Ptr.toObjectBound o bs.length)
   -- §6.5.2p2: an identifier designating an object is an lvalue.
   | .declRef (some id) name _ ty _ =>
       match ctx.idEnv.lookup? id with
@@ -1251,6 +1277,7 @@ def Expr.nodeIsPure : Expr → Bool
   | .call .. => false
   -- §6.7.11 — aggregate initialization writes through the layout.
   | .initList .. | .arrayInitList .. | .implicitValueInit .. | .compoundLit .. => false
+  | .strLit .. => false
   -- Out of tier: unknown, therefore not pure.
   | .unsupported .. => false
   | _ => true

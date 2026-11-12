@@ -3,19 +3,19 @@
   "c-testsuite/single-exec": {
    "not-ingested": 5,
    "not-parsed": 1,
-   "passed": 104,
-   "refused-libc": 2,
+   "passed": 109,
+   "refused-libc": 8,
    "refused-ub": 2,
-   "refused-unsupported": 104,
+   "refused-unsupported": 93,
    "timeout": 2
   },
   "gcc.c-torture/execute": {
    "not-ingested": 19,
    "not-parsed": 321,
-   "passed": 500,
-   "refused-libc": 95,
-   "refused-ub": 28,
-   "refused-unsupported": 913,
+   "passed": 504,
+   "refused-libc": 122,
+   "refused-ub": 31,
+   "refused-unsupported": 879,
    "timeout": 42
   },
   "gcc.c23-run": {
@@ -31,10 +31,10 @@
  "counts": {
   "not-ingested": 25,
   "not-parsed": 350,
-  "passed": 605,
-  "refused-libc": 99,
-  "refused-ub": 31,
-  "refused-unsupported": 1060,
+  "passed": 614,
+  "refused-libc": 132,
+  "refused-ub": 34,
+  "refused-unsupported": 1015,
   "timeout": 44
  },
  "dynamic_wall_ranking": [
@@ -398,166 +398,46 @@
   {
    "files": [
     "00025.c",
-    "00026.c",
-    "00056.c",
-    "00058.c",
-    "00112.c",
-    "00125.c",
-    "00131.c",
-    "00132.c",
-    "00137.c",
-    "00138.c",
-    "00154.c",
-    "00156.c",
-    "00157.c",
-    "00158.c",
-    "00159.c",
-    "00160.c",
-    "00161.c",
-    "00163.c",
-    "00164.c",
-    "00165.c",
-    "00166.c",
-    "00167.c",
-    "00168.c",
-    "00169.c",
-    "00171.c",
-    "00172.c",
-    "00173.c",
-    "00175.c",
+    "00040.c",
     "00176.c",
-    "00177.c",
     "00179.c",
     "00180.c",
-    "00181.c",
-    "00183.c",
-    "00184.c",
-    "00185.c",
-    "00186.c",
     "00187.c",
-    "00188.c",
-    "00190.c",
-    "00191.c",
-    "00192.c",
-    "00193.c",
     "00194.c",
-    "00196.c",
-    "00197.c",
-    "00199.c",
-    "00201.c",
-    "00202.c",
-    "00203.c",
-    "00206.c",
-    "00211.c",
-    "00215.c",
-    "20000121-1.c",
-    "20000223-1.c",
-    "20000703-1.c",
-    "20000910-2.c",
-    "20001130-2.c",
-    "20010325-1.c",
-    "20010409-1.c",
-    "20011024-1.c",
-    "20011109-2.c",
-    "20011114-1.c",
-    "20011126-2.c",
-    "20021011-1.c",
-    "20021120-3.c",
-    "20030626-1.c",
-    "20030626-2.c",
-    "20030715-1.c",
-    "20030920-1.c",
-    "20030928-1.c",
-    "20041218-1.c",
-    "20050218-1.c",
-    "20050502-1.c",
-    "20070201-1.c",
-    "20080604-1.c",
-    "20100827-1.c",
-    "20111208-1.c",
-    "20120207-1.c",
-    "920726-1.c",
-    "921006-1.c",
-    "921007-1.c",
-    "921019-1.c",
-    "921117-1.c",
-    "930429-1.c",
-    "930725-1.c",
-    "961125-1.c",
-    "980526-2.c",
-    "980608-1.c",
-    "980707-1.c",
-    "980716-1.c",
-    "991227-1.c",
-    "builtins/strcmp.c",
-    "builtins/strrchr.c",
-    "builtins/strstr-asm.c",
-    "const-addr-expr-1.c",
-    "loop-12.c",
-    "loop-2f.c",
-    "loop-2g.c",
-    "pr110914.c",
-    "pr111863-1.c",
-    "pr114965.c",
-    "pr116799.c",
-    "pr20601-1.c",
-    "pr34415.c",
-    "pr35800.c",
-    "pr53688.c",
-    "pr59229.c",
-    "pr60062.c",
-    "pr71631.c",
-    "pr78586.c",
-    "pr78622.c",
-    "pr79327.c",
-    "pr80153.c",
-    "pr86528.c",
-    "pr93908.c",
-    "printf-1.c",
-    "printf-chk-1.c",
-    "ptr-arith-1.c",
-    "string-opt-17.c",
-    "string-opt-5.c",
-    "va-arg-10.c",
-    "va-arg-15.c",
-    "va-arg-17.c",
-    "va-arg-19.c",
-    "va-arg-21.c",
-    "va-arg-9.c",
-    "widechar-3.c"
-   ],
-   "present": 128,
-   "sole": 128,
-   "wall": "unsupported:not an lvalue: StringLiteral"
-  },
-  {
-   "files": [
-    "00040.c",
     "00214.c",
     "20000402-1.c",
     "20000412-6.c",
+    "20000703-1.c",
     "20000722-1.c",
     "20000801-2.c",
     "20000818-1.c",
+    "20000910-2.c",
     "20001203-2.c",
     "20010224-1.c",
     "20010403-1.c",
     "20010925-1.c",
+    "20011024-1.c",
+    "20011114-1.c",
     "20020227-1.c",
     "20020406-1.c",
     "20020418-1.c",
     "20020529-1.c",
+    "20021011-1.c",
     "20021113-1.c",
+    "20021120-3.c",
     "20021127-1.c",
     "20030117-1.c",
     "20030203-1.c",
     "20030307-1.c",
     "20030408-1.c",
     "20030606-1.c",
+    "20030626-2.c",
+    "20030715-1.c",
     "20030717-1.c",
     "20030718-1.c",
     "20040823-1.c",
     "20041126-1.c",
+    "20050218-1.c",
     "20050826-1.c",
     "20060930-2.c",
     "20070824-1.c",
@@ -565,13 +445,18 @@
     "20071120-1.c",
     "20071219-1.c",
     "20081218-1.c",
+    "20120207-1.c",
     "20141107-1.c",
+    "921006-1.c",
+    "921117-1.c",
+    "930725-1.c",
     "960521-1.c",
     "970214-1.c",
     "970214-2.c",
     "970217-1.c",
     "980505-1.c",
     "980618-1.c",
+    "980707-1.c",
     "981019-1.c",
     "990128-1.c",
     "990513-1.c",
@@ -589,12 +474,16 @@
     "frame-address.c",
     "gcc/testsuite/gcc.dg/c23-empty-init-5.c",
     "gcc/testsuite/gcc.dg/c23-nullptr-5.c",
+    "loop-2f.c",
+    "loop-2g.c",
     "loop-5.c",
     "memset-4.c",
     "multi-ix.c",
     "nestfunc-4.c",
     "pr108789.c",
+    "pr110914.c",
     "pr115277.c",
+    "pr116799.c",
     "pr119428.c",
     "pr122000.c",
     "pr123978.c",
@@ -608,6 +497,9 @@
     "pr42614.c",
     "pr43008.c",
     "pr43236.c",
+    "pr53688.c",
+    "pr59229.c",
+    "pr60062.c",
     "pr61725.c",
     "pr63843.c",
     "pr64006.c",
@@ -615,8 +507,12 @@
     "pr71554.c",
     "pr77718.c",
     "pr77767.c",
+    "pr78586.c",
+    "pr78622.c",
+    "pr79327.c",
     "pr84339.c",
     "pr85095.c",
+    "pr86528.c",
     "pr88693.c",
     "pr89434.c",
     "pr90025.c",
@@ -628,12 +524,14 @@
     "pr97325.c",
     "pr97386-1.c",
     "pr98853-1.c",
+    "printf-1.c",
     "split-path-1.c",
+    "string-opt-17.c",
     "string-opt-18.c",
     "strlen-5.c"
    ],
-   "present": 99,
-   "sole": 99,
+   "present": 132,
+   "sole": 132,
    "wall": "libc-call"
   },
   {
@@ -678,6 +576,7 @@
     "builtins/strchr-lib.c",
     "builtins/strchr.c",
     "builtins/strcmp-lib.c",
+    "builtins/strcmp.c",
     "builtins/strcpy-2-lib.c",
     "builtins/strcpy-2.c",
     "builtins/strcpy-chk-lib.c",
@@ -705,8 +604,10 @@
     "builtins/strpcpy-2-lib.c",
     "builtins/strpcpy-lib.c",
     "builtins/strrchr-lib.c",
+    "builtins/strrchr.c",
     "builtins/strspn-lib.c",
     "builtins/strspn.c",
+    "builtins/strstr-asm.c",
     "builtins/strstr-lib.c",
     "builtins/strstr.c",
     "builtins/uabs-1.c",
@@ -733,9 +634,72 @@
     "ieee/pr38016.c",
     "pr71626-2.c"
    ],
-   "present": 94,
-   "sole": 94,
+   "present": 97,
+   "sole": 97,
    "wall": "unsupported:no definition for 'main'"
+  },
+  {
+   "files": [
+    "00056.c",
+    "00125.c",
+    "00131.c",
+    "00132.c",
+    "00154.c",
+    "00156.c",
+    "00157.c",
+    "00158.c",
+    "00159.c",
+    "00160.c",
+    "00161.c",
+    "00163.c",
+    "00164.c",
+    "00165.c",
+    "00166.c",
+    "00167.c",
+    "00168.c",
+    "00169.c",
+    "00171.c",
+    "00172.c",
+    "00173.c",
+    "00175.c",
+    "00177.c",
+    "00181.c",
+    "00183.c",
+    "00184.c",
+    "00185.c",
+    "00186.c",
+    "00188.c",
+    "00190.c",
+    "00191.c",
+    "00192.c",
+    "00193.c",
+    "00196.c",
+    "00197.c",
+    "00199.c",
+    "00201.c",
+    "00202.c",
+    "00203.c",
+    "00206.c",
+    "00211.c",
+    "00215.c",
+    "20000121-1.c",
+    "20001130-2.c",
+    "20010325-1.c",
+    "20030626-1.c",
+    "20030920-1.c",
+    "20111208-1.c",
+    "921007-1.c",
+    "980608-1.c",
+    "991227-1.c",
+    "loop-12.c",
+    "pr111863-1.c",
+    "pr80153.c",
+    "va-arg-21.c",
+    "widechar-3.c"
+   ],
+   "present": 56,
+   "sole": 56,
+   "wall": "unsupported:string literal with escape or non-ASCII spelling"
   },
   {
    "files": [
@@ -868,6 +832,7 @@
     "990106-2.c",
     "alias-access-path-2.c",
     "bitfld-1.c",
+    "const-addr-expr-1.c",
     "gcc/testsuite/gcc.dg/c23-empty-init-warn-1.c",
     "gcc/testsuite/gcc.dg/c23-empty-init-warn-2.c",
     "gcc/testsuite/gcc.dg/c23-empty-init-warn-4.c",
@@ -895,8 +860,8 @@
     "vrp-5.c",
     "vrp-6.c"
    ],
-   "present": 43,
-   "sole": 43,
+   "present": 44,
+   "sole": 44,
    "wall": "unsupported:fewer arguments than parameters"
   },
   {
@@ -975,15 +940,58 @@
     "pr67929_1.c",
     "stdarg-4.c",
     "va-arg-12.c",
+    "va-arg-15.c",
     "va-arg-16.c",
+    "va-arg-17.c",
     "va-arg-18.c",
     "va-arg-5.c",
     "va-arg-6.c",
     "va-arg-7.c"
    ],
+   "present": 36,
+   "sole": 36,
+   "wall": "unsupported:floating literal (floats are a named decision)"
+  },
+  {
+   "files": [
+    "00141.c",
+    "00144.c",
+    "20010409-1.c",
+    "20020129-1.c",
+    "20020508-2.c",
+    "20020508-3.c",
+    "20030404-1.c",
+    "20030928-1.c",
+    "20040409-1w.c",
+    "20040409-2w.c",
+    "20040409-3w.c",
+    "20060110-1.c",
+    "20060110-2.c",
+    "20080222-1.c",
+    "20191023-1.c",
+    "930529-1.c",
+    "950704-1.c",
+    "960317-1.c",
+    "gcc/testsuite/gcc.dg/c23-complit-1.c",
+    "loop-15.c",
+    "pr17252.c",
+    "pr21173.c",
+    "pr34099-2.c",
+    "pr34099.c",
+    "pr40386.c",
+    "pr41750.c",
+    "pr43629.c",
+    "pr56051.c",
+    "pr57124.c",
+    "pr58831.c",
+    "pr7284-1.c",
+    "pr79121.c",
+    "pr99079.c",
+    "ptr-arith-1.c"
+   ],
    "present": 34,
    "sole": 34,
-   "wall": "unsupported:floating literal (floats are a named decision)"
+   "wall": "undefined-behavior"
   },
   {
    "files": [
@@ -1026,44 +1034,6 @@
   },
   {
    "files": [
-    "00141.c",
-    "00144.c",
-    "20020129-1.c",
-    "20020508-2.c",
-    "20020508-3.c",
-    "20030404-1.c",
-    "20040409-1w.c",
-    "20040409-2w.c",
-    "20040409-3w.c",
-    "20060110-1.c",
-    "20060110-2.c",
-    "20080222-1.c",
-    "20191023-1.c",
-    "930529-1.c",
-    "950704-1.c",
-    "960317-1.c",
-    "gcc/testsuite/gcc.dg/c23-complit-1.c",
-    "loop-15.c",
-    "pr17252.c",
-    "pr21173.c",
-    "pr34099-2.c",
-    "pr34099.c",
-    "pr40386.c",
-    "pr41750.c",
-    "pr43629.c",
-    "pr56051.c",
-    "pr57124.c",
-    "pr58831.c",
-    "pr7284-1.c",
-    "pr79121.c",
-    "pr99079.c"
-   ],
-   "present": 31,
-   "sole": 31,
-   "wall": "undefined-behavior"
-  },
-  {
-   "files": [
     "00182.c",
     "20000910-1.c",
     "20010129-1.c",
@@ -1073,6 +1043,7 @@
     "20031204-1.c",
     "20040302-1.c",
     "20040707-1.c",
+    "20041218-1.c",
     "20071108-1.c",
     "20071210-1.c",
     "20080424-1.c",
@@ -1090,10 +1061,11 @@
     "pr34176.c",
     "pr53084.c",
     "pr70460.c",
+    "pr93908.c",
     "va-arg-4.c"
    ],
-   "present": 27,
-   "sole": 27,
+   "present": 29,
+   "sole": 29,
    "wall": "unsupported:block-scope storage class 'static' is outside the tier"
   },
   {
@@ -1253,6 +1225,57 @@
   },
   {
    "files": [
+    "00032.c",
+    "20000801-1.c",
+    "20011126-2.c",
+    "20020503-1.c",
+    "20050502-1.c",
+    "20060910-1.c",
+    "20070201-1.c",
+    "20100827-1.c",
+    "20120808-1.c",
+    "20140828-1.c",
+    "930429-1.c",
+    "950714-1.c",
+    "961125-1.c",
+    "990222-1.c",
+    "pr20601-1.c",
+    "pr27073.c",
+    "pr34415.c",
+    "pr54985.c",
+    "pr71631.c"
+   ],
+   "present": 19,
+   "sole": 19,
+   "wall": "unsupported:pointer used as an integer (no ptr\u2194int cast in tier)"
+  },
+  {
+   "files": [
+    "20000519-1.c",
+    "20071213-1.c",
+    "920726-1.c",
+    "980716-1.c",
+    "991216-2.c",
+    "gcc/testsuite/gcc.dg/c23-stdarg-9.c",
+    "pr117432.c",
+    "stdarg-2.c",
+    "va-arg-1.c",
+    "va-arg-10.c",
+    "va-arg-11.c",
+    "va-arg-13.c",
+    "va-arg-19.c",
+    "va-arg-20.c",
+    "va-arg-24.c",
+    "va-arg-8.c",
+    "va-arg-9.c",
+    "va-arg-trap-1.c"
+   ],
+   "present": 18,
+   "sole": 18,
+   "wall": "unsupported:more arguments than parameters"
+  },
+  {
+   "files": [
     "00087.c",
     "20081103-1.c",
     "20100708-1.c",
@@ -1278,26 +1301,6 @@
   },
   {
    "files": [
-    "20000519-1.c",
-    "20071213-1.c",
-    "991216-2.c",
-    "gcc/testsuite/gcc.dg/c23-stdarg-9.c",
-    "pr117432.c",
-    "stdarg-2.c",
-    "va-arg-1.c",
-    "va-arg-11.c",
-    "va-arg-13.c",
-    "va-arg-20.c",
-    "va-arg-24.c",
-    "va-arg-8.c",
-    "va-arg-trap-1.c"
-   ],
-   "present": 13,
-   "sole": 13,
-   "wall": "unsupported:more arguments than parameters"
-  },
-  {
-   "files": [
     "20000622-1.c",
     "20010329-1.c",
     "20021010-2.c",
@@ -1318,6 +1321,7 @@
    "files": [
     "20011121-1.c",
     "941014-1.c",
+    "980526-2.c",
     "loop-2c.c",
     "pr22098-1.c",
     "pr22098-2.c",
@@ -1327,9 +1331,26 @@
     "pr58209.c",
     "pr97421-3.c"
    ],
+   "present": 11,
+   "sole": 11,
+   "wall": "cast:PointerToIntegral"
+  },
+  {
+   "files": [
+    "00051.c",
+    "00143.c",
+    "20011109-1.c",
+    "20080719-1.c",
+    "920506-1.c",
+    "medce-1.c",
+    "pr114965.c",
+    "pr120677.c",
+    "pr91632.c",
+    "switch-1.c"
+   ],
    "present": 10,
    "sole": 10,
-   "wall": "cast:PointerToIntegral"
+   "wall": "unsupported:case label nested in a control statement"
   },
   {
    "files": [
@@ -1347,39 +1368,6 @@
    "present": 10,
    "sole": 10,
    "wall": "unsupported:compound literal (inch 4"
-  },
-  {
-   "files": [
-    "00032.c",
-    "20000801-1.c",
-    "20020503-1.c",
-    "20060910-1.c",
-    "20120808-1.c",
-    "20140828-1.c",
-    "950714-1.c",
-    "990222-1.c",
-    "pr27073.c",
-    "pr54985.c"
-   ],
-   "present": 10,
-   "sole": 10,
-   "wall": "unsupported:pointer used as an integer (no ptr\u2194int cast in tier)"
-  },
-  {
-   "files": [
-    "00051.c",
-    "00143.c",
-    "20011109-1.c",
-    "20080719-1.c",
-    "920506-1.c",
-    "medce-1.c",
-    "pr120677.c",
-    "pr91632.c",
-    "switch-1.c"
-   ],
-   "present": 9,
-   "sole": 9,
-   "wall": "unsupported:case label nested in a control statement"
   },
   {
    "files": [
@@ -1412,6 +1400,20 @@
    "present": 9,
    "sole": 9,
    "wall": "unsupported:no layout for declared type 'float'"
+  },
+  {
+   "files": [
+    "printf-chk-1.c",
+    "stdarg-1.c",
+    "va-arg-14.c",
+    "vfprintf-1.c",
+    "vfprintf-chk-1.c",
+    "vprintf-1.c",
+    "vprintf-chk-1.c"
+   ],
+   "present": 7,
+   "sole": 7,
+   "wall": "unsupported:no layout for declared type 'va_list'"
   },
   {
    "files": [
@@ -1464,19 +1466,6 @@
    "present": 6,
    "sole": 6,
    "wall": "unsupported:no layout for declared type 'struct s'"
-  },
-  {
-   "files": [
-    "stdarg-1.c",
-    "va-arg-14.c",
-    "vfprintf-1.c",
-    "vfprintf-chk-1.c",
-    "vprintf-1.c",
-    "vprintf-chk-1.c"
-   ],
-   "present": 6,
-   "sole": 6,
-   "wall": "unsupported:no layout for declared type 'va_list'"
   },
   {
    "files": [
@@ -1658,6 +1647,16 @@
    "present": 3,
    "sole": 3,
    "wall": "unsupported:no layout for declared type 'struct foo'"
+  },
+  {
+   "files": [
+    "20000223-1.c",
+    "align-3.c",
+    "zerolen-2.c"
+   ],
+   "present": 3,
+   "sole": 3,
+   "wall": "unsupported:type trait '__alignof'"
   },
   {
    "files": [
@@ -1887,15 +1886,6 @@
    "present": 2,
    "sole": 2,
    "wall": "unsupported:sizeof: no layout for operand type 'struct A'"
-  },
-  {
-   "files": [
-    "align-3.c",
-    "zerolen-2.c"
-   ],
-   "present": 2,
-   "sole": 2,
-   "wall": "unsupported:type trait '__alignof'"
   },
   {
    "files": [
@@ -2294,6 +2284,14 @@
    "present": 1,
    "sole": 1,
    "wall": "unsupported:no layout for declared type 'char[argc]'"
+  },
+  {
+   "files": [
+    "string-opt-5.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "unsupported:no layout for declared type 'const char *const'"
   },
   {
    "files": [
@@ -3945,8 +3943,8 @@
   }
  ],
  "manifest_hash": "1de1a60c299d5bb51dae7ca001b0a008010cad0b25670cde2090c08bfc1a84ce",
- "measured_at_utc": "2026-11-12T05:45:00Z",
- "measured_commit": "025a8a3d1",
+ "measured_at_utc": "2026-11-12T06:05:00Z",
+ "measured_commit": "b8c99d844",
  "pin": null,
  "rows": [
   {
@@ -4203,8 +4201,8 @@
   },
   {
    "corpus": "c-testsuite/single-exec",
-   "detail": "not an lvalue: StringLiteral",
-   "dynamic_wall": "unsupported:not an lvalue: StringLiteral",
+   "detail": "id19",
+   "dynamic_wall": "libc-call",
    "manifest_status": "parsed",
    "name": "00025.c",
    "sha256": "9096fd094a7596a53ed720f728053226642c64e06babad4b49cf588b4f80ab96",
@@ -4213,12 +4211,12 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "refused-libc"
   },
   {
    "corpus": "c-testsuite/single-exec",
-   "detail": "not an lvalue: StringLiteral",
-   "dynamic_wall": "unsupported:not an lvalue: StringLiteral",
+   "detail": "",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "00026.c",
    "sha256": "abe7d59f59f9db11296e141e63c9b74820a73d51ab7003a7bf2bf1dad7cb5003",
@@ -4226,7 +4224,7 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "c-testsuite/single-exec",
@@ -4548,8 +4546,8 @@
   },
   {
    "corpus": "c-testsuite/single-exec",
-   "detail": "not an lvalue: StringLiteral",
-   "dynamic_wall": "unsupported:not an lvalue: StringLiteral",
+   "detail": "string literal with escape or non-ASCII spelling",
+   "dynamic_wall": "unsupported:string literal with escape or non-ASCII spelling",
    "manifest_status": "parsed",
    "name": "00056.c",
    "sha256": "00c4a038a3b12b353e5115c122b136eb175a7dc1dba5d36bec5ad6878c16f4ae",
@@ -4574,8 +4572,8 @@
   },
   {
    "corpus": "c-testsuite/single-exec",
-   "detail": "not an lvalue: StringLiteral",
-   "dynamic_wall": "unsupported:not an lvalue: StringLiteral",
+   "detail": "",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "00058.c",
    "sha256": "defd689fe520b73d5134d0d435ce6a7098e3dc8fa002478544915eaaee759afb",
@@ -4583,7 +4581,7 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "c-testsuite/single-exec",
@@ -5143,8 +5141,8 @@
   },
   {
    "corpus": "c-testsuite/single-exec",
-   "detail": "not an lvalue: StringLiteral",
-   "dynamic_wall": "unsupported:not an lvalue: StringLiteral",
+   "detail": "",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "00112.c",
    "sha256": "eac2b9833390803455c480ba73f78e5a5e8bd543bffd7d99da71f313f67a4bf1",
@@ -5152,7 +5150,7 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "c-testsuite/single-exec",
@@ -5298,8 +5296,8 @@
   },
   {
    "corpus": "c-testsuite/single-exec",
-   "detail": "not an lvalue: StringLiteral",
-   "dynamic_wall": "unsupported:not an lvalue: StringLiteral",
+   "detail": "string literal with escape or non-ASCII spelling",
+   "dynamic_wall": "unsupported:string literal with escape or non-ASCII spelling",
    "manifest_status": "parsed",
    "name": "00125.c",
    "sha256": "b3d7c7a17e8c9d4e0c15a435f32e0fe288bd154f1b250bcb323ac227a59245f0",
@@ -5366,8 +5364,8 @@
   },
   {
    "corpus": "c-testsuite/single-exec",
-   "detail": "not an lvalue: StringLiteral",
-   "dynamic_wall": "unsupported:not an lvalue: StringLiteral",
+   "detail": "string literal with escape or non-ASCII spelling",
+   "dynamic_wall": "unsupported:string literal with escape or non-ASCII spelling",
    "manifest_status": "parsed",
    "name": "00131.c",
    "sha256": "213dcb02fe9c196840dd91ea3eb2c81ca13d8b3a216414cde713dfd02eb879be",
@@ -5380,8 +5378,8 @@
   },
   {
    "corpus": "c-testsuite/single-exec",
-   "detail": "not an lvalue: StringLiteral",
-   "dynamic_wall": "unsupported:not an lvalue: StringLiteral",
+   "detail": "string literal with escape or non-ASCII spelling",
+   "dynamic_wall": "unsupported:string literal with escape or non-ASCII spelling",
    "manifest_status": "parsed",
    "name": "00132.c",
    "sha256": "6baff8442e410d6bd98e6dc4f1ff0b61db0fab15ef2ec7ae51b6ab777b32bfb9",
@@ -5434,8 +5432,8 @@
   },
   {
    "corpus": "c-testsuite/single-exec",
-   "detail": "not an lvalue: StringLiteral",
-   "dynamic_wall": "unsupported:not an lvalue: StringLiteral",
+   "detail": "",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "00137.c",
    "sha256": "1bc49f9d3d2f0a1c3ca1a07188ebc49540acd8faeacb622130c9c0e5908f003a",
@@ -5443,12 +5441,12 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "c-testsuite/single-exec",
-   "detail": "not an lvalue: StringLiteral",
-   "dynamic_wall": "unsupported:not an lvalue: StringLiteral",
+   "detail": "",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "00138.c",
    "sha256": "4b5c7d607aeafa4182c98c317f48f8e2b433206ba0db30433937da55443747ff",
@@ -5456,7 +5454,7 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "c-testsuite/single-exec",
@@ -5630,8 +5628,8 @@
   },
   {
    "corpus": "c-testsuite/single-exec",
-   "detail": "not an lvalue: StringLiteral",
-   "dynamic_wall": "unsupported:not an lvalue: StringLiteral",
+   "detail": "string literal with escape or non-ASCII spelling",
+   "dynamic_wall": "unsupported:string literal with escape or non-ASCII spelling",
    "manifest_status": "parsed",
    "name": "00154.c",
    "sha256": "bf05a27879ccb6e512501c95c368e2f3f2b4bcb96aeccfe3f6a57847385e6369",
@@ -5654,8 +5652,8 @@
   },
   {
    "corpus": "c-testsuite/single-exec",
-   "detail": "not an lvalue: StringLiteral",
-   "dynamic_wall": "unsupported:not an lvalue: StringLiteral",
+   "detail": "string literal with escape or non-ASCII spelling",
+   "dynamic_wall": "unsupported:string literal with escape or non-ASCII spelling",
    "manifest_status": "parsed",
    "name": "00156.c",
    "sha256": "54ab4ae99d7d1f7afa2bdacf9296012a7776cc000ad6e4877f29ef32075a820d",
@@ -5668,8 +5666,8 @@
   },
   {
    "corpus": "c-testsuite/single-exec",
-   "detail": "not an lvalue: StringLiteral",
-   "dynamic_wall": "unsupported:not an lvalue: StringLiteral",
+   "detail": "string literal with escape or non-ASCII spelling",
+   "dynamic_wall": "unsupported:string literal with escape or non-ASCII spelling",
    "manifest_status": "parsed",
    "name": "00157.c",
    "sha256": "998a4efb891cc3fd13762abae41f1de8ce293081608c0638c2960274ae74c0fa",
@@ -5682,8 +5680,8 @@
   },
   {
    "corpus": "c-testsuite/single-exec",
-   "detail": "not an lvalue: StringLiteral",
-   "dynamic_wall": "unsupported:not an lvalue: StringLiteral",
+   "detail": "string literal with escape or non-ASCII spelling",
+   "dynamic_wall": "unsupported:string literal with escape or non-ASCII spelling",
    "manifest_status": "parsed",
    "name": "00158.c",
    "sha256": "abf44e80a4a0cad8d2214cc1cdb8fe1a550755ddde8c729bd667ac2f24cdc5b2",
@@ -5696,8 +5694,8 @@
   },
   {
    "corpus": "c-testsuite/single-exec",
-   "detail": "not an lvalue: StringLiteral",
-   "dynamic_wall": "unsupported:not an lvalue: StringLiteral",
+   "detail": "string literal with escape or non-ASCII spelling",
+   "dynamic_wall": "unsupported:string literal with escape or non-ASCII spelling",
    "manifest_status": "parsed",
    "name": "00159.c",
    "sha256": "3a2cde505ed84255947fa24a6df17bc03636f7af215505eebc92ca6a7c4212c4",
@@ -5710,8 +5708,8 @@
   },
   {
    "corpus": "c-testsuite/single-exec",
-   "detail": "not an lvalue: StringLiteral",
-   "dynamic_wall": "unsupported:not an lvalue: StringLiteral",
+   "detail": "string literal with escape or non-ASCII spelling",
+   "dynamic_wall": "unsupported:string literal with escape or non-ASCII spelling",
    "manifest_status": "parsed",
    "name": "00160.c",
    "sha256": "12c491bee3cbe26de274402a5813a664be5d32f5ad82147d0d9eb71cc609f447",
@@ -5724,8 +5722,8 @@
   },
   {
    "corpus": "c-testsuite/single-exec",
-   "detail": "not an lvalue: StringLiteral",
-   "dynamic_wall": "unsupported:not an lvalue: StringLiteral",
+   "detail": "string literal with escape or non-ASCII spelling",
+   "dynamic_wall": "unsupported:string literal with escape or non-ASCII spelling",
    "manifest_status": "parsed",
    "name": "00161.c",
    "sha256": "f330014c7302b5d7e30b7ba902dc8130dde283d77d94e4a5df5dffb0901fd73d",
@@ -5748,8 +5746,8 @@
   },
   {
    "corpus": "c-testsuite/single-exec",
-   "detail": "not an lvalue: StringLiteral",
-   "dynamic_wall": "unsupported:not an lvalue: StringLiteral",
+   "detail": "string literal with escape or non-ASCII spelling",
+   "dynamic_wall": "unsupported:string literal with escape or non-ASCII spelling",
    "manifest_status": "parsed",
    "name": "00163.c",
    "sha256": "f56173b08aa78d2ce2c8753f9ca89542ced73a831a5fb3343cf23280b3f6a3f5",
@@ -5762,8 +5760,8 @@
   },
   {
    "corpus": "c-testsuite/single-exec",
-   "detail": "not an lvalue: StringLiteral",
-   "dynamic_wall": "unsupported:not an lvalue: StringLiteral",
+   "detail": "string literal with escape or non-ASCII spelling",
+   "dynamic_wall": "unsupported:string literal with escape or non-ASCII spelling",
    "manifest_status": "parsed",
    "name": "00164.c",
    "sha256": "1a7a3d700f1509890f6175aaad92ff4c923ab401a0f2619ef3727ced7d8497dd",
@@ -5776,8 +5774,8 @@
   },
   {
    "corpus": "c-testsuite/single-exec",
-   "detail": "not an lvalue: StringLiteral",
-   "dynamic_wall": "unsupported:not an lvalue: StringLiteral",
+   "detail": "string literal with escape or non-ASCII spelling",
+   "dynamic_wall": "unsupported:string literal with escape or non-ASCII spelling",
    "manifest_status": "parsed",
    "name": "00165.c",
    "sha256": "9118968eeccc74e136784555281ffe5eea6f6c615a10c88d4e0428a871afe507",
@@ -5790,8 +5788,8 @@
   },
   {
    "corpus": "c-testsuite/single-exec",
-   "detail": "not an lvalue: StringLiteral",
-   "dynamic_wall": "unsupported:not an lvalue: StringLiteral",
+   "detail": "string literal with escape or non-ASCII spelling",
+   "dynamic_wall": "unsupported:string literal with escape or non-ASCII spelling",
    "manifest_status": "parsed",
    "name": "00166.c",
    "sha256": "82a17c717f3d85d66c4b7b5f73dff4a4544a8303431345fece4dd86f24011305",
@@ -5804,8 +5802,8 @@
   },
   {
    "corpus": "c-testsuite/single-exec",
-   "detail": "not an lvalue: StringLiteral",
-   "dynamic_wall": "unsupported:not an lvalue: StringLiteral",
+   "detail": "string literal with escape or non-ASCII spelling",
+   "dynamic_wall": "unsupported:string literal with escape or non-ASCII spelling",
    "manifest_status": "parsed",
    "name": "00167.c",
    "sha256": "4e8838ecb463243d245df0db6c8851081be8ffc50858a04cbbe4e1852a90ba4c",
@@ -5818,8 +5816,8 @@
   },
   {
    "corpus": "c-testsuite/single-exec",
-   "detail": "not an lvalue: StringLiteral",
-   "dynamic_wall": "unsupported:not an lvalue: StringLiteral",
+   "detail": "string literal with escape or non-ASCII spelling",
+   "dynamic_wall": "unsupported:string literal with escape or non-ASCII spelling",
    "manifest_status": "parsed",
    "name": "00168.c",
    "sha256": "f222fef343f1d0f86da59e1da77bd7b93b3dcde04cc4d1d73195cf0df65ad4f2",
@@ -5832,8 +5830,8 @@
   },
   {
    "corpus": "c-testsuite/single-exec",
-   "detail": "not an lvalue: StringLiteral",
-   "dynamic_wall": "unsupported:not an lvalue: StringLiteral",
+   "detail": "string literal with escape or non-ASCII spelling",
+   "dynamic_wall": "unsupported:string literal with escape or non-ASCII spelling",
    "manifest_status": "parsed",
    "name": "00169.c",
    "sha256": "69cfb00323c7ab414844a6e6dd5c4262e5175a8d4b73d1ac2dbdb9385b93b90d",
@@ -5860,8 +5858,8 @@
   },
   {
    "corpus": "c-testsuite/single-exec",
-   "detail": "not an lvalue: StringLiteral",
-   "dynamic_wall": "unsupported:not an lvalue: StringLiteral",
+   "detail": "string literal with escape or non-ASCII spelling",
+   "dynamic_wall": "unsupported:string literal with escape or non-ASCII spelling",
    "manifest_status": "parsed",
    "name": "00171.c",
    "sha256": "d3e31f6c40eb64eabcabf795cb470332fd085dc31eddef77c83586e3d4e46201",
@@ -5874,8 +5872,8 @@
   },
   {
    "corpus": "c-testsuite/single-exec",
-   "detail": "not an lvalue: StringLiteral",
-   "dynamic_wall": "unsupported:not an lvalue: StringLiteral",
+   "detail": "string literal with escape or non-ASCII spelling",
+   "dynamic_wall": "unsupported:string literal with escape or non-ASCII spelling",
    "manifest_status": "parsed",
    "name": "00172.c",
    "sha256": "5cdbe48598d505f93a3b16a164bb4f5350c52019642bf08688517f696998d49e",
@@ -5888,8 +5886,8 @@
   },
   {
    "corpus": "c-testsuite/single-exec",
-   "detail": "not an lvalue: StringLiteral",
-   "dynamic_wall": "unsupported:not an lvalue: StringLiteral",
+   "detail": "string literal with escape or non-ASCII spelling",
+   "dynamic_wall": "unsupported:string literal with escape or non-ASCII spelling",
    "manifest_status": "parsed",
    "name": "00173.c",
    "sha256": "e762670518c9ae8a9e4cc594e51b1fe0d5a6b90b0036d2ab91ace347d5bfa446",
@@ -5918,8 +5916,8 @@
   },
   {
    "corpus": "c-testsuite/single-exec",
-   "detail": "not an lvalue: StringLiteral",
-   "dynamic_wall": "unsupported:not an lvalue: StringLiteral",
+   "detail": "string literal with escape or non-ASCII spelling",
+   "dynamic_wall": "unsupported:string literal with escape or non-ASCII spelling",
    "manifest_status": "parsed",
    "name": "00175.c",
    "sha256": "9140671105335599b144512673237a8ce1faf1e251840708a8c1999c9601dcee",
@@ -5935,8 +5933,8 @@
   },
   {
    "corpus": "c-testsuite/single-exec",
-   "detail": "not an lvalue: StringLiteral",
-   "dynamic_wall": "unsupported:not an lvalue: StringLiteral",
+   "detail": "id237",
+   "dynamic_wall": "libc-call",
    "manifest_status": "parsed",
    "name": "00176.c",
    "sha256": "ab95d157702eda14220fdd3faeca45ea7beb6628b5f9e8717076771a67125281",
@@ -5945,12 +5943,12 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "refused-libc"
   },
   {
    "corpus": "c-testsuite/single-exec",
-   "detail": "not an lvalue: StringLiteral",
-   "dynamic_wall": "unsupported:not an lvalue: StringLiteral",
+   "detail": "string literal with escape or non-ASCII spelling",
+   "dynamic_wall": "unsupported:string literal with escape or non-ASCII spelling",
    "manifest_status": "parsed",
    "name": "00177.c",
    "sha256": "f474a1ac98c29fdf810538b5593c91496f8aeb45c17af641c3feeb7cd3634b61",
@@ -5977,8 +5975,8 @@
   },
   {
    "corpus": "c-testsuite/single-exec",
-   "detail": "not an lvalue: StringLiteral",
-   "dynamic_wall": "unsupported:not an lvalue: StringLiteral",
+   "detail": "id597",
+   "dynamic_wall": "libc-call",
    "manifest_status": "parsed",
    "name": "00179.c",
    "sha256": "9d2a00c8420a356625a16e53a81d51ae5b00380039c8224e266d9a154509ee89",
@@ -5987,12 +5985,12 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "refused-libc"
   },
   {
    "corpus": "c-testsuite/single-exec",
-   "detail": "not an lvalue: StringLiteral",
-   "dynamic_wall": "unsupported:not an lvalue: StringLiteral",
+   "detail": "id597",
+   "dynamic_wall": "libc-call",
    "manifest_status": "parsed",
    "name": "00180.c",
    "sha256": "88c60602178ed9f825bc74c372cab81b366d58d44d9af13a82831097d18c133b",
@@ -6001,12 +5999,12 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "refused-libc"
   },
   {
    "corpus": "c-testsuite/single-exec",
-   "detail": "not an lvalue: StringLiteral",
-   "dynamic_wall": "unsupported:not an lvalue: StringLiteral",
+   "detail": "string literal with escape or non-ASCII spelling",
+   "dynamic_wall": "unsupported:string literal with escape or non-ASCII spelling",
    "manifest_status": "parsed",
    "name": "00181.c",
    "sha256": "3ac82fb82f9af999590e8c0d15094126d4f7ec132d7f2c7c1e714278496c28e7",
@@ -6033,8 +6031,8 @@
   },
   {
    "corpus": "c-testsuite/single-exec",
-   "detail": "not an lvalue: StringLiteral",
-   "dynamic_wall": "unsupported:not an lvalue: StringLiteral",
+   "detail": "string literal with escape or non-ASCII spelling",
+   "dynamic_wall": "unsupported:string literal with escape or non-ASCII spelling",
    "manifest_status": "parsed",
    "name": "00183.c",
    "sha256": "03d7d13d543951d43a945546cfdbee4589a96fca840c76780e71bfb3e2d60c0d",
@@ -6047,8 +6045,8 @@
   },
   {
    "corpus": "c-testsuite/single-exec",
-   "detail": "not an lvalue: StringLiteral",
-   "dynamic_wall": "unsupported:not an lvalue: StringLiteral",
+   "detail": "string literal with escape or non-ASCII spelling",
+   "dynamic_wall": "unsupported:string literal with escape or non-ASCII spelling",
    "manifest_status": "parsed",
    "name": "00184.c",
    "sha256": "706f51eee7da050fdb28acacb269f3b0a20aa78d6270b4bf365d18e5d10d8b98",
@@ -6061,8 +6059,8 @@
   },
   {
    "corpus": "c-testsuite/single-exec",
-   "detail": "not an lvalue: StringLiteral",
-   "dynamic_wall": "unsupported:not an lvalue: StringLiteral",
+   "detail": "string literal with escape or non-ASCII spelling",
+   "dynamic_wall": "unsupported:string literal with escape or non-ASCII spelling",
    "manifest_status": "parsed",
    "name": "00185.c",
    "sha256": "e5fe44c73d1daafdcae71aca64a3e420df631063d9e1863338f8441eadfd7664",
@@ -6075,8 +6073,8 @@
   },
   {
    "corpus": "c-testsuite/single-exec",
-   "detail": "not an lvalue: StringLiteral",
-   "dynamic_wall": "unsupported:not an lvalue: StringLiteral",
+   "detail": "string literal with escape or non-ASCII spelling",
+   "dynamic_wall": "unsupported:string literal with escape or non-ASCII spelling",
    "manifest_status": "parsed",
    "name": "00186.c",
    "sha256": "313641d23d56c9837e9b93096521374a6de5a2a9a08053090527808fdd5fb130",
@@ -6089,8 +6087,8 @@
   },
   {
    "corpus": "c-testsuite/single-exec",
-   "detail": "not an lvalue: StringLiteral",
-   "dynamic_wall": "unsupported:not an lvalue: StringLiteral",
+   "detail": "id202",
+   "dynamic_wall": "libc-call",
    "manifest_status": "parsed",
    "name": "00187.c",
    "sha256": "78fe8f7f6f79a04a3fb9c07942726cd25b0898bbf9abc06d341733b641fea93b",
@@ -6099,12 +6097,12 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "refused-libc"
   },
   {
    "corpus": "c-testsuite/single-exec",
-   "detail": "not an lvalue: StringLiteral",
-   "dynamic_wall": "unsupported:not an lvalue: StringLiteral",
+   "detail": "string literal with escape or non-ASCII spelling",
+   "dynamic_wall": "unsupported:string literal with escape or non-ASCII spelling",
    "manifest_status": "parsed",
    "name": "00188.c",
    "sha256": "1277cb2b5213a471d003fa2d04452501de72034914bcf081b2178acd0b92b7a7",
@@ -6131,8 +6129,8 @@
   },
   {
    "corpus": "c-testsuite/single-exec",
-   "detail": "not an lvalue: StringLiteral",
-   "dynamic_wall": "unsupported:not an lvalue: StringLiteral",
+   "detail": "string literal with escape or non-ASCII spelling",
+   "dynamic_wall": "unsupported:string literal with escape or non-ASCII spelling",
    "manifest_status": "parsed",
    "name": "00190.c",
    "sha256": "81c9704a64902514cdbc4a93862c1a0d263b70a977bd2065e2a155e04426462f",
@@ -6145,8 +6143,8 @@
   },
   {
    "corpus": "c-testsuite/single-exec",
-   "detail": "not an lvalue: StringLiteral",
-   "dynamic_wall": "unsupported:not an lvalue: StringLiteral",
+   "detail": "string literal with escape or non-ASCII spelling",
+   "dynamic_wall": "unsupported:string literal with escape or non-ASCII spelling",
    "manifest_status": "parsed",
    "name": "00191.c",
    "sha256": "833b3339452c7a7300fdaebd68f4ea08d0d58aae7ab2667ef273d2fdb02ef1b3",
@@ -6159,8 +6157,8 @@
   },
   {
    "corpus": "c-testsuite/single-exec",
-   "detail": "not an lvalue: StringLiteral",
-   "dynamic_wall": "unsupported:not an lvalue: StringLiteral",
+   "detail": "string literal with escape or non-ASCII spelling",
+   "dynamic_wall": "unsupported:string literal with escape or non-ASCII spelling",
    "manifest_status": "parsed",
    "name": "00192.c",
    "sha256": "88e1581109fa61483e3da940ee731df2da124d50a99fd5abcdc4057c9d3dde08",
@@ -6173,8 +6171,8 @@
   },
   {
    "corpus": "c-testsuite/single-exec",
-   "detail": "not an lvalue: StringLiteral",
-   "dynamic_wall": "unsupported:not an lvalue: StringLiteral",
+   "detail": "string literal with escape or non-ASCII spelling",
+   "dynamic_wall": "unsupported:string literal with escape or non-ASCII spelling",
    "manifest_status": "parsed",
    "name": "00193.c",
    "sha256": "b5ee395e0fbddc3e95750fd6a7e9ee240ef46334dc7f03f693a4e41b5242a56d",
@@ -6187,8 +6185,8 @@
   },
   {
    "corpus": "c-testsuite/single-exec",
-   "detail": "not an lvalue: StringLiteral",
-   "dynamic_wall": "unsupported:not an lvalue: StringLiteral",
+   "detail": "id237",
+   "dynamic_wall": "libc-call",
    "manifest_status": "parsed",
    "name": "00194.c",
    "sha256": "164f79be0581a1b748b21cf5f6bb6a827af39d3276c0ec075a2c4250e342f467",
@@ -6197,7 +6195,7 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "refused-libc"
   },
   {
    "corpus": "c-testsuite/single-exec",
@@ -6215,8 +6213,8 @@
   },
   {
    "corpus": "c-testsuite/single-exec",
-   "detail": "not an lvalue: StringLiteral",
-   "dynamic_wall": "unsupported:not an lvalue: StringLiteral",
+   "detail": "string literal with escape or non-ASCII spelling",
+   "dynamic_wall": "unsupported:string literal with escape or non-ASCII spelling",
    "manifest_status": "parsed",
    "name": "00196.c",
    "sha256": "36fa4c77a0cbb5055d92def9affaba99d90611eefd135628fff16577a381bda2",
@@ -6229,8 +6227,8 @@
   },
   {
    "corpus": "c-testsuite/single-exec",
-   "detail": "not an lvalue: StringLiteral",
-   "dynamic_wall": "unsupported:not an lvalue: StringLiteral",
+   "detail": "string literal with escape or non-ASCII spelling",
+   "dynamic_wall": "unsupported:string literal with escape or non-ASCII spelling",
    "manifest_status": "parsed",
    "name": "00197.c",
    "sha256": "681552c8a2b0f917a3fc10ea0ac32fe7808b0e03a93ba9ef4ca6c547ce9c5e0f",
@@ -6257,8 +6255,8 @@
   },
   {
    "corpus": "c-testsuite/single-exec",
-   "detail": "not an lvalue: StringLiteral",
-   "dynamic_wall": "unsupported:not an lvalue: StringLiteral",
+   "detail": "string literal with escape or non-ASCII spelling",
+   "dynamic_wall": "unsupported:string literal with escape or non-ASCII spelling",
    "manifest_status": "parsed",
    "name": "00199.c",
    "sha256": "f6bd6978742eccc62d87eab0458c2c47dfcc4cc5e7b411017d65961fc64c4185",
@@ -6285,8 +6283,8 @@
   },
   {
    "corpus": "c-testsuite/single-exec",
-   "detail": "not an lvalue: StringLiteral",
-   "dynamic_wall": "unsupported:not an lvalue: StringLiteral",
+   "detail": "string literal with escape or non-ASCII spelling",
+   "dynamic_wall": "unsupported:string literal with escape or non-ASCII spelling",
    "manifest_status": "parsed",
    "name": "00201.c",
    "sha256": "935e90c432c89b4503281e9755ae71a3c272c529ab05be9ba335a83b239bf84f",
@@ -6299,8 +6297,8 @@
   },
   {
    "corpus": "c-testsuite/single-exec",
-   "detail": "not an lvalue: StringLiteral",
-   "dynamic_wall": "unsupported:not an lvalue: StringLiteral",
+   "detail": "string literal with escape or non-ASCII spelling",
+   "dynamic_wall": "unsupported:string literal with escape or non-ASCII spelling",
    "manifest_status": "parsed",
    "name": "00202.c",
    "sha256": "fd59bba67fcf1338a92826076779863807cdd16561655fb0747716b507ec2812",
@@ -6313,8 +6311,8 @@
   },
   {
    "corpus": "c-testsuite/single-exec",
-   "detail": "not an lvalue: StringLiteral",
-   "dynamic_wall": "unsupported:not an lvalue: StringLiteral",
+   "detail": "string literal with escape or non-ASCII spelling",
+   "dynamic_wall": "unsupported:string literal with escape or non-ASCII spelling",
    "manifest_status": "parsed",
    "name": "00203.c",
    "sha256": "67e9ea6d27a1879495dba564b3a452ccf8a2eb74fc55b95a8444abc4f4bfc862",
@@ -6358,8 +6356,8 @@
   },
   {
    "corpus": "c-testsuite/single-exec",
-   "detail": "not an lvalue: StringLiteral",
-   "dynamic_wall": "unsupported:not an lvalue: StringLiteral",
+   "detail": "string literal with escape or non-ASCII spelling",
+   "dynamic_wall": "unsupported:string literal with escape or non-ASCII spelling",
    "manifest_status": "parsed",
    "name": "00206.c",
    "sha256": "ffe817a4f1b8e449cc44a792c9bc56d7444b1a43ae458a172771b052dd504f7f",
@@ -6425,8 +6423,8 @@
   },
   {
    "corpus": "c-testsuite/single-exec",
-   "detail": "not an lvalue: StringLiteral",
-   "dynamic_wall": "unsupported:not an lvalue: StringLiteral",
+   "detail": "string literal with escape or non-ASCII spelling",
+   "dynamic_wall": "unsupported:string literal with escape or non-ASCII spelling",
    "manifest_status": "parsed",
    "name": "00211.c",
    "sha256": "4a9e8c5692db416b17cc78d755f16d3eae8c177a06584fc4aa8bd5a17127c39f",
@@ -6484,8 +6482,8 @@
   },
   {
    "corpus": "c-testsuite/single-exec",
-   "detail": "not an lvalue: StringLiteral",
-   "dynamic_wall": "unsupported:not an lvalue: StringLiteral",
+   "detail": "string literal with escape or non-ASCII spelling",
+   "dynamic_wall": "unsupported:string literal with escape or non-ASCII spelling",
    "manifest_status": "parsed",
    "name": "00215.c",
    "sha256": "e4a5fb421df978c45734fcda23c74233a72bcecc9df977e6556f55d9a2f4583c",
@@ -6592,8 +6590,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "not an lvalue: StringLiteral",
-   "dynamic_wall": "unsupported:not an lvalue: StringLiteral",
+   "detail": "string literal with escape or non-ASCII spelling",
+   "dynamic_wall": "unsupported:string literal with escape or non-ASCII spelling",
    "manifest_status": "parsed",
    "name": "20000121-1.c",
    "sha256": "5b93de04401f74c32ca0163f36e2d0c2c517e7fe3b4f0588b7c4f6258ec6a835",
@@ -6625,8 +6623,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "not an lvalue: StringLiteral",
-   "dynamic_wall": "unsupported:not an lvalue: StringLiteral",
+   "detail": "type trait '__alignof'",
+   "dynamic_wall": "unsupported:type trait '__alignof'",
    "manifest_status": "parsed",
    "name": "20000223-1.c",
    "sha256": "c969625960dea8a035d52984fec27ca418ea1c29bb24df25e5b2528f71f95002",
@@ -6950,8 +6948,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "not an lvalue: StringLiteral",
-   "dynamic_wall": "unsupported:not an lvalue: StringLiteral",
+   "detail": "id40",
+   "dynamic_wall": "libc-call",
    "manifest_status": "parsed",
    "name": "20000703-1.c",
    "sha256": "6e03635f6ee494d6150be8b259217d6ce090c847621f883aa79dc55fc796f41c",
@@ -6961,7 +6959,7 @@
     "type-layout",
     "unsupported:StmtExpr"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "refused-libc"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -7266,8 +7264,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "not an lvalue: StringLiteral",
-   "dynamic_wall": "unsupported:not an lvalue: StringLiteral",
+   "detail": "id542",
+   "dynamic_wall": "libc-call",
    "manifest_status": "parsed",
    "name": "20000910-2.c",
    "sha256": "630dda2d782bd72273a5ba7df4a52c6c5a20344d88f270467652ba6eafaf738c",
@@ -7276,7 +7274,7 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "refused-libc"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -7490,8 +7488,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "not an lvalue: StringLiteral",
-   "dynamic_wall": "unsupported:not an lvalue: StringLiteral",
+   "detail": "string literal with escape or non-ASCII spelling",
+   "dynamic_wall": "unsupported:string literal with escape or non-ASCII spelling",
    "manifest_status": "parsed",
    "name": "20001130-2.c",
    "sha256": "9a2999d2605dab5e7d7ff9530d141b5fe96d5e408c9d7b4724908ed2ec3cdffd",
@@ -7715,8 +7713,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "not an lvalue: StringLiteral",
-   "dynamic_wall": "unsupported:not an lvalue: StringLiteral",
+   "detail": "string literal with escape or non-ASCII spelling",
+   "dynamic_wall": "unsupported:string literal with escape or non-ASCII spelling",
    "manifest_status": "parsed",
    "name": "20010325-1.c",
    "sha256": "d6f4ef2feed125398cfceadc13d71be6549660f96c32bfad4339af394d690710",
@@ -7750,8 +7748,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "not an lvalue: StringLiteral",
-   "dynamic_wall": "unsupported:not an lvalue: StringLiteral",
+   "detail": "LeanModels.C.C23.MemFault.nonValueRepresentation 0 0",
+   "dynamic_wall": "undefined-behavior",
    "manifest_status": "parsed",
    "name": "20010409-1.c",
    "sha256": "69ea3edd9718045635f1aaf4f5d81da4e617a06ff7e2bbc27ba909a1231add8d",
@@ -7760,7 +7758,7 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "refused-ub"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -7969,8 +7967,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "not an lvalue: StringLiteral",
-   "dynamic_wall": "unsupported:not an lvalue: StringLiteral",
+   "detail": "id29",
+   "dynamic_wall": "libc-call",
    "manifest_status": "parsed",
    "name": "20011024-1.c",
    "sha256": "318630ae7d1dd6ab618fb7ff8ebfc135c6154cc1e7479fa430e7c8196a6291e7",
@@ -7979,7 +7977,7 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "refused-libc"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -7993,8 +7991,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "not an lvalue: StringLiteral",
-   "dynamic_wall": "unsupported:not an lvalue: StringLiteral",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "20011109-2.c",
    "sha256": "db9b85c2c2c4c0ca03b74fb16f47092bc1955eb86ffb316cf0173b931fe33888",
@@ -8002,7 +8000,7 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -8019,8 +8017,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "not an lvalue: StringLiteral",
-   "dynamic_wall": "unsupported:not an lvalue: StringLiteral",
+   "detail": "id36",
+   "dynamic_wall": "libc-call",
    "manifest_status": "parsed",
    "name": "20011114-1.c",
    "sha256": "4949cb14e65372b91231780fddd60173451c99f9bbcff2c44975f75467aefdbf",
@@ -8028,7 +8026,7 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "refused-libc"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -8066,8 +8064,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "not an lvalue: StringLiteral",
-   "dynamic_wall": "unsupported:not an lvalue: StringLiteral",
+   "detail": "pointer used as an integer (no ptr\u2194int cast in tier)",
+   "dynamic_wall": "unsupported:pointer used as an integer (no ptr\u2194int cast in tier)",
    "manifest_status": "parsed",
    "name": "20011126-2.c",
    "sha256": "52fc3596a01688ff5a126d07bc7b88811bed3bd82fba8bd18dc097201da6c4f9",
@@ -8732,8 +8730,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "not an lvalue: StringLiteral",
-   "dynamic_wall": "unsupported:not an lvalue: StringLiteral",
+   "detail": "id29",
+   "dynamic_wall": "libc-call",
    "manifest_status": "parsed",
    "name": "20021011-1.c",
    "sha256": "cc2e4b4355551ef32eeca6b9fa46e4351f475f3c686f5287974a3f38fb427301",
@@ -8742,7 +8740,7 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "refused-libc"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -8859,8 +8857,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "not an lvalue: StringLiteral",
-   "dynamic_wall": "unsupported:not an lvalue: StringLiteral",
+   "detail": "id37",
+   "dynamic_wall": "libc-call",
    "manifest_status": "parsed",
    "name": "20021120-3.c",
    "sha256": "015a0910b2a6c7f94aad21ca1d54984e7760c78077dd53a38b876338d51fc086",
@@ -8869,7 +8867,7 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "refused-libc"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -9202,8 +9200,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "not an lvalue: StringLiteral",
-   "dynamic_wall": "unsupported:not an lvalue: StringLiteral",
+   "detail": "string literal with escape or non-ASCII spelling",
+   "dynamic_wall": "unsupported:string literal with escape or non-ASCII spelling",
    "manifest_status": "parsed",
    "name": "20030626-1.c",
    "sha256": "54d8cd932e3da3af64d53090514a9f615a0ea3eef956a98902a218a6ec5daf1f",
@@ -9216,8 +9214,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "not an lvalue: StringLiteral",
-   "dynamic_wall": "unsupported:not an lvalue: StringLiteral",
+   "detail": "id22",
+   "dynamic_wall": "libc-call",
    "manifest_status": "parsed",
    "name": "20030626-2.c",
    "sha256": "a4a054bc1961d7e5e280cf838c02dc5084d5161e8a8a65da92457f753c358778",
@@ -9226,7 +9224,7 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "refused-libc"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -9240,8 +9238,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "not an lvalue: StringLiteral",
-   "dynamic_wall": "unsupported:not an lvalue: StringLiteral",
+   "detail": "id20",
+   "dynamic_wall": "libc-call",
    "manifest_status": "parsed",
    "name": "20030715-1.c",
    "sha256": "5237fc956973f647d62fdb0c09d77800107ac8ac95576a60aae21f519802610d",
@@ -9250,7 +9248,7 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "refused-libc"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -9402,8 +9400,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "not an lvalue: StringLiteral",
-   "dynamic_wall": "unsupported:not an lvalue: StringLiteral",
+   "detail": "string literal with escape or non-ASCII spelling",
+   "dynamic_wall": "unsupported:string literal with escape or non-ASCII spelling",
    "manifest_status": "parsed",
    "name": "20030920-1.c",
    "sha256": "c8df090a4028952f82cb0c3ce035b69bea04a4e89599feb15271b4eec1a52f0a",
@@ -9415,8 +9413,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "not an lvalue: StringLiteral",
-   "dynamic_wall": "unsupported:not an lvalue: StringLiteral",
+   "detail": "LeanModels.C.C23.MemFault.deadObject 5 (LeanModels.C.C23.Duration.static_)",
+   "dynamic_wall": "undefined-behavior",
    "manifest_status": "parsed",
    "name": "20030928-1.c",
    "sha256": "4ced138b6a79c6da681fcac01cc1c46b96233522a01c3fa5710744cff28b0bf6",
@@ -9424,7 +9422,7 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "refused-ub"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -10133,8 +10131,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "not an lvalue: StringLiteral",
-   "dynamic_wall": "unsupported:not an lvalue: StringLiteral",
+   "detail": "block-scope storage class 'static' is outside the tier",
+   "dynamic_wall": "unsupported:block-scope storage class 'static' is outside the tier",
    "manifest_status": "parsed",
    "name": "20041218-1.c",
    "sha256": "b5d1601f6799841f2bae31fac4e6e3f754cae2c1d23a4342665fd42f6668ffee",
@@ -10296,8 +10294,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "not an lvalue: StringLiteral",
-   "dynamic_wall": "unsupported:not an lvalue: StringLiteral",
+   "detail": "id21",
+   "dynamic_wall": "libc-call",
    "manifest_status": "parsed",
    "name": "20050218-1.c",
    "sha256": "58cee76083f39fa4acffe227c321e93f5fed969a9bbd5acafdc1676d461c13af",
@@ -10306,7 +10304,7 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "refused-libc"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -10367,8 +10365,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "not an lvalue: StringLiteral",
-   "dynamic_wall": "unsupported:not an lvalue: StringLiteral",
+   "detail": "pointer used as an integer (no ptr\u2194int cast in tier)",
+   "dynamic_wall": "unsupported:pointer used as an integer (no ptr\u2194int cast in tier)",
    "manifest_status": "parsed",
    "name": "20050502-1.c",
    "sha256": "c0193c330a5aa8d3c7d85780afc61fc5f439792ebc6d90a9f25b0a46c9665cf4",
@@ -10727,8 +10725,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "not an lvalue: StringLiteral",
-   "dynamic_wall": "unsupported:not an lvalue: StringLiteral",
+   "detail": "pointer used as an integer (no ptr\u2194int cast in tier)",
+   "dynamic_wall": "unsupported:pointer used as an integer (no ptr\u2194int cast in tier)",
    "manifest_status": "parsed",
    "name": "20070201-1.c",
    "sha256": "79a6ffa40ce563a6f0b2ffb9dc77ae4738fadda63e9171fde370feb9e889b162",
@@ -11161,8 +11159,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "not an lvalue: StringLiteral",
-   "dynamic_wall": "unsupported:not an lvalue: StringLiteral",
+   "detail": "",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "20080604-1.c",
    "sha256": "9f84f172ede72e46c9e6b43241801c614699bd8e82bbdeaa8d1c2d83dd7b4c50",
@@ -11170,7 +11168,7 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -11426,8 +11424,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "not an lvalue: StringLiteral",
-   "dynamic_wall": "unsupported:not an lvalue: StringLiteral",
+   "detail": "pointer used as an integer (no ptr\u2194int cast in tier)",
+   "dynamic_wall": "unsupported:pointer used as an integer (no ptr\u2194int cast in tier)",
    "manifest_status": "parsed",
    "name": "20100827-1.c",
    "sha256": "02d59f1d5c866906ecaa3ae45ec45753dea383ddba352250caf74df884d40d60",
@@ -11483,8 +11481,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "not an lvalue: StringLiteral",
-   "dynamic_wall": "unsupported:not an lvalue: StringLiteral",
+   "detail": "string literal with escape or non-ASCII spelling",
+   "dynamic_wall": "unsupported:string literal with escape or non-ASCII spelling",
    "manifest_status": "parsed",
    "name": "20111208-1.c",
    "sha256": "92723158d592c7c9b386233062c8faede652bc2a9189b6af138ff322ae6fc5ce",
@@ -11545,8 +11543,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "not an lvalue: StringLiteral",
-   "dynamic_wall": "unsupported:not an lvalue: StringLiteral",
+   "detail": "id20",
+   "dynamic_wall": "libc-call",
    "manifest_status": "parsed",
    "name": "20120207-1.c",
    "sha256": "54547af0299635162ae5fbd31c63f73a2cf8bf3841ed501a5b465e999883cb22",
@@ -11555,7 +11553,7 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "refused-libc"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -12418,8 +12416,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "not an lvalue: StringLiteral",
-   "dynamic_wall": "unsupported:not an lvalue: StringLiteral",
+   "detail": "more arguments than parameters",
+   "dynamic_wall": "unsupported:more arguments than parameters",
    "manifest_status": "parsed",
    "name": "920726-1.c",
    "sha256": "af90ff5eeb8799ed0e0d255bd276fbcac8bf6d890785a7fe998b82758e59d393",
@@ -12553,8 +12551,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "not an lvalue: StringLiteral",
-   "dynamic_wall": "unsupported:not an lvalue: StringLiteral",
+   "detail": "id34",
+   "dynamic_wall": "libc-call",
    "manifest_status": "parsed",
    "name": "921006-1.c",
    "sha256": "21d2c53547fd5d18d2019b248118063b6a5b16112fbe5a258ff5e0dd42d5849f",
@@ -12563,12 +12561,12 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "refused-libc"
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "not an lvalue: StringLiteral",
-   "dynamic_wall": "unsupported:not an lvalue: StringLiteral",
+   "detail": "string literal with escape or non-ASCII spelling",
+   "dynamic_wall": "unsupported:string literal with escape or non-ASCII spelling",
    "manifest_status": "parsed",
    "name": "921007-1.c",
    "sha256": "a5d368d43255b295a41f89061557d5f9edf7125baab0f4805dd952c98048fb5b",
@@ -12613,8 +12611,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "not an lvalue: StringLiteral",
-   "dynamic_wall": "unsupported:not an lvalue: StringLiteral",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "921019-1.c",
    "sha256": "40798c73ac78f38b702455a4c15eb5e1e7736253b7eabe1cb2f30e33c8cd993a",
@@ -12622,7 +12620,7 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -12692,8 +12690,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "not an lvalue: StringLiteral",
-   "dynamic_wall": "unsupported:not an lvalue: StringLiteral",
+   "detail": "id67",
+   "dynamic_wall": "libc-call",
    "manifest_status": "parsed",
    "name": "921117-1.c",
    "sha256": "0e2ba7511fba9c9146762719400a71a9feb7764ef706b852d54089ab9a3b8534",
@@ -12702,7 +12700,7 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "refused-libc"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -12913,8 +12911,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "not an lvalue: StringLiteral",
-   "dynamic_wall": "unsupported:not an lvalue: StringLiteral",
+   "detail": "pointer used as an integer (no ptr\u2194int cast in tier)",
+   "dynamic_wall": "unsupported:pointer used as an integer (no ptr\u2194int cast in tier)",
    "manifest_status": "parsed",
    "name": "930429-1.c",
    "sha256": "f4412cbe15519cd91f247f90fbc00b6c4c6de1c51243d95ff7410d6eb37c7c88",
@@ -13164,8 +13162,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "not an lvalue: StringLiteral",
-   "dynamic_wall": "unsupported:not an lvalue: StringLiteral",
+   "detail": "id57",
+   "dynamic_wall": "libc-call",
    "manifest_status": "parsed",
    "name": "930725-1.c",
    "sha256": "2921be94d182e4af56d4452f63c551624e91c53e3bdf5ee8c9326f2e4217e012",
@@ -13174,7 +13172,7 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "refused-libc"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -14322,8 +14320,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "not an lvalue: StringLiteral",
-   "dynamic_wall": "unsupported:not an lvalue: StringLiteral",
+   "detail": "pointer used as an integer (no ptr\u2194int cast in tier)",
+   "dynamic_wall": "unsupported:pointer used as an integer (no ptr\u2194int cast in tier)",
    "manifest_status": "parsed",
    "name": "961125-1.c",
    "sha256": "43365ddefcd738cbf9a632528b4c27b43243b2d67a7060665190177e9bd7bd10",
@@ -14518,8 +14516,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "not an lvalue: StringLiteral",
-   "dynamic_wall": "unsupported:not an lvalue: StringLiteral",
+   "detail": "castKind 'PointerToIntegral'",
+   "dynamic_wall": "cast:PointerToIntegral",
    "manifest_status": "parsed",
    "name": "980526-2.c",
    "sha256": "89c8f15e8515cb45e315f375b87f60611c7a1573b59fc60a3184ac517ceb758e",
@@ -14594,8 +14592,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "not an lvalue: StringLiteral",
-   "dynamic_wall": "unsupported:not an lvalue: StringLiteral",
+   "detail": "string literal with escape or non-ASCII spelling",
+   "dynamic_wall": "unsupported:string literal with escape or non-ASCII spelling",
    "manifest_status": "parsed",
    "name": "980608-1.c",
    "sha256": "588cf65bb572c64a84b3dcd18c3c078973b97cb6365308c146077c6623dd7412",
@@ -14653,8 +14651,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "not an lvalue: StringLiteral",
-   "dynamic_wall": "unsupported:not an lvalue: StringLiteral",
+   "detail": "id439",
+   "dynamic_wall": "libc-call",
    "manifest_status": "parsed",
    "name": "980707-1.c",
    "sha256": "5521d0bf62e7210d9e0d74cc80322eb8ca1e7379fa643d747b70c956c5c5b9e5",
@@ -14663,7 +14661,7 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "refused-libc"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -14680,8 +14678,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "not an lvalue: StringLiteral",
-   "dynamic_wall": "unsupported:not an lvalue: StringLiteral",
+   "detail": "more arguments than parameters",
+   "dynamic_wall": "unsupported:more arguments than parameters",
    "manifest_status": "parsed",
    "name": "980716-1.c",
    "sha256": "d189e2baf735a74eac5e1e25df6337877b239b370e5307eebb93078a74c20576",
@@ -15233,8 +15231,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "not an lvalue: StringLiteral",
-   "dynamic_wall": "unsupported:not an lvalue: StringLiteral",
+   "detail": "string literal with escape or non-ASCII spelling",
+   "dynamic_wall": "unsupported:string literal with escape or non-ASCII spelling",
    "manifest_status": "parsed",
    "name": "991227-1.c",
    "sha256": "7d4eaa0209fc478b2cb84ae4c54bc94c81959c4be3af0fdb167ee65a358eed9c",
@@ -16863,8 +16861,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "not an lvalue: StringLiteral",
-   "dynamic_wall": "unsupported:not an lvalue: StringLiteral",
+   "detail": "no definition for 'main'",
+   "dynamic_wall": "unsupported:no definition for 'main'",
    "manifest_status": "parsed",
    "name": "builtins/strcmp.c",
    "sha256": "c427dc42ed16be7222ea7b1ecb2ab8ab91817aee8ccb07544a6a5e060d7b7574",
@@ -17284,8 +17282,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "not an lvalue: StringLiteral",
-   "dynamic_wall": "unsupported:not an lvalue: StringLiteral",
+   "detail": "no definition for 'main'",
+   "dynamic_wall": "unsupported:no definition for 'main'",
    "manifest_status": "parsed",
    "name": "builtins/strrchr.c",
    "sha256": "a4e44fba91c48221e40938f70616fdc3522b20da51c46a37256f45b0f386c64c",
@@ -17334,8 +17332,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "not an lvalue: StringLiteral",
-   "dynamic_wall": "unsupported:not an lvalue: StringLiteral",
+   "detail": "no definition for 'main'",
+   "dynamic_wall": "unsupported:no definition for 'main'",
    "manifest_status": "parsed",
    "name": "builtins/strstr-asm.c",
    "sha256": "c8fd9de5b7ef367f2ab9648ad698bcd1dde1ffeb68177ac073b217609550f0b9",
@@ -17696,8 +17694,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "not an lvalue: StringLiteral",
-   "dynamic_wall": "unsupported:not an lvalue: StringLiteral",
+   "detail": "fewer arguments than parameters",
+   "dynamic_wall": "unsupported:fewer arguments than parameters",
    "manifest_status": "parsed",
    "name": "const-addr-expr-1.c",
    "sha256": "5c98c0ac01cef85b6a80457c20ebe0cee5e7591ceeb16f82c11594a239033703",
@@ -20010,8 +20008,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "not an lvalue: StringLiteral",
-   "dynamic_wall": "unsupported:not an lvalue: StringLiteral",
+   "detail": "string literal with escape or non-ASCII spelling",
+   "dynamic_wall": "unsupported:string literal with escape or non-ASCII spelling",
    "manifest_status": "parsed",
    "name": "loop-12.c",
    "sha256": "635996f6b8c74d18d9d72e801ac39dfda7c3c93d4c40e2aef8c329bb5f4da644",
@@ -20117,8 +20115,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "not an lvalue: StringLiteral",
-   "dynamic_wall": "unsupported:not an lvalue: StringLiteral",
+   "detail": "id262",
+   "dynamic_wall": "libc-call",
    "manifest_status": "parsed",
    "name": "loop-2f.c",
    "sha256": "a2d52eb6a92ce7d5dc7f225de6b18392b6153fff41c98fe76aa1380c4999788a",
@@ -20128,12 +20126,12 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "refused-libc"
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "not an lvalue: StringLiteral",
-   "dynamic_wall": "unsupported:not an lvalue: StringLiteral",
+   "detail": "id262",
+   "dynamic_wall": "libc-call",
    "manifest_status": "parsed",
    "name": "loop-2g.c",
    "sha256": "268c47639d02a1978808b460f8bb5545ba9476058ddacbe376f5bdcf0ef36221",
@@ -20143,7 +20141,7 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "refused-libc"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -21277,8 +21275,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "not an lvalue: StringLiteral",
-   "dynamic_wall": "unsupported:not an lvalue: StringLiteral",
+   "detail": "id66",
+   "dynamic_wall": "libc-call",
    "manifest_status": "parsed",
    "name": "pr110914.c",
    "sha256": "f00c55da1029a7214d391a05e0983bfb4e0c43a3dcce34035423de0f78d515df",
@@ -21287,7 +21285,7 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "refused-libc"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -21411,8 +21409,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "not an lvalue: StringLiteral",
-   "dynamic_wall": "unsupported:not an lvalue: StringLiteral",
+   "detail": "string literal with escape or non-ASCII spelling",
+   "dynamic_wall": "unsupported:string literal with escape or non-ASCII spelling",
    "manifest_status": "parsed",
    "name": "pr111863-1.c",
    "sha256": "00dff7816a81b80f8c11d196f9c46352bffa362847c2658147b55a65b7bd1d98",
@@ -21508,8 +21506,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "not an lvalue: StringLiteral",
-   "dynamic_wall": "unsupported:not an lvalue: StringLiteral",
+   "detail": "case label nested in a control statement",
+   "dynamic_wall": "unsupported:case label nested in a control statement",
    "manifest_status": "parsed",
    "name": "pr114965.c",
    "sha256": "e1713aa47404a0f7d0ad498dd32da1e03b5cc3f21a81af38a31e591f5bd4bcfb",
@@ -21545,8 +21543,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "not an lvalue: StringLiteral",
-   "dynamic_wall": "unsupported:not an lvalue: StringLiteral",
+   "detail": "id56",
+   "dynamic_wall": "libc-call",
    "manifest_status": "parsed",
    "name": "pr116799.c",
    "sha256": "4c8b152e9be0e30fabe1ce363fddcd56e98107b8df401c0668b76260c6e7182d",
@@ -21555,7 +21553,7 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "refused-libc"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -22092,8 +22090,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "not an lvalue: StringLiteral",
-   "dynamic_wall": "unsupported:not an lvalue: StringLiteral",
+   "detail": "pointer used as an integer (no ptr\u2194int cast in tier)",
+   "dynamic_wall": "unsupported:pointer used as an integer (no ptr\u2194int cast in tier)",
    "manifest_status": "parsed",
    "name": "pr20601-1.c",
    "sha256": "2c806b4cdec5d59f743c669860262171a9a45579f3abe244332c6365b38c27c8",
@@ -22975,8 +22973,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "not an lvalue: StringLiteral",
-   "dynamic_wall": "unsupported:not an lvalue: StringLiteral",
+   "detail": "pointer used as an integer (no ptr\u2194int cast in tier)",
+   "dynamic_wall": "unsupported:pointer used as an integer (no ptr\u2194int cast in tier)",
    "manifest_status": "parsed",
    "name": "pr34415.c",
    "sha256": "13ab9e6adebc2c6da13d7014094af60ceb5c4bdb067348ac9ab7fcbfa58b054c",
@@ -23103,8 +23101,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "not an lvalue: StringLiteral",
-   "dynamic_wall": "unsupported:not an lvalue: StringLiteral",
+   "detail": "",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "pr35800.c",
    "sha256": "536145a3a4b50e7dcd2f2f3d7752e27a4a2e8946363f6eb68517f61eeb4b1d6e",
@@ -23112,7 +23110,7 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -24756,8 +24754,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "not an lvalue: StringLiteral",
-   "dynamic_wall": "unsupported:not an lvalue: StringLiteral",
+   "detail": "id25",
+   "dynamic_wall": "libc-call",
    "manifest_status": "parsed",
    "name": "pr53688.c",
    "sha256": "010877ad5b37612d649fdcfde302dbba2e51c30064dd4da2d93f2ba874ae80a1",
@@ -24766,7 +24764,7 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "refused-libc"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -25399,8 +25397,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "not an lvalue: StringLiteral",
-   "dynamic_wall": "unsupported:not an lvalue: StringLiteral",
+   "detail": "id99",
+   "dynamic_wall": "libc-call",
    "manifest_status": "parsed",
    "name": "pr59229.c",
    "sha256": "baa810f41ea53ccf4d1374734d2f1ec51b9b7dcecebe7483845bf763e4ce953d",
@@ -25409,7 +25407,7 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "refused-libc"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -25512,8 +25510,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "not an lvalue: StringLiteral",
-   "dynamic_wall": "unsupported:not an lvalue: StringLiteral",
+   "detail": "id25",
+   "dynamic_wall": "libc-call",
    "manifest_status": "parsed",
    "name": "pr60062.c",
    "sha256": "76562729f3ce8b46ec7c4028fa6ce382b197f683272c71a1bb68cd3028e86409",
@@ -25522,7 +25520,7 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "refused-libc"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -26664,8 +26662,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "not an lvalue: StringLiteral",
-   "dynamic_wall": "unsupported:not an lvalue: StringLiteral",
+   "detail": "pointer used as an integer (no ptr\u2194int cast in tier)",
+   "dynamic_wall": "unsupported:pointer used as an integer (no ptr\u2194int cast in tier)",
    "manifest_status": "parsed",
    "name": "pr71631.c",
    "sha256": "bbcf356ce773fb861b23822b21d24a0cff08fc5ec2a32e74fb5b044751a275bb",
@@ -26812,8 +26810,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "not an lvalue: StringLiteral",
-   "dynamic_wall": "unsupported:not an lvalue: StringLiteral",
+   "detail": "id26",
+   "dynamic_wall": "libc-call",
    "manifest_status": "parsed",
    "name": "pr78586.c",
    "sha256": "b381c8f7fbc30e3f92c3a3c29047466b0bf0a914c5bafaf6aa5c43593891c204",
@@ -26822,7 +26820,7 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "refused-libc"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -26838,8 +26836,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "not an lvalue: StringLiteral",
-   "dynamic_wall": "unsupported:not an lvalue: StringLiteral",
+   "detail": "id44",
+   "dynamic_wall": "libc-call",
    "manifest_status": "parsed",
    "name": "pr78622.c",
    "sha256": "2fbf1d51ec9a52a97fc707ec770611ecc252006620260510f0ada6eb0f2ed1d7",
@@ -26848,7 +26846,7 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "refused-libc"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -26948,8 +26946,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "not an lvalue: StringLiteral",
-   "dynamic_wall": "unsupported:not an lvalue: StringLiteral",
+   "detail": "id27",
+   "dynamic_wall": "libc-call",
    "manifest_status": "parsed",
    "name": "pr79327.c",
    "sha256": "462f173d138956bb675d6a98de5a649fabf8253d9dd5cc147b9cafdd9d8fe8f5",
@@ -26958,7 +26956,7 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "refused-libc"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -27020,8 +27018,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "not an lvalue: StringLiteral",
-   "dynamic_wall": "unsupported:not an lvalue: StringLiteral",
+   "detail": "string literal with escape or non-ASCII spelling",
+   "dynamic_wall": "unsupported:string literal with escape or non-ASCII spelling",
    "manifest_status": "parsed",
    "name": "pr80153.c",
    "sha256": "154f48197e7d777dab2c8347e7ffa399cc0b1643b5430454c59d754981f331b7",
@@ -27489,8 +27487,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "not an lvalue: StringLiteral",
-   "dynamic_wall": "unsupported:not an lvalue: StringLiteral",
+   "detail": "id119",
+   "dynamic_wall": "libc-call",
    "manifest_status": "parsed",
    "name": "pr86528.c",
    "sha256": "af206bddf203102d7dacd2a1eb95adfc187aa8b0ce304b607bd42686d68d2f4f",
@@ -27499,7 +27497,7 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "refused-libc"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -27991,8 +27989,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "not an lvalue: StringLiteral",
-   "dynamic_wall": "unsupported:not an lvalue: StringLiteral",
+   "detail": "block-scope storage class 'static' is outside the tier",
+   "dynamic_wall": "unsupported:block-scope storage class 'static' is outside the tier",
    "manifest_status": "parsed",
    "name": "pr93908.c",
    "sha256": "f5695316d24f7cba2ad9d28ef1693525012eb3236807b3bd88daa303fc12b5db",
@@ -28434,8 +28432,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "not an lvalue: StringLiteral",
-   "dynamic_wall": "unsupported:not an lvalue: StringLiteral",
+   "detail": "id237",
+   "dynamic_wall": "libc-call",
    "manifest_status": "parsed",
    "name": "printf-1.c",
    "sha256": "1135335188e0afab823dc45243ce84fcd6cfe0676f7302172dce49674cc2513f",
@@ -28444,7 +28442,7 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "refused-libc"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -28458,8 +28456,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "not an lvalue: StringLiteral",
-   "dynamic_wall": "unsupported:not an lvalue: StringLiteral",
+   "detail": "no layout for declared type 'va_list'",
+   "dynamic_wall": "unsupported:no layout for declared type 'va_list'",
    "manifest_status": "parsed",
    "name": "printf-chk-1.c",
    "sha256": "f085b13f50d60e7d4928c453fb38efbbc385625e16b4cb5313bc78eed03042d3",
@@ -28496,8 +28494,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "not an lvalue: StringLiteral",
-   "dynamic_wall": "unsupported:not an lvalue: StringLiteral",
+   "detail": "LeanModels.C.C23.MemFault.outOfBounds 1 14 1 13",
+   "dynamic_wall": "undefined-behavior",
    "manifest_status": "parsed",
    "name": "ptr-arith-1.c",
    "sha256": "d7125e5a3d11cef291bad1cec7eca7dbc05b2e28750e0c59525b849b647b599c",
@@ -28505,7 +28503,7 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "refused-ub"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -28941,8 +28939,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "not an lvalue: StringLiteral",
-   "dynamic_wall": "unsupported:not an lvalue: StringLiteral",
+   "detail": "id22",
+   "dynamic_wall": "libc-call",
    "manifest_status": "parsed",
    "name": "string-opt-17.c",
    "sha256": "f1f764b90fd97e4b42a2a2faf505f26fd6c7fa8c4f5740f6092a1a63e0767e5c",
@@ -28951,7 +28949,7 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "refused-libc"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -28968,8 +28966,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "not an lvalue: StringLiteral",
-   "dynamic_wall": "unsupported:not an lvalue: StringLiteral",
+   "detail": "no layout for declared type 'const char *const'",
+   "dynamic_wall": "unsupported:no layout for declared type 'const char *const'",
    "manifest_status": "parsed",
    "name": "string-opt-5.c",
    "sha256": "ae4d5bc865c6d2b4c4ca3a0633f3e87dd76e5c38b5a9dc6c2008b602e187ae8a",
@@ -29281,8 +29279,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "not an lvalue: StringLiteral",
-   "dynamic_wall": "unsupported:not an lvalue: StringLiteral",
+   "detail": "more arguments than parameters",
+   "dynamic_wall": "unsupported:more arguments than parameters",
    "manifest_status": "parsed",
    "name": "va-arg-10.c",
    "sha256": "5cb2d6ed423c050aaa81f9a50ce99c3dd43e88f2757c460a46a8b5836b09c4df",
@@ -29352,8 +29350,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "not an lvalue: StringLiteral",
-   "dynamic_wall": "unsupported:not an lvalue: StringLiteral",
+   "detail": "floating literal (floats are a named decision)",
+   "dynamic_wall": "unsupported:floating literal (floats are a named decision)",
    "manifest_status": "parsed",
    "name": "va-arg-15.c",
    "sha256": "bc9aefd3656145f3f3e0110bab4fe674903e26cdb8c23b474e6f185e5d705a3d",
@@ -29382,8 +29380,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "not an lvalue: StringLiteral",
-   "dynamic_wall": "unsupported:not an lvalue: StringLiteral",
+   "detail": "floating literal (floats are a named decision)",
+   "dynamic_wall": "unsupported:floating literal (floats are a named decision)",
    "manifest_status": "parsed",
    "name": "va-arg-17.c",
    "sha256": "e3bd464100e2fc2a2657d338e921a84ff7e2626e1b04ca51fde765b56fd3f046",
@@ -29411,8 +29409,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "not an lvalue: StringLiteral",
-   "dynamic_wall": "unsupported:not an lvalue: StringLiteral",
+   "detail": "more arguments than parameters",
+   "dynamic_wall": "unsupported:more arguments than parameters",
    "manifest_status": "parsed",
    "name": "va-arg-19.c",
    "sha256": "e0251e5c3506f5909a206d4523019424f7890dc5033296693ddd7cf35d165331",
@@ -29450,8 +29448,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "not an lvalue: StringLiteral",
-   "dynamic_wall": "unsupported:not an lvalue: StringLiteral",
+   "detail": "string literal with escape or non-ASCII spelling",
+   "dynamic_wall": "unsupported:string literal with escape or non-ASCII spelling",
    "manifest_status": "parsed",
    "name": "va-arg-21.c",
    "sha256": "dedc44188f3fd1c561cd63e1d964c7f0beb5c077b4802c961b0eb7f4a6c7fbd9",
@@ -29593,8 +29591,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "not an lvalue: StringLiteral",
-   "dynamic_wall": "unsupported:not an lvalue: StringLiteral",
+   "detail": "more arguments than parameters",
+   "dynamic_wall": "unsupported:more arguments than parameters",
    "manifest_status": "parsed",
    "name": "va-arg-9.c",
    "sha256": "d81cf4ba2a988b659534a2037ecff6039bac090a41e316dad99cfd094c743cba",
@@ -29808,8 +29806,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "not an lvalue: StringLiteral",
-   "dynamic_wall": "unsupported:not an lvalue: StringLiteral",
+   "detail": "string literal with escape or non-ASCII spelling",
+   "dynamic_wall": "unsupported:string literal with escape or non-ASCII spelling",
    "manifest_status": "parsed",
    "name": "widechar-3.c",
    "sha256": "5d4286b40e5d9479dbf6b34789f480fd4b0f9f183ad4da1cc20d957bf31160b0",

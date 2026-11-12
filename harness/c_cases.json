@@ -96,6 +96,18 @@
     "return_value": 0
   },
   {
+    "id": "plain-string-index",
+    "source": "int main(void) { const char *p = \"hello\"; return p[0] == 'h' ? 0 : 1; }",
+    "expect": "match",
+    "return_value": 0
+  },
+  {
+    "id": "escaped-string-loud",
+    "source": "int main(void) { const char *p = \"hello\\n\"; return p[0] == 'h' ? 0 : 1; }",
+    "expect": "refuse",
+    "error": "string literal with escape"
+  },
+  {
     "id": "compound-signed-char",
     "source": "int main(void) { signed char s = 127; s += 1; return s; }",
     "expect": "match",

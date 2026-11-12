@@ -26485,6 +26485,32 @@ def _sva_vector_literal(node):
     return {"kind": "Literal", "span": None, "width": width, "bits": bits}
 
 
+def _sva_repeated_vector_literal(node):
+    """Convert a literal-only multiple concatenation to one sized literal.
+
+    A replication such as ``{4{1'b1}}`` is a four-bit value, not an
+    unbased fill.  Keep the source's width in the existing ``Literal`` node
+    so the SVA evaluator can apply the normal self-determined sizing rules.
+    The structured syntax is deliberately limited to one direct vector
+    literal operand; other concatenation forms remain loud below.
+    """
+    if not isinstance(node, dict) or node.get("kind") != "MultipleConcatenationExpression":
+        return None
+    count = _sva_integer(node.get("expression"))
+    if count is None or count <= 0:
+        return None
+    concat = node.get("concatenation") or {}
+    expressions = concat.get("expressions") or []
+    if len(expressions) != 1:
+        return None
+    operand = _sva_vector_literal(expressions[0])
+    if operand is None:
+        return None
+    bits = operand["bits"] * count
+    return {"kind": "Literal", "span": None,
+            "width": operand["width"] * count, "bits": bits}
+
+
 def _sva_scoped_name(node):
     """Return a qualified value path from Slang's nested ``ScopedName``.
 
@@ -26604,19 +26630,14 @@ def _sva_pexpr(node):
                     items.append({"kind": "Fill", "bit": raw})
                     continue
             if item_kind == "MultipleConcatenationExpression":
-                concat = item.get("concatenation") or {}
-                exprs = concat.get("expressions") or []
-                if len(exprs) == 1:
-                    raw = ((exprs[0].get("value") or {}).get("text", "")
-                           if isinstance(exprs[0], dict) else "")
-                    if raw == "1":
-                        items.append({"kind": "Fill", "bit": "1"})
-                        continue
+                literal = _sva_repeated_vector_literal(item)
+                if literal is not None:
+                    items.append(literal)
+                    continue
             if item_kind == "IntegerVectorExpression":
-                raw = ((item.get("value") or {}).get("text", "")
-                       if isinstance(item, dict) else "")
-                if raw in ("0", "1"):
-                    items.append({"kind": "Fill", "bit": raw})
+                literal = _sva_vector_literal(item)
+                if literal is not None:
+                    items.append(literal)
                     continue
             return {"kind": "Unsupported", "sv_kind": "InsideExpression",
                     "text": "inside range or item outside the finite literal fragment"}
@@ -26901,6 +26922,33 @@ def _sva_property_ast(statement):
     return result
 
 
+def _sva_property_metadata(statement):
+    """Read assertion kind and clock from Slang's property statement node.
+
+    The source text is retained for diagnostics, but it is not a grammar
+    input.  In particular, ``restrict property`` must never fall through to
+    the old assertion default merely because a spelling was absent from a
+    source-text regular expression.
+    """
+    try:
+        data = json.loads(statement.syntax.to_json())
+        syntax = data.get("statement", {})
+        kind = {
+            "AssertPropertyStatement": "assert",
+            "AssumePropertyStatement": "assume",
+            "CoverPropertyStatement": "cover",
+            "RestrictPropertyStatement": "restrict",
+        }.get(syntax.get("kind"), "unsupported")
+        spec = syntax.get("propertySpec", {})
+        clocking = spec.get("clocking", {})
+        event = ((clocking.get("expr") or {}).get("expr") or {})
+        event_expr = event.get("expr") or {}
+        clock = _sva_scoped_name(event_expr)
+        return kind, clock
+    except Exception:
+        return "unsupported", None
+
+
 def _convert_concurrent_property(sm, m, path=()):
     """Retain a concurrent assertion as envelope metadata.
 
@@ -26912,12 +26960,7 @@ def _convert_concurrent_property(sm, m, path=()):
     """
     text = source_text(m)
     head = text.split(":", 1)[0].strip() if ":" in text else ""
-    match = re.search(r"\b(assert|assume|cover)\s+property\b", text)
-    kind = match.group(1) if match else "assert"
-    clock_match = re.search(
-        r"@\s*\(\s*(?:(?:posedge|negedge|edge)\s+)?([A-Za-z_$][A-Za-z0-9_$]*)",
-        text)
-    clock = clock_match.group(1) if clock_match else None
+    kind, clock = _sva_property_metadata(m)
     result = {
         "kind": "SvaProperty",
         "span": sym_span(sm, m),

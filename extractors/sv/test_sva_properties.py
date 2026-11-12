@@ -42,6 +42,52 @@ endmodule
         self.assertFalse(any(n.get("sv_kind") == "ProceduralBlockSymbol:NoEventControl"
                              for n in module["others"]))
 
+    def test_inside_sized_literals_keep_their_declared_width(self):
+        source = """module top(input logic clk, input logic [3:0] a);
+  assert property (@(posedge clk) a inside {4'b0, 4'b1});
+endmodule
+"""
+        with tempfile.TemporaryDirectory() as directory:
+            src = Path(directory) / "inside.sv"
+            out = Path(directory) / "inside.sv.json"
+            src.write_text(source)
+            extract.process_symbolic("top", [str(src)], [], str(out))
+            prop = json.loads(out.read_text())["design"]["modules"][0]["properties"][0]
+        expr = prop["ast"]["property"]["body"]["test"]["expr"]
+        self.assertEqual(expr["left"]["right"]["kind"], "Literal")
+        self.assertEqual(expr["left"]["right"]["bits"], "0000")
+        self.assertEqual(expr["right"]["right"]["kind"], "Literal")
+        self.assertEqual(expr["right"]["right"]["bits"], "0001")
+
+    def test_inside_repeated_literal_keeps_replication_width(self):
+        source = """module top(input logic clk, input logic [3:0] a);
+  assert property (@(posedge clk) a inside {{4{1'b1}}});
+endmodule
+"""
+        with tempfile.TemporaryDirectory() as directory:
+            src = Path(directory) / "inside_repl.sv"
+            out = Path(directory) / "inside_repl.sv.json"
+            src.write_text(source)
+            extract.process_symbolic("top", [str(src)], [], str(out))
+            prop = json.loads(out.read_text())["design"]["modules"][0]["properties"][0]
+        literal = prop["ast"]["property"]["body"]["test"]["expr"]["right"]
+        self.assertEqual(literal, {
+            "kind": "Literal", "span": None, "width": 4, "bits": "1111"})
+
+    def test_restrict_property_does_not_default_to_assert(self):
+        source = """module top(input logic clk, a);
+  restrict property (@(posedge clk) a);
+endmodule
+"""
+        with tempfile.TemporaryDirectory() as directory:
+            src = Path(directory) / "restrict.sv"
+            out = Path(directory) / "restrict.sv.json"
+            src.write_text(source)
+            extract.process_symbolic("top", [str(src)], [], str(out))
+            prop = json.loads(out.read_text())["design"]["modules"][0]["properties"][0]
+        self.assertEqual(prop["property_kind"], "restrict")
+        self.assertNotIn("ast", prop)
+
     def test_negedge_and_nonoverlap_are_structured(self):
         source = """module top(input logic clk, req, ack);
   assert property (@(negedge clk) req |=> ack);

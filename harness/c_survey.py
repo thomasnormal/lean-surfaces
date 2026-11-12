@@ -64,6 +64,8 @@ def dynamic_wall(verdict, detail):
             return "unsupported:CaseStmt"
         if detail.startswith("unsequenced side effects"):
             return "unsequenced-effects"
+        if detail.startswith("not an lvalue: "):
+            return "unsupported:" + detail
         return "unsupported:" + detail.split(":", 1)[0]
     if verdict == "refused-libc":
         return "libc-call"
@@ -321,6 +323,10 @@ def selftest():
         return 1
     if dynamic_wall("refused-unsupported", "out of tier: ChooseExpr") != "unsupported:ChooseExpr":
         print("c_survey --self-test: dynamic wall normalization failed", file=sys.stderr)
+        return 1
+    if dynamic_wall("refused-unsupported", "not an lvalue: StringLiteral") != \
+            "unsupported:not an lvalue: StringLiteral":
+        print("c_survey --self-test: lvalue wall lost its construct", file=sys.stderr)
         return 1
     print("c_survey --self-test: ok")
     return 0

@@ -4,8 +4,8 @@ Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manife
 
 - verdicts: 605/2214 MATCH (passed 605, failed 0, oracle 0)
 - manifest SHA-256: `1de1a60c299d5bb51dae7ca001b0a008010cad0b25670cde2090c08bfc1a84ce`
-- measured commit: `3a62c53ee`
-- measured at: `2026-11-12T05:25:00Z`
+- measured commit: `5048a4d90`
+- measured at: `2026-11-12T05:35:00Z`
 
 ## Verdict counts
 
@@ -90,7 +90,7 @@ The run's first refusal, normalized by construct; `sole` counts rows whose first
 | wall | sole | present | example files |
 | --- | ---: | ---: | --- |
 | `frontend` | 350 | 350 | 00209.c, 20000112-1.c, 20000227-1.c, 20000314-3.c, 20000412-3.c |
-| `unsupported:not an lvalue` | 129 | 129 | 00025.c, 00026.c, 00056.c, 00058.c, 00112.c |
+| `unsupported:not an lvalue: StringLiteral` | 128 | 128 | 00025.c, 00026.c, 00056.c, 00058.c, 00112.c |
 | `libc-call` | 99 | 99 | 00040.c, 00214.c, 20000402-1.c, 20000412-6.c, 20000722-1.c |
 | `unsupported:no definition for 'main'` | 94 | 94 | 20040705-1.c, 20040705-2.c, 20040709-3.c, builtins/20010124-1.c, builtins/abs-1.c |
 | `unsupported:not an integer type` | 54 | 54 | 00072.c, 00073.c, 20000419-1.c, 20000706-1.c, 20000706-2.c |
@@ -280,6 +280,7 @@ The run's first refusal, normalized by construct; `sole` counts rows whose first
 | `unsupported:no layout for parameter type 'foo_t *const'` | 1 | 1 | pr33669.c |
 | `unsupported:no layout for parameter type 'int **restrict'` | 1 | 1 | 20080506-2.c |
 | `unsupported:no layout for parameter type 'int *restrict'` | 1 | 1 | pr38212.c |
+| `unsupported:not an lvalue: PredefinedExpr` | 1 | 1 | 20001011-1.c |
 | `unsupported:src/20000412-5.c` | 1 | 1 | 20000412-5.c |
 | `unsupported:src/20001203-1.c` | 1 | 1 | 20001203-1.c |
 | `unsupported:src/20020225-2.c` | 1 | 1 | 20020225-2.c |

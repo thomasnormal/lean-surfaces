@@ -686,6 +686,32 @@ def extract(path, source_name=None):
             ex.loc.file, ex.loc.line = loc.file, loc.line
             top.append(ex.node(d))
 
+    # Clang emits separate declaration IDs for a prototype and its later
+    # definition.  In C those declarations denote one function; retaining the
+    # prototype ID at a call makes the evaluator refuse a real defined call as
+    # external libc.  Use the parser's own FunctionDecl name/body fields to
+    # canonicalize redeclarations to the body-bearing declaration ID.  This is
+    # identity normalization over the approved AST, never source reparsing.
+    function_defs = {
+        n.get("name"): n.get("decl_id")
+        for n in top
+        if n.get("kind") == "FunctionDecl" and n.get("body") is not None
+        and n.get("name") and n.get("decl_id")
+    }
+    def unify(value):
+        if isinstance(value, dict):
+            if value.get("kind") == "FunctionDecl" and value.get("name") in function_defs:
+                value["decl_id"] = function_defs[value["name"]]
+            elif value.get("kind") == "DeclRefExpr" and value.get("decl_kind") == "FunctionDecl":
+                if value.get("name") in function_defs:
+                    value["decl_id"] = function_defs[value["name"]]
+            for child in value.values():
+                unify(child)
+        elif isinstance(value, list):
+            for child in value:
+                unify(child)
+    unify(top)
+
     # The corpus lives in ANOTHER repository (tools/ctwin/ in sunfish), so a
     # path relative to this root would be a fiction.  `--source-name` records
     # the corpus's own path in its own repo; without it we fall back to a

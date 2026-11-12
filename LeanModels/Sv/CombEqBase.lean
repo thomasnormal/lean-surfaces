@@ -1565,7 +1565,7 @@ theorem rdsOf?_len {ds : List DeclT} :
   | .int .., rs, h, _
   | .resize .., rs, h, _ | .signedResize .., rs, h, _ | .squash2 .., rs, h, _
   | .sysCall .., rs, h, _ | .repl .., rs, h, _
-  | .cast .., rs, h, _ | .unsupported .., rs, h, _ => by
+  | .cast .., rs, h, _ | .unsupported .., rs, h, _ | .functionCall .., rs, h, _ => by
       simp [rdsOf?, rdsLeaf?, leafRd?] at h
 
 /-- On an accepted expression the skeleton's leaves are exactly the reads. -/
@@ -1636,7 +1636,7 @@ theorem skT_leaves {ds : List DeclT} :
   | .int .., rs, h, _
   | .resize .., rs, h, _ | .signedResize .., rs, h, _ | .squash2 .., rs, h, _
   | .sysCall .., rs, h, _ | .repl .., rs, h, _
-  | .cast .., rs, h, _ | .unsupported .., rs, h, _ => by
+  | .cast .., rs, h, _ | .unsupported .., rs, h, _ | .functionCall .., rs, h, _ => by
       simp [rdsOf?, rdsLeaf?, leafRd?] at h
 
 
@@ -1674,7 +1674,7 @@ theorem skT_v1 {ds : List DeclT} :
   | .int .., rs, _, h | .fill .., rs, _, h
   | .resize .., rs, _, h | .signedResize .., rs, _, h | .squash2 .., rs, _, h
   | .sysCall .., rs, _, h | .repl .., rs, _, h
-  | .cast .., rs, _, h | .unsupported .., rs, _, h => by
+  | .cast .., rs, _, h | .unsupported .., rs, _, h | .functionCall .., rs, _, h => by
       simp [rdsOf?, rdsLeaf?, leafRd?] at h
 
 /-! ## The mirror `Sk.dz` keeps the width, the leaves and the knownness -/
@@ -1961,7 +1961,7 @@ theorem cnt_peel : ∀ p : PExpr, cnt p.peelMk = cnt p
   | .resize _ e => by simp only [PExpr.peelMk, cnt]; exact cnt_peel e
   | .signedResize _ e => by simp only [PExpr.peelMk, cnt]; exact cnt_peel e
   | .lit _ | .fill _ | .ident _ | .bitSel .. | .partSel .. | .arrayElem .. | .arrayPart .. | .paramRef .. | .genvarRef _
-  | .enumRef .. | .int _ | .sysCall .. | .cast .. | .squash2 .. | .unsupported .. | .binary .. | .unary .. | .ternary ..
+  | .enumRef .. | .int _ | .sysCall .. | .cast .. | .squash2 .. | .unsupported .. | .functionCall .. | .binary .. | .unary .. | .ternary ..
   | .reduce .. | .concat _ | .repl .. => rfl
 
 theorem skAmt_eq {ds : List DeclT} {r : PExpr} {rb : List Acc} (h : shAmtRd? ds r = .ok rb) (as : List Acc) :
@@ -1997,7 +1997,7 @@ theorem rdsOfD1?_len {ds : List DeclT} : ∀ (v : PExpr) (rs : List Acc), rdsOfD
   | .concat _, rs, h => by simp [rdsOfD1?] at h
   | .ident _, rs, h | .bitSel .., rs, h | .partSel .., rs, h | .arrayElem .., rs, h | .arrayPart .., rs, h
   | .cast .., rs, h | .fill _, rs, h | .paramRef .., rs, h | .genvarRef _, rs, h | .enumRef .., rs, h | .int _, rs, h
-  | .sysCall .., rs, h | .squash2 .., rs, h | .unsupported .., rs, h | .repl .., rs, h => by
+  | .sysCall .., rs, h | .squash2 .., rs, h | .unsupported .., rs, h | .functionCall .., rs, h | .repl .., rs, h => by
       obtain ⟨a, rfl, -, hc, -⟩ := dLeaf_facts (by simpa [rdsOfD1?] using h)
       simp [hc]
 
@@ -2068,7 +2068,7 @@ theorem rdsOfD?_len {ds : List DeclT} :
       exact partRdDW_len (p := .repl c a) (by simpa [partRdDW?] using h)
   | .ident _, _, rs, h | .bitSel .., _, rs, h | .partSel .., _, rs, h | .arrayElem .., _, rs, h
   | .arrayPart .., _, rs, h | .cast .., _, rs, h | .fill _, _, rs, h | .paramRef .., _, rs, h | .genvarRef _, _, rs, h
-  | .enumRef .., _, rs, h | .sysCall .., _, rs, h | .squash2 .., _, rs, h | .unsupported .., _, rs, h => by
+  | .enumRef .., _, rs, h | .sysCall .., _, rs, h | .squash2 .., _, rs, h | .unsupported .., _, rs, h | .functionCall .., _, rs, h => by
       obtain ⟨a, rfl, -, hc, -⟩ := dLeaf_facts (by simpa [rdsOfD?] using h)
       simp [hc]
 
@@ -2113,7 +2113,7 @@ theorem skD1_leaves {ds : List DeclT} :
   | .concat _, rs, h => by simp [rdsOfD1?] at h
   | .ident _, rs, h | .bitSel .., rs, h | .partSel .., rs, h | .arrayElem .., rs, h | .arrayPart .., rs, h
   | .cast .., rs, h | .fill _, rs, h | .paramRef .., rs, h | .genvarRef _, rs, h | .enumRef .., rs, h | .int _, rs, h
-  | .sysCall .., rs, h | .squash2 .., rs, h | .unsupported .., rs, h | .repl .., rs, h => by
+  | .sysCall .., rs, h | .squash2 .., rs, h | .unsupported .., rs, h | .functionCall .., rs, h | .repl .., rs, h => by
       obtain ⟨a, rfl, -, -, -, h1, -⟩ := dLeaf_facts (by simpa [rdsOfD1?] using h)
       simp [h1, Sk.leaves]
 
@@ -2233,7 +2233,7 @@ theorem skD_leaves {ds : List DeclT} :
         simp [skD, repPartD_rd hnl, Sk.leaves, partLeaves]
   | .ident _, _, rs, h | .bitSel .., _, rs, h | .partSel .., _, rs, h | .arrayElem .., _, rs, h
   | .arrayPart .., _, rs, h | .cast .., _, rs, h | .fill _, _, rs, h | .paramRef .., _, rs, h | .genvarRef _, _, rs, h
-  | .enumRef .., _, rs, h | .sysCall .., _, rs, h | .squash2 .., _, rs, h | .unsupported .., _, rs, h => by
+  | .enumRef .., _, rs, h | .sysCall .., _, rs, h | .squash2 .., _, rs, h | .unsupported .., _, rs, h | .functionCall .., _, rs, h => by
       obtain ⟨a, rfl, -, -, h1, -⟩ := dLeaf_facts (by simpa [rdsOfD?] using h)
       simp [h1, Sk.leaves]
 
@@ -2362,7 +2362,7 @@ theorem rdsOfW?_len {ds : List DeclT} :
   | .paramRef .., rs, h, _ | .genvarRef .., rs, h, _ | .enumRef .., rs, h, _
   | .signedResize .., rs, h, _ | .squash2 .., rs, h, _
   | .sysCall .., rs, h, _
-  | .cast .., rs, h, _ | .unsupported .., rs, h, _ => by
+  | .cast .., rs, h, _ | .unsupported .., rs, h, _ | .functionCall .., rs, h, _ => by
       simp [rdsOfW?, rdsLeaf?, leafRd?] at h
 
 /-- On an accepted expression the skeleton's leaves are exactly the reads. -/
@@ -2460,7 +2460,7 @@ theorem skT_leavesW {ds : List DeclT} :
   | .paramRef .., rs, h, _ | .genvarRef .., rs, h, _ | .enumRef .., rs, h, _
   | .signedResize .., rs, h, _ | .squash2 .., rs, h, _
   | .sysCall .., rs, h, _
-  | .cast .., rs, h, _ | .unsupported .., rs, h, _ => by
+  | .cast .., rs, h, _ | .unsupported .., rs, h, _ | .functionCall .., rs, h, _ => by
       simp [rdsOfW?, rdsLeaf?, leafRd?] at h
 
 end CombEq

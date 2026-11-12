@@ -68,7 +68,10 @@ info: sv_equations: the netlist view and the obligations
   [inputsKnown_3] ⊢ ∃ v, st.lookup "cin" = some v ∧ v.allKnown = true ∧ v.width = 1
 -/
 #guard_msgs (whitespace := lax) in
-example (N : Nat) (hN : 1 ≤ N) (hR : (N : Int) < 2147483648) :
+-- one declaration for the structure, the rank and the equations (`comb_proof.lean` splits them): the 32-bit reading of
+-- the four localparams, each wrapped at every operation, takes it past the default budget
+set_option maxHeartbeats 400000 in
+example (N : Nat) (hN : 1 ≤ N) (hR : (N : Int) < 2147483647) :
     lp_add.sem N ⊨₂ spec2 fun _ tr => ∀ (c : Nat) (st : SvState), tr[c]? = some st →
       ∀ (x y : BitVec N) (ci : Bool),
         SvState.lookup st "a" = some (LVec.ofBitVec x) →

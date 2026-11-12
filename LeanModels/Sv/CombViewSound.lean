@@ -264,13 +264,15 @@ theorem surfaceFuel_gt (args : List Int) (x : Nat) (hx : x ≤ 4 * (args.map Int
     omega
   omega
 
+/-- The environment `paramEnv2` produces: some declaration scope `env2` with its dimension table, and the design's
+function declarations (`functions`, which no comb theorem reads). -/
 theorem paramEnv2_dims {d : PDesign} {args : List Int} {env : IEnv}
     (h : d.paramEnv2 args = .ok env) :
-    ∃ env2 : IEnv, env = { env2 with dims := dimTable env2 d.decls } := by
+    ∃ (env2 : IEnv) (fs : List PFunction), env = { env2 with dims := dimTable env2 d.decls, functions := fs } := by
   unfold PDesign.paramEnv2 at h
   simp only [Res.bind_eq_ok] at h
   obtain ⟨_, -, _, -, e0, -, e1, -, e2, -, pws, -, hfin⟩ := h
-  exact ⟨{ e2 with pwidths := pws }, (Res.ok.inj hfin).symm⟩
+  exact ⟨{ e2 with pwidths := pws }, d.functions, (Res.ok.inj hfin).symm⟩
 
 theorem dimsOf'_some {s : Summary} {n : String} {dims : List (Aff × Aff)}
     (h : s.dimsOf' n = some dims) :
@@ -525,12 +527,12 @@ theorem mem_declNames_of_find {s : Summary} {n : String} (h : (s.find n).isSome 
 /-- The environment facts of the instantiation, from the declaration stage. -/
 theorem ctx_of_env {s : Summary} {d : PDesign} (hsd : declsOf? d.decls = .ok s.decls)
     {σ : String → Int} {env : IEnv}
-    (hdim : ∃ env2 : IEnv, env = { env2 with dims := dimTable env2 d.decls })
+    (hdim : ∃ (env2 : IEnv) (fs : List PFunction), env = { env2 with dims := dimTable env2 d.decls, functions := fs })
     (hag : Agrees σ env s.params)
     (hdecl : ∀ dt ∈ s.decls, ∀ n ∈ dt.affNames, n ∈ s.params) :
     Ctx σ (env.withDecls (s.decls.map (DeclT.toDecl σ))) (s.decls.map fun dt => (dt.name, dt.elemW σ))
       (s.DW σ) (s.DG σ) (s.EW σ) s.params := by
-  obtain ⟨env2, henv⟩ := hdim
+  obtain ⟨env2, fs, henv⟩ := hdim
   have hagd : ∀ dt ∈ s.decls, ∀ n ∈ dt.affNames, env2.intVal? n = some (σ n) := by
     intro dt hdt n hn
     have := hag n (hdecl dt hdt n hn)

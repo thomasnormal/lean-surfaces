@@ -634,7 +634,8 @@ theorem consts_eq : ∀ v : PExpr, v.consts = (v.cnames, v.rcounts)
   | .functionCall .. => by simp [PExpr.consts, PExpr.cnames, PExpr.rcounts]
   | .paramRef _ none | .paramRef _ (some _) => rfl
   | .lit _ | .fill _ | .ident _ | .bitSel .. | .partSel .. | .arrayElem .. | .arrayPart .. | .genvarRef _
-  | .enumRef .. | .int _ | .sysCall .. | .cast .. | .signedResize .. | .squash2 .. | .unsupported .. => by
+  | .enumRef .. | .int _ | .sysCall .. | .cast .. | .signedResize .. | .squash2 .. | .unsupported ..
+  | .functionCall .. => by
       simp [PExpr.consts, PExpr.cnames, PExpr.rcounts]
 
 /-- The constants of an expression are in scope and its replication counts are non-negative. -/
@@ -1395,7 +1396,7 @@ theorem noConst_spec : ∀ v : PExpr, noConst v = true → v.cnames = [] ∧ v.r
   | .paramRef _ (some _), _ => ⟨rfl, rfl⟩
   | .lit _, _ | .fill _, _ | .ident _, _ | .bitSel .., _ | .partSel .., _ | .arrayElem .., _ | .arrayPart .., _
   | .genvarRef _, _ | .enumRef .., _ | .int _, _ | .sysCall .., _ | .cast .., _
-  | .signedResize .., _ | .squash2 .., _ | .unsupported .., _ => by
+  | .signedResize .., _ | .squash2 .., _ | .unsupported .., _ | .functionCall .., _ => by
       simp [PExpr.cnames, PExpr.rcounts]
 
 /-! ### The left operand of a shift: what `instDivOperand2` lowers
@@ -2169,10 +2170,22 @@ obligation needs (`2 ^ NI ≥ …`) is the player's to supply.
 
 Nothing here is trusted. `Summary.sound` and everything built on it need only
 `Agrees σ env s.params` for the environment `paramEnv2` really produced; the tactics close that by
-`rfl` per design (the localparam really sits in `env.vals`, bound by `bindLocal`, at the value
-`CE.eval` computes), so a `CE` that disagreed with the instantiation makes `hag` fail to close. The
-operations are `evalInt`'s own (`Int.tdiv`/`Int.tmod`, the operand order of `+ - *`), which is what
-lets `rfl` see through the symbolic parameter. -/
+`rfl` per design (the localparam really sits in the environment, bound by `bindLocal`, at the value
+`CE.eval` computes), so a `CE` that disagreed with the instantiation makes `hag` fail to close.
+
+**The 32-bit reading.** An `integer`/`int` localparam is an expression of 32-bit signed operands: every literal, every
+constant read and every result of `+ - * / %` and of a shift is a 32-bit `int` (IEEE 1800-2023 §11.4, §11.6.1, §11.8.1),
+and the instantiation evaluates it so, wrapping at every node (`evalIntExact`, `canonInt 32 true` around each one). `CE.eval`
+is an unbounded value of the same tree whose low 32 bits are the IEEE result's: `+ - *` and `<<` need no wrap of their
+operands for that (the low bits of a sum, difference, product or left shift depend only on the low bits of the operands,
+§11.4.3), `>>` reads its operand's 32-bit pattern and `>>>` its 32-bit value, while `/`, `%` and `$clog2` read their
+operand's unbounded value (`Int.tdiv`/`Int.tmod`). So `hag` holds exactly where the definition's value is in [-2^31, 2^31)
+(the instantiation's value is its 32-bit wrap) and every operand of `/`, `%` and `$clog2` is too: `(1 << (E - 1)) - 1` is
+read at `E = 32`, where `1 << 31` wraps to `-2^31` and the difference back to `2^31 - 1`; `(N * 1000000) / 1000000` is not
+read where the product leaves the range. At concrete arguments `rfl` decides it; at a symbolic one the tactics bring the
+instantiation's value to one wrap around the summary's tree and remove the wraps from the hypotheses in context
+(`canonInt32_add_l` and its siblings, `canonInt32_of_bounds`). Where the readings part the tactics refuse, naming the
+operation (`CE.wrapDiag`); a definition is never read at a value other than the instantiation's. -/
 
 /-- The definition of a localparam. -/
 inductive CE where
@@ -2196,8 +2209,10 @@ inductive CE where
   | ashr (a b : CE)
 deriving Repr, BEq, DecidableEq, Inhabited
 
-/-- The value of a definition, with `evalInt`'s own operations (`/` and `%` truncate toward zero; `$clog2` is
-`LeanModels.Sv.clog2` of the argument's `toNat`, where `evalInt` refuses a negative argument).
+/-- The value of a definition, unbounded (`/` and `%` truncate toward zero, IEEE 1800-2023 §11.4.2; `$clog2` is
+`LeanModels.Sv.clog2` of the argument's `toNat`, where the instantiation refuses a negative argument). It is the 32-bit
+`int` value of the instantiation wherever it is in the 32-bit range and so is every operand of `/`, `%` and `$clog2` (see
+"The 32-bit reading" above).
 
 The shifts are the 32-bit `int` operations of IEEE 1800-2023 §11.4.10 on the values of their operands as 32-bit
 patterns, so that the value is exact for every operand value, not only where the operands stay in the 32-bit range. The
@@ -2207,9 +2222,12 @@ more shifts every bit out). `<<` is `a * 2^amount`: its low 32 bits, the result,
 its two's-complement reading) with its sign, a division by `2^amount` rounded down. So the value's 32-bit
 reading is the IEEE result for EVERY value of the operands' readings, and the agreement `hag` (the value equals the
 instantiation's 32-bit `int` value, which is in the 32-bit range) holds only where the summary's value IS that
-result. The instantiation computes `<<` by `a * 2^b`, `>>` by `Int.tdiv` (refusing a negative `a`) and `>>>` by
-`Int.fdiv`, all of them refusing a negative `b` (`evalInt`); where its operands are in the 32-bit range these are
-the same numbers, which is what the tactics show at a symbolic parameter. -/
+result. The instantiation computes `<<` by `a * 2^b`, `>>` by `Int.tdiv` and `>>>` by `Int.fdiv`, each wrapped to 32
+bits, all of them refusing a negative `b` (`evalIntExact`; the unbounded `evalInt` of an untyped localparam also refuses
+`>>` of a negative `a`); where its operands are in the 32-bit range and the left operand of `>>` is not negative these
+are the same numbers, which is what the tactics show at a symbolic parameter. At a negative left operand of `>>` the
+32-bit instantiation's `Int.tdiv` is not the logical shift of §11.4.10 (`-8 >> 1` is 2147483644, the instantiation
+gives -4): the two differ and the tactics refuse there, naming it (`CE.wrapDiag`). -/
 def CE.eval (σ : String → Int) : CE → Int
   | .lit v => v
   | .ref n => σ n

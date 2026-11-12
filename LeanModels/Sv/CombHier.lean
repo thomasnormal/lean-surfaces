@@ -96,6 +96,8 @@ def PExpr.hren (pfx : String) : PExpr → PExpr
   | .arrayElem n is => .arrayElem (pfx ++ n) (PExpr.hrenL pfx is)
   | .arrayPart n is m a b => .arrayPart (pfx ++ n) (PExpr.hrenL pfx is) m (a.hren pfx) (b.hren pfx)
   | .unsupported k t => .unsupported k t
+  -- a call of a function (no summary reads one: the comb fragment refuses it); its arguments are of the child's scope
+  | .functionCall n as => .functionCall n (PExpr.hrenL pfx as)
 
 /-- `PExpr.hren`, elementwise. -/
 def PExpr.hrenL (pfx : String) : List PExpr → List PExpr
@@ -456,7 +458,7 @@ theorem affOf?_hren (pfx : String) : ∀ {e : PExpr} {a : Aff}, affOf? e = some 
   | .unary .., _, h | .ternary .., _, h | .concat _, _, h | .resize .., _, h | .signedResize .., _, h
   | .squash2 .., _, h | .sysCall .., _, h | .bitSel .., _, h | .partSel .., _, h | .repl .., _, h
   | .reduce .., _, h | .cast .., _, h | .arrayElem .., _, h | .arrayPart .., _, h
-  | .unsupported .., _, h => by simp [affOf?] at h
+  | .unsupported .., _, h | .functionCall .., _, h => by simp [affOf?] at h
 
 theorem dimOf?_hren (pfx nm nm' : String) {d : PDim} {p : PDim × Aff × Aff} (h : dimOf? nm d = .ok p) :
     dimOf? nm' (PDim.hren pfx d) = .ok (PDim.hren pfx p.1, p.2.1.hren pfx, p.2.2.hren pfx) := by

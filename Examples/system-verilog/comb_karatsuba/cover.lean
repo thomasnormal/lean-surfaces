@@ -16,6 +16,9 @@ explicit disjunction of writers and the same standard closer closes all 17 of th
 The theorem states a trivial specification: the point is the obligations `sv_equations` hands back, not the arithmetic
 (the multiplier's proof, `svgolf/design/tasks-week2/clmul/karatsuba/G3h.lean`, goes through the same `sv_cover` calls).
 
+The range premise is `N < 2147483647`: `H = (N + 1) / 2` adds before it divides, and the instantiation wraps that sum to
+32 bits (IEEE 1800-2023 §11.4, §11.6.1, §11.8.1), so at `N = 2147483647` the quotient is negative.
+
 Build: `lake build Examples.«system-verilog».comb_karatsuba.cover`.
 -/
 
@@ -27,7 +30,7 @@ namespace Examples.«system-verilog».comb_karatsuba.cover
 set_option maxHeartbeats 0 in
 /-- Every obligation of `sv_equations` that is left (the coverage of every read, 17 goals) is closed by the standard
 closer; the two input premises by `inKnown_ofBitVec`. -/
-theorem k1u_covers (N : Nat) (hN : 1 ≤ N) (hR : (N : Int) < 2147483648)
+theorem k1u_covers (N : Nat) (hN : 1 ≤ N) (hR : (N : Int) < 2147483647)
     (hc : CombDesign (clmul_n.sem N)) (ha : Acyclic (clmul_n.sem N)) :
     clmul_n.sem N ⊨₂ spec2 fun _ tr => ∀ (c : Nat) (st : SvState), tr[c]? = some st →
       ∀ (x y : BitVec N),

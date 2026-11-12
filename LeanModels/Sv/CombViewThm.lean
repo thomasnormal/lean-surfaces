@@ -1007,7 +1007,7 @@ theorem unsign_of_rdsOf {ds : List DeclT} :
   | .bitSel .., _, h | .partSel .., _, h => unsign_of_rdsLeaf (by simpa [rdsOf?] using h)
   | .paramRef .., _, h | .genvarRef _, _, h | .enumRef .., _, h | .int _, _, h | .fill _, _, h
   | .resize .., _, h | .signedResize .., _, h | .squash2 .., _, h | .sysCall .., _, h | .repl .., _, h
-  | .cast .., _, h | .unsupported .., _, h => by
+  | .cast .., _, h | .unsupported .., _, h | .functionCall .., _, h => by
       simp [rdsOf?, rdsLeaf?, leafRd?] at h
 
 theorem unsign_of_rdsOfW {ds : List DeclT} :
@@ -1055,7 +1055,7 @@ theorem unsign_of_rdsOfW {ds : List DeclT} :
   | .bitSel .., _, h | .partSel .., _, h => unsign_of_rdsLeaf (by simpa [rdsOfW?] using h)
   | .paramRef .., _, h | .genvarRef _, _, h | .enumRef .., _, h | .fill _, _, h
   | .signedResize .., _, h | .squash2 .., _, h | .sysCall .., _, h
-  | .cast .., _, h | .unsupported .., _, h => by
+  | .cast .., _, h | .unsupported .., _, h | .functionCall .., _, h => by
       simp [rdsOfW?, rdsLeaf?, leafRd?] at h
 
 theorem unsign_of_rhsRds {ds : List DeclT} {v : PExpr} {rs : List Acc} (h : rhsRds? ds v = .ok rs) :
@@ -2391,7 +2391,7 @@ theorem inst_rd (C : Ctx σ E elems DW DG EW ns) {ds : List DeclT} :
   | .int .., rs, h, _, _ | .fill .., rs, h, _, _
   | .resize .., rs, h, _, _ | .signedResize .., rs, h, _, _
   | .squash2 .., rs, h, _, _ | .sysCall .., rs, h, _, _
-  | .cast .., rs, h, _, _ | .unsupported .., rs, h, _, _ => by
+  | .cast .., rs, h, _, _ | .unsupported .., rs, h, _, _ | .functionCall .., rs, h, _, _ => by
       simp [rdsOf?, rdsLeaf?, leafRd?] at h
 
 /-- A leaf the recognizer accepts is a signal access. -/
@@ -2813,7 +2813,7 @@ theorem dow_peel : ∀ p : PExpr, divOperandWidth2 E elems p.peelMk = divOperand
   | .signedResize _ e => by simp only [PExpr.peelMk, divOperandWidth2]; exact dow_peel e
   | .lit _ | .fill _ | .ident _ | .bitSel .. | .partSel .. | .arrayElem .. | .arrayPart .. | .paramRef .. | .genvarRef _
   | .enumRef .. | .int _ | .sysCall .. | .cast .. | .squash2 .. | .unsupported .. | .binary .. | .unary .. | .ternary ..
-  | .reduce .. | .concat _ | .repl .. => rfl
+  | .reduce .. | .concat _ | .repl .. | .functionCall .. => rfl
 
 /-- The signedness the markers at the root of an expression lower it with. -/
 def _root_.LeanModels.Sv.PExpr.peelSg (s : Bool) : PExpr → Bool
@@ -2834,7 +2834,7 @@ theorem iDO_peel : ∀ (p : PExpr) (s : Bool) (c : Nat), (∀ g, p.peelMk ≠ .g
   | .arrayElem .., _, _, _ | .arrayPart .., _, _, _ | .paramRef .., _, _, _ | .genvarRef _, _, _, _
   | .enumRef .., _, _, _ | .int _, _, _, _ | .sysCall .., _, _, _ | .cast .., _, _, _ | .squash2 .., _, _, _
   | .unsupported .., _, _, _ | .binary .., _, _, _ | .unary .., _, _, _ | .ternary .., _, _, _
-  | .reduce .., _, _, _ | .concat _, _, _, _ | .repl .., _, _, _ => rfl
+  | .reduce .., _, _, _ | .concat _, _, _, _ | .repl .., _, _, _ | .functionCall .., _, _, _ => rfl
 
 /-! #### Inversions of the shift-operand readers -/
 
@@ -3066,7 +3066,7 @@ theorem rd_peel (C : Ctx σ E elems DW DG EW ns) {ds : List DeclT} {rs : List Ac
       · simp [PExpr.peelMk, dLeaf?, PExpr.uncast, rdsLeaf?, leafRd?] at h
   | .fill _, h, s, c | .ident _, h, s, c | .bitSel .., h, s, c | .partSel .., h, s, c | .arrayElem .., h, s, c
   | .arrayPart .., h, s, c | .paramRef .., h, s, c | .genvarRef _, h, s, c | .enumRef .., h, s, c | .int _, h, s, c
-  | .sysCall .., h, s, c | .cast .., h, s, c | .squash2 .., h, s, c | .unsupported .., h, s, c | .binary .., h, s, c
+  | .sysCall .., h, s, c | .cast .., h, s, c | .squash2 .., h, s, c | .unsupported .., h, s, c | .functionCall .., h, s, c | .binary .., h, s, c
   | .unary .., h, s, c | .ternary .., h, s, c | .reduce .., h, s, c | .concat _, h, s, c | .repl .., h, s, c => by
       rcases h with ⟨v, hv, -⟩ | h
       · simp [PExpr.peelMk] at hv
@@ -3134,7 +3134,7 @@ theorem rd_divD1 (C : Ctx σ E elems DW DG EW ns) {ds : List DeclT} :
   | .arrayElem .., rs, h, hacc, s, c | .arrayPart .., rs, h, hacc, s, c | .cast .., rs, h, hacc, s, c
   | .fill _, rs, h, hacc, s, c | .paramRef .., rs, h, hacc, s, c | .genvarRef _, rs, h, hacc, s, c
   | .enumRef .., rs, h, hacc, s, c | .int _, rs, h, hacc, s, c | .sysCall .., rs, h, hacc, s, c
-  | .squash2 .., rs, h, hacc, s, c | .unsupported .., rs, h, hacc, s, c | .repl .., rs, h, hacc, s, c =>
+  | .squash2 .., rs, h, hacc, s, c | .unsupported .., rs, h, hacc, s, c | .functionCall .., rs, h, hacc, s, c | .repl .., rs, h, hacc, s, c =>
       rd_dLeaf C (by simpa [rdsOfD1?] using h) hacc s c
 
 /-- A replication inside the left operand of a shift (its count evaluates, non-negative: `ConstOK`). -/
@@ -3266,7 +3266,7 @@ theorem rd_divD (C : Ctx σ E elems DW DG EW ns) {ds : List DeclT} :
   | .cast .., _, rs, h, hacc, _, s, c | .fill _, _, rs, h, hacc, _, s, c | .paramRef .., _, rs, h, hacc, _, s, c
   | .genvarRef _, _, rs, h, hacc, _, s, c | .enumRef .., _, rs, h, hacc, _, s, c
   | .sysCall .., _, rs, h, hacc, _, s, c | .squash2 .., _, rs, h, hacc, _, s, c
-  | .unsupported .., _, rs, h, hacc, _, s, c =>
+  | .unsupported .., _, rs, h, hacc, _, s, c | .functionCall .., _, rs, h, hacc, _, s, c =>
       rd_dLeaf C (by simpa [rdsOfD?] using h) hacc s c
 
 /-- **A marked operand of a signed comparison** (`sxOpd?` under a `SignedResize` marker), instantiated: its own width
@@ -3499,7 +3499,7 @@ theorem inst_rdW (C : Ctx σ E elems DW DG EW ns) {ds : List DeclT} :
   | .fill .., rs, h, _, _, _, _
   | .signedResize .., rs, h, _, _, _, _
   | .squash2 .., rs, h, _, _, _, _ | .sysCall .., rs, h, _, _, _, _
-  | .cast .., rs, h, _, _, _, _ | .unsupported .., rs, h, _, _, _, _ => by
+  | .cast .., rs, h, _, _, _, _ | .unsupported .., rs, h, _, _, _, _ | .functionCall .., rs, h, _, _, _, _ => by
       simp [rdsOfW?, rdsLeaf?, leafRd?] at h
 
 /-- The right-hand side of a site of the word-level fragment, at the target's width. -/

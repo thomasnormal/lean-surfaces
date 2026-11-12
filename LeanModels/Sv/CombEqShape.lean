@@ -766,7 +766,7 @@ theorem skT_shapeU (C : Ctx σ E elems DW DG EW ns) {dw : String → Nat}
   | .signedResize .., rs, h, _, _, _, _
   | .squash2 .., rs, h, _, _, _, _
   | .sysCall .., rs, h, _, _, _, _
-  | .unsupported .., rs, h, _, _, _, _ => by
+  | .unsupported .., rs, h, _, _, _, _ | .functionCall .., rs, h, _, _, _, _ => by
       simp [PExpr.unsign, rdsOf?, rdsLeaf?, leafRd?] at h
   | .repl c a, rs, h, _, _, _, _ => by
       rw [unsign_repl] at h; simp [rdsOf?, rdsLeaf?, leafRd?] at h
@@ -1558,7 +1558,7 @@ theorem skD1_shape (C : Ctx σ E elems DW DG EW ns) {dw : String → Nat}
   | .ident _, rs, h, hacc | .bitSel .., rs, h, hacc | .partSel .., rs, h, hacc | .arrayElem .., rs, h, hacc
   | .arrayPart .., rs, h, hacc | .cast .., rs, h, hacc | .fill _, rs, h, hacc | .paramRef .., rs, h, hacc
   | .genvarRef _, rs, h, hacc | .enumRef .., rs, h, hacc | .int _, rs, h, hacc | .sysCall .., rs, h, hacc
-  | .squash2 .., rs, h, hacc | .unsupported .., rs, h, hacc | .repl .., rs, h, hacc => by
+  | .squash2 .., rs, h, hacc | .unsupported .., rs, h, hacc | .functionCall .., rs, h, hacc | .repl .., rs, h, hacc => by
       exact skD1_ofLeaf C hdw (by simpa [rdsOfD1?] using h) hacc
 
 /-- **A concatenation part inside the left operand of a shift** (a literal or one access, under conversion markers):
@@ -1907,7 +1907,7 @@ theorem skD_shape (C : Ctx σ E elems DW DG EW ns) {dw : String → Nat}
   | .arrayElem .., _, rs, h, hacc, _ | .arrayPart .., _, rs, h, hacc, _ | .cast .., _, rs, h, hacc, _
   | .fill _, _, rs, h, hacc, _ | .paramRef .., _, rs, h, hacc, _ | .genvarRef _, _, rs, h, hacc, _
   | .enumRef .., _, rs, h, hacc, _ | .sysCall .., _, rs, h, hacc, _ | .squash2 .., _, rs, h, hacc, _
-  | .unsupported .., _, rs, h, hacc, _ =>
+  | .unsupported .., _, rs, h, hacc, _ | .functionCall .., _, rs, h, hacc, _ =>
       skD_ofLeaf C hdw (by simpa [rdsOfD?] using h) hacc
 
 /-! ## The word-level shape theorem -/
@@ -2370,7 +2370,7 @@ theorem skT_shapeCU (C : Ctx σ E elems DW DG EW ns) {dw : String → Nat}
   | .signedResize .., rs, h, _, _, _, _, _
   | .squash2 .., rs, h, _, _, _, _, _
   | .sysCall .., rs, h, _, _, _, _, _
-  | .unsupported .., rs, h, _, _, _, _, _ => by
+  | .unsupported .., rs, h, _, _, _, _, _ | .functionCall .., rs, h, _, _, _, _, _ => by
       simp [PExpr.unsign, rdsOfW?, rdsLeaf?, leafRd?] at h
 
 theorem gate_shapeCU (C : Ctx σ E elems DW DG EW ns) {dw : String → Nat}

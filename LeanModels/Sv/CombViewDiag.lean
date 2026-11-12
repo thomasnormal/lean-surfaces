@@ -46,6 +46,52 @@ def CE.showP : Nat → CE → String
 
 def CE.show (c : CE) : String := c.showP 0
 
+/-- The signed 32-bit range. -/
+def inInt32 (v : Int) : Bool := decide (-2147483648 ≤ v) && decide (v < 2147483648)
+
+/-- (Refusal text only.) The operand `a` of `c` (`/`, `%`, `$clog2`) outside the range. -/
+def CE.operandDiag (σ : String → Int) (c a : CE) : Option String :=
+  let v := a.eval σ
+  if inInt32 v then none
+  else some s!"the operand `{a.show}` of `{c.show}` is {v} at these parameters, outside the signed 32-bit range [-2147483648, 2147483647]: the instantiation wraps it to {canonInt 32 true v} first (IEEE 1800-2023 §11.4, §11.6.1, §11.8.1: every operand and result of an `int` expression is 32 bits wide) and the summary reads the unbounded value, so a definition that divides, takes a remainder of or the `$clog2` of a value outside the range is outside the fragment"
+
+/-- (Refusal text only.) The operations of a definition whose operand the summary reads unbounded and the instantiation
+at its 32-bit value, innermost first (`CE.wrapDiag`): an operand of `/`, `%` or `$clog2` outside the 32-bit range, or a `>>`
+of a value whose 32-bit reading is negative. `+ - *` and the shifts `<<`, `>>>` read their operands as 32-bit patterns or
+values already (`CE.eval`), so only their RESULT's range matters, at the root. -/
+def CE.opDiag (σ : String → Int) : CE → Option String
+  | .lit _ | .ref _ => none
+  | .add a b | .sub a b | .mul a b | .shl a b | .ashr a b => a.opDiag σ <|> b.opDiag σ
+  | .divK a k => a.opDiag σ <|> CE.operandDiag σ (.divK a k) a
+  | .modK a k => a.opDiag σ <|> CE.operandDiag σ (.modK a k) a
+  | .clog2 a => a.opDiag σ <|> CE.operandDiag σ (.clog2 a) a
+  | .clog2S a => a.opDiag σ <|> CE.operandDiag σ (.clog2S a) a
+  | .shr a b =>
+      a.opDiag σ <|> b.opDiag σ <|>
+        (let v := canonInt 32 true (a.eval σ)
+         if v < 0 then
+           some s!"`{(CE.shr a b).show}` shifts the negative `int` {v} right: IEEE 1800-2023 §11.4.10 fills the vacated bits of its 32-bit pattern with zeros (the value {(CE.shr a b).eval σ}), and the instantiation divides it by a power of two toward zero (`Int.tdiv` in `evalIntExact`; the semantics owners have the finding); a `>>` of a negative `int` is outside the fragment"
+         else none)
+
+/-- (Refusal text only; no theorem reads it.) **Where a localparam's definition leaves its reading** at the valuation
+`σ`: an operation whose operand the two readings take differently (`CE.opDiag`), else the definition's value itself outside
+the signed 32-bit range (the instantiation's value is its 32-bit wrap). `none`: the two readings agree. -/
+def CE.wrapDiag (σ : String → Int) (c : CE) : Option String :=
+  c.opDiag σ <|>
+    (let v := c.eval σ
+     if inInt32 v then none
+     else some s!"the value of the definition `{c.show}` is {v} at these parameters, outside the signed 32-bit range [-2147483648, 2147483647]: the instantiation's value is its 32-bit wrap {canonInt 32 true v} (IEEE 1800-2023 §11.4, §11.6.1, §11.8.1: every result of an `int` expression is 32 bits wide), and the summary reads the unbounded value, so a localparam whose value leaves the range is outside the fragment")
+
+/-! Where the readings part (`(N * 1000000) / 1000000` at `N = 10000`: the product is 10000000000, which the
+instantiation wraps to 1410065408 before it divides, so the quotient is 1410; `(N - 16) >> 1` at `N = 8`; and
+`(1 << 31) - 1`, which does NOT part: `1 << 31` wraps to `-2^31` and the difference back to `2^31 - 1`): -/
+#guard (CE.wrapDiag (fun _ => 10000) (.divK (.mul (.ref "N") (.lit 1000000)) 1000000)).isSome
+#guard (CE.wrapDiag (fun _ => 1000) (.divK (.mul (.ref "N") (.lit 1000000)) 1000000)).isNone
+#guard (CE.wrapDiag (fun _ => 8) (.shr (.sub (.ref "N") (.lit 16)) (.lit 1))).isSome
+#guard (CE.wrapDiag (fun _ => 20) (.shr (.sub (.ref "N") (.lit 16)) (.lit 1))).isNone
+#guard (CE.wrapDiag (fun _ => 32) (.sub (.shl (.lit 1) (.sub (.ref "E") (.lit 1))) (.lit 1))).isNone
+#guard (CE.wrapDiag (fun _ => 33) (.sub (.shl (.lit 1) (.sub (.ref "E") (.lit 1))) (.lit 1))).isSome
+
 /-- The module parameters (the constants `args` binds), without the localparams. -/
 def Summary.pnames (s : Summary) : List String := s.params.take (s.params.length - s.lps.length)
 

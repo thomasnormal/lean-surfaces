@@ -14,6 +14,10 @@ theorem is the ripple adder's (`ripple_add/comb_proof.lean`), and so is the whol
 localparam-sized bound meets the plain `N`, each one `omega` (`T = N`, from the definitions of `H` and
 `R` as `omega` reads them: floor `/` and `%` by a literal, the truncating forms having been rewritten
 under `hN` by the tactic).
+
+The range premise is `N < 2147483647`, not the `int` range alone: `H = (N + 1) / 2` adds before it divides, and the
+instantiation wraps that sum to 32 bits (IEEE 1800-2023 §11.4, §11.6.1, §11.8.1), so at `N = 2147483647` it is
+`-2147483648` and `H` is `-1073741824`, where the summary reads `1073741824`.
 -/
 
 open LeanModels.Sv LeanModels.Sv.CombView LeanModels.Sv.CombLib LeanModels.Sv.CombEq
@@ -25,17 +29,17 @@ namespace Examples.«system-verilog».lp_add.comb_proof
 /-- The structure of `lp_add`: a combinational design (the proof is three declarations, one for the structure, one for
 the rank and one for the settled equations: every declaration has its own heartbeat budget, and the whole proof had
 needed 199 000 of the 200 000 default and carried a `maxHeartbeats` option for it). -/
-theorem lp_comb (N : Nat) (hN : 1 ≤ N) (hR : (N : Int) < 2147483648) : CombDesign (lp_add.sem N) := by
+theorem lp_comb (N : Nat) (hN : 1 ≤ N) (hR : (N : Int) < 2147483647) : CombDesign (lp_add.sem N) := by
   sv_structure
   all_goals (intros; omega)
 
-theorem lp_acyclic (N : Nat) (hN : 1 ≤ N) (hR : (N : Int) < 2147483648) : Acyclic (lp_add.sem N) := by
+theorem lp_acyclic (N : Nat) (hN : 1 ≤ N) (hR : (N : Int) < 2147483647) : Acyclic (lp_add.sem N) := by
   sv_structure (rank := rippleRank (fun p => if p = 0 then 0 else N + 1) (fun _ _ i => i.toNat + 1))
   all_goals (intros; omega)
 
 /-- The equations of `lp_add` in a settled state (the second half of `lp_correct`). The tactics' own `simp` and
 `omega` carry the quotient and remainder of the localparam definitions. -/
-theorem lp_settled (N : Nat) (hN : 1 ≤ N) (hR : (N : Int) < 2147483648)
+theorem lp_settled (N : Nat) (hN : 1 ≤ N) (hR : (N : Int) < 2147483647)
     (hc : CombDesign (lp_add.sem N)) (ha : Acyclic (lp_add.sem N))
     (st : SvState) (heqs : CombEqs (lp_add.sem N) st) (hsh : StateShape (lp_add.sem N) st)
     (x y : BitVec N) (ci : Bool)
@@ -59,7 +63,7 @@ theorem lp_settled (N : Nat) (hN : 1 ≤ N) (hR : (N : Int) < 2147483648)
     | (refine inKnown_ofBitVec hCi ?_; omega)
 
 /-- **Ripple-adder correctness with localparams, every `N ≥ 1`.** -/
-theorem lp_correct (N : Nat) (hN : 1 ≤ N) (hR : (N : Int) < 2147483648) :
+theorem lp_correct (N : Nat) (hN : 1 ≤ N) (hR : (N : Int) < 2147483647) :
     lp_add.sem N ⊨₂ spec2 fun _ tr => ∀ (c : Nat) (st : SvState), tr[c]? = some st →
       ∀ (x y : BitVec N) (ci : Bool),
         SvState.lookup st "a" = some (LVec.ofBitVec x) →

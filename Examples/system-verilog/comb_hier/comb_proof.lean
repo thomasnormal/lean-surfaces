@@ -42,6 +42,9 @@ theorem lookup_bv {st : SvState} {n : String} {W : Nat}
   have := SvState.lookup_eq_ofBitVec_bv hv hvw (fun k hk' => (hk k hk').2)
   rw [hv, this]
 
+-- the structure and the equations in one declaration: the hierarchy's parameter stage (the parent's `H = W / 2` and each
+-- child's `W`, every value wrapped to 32 bits since 864c2c42e) takes it past the default budget
+set_option maxHeartbeats 400000 in
 /-- **The two halves compute the XOR of the whole word**, at every even width `W = 2 * K` in the `int` range. -/
 theorem halves_correct (K : Nat) (hK : 1 ≤ K) (hR : (2 * K : Int) < 2147483648) :
     halves.sem (2 * K) ⊨₂ spec2 fun _ tr => ∀ (c : Nat) (st : SvState), tr[c]? = some st →

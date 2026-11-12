@@ -10,7 +10,9 @@ integer`s and uses them in a declaration (`logic [T:0] c`), a generate bound (`i
 the module parameters, `Summary.lps` keeps its definition): the obligations below are closed
 statements over `Int` in which the definitions are inlined, `/` and `%` by a literal as `omega` reads
 them, and the usual `intros; omega` closes every one (it needs `T = N`, which it derives from the
-definitions). Pinned: the hint with its `localparams:` block, and the axioms.
+definitions). Pinned: the hint with its `localparams:` block, and the axioms. The range premise is `N < 2147483647`:
+`H = (N + 1) / 2` and `$clog2(N + 1)` add before they divide, and the instantiation wraps the sum to 32 bits (IEEE
+1800-2023 §11.4, §11.6.1, §11.8.1), so at `N = 2147483647` it is negative.
 
 Build: `lake build Examples.«system-verilog».lp_add.comb_view`.
 -/
@@ -24,20 +26,20 @@ namespace Examples.«system-verilog».lp_add.comb_view
 
 /- `$clog2` in a 32-bit signed `int` localparam follows the same summary
 route as the `integer` spelling. -/
-theorem lp_clog2_comb (N : Nat) (hN : 1 ≤ N) (hR : (N : Int) < 2147483648) : CombDesign (lp_clog2.sem N) := by
+theorem lp_clog2_comb (N : Nat) (hN : 1 ≤ N) (hR : (N : Int) < 2147483647) : CombDesign (lp_clog2.sem N) := by
   sv_structure
   all_goals (intros; omega)
 
-theorem lp_comb (N : Nat) (hN : 1 ≤ N) (hR : (N : Int) < 2147483648) : CombDesign (lp_add.sem N) := by
+theorem lp_comb (N : Nat) (hN : 1 ≤ N) (hR : (N : Int) < 2147483647) : CombDesign (lp_add.sem N) := by
   sv_structure
   all_goals (intros; omega)
 
-theorem lp_acyclic (N : Nat) (hN : 1 ≤ N) (hR : (N : Int) < 2147483648) : Acyclic (lp_add.sem N) := by
+theorem lp_acyclic (N : Nat) (hN : 1 ≤ N) (hR : (N : Int) < 2147483647) : Acyclic (lp_add.sem N) := by
   sv_structure (rank := rippleRank (fun p => if p = 0 then 0 else N + 1) (fun _ _ i => i.toNat + 1))
   all_goals (intros; omega)
 
 /-- With the comb profile in hand the one-driver goals are not asked again. -/
-theorem lp_acyclic_using (N : Nat) (hN : 1 ≤ N) (hR : (N : Int) < 2147483648) (hc : CombDesign (lp_add.sem N)) :
+theorem lp_acyclic_using (N : Nat) (hN : 1 ≤ N) (hR : (N : Int) < 2147483647) (hc : CombDesign (lp_add.sem N)) :
     Acyclic (lp_add.sem N) := by
   sv_structure (rank := rippleRank (fun p => if p = 0 then 0 else N + 1) (fun _ _ i => i.toNat + 1))
     using hc
@@ -87,7 +89,7 @@ overlaps the written window; ranks are functions of the site identity):
   rank(g_bit#1[i']) < rank(g_bit#1[i])   [g_bit#1[i] reads c[i]; g_bit#1[i'] drives c[i' + 1]]
 -/
 #guard_msgs (whitespace := lax) in
-example (N : Nat) (hN : 1 ≤ N) (hR : (N : Int) < 2147483648) : CombDesign (lp_add.sem N) := by
+example (N : Nat) (hN : 1 ≤ N) (hR : (N : Int) < 2147483647) : CombDesign (lp_add.sem N) := by
   sv_structure?
   exact lp_comb N hN hR
 

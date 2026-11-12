@@ -11245,7 +11245,10 @@ def execStmt (m : Module) (fuel : Nat) (st : FrameState) (s : Stmt) :
       -- retained state under the accelerator-equivalence obligation
       -- (docs/c-intrinsics-proposal.md §2.5, differentially tested).
       -- Star changes nothing here: the raise fires before any binding.
-      .exn st (.importError mod)
+      if mod == "__main__" then
+        .unsupported "from __main__ import ... requires the runner's live __main__ module, outside the closed-function tier"
+      else
+        .exn st (.importError mod)
     | .pass _ => .ok st .next
     | .brk _ => .ok st .brk
     | .cont _ => .ok st .cont

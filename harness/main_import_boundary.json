@@ -1,0 +1,85 @@
+{
+  "schema_version": "0.1",
+  "language": "python",
+  "frontend": {
+    "name": "cpython-ast",
+    "version": "3.9.25"
+  },
+  "source_file": "harness/main_import_boundary.py",
+  "source_sha256": "8ce4ebea4b7ada22123c27ccf1cfc308b375e5c5b111ad7c40c05b48d267bf23",
+  "module": {
+    "kind": "Module",
+    "body": [
+      {
+        "kind": "Expr",
+        "span": {
+          "lineno": 1,
+          "col_offset": 0,
+          "end_lineno": 1,
+          "end_col_offset": 80
+        },
+        "value": {
+          "kind": "Constant",
+          "span": {
+            "lineno": 1,
+            "col_offset": 0,
+            "end_lineno": 1,
+            "end_col_offset": 80
+          },
+          "value": {
+            "type": "str",
+            "value": "The closed-function tier does not model the runner's live __main__ module."
+          }
+        }
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 2,
+          "col_offset": 0,
+          "end_lineno": 4,
+          "end_col_offset": 19
+        },
+        "name": "probe",
+        "args": [],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "ImportFrom",
+            "span": {
+              "lineno": 3,
+              "col_offset": 4,
+              "end_lineno": 3,
+              "end_col_offset": 33
+            },
+            "module": "__main__",
+            "names": [
+              "__name__"
+            ]
+          },
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 4,
+              "col_offset": 4,
+              "end_lineno": 4,
+              "end_col_offset": 19
+            },
+            "value": {
+              "kind": "Name",
+              "span": {
+                "lineno": 4,
+                "col_offset": 11,
+                "end_lineno": 4,
+                "end_col_offset": 19
+              },
+              "id": "__name__"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "lean_blocks": []
+}

@@ -2067,7 +2067,10 @@ def execOpen (K : Kont) (m : Module) : Stmt → SemF RFlow
       -- CPython's own `ModuleNotFoundError`), or the statement sits in
       -- import-guard position and the raise is caught by construction, the
       -- fallback branch then running from the RETAINED state.
-      raisePy (.importError mod)
+      if mod == "__main__" then
+        refuse "from __main__ import ... requires the runner's live __main__ module, outside the closed-function tier"
+      else
+        raisePy (.importError mod)
   termination_by structural s => s
 
 /-- A block stops at the first non-`next` flow. -/

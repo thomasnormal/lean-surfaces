@@ -3573,7 +3573,9 @@ theorem worldInv (m : Module) (hm : m.heapFree = true) (fuel : Nat) :
         -- `Stmt.heapFree` to `false` or re-prove this — the recorded
         -- review point.
         simp only [execStmt]
-        exact .exn
+        split
+        · exact .unsupported
+        · exact .exn
       | raiseStmt exc cause _ =>
         -- IN the fragment, vacuously: the raise arm never decides `.ok`
         simp only [execStmt]

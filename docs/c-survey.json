@@ -3,43 +3,43 @@
   "c-testsuite/single-exec": {
    "not-ingested": 5,
    "not-parsed": 1,
-   "passed": 95,
+   "passed": 97,
    "refused-libc": 2,
    "refused-ub": 2,
-   "refused-unsupported": 113,
+   "refused-unsupported": 111,
    "timeout": 2
   },
   "gcc.c-torture/execute": {
    "not-ingested": 19,
    "not-parsed": 321,
-   "passed": 319,
-   "refused-libc": 269,
+   "passed": 323,
+   "refused-libc": 272,
    "refused-ub": 28,
-   "refused-unsupported": 920,
+   "refused-unsupported": 913,
    "timeout": 42
   },
   "gcc.c23-run": {
    "not-ingested": 1,
    "not-parsed": 28,
-   "refused-libc": 3,
+   "refused-libc": 4,
    "refused-ub": 1,
-   "refused-unsupported": 43
+   "refused-unsupported": 42
   }
  },
  "corpus": "C1-C3 (gcc torture, c-testsuite, gcc c23-run)",
  "counts": {
   "not-ingested": 25,
   "not-parsed": 350,
-  "passed": 414,
-  "refused-libc": 274,
+  "passed": 420,
+  "refused-libc": 278,
   "refused-ub": 31,
-  "refused-unsupported": 1076,
+  "refused-unsupported": 1066,
   "timeout": 44
  },
- "manifest_hash": "953938cce1637cf91ba3dda661a9b9309cd83f0ebf7d7f17cc1a36704295f367",
- "measured_at_utc": "2026-11-12T01:52:00Z",
- "measured_commit": "ecac15649",
- "pin": null,
+ "manifest_hash": "0bedbf73d044d862f64a5272f8b8559fc2b0b3d6a9ad4c7bd1e28bc52d5acd61",
+ "measured_at_utc": "2026-11-12T01:18:00Z",
+ "measured_commit": "d76d729d3",
+ "pin": "C1-C3",
  "rows": [
   {
    "corpus": "c-testsuite/single-exec",
@@ -1317,14 +1317,14 @@
   },
   {
    "corpus": "c-testsuite/single-exec",
-   "detail": "no layout for declared type 'char[2][4]'",
+   "detail": "",
    "manifest_status": "parsed",
    "name": "00130.c",
    "sha256": "5ebdc13c2dd18826af1e08d0e8a5e5a0977a12a625d1e73ce955dfd76f9b8852",
    "static_walls": [
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "c-testsuite/single-exec",
@@ -1538,14 +1538,14 @@
   },
   {
    "corpus": "c-testsuite/single-exec",
-   "detail": "unbound declaration 'id15' (name 'arr')",
+   "detail": "",
    "manifest_status": "parsed",
    "name": "00151.c",
    "sha256": "57352f79f25d8229cc8f825a5a0ee27eae3fd2c4a79e1c00a72be9f39c2bfb25",
    "static_walls": [
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "c-testsuite/single-exec",
@@ -3358,14 +3358,14 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "no layout for declared type 'int[2][1]'",
+   "detail": "id24",
    "manifest_status": "parsed",
    "name": "20010114-1.c",
    "sha256": "1190b3f6bb758cfac627298d5234504698ed44b5d15f1f3c387ad139929e1ac2",
    "static_walls": [
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "refused-libc"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -6565,7 +6565,7 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "unbound declaration 'id21' (name 'g')",
+   "detail": "block-scope storage class 'static' is outside the tier",
    "manifest_status": "parsed",
    "name": "20080424-1.c",
    "sha256": "4820e74c049e399d53fdf2a107335f78f6fd2df1bda0f25b11e2e25148c216e7",
@@ -6797,14 +6797,14 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "no layout for parameter type 'int (*)[2]'",
+   "detail": "",
    "manifest_status": "parsed",
    "name": "20090814-1.c",
    "sha256": "fce1d092bae8717446b9e9898686837a7b445b1efcd9102a4ce7e1052318bc32",
    "static_walls": [
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -8326,14 +8326,14 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "unbound declaration 'id27' (name 'w')",
+   "detail": "id24",
    "manifest_status": "parsed",
    "name": "930603-2.c",
    "sha256": "397703ea45bdd366389e7da3010b687af889b19f51dc45c91dac7d5db59e61f9",
    "static_walls": [
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "refused-libc"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -12943,14 +12943,14 @@
   },
   {
    "corpus": "gcc.c23-run",
-   "detail": "no layout for declared type 'int (*)[++i]'",
+   "detail": "id18",
    "manifest_status": "parsed",
    "name": "gcc/testsuite/gcc.dg/c23-auto-2.c",
    "sha256": "310c5a4186732cabf9db01422c273afca75c34e2a5776f6c2516313b4747b960",
    "static_walls": [
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "refused-libc"
   },
   {
    "corpus": "gcc.c23-run",
@@ -16370,7 +16370,7 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "no layout for declared type 'int[1][4]'",
+   "detail": "declaration outside a block",
    "manifest_status": "parsed",
    "name": "pr124358.c",
    "sha256": "4bfac3671278712097cedc58d0c1524f1bec0b73bb30895d10b947b0103806b5",
@@ -17743,18 +17743,18 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "no layout for declared type 'int[2][1]'",
+   "detail": "",
    "manifest_status": "parsed",
    "name": "pr38048-1.c",
    "sha256": "8951d2943e895d9120bca14dbde6148ae1a1d51a14dc1de3612c4fac6ce4a6dd",
    "static_walls": [
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "no layout for declared type 'int[2][2]'",
+   "detail": "castKind 'FloatingToIntegral'",
    "manifest_status": "parsed",
    "name": "pr38048-2.c",
    "sha256": "1a322440174c812e8016ab7219c7ce6c805db317b4bfd66de61023bf50e3814d",
@@ -18198,14 +18198,14 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "sizeof: no layout for the operand type",
+   "detail": "",
    "manifest_status": "parsed",
    "name": "pr42570.c",
    "sha256": "a5e849a2d20303f5026c872b8fa382cbfe32e06623fc031cf7682ee95e4602db",
    "static_walls": [
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -19329,14 +19329,14 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "unbound declaration 'id21' (name 'a')",
+   "detail": "",
    "manifest_status": "parsed",
    "name": "pr57568.c",
    "sha256": "daaafe0625181b6fcb49de7a937c6c533e42711bb15a5c02143c5876dbd81c93",
    "static_walls": [
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -21605,7 +21605,7 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "unbound declaration 'id15' (name 'a')",
+   "detail": "string literal (inch 4: it needs a static object)",
    "manifest_status": "parsed",
    "name": "pr86714.c",
    "sha256": "d33772251fbc170de4fea0464aa8f90aa3b929407613ed3d59193c14b7fccc15",
@@ -22954,7 +22954,7 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "unbound declaration 'id23' (name 'a')",
+   "detail": "string literal (inch 4: it needs a static object)",
    "manifest_status": "parsed",
    "name": "strlen-2.c",
    "sha256": "0e7016a417851de83c72fa3f8a831300aca2d163a55c65576afd7d1f691d74cf",
@@ -22967,7 +22967,7 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "unbound declaration 'id23' (name 'a')",
+   "detail": "string literal (inch 4: it needs a static object)",
    "manifest_status": "parsed",
    "name": "strlen-3.c",
    "sha256": "3d9d348f6e0a8dcb6db3950378215846746479c90a9d566ab2465df8373efde6",
@@ -22993,7 +22993,7 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "unbound declaration 'id25' (name 'ca')",
+   "detail": "id19",
    "manifest_status": "parsed",
    "name": "strlen-5.c",
    "sha256": "8721fdac48fc04356861299ca942b3a77499ae7f5ecdd7da80c325dc1cb848db",
@@ -23002,11 +23002,11 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "refused-libc"
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "not an lvalue: StringLiteral",
+   "detail": "string literal (inch 4: it needs a static object)",
    "manifest_status": "parsed",
    "name": "strlen-6.c",
    "sha256": "06b9b66210c9f2f154dd882779051d415a24c3de166269c10ff8efe4f6a06e1d",

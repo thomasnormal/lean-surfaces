@@ -27,10 +27,6 @@
      "files": 1
     },
     {
-     "detail": "no layout for declared type 'char[2][4]'",
-     "files": 1
-    },
-    {
      "detail": "no layout for declared type 'struct foo'",
      "files": 1
     },
@@ -64,11 +60,11 @@
     }
    ],
    "files": 220,
-   "observed_any_no_layout": 18,
-   "observed_decl_no_layout": 17,
+   "observed_any_no_layout": 17,
+   "observed_decl_no_layout": 16,
    "observed_decl_without_static_candidate": 4,
-   "static_and_observed_decl": 13,
-   "static_candidate_without_observed_decl": 110,
+   "static_and_observed_decl": 12,
+   "static_candidate_without_observed_decl": 111,
    "static_present": 123,
    "static_sole": 41
   },
@@ -117,10 +113,6 @@
     {
      "detail": "no layout for declared type 'size_t'",
      "files": 3
-    },
-    {
-     "detail": "no layout for declared type 'int[2][1]'",
-     "files": 2
     },
     {
      "detail": "no layout for declared type 'long double'",
@@ -351,10 +343,6 @@
      "files": 1
     },
     {
-     "detail": "no layout for declared type 'int[1][4]'",
-     "files": 1
-    },
-    {
      "detail": "no layout for declared type 'struct B'",
      "files": 1
     },
@@ -384,10 +372,6 @@
     },
     {
      "detail": "no layout for declared type 'PgHdr[5]'",
-     "files": 1
-    },
-    {
-     "detail": "no layout for declared type 'int[2][2]'",
      "files": 1
     },
     {
@@ -484,20 +468,16 @@
     }
    ],
    "files": 1918,
-   "observed_any_no_layout": 214,
-   "observed_decl_no_layout": 191,
+   "observed_any_no_layout": 208,
+   "observed_decl_no_layout": 187,
    "observed_decl_without_static_candidate": 23,
-   "static_and_observed_decl": 168,
-   "static_candidate_without_observed_decl": 741,
+   "static_and_observed_decl": 164,
+   "static_candidate_without_observed_decl": 745,
    "static_present": 909,
    "static_sole": 308
   },
   "gcc.c23-run": {
    "decl_messages": [
-    {
-     "detail": "no layout for declared type 'int (*)[++i]'",
-     "files": 1
-    },
     {
      "detail": "no layout for declared type 'const struct s'",
      "files": 1
@@ -520,11 +500,11 @@
     }
    ],
    "files": 76,
-   "observed_any_no_layout": 7,
-   "observed_decl_no_layout": 6,
+   "observed_any_no_layout": 6,
+   "observed_decl_no_layout": 5,
    "observed_decl_without_static_candidate": 1,
-   "static_and_observed_decl": 5,
-   "static_candidate_without_observed_decl": 24,
+   "static_and_observed_decl": 4,
+   "static_candidate_without_observed_decl": 25,
    "static_present": 29,
    "static_sole": 4
   }
@@ -532,8 +512,8 @@
  "corpus": "C1-C3 (gcc torture, c-testsuite, gcc c23-run)",
  "interpretation": "type-layout is a candidate wall, not a dynamic verdict: the static heuristic over-approximates the files that reach a missing layout and misses some declaration types. Price a tier from observed no-layout refusals, retaining the static ranking for discovery.",
  "schema": "c-type-layout-price-0.1",
- "survey_commit": "ecac15649",
- "survey_measured_at_utc": "2026-11-12T01:52:00Z",
+ "survey_commit": "d76d729d3",
+ "survey_measured_at_utc": "2026-11-12T01:18:00Z",
  "survey_schema": "c-survey-0.1",
  "top_decl_messages": [
   {
@@ -590,10 +570,6 @@
   },
   {
    "detail": "no layout for declared type 'enum E'",
-   "files": 2
-  },
-  {
-   "detail": "no layout for declared type 'int[2][1]'",
    "files": 2
   },
   {
@@ -654,10 +630,6 @@
   },
   {
    "detail": "no layout for declared type 'int (*(*)(int, int))(int, int)'",
-   "files": 1
-  },
-  {
-   "detail": "no layout for declared type 'char[2][4]'",
    "files": 1
   },
   {
@@ -849,10 +821,6 @@
    "files": 1
   },
   {
-   "detail": "no layout for declared type 'int[1][4]'",
-   "files": 1
-  },
-  {
    "detail": "no layout for declared type 'struct B'",
    "files": 1
   },
@@ -882,10 +850,6 @@
   },
   {
    "detail": "no layout for declared type 'PgHdr[5]'",
-   "files": 1
-  },
-  {
-   "detail": "no layout for declared type 'int[2][2]'",
    "files": 1
   },
   {
@@ -981,10 +945,6 @@
    "files": 1
   },
   {
-   "detail": "no layout for declared type 'int (*)[++i]'",
-   "files": 1
-  },
-  {
    "detail": "no layout for declared type 'const struct s'",
    "files": 1
   },
@@ -1002,11 +962,11 @@
   }
  ],
  "totals": {
-  "observed_any_no_layout": 239,
-  "observed_decl_no_layout": 214,
+  "observed_any_no_layout": 231,
+  "observed_decl_no_layout": 208,
   "observed_decl_without_static_candidate": 28,
-  "static_and_observed_decl": 186,
-  "static_candidate_without_observed_decl": 875,
+  "static_and_observed_decl": 180,
+  "static_candidate_without_observed_decl": 881,
   "static_present": 1061,
   "static_sole": 353
  }

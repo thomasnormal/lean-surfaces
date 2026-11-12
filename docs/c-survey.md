@@ -2,10 +2,10 @@
 
 Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manifest.
 
-- verdicts: 414/2214 scored (passed 414, failed 0)
-- manifest SHA-256: `953938cce1637cf91ba3dda661a9b9309cd83f0ebf7d7f17cc1a36704295f367`
-- measured commit: `ecac15649`
-- measured at: `2026-11-12T01:52:00Z`
+- verdicts: 420/2214 scored (passed 420, failed 0)
+- manifest SHA-256: `0bedbf73d044d862f64a5272f8b8559fc2b0b3d6a9ad4c7bd1e28bc52d5acd61`
+- measured commit: `d76d729d3`
+- measured at: `2026-11-12T01:18:00Z`
 
 ## Verdict counts
 
@@ -13,10 +13,10 @@ Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manife
 | --- | ---: |
 | `not-ingested` | 25 |
 | `not-parsed` | 350 |
-| `passed` | 414 |
-| `refused-libc` | 274 |
+| `passed` | 420 |
+| `refused-libc` | 278 |
 | `refused-ub` | 31 |
-| `refused-unsupported` | 1076 |
+| `refused-unsupported` | 1066 |
 | `timeout` | 44 |
 
 ## Counts by corpus
@@ -25,23 +25,23 @@ Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manife
 | --- | --- | ---: |
 | `c-testsuite/single-exec` | `not-ingested` | 5 |
 | `c-testsuite/single-exec` | `not-parsed` | 1 |
-| `c-testsuite/single-exec` | `passed` | 95 |
+| `c-testsuite/single-exec` | `passed` | 97 |
 | `c-testsuite/single-exec` | `refused-libc` | 2 |
 | `c-testsuite/single-exec` | `refused-ub` | 2 |
-| `c-testsuite/single-exec` | `refused-unsupported` | 113 |
+| `c-testsuite/single-exec` | `refused-unsupported` | 111 |
 | `c-testsuite/single-exec` | `timeout` | 2 |
 | `gcc.c-torture/execute` | `not-ingested` | 19 |
 | `gcc.c-torture/execute` | `not-parsed` | 321 |
-| `gcc.c-torture/execute` | `passed` | 319 |
-| `gcc.c-torture/execute` | `refused-libc` | 269 |
+| `gcc.c-torture/execute` | `passed` | 323 |
+| `gcc.c-torture/execute` | `refused-libc` | 272 |
 | `gcc.c-torture/execute` | `refused-ub` | 28 |
-| `gcc.c-torture/execute` | `refused-unsupported` | 920 |
+| `gcc.c-torture/execute` | `refused-unsupported` | 913 |
 | `gcc.c-torture/execute` | `timeout` | 42 |
 | `gcc.c23-run` | `not-ingested` | 1 |
 | `gcc.c23-run` | `not-parsed` | 28 |
-| `gcc.c23-run` | `refused-libc` | 3 |
+| `gcc.c23-run` | `refused-libc` | 4 |
 | `gcc.c23-run` | `refused-ub` | 1 |
-| `gcc.c23-run` | `refused-unsupported` | 43 |
+| `gcc.c23-run` | `refused-unsupported` | 42 |
 
 ## Static wall ranking
 

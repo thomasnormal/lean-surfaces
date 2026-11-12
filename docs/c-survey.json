@@ -4213,8 +4213,8 @@
   }
  ],
  "manifest_hash": "eb2ea162993fd287a86d680d539ca5a9bba4f09b045a6ad663aaf88cdc3f445d",
- "measured_at_utc": "2026-11-12T18:58:11Z",
- "measured_commit": "HEAD",
+ "measured_at_utc": "2026-11-12T18:58:23Z",
+ "measured_commit": "f97e994a0",
  "pin": {
   "corpora": [
    "C1",

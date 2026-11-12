@@ -73126,6 +73126,15 @@
     },
 
     {
+      "name": "untyped_localparam_refuse",
+      "example": "sem2/untyped_localparam_refuse",
+      "top": "untyped_localparam_refuse",
+      "refusal": "Constant:untyped-width",
+      "signals": ["k", "a"],
+      "stimulus": [{}],
+      "measured": "2026-11-12: IEEE 1800-2023 §§6.20.2 and 11.6.1 leave the untyped initializer's self-determined width observable; Icarus Verilog 13.0 and Xcelium 24.03-s004 disagree on the lossless intermediate width. E refuses Constant:untyped-width at default and N=8 rather than choose a tool-dependent result."
+    },
+    {
       "name": "int32_negative_shift_e",
       "example": "sem2/int32_negative_shift_e",
       "top": "int32_negative_shift_e",

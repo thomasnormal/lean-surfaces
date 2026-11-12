@@ -123,7 +123,34 @@ def self_test():
         raise RuntimeError("record-layout join self-test failed")
     if record_nodes({"translation_unit": {"decls": []}}, "S"):
         raise RuntimeError("record-layout missing-record self-test failed")
+    if "bit-fields" not in render({"files": 0, "files_fully_joined": 0,
+                                    "files_with_bitfields": 0, "rows": []}):
+        raise RuntimeError("record-layout price rendering self-test failed")
     print("c_record_layout_join_price: self-test ok")
+
+
+def render(report):
+    lines = ["# C parser-native bit-field layout price", "",
+             "Measured from the pinned Clang record-layout probe on a frozen external manifest.", "",
+             "- files: %d" % report["files"],
+             "- fully joined records: %d" % report["files_fully_joined"],
+             "- files with bit-fields: %d" % report["files_with_bitfields"], "",
+             "| file | size | alignment | bit-fields | offsets / widths |",
+             "| --- | ---: | ---: | ---: | --- |"]
+    for row in report["rows"]:
+        layouts = row.get("layouts", [])
+        if not layouts:
+            lines.append("| `%s` | — | — | — | no joined layout |" % row["name"])
+            continue
+        layout = layouts[0]
+        bits = ", ".join(
+            "%s@%s/%s" % (field["name"] or "<anonymous>",
+                           field["offset_bits"], field["width_bits"])
+            for field in layout["bitfields"])
+        lines.append("| `%s` | %s | %s | %s | %s |" % (
+            row["name"], layout["size_bytes"], layout["alignment_bytes"],
+            layout["bitfield_count"], bits or "none"))
+    return "\n".join(lines) + "\n"
 
 
 def main():
@@ -136,6 +163,7 @@ def main():
                         help="restrict the price to this manifest name (repeatable)")
     parser.add_argument("--out-dir")
     parser.add_argument("--json")
+    parser.add_argument("--page")
     parser.add_argument("--self-test", action="store_true")
     args = parser.parse_args()
     try:
@@ -144,7 +172,9 @@ def main():
             return 0
         if not args.manifest or not args.plugin or not args.out_dir:
             parser.error("--manifest, --plugin, and --out-dir are required")
-        run(args)
+        report = run(args)
+        if args.page:
+            Path(args.page).write_text(render(report))
         return 0
     except (OSError, RuntimeError, ValueError, json.JSONDecodeError) as error:
         print("c_record_layout_join_price: %s" % error, file=sys.stderr)

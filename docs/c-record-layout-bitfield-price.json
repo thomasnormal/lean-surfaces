@@ -1,0 +1,444 @@
+{
+ "files": 12,
+ "files_fully_joined": 12,
+ "files_with_bitfields": 12,
+ "files_with_record": 12,
+ "record_name": "S",
+ "rows": [
+  {
+   "classes": [
+    "joined"
+   ],
+   "joined": true,
+   "layouts": [
+    {
+     "alignment_bytes": 2,
+     "bitfield_count": 5,
+     "bitfields": [
+      {
+       "name": "i",
+       "offset_bits": 0,
+       "width_bits": 12
+      },
+      {
+       "name": "c1",
+       "offset_bits": 12,
+       "width_bits": 1
+      },
+      {
+       "name": "c2",
+       "offset_bits": 13,
+       "width_bits": 1
+      },
+      {
+       "name": "c3",
+       "offset_bits": 14,
+       "width_bits": 1
+      },
+      {
+       "name": "c4",
+       "offset_bits": 15,
+       "width_bits": 1
+      }
+     ],
+     "size_bytes": 2
+    }
+   ],
+   "name": "20230630-1.c",
+   "records": 1
+  },
+  {
+   "classes": [
+    "joined"
+   ],
+   "joined": true,
+   "layouts": [
+    {
+     "alignment_bytes": 2,
+     "bitfield_count": 5,
+     "bitfields": [
+      {
+       "name": "i",
+       "offset_bits": 0,
+       "width_bits": 12
+      },
+      {
+       "name": "c1",
+       "offset_bits": 12,
+       "width_bits": 1
+      },
+      {
+       "name": "c2",
+       "offset_bits": 13,
+       "width_bits": 1
+      },
+      {
+       "name": "c3",
+       "offset_bits": 14,
+       "width_bits": 1
+      },
+      {
+       "name": "c4",
+       "offset_bits": 15,
+       "width_bits": 1
+      }
+     ],
+     "size_bytes": 2
+    }
+   ],
+   "name": "20230630-2.c",
+   "records": 1
+  },
+  {
+   "classes": [
+    "joined"
+   ],
+   "joined": true,
+   "layouts": [
+    {
+     "alignment_bytes": 4,
+     "bitfield_count": 9,
+     "bitfields": [
+      {
+       "name": "i",
+       "offset_bits": 0,
+       "width_bits": 24
+      },
+      {
+       "name": "c1",
+       "offset_bits": 24,
+       "width_bits": 1
+      },
+      {
+       "name": "c2",
+       "offset_bits": 25,
+       "width_bits": 1
+      },
+      {
+       "name": "c3",
+       "offset_bits": 26,
+       "width_bits": 1
+      },
+      {
+       "name": "c4",
+       "offset_bits": 27,
+       "width_bits": 1
+      },
+      {
+       "name": "c5",
+       "offset_bits": 28,
+       "width_bits": 1
+      },
+      {
+       "name": "c6",
+       "offset_bits": 29,
+       "width_bits": 1
+      },
+      {
+       "name": "c7",
+       "offset_bits": 30,
+       "width_bits": 1
+      },
+      {
+       "name": "c8",
+       "offset_bits": 31,
+       "width_bits": 1
+      }
+     ],
+     "size_bytes": 4
+    }
+   ],
+   "name": "20230630-3.c",
+   "records": 1
+  },
+  {
+   "classes": [
+    "joined"
+   ],
+   "joined": true,
+   "layouts": [
+    {
+     "alignment_bytes": 4,
+     "bitfield_count": 9,
+     "bitfields": [
+      {
+       "name": "i",
+       "offset_bits": 0,
+       "width_bits": 24
+      },
+      {
+       "name": "c1",
+       "offset_bits": 24,
+       "width_bits": 1
+      },
+      {
+       "name": "c2",
+       "offset_bits": 25,
+       "width_bits": 1
+      },
+      {
+       "name": "c3",
+       "offset_bits": 26,
+       "width_bits": 1
+      },
+      {
+       "name": "c4",
+       "offset_bits": 27,
+       "width_bits": 1
+      },
+      {
+       "name": "c5",
+       "offset_bits": 28,
+       "width_bits": 1
+      },
+      {
+       "name": "c6",
+       "offset_bits": 29,
+       "width_bits": 1
+      },
+      {
+       "name": "c7",
+       "offset_bits": 30,
+       "width_bits": 1
+      },
+      {
+       "name": "c8",
+       "offset_bits": 31,
+       "width_bits": 1
+      }
+     ],
+     "size_bytes": 4
+    }
+   ],
+   "name": "20230630-4.c",
+   "records": 1
+  },
+  {
+   "classes": [
+    "joined"
+   ],
+   "joined": true,
+   "layouts": [
+    {
+     "alignment_bytes": 4,
+     "bitfield_count": 5,
+     "bitfields": [
+      {
+       "name": "a",
+       "offset_bits": 0,
+       "width_bits": 3
+      },
+      {
+       "name": "b",
+       "offset_bits": 3,
+       "width_bits": 8
+      },
+      {
+       "name": "c",
+       "offset_bits": 11,
+       "width_bits": 21
+      },
+      {
+       "name": "g",
+       "offset_bits": 320,
+       "width_bits": 5
+      },
+      {
+       "name": "h",
+       "offset_bits": 325,
+       "width_bits": 27
+      }
+     ],
+     "size_bytes": 44
+    }
+   ],
+   "name": "pr108498-2.c",
+   "records": 1
+  },
+  {
+   "classes": [
+    "joined"
+   ],
+   "joined": true,
+   "layouts": [
+    {
+     "alignment_bytes": 4,
+     "bitfield_count": 1,
+     "bitfields": [
+      {
+       "name": "f",
+       "offset_bits": 0,
+       "width_bits": 1
+      }
+     ],
+     "size_bytes": 4
+    }
+   ],
+   "name": "pr49123.c",
+   "records": 1
+  },
+  {
+   "classes": [
+    "joined"
+   ],
+   "joined": true,
+   "layouts": [
+    {
+     "alignment_bytes": 4,
+     "bitfield_count": 3,
+     "bitfields": [
+      {
+       "name": "f0",
+       "offset_bits": 0,
+       "width_bits": 8
+      },
+      {
+       "name": "",
+       "offset_bits": 8,
+       "width_bits": 6
+      },
+      {
+       "name": "f1",
+       "offset_bits": 14,
+       "width_bits": 5
+      }
+     ],
+     "size_bytes": 4
+    }
+   ],
+   "name": "pr58984.c",
+   "records": 1
+  },
+  {
+   "classes": [
+    "joined"
+   ],
+   "joined": true,
+   "layouts": [
+    {
+     "alignment_bytes": 8,
+     "bitfield_count": 3,
+     "bitfields": [
+      {
+       "name": "l1",
+       "offset_bits": 0,
+       "width_bits": 24
+      },
+      {
+       "name": "l2",
+       "offset_bits": 24,
+       "width_bits": 8
+      },
+      {
+       "name": "l3",
+       "offset_bits": 32,
+       "width_bits": 32
+      }
+     ],
+     "size_bytes": 8
+    }
+   ],
+   "name": "pr65215-3.c",
+   "records": 1
+  },
+  {
+   "classes": [
+    "joined"
+   ],
+   "joined": true,
+   "layouts": [
+    {
+     "alignment_bytes": 8,
+     "bitfield_count": 1,
+     "bitfields": [
+      {
+       "name": "l1",
+       "offset_bits": 0,
+       "width_bits": 48
+      }
+     ],
+     "size_bytes": 8
+    }
+   ],
+   "name": "pr65215-4.c",
+   "records": 1
+  },
+  {
+   "classes": [
+    "joined"
+   ],
+   "joined": true,
+   "layouts": [
+    {
+     "alignment_bytes": 4,
+     "bitfield_count": 1,
+     "bitfields": [
+      {
+       "name": "g",
+       "offset_bits": 32,
+       "width_bits": 2
+      }
+     ],
+     "size_bytes": 8
+    }
+   ],
+   "name": "pr70127.c",
+   "records": 1
+  },
+  {
+   "classes": [
+    "joined"
+   ],
+   "joined": true,
+   "layouts": [
+    {
+     "alignment_bytes": 4,
+     "bitfield_count": 1,
+     "bitfields": [
+      {
+       "name": "i",
+       "offset_bits": 0,
+       "width_bits": 24
+      }
+     ],
+     "size_bytes": 4
+    }
+   ],
+   "name": "pr89195.c",
+   "records": 1
+  },
+  {
+   "classes": [
+    "joined"
+   ],
+   "joined": true,
+   "layouts": [
+    {
+     "alignment_bytes": 4,
+     "bitfield_count": 3,
+     "bitfields": [
+      {
+       "name": "b",
+       "offset_bits": 0,
+       "width_bits": 3
+      },
+      {
+       "name": "c",
+       "offset_bits": 3,
+       "width_bits": 28
+      },
+      {
+       "name": "d",
+       "offset_bits": 31,
+       "width_bits": 1
+      }
+     ],
+     "size_bytes": 4
+    }
+   ],
+   "name": "pr97764.c",
+   "records": 1
+  }
+ ],
+ "schema": "c-record-layout-join-price-0.1"
+}

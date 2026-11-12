@@ -234,3 +234,10 @@ source-shaped envelope and matches Xcelium 24.03-s004 for all 4 cycles.  The
 corpus is Xcelium-only for this syntax, so no Icarus result is claimed.  This
 is an E-MATCH against the available pinned oracle and does not change the
 frozen migration count.
+
+The packed streaming-left row, `streaming_left_fixed`, runs from its
+source-shaped envelope and matches Xcelium 24.03-s004 for all 3 cycles.
+Icarus Verilog 13.0 cannot parse streaming concatenations and is recorded as
+the declared `iverilog-streaming-left-fixed` unavailable oracle.  This is an
+E-MATCH against the available pinned oracle and does not change the frozen
+migration count.

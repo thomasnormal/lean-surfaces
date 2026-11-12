@@ -890,6 +890,12 @@ def MemEDesign.step (d : MemEDesign) (s : MemEState) (inputs : SvState) : Except
 
 def MemEDesign.ofPDesign (d : PDesign) (args : List Int) : Res MemEDesign := do
   let env ← d.paramEnv2 args
+  -- Generate items are source-shaped elaboration nodes, not an optional
+  -- side table.  MemE has no generate walker yet; refusing here prevents a
+  -- generated memory process from being silently dropped while the scalar
+  -- declaration still appears to admit (§27.4).
+  if !d.generates.isEmpty then
+    .unsupported "E memory route does not yet admit generate items"
   if d.others.any (fun entry => !memEAllowedOther entry) then
     .unsupported "E memory route does not yet admit unsupported module members"
   match memEProcessAdmissions d.processes with

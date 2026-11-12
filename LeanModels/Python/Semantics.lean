@@ -3785,6 +3785,15 @@ def strOfValH (h : Heap) (v : RVal) : Res RVal :=
       | some s => .ok (.str s)
       | Option.none => .unsupported s!"str() of '{v.typeName}' is outside the tier (its rendering refuses; docs/memory-model.md §rendering)"
 
+/-! The scalar rendering overlap is intentional: heap-aware rendering calls
+the value worker for these four immediate CPython objects. Container and
+reference values use the separate `reprVal` worker and its active-path rule. -/
+theorem strOfValH_basic (h : Heap) (v : RVal) :
+    match v with
+    | .int _ | .bool _ | .str _ | .none => strOfValH h v = strOfVal v
+    | _ => True := by
+  cases v <;> simp [strOfValH]
+
 def reprArgs (h : Heap) (vs : List RVal) : Res RVal :=
   match vs with
   | [v] =>

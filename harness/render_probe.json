@@ -1,0 +1,348 @@
+{
+  "schema_version": "0.1",
+  "language": "python",
+  "frontend": {
+    "name": "cpython-ast",
+    "version": "3.9.25"
+  },
+  "source_file": "harness/render_probe.py",
+  "source_sha256": "3bdaa12b591f0cd5195ee778caf0fbd07c3908101ca589dcff0a33cee20a2428",
+  "module": {
+    "kind": "Module",
+    "body": [
+      {
+        "kind": "Expr",
+        "span": {
+          "lineno": 1,
+          "col_offset": 0,
+          "end_lineno": 1,
+          "end_col_offset": 62
+        },
+        "value": {
+          "kind": "Constant",
+          "span": {
+            "lineno": 1,
+            "col_offset": 0,
+            "end_lineno": 1,
+            "end_col_offset": 62
+          },
+          "value": {
+            "type": "str",
+            "value": "Rows for scalar and heap-aware rendering worker overlap."
+          }
+        }
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 3,
+          "col_offset": 0,
+          "end_lineno": 4,
+          "end_col_offset": 41
+        },
+        "name": "scalar_str",
+        "args": [],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 4,
+              "col_offset": 4,
+              "end_lineno": 4,
+              "end_col_offset": 41
+            },
+            "value": {
+              "kind": "Tuple",
+              "span": {
+                "lineno": 4,
+                "col_offset": 11,
+                "end_lineno": 4,
+                "end_col_offset": 41
+              },
+              "elts": [
+                {
+                  "kind": "Call",
+                  "span": {
+                    "lineno": 4,
+                    "col_offset": 12,
+                    "end_lineno": 4,
+                    "end_col_offset": 18
+                  },
+                  "func": {
+                    "kind": "Name",
+                    "span": {
+                      "lineno": 4,
+                      "col_offset": 12,
+                      "end_lineno": 4,
+                      "end_col_offset": 15
+                    },
+                    "id": "str"
+                  },
+                  "args": [
+                    {
+                      "kind": "Constant",
+                      "span": {
+                        "lineno": 4,
+                        "col_offset": 16,
+                        "end_lineno": 4,
+                        "end_col_offset": 17
+                      },
+                      "value": {
+                        "type": "int",
+                        "repr": "1"
+                      }
+                    }
+                  ],
+                  "keywords": [],
+                  "call_unsupported": null
+                },
+                {
+                  "kind": "Call",
+                  "span": {
+                    "lineno": 4,
+                    "col_offset": 20,
+                    "end_lineno": 4,
+                    "end_col_offset": 29
+                  },
+                  "func": {
+                    "kind": "Name",
+                    "span": {
+                      "lineno": 4,
+                      "col_offset": 20,
+                      "end_lineno": 4,
+                      "end_col_offset": 23
+                    },
+                    "id": "str"
+                  },
+                  "args": [
+                    {
+                      "kind": "Constant",
+                      "span": {
+                        "lineno": 4,
+                        "col_offset": 24,
+                        "end_lineno": 4,
+                        "end_col_offset": 28
+                      },
+                      "value": {
+                        "type": "bool",
+                        "value": true
+                      }
+                    }
+                  ],
+                  "keywords": [],
+                  "call_unsupported": null
+                },
+                {
+                  "kind": "Call",
+                  "span": {
+                    "lineno": 4,
+                    "col_offset": 31,
+                    "end_lineno": 4,
+                    "end_col_offset": 40
+                  },
+                  "func": {
+                    "kind": "Name",
+                    "span": {
+                      "lineno": 4,
+                      "col_offset": 31,
+                      "end_lineno": 4,
+                      "end_col_offset": 34
+                    },
+                    "id": "str"
+                  },
+                  "args": [
+                    {
+                      "kind": "Constant",
+                      "span": {
+                        "lineno": 4,
+                        "col_offset": 35,
+                        "end_lineno": 4,
+                        "end_col_offset": 39
+                      },
+                      "value": {
+                        "type": "none"
+                      }
+                    }
+                  ],
+                  "keywords": [],
+                  "call_unsupported": null
+                }
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 7,
+          "col_offset": 0,
+          "end_lineno": 8,
+          "end_col_offset": 23
+        },
+        "name": "tuple_repr",
+        "args": [],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 8,
+              "col_offset": 4,
+              "end_lineno": 8,
+              "end_col_offset": 23
+            },
+            "value": {
+              "kind": "Call",
+              "span": {
+                "lineno": 8,
+                "col_offset": 11,
+                "end_lineno": 8,
+                "end_col_offset": 23
+              },
+              "func": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 8,
+                  "col_offset": 11,
+                  "end_lineno": 8,
+                  "end_col_offset": 15
+                },
+                "id": "repr"
+              },
+              "args": [
+                {
+                  "kind": "Tuple",
+                  "span": {
+                    "lineno": 8,
+                    "col_offset": 16,
+                    "end_lineno": 8,
+                    "end_col_offset": 22
+                  },
+                  "elts": [
+                    {
+                      "kind": "Constant",
+                      "span": {
+                        "lineno": 8,
+                        "col_offset": 17,
+                        "end_lineno": 8,
+                        "end_col_offset": 18
+                      },
+                      "value": {
+                        "type": "int",
+                        "repr": "1"
+                      }
+                    },
+                    {
+                      "kind": "Constant",
+                      "span": {
+                        "lineno": 8,
+                        "col_offset": 20,
+                        "end_lineno": 8,
+                        "end_col_offset": 21
+                      },
+                      "value": {
+                        "type": "int",
+                        "repr": "2"
+                      }
+                    }
+                  ]
+                }
+              ],
+              "keywords": [],
+              "call_unsupported": null
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 11,
+          "col_offset": 0,
+          "end_lineno": 12,
+          "end_col_offset": 23
+        },
+        "name": "list_repr",
+        "args": [],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 12,
+              "col_offset": 4,
+              "end_lineno": 12,
+              "end_col_offset": 23
+            },
+            "value": {
+              "kind": "Call",
+              "span": {
+                "lineno": 12,
+                "col_offset": 11,
+                "end_lineno": 12,
+                "end_col_offset": 23
+              },
+              "func": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 12,
+                  "col_offset": 11,
+                  "end_lineno": 12,
+                  "end_col_offset": 15
+                },
+                "id": "repr"
+              },
+              "args": [
+                {
+                  "kind": "List",
+                  "span": {
+                    "lineno": 12,
+                    "col_offset": 16,
+                    "end_lineno": 12,
+                    "end_col_offset": 22
+                  },
+                  "elts": [
+                    {
+                      "kind": "Constant",
+                      "span": {
+                        "lineno": 12,
+                        "col_offset": 17,
+                        "end_lineno": 12,
+                        "end_col_offset": 18
+                      },
+                      "value": {
+                        "type": "int",
+                        "repr": "1"
+                      }
+                    },
+                    {
+                      "kind": "Constant",
+                      "span": {
+                        "lineno": 12,
+                        "col_offset": 20,
+                        "end_lineno": 12,
+                        "end_col_offset": 21
+                      },
+                      "value": {
+                        "type": "int",
+                        "repr": "2"
+                      }
+                    }
+                  ]
+                }
+              ],
+              "keywords": [],
+              "call_unsupported": null
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "lean_blocks": []
+}

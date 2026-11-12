@@ -1052,7 +1052,7 @@ def callFn : Nat → Program → LeanModels.C.FunctionDefn → List CVal → Exe
                 runStrcmp vs
               else if nm == "__builtin_sprintf" || nm == "sprintf" then
                 runSprintf vs
-              else if nm == "__builtin_strcpy" then
+              else if nm == "__builtin_strcpy" || nm == "strcpy" then
                 runBuiltinStrcpy vs
               else if nm == "strlen" then
                 runStrlen vs
@@ -1095,7 +1095,7 @@ def callFn : Nat → Program → LeanModels.C.FunctionDefn → List CVal → Exe
             | none =>
               if nm == "__builtin_strcmp" || nm == "strcmp" then runStrcmp vs
               else if nm == "__builtin_sprintf" || nm == "sprintf" then runSprintf vs
-              else if nm == "__builtin_strcpy" then runBuiltinStrcpy vs
+              else if nm == "__builtin_strcpy" || nm == "strcpy" then runBuiltinStrcpy vs
               else if nm == "strlen" then runStrlen vs
               else if nm == "printf" || nm == "__builtin_printf" then runPrintf vs
               else if nm == "memset" || nm == "__builtin_memset" then runMemset vs

@@ -1,0 +1,15 @@
+[
+  {"name": "read_x_is_independent", "op": "read", "value": "x", "expected": ["0", "1"]},
+  {"name": "read_xz_vector", "op": "read", "value": "xz", "expected": ["00", "01", "10", "11"]},
+  {"name": "if_x_both_branches", "op": "if", "condition": "x", "then": "1", "else": "0", "expected": ["0", "1"]},
+  {"name": "if_x_strict", "op": "if", "condition": "x", "then": "1", "else": "0", "strict": true, "expected_status": "refusal", "message": "unknown decision value"},
+  {"name": "case_x_source_order", "op": "case", "subject": "x", "items": [["0", "a"], ["1", "b"]], "default": "d", "expected": ["a", "b"]},
+  {"name": "case_x_strict", "op": "case", "subject": "x", "items": [["0", "a"], ["1", "b"]], "default": "d", "strict": true, "expected_status": "refusal", "message": "unknown decision value"},
+  {"name": "index_x_reads_each_cell", "op": "index_read", "index": "x", "cells": {"0": "a", "1": "b"}, "expected": ["a", "b"]},
+  {"name": "index_x_strict", "op": "index_read", "index": "x", "cells": {"0": "a", "1": "b"}, "strict": true, "expected_status": "refusal", "message": "unknown memory index"},
+  {"name": "index_oob_reads_x", "op": "index_read", "index": "1", "cells": {"0": "a"}, "expected": ["x"]},
+  {"name": "index_x_write_states", "op": "index_write", "index": "x", "cells": {"0": "a", "1": "b"}, "value": "c", "expected": [{"0": "c", "1": "b"}, {"0": "a", "1": "c"}]},
+  {"name": "two_state_is_deterministic", "op": "two_state", "value": "xz01", "expected": "0001"},
+  {"name": "x_clock_strict", "op": "control", "value": "x", "strict": true, "expected_status": "refusal", "message": "unknown clock/set/reset control"},
+  {"name": "x_clock_lenient_switch", "op": "control", "value": "x", "expected": ["0", "1"]}
+]

@@ -100,3 +100,13 @@ step replaces that predicate with the per-read witness and then lifts it
 through `Core0Proc`, `Core1Edge`, `MemE`, `Sva`, `Observe`, `Contract`, and the
 cycle/run bridges. No new AST constructor, semantic fuel, run2 meaning, or
 MemCycle meaning is required.
+
+The executable probe is `harness/sv_x_resolution.py` with the committed
+`harness/sv_x_resolution.json` battery. It checks independent reads of x/z
+vectors, if and case decisions, unknown and out-of-range memory indices,
+blocking index writes, the deterministic two-state conversion, and unknown
+clock/set/reset controls. Each decision and control row has a strict switch:
+the lenient switch enumerates the possible outcomes, while strict mode returns
+the named refusal that a proof consumer must carry until X-E is wired through
+execution. Run `python3 harness/sv_x_resolution.py`; the current battery has
+13 passing rows and does not consult a simulator or alter E.

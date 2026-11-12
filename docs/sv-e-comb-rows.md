@@ -92,6 +92,10 @@ The multi-assignment copy chain, `acg_alias_chain`, is also refused by E as
 `AlwaysComb:alias-read`.  The refusal is source-shaped and agrees with the
 legacy boundary; no E verdict or migration-count change is claimed.
 
+The inverted-copy alias row, `acg_alias_not`, is likewise refused by E as
+`AlwaysComb:alias-read`.  Its source-shaped guard result agrees with the
+legacy boundary; no E verdict or migration-count change is claimed.
+
 The receipts were produced with:
 
 ```text

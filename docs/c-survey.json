@@ -1,21 +1,21 @@
 {
  "by_corpus": {
   "c-testsuite/single-exec": {
-   "not-ingested": 7,
+   "not-ingested": 5,
    "not-parsed": 1,
    "passed": 95,
    "refused-libc": 2,
    "refused-ub": 2,
-   "refused-unsupported": 111,
+   "refused-unsupported": 113,
    "timeout": 2
   },
   "gcc.c-torture/execute": {
-   "not-ingested": 20,
+   "not-ingested": 19,
    "not-parsed": 321,
-   "passed": 317,
-   "refused-libc": 261,
+   "passed": 319,
+   "refused-libc": 269,
    "refused-ub": 28,
-   "refused-unsupported": 929,
+   "refused-unsupported": 920,
    "timeout": 42
   },
   "gcc.c23-run": {
@@ -28,17 +28,17 @@
  },
  "corpus": "C1-C3 (gcc torture, c-testsuite, gcc c23-run)",
  "counts": {
-  "not-ingested": 28,
+  "not-ingested": 25,
   "not-parsed": 350,
-  "passed": 412,
-  "refused-libc": 266,
+  "passed": 414,
+  "refused-libc": 274,
   "refused-ub": 31,
-  "refused-unsupported": 1083,
+  "refused-unsupported": 1076,
   "timeout": 44
  },
  "manifest_hash": "953938cce1637cf91ba3dda661a9b9309cd83f0ebf7d7f17cc1a36704295f367",
- "measured_at_utc": "2026-11-12T01:20:00Z",
- "measured_commit": "003c716fd",
+ "measured_at_utc": "2026-11-12T01:45:00Z",
+ "measured_commit": "f6680e3a8",
  "pin": null,
  "rows": [
   {
@@ -541,13 +541,11 @@
   },
   {
    "corpus": "c-testsuite/single-exec",
-   "detail": "out of tier: SwitchStmt",
+   "detail": "case label nested in a control statement",
    "manifest_status": "parsed",
    "name": "00051.c",
    "sha256": "00742a819d1b19ae42f9e4552ea37a9dc4733e1fa38955190ac4e7441752490f",
-   "static_walls": [
-    "unsupported:SwitchStmt"
-   ],
+   "static_walls": [],
    "verdict": "refused-unsupported"
   },
   {
@@ -1460,13 +1458,12 @@
   },
   {
    "corpus": "c-testsuite/single-exec",
-   "detail": "out of tier: SwitchStmt",
+   "detail": "case label nested in a control statement",
    "manifest_status": "parsed",
    "name": "00143.c",
    "sha256": "504987b029603d17892066bf821aa541873d2c5339bbf9220eb9b64f7b7fc31f",
    "static_walls": [
-    "type-layout",
-    "unsupported:SwitchStmt"
+    "type-layout"
    ],
    "verdict": "refused-unsupported"
   },
@@ -1525,25 +1522,25 @@
   },
   {
    "corpus": "c-testsuite/single-exec",
-   "detail": "envelope: VarDecl: UnaryOperator: CompoundLiteralExpr: InitListExpr: ConstantExpr: field 'value': String expected",
+   "detail": "compound literal (inch 4: it needs an object)",
    "manifest_status": "parsed",
    "name": "00149.c",
    "sha256": "05eaed6d6147343b96cc9701f6cdb806896bda54005597f9a35fb184676c648e",
    "static_walls": [
     "type-layout"
    ],
-   "verdict": "not-ingested"
+   "verdict": "refused-unsupported"
   },
   {
    "corpus": "c-testsuite/single-exec",
-   "detail": "envelope: VarDecl: UnaryOperator: CompoundLiteralExpr: InitListExpr: ConstantExpr: field 'value': String expected",
+   "detail": "compound literal (inch 4: it needs an object)",
    "manifest_status": "parsed",
    "name": "00150.c",
    "sha256": "43965a3537ff957841cbec8350e3378cbc4690e7358d504845e82e341bb179bb",
    "static_walls": [
     "type-layout"
    ],
-   "verdict": "not-ingested"
+   "verdict": "refused-unsupported"
   },
   {
    "corpus": "c-testsuite/single-exec",
@@ -1633,8 +1630,7 @@
    "static_walls": [
     "libc-call",
     "string-literal",
-    "type-layout",
-    "unsupported:SwitchStmt"
+    "type-layout"
    ],
    "verdict": "refused-unsupported"
   },
@@ -1947,8 +1943,7 @@
    "static_walls": [
     "libc-call",
     "string-literal",
-    "type-layout",
-    "unsupported:SwitchStmt"
+    "type-layout"
    ],
    "verdict": "refused-unsupported"
   },
@@ -2085,15 +2080,14 @@
   },
   {
    "corpus": "c-testsuite/single-exec",
-   "detail": "out of tier: SwitchStmt",
+   "detail": "not an lvalue: StringLiteral",
    "manifest_status": "parsed",
    "name": "00193.c",
    "sha256": "b5ee395e0fbddc3e95750fd6a7e9ee240ef46334dc7f03f693a4e41b5242a56d",
    "static_walls": [
     "libc-call",
     "string-literal",
-    "type-layout",
-    "unsupported:SwitchStmt"
+    "type-layout"
    ],
    "verdict": "refused-unsupported"
   },
@@ -2354,8 +2348,7 @@
     "libc-call",
     "string-literal",
     "type-layout",
-    "unsupported:StmtExpr",
-    "unsupported:SwitchStmt"
+    "unsupported:StmtExpr"
    ],
    "verdict": "refused-unsupported"
   },
@@ -2384,14 +2377,13 @@
    "static_walls": [
     "libc-call",
     "string-literal",
-    "type-layout",
-    "unsupported:SwitchStmt"
+    "type-layout"
    ],
    "verdict": "refused-unsupported"
   },
   {
    "corpus": "c-testsuite/single-exec",
-   "detail": "envelope: VarDecl: ImplicitCastExpr: ParenExpr: CompoundLiteralExpr: InitListExpr: ConstantExpr: field 'value': String expected",
+   "detail": "envelope: RecordDecl: FieldDecl: field 'name': String expected",
    "manifest_status": "parsed",
    "name": "00216.c",
    "sha256": "023f99bc5046f940b3cb9d6f3070c3a9d7c1dfe295cdd74d3b155ed774df28c0",
@@ -2425,8 +2417,7 @@
    "static_walls": [
     "libc-call",
     "string-literal",
-    "type-layout",
-    "unsupported:SwitchStmt"
+    "type-layout"
    ],
    "verdict": "refused-unsupported"
   },
@@ -3304,14 +3295,13 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "out of tier: SwitchStmt",
+   "detail": "not an lvalue: StringLiteral",
    "manifest_status": "parsed",
    "name": "20001130-2.c",
    "sha256": "9a2999d2605dab5e7d7ff9530d141b5fe96d5e408c9d7b4724908ed2ec3cdffd",
    "static_walls": [
     "string-literal",
-    "type-layout",
-    "unsupported:SwitchStmt"
+    "type-layout"
    ],
    "verdict": "refused-unsupported"
   },
@@ -3375,14 +3365,12 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "out of tier: SwitchStmt",
+   "detail": "id18",
    "manifest_status": "parsed",
    "name": "20010106-1.c",
    "sha256": "a4c5a6c32a786cdd6ac04b9d72242ce760a748dac2536db0adb112eb210395ab",
-   "static_walls": [
-    "unsupported:SwitchStmt"
-   ],
-   "verdict": "refused-unsupported"
+   "static_walls": [],
+   "verdict": "refused-libc"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -3766,13 +3754,11 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "out of tier: SwitchStmt",
+   "detail": "case label nested in a control statement",
    "manifest_status": "parsed",
    "name": "20011109-1.c",
    "sha256": "1ddde69b748e07a418efa9aad7345339f4c3a40be94dbfd7912b766e3f2e1df8",
-   "static_walls": [
-    "unsupported:SwitchStmt"
-   ],
+   "static_walls": [],
    "verdict": "refused-unsupported"
   },
   {
@@ -3884,20 +3870,19 @@
    "name": "20011219-1.c",
    "sha256": "7a006cf07778d9e15218ca7310c712bbf2fbadf139959dda7130ab9c36a5064d",
    "static_walls": [
-    "unsupported:SwitchStmt"
+    "string-literal",
+    "type-layout"
    ],
    "verdict": "refused-unsupported"
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "out of tier: SwitchStmt",
+   "detail": "id18",
    "manifest_status": "parsed",
    "name": "20011223-1.c",
    "sha256": "83deb1a68358698bf3af29211f8906f834bf1a78fad34521f6061193e8cbd83c",
-   "static_walls": [
-    "unsupported:SwitchStmt"
-   ],
-   "verdict": "refused-unsupported"
+   "static_walls": [],
+   "verdict": "refused-libc"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -4303,8 +4288,7 @@
    "sha256": "4f1736545a78454520641f373c2b81155a0afcc6ef6f8fc52df56d4f3b8cdc35",
    "static_walls": [
     "assignment-call",
-    "type-layout",
-    "unsupported:SwitchStmt"
+    "type-layout"
    ],
    "verdict": "refused-libc"
   },
@@ -4778,15 +4762,14 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "out of tier: SwitchStmt",
+   "detail": "id39",
    "manifest_status": "parsed",
    "name": "20030313-1.c",
    "sha256": "03c9b1ca6b81a7d22b5b6ba53944ed307b482a794d42c91d468f8762b10034c0",
    "static_walls": [
-    "type-layout",
-    "unsupported:SwitchStmt"
+    "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "refused-libc"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -4804,7 +4787,7 @@
    "name": "20030323-1.c",
    "sha256": "7696430d65f84d7fd02dfe3efbc3fb89acaec8c9300408138054c1374c7e1453",
    "static_walls": [
-    "unsupported:SwitchStmt"
+    "libc-call"
    ],
    "verdict": "passed"
   },
@@ -5005,13 +4988,11 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "out of tier: SwitchStmt",
+   "detail": "unbound declaration 'id28' (name 'test')",
    "manifest_status": "parsed",
    "name": "20030903-1.c",
    "sha256": "267cd90d53d2fa73fb1b36252b20ebb0d5f6953920465682cbfc41632a59d725",
-   "static_walls": [
-    "unsupported:SwitchStmt"
-   ],
+   "static_walls": [],
    "verdict": "refused-unsupported"
   },
   {
@@ -5755,7 +5736,7 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "out of tier: SwitchStmt",
+   "detail": "not an lvalue: StringLiteral",
    "manifest_status": "parsed",
    "name": "20041218-1.c",
    "sha256": "b5d1601f6799841f2bae31fac4e6e3f754cae2c1d23a4342665fd42f6668ffee",
@@ -5763,8 +5744,7 @@
     "assignment-call",
     "libc-call",
     "string-literal",
-    "type-layout",
-    "unsupported:SwitchStmt"
+    "type-layout"
    ],
    "verdict": "refused-unsupported"
   },
@@ -6071,14 +6051,14 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "envelope: VarDecl: InitListExpr: UnaryOperator: CompoundLiteralExpr: InitListExpr: ConstantExpr: field 'value': String expected",
+   "detail": "compound literal (inch 4: it needs an object)",
    "manifest_status": "parsed",
    "name": "20050929-1.c",
    "sha256": "7f3bb1dae22731ecb25b35dab9b67b1c7a10647d01fb09d53fa33a4a828f8a0c",
    "static_walls": [
     "type-layout"
    ],
-   "verdict": "not-ingested"
+   "verdict": "refused-unsupported"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -6552,7 +6532,7 @@
    "static_walls": [
     "libc-call",
     "type-layout",
-    "unsupported:SwitchStmt"
+    "unsupported:VAArgExpr"
    ],
    "verdict": "refused-unsupported"
   },
@@ -6722,14 +6702,13 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "out of tier: SwitchStmt",
+   "detail": "case label nested in a control statement",
    "manifest_status": "parsed",
    "name": "20080719-1.c",
    "sha256": "8729d02876bba7cb4a080c80c915a531d97f295723f92d5df3365d02ebe5da50",
    "static_walls": [
     "libc-call",
-    "type-layout",
-    "unsupported:SwitchStmt"
+    "type-layout"
    ],
    "verdict": "refused-unsupported"
   },
@@ -6846,8 +6825,7 @@
    "name": "20090527-1.c",
    "sha256": "f63fd94d342df801f9bec7a19e900c5766d043eef8ebded778b654075f499969",
    "static_walls": [
-    "type-layout",
-    "unsupported:SwitchStmt"
+    "type-layout"
    ],
    "verdict": "not-ingested"
   },
@@ -7016,8 +6994,7 @@
    "static_walls": [
     "libc-call",
     "string-literal",
-    "type-layout",
-    "unsupported:SwitchStmt"
+    "type-layout"
    ],
    "verdict": "refused-unsupported"
   },
@@ -7115,8 +7092,7 @@
    "name": "20120808-1.c",
    "sha256": "194ffb346c27ea614c2da75618f191b556eba9ec12a2b354ca45643246495bdb",
    "static_walls": [
-    "type-layout",
-    "unsupported:SwitchStmt"
+    "type-layout"
    ],
    "verdict": "refused-unsupported"
   },
@@ -7427,8 +7403,7 @@
    "name": "20191023-1.c",
    "sha256": "2aece4edc922ee236840668c7b7ae7b2c0fe4e18bffcbce23b55f8a09dd1b71e",
    "static_walls": [
-    "libc-call",
-    "unsupported:SwitchStmt"
+    "libc-call"
    ],
    "verdict": "refused-ub"
   },
@@ -7739,13 +7714,12 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "out of tier: SwitchStmt",
+   "detail": "case label nested in a control statement",
    "manifest_status": "parsed",
    "name": "920506-1.c",
    "sha256": "5f07e38bc27df8b48e64a8b2945ce8d5631ad473d66665ae3ef49f27d5b1faa2",
    "static_walls": [
-    "type-layout",
-    "unsupported:SwitchStmt"
+    "type-layout"
    ],
    "verdict": "refused-unsupported"
   },
@@ -8328,8 +8302,7 @@
    "name": "930408-1.c",
    "sha256": "a5b688398261a7e62c1a5e74bfe0e72cc77dc64b7d7d4b5cd4dba667b360af50",
    "static_walls": [
-    "type-layout",
-    "unsupported:SwitchStmt"
+    "type-layout"
    ],
    "verdict": "not-ingested"
   },
@@ -9340,14 +9313,12 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "out of tier: SwitchStmt",
+   "detail": "id24",
    "manifest_status": "parsed",
    "name": "960302-1.c",
    "sha256": "9ce86979f1fd618a95f8bac098e6f09eeade89a265f0a6d22b5f1c31e9dbe5c4",
-   "static_walls": [
-    "unsupported:SwitchStmt"
-   ],
-   "verdict": "refused-unsupported"
+   "static_walls": [],
+   "verdict": "refused-libc"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -9426,8 +9397,7 @@
    "static_walls": [
     "libc-call",
     "string-literal",
-    "type-layout",
-    "unsupported:SwitchStmt"
+    "type-layout"
    ],
    "verdict": "refused-unsupported"
   },
@@ -10186,8 +10156,7 @@
    "sha256": "eae9e2f7911318038833aad9b1636e1f9ffedec73493854547859606dd8d9538",
    "static_walls": [
     "string-literal",
-    "type-layout",
-    "unsupported:SwitchStmt"
+    "type-layout"
    ],
    "verdict": "refused-unsupported"
   },
@@ -10268,15 +10237,14 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "out of tier: SwitchStmt",
+   "detail": "id24",
    "manifest_status": "parsed",
    "name": "990811-1.c",
    "sha256": "4bbbe311e6daf32490099024c84a20236073981e1f0164ebba0df2cb5fb035a3",
    "static_walls": [
-    "type-layout",
-    "unsupported:SwitchStmt"
+    "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "refused-libc"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -10335,9 +10303,7 @@
    "manifest_status": "parsed",
    "name": "991016-1.c",
    "sha256": "7d4f953ef3d108bf6657f65733c38a4fc20fb2e4f7d1a87cd2285126fd420b00",
-   "static_walls": [
-    "unsupported:SwitchStmt"
-   ],
+   "static_walls": [],
    "verdict": "refused-unsupported"
   },
   {
@@ -10672,8 +10638,7 @@
    "name": "ashldi-1.c",
    "sha256": "1ea00996ffc02dc6b6072708f3e883e15bfef485e7d2ddce7857a777f611ac66",
    "static_walls": [
-    "type-layout",
-    "unsupported:SwitchStmt"
+    "type-layout"
    ],
    "verdict": "timeout"
   },
@@ -10684,8 +10649,7 @@
    "name": "ashrdi-1.c",
    "sha256": "9b7d8a875d02c6cbdf77928a400a0436f76759f9af6b840b65ae069fc69665be",
    "static_walls": [
-    "type-layout",
-    "unsupported:SwitchStmt"
+    "type-layout"
    ],
    "verdict": "timeout"
   },
@@ -14558,10 +14522,10 @@
    "name": "ieee/pr108540-1.c",
    "sha256": "c3a36f26713ef8442f46e4536dba02335743f21093a375da5cac2c1fa8f5c0c0",
    "static_walls": [
+    "cast:IntegralToFloating",
     "libc-call",
     "string-literal",
-    "type-layout",
-    "unsupported:SwitchStmt"
+    "type-layout"
    ],
    "verdict": "refused-unsupported"
   },
@@ -15133,8 +15097,7 @@
    "name": "lshrdi-1.c",
    "sha256": "f8b359a6601d2245a99c2ae18f014ab1ab78e99ac0d884db6f185be8beb09d66",
    "static_walls": [
-    "type-layout",
-    "unsupported:SwitchStmt"
+    "type-layout"
    ],
    "verdict": "timeout"
   },
@@ -15188,12 +15151,12 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "out of tier: SwitchStmt",
+   "detail": "case label nested in a control statement",
    "manifest_status": "parsed",
    "name": "medce-1.c",
    "sha256": "b91b1b14e59baa392f44236ff3e525e4fc5b827d70e8d4ae3d6e81701d2f2409",
    "static_walls": [
-    "unsupported:SwitchStmt"
+    "libc-call"
    ],
    "verdict": "refused-unsupported"
   },
@@ -15926,15 +15889,14 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "out of tier: SwitchStmt",
+   "detail": "",
    "manifest_status": "parsed",
    "name": "pr110115.c",
    "sha256": "e9af63e1160161ded2f543516d1402fd65757927ae35e385d8fca5caf07b544a",
    "static_walls": [
-    "type-layout",
-    "unsupported:SwitchStmt"
+    "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -16271,8 +16233,7 @@
    "static_walls": [
     "libc-call",
     "string-literal",
-    "type-layout",
-    "unsupported:SwitchStmt"
+    "type-layout"
    ],
    "verdict": "refused-unsupported"
   },
@@ -16439,14 +16400,13 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "out of tier: SwitchStmt",
+   "detail": "case label nested in a control statement",
    "manifest_status": "parsed",
    "name": "pr120677.c",
    "sha256": "aad231e615d9f32a22ce72ebaa06bfabcc21c9b7a694ea9a6e56998c715b0750",
    "static_walls": [
     "assignment-call",
-    "libc-call",
-    "unsupported:SwitchStmt"
+    "libc-call"
    ],
    "verdict": "refused-unsupported"
   },
@@ -16472,13 +16432,12 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "out of tier: SwitchStmt",
+   "detail": "not an integer type: '__int128'",
    "manifest_status": "parsed",
    "name": "pr122943.c",
    "sha256": "8ea3ac0eeda989033311c68e415e42ab7171647ea61e65db1386326f40fe146d",
    "static_walls": [
-    "libc-call",
-    "unsupported:SwitchStmt"
+    "libc-call"
    ],
    "verdict": "refused-unsupported"
   },
@@ -16510,8 +16469,7 @@
    "sha256": "202b9eecc59576f304bead0b54fce759921575aa12cf8b3174f258c73cf09964",
    "static_walls": [
     "libc-call",
-    "type-layout",
-    "unsupported:SwitchStmt"
+    "type-layout"
    ],
    "verdict": "refused-unsupported"
   },
@@ -16577,8 +16535,7 @@
    "sha256": "0b91ab76b23510d74969a65f5e11595d4136959c60a86495f2baed094478b5f7",
    "static_walls": [
     "libc-call",
-    "type-layout",
-    "unsupported:SwitchStmt"
+    "type-layout"
    ],
    "verdict": "refused-unsupported"
   },
@@ -16603,8 +16560,7 @@
    "sha256": "764416eec91cefdb81ae9de44d37396c6f818f89b4c01c06d349816df4ca9228",
    "static_walls": [
     "libc-call",
-    "type-layout",
-    "unsupported:SwitchStmt"
+    "type-layout"
    ],
    "verdict": "refused-unsupported"
   },
@@ -16705,8 +16661,7 @@
    "name": "pr17377.c",
    "sha256": "a2bca45e7f6f101a6d53f9f76903b270ec9f67d28f6f9e8bd81e8fd0127f2479",
    "static_walls": [
-    "libc-call",
-    "unsupported:SwitchStmt"
+    "libc-call"
    ],
    "verdict": "refused-unsupported"
   },
@@ -16823,8 +16778,7 @@
    "static_walls": [
     "assignment-call",
     "string-literal",
-    "type-layout",
-    "unsupported:SwitchStmt"
+    "type-layout"
    ],
    "verdict": "refused-unsupported"
   },
@@ -17611,15 +17565,14 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "out of tier: SwitchStmt",
+   "detail": "id37",
    "manifest_status": "parsed",
    "name": "pr34154.c",
    "sha256": "edae4e9e3f74389c5fac0193e76bc3795b8aba369c7eea72ac658db62babae11",
    "static_walls": [
-    "unsupported:EmptyDecl",
-    "unsupported:SwitchStmt"
+    "unsupported:EmptyDecl"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "refused-libc"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -17753,12 +17706,13 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "out of tier: SwitchStmt",
+   "detail": "not an lvalue: StringLiteral",
    "manifest_status": "parsed",
    "name": "pr35800.c",
    "sha256": "536145a3a4b50e7dcd2f2f3d7752e27a4a2e8946363f6eb68517f61eeb4b1d6e",
    "static_walls": [
-    "unsupported:SwitchStmt"
+    "string-literal",
+    "type-layout"
    ],
    "verdict": "refused-unsupported"
   },
@@ -17972,8 +17926,7 @@
     "cast:PointerToIntegral",
     "libc-call",
     "string-literal",
-    "type-layout",
-    "unsupported:SwitchStmt"
+    "type-layout"
    ],
    "verdict": "refused-unsupported"
   },
@@ -18202,15 +18155,14 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "out of tier: SwitchStmt",
+   "detail": "id22",
    "manifest_status": "parsed",
    "name": "pr40668.c",
    "sha256": "e11fffe59899ff934501ad0ccad617f161291a70addcea34f1d4a104665230f7",
    "static_walls": [
-    "libc-call",
-    "unsupported:SwitchStmt"
+    "libc-call"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "refused-libc"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -18628,7 +18580,7 @@
     "cast:IntegralToFloating",
     "libc-call",
     "type-layout",
-    "unsupported:SwitchStmt"
+    "unsupported:VAArgExpr"
    ],
    "verdict": "refused-unsupported"
   },
@@ -18875,14 +18827,12 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "out of tier: SwitchStmt",
+   "detail": "id18",
    "manifest_status": "parsed",
    "name": "pr48809.c",
    "sha256": "ead81f5b72daacf02299339b743fae70c42608bfade30b337a2287991020b671",
-   "static_walls": [
-    "unsupported:SwitchStmt"
-   ],
-   "verdict": "refused-unsupported"
+   "static_walls": [],
+   "verdict": "refused-libc"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -18963,14 +18913,12 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "out of tier: SwitchStmt",
+   "detail": "",
    "manifest_status": "parsed",
    "name": "pr49161.c",
    "sha256": "d6e1771956816cd0aba94707f52bd0d61a37b769795cb7c1c7aa1106b1d3f1b3",
-   "static_walls": [
-    "unsupported:SwitchStmt"
-   ],
-   "verdict": "refused-unsupported"
+   "static_walls": [],
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -19744,9 +19692,10 @@
    "name": "pr58574.c",
    "sha256": "0d9ee9991bbcee2af0713c8f6846241e491e0ca8bdbc806bb9ccaae162d2f960",
    "static_walls": [
+    "cast:FloatingToIntegral",
+    "cast:IntegralToFloating",
     "libc-call",
-    "type-layout",
-    "unsupported:SwitchStmt"
+    "type-layout"
    ],
    "verdict": "refused-unsupported"
   },
@@ -21940,8 +21889,8 @@
    "name": "pr88739.c",
    "sha256": "2a61a6bbeb2cc166299055a3d95df24b5c38bb98b8174136499275ed0422b426",
    "static_walls": [
-    "type-layout",
-    "unsupported:SwitchStmt"
+    "libc-call",
+    "type-layout"
    ],
    "verdict": "refused-unsupported"
   },
@@ -22106,20 +22055,18 @@
     "cast:PointerToIntegral",
     "libc-call",
     "type-layout",
-    "unsupported:AlignedAttr",
-    "unsupported:SwitchStmt"
+    "unsupported:AlignedAttr"
    ],
    "verdict": "refused-unsupported"
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "out of tier: SwitchStmt",
+   "detail": "case label nested in a control statement",
    "manifest_status": "parsed",
    "name": "pr91632.c",
    "sha256": "1e52951fee9532c2eda4feffd091dd9e907c5f9bcac060b1e4e680155469cf9d",
    "static_walls": [
-    "libc-call",
-    "unsupported:SwitchStmt"
+    "libc-call"
    ],
    "verdict": "refused-unsupported"
   },
@@ -22996,7 +22943,6 @@
     "cast:FloatingToIntegral",
     "libc-call",
     "type-layout",
-    "unsupported:SwitchStmt",
     "unsupported:VAArgExpr"
    ],
    "verdict": "refused-unsupported"
@@ -23010,7 +22956,6 @@
    "static_walls": [
     "libc-call",
     "type-layout",
-    "unsupported:SwitchStmt",
     "unsupported:VAArgExpr"
    ],
    "verdict": "refused-unsupported"
@@ -23036,10 +22981,10 @@
    "name": "stdarg-4.c",
    "sha256": "df92949fcdfbb1dec3c0d7fdad72e494a01ab6d678bd237196fa300234673e54",
    "static_walls": [
+    "assignment-call",
     "cast:FloatingToIntegral",
     "libc-call",
     "type-layout",
-    "unsupported:SwitchStmt",
     "unsupported:VAArgExpr"
    ],
    "verdict": "refused-unsupported"
@@ -23413,13 +23358,12 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "out of tier: SwitchStmt",
+   "detail": "case label nested in a control statement",
    "manifest_status": "parsed",
    "name": "switch-1.c",
    "sha256": "7909465fd9bd7e2501772ae0c636381432a306313b3fe817e8d1bfbb45ed126b",
    "static_walls": [
-    "assignment-call",
-    "unsupported:SwitchStmt"
+    "assignment-call"
    ],
    "verdict": "refused-unsupported"
   },
@@ -23820,8 +23764,7 @@
    "static_walls": [
     "libc-call",
     "string-literal",
-    "type-layout",
-    "unsupported:SwitchStmt"
+    "type-layout"
    ],
    "verdict": "refused-unsupported"
   },
@@ -23834,8 +23777,7 @@
    "static_walls": [
     "libc-call",
     "string-literal",
-    "type-layout",
-    "unsupported:SwitchStmt"
+    "type-layout"
    ],
    "verdict": "refused-unsupported"
   },
@@ -23859,8 +23801,7 @@
    "static_walls": [
     "libc-call",
     "string-literal",
-    "type-layout",
-    "unsupported:SwitchStmt"
+    "type-layout"
    ],
    "verdict": "refused-unsupported"
   },
@@ -23873,8 +23814,7 @@
    "static_walls": [
     "libc-call",
     "string-literal",
-    "type-layout",
-    "unsupported:SwitchStmt"
+    "type-layout"
    ],
    "verdict": "refused-unsupported"
   },
@@ -24232,6 +24172,7 @@
     "20011126-2.c",
     "20011128-1.c",
     "20011217-1.c",
+    "20011219-1.c",
     "20020129-1.c",
     "20020206-1.c",
     "20020206-2.c",
@@ -24825,6 +24766,7 @@
     "pr34971.c",
     "pr35456.c",
     "pr35472.c",
+    "pr35800.c",
     "pr36034-1.c",
     "pr36034-2.c",
     "pr36038.c",
@@ -25099,8 +25041,8 @@
     "zerolen-1.c",
     "zerolen-2.c"
    ],
-   "present": 1059,
-   "sole": 292,
+   "present": 1061,
+   "sole": 303,
    "wall": "type-layout"
   },
   {
@@ -25199,6 +25141,7 @@
     "20021113-1.c",
     "20021120-3.c",
     "20030221-1.c",
+    "20030323-1.c",
     "20030330-1.c",
     "20030408-1.c",
     "20030606-1.c",
@@ -25435,6 +25378,7 @@
     "lto-tbaa-1.c",
     "mayalias-2.c",
     "mayalias-3.c",
+    "medce-1.c",
     "memchr-1.c",
     "memcpy-1.c",
     "memcpy-2.c",
@@ -25717,6 +25661,7 @@
     "pr87623.c",
     "pr88693.c",
     "pr88714.c",
+    "pr88739.c",
     "pr89195.c",
     "pr89369.c",
     "pr89434.c",
@@ -25840,8 +25785,8 @@
     "vprintf-chk-1.c",
     "widechar-3.c"
    ],
-   "present": 734,
-   "sole": 193,
+   "present": 737,
+   "sole": 200,
    "wall": "libc-call"
   },
   {
@@ -26024,6 +25969,7 @@
     "simd-4.c",
     "simd-6.c",
     "ssad-run.c",
+    "stdarg-4.c",
     "strcpy-1.c",
     "strct-pack-4.c",
     "strlen-1.c",
@@ -26032,80 +25978,9 @@
     "switch-1.c",
     "usad-run.c"
    ],
-   "present": 185,
-   "sole": 27,
+   "present": 186,
+   "sole": 28,
    "wall": "assignment-call"
-  },
-  {
-   "files": [
-    "00051.c",
-    "00143.c",
-    "00158.c",
-    "00182.c",
-    "00193.c",
-    "00213.c",
-    "00215.c",
-    "00218.c",
-    "20001130-2.c",
-    "20010106-1.c",
-    "20011109-1.c",
-    "20011219-1.c",
-    "20011223-1.c",
-    "20020529-1.c",
-    "20030313-1.c",
-    "20030323-1.c",
-    "20030903-1.c",
-    "20041218-1.c",
-    "20071213-1.c",
-    "20080719-1.c",
-    "20090527-1.c",
-    "20111208-1.c",
-    "20120808-1.c",
-    "20191023-1.c",
-    "920506-1.c",
-    "930408-1.c",
-    "960302-1.c",
-    "960327-1.c",
-    "990524-1.c",
-    "990811-1.c",
-    "991016-1.c",
-    "ashldi-1.c",
-    "ashrdi-1.c",
-    "ieee/pr108540-1.c",
-    "lshrdi-1.c",
-    "medce-1.c",
-    "pr110115.c",
-    "pr114965.c",
-    "pr120677.c",
-    "pr122943.c",
-    "pr123625.c",
-    "pr126405-2.c",
-    "pr126405.c",
-    "pr17377.c",
-    "pr20601-1.c",
-    "pr34154.c",
-    "pr35800.c",
-    "pr38051.c",
-    "pr40668.c",
-    "pr44575.c",
-    "pr48809.c",
-    "pr49161.c",
-    "pr58574.c",
-    "pr88739.c",
-    "pr91597.c",
-    "pr91632.c",
-    "stdarg-1.c",
-    "stdarg-2.c",
-    "stdarg-4.c",
-    "switch-1.c",
-    "vfprintf-1.c",
-    "vfprintf-chk-1.c",
-    "vprintf-1.c",
-    "vprintf-chk-1.c"
-   ],
-   "present": 64,
-   "sole": 13,
-   "wall": "unsupported:SwitchStmt"
   },
   {
    "files": [
@@ -26203,6 +26078,19 @@
   },
   {
    "files": [
+    "20050106-1.c",
+    "20230630-2.c",
+    "20230630-4.c",
+    "builtin-bitops-1.c",
+    "pr34154.c",
+    "pr37573.c"
+   ],
+   "present": 6,
+   "sole": 2,
+   "wall": "unsupported:EmptyDecl"
+  },
+  {
+   "files": [
     "00213.c",
     "00214.c",
     "20000703-1.c",
@@ -26232,19 +26120,6 @@
    "present": 8,
    "sole": 1,
    "wall": "unsupported:AddrLabelExpr"
-  },
-  {
-   "files": [
-    "20050106-1.c",
-    "20230630-2.c",
-    "20230630-4.c",
-    "builtin-bitops-1.c",
-    "pr34154.c",
-    "pr37573.c"
-   ],
-   "present": 6,
-   "sole": 1,
-   "wall": "unsupported:EmptyDecl"
   },
   {
    "files": [
@@ -26361,6 +26236,7 @@
     "20011114-1.c",
     "20011126-2.c",
     "20011128-1.c",
+    "20011219-1.c",
     "20020406-1.c",
     "20021011-1.c",
     "20021120-3.c",
@@ -26472,6 +26348,7 @@
     "pr15296.c",
     "pr20601-1.c",
     "pr34415.c",
+    "pr35800.c",
     "pr36321.c",
     "pr38051.c",
     "pr47337.c",
@@ -26528,7 +26405,7 @@
     "widechar-2.c",
     "widechar-3.c"
    ],
-   "present": 260,
+   "present": 262,
    "sole": 0,
    "wall": "string-literal"
   },
@@ -26586,6 +26463,7 @@
     "ieee/inf-4.c",
     "ieee/minuszero.c",
     "ieee/mzero5.c",
+    "ieee/pr108540-1.c",
     "ieee/pr28634.c",
     "ieee/pr29302-1.c",
     "ieee/pr67218.c",
@@ -26604,6 +26482,7 @@
     "pr44575.c",
     "pr47538.c",
     "pr49644.c",
+    "pr58574.c",
     "pr59643.c",
     "pr66233.c",
     "pr68390.c",
@@ -26614,7 +26493,7 @@
     "va-arg-15.c",
     "va-arg-26.c"
    ],
-   "present": 79,
+   "present": 81,
    "sole": 0,
    "wall": "cast:IntegralToFloating"
   },
@@ -26624,6 +26503,7 @@
     "20000519-1.c",
     "20041113-1.c",
     "20041214-1.c",
+    "20071213-1.c",
     "920501-8.c",
     "920625-1.c",
     "920726-1.c",
@@ -26643,6 +26523,7 @@
     "multi-ix.c",
     "pr117432.c",
     "pr38151.c",
+    "pr44575.c",
     "pr44942.c",
     "pr64979.c",
     "pr92904.c",
@@ -26676,7 +26557,7 @@
     "va-arg-9.c",
     "va-arg-trap-1.c"
    ],
-   "present": 55,
+   "present": 57,
    "sole": 0,
    "wall": "unsupported:VAArgExpr"
   },
@@ -26742,6 +26623,39 @@
   },
   {
    "files": [
+    "00175.c",
+    "20000605-1.c",
+    "20010118-1.c",
+    "20031003-1.c",
+    "20040709-1.c",
+    "20040709-2.c",
+    "20040831-1.c",
+    "20041113-1.c",
+    "20071030-1.c",
+    "930622-2.c",
+    "980605-1.c",
+    "cbrt.c",
+    "cvt-1.c",
+    "float-floor.c",
+    "gofast.c",
+    "ieee/20010226-1.c",
+    "ieee/compare-fp-2.c",
+    "ieee/rbug.c",
+    "ipa-sra-1.c",
+    "pr38048-2.c",
+    "pr58574.c",
+    "pr66233.c",
+    "pr67929_1.c",
+    "stdarg-1.c",
+    "stdarg-3.c",
+    "stdarg-4.c"
+   ],
+   "present": 26,
+   "sole": 0,
+   "wall": "cast:FloatingToIntegral"
+  },
+  {
+   "files": [
     "00210.c",
     "20010518-2.c",
     "20020227-1.c",
@@ -26772,38 +26686,6 @@
    "present": 26,
    "sole": 0,
    "wall": "unsupported:PackedAttr"
-  },
-  {
-   "files": [
-    "00175.c",
-    "20000605-1.c",
-    "20010118-1.c",
-    "20031003-1.c",
-    "20040709-1.c",
-    "20040709-2.c",
-    "20040831-1.c",
-    "20041113-1.c",
-    "20071030-1.c",
-    "930622-2.c",
-    "980605-1.c",
-    "cbrt.c",
-    "cvt-1.c",
-    "float-floor.c",
-    "gofast.c",
-    "ieee/20010226-1.c",
-    "ieee/compare-fp-2.c",
-    "ieee/rbug.c",
-    "ipa-sra-1.c",
-    "pr38048-2.c",
-    "pr66233.c",
-    "pr67929_1.c",
-    "stdarg-1.c",
-    "stdarg-3.c",
-    "stdarg-4.c"
-   ],
-   "present": 25,
-   "sole": 0,
-   "wall": "cast:FloatingToIntegral"
   },
   {
    "files": [

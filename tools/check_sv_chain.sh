@@ -47,6 +47,7 @@
 # USAGE      bash tools/check_sv_chain.sh              build; exit 0 only if both groups build
 #            bash tools/check_sv_chain.sh --list       print the modules, run nothing
 #            bash tools/check_sv_chain.sh --dependents PATH...  print the chain modules importing those files, run nothing
+#            bash tools/check_sv_chain.sh --import-closure  check the E authority closure and E executor ratchet
 #            bash tools/check_sv_chain.sh --self-test  the logic against a stubbed `lake` and slot (NO Lean is run)
 # EXIT       0 built; 1 a group failed to build; 2 usage error, no `lake`, or `--dependents` could not read the tree;
 #            3 the run2 ratchet failed or could not run (nothing was built).
@@ -106,6 +107,104 @@ import_edges() {
 
 union() { printf '%s\n' "$@" | grep . | sort -u; }
 
+# The authority check is deliberately a text-only graph walk.  It does not
+# invoke Lean or inspect oleans: the import lines are the only boundary that
+# matters for this gate.  `edges` has one `importer imported` pair per line.
+forward_closure() {
+  local edges="$1" front="$2" seen="$2" found new
+  while [ -n "$front" ]; do
+    found="$(printf '%s\n' "$edges" | awk -v wanted="$front" '
+      BEGIN { n = split(wanted, a, "\n"); for (i = 1; i <= n; i++) need[a[i]] = 1 }
+      ($1 in need) { print $2 }
+    ' | sort -u)"
+    new="$(printf '%s\n' "$found" | awk -v old="$seen" '
+      BEGIN { n = split(old, a, "\n"); for (i = 1; i <= n; i++) seen[a[i]] = 1 }
+      $0 != "" && !seen[$0] { print $0 }
+    ')"
+    [ -n "$new" ] || break
+    seen="$(union "$seen" "$new")"
+    front="$new"
+  done
+  printf '%s\n' "$seen" | grep . | sort -u
+}
+
+e0_authority_roots() {
+  cat <<'EOF'
+LeanModels.Sv.Kernel.Core0E
+LeanModels.Sv.Kernel.Obs_E0
+EOF
+}
+
+e_executor_roots() {
+  cat <<'EOF'
+LeanModels.Sv.Kernel.Core1Disc
+LeanModels.Sv.Kernel.Core1Edge
+LeanModels.Sv.Kernel.Core1Elab
+LeanModels.Sv.Kernel.Core1Obs
+LeanModels.Sv.Kernel.Core1Resolve
+LeanModels.Sv.Kernel.Core1Targets
+LeanModels.Sv.Kernel.RunE
+LeanModels.Sv.Kernel.RunE1
+LeanModels.Sv.Kernel.RunEArray
+LeanModels.Sv.Kernel.ArrayE
+LeanModels.Sv.Kernel.Core0Comb
+EOF
+}
+
+e0_forbidden() {
+  cat <<'EOF'
+LeanModels.Sv.Param2
+LeanModels.Sv.Sem2
+LeanModels.Sv.Sem2Run
+LeanModels.Sv.Comb2
+LeanModels.Sv.Spec2
+LeanModels.Sv.Mono2
+LeanModels.Sv.MemCycle
+LeanModels.Sv.Kernel.MemE
+EOF
+}
+
+check_e_import_closure() {
+  local edges required missing root closure forbidden hit baseline ratchet extra
+  edges="$(import_edges)"
+  [ -n "$edges" ] || { echo "sv-chain: import-closure read no Lean imports" >&2; return 2; }
+
+  required="$(e0_authority_roots)"
+  for root in $required; do
+    [ -r "${root//./\/}.lean" ] || {
+      echo "sv-chain: import-closure missing E authority root $root" >&2
+      return 2
+    }
+  done
+  closure="$(forward_closure "$edges" "$required")"
+  forbidden="$(e0_forbidden)"
+  hit="$(printf '%s\n' "$closure" | grep -xF -f <(printf '%s\n' "$forbidden") || true)"
+  if [ -n "$hit" ]; then
+    echo "sv-chain: E-core-0 authority reaches forbidden modules:" >&2
+    printf '  %s\n' "$hit" >&2
+    return 1
+  fi
+
+  ratchet="$(e_executor_roots)"
+  for root in $ratchet; do
+    [ -r "${root//./\/}.lean" ] || {
+      echo "sv-chain: import-closure missing E executor root $root" >&2
+      return 2
+    }
+  done
+  baseline="$(dirname "$0")/sv_e_closure_baseline.txt"
+  [ -r "$baseline" ] || { echo "sv-chain: missing $baseline" >&2; return 2; }
+  ratchet="$(forward_closure "$edges" "$ratchet")"
+  extra="$(printf '%s\n' "$ratchet" | grep -v '^#' | grep -vxF -f "$baseline" || true)"
+  if [ -n "$extra" ]; then
+    echo "sv-chain: E executor closure grew beyond tools/sv_e_closure_baseline.txt:" >&2
+    printf '  %s\n' "$extra" >&2
+    return 1
+  fi
+  echo "=== [sv-chain] E import closure: authority clean; executor ratchet $(printf '%s\n' "$ratchet" | grep -c .)/$(grep -v '^#' "$baseline" | grep -c .)"
+  return 0
+}
+
 # `example_files`' fixpoint, run backwards. It reads the tree once, into the table above, and each round greps for the
 # modules the last round found and no others: BSD grep is slow per pattern, and an import chain here is many rounds deep.
 dependents() {
@@ -158,6 +257,11 @@ build_all() {
   collect
   have_chain || return 2
   print_list
+  echo "=== [sv-chain] E import closure (no Lean)"
+  if ! check_e_import_closure; then
+    echo "=== [sv-chain] FAILED: E import closure (nothing was built)" >&2
+    return 3
+  fi
   echo "=== [sv-chain] the run2 ratchet (tools/check_run2_ratchet.sh; no Lean)"
   if ! bash tools/check_run2_ratchet.sh; then
     echo "=== [sv-chain] FAILED: the run2 ratchet (nothing was built)" >&2
@@ -294,6 +398,37 @@ STUB
   check "--dependents on a tree with no imports refuses" "$rc" 2
   out="$(bash "$empty/tools/check_sv_chain.sh" --dependents docs/a.md 2>&1)"; rc=$?
   check "  ...while a non-Sv path never asks the tree" "$rc" 0
+  # The E closure fixture is installed before the ratchet step: a copy of the
+  # chain script runs the copy of both no-Lean gates beside it.
+  mk LeanModels/Sv/Kernel/Core0E.lean 'import LeanModels.Sv.CombEBase'
+  mk LeanModels/Sv/Kernel/Obs_E0.lean 'import LeanModels.Sv.Kernel.Core0E'
+  mk LeanModels/Sv/Kernel/Core1Disc.lean '-- root'
+  mk LeanModels/Sv/Kernel/Core1Edge.lean '-- root'
+  mk LeanModels/Sv/Kernel/Core1Elab.lean '-- root'
+  mk LeanModels/Sv/Kernel/Core1Obs.lean '-- root'
+  mk LeanModels/Sv/Kernel/Core1Resolve.lean '-- root'
+  mk LeanModels/Sv/Kernel/Core1Targets.lean '-- root'
+  mk LeanModels/Sv/Kernel/RunE.lean '-- root'
+  mk LeanModels/Sv/Kernel/RunE1.lean '-- root'
+  mk LeanModels/Sv/Kernel/RunEArray.lean '-- root'
+  mk LeanModels/Sv/Kernel/ArrayE.lean '-- root'
+  mk LeanModels/Sv/Kernel/Core0Comb.lean '-- root'
+  cat > "$tree/tools/sv_e_closure_baseline.txt" <<'EOF'
+LeanModels.Sv.Kernel.ArrayE
+LeanModels.Sv.Kernel.Core0Comb
+LeanModels.Sv.Kernel.Core1Disc
+LeanModels.Sv.Kernel.Core1Edge
+LeanModels.Sv.Kernel.Core1Elab
+LeanModels.Sv.Kernel.Core1Obs
+LeanModels.Sv.Kernel.Core1Resolve
+LeanModels.Sv.Kernel.Core1Targets
+LeanModels.Sv.Kernel.Core0E
+LeanModels.Sv.Kernel.Obs_E0
+LeanModels.Sv.Kernel.RunE
+LeanModels.Sv.Kernel.RunE1
+LeanModels.Sv.Kernel.RunEArray
+EOF
+
   # The ratchet step, over the fixture tree: a copy of the chain script runs the copy of the ratchet beside it.
   chain() { : > "$STUB_LOG"; out="$(cd / && PATH="$tmp:$PATH" env -u LEANSLOT bash "$tree/tools/check_sv_chain.sh" 2>&1)"; rc=$?; }
   chain
@@ -314,6 +449,20 @@ def drift := 1'
   out="$(bash "$self" --dependents LeanModels/Sv/Param.lean)"; rc=$?
   check "the real tree: Param.lean reaches CombProc" "$(printf '%s\n' "$out" | grep -cx 'LeanModels.Sv.CombProc')" 1
   check "  ...and every name it prints is one \`--list\` prints" "$(printf '%s\n' "$out" | grep -vxF -f <(bash "$self" --list | sed 's/^    //') | grep -c .)" 0
+
+  # The E closure gate is text-only and must reject both a forbidden authority
+  # edge and growth outside the committed executor ratchet.
+  out="$(cd / && PATH="$tmp:$PATH" bash "$tree/tools/check_sv_chain.sh" --import-closure 2>&1)"; rc=$?
+  check "the E import closure passes on the clean fixture" "$rc" 0
+  check "  ...reports a clean authority" "$(printf '%s' "$out" | grep -c 'authority clean')" 1
+  mk LeanModels/Sv/Kernel/Core0E.lean 'import LeanModels.Sv.Param2'
+  out="$(cd / && PATH="$tmp:$PATH" bash "$tree/tools/check_sv_chain.sh" --import-closure 2>&1)"; rc=$?
+  check "the E import closure rejects a forbidden authority edge" "$rc" 1
+  mk LeanModels/Sv/Kernel/Core0E.lean 'import LeanModels.Sv.CombEBase'
+  mk LeanModels/Sv/Kernel/Core1Disc.lean 'import LeanModels.Sv.NewExecutor'
+  mk LeanModels/Sv/NewExecutor.lean '-- new'
+  out="$(cd / && PATH="$tmp:$PATH" bash "$tree/tools/check_sv_chain.sh" --import-closure 2>&1)"; rc=$?
+  check "the E import closure ratchet rejects a new executor dependency" "$rc" 1
   rm -rf "$tmp"
   echo "check_sv_chain self-test: $ok ok, $bad failed"
   [ "$bad" = 0 ]
@@ -323,11 +472,13 @@ case "${1:-}" in
   "")          build_all; exit $? ;;
   --list)      [ "$#" = 1 ] || { echo "check_sv_chain: --list takes no further argument" >&2; exit 2; }
                collect; print_list; exit 0 ;;
+  --import-closure) [ "$#" = 1 ] || { echo "check_sv_chain: --import-closure takes no further argument" >&2; exit 2; }
+               check_e_import_closure; exit $? ;;
   --dependents) [ "$#" -gt 1 ] || { echo "check_sv_chain: --dependents takes at least one path" >&2; exit 2; }
                shift; dependents "$@"; exit $? ;;
   --self-test) [ "$#" = 1 ] || { echo "check_sv_chain: --self-test takes no further argument" >&2; exit 2; }
                self_test; exit $? ;;
   *)           echo "check_sv_chain: unknown argument (got: $*)" >&2
-               echo "  Accepted: no argument (build), --list, --dependents PATH..., --self-test." >&2
+               echo "  Accepted: no argument (build), --list, --import-closure, --dependents PATH..., --self-test." >&2
                exit 2 ;;
 esac

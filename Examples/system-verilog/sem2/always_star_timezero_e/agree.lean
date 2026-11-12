@@ -1,5 +1,5 @@
 import LeanModels.Sv.Ingest2
-import LeanModels.Sv.Kernel.Core0E
+import LeanModels.Sv.Kernel.Core0Entry
 
 /-! Clean-room E receipt for a plain `always @*` whose read is fed by a
 continuous driver.  The parser node stays an implicit event; it is not

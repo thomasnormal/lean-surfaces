@@ -6,7 +6,7 @@ loud; these are no execution witnesses.
 -/
 import LeanModels.Sv.Ingest2
 import LeanModels.Sv.MemCycle
-import LeanModels.Sv.Kernel.Core0E
+import LeanModels.Sv.Kernel.Core0Entry
 
 namespace Examples.«system-verilog».sem2.always_star_step11.agree
 

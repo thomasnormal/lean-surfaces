@@ -1051,7 +1051,18 @@ def evalExpr (ctx : Ctx) : Expr → EvalM CVal
       match v.toInt? with
       | some n => pure (.int t (if t == IntTy.int_ then charLiteralValue n else n))
       | none => refuseUnsupported s!"character literal spelling '{v}'"
-  | .strLit .. => refuseUnsupported "string literal (inch 4: it needs a static object)"
+  | .strLit value decoded _ _ => do
+      let bs ← match decoded with
+        | some bytes => pure ((bytes.map (fun b => CByte.conc (UInt8.ofNat b))) ++
+            [CByte.conc 0])
+        | none => match plainStringBytes value with
+          | some bs => pure bs
+          | none => refuseUnsupported "string literal with escape or non-ASCII spelling"
+      let m ← get
+      let (m', o) := m.alloc .static_ bs.length (some "char[]")
+      set m'
+      writeMem (fun m => m.storeBytes (Ptr.toObjectBound o bs.length) bs)
+      pure (.ptr (Ptr.toObjectBound o bs.length))
   | .floatLit .. => refuseUnsupported "floating literal (floats are a named decision)"
 
   -- A bare name in value position is an enumeration constant; every other

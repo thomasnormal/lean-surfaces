@@ -6,10 +6,10 @@ and 12.5 give the process its inferred sensitivity and latch hold when no arm
 matches.  The extractor keeps the `AlwaysEvent` marker and the `Case` node;
 it does not invent a default arm or lower the case into an `if` chain.
 
-`agree.lean` checks that retained envelope shape and the narrow E memory
-execution slice.  Source-shaped case arms containing blocking scalar or cell
-assignments execute in source order; richer arm bodies remain loud, and an
-unmatched selector holds the E x-start value.  `check.py` compares the
+`agree.lean` checks the retained envelope shape and the canonical E-core-0
+execution.  Source-shaped case arms containing blocking assignments execute in
+source order; richer arm bodies remain loud, and an unmatched selector holds
+the E x-start value.  `check.py` compares the
 source rows with Icarus Verilog 13.0 and readiness-gated Xcelium
 24.03-s004 when licensed.  The first sample is recorded separately because
 Icarus leaves the implicit waiter asleep at time zero (`q=xxxx`) while

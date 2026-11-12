@@ -73211,5 +73211,13 @@
     "refusal": "ContinuousAssignSymbol:InvalidExpression",
     "measured": "2026-11-12: Slang rejects the undeclared `missing[i]` source with ContinuousAssignSymbol:InvalidExpression; no simulator oracle is claimed because the approved frontend rejects the design before simulation."
   }
+  ,{
+    "name": "assign_target_e",
+    "example": "sem2/assign_target_e",
+    "top": "assign_target_e",
+    "signals": ["x", "y"],
+    "stimulus": [{"x": "0"}, {"x": "1"}, {"x": "x"}, {"x": "z"}],
+    "measured": "2026-11-12: Slang elaborates the implicit-net assignment target as a declared one-bit net; E and both pinned simulators propagate x to y and preserve the source-shaped target."
+  }
   ]
 }

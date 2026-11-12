@@ -1,0 +1,156 @@
+{
+  "schema_version": "sv-0.2",
+  "language": "systemverilog",
+  "frontend": {
+    "name": "pyslang",
+    "family": "pyslang-11"
+  },
+  "mode": "symbolic",
+  "top": "assign_target_e",
+  "source_files": [
+    {
+      "path": "Examples/system-verilog/sem2/assign_target_e/assign_target_e.sv",
+      "sha256": "08d2f77da3e75df61bfb3479d494ce2f4d98d44f985cd3319cb64cbc1554665a"
+    }
+  ],
+  "packages": [],
+  "design": {
+    "kind": "Design",
+    "modules": [
+      {
+        "kind": "Module",
+        "span": {
+          "line": 1,
+          "col": 1,
+          "end_line": 4,
+          "end_col": 10
+        },
+        "name": "assign_target_e",
+        "imports": [],
+        "params": [],
+        "types": [],
+        "ports": [
+          {
+            "kind": "Port",
+            "span": {
+              "line": 1,
+              "col": 36,
+              "end_line": 1,
+              "end_col": 37
+            },
+            "name": "x",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 1,
+              "col": 52,
+              "end_line": 1,
+              "end_col": 53
+            },
+            "name": "y",
+            "dir": "out",
+            "width": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            }
+          }
+        ],
+        "decls": [
+          {
+            "kind": "Var",
+            "span": {
+              "line": 2,
+              "col": 10,
+              "end_line": 2,
+              "end_col": 17
+            },
+            "name": "missing",
+            "width": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            },
+            "init": null,
+            "net_as_variable": true
+          }
+        ],
+        "processes": [
+          {
+            "kind": "Assign",
+            "span": {
+              "line": 2,
+              "col": 10,
+              "end_line": 2,
+              "end_col": 21
+            },
+            "target": {
+              "kind": "Ident",
+              "span": {
+                "line": 2,
+                "col": 10,
+                "end_line": 2,
+                "end_col": 17
+              },
+              "width": 1,
+              "name": "missing"
+            },
+            "value": {
+              "kind": "Ident",
+              "span": {
+                "line": 2,
+                "col": 20,
+                "end_line": 2,
+                "end_col": 21
+              },
+              "width": 1,
+              "name": "x"
+            }
+          },
+          {
+            "kind": "Assign",
+            "span": {
+              "line": 3,
+              "col": 10,
+              "end_line": 3,
+              "end_col": 15
+            },
+            "target": {
+              "kind": "Ident",
+              "span": {
+                "line": 3,
+                "col": 10,
+                "end_line": 3,
+                "end_col": 11
+              },
+              "width": 1,
+              "name": "y"
+            },
+            "value": {
+              "kind": "Ident",
+              "span": {
+                "line": 3,
+                "col": 14,
+                "end_line": 3,
+                "end_col": 15
+              },
+              "width": 1,
+              "name": "x"
+            }
+          }
+        ],
+        "generates": [],
+        "others": []
+      }
+    ],
+    "others": []
+  },
+  "lean_blocks": []
+}

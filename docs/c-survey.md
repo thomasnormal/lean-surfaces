@@ -2,10 +2,10 @@
 
 Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manifest.
 
-- verdicts: 867/2214 MATCH (passed 867, failed 0, oracle 0)
+- verdicts: 869/2214 MATCH (passed 869, failed 0, oracle 0)
 - manifest SHA-256: `eb2ea162993fd287a86d680d539ca5a9bba4f09b045a6ad663aaf88cdc3f445d`
-- measured commit: `95c478b8f`
-- measured at: `2026-11-12T18:38:08Z`
+- measured commit: `HEAD`
+- measured at: `2026-11-12T18:43:03Z`
 
 ## Verdict counts
 
@@ -13,8 +13,8 @@ Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manife
 | --- | ---: |
 | `not-parsed` | 294 |
 | `oracle-tests-compiler` | 1 |
-| `passed` | 867 |
-| `refused-libc` | 38 |
+| `passed` | 869 |
+| `refused-libc` | 36 |
 | `refused-ub` | 70 |
 | `refused-unsupported` | 891 |
 | `timeout` | 53 |
@@ -30,8 +30,8 @@ Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manife
 | `c-testsuite/single-exec` | `timeout` | 2 |
 | `gcc.c-torture/execute` | `not-parsed` | 267 |
 | `gcc.c-torture/execute` | `oracle-tests-compiler` | 1 |
-| `gcc.c-torture/execute` | `passed` | 708 |
-| `gcc.c-torture/execute` | `refused-libc` | 33 |
+| `gcc.c-torture/execute` | `passed` | 710 |
+| `gcc.c-torture/execute` | `refused-libc` | 31 |
 | `gcc.c-torture/execute` | `refused-ub` | 61 |
 | `gcc.c-torture/execute` | `refused-unsupported` | 797 |
 | `gcc.c-torture/execute` | `timeout` | 51 |
@@ -139,7 +139,6 @@ The run's first refusal, normalized by construct; `sole` counts rows whose first
 | `unsupported:unbound declaration 'id27' (name 'x')` | 3 | 3 | 20030209-1.c, 960405-1.c, 991030-1.c |
 | `libc-call: calloc` | 2 | 2 | 00040.c, ipa-sra-2.c |
 | `libc-call: open` | 2 | 2 | loop-2f.c, loop-2g.c |
-| `libc-call: strchr` | 2 | 2 | 20000112-1.c, 20000910-2.c |
 | `unsupported:extern object 'abs_called' has no definition in the translation unit` | 2 | 2 | builtins/abs-1-lib.c, builtins/uabs-1-lib.c |
 | `unsupported:extern object 'x' has no definition in the translation unit` | 2 | 2 | 00094.c, 00110.c |
 | `unsupported:goto skips a block declaration` | 2 | 2 | 00129.c, gcc/testsuite/gcc.dg/c23-labels-1.c |

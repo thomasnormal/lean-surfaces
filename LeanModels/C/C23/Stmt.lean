@@ -541,16 +541,26 @@ def declare : Nat → Ctx → List Decl → ExecM Ctx
   | fuel + 1, ctx, d :: ds =>
     match d with
     | .var id name ty storage init _recordId _ => do
-        match storage with
-        | some "auto" | some "register" | none => pure ()
-        | some s => refuseUnsupported s!"block-scope storage class '{s}' is outside the tier"
-        match ctx.layout.size ty with
-        | none => refuseUnsupported s!"no layout for declared type '{ty}'"
-        | some sz => do
+        if storage == some "static" then
+          match id with
+          | some declaration =>
+              match ctx.idEnv.lookup? declaration with
+              | some o => declare fuel { ctx with env := (name, o) :: ctx.env } ds
+              | none => refuseUnsupported s!"static object '{name}' has no initialized storage"
+          | none => refuseUnsupported s!"static object '{name}' has no declaration identity"
+        else
+          match storage with
+          | some "auto" | some "register" | some "static" | none => pure ()
+          | some s => refuseUnsupported s!"block-scope storage class '{s}' is outside the tier"
+          match ctx.layout.size ty with
+          | none => refuseUnsupported s!"no layout for declared type '{ty}'"
+          | some sz => do
             -- §6.2.4p6: an automatic object lives from block entry, with
-            -- an INDETERMINATE representation until something writes it.
+            -- an INDETERMINATE representation until something writes it;
+            -- block-scope `static` instead keeps its static lifetime.
             let m ← get
-            let (m', o) := m.alloc .automatic sz (some ty)
+            let dur := if storage == some "static" then Duration.static_ else Duration.automatic
+            let (m', o) := m.alloc dur sz (some ty)
             set m'
             let idEnv' := match id with
               | some declaration => (declaration, o) :: ctx.idEnv

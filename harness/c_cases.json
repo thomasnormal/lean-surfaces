@@ -283,8 +283,8 @@
   {
     "id": "static-local",
     "source": "int f(void) { static int n = 0; return ++n; } int main(void) { return f(); }",
-    "expect": "refuse",
-    "error": "storage class"
+    "expect": "match",
+    "return_value": 1
   },
   {
     "id": "extern-local",

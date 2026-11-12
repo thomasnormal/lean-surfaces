@@ -295,9 +295,14 @@ the store as a tombstone — see `CObj.live`. -/
 def kill (m : Mem) (o : ObjId) : Mem :=
   ⟨m.objs.modify o (fun c => { c with live := false })⟩
 
-/-- End the lifetime of every object allocated at or after `start`. -/
+/-- End the lifetime of automatic objects allocated at or after `start`.
+Static objects remain live for the whole execution (§6.2.4p3). -/
 def killFrom (m : Mem) (start : Nat) : Mem :=
-  (List.range (m.count - start)).foldl (fun acc i => acc.kill (start + i)) m
+  (List.range (m.count - start)).foldl (fun acc i =>
+    let o := start + i
+    match acc.get? o with
+    | some c => if c.dur == .automatic then acc.kill o else acc
+    | none => acc) m
 
 /-! ### The one place the structural refusals are raised -/
 

@@ -12,11 +12,11 @@
   "gcc.c-torture/execute": {
    "not-ingested": 19,
    "not-parsed": 321,
-   "passed": 504,
-   "refused-libc": 122,
-   "refused-ub": 31,
-   "refused-unsupported": 879,
-   "timeout": 42
+   "passed": 513,
+   "refused-libc": 120,
+   "refused-ub": 30,
+   "refused-unsupported": 871,
+   "timeout": 44
   },
   "gcc.c23-run": {
    "not-ingested": 1,
@@ -31,11 +31,11 @@
  "counts": {
   "not-ingested": 25,
   "not-parsed": 350,
-  "passed": 614,
-  "refused-libc": 132,
-  "refused-ub": 34,
-  "refused-unsupported": 1015,
-  "timeout": 44
+  "passed": 623,
+  "refused-libc": 130,
+  "refused-ub": 33,
+  "refused-unsupported": 1007,
+  "timeout": 46
  },
  "dynamic_wall_ranking": [
   {
@@ -437,6 +437,7 @@
     "20030718-1.c",
     "20040823-1.c",
     "20041126-1.c",
+    "20041218-1.c",
     "20050218-1.c",
     "20050826-1.c",
     "20060930-2.c",
@@ -466,7 +467,6 @@
     "builtin-constant.c",
     "builtin-prefetch-1.c",
     "builtin-prefetch-2.c",
-    "builtin-prefetch-3.c",
     "builtin-prefetch-4.c",
     "builtin-prefetch-5.c",
     "builtins/lib/main.c",
@@ -512,8 +512,6 @@
     "pr79327.c",
     "pr84339.c",
     "pr85095.c",
-    "pr86528.c",
-    "pr88693.c",
     "pr89434.c",
     "pr90025.c",
     "pr90311.c",
@@ -530,8 +528,8 @@
     "string-opt-18.c",
     "strlen-5.c"
    ],
-   "present": 132,
-   "sole": 132,
+   "present": 130,
+   "sole": 130,
    "wall": "libc-call"
   },
   {
@@ -721,6 +719,7 @@
     "20030914-1.c",
     "20030914-2.c",
     "20040703-1.c",
+    "20040707-1.c",
     "20050713-1.c",
     "20050826-2.c",
     "931004-1.c",
@@ -758,8 +757,8 @@
     "strct-varg-1.c",
     "va-arg-23.c"
    ],
-   "present": 54,
-   "sole": 54,
+   "present": 55,
+   "sole": 55,
    "wall": "unsupported:not an integer type"
   },
   {
@@ -776,6 +775,8 @@
     "961017-2.c",
     "980602-1.c",
     "991201-1.c",
+    "arith-rand-ll.c",
+    "arith-rand.c",
     "ashldi-1.c",
     "ashrdi-1.c",
     "divcmp-1.c",
@@ -809,8 +810,8 @@
     "ssad-run.c",
     "usad-run.c"
    ],
-   "present": 44,
-   "sole": 44,
+   "present": 46,
+   "sole": 46,
    "wall": "timeout"
   },
   {
@@ -819,7 +820,6 @@
     "20000412-2.c",
     "20000412-4.c",
     "20001124-1.c",
-    "20010915-1.c",
     "20020206-2.c",
     "20020402-2.c",
     "20021204-1.c",
@@ -846,9 +846,7 @@
     "pr23047.c",
     "pr28651.c",
     "pr32500.c",
-    "pr36321.c",
     "pr40493.c",
-    "pr56982.c",
     "pr61375.c",
     "pr68143_1.c",
     "scal-to-vec1.c",
@@ -860,8 +858,8 @@
     "vrp-5.c",
     "vrp-6.c"
    ],
-   "present": 44,
-   "sole": 44,
+   "present": 41,
+   "sole": 41,
    "wall": "unsupported:fewer arguments than parameters"
   },
   {
@@ -908,6 +906,51 @@
    "present": 38,
    "sole": 38,
    "wall": "unsupported:extern object 'inside_main' has no definition in the translation unit"
+  },
+  {
+   "files": [
+    "00115.c",
+    "00204.c",
+    "00208.c",
+    "00217.c",
+    "20000801-4.c",
+    "20001229-1.c",
+    "20010915-1.c",
+    "20011128-1.c",
+    "20021219-1.c",
+    "20030221-1.c",
+    "20031204-1.c",
+    "20041214-1.c",
+    "20050502-2.c",
+    "20070724-1.c",
+    "20121108-1.c",
+    "930123-1.c",
+    "960321-1.c",
+    "960327-1.c",
+    "990524-1.c",
+    "builtins/memmove-2.c",
+    "builtins/memmove.c",
+    "builtins/memops-asm.c",
+    "builtins/strcpy.c",
+    "builtins/strlen-3.c",
+    "memchr-1.c",
+    "p18298.c",
+    "pr65369.c",
+    "pr86528.c",
+    "pr86714.c",
+    "pr88693.c",
+    "strcpy-2.c",
+    "strlen-2.c",
+    "strlen-3.c",
+    "strlen-4.c",
+    "strlen-6.c",
+    "va-arg-10.c",
+    "va-arg-9.c",
+    "wchar_t-1.c"
+   ],
+   "present": 38,
+   "sole": 38,
+   "wall": "unsupported:string literal (inch 4"
   },
   {
    "files": [
@@ -961,7 +1004,6 @@
     "20020508-2.c",
     "20020508-3.c",
     "20030404-1.c",
-    "20030928-1.c",
     "20040409-1w.c",
     "20040409-2w.c",
     "20040409-3w.c",
@@ -989,84 +1031,9 @@
     "pr99079.c",
     "ptr-arith-1.c"
    ],
-   "present": 34,
-   "sole": 34,
+   "present": 33,
+   "sole": 33,
    "wall": "undefined-behavior"
-  },
-  {
-   "files": [
-    "00115.c",
-    "00204.c",
-    "00208.c",
-    "00217.c",
-    "20000801-4.c",
-    "20001229-1.c",
-    "20011128-1.c",
-    "20021219-1.c",
-    "20030221-1.c",
-    "20041214-1.c",
-    "20050502-2.c",
-    "20070724-1.c",
-    "20121108-1.c",
-    "930123-1.c",
-    "960321-1.c",
-    "960327-1.c",
-    "990524-1.c",
-    "builtins/memmove-2.c",
-    "builtins/memmove.c",
-    "builtins/memops-asm.c",
-    "builtins/strcpy.c",
-    "builtins/strlen-3.c",
-    "memchr-1.c",
-    "p18298.c",
-    "pr65369.c",
-    "pr86714.c",
-    "strcpy-2.c",
-    "strlen-2.c",
-    "strlen-3.c",
-    "strlen-4.c",
-    "strlen-6.c",
-    "wchar_t-1.c"
-   ],
-   "present": 32,
-   "sole": 32,
-   "wall": "unsupported:string literal (inch 4"
-  },
-  {
-   "files": [
-    "00182.c",
-    "20000910-1.c",
-    "20010129-1.c",
-    "20020615-1.c",
-    "20021024-1.c",
-    "20021111-1.c",
-    "20031204-1.c",
-    "20040302-1.c",
-    "20040707-1.c",
-    "20041218-1.c",
-    "20071108-1.c",
-    "20071210-1.c",
-    "20080424-1.c",
-    "920501-4.c",
-    "930126-1.c",
-    "931110-2.c",
-    "950809-1.c",
-    "980505-2.c",
-    "990326-1.c",
-    "arith-rand-ll.c",
-    "arith-rand.c",
-    "gcc/testsuite/gcc.dg/c23-empty-init-warn-17.c",
-    "ieee/fp-cmp-5.c",
-    "ieee/fp-cmp-8.c",
-    "pr34176.c",
-    "pr53084.c",
-    "pr70460.c",
-    "pr93908.c",
-    "va-arg-4.c"
-   ],
-   "present": 29,
-   "sole": 29,
-   "wall": "unsupported:block-scope storage class 'static' is outside the tier"
   },
   {
    "files": [
@@ -1084,10 +1051,10 @@
     "ieee/20001122-1.c",
     "ieee/20011123-1.c",
     "ieee/inf-4.c",
+    "ieee/mzero2.c",
     "ieee/mzero5.c",
     "ieee/pr84235.c",
     "ieee/rbug.c",
-    "ieee/unsafe-fp-assoc.c",
     "loop-8.c",
     "pr107879.c",
     "pr23941.c",
@@ -1095,10 +1062,11 @@
     "pr35456.c",
     "pr44683.c",
     "pr58574.c",
-    "pr68390.c"
+    "pr68390.c",
+    "pr92618.c"
    ],
-   "present": 26,
-   "sole": 26,
+   "present": 27,
+   "sole": 27,
    "wall": "unsupported:no layout for declared type 'double'"
   },
   {
@@ -1198,6 +1166,63 @@
   },
   {
    "files": [
+    "00032.c",
+    "00182.c",
+    "20000801-1.c",
+    "20000910-1.c",
+    "20011126-2.c",
+    "20020503-1.c",
+    "20050502-1.c",
+    "20060910-1.c",
+    "20070201-1.c",
+    "20100827-1.c",
+    "20120808-1.c",
+    "20140828-1.c",
+    "930429-1.c",
+    "931110-2.c",
+    "950714-1.c",
+    "961125-1.c",
+    "990222-1.c",
+    "pr20601-1.c",
+    "pr27073.c",
+    "pr34176.c",
+    "pr34415.c",
+    "pr54985.c",
+    "pr71631.c"
+   ],
+   "present": 23,
+   "sole": 23,
+   "wall": "unsupported:pointer used as an integer (no ptr\u2194int cast in tier)"
+  },
+  {
+   "files": [
+    "00087.c",
+    "20081103-1.c",
+    "20100708-1.c",
+    "20171008-1.c",
+    "20230630-1.c",
+    "20230630-2.c",
+    "20230630-3.c",
+    "20230630-4.c",
+    "pr101188.c",
+    "pr108498-2.c",
+    "pr47538.c",
+    "pr49123.c",
+    "pr52979-1.c",
+    "pr52979-2.c",
+    "pr65215-3.c",
+    "pr65215-4.c",
+    "pr70127.c",
+    "pr79737-1.c",
+    "pr89195.c",
+    "pr97764.c"
+   ],
+   "present": 20,
+   "sole": 20,
+   "wall": "unsupported:no layout for declared type 'struct S'"
+  },
+  {
+   "files": [
     "00103.c",
     "20001017-2.c",
     "20050316-1.c",
@@ -1225,32 +1250,6 @@
   },
   {
    "files": [
-    "00032.c",
-    "20000801-1.c",
-    "20011126-2.c",
-    "20020503-1.c",
-    "20050502-1.c",
-    "20060910-1.c",
-    "20070201-1.c",
-    "20100827-1.c",
-    "20120808-1.c",
-    "20140828-1.c",
-    "930429-1.c",
-    "950714-1.c",
-    "961125-1.c",
-    "990222-1.c",
-    "pr20601-1.c",
-    "pr27073.c",
-    "pr34415.c",
-    "pr54985.c",
-    "pr71631.c"
-   ],
-   "present": 19,
-   "sole": 19,
-   "wall": "unsupported:pointer used as an integer (no ptr\u2194int cast in tier)"
-  },
-  {
-   "files": [
     "20000519-1.c",
     "20071213-1.c",
     "920726-1.c",
@@ -1260,44 +1259,17 @@
     "pr117432.c",
     "stdarg-2.c",
     "va-arg-1.c",
-    "va-arg-10.c",
     "va-arg-11.c",
     "va-arg-13.c",
     "va-arg-19.c",
     "va-arg-20.c",
     "va-arg-24.c",
     "va-arg-8.c",
-    "va-arg-9.c",
     "va-arg-trap-1.c"
    ],
-   "present": 18,
-   "sole": 18,
+   "present": 16,
+   "sole": 16,
    "wall": "unsupported:more arguments than parameters"
-  },
-  {
-   "files": [
-    "00087.c",
-    "20081103-1.c",
-    "20100708-1.c",
-    "20171008-1.c",
-    "20230630-1.c",
-    "20230630-2.c",
-    "20230630-3.c",
-    "20230630-4.c",
-    "pr101188.c",
-    "pr108498-2.c",
-    "pr47538.c",
-    "pr65215-3.c",
-    "pr65215-4.c",
-    "pr70127.c",
-    "pr71700.c",
-    "pr79737-1.c",
-    "pr89195.c",
-    "pr97764.c"
-   ],
-   "present": 18,
-   "sole": 18,
-   "wall": "unsupported:no layout for declared type 'struct S'"
   },
   {
    "files": [
@@ -1403,6 +1375,20 @@
   },
   {
    "files": [
+    "00043.c",
+    "20040625-1.c",
+    "930126-1.c",
+    "961223-1.c",
+    "pr110165-1.c",
+    "pr110166-1.c",
+    "pr29006.c"
+   ],
+   "present": 7,
+   "sole": 7,
+   "wall": "unsupported:no layout for declared type 'struct s'"
+  },
+  {
+   "files": [
     "printf-chk-1.c",
     "stdarg-1.c",
     "va-arg-14.c",
@@ -1414,19 +1400,6 @@
    "present": 7,
    "sole": 7,
    "wall": "unsupported:no layout for declared type 'va_list'"
-  },
-  {
-   "files": [
-    "20020413-1.c",
-    "920618-1.c",
-    "ieee/20010114-2.c",
-    "ieee/20030331-1.c",
-    "ieee/pr67218.c",
-    "pr36343.c"
-   ],
-   "present": 6,
-   "sole": 6,
-   "wall": "cast:FloatingCast"
   },
   {
    "files": [
@@ -1443,6 +1416,19 @@
   },
   {
    "files": [
+    "20040302-1.c",
+    "20071210-1.c",
+    "920501-4.c",
+    "920501-5.c",
+    "990208-1.c",
+    "pr70460.c"
+   ],
+   "present": 6,
+   "sole": 6,
+   "wall": "unsupported:AddrLabelExpr"
+  },
+  {
+   "files": [
     "20020321-1.c",
     "920710-1.c",
     "930622-2.c",
@@ -1453,19 +1439,6 @@
    "present": 6,
    "sole": 6,
    "wall": "unsupported:integer-to-floating conversion (floats"
-  },
-  {
-   "files": [
-    "00043.c",
-    "20040625-1.c",
-    "961223-1.c",
-    "pr110165-1.c",
-    "pr110166-1.c",
-    "pr29006.c"
-   ],
-   "present": 6,
-   "sole": 6,
-   "wall": "unsupported:no layout for declared type 'struct s'"
   },
   {
    "files": [
@@ -1505,14 +1478,14 @@
   },
   {
    "files": [
-    "20031003-1.c",
-    "cbrt.c",
-    "pr38048-2.c",
-    "pr66233.c"
+    "20020413-1.c",
+    "920618-1.c",
+    "ieee/pr67218.c",
+    "pr36343.c"
    ],
    "present": 4,
    "sole": 4,
-   "wall": "cast:FloatingToIntegral"
+   "wall": "cast:FloatingCast"
   },
   {
    "files": [
@@ -1549,14 +1522,35 @@
   },
   {
    "files": [
-    "pr40404.c",
-    "pr48973-1.c",
-    "pr48973-2.c",
-    "pr49123.c"
+    "cbrt.c",
+    "ieee/hugeval.c",
+    "ieee/unsafe-fp-assoc-1.c",
+    "ieee/unsafe-fp-assoc.c"
    ],
    "present": 4,
    "sole": 4,
-   "wall": "unsupported:unbound declaration 'id25' (name 's')"
+   "wall": "unsupported:no layout for declared type 'const double'"
+  },
+  {
+   "files": [
+    "bitfld-6.c",
+    "bitfld-7.c",
+    "pr86492.c",
+    "pr88739.c"
+   ],
+   "present": 4,
+   "sole": 4,
+   "wall": "unsupported:no layout for declared type 'union U'"
+  },
+  {
+   "files": [
+    "20031003-1.c",
+    "pr38048-2.c",
+    "pr66233.c"
+   ],
+   "present": 3,
+   "sole": 3,
+   "wall": "cast:FloatingToIntegral"
   },
   {
    "files": [
@@ -1630,16 +1624,6 @@
   },
   {
    "files": [
-    "strcmp-1.c",
-    "strlen-1.c",
-    "strncmp-1.c"
-   ],
-   "present": 3,
-   "sole": 3,
-   "wall": "unsupported:no layout for declared type 'size_t'"
-  },
-  {
-   "files": [
     "00140.c",
     "bf-pack-1.c",
     "gcc/testsuite/gcc.dg/c23-tag-alias-7.c"
@@ -1680,6 +1664,16 @@
   },
   {
    "files": [
+    "pr40404.c",
+    "pr48973-1.c",
+    "pr48973-2.c"
+   ],
+   "present": 3,
+   "sole": 3,
+   "wall": "unsupported:unbound declaration 'id25' (name 's')"
+  },
+  {
+   "files": [
     "20030209-1.c",
     "960405-1.c",
     "991030-1.c"
@@ -1687,25 +1681,6 @@
    "present": 3,
    "sole": 3,
    "wall": "unsupported:unbound declaration 'id27' (name 'x')"
-  },
-  {
-   "files": [
-    "memset-1.c",
-    "memset-2.c",
-    "memset-3.c"
-   ],
-   "present": 3,
-   "sole": 3,
-   "wall": "unsupported:unbound declaration 'id320' (name 'u')"
-  },
-  {
-   "files": [
-    "920501-5.c",
-    "990208-1.c"
-   ],
-   "present": 2,
-   "sole": 2,
-   "wall": "unsupported:AddrLabelExpr"
   },
   {
    "files": [
@@ -1754,6 +1729,15 @@
   },
   {
    "files": [
+    "ieee/20010114-2.c",
+    "ieee/20030331-1.c"
+   ],
+   "present": 2,
+   "sole": 2,
+   "wall": "unsupported:no layout for declared type 'const float'"
+  },
+  {
+   "files": [
     "ieee/acc1.c",
     "ieee/acc2.c"
    ],
@@ -1769,6 +1753,24 @@
    "present": 2,
    "sole": 2,
    "wall": "unsupported:no layout for declared type 'enum E'"
+  },
+  {
+   "files": [
+    "20101025-1.c",
+    "builtin-prefetch-3.c"
+   ],
+   "present": 2,
+   "sole": 2,
+   "wall": "unsupported:no layout for declared type 'int *volatile'"
+  },
+  {
+   "files": [
+    "20210505-1.c",
+    "pr56982.c"
+   ],
+   "present": 2,
+   "sole": 2,
+   "wall": "unsupported:no layout for declared type 'jmp_buf'"
   },
   {
    "files": [
@@ -1817,6 +1819,15 @@
   },
   {
    "files": [
+    "990326-1.c",
+    "packed-aligned.c"
+   ],
+   "present": 2,
+   "sole": 2,
+   "wall": "unsupported:no layout for declared type 'struct c'"
+  },
+  {
+   "files": [
     "bitfld-8.c",
     "bitfld-9.c"
    ],
@@ -1844,30 +1855,12 @@
   },
   {
    "files": [
-    "pr86492.c",
-    "pr88739.c"
-   ],
-   "present": 2,
-   "sole": 2,
-   "wall": "unsupported:no layout for declared type 'union U'"
-  },
-  {
-   "files": [
     "pr123625-2.c",
     "pr126405-3.c"
    ],
    "present": 2,
    "sole": 2,
    "wall": "unsupported:no layout for declared type 'v16di'"
-  },
-  {
-   "files": [
-    "991228-1.c",
-    "ieee/unsafe-fp-assoc-1.c"
-   ],
-   "present": 2,
-   "sole": 2,
-   "wall": "unsupported:sizeof: no layout for operand type 'double'"
   },
   {
    "files": [
@@ -1934,15 +1927,6 @@
   },
   {
    "files": [
-    "bitfld-6.c",
-    "bitfld-7.c"
-   ],
-   "present": 2,
-   "sole": 2,
-   "wall": "unsupported:unbound declaration 'id20' (name 'u')"
-  },
-  {
-   "files": [
     "00091.c",
     "pr56837.c"
    ],
@@ -1967,15 +1951,6 @@
    "present": 2,
    "sole": 2,
    "wall": "unsupported:unbound declaration 'id22' (name 's')"
-  },
-  {
-   "files": [
-    "memcpy-2.c",
-    "strcpy-1.c"
-   ],
-   "present": 2,
-   "sole": 2,
-   "wall": "unsupported:unbound declaration 'id320' (name 'u1')"
   },
   {
    "files": [
@@ -2044,6 +2019,14 @@
    "present": 1,
    "sole": 1,
    "wall": "unsupported:AlignedAttr"
+  },
+  {
+   "files": [
+    "gcc/testsuite/gcc.dg/c23-empty-init-warn-17.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "unsupported:DesignatedInitUpdateExpr"
   },
   {
    "files": [
@@ -2247,19 +2230,19 @@
   },
   {
    "files": [
-    "pr92618.c"
-   ],
-   "present": 1,
-   "sole": 1,
-   "wall": "unsupported:no layout for declared type '__m128i'"
-  },
-  {
-   "files": [
     "pr19515.c"
    ],
    "present": 1,
    "sole": 1,
    "wall": "unsupported:no layout for declared type 'aun'"
+  },
+  {
+   "files": [
+    "va-arg-4.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "unsupported:no layout for declared type 'big'"
   },
   {
    "files": [
@@ -2279,6 +2262,14 @@
   },
   {
    "files": [
+    "pr36321.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "unsupported:no layout for declared type 'char *volatile'"
+  },
+  {
+   "files": [
     "00207.c"
    ],
    "present": 1,
@@ -2295,11 +2286,43 @@
   },
   {
    "files": [
+    "pr53084.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "unsupported:no layout for declared type 'const char *const[1]'"
+  },
+  {
+   "files": [
+    "20080117-1.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "unsupported:no layout for declared type 'const gs_imager_state'"
+  },
+  {
+   "files": [
     "00219.c"
    ],
    "present": 1,
    "sole": 1,
    "wall": "unsupported:no layout for declared type 'const int *const'"
+  },
+  {
+   "files": [
+    "ieee/copysign1.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "unsupported:no layout for declared type 'const struct Df[8]'"
+  },
+  {
+   "files": [
+    "pr100453.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "unsupported:no layout for declared type 'const struct a'"
   },
   {
    "files": [
@@ -2311,11 +2334,35 @@
   },
   {
    "files": [
+    "ieee/fp-cmp-8.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "unsupported:no layout for declared type 'const struct try[14]'"
+  },
+  {
+   "files": [
+    "ieee/fp-cmp-5.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "unsupported:no layout for declared type 'const struct try[6]'"
+  },
+  {
+   "files": [
     "pr93434.c"
    ],
    "present": 1,
    "sole": 1,
    "wall": "unsupported:no layout for declared type 'creal_T[16]'"
+  },
+  {
+   "files": [
+    "func-ptr-1.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "unsupported:no layout for declared type 'double (*)(float)'"
   },
   {
    "files": [
@@ -2367,6 +2414,14 @@
   },
   {
    "files": [
+    "loop-ivopts-1.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "unsupported:no layout for declared type 'float[16]'"
+  },
+  {
+   "files": [
     "ieee/pr72824.c"
    ],
    "present": 1,
@@ -2380,14 +2435,6 @@
    "present": 1,
    "sole": 1,
    "wall": "unsupported:no layout for declared type 'float[3]'"
-  },
-  {
-   "files": [
-    "loop-ivopts-1.c"
-   ],
-   "present": 1,
-   "sole": 1,
-   "wall": "unsupported:no layout for declared type 'float[4]'"
   },
   {
    "files": [
@@ -2452,6 +2499,14 @@
    "present": 1,
    "sole": 1,
    "wall": "unsupported:no layout for declared type 'int (*)[++i]'"
+  },
+  {
+   "files": [
+    "pr58277-2.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "unsupported:no layout for declared type 'int ***volatile'"
   },
   {
    "files": [
@@ -2551,6 +2606,22 @@
   },
   {
    "files": [
+    "pr71700.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "unsupported:no layout for declared type 'struct S[2]'"
+  },
+  {
+   "files": [
+    "pr58570.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "unsupported:no layout for declared type 'struct S[6]'"
+  },
+  {
+   "files": [
     "20031211-1.c"
    ],
    "present": 1,
@@ -2564,14 +2635,6 @@
    "present": 1,
    "sole": 1,
    "wall": "unsupported:no layout for declared type 'struct bar'"
-  },
-  {
-   "files": [
-    "packed-aligned.c"
-   ],
-   "present": 1,
-   "sole": 1,
-   "wall": "unsupported:no layout for declared type 'struct c'"
   },
   {
    "files": [
@@ -2799,6 +2862,14 @@
   },
   {
    "files": [
+    "20030903-1.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "unsupported:no layout for declared type 'volatile enum X'"
+  },
+  {
+   "files": [
     "gcc/testsuite/gcc.dg/c23-float-12.c"
    ],
    "present": 1,
@@ -2903,11 +2974,11 @@
   },
   {
    "files": [
-    "ieee/copysign1.c"
+    "991228-1.c"
    ],
    "present": 1,
    "sole": 1,
-   "wall": "unsupported:sizeof: no layout for operand type 'const struct Df[8]'"
+   "wall": "unsupported:sizeof: no layout for operand type 'double'"
   },
   {
    "files": [
@@ -3103,6 +3174,38 @@
   },
   {
    "files": [
+    "memcpy-2.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "unsupported:src/memcpy-2.c"
+  },
+  {
+   "files": [
+    "memset-1.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "unsupported:src/memset-1.c"
+  },
+  {
+   "files": [
+    "memset-2.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "unsupported:src/memset-2.c"
+  },
+  {
+   "files": [
+    "memset-3.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "unsupported:src/memset-3.c"
+  },
+  {
+   "files": [
     "pr33631.c"
    ],
    "present": 1,
@@ -3124,6 +3227,38 @@
    "present": 1,
    "sole": 1,
    "wall": "unsupported:src/simd-4.c"
+  },
+  {
+   "files": [
+    "strcmp-1.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "unsupported:src/strcmp-1.c"
+  },
+  {
+   "files": [
+    "strcpy-1.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "unsupported:src/strcpy-1.c"
+  },
+  {
+   "files": [
+    "strlen-1.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "unsupported:src/strlen-1.c"
+  },
+  {
+   "files": [
+    "strncmp-1.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "unsupported:src/strncmp-1.c"
   },
   {
    "files": [
@@ -3311,14 +3446,6 @@
   },
   {
    "files": [
-    "pr100453.c"
-   ],
-   "present": 1,
-   "sole": 1,
-   "wall": "unsupported:unbound declaration 'id22' (name 'f')"
-  },
-  {
-   "files": [
     "packed-2.c"
    ],
    "present": 1,
@@ -3356,14 +3483,6 @@
    "present": 1,
    "sole": 1,
    "wall": "unsupported:unbound declaration 'id24' (name 'a1')"
-  },
-  {
-   "files": [
-    "20080117-1.c"
-   ],
-   "present": 1,
-   "sole": 1,
-   "wall": "unsupported:unbound declaration 'id24' (name 'gstate_initial')"
   },
   {
    "files": [
@@ -3415,14 +3534,6 @@
   },
   {
    "files": [
-    "pr58570.c"
-   ],
-   "present": 1,
-   "sole": 1,
-   "wall": "unsupported:unbound declaration 'id26' (name 'd')"
-  },
-  {
-   "files": [
     "pr117095.c"
    ],
    "present": 1,
@@ -3471,14 +3582,6 @@
   },
   {
    "files": [
-    "ieee/mzero2.c"
-   ],
-   "present": 1,
-   "sole": 1,
-   "wall": "unsupported:unbound declaration 'id27' (name 'pzero')"
-  },
-  {
-   "files": [
     "pr38151.c"
    ],
    "present": 1,
@@ -3487,27 +3590,11 @@
   },
   {
    "files": [
-    "ieee/hugeval.c"
-   ],
-   "present": 1,
-   "sole": 1,
-   "wall": "unsupported:unbound declaration 'id2748' (name 'pinf')"
-  },
-  {
-   "files": [
     "pr55750.c"
    ],
    "present": 1,
    "sole": 1,
    "wall": "unsupported:unbound declaration 'id28' (name 'arr')"
-  },
-  {
-   "files": [
-    "20101025-1.c"
-   ],
-   "present": 1,
-   "sole": 1,
-   "wall": "unsupported:unbound declaration 'id28' (name 'g_6')"
   },
   {
    "files": [
@@ -3535,14 +3622,6 @@
   },
   {
    "files": [
-    "20030903-1.c"
-   ],
-   "present": 1,
-   "sole": 1,
-   "wall": "unsupported:unbound declaration 'id28' (name 'test')"
-  },
-  {
-   "files": [
     "bitfld-4.c"
    ],
    "present": 1,
@@ -3564,14 +3643,6 @@
    "present": 1,
    "sole": 1,
    "wall": "unsupported:unbound declaration 'id29' (name 'f1')"
-  },
-  {
-   "files": [
-    "func-ptr-1.c"
-   ],
-   "present": 1,
-   "sole": 1,
-   "wall": "unsupported:unbound declaration 'id29' (name 'fp')"
   },
   {
    "files": [
@@ -3671,14 +3742,6 @@
   },
   {
    "files": [
-    "pr52979-1.c"
-   ],
-   "present": 1,
-   "sole": 1,
-   "wall": "unsupported:unbound declaration 'id34' (name 'a')"
-  },
-  {
-   "files": [
     "ieee/mzero3.c"
    ],
    "present": 1,
@@ -3716,14 +3779,6 @@
    "present": 1,
    "sole": 1,
    "wall": "unsupported:unbound declaration 'id37' (name 'pts')"
-  },
-  {
-   "files": [
-    "pr52979-2.c"
-   ],
-   "present": 1,
-   "sole": 1,
-   "wall": "unsupported:unbound declaration 'id38' (name 'a')"
   },
   {
    "files": [
@@ -3775,11 +3830,11 @@
   },
   {
    "files": [
-    "pr58277-2.c"
+    "pr93908.c"
    ],
    "present": 1,
    "sole": 1,
-   "wall": "unsupported:unbound declaration 'id43' (name 'h')"
+   "wall": "unsupported:unbound declaration 'id43' (name 'buf')"
   },
   {
    "files": [
@@ -3852,14 +3907,6 @@
    "present": 1,
    "sole": 1,
    "wall": "unsupported:unbound declaration 'id52' (name 'x')"
-  },
-  {
-   "files": [
-    "20210505-1.c"
-   ],
-   "present": 1,
-   "sole": 1,
-   "wall": "unsupported:unbound declaration 'id64' (name 'buf')"
   },
   {
    "files": [
@@ -3943,8 +3990,8 @@
   }
  ],
  "manifest_hash": "1de1a60c299d5bb51dae7ca001b0a008010cad0b25670cde2090c08bfc1a84ce",
- "measured_at_utc": "2026-11-12T06:05:00Z",
- "measured_commit": "b8c99d844",
+ "measured_at_utc": "2026-11-12T06:30:00Z",
+ "measured_commit": "7e2319546",
  "pin": null,
  "rows": [
   {
@@ -6017,8 +6064,8 @@
   },
   {
    "corpus": "c-testsuite/single-exec",
-   "detail": "block-scope storage class 'static' is outside the tier",
-   "dynamic_wall": "unsupported:block-scope storage class 'static' is outside the tier",
+   "detail": "pointer used as an integer (no ptr\u2194int cast in tier)",
+   "dynamic_wall": "unsupported:pointer used as an integer (no ptr\u2194int cast in tier)",
    "manifest_status": "parsed",
    "name": "00182.c",
    "sha256": "978fb36c70bcd39965a2f0a7be31495847662a496fc945024825d9e3b3c9f0de",
@@ -7252,8 +7299,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "block-scope storage class 'static' is outside the tier",
-   "dynamic_wall": "unsupported:block-scope storage class 'static' is outside the tier",
+   "detail": "pointer used as an integer (no ptr\u2194int cast in tier)",
+   "dynamic_wall": "unsupported:pointer used as an integer (no ptr\u2194int cast in tier)",
    "manifest_status": "parsed",
    "name": "20000910-1.c",
    "sha256": "f65453c1b825db283b34bde7d68f829e1e403b573e4f09931596171da3b35c48",
@@ -7647,15 +7694,15 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "block-scope storage class 'static' is outside the tier",
-   "dynamic_wall": "unsupported:block-scope storage class 'static' is outside the tier",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "20010129-1.c",
    "sha256": "52073831916d7e42214422b7f3ec122c3c99672405efb246c0ac19e3bed5bc76",
    "static_walls": [
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -7903,8 +7950,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "fewer arguments than parameters",
-   "dynamic_wall": "unsupported:fewer arguments than parameters",
+   "detail": "string literal (inch 4: it needs a static object)",
+   "dynamic_wall": "unsupported:string literal (inch 4",
    "manifest_status": "parsed",
    "name": "20010915-1.c",
    "sha256": "079287a9978b9ab65d73a966feb4a5b2962386f23619512e92c469b094e380bc",
@@ -8585,15 +8632,15 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "block-scope storage class 'static' is outside the tier",
-   "dynamic_wall": "unsupported:block-scope storage class 'static' is outside the tier",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "20020615-1.c",
    "sha256": "c50a9a8eee03ddf68f438fb28aa411f7263f7144cb6b9c02b3ced1403ea04df3",
    "static_walls": [
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -8756,25 +8803,25 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "block-scope storage class 'static' is outside the tier",
-   "dynamic_wall": "unsupported:block-scope storage class 'static' is outside the tier",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "20021024-1.c",
    "sha256": "dc8e03bd342409ae021669441e46dfca89652f628828e6edc26cb6b94ece8bdb",
    "static_walls": [
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "block-scope storage class 'static' is outside the tier",
-   "dynamic_wall": "unsupported:block-scope storage class 'static' is outside the tier",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "20021111-1.c",
    "sha256": "4c59ef5d9e8719866937bece164dcc883a643c14835cd67dd186e33d0bb881b9",
    "static_walls": [],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -9321,8 +9368,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "unbound declaration 'id28' (name 'test')",
-   "dynamic_wall": "unsupported:unbound declaration 'id28' (name 'test')",
+   "detail": "no layout for declared type 'volatile enum X'",
+   "dynamic_wall": "unsupported:no layout for declared type 'volatile enum X'",
    "manifest_status": "parsed",
    "name": "20030903-1.c",
    "sha256": "267cd90d53d2fa73fb1b36252b20ebb0d5f6953920465682cbfc41632a59d725",
@@ -9413,8 +9460,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "LeanModels.C.C23.MemFault.deadObject 5 (LeanModels.C.C23.Duration.static_)",
-   "dynamic_wall": "undefined-behavior",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "20030928-1.c",
    "sha256": "4ced138b6a79c6da681fcac01cc1c46b96233522a01c3fa5710744cff28b0bf6",
@@ -9422,7 +9469,7 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-ub"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -9495,8 +9542,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "block-scope storage class 'static' is outside the tier",
-   "dynamic_wall": "unsupported:block-scope storage class 'static' is outside the tier",
+   "detail": "string literal (inch 4: it needs a static object)",
+   "dynamic_wall": "unsupported:string literal (inch 4",
    "manifest_status": "parsed",
    "name": "20031204-1.c",
    "sha256": "f312b548f8ad48c4650e1c9598de8c702c605cb349fb7a0e7a50e1a993bf2431",
@@ -9600,8 +9647,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "block-scope storage class 'static' is outside the tier",
-   "dynamic_wall": "unsupported:block-scope storage class 'static' is outside the tier",
+   "detail": "out of tier: AddrLabelExpr",
+   "dynamic_wall": "unsupported:AddrLabelExpr",
    "manifest_status": "parsed",
    "name": "20040302-1.c",
    "sha256": "7c160745cda07c5f1640a6bfbb2ed29dd5be9c3264e4fa1fbc562257f77e2578",
@@ -9860,8 +9907,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "block-scope storage class 'static' is outside the tier",
-   "dynamic_wall": "unsupported:block-scope storage class 'static' is outside the tier",
+   "detail": "not an integer type: 'struct s'",
+   "dynamic_wall": "unsupported:not an integer type",
    "manifest_status": "parsed",
    "name": "20040707-1.c",
    "sha256": "c7ac6a83a406bf58c441f503f96f29ed3a3c1585e01b4688d8726cf655d6410c",
@@ -10131,8 +10178,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "block-scope storage class 'static' is outside the tier",
-   "dynamic_wall": "unsupported:block-scope storage class 'static' is outside the tier",
+   "detail": "id64",
+   "dynamic_wall": "libc-call",
    "manifest_status": "parsed",
    "name": "20041218-1.c",
    "sha256": "b5d1601f6799841f2bae31fac4e6e3f754cae2c1d23a4342665fd42f6668ffee",
@@ -10141,7 +10188,7 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "refused-libc"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -10903,8 +10950,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "block-scope storage class 'static' is outside the tier",
-   "dynamic_wall": "unsupported:block-scope storage class 'static' is outside the tier",
+   "detail": "",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "20071108-1.c",
    "sha256": "82eccbd5c130ddf9a7b881b9c621ab7206010f03e7eeba5a0514711b6e3a687f",
@@ -10912,7 +10959,7 @@
     "libc-call",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -10951,8 +10998,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "block-scope storage class 'static' is outside the tier",
-   "dynamic_wall": "unsupported:block-scope storage class 'static' is outside the tier",
+   "detail": "out of tier: AddrLabelExpr",
+   "dynamic_wall": "unsupported:AddrLabelExpr",
    "manifest_status": "parsed",
    "name": "20071210-1.c",
    "sha256": "3bfd321c9aa91a510a5ed273f556bfc753fa8937af22484ffb139f93dc16da70",
@@ -11035,8 +11082,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "unbound declaration 'id24' (name 'gstate_initial')",
-   "dynamic_wall": "unsupported:unbound declaration 'id24' (name 'gstate_initial')",
+   "detail": "no layout for declared type 'const gs_imager_state'",
+   "dynamic_wall": "unsupported:no layout for declared type 'const gs_imager_state'",
    "manifest_status": "parsed",
    "name": "20080117-1.c",
    "sha256": "3ae8df6d96430073e71d1091a6589b916cb18130adcbcb411cbf0379ae81b11c",
@@ -11079,15 +11126,15 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "block-scope storage class 'static' is outside the tier",
-   "dynamic_wall": "unsupported:block-scope storage class 'static' is outside the tier",
+   "detail": "",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "20080424-1.c",
    "sha256": "4820e74c049e399d53fdf2a107335f78f6fd2df1bda0f25b11e2e25148c216e7",
    "static_walls": [
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -11459,8 +11506,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "unbound declaration 'id28' (name 'g_6')",
-   "dynamic_wall": "unsupported:unbound declaration 'id28' (name 'g_6')",
+   "detail": "no layout for declared type 'int *volatile'",
+   "dynamic_wall": "unsupported:no layout for declared type 'int *volatile'",
    "manifest_status": "parsed",
    "name": "20101025-1.c",
    "sha256": "076cae97c6192e807020fb8f7e70f981c07fdd6271059481b048f0775617429d",
@@ -11933,8 +11980,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "unbound declaration 'id64' (name 'buf')",
-   "dynamic_wall": "unsupported:unbound declaration 'id64' (name 'buf')",
+   "detail": "no layout for declared type 'jmp_buf'",
+   "dynamic_wall": "unsupported:no layout for declared type 'jmp_buf'",
    "manifest_status": "parsed",
    "name": "20210505-1.c",
    "sha256": "f89abf070a7dae85ad9026f5113b7fa91e4f6f3c9eb2f03a9514de8910222d57",
@@ -12190,8 +12237,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "block-scope storage class 'static' is outside the tier",
-   "dynamic_wall": "unsupported:block-scope storage class 'static' is outside the tier",
+   "detail": "out of tier: AddrLabelExpr",
+   "dynamic_wall": "unsupported:AddrLabelExpr",
    "manifest_status": "parsed",
    "name": "920501-4.c",
    "sha256": "7d11f5a759ada1bf033915b8d05f41adbff74692647d00679e079c576236efe7",
@@ -12864,8 +12911,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "block-scope storage class 'static' is outside the tier",
-   "dynamic_wall": "unsupported:block-scope storage class 'static' is outside the tier",
+   "detail": "no layout for declared type 'struct s'",
+   "dynamic_wall": "unsupported:no layout for declared type 'struct s'",
    "manifest_status": "parsed",
    "name": "930126-1.c",
    "sha256": "d8975e0960e19c2273a8a5239f1ce73e76842711a1e6d2113da9f8c13fc786fc",
@@ -13524,8 +13571,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "block-scope storage class 'static' is outside the tier",
-   "dynamic_wall": "unsupported:block-scope storage class 'static' is outside the tier",
+   "detail": "pointer used as an integer (no ptr\u2194int cast in tier)",
+   "dynamic_wall": "unsupported:pointer used as an integer (no ptr\u2194int cast in tier)",
    "manifest_status": "parsed",
    "name": "931110-2.c",
    "sha256": "fa1f986466711b6953473cd495a051e3a0d582c9fe3e90a700b679844ae441fd",
@@ -13854,15 +13901,15 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "block-scope storage class 'static' is outside the tier",
-   "dynamic_wall": "unsupported:block-scope storage class 'static' is outside the tier",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "950809-1.c",
    "sha256": "4a29d36a54d900f2068b560ddb7883af2e7cd37bf2420cd59f63a25397046b28",
    "static_walls": [
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -14457,15 +14504,15 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "block-scope storage class 'static' is outside the tier",
-   "dynamic_wall": "unsupported:block-scope storage class 'static' is outside the tier",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "980505-2.c",
    "sha256": "c49936dca4b83b15b1ab4f90aa43b3f326a63b4158e60d3b14e41b4a26847294",
    "static_walls": [
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -14864,8 +14911,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "block-scope storage class 'static' is outside the tier",
-   "dynamic_wall": "unsupported:block-scope storage class 'static' is outside the tier",
+   "detail": "no layout for declared type 'struct c'",
+   "dynamic_wall": "unsupported:no layout for declared type 'struct c'",
    "manifest_status": "parsed",
    "name": "990326-1.c",
    "sha256": "2f7244e7ade4cda9b5db57f8a07d3ccd9669f647062c96ee954df30d3780c7a4",
@@ -15413,23 +15460,23 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "block-scope storage class 'static' is outside the tier",
-   "dynamic_wall": "unsupported:block-scope storage class 'static' is outside the tier",
+   "detail": "",
+   "dynamic_wall": "timeout",
    "manifest_status": "parsed",
    "name": "arith-rand-ll.c",
    "sha256": "8e4da7b080eee46dd5d37a9b588ee64a439ef009a8fa3458573475278bbd9cf0",
    "static_walls": [],
-   "verdict": "refused-unsupported"
+   "verdict": "timeout"
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "block-scope storage class 'static' is outside the tier",
-   "dynamic_wall": "unsupported:block-scope storage class 'static' is outside the tier",
+   "detail": "",
+   "dynamic_wall": "timeout",
    "manifest_status": "parsed",
    "name": "arith-rand.c",
    "sha256": "2a7bade42fd22c970f880cb2fe78665cb71755c8557d224dd1fa97f176bc6764",
    "static_walls": [],
-   "verdict": "refused-unsupported"
+   "verdict": "timeout"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -15601,8 +15648,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "unbound declaration 'id20' (name 'u')",
-   "dynamic_wall": "unsupported:unbound declaration 'id20' (name 'u')",
+   "detail": "no layout for declared type 'union U'",
+   "dynamic_wall": "unsupported:no layout for declared type 'union U'",
    "manifest_status": "parsed",
    "name": "bitfld-6.c",
    "sha256": "d1c4ca0495c4d0e1c4d3dd487c401324185e08a399d3ae1c7d221efe61a8d105",
@@ -15613,8 +15660,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "unbound declaration 'id20' (name 'u')",
-   "dynamic_wall": "unsupported:unbound declaration 'id20' (name 'u')",
+   "detail": "no layout for declared type 'union U'",
+   "dynamic_wall": "unsupported:no layout for declared type 'union U'",
    "manifest_status": "parsed",
    "name": "bitfld-7.c",
    "sha256": "2a6020e8ec4854739e0811ea590d417db741c9c7877e829ce9726f6b6830343a",
@@ -15786,8 +15833,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id69",
-   "dynamic_wall": "libc-call",
+   "detail": "no layout for declared type 'int *volatile'",
+   "dynamic_wall": "unsupported:no layout for declared type 'int *volatile'",
    "manifest_status": "parsed",
    "name": "builtin-prefetch-3.c",
    "sha256": "8697eb4614fac2f01ef1bd600c7898eaa47a1e44748f36b3aac6c59b20239f40",
@@ -15795,7 +15842,7 @@
     "libc-call",
     "type-layout"
    ],
-   "verdict": "refused-libc"
+   "verdict": "refused-unsupported"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -17486,8 +17533,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "castKind 'FloatingToIntegral'",
-   "dynamic_wall": "cast:FloatingToIntegral",
+   "detail": "no layout for declared type 'const double'",
+   "dynamic_wall": "unsupported:no layout for declared type 'const double'",
    "manifest_status": "parsed",
    "name": "cbrt.c",
    "sha256": "5af344d4e08d8326268b026f474dbc63d51f5528aa5fa97b5e0fa7ebaa982b14",
@@ -18011,8 +18058,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "unbound declaration 'id29' (name 'fp')",
-   "dynamic_wall": "unsupported:unbound declaration 'id29' (name 'fp')",
+   "detail": "no layout for declared type 'double (*)(float)'",
+   "dynamic_wall": "unsupported:no layout for declared type 'double (*)(float)'",
    "manifest_status": "parsed",
    "name": "func-ptr-1.c",
    "sha256": "bf4686c7a8a6064e3eafd06739569113786ae5b26324d3d4853c3169aca0dd5e",
@@ -18277,8 +18324,8 @@
   },
   {
    "corpus": "gcc.c23-run",
-   "detail": "block-scope storage class 'static' is outside the tier",
-   "dynamic_wall": "unsupported:block-scope storage class 'static' is outside the tier",
+   "detail": "out of tier: DesignatedInitUpdateExpr",
+   "dynamic_wall": "unsupported:DesignatedInitUpdateExpr",
    "manifest_status": "parsed",
    "name": "gcc/testsuite/gcc.dg/c23-empty-init-warn-17.c",
    "sha256": "9b048bb51d4d9787ffff2aef43b97a6e9b23e9b84fd2bae7cebe2d9c3baa4fbe",
@@ -18943,8 +18990,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "castKind 'FloatingCast'",
-   "dynamic_wall": "cast:FloatingCast",
+   "detail": "no layout for declared type 'const float'",
+   "dynamic_wall": "unsupported:no layout for declared type 'const float'",
    "manifest_status": "parsed",
    "name": "ieee/20010114-2.c",
    "sha256": "fa1cc9944dd41cf27dd9406f6e27621bf4d45a15abaadb2850c700713cfba192",
@@ -18983,8 +19030,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "castKind 'FloatingCast'",
-   "dynamic_wall": "cast:FloatingCast",
+   "detail": "no layout for declared type 'const float'",
+   "dynamic_wall": "unsupported:no layout for declared type 'const float'",
    "manifest_status": "parsed",
    "name": "ieee/20030331-1.c",
    "sha256": "d52fa029a9083725230aecafc1227829a9465ba0a4da49b254ece90eb85c5d79",
@@ -19219,8 +19266,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "sizeof: no layout for operand type 'const struct Df[8]'",
-   "dynamic_wall": "unsupported:sizeof: no layout for operand type 'const struct Df[8]'",
+   "detail": "no layout for declared type 'const struct Df[8]'",
+   "dynamic_wall": "unsupported:no layout for declared type 'const struct Df[8]'",
    "manifest_status": "parsed",
    "name": "ieee/copysign1.c",
    "sha256": "eaa559171205738e58dbe5e0bb0c390594e9193c8845b1b3d2d479d7746acae6",
@@ -19389,8 +19436,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "block-scope storage class 'static' is outside the tier",
-   "dynamic_wall": "unsupported:block-scope storage class 'static' is outside the tier",
+   "detail": "no layout for declared type 'const struct try[6]'",
+   "dynamic_wall": "unsupported:no layout for declared type 'const struct try[6]'",
    "manifest_status": "parsed",
    "name": "ieee/fp-cmp-5.c",
    "sha256": "3287dadc1c6a407b00841baa398829495ee9863d5890a5ab25ea234e70752920",
@@ -19427,8 +19474,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "block-scope storage class 'static' is outside the tier",
-   "dynamic_wall": "unsupported:block-scope storage class 'static' is outside the tier",
+   "detail": "no layout for declared type 'const struct try[14]'",
+   "dynamic_wall": "unsupported:no layout for declared type 'const struct try[14]'",
    "manifest_status": "parsed",
    "name": "ieee/fp-cmp-8.c",
    "sha256": "ff577c6ffef173008f543040c4da071a51d9002644d38a080d05c1ea126c4e87",
@@ -19498,8 +19545,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "unbound declaration 'id2748' (name 'pinf')",
-   "dynamic_wall": "unsupported:unbound declaration 'id2748' (name 'pinf')",
+   "detail": "no layout for declared type 'const double'",
+   "dynamic_wall": "unsupported:no layout for declared type 'const double'",
    "manifest_status": "parsed",
    "name": "ieee/hugeval.c",
    "sha256": "cc39c196f7ed4ba25775b5de74fd939d082402f82b20d3136cfb3c70cbe31677",
@@ -19590,8 +19637,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "unbound declaration 'id27' (name 'pzero')",
-   "dynamic_wall": "unsupported:unbound declaration 'id27' (name 'pzero')",
+   "detail": "no layout for declared type 'double'",
+   "dynamic_wall": "unsupported:no layout for declared type 'double'",
    "manifest_status": "parsed",
    "name": "ieee/mzero2.c",
    "sha256": "b1bacef006256f3ef92cf8c10b2e8aa55376c81ac399c1b06fcc6ca3034ca8d9",
@@ -19869,8 +19916,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "sizeof: no layout for operand type 'double'",
-   "dynamic_wall": "unsupported:sizeof: no layout for operand type 'double'",
+   "detail": "no layout for declared type 'const double'",
+   "dynamic_wall": "unsupported:no layout for declared type 'const double'",
    "manifest_status": "parsed",
    "name": "ieee/unsafe-fp-assoc-1.c",
    "sha256": "34e1637d933dfffa381a748d759c1ed4851cc108711507dbb79dcc68232ef4e3",
@@ -19882,8 +19929,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "no layout for declared type 'double'",
-   "dynamic_wall": "unsupported:no layout for declared type 'double'",
+   "detail": "no layout for declared type 'const double'",
+   "dynamic_wall": "unsupported:no layout for declared type 'const double'",
    "manifest_status": "parsed",
    "name": "ieee/unsafe-fp-assoc.c",
    "sha256": "cf44021837b1fb2c4a13cfa6728192ae185a6004a732aacb1c70dead7b3db0d6",
@@ -20249,8 +20296,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "no layout for declared type 'float[4]'",
-   "dynamic_wall": "unsupported:no layout for declared type 'float[4]'",
+   "detail": "no layout for declared type 'float[16]'",
+   "dynamic_wall": "unsupported:no layout for declared type 'float[16]'",
    "manifest_status": "parsed",
    "name": "loop-ivopts-1.c",
    "sha256": "af3d6814164cd9af9c07374db2af3fb3daccad3ef974ed2c51225916c279717b",
@@ -20386,8 +20433,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "unbound declaration 'id320' (name 'u1')",
-   "dynamic_wall": "unsupported:unbound declaration 'id320' (name 'u1')",
+   "detail": "src/memcpy-2.c:32:8)'",
+   "dynamic_wall": "unsupported:src/memcpy-2.c",
    "manifest_status": "parsed",
    "name": "memcpy-2.c",
    "sha256": "4b70077da1952fa302f5e5ba44b62625955714c8005995c76d3213c3552655db",
@@ -20452,8 +20499,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "unbound declaration 'id320' (name 'u')",
-   "dynamic_wall": "unsupported:unbound declaration 'id320' (name 'u')",
+   "detail": "src/memset-1.c:27:8)'",
+   "dynamic_wall": "unsupported:src/memset-1.c",
    "manifest_status": "parsed",
    "name": "memset-1.c",
    "sha256": "ec4a2649b0a16fd7ae77591c0b3f37b0e6a24a90e7464ab6f2c14b2f2fd6061e",
@@ -20465,8 +20512,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "unbound declaration 'id320' (name 'u')",
-   "dynamic_wall": "unsupported:unbound declaration 'id320' (name 'u')",
+   "detail": "src/memset-2.c:27:8)'",
+   "dynamic_wall": "unsupported:src/memset-2.c",
    "manifest_status": "parsed",
    "name": "memset-2.c",
    "sha256": "9c05b5acd9d8b42857bccb176537bd9c315cb4cc314098c25fa4b688975ca767",
@@ -20478,8 +20525,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "unbound declaration 'id320' (name 'u')",
-   "dynamic_wall": "unsupported:unbound declaration 'id320' (name 'u')",
+   "detail": "src/memset-3.c:27:8)'",
+   "dynamic_wall": "unsupported:src/memset-3.c",
    "manifest_status": "parsed",
    "name": "memset-3.c",
    "sha256": "1e9c569754b474e3f86f4ad5037c08f370f5cf6f469e407bd636f0cb9fc1efd0",
@@ -20751,8 +20798,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "unbound declaration 'id22' (name 'f')",
-   "dynamic_wall": "unsupported:unbound declaration 'id22' (name 'f')",
+   "detail": "no layout for declared type 'const struct a'",
+   "dynamic_wall": "unsupported:no layout for declared type 'const struct a'",
    "manifest_status": "parsed",
    "name": "pr100453.c",
    "sha256": "d9ac87fdece674b8aac434e98bbf094363a4e53409452562f64b32647091f294",
@@ -22961,8 +23008,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "block-scope storage class 'static' is outside the tier",
-   "dynamic_wall": "unsupported:block-scope storage class 'static' is outside the tier",
+   "detail": "pointer used as an integer (no ptr\u2194int cast in tier)",
+   "dynamic_wall": "unsupported:pointer used as an integer (no ptr\u2194int cast in tier)",
    "manifest_status": "parsed",
    "name": "pr34176.c",
    "sha256": "9acd2bb99915c1e65a65c9feb9316947049a1e56d8a1fdd18f6e81de0bd904a0",
@@ -23163,8 +23210,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "fewer arguments than parameters",
-   "dynamic_wall": "unsupported:fewer arguments than parameters",
+   "detail": "no layout for declared type 'char *volatile'",
+   "dynamic_wall": "unsupported:no layout for declared type 'char *volatile'",
    "manifest_status": "parsed",
    "name": "pr36321.c",
    "sha256": "78612d5c3cdb0a935d80cca0c89c39a74043854d4d9b677fda00e7db2a01c1fa",
@@ -24396,8 +24443,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "unbound declaration 'id25' (name 's')",
-   "dynamic_wall": "unsupported:unbound declaration 'id25' (name 's')",
+   "detail": "no layout for declared type 'struct S'",
+   "dynamic_wall": "unsupported:no layout for declared type 'struct S'",
    "manifest_status": "parsed",
    "name": "pr49123.c",
    "sha256": "61d760f108b2bfa9d65354ec4ad80f11b92e66943a1186ded3bbb6a90073fb78",
@@ -24673,8 +24720,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "unbound declaration 'id34' (name 'a')",
-   "dynamic_wall": "unsupported:unbound declaration 'id34' (name 'a')",
+   "detail": "no layout for declared type 'struct S'",
+   "dynamic_wall": "unsupported:no layout for declared type 'struct S'",
    "manifest_status": "parsed",
    "name": "pr52979-1.c",
    "sha256": "1dadc165373ec8fe6f3ef9be1784dc6c9dca2139dd61e55d8662ab8940b06365",
@@ -24686,8 +24733,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "unbound declaration 'id38' (name 'a')",
-   "dynamic_wall": "unsupported:unbound declaration 'id38' (name 'a')",
+   "detail": "no layout for declared type 'struct S'",
+   "dynamic_wall": "unsupported:no layout for declared type 'struct S'",
    "manifest_status": "parsed",
    "name": "pr52979-2.c",
    "sha256": "aee0f1b8756e7cb3e67d75b17bf910cebe45632685535e06169176be03895bb1",
@@ -24699,8 +24746,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "block-scope storage class 'static' is outside the tier",
-   "dynamic_wall": "unsupported:block-scope storage class 'static' is outside the tier",
+   "detail": "no layout for declared type 'const char *const[1]'",
+   "dynamic_wall": "unsupported:no layout for declared type 'const char *const[1]'",
    "manifest_status": "parsed",
    "name": "pr53084.c",
    "sha256": "4859f7937a03ccc0ef5d43c3229458ef7ec1b3c2f219e8a52a7dd000d0490779",
@@ -24925,8 +24972,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "fewer arguments than parameters",
-   "dynamic_wall": "unsupported:fewer arguments than parameters",
+   "detail": "no layout for declared type 'jmp_buf'",
+   "dynamic_wall": "unsupported:no layout for declared type 'jmp_buf'",
    "manifest_status": "parsed",
    "name": "pr56982.c",
    "sha256": "fc4d0e1d5628334268e1ad3d64cdfdda29a47b8cd4d130ae1a4f2bbd26eadca3",
@@ -25146,8 +25193,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "unbound declaration 'id43' (name 'h')",
-   "dynamic_wall": "unsupported:unbound declaration 'id43' (name 'h')",
+   "detail": "no layout for declared type 'int ***volatile'",
+   "dynamic_wall": "unsupported:no layout for declared type 'int ***volatile'",
    "manifest_status": "parsed",
    "name": "pr58277-2.c",
    "sha256": "9b44920c4243e0403e54662a6360be2bdb554b5584c17c42005c9981df47c3b0",
@@ -25234,8 +25281,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "unbound declaration 'id26' (name 'd')",
-   "dynamic_wall": "unsupported:unbound declaration 'id26' (name 'd')",
+   "detail": "no layout for declared type 'struct S[6]'",
+   "dynamic_wall": "unsupported:no layout for declared type 'struct S[6]'",
    "manifest_status": "parsed",
    "name": "pr58570.c",
    "sha256": "8977d3d9cbbb7d40a055648e256eeae11819545f4a918fafdd366aebc281fc5d",
@@ -26517,8 +26564,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "block-scope storage class 'static' is outside the tier",
-   "dynamic_wall": "unsupported:block-scope storage class 'static' is outside the tier",
+   "detail": "out of tier: AddrLabelExpr",
+   "dynamic_wall": "unsupported:AddrLabelExpr",
    "manifest_status": "parsed",
    "name": "pr70460.c",
    "sha256": "8b9fea7f9750e533b9ed63f775c9c02d4b748963e80383cbfd8dfce65a911300",
@@ -26676,8 +26723,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "no layout for declared type 'struct S'",
-   "dynamic_wall": "unsupported:no layout for declared type 'struct S'",
+   "detail": "no layout for declared type 'struct S[2]'",
+   "dynamic_wall": "unsupported:no layout for declared type 'struct S[2]'",
    "manifest_status": "parsed",
    "name": "pr71700.c",
    "sha256": "2c73560c6890d92f8b2e0715c7d0951859d1861c8d38660870fc163c635204cc",
@@ -27487,8 +27534,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id119",
-   "dynamic_wall": "libc-call",
+   "detail": "string literal (inch 4: it needs a static object)",
+   "dynamic_wall": "unsupported:string literal (inch 4",
    "manifest_status": "parsed",
    "name": "pr86528.c",
    "sha256": "af206bddf203102d7dacd2a1eb95adfc187aa8b0ce304b607bd42686d68d2f4f",
@@ -27497,7 +27544,7 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-libc"
+   "verdict": "refused-unsupported"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -27594,8 +27641,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id73",
-   "dynamic_wall": "libc-call",
+   "detail": "string literal (inch 4: it needs a static object)",
+   "dynamic_wall": "unsupported:string literal (inch 4",
    "manifest_status": "parsed",
    "name": "pr88693.c",
    "sha256": "ad4fd22a0cacfb3851fce1aa1d6356071daba3f42b95a81668bc4b6045d8bf46",
@@ -27604,7 +27651,7 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-libc"
+   "verdict": "refused-unsupported"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -27847,8 +27894,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "no layout for declared type '__m128i'",
-   "dynamic_wall": "unsupported:no layout for declared type '__m128i'",
+   "detail": "no layout for declared type 'double'",
+   "dynamic_wall": "unsupported:no layout for declared type 'double'",
    "manifest_status": "parsed",
    "name": "pr92618.c",
    "sha256": "b14f56ce7c1d8f56996de35257f0d3e8f1948e64d030ad74a41fe89ceb3ac8d1",
@@ -27989,8 +28036,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "block-scope storage class 'static' is outside the tier",
-   "dynamic_wall": "unsupported:block-scope storage class 'static' is outside the tier",
+   "detail": "unbound declaration 'id43' (name 'buf')",
+   "dynamic_wall": "unsupported:unbound declaration 'id43' (name 'buf')",
    "manifest_status": "parsed",
    "name": "pr93908.c",
    "sha256": "f5695316d24f7cba2ad9d28ef1693525012eb3236807b3bd88daa303fc12b5db",
@@ -28820,8 +28867,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "no layout for declared type 'size_t'",
-   "dynamic_wall": "unsupported:no layout for declared type 'size_t'",
+   "detail": "src/strcmp-1.c:28:8)'",
+   "dynamic_wall": "unsupported:src/strcmp-1.c",
    "manifest_status": "parsed",
    "name": "strcmp-1.c",
    "sha256": "5ee8f8099598bc6ad7e34428623c2520642bcd93a3f7b275ffb6f0bf33470159",
@@ -28833,8 +28880,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "unbound declaration 'id320' (name 'u1')",
-   "dynamic_wall": "unsupported:unbound declaration 'id320' (name 'u1')",
+   "detail": "src/strcpy-1.c:29:8)'",
+   "dynamic_wall": "unsupported:src/strcpy-1.c",
    "manifest_status": "parsed",
    "name": "strcpy-1.c",
    "sha256": "1b3e448671092bdc6c1b79b6455e8a197c58280bf6bb82e3b2676fb4d470add3",
@@ -28980,8 +29027,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "no layout for declared type 'size_t'",
-   "dynamic_wall": "unsupported:no layout for declared type 'size_t'",
+   "detail": "src/strlen-1.c:28:8)'",
+   "dynamic_wall": "unsupported:src/strlen-1.c",
    "manifest_status": "parsed",
    "name": "strlen-1.c",
    "sha256": "93b80cc7255924aa74cfc03632dde0db9f7f4fe90c54aa3d4004100496ad19d3",
@@ -29077,8 +29124,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "no layout for declared type 'size_t'",
-   "dynamic_wall": "unsupported:no layout for declared type 'size_t'",
+   "detail": "src/strncmp-1.c:29:8)'",
+   "dynamic_wall": "unsupported:src/strncmp-1.c",
    "manifest_status": "parsed",
    "name": "strncmp-1.c",
    "sha256": "5144ae0223f0612c42ae17107f5caaed4b7bc90a4101eec4240fda8e8a18bfe3",
@@ -29279,8 +29326,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "more arguments than parameters",
-   "dynamic_wall": "unsupported:more arguments than parameters",
+   "detail": "string literal (inch 4: it needs a static object)",
+   "dynamic_wall": "unsupported:string literal (inch 4",
    "manifest_status": "parsed",
    "name": "va-arg-10.c",
    "sha256": "5cb2d6ed423c050aaa81f9a50ce99c3dd43e88f2757c460a46a8b5836b09c4df",
@@ -29520,8 +29567,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "block-scope storage class 'static' is outside the tier",
-   "dynamic_wall": "unsupported:block-scope storage class 'static' is outside the tier",
+   "detail": "no layout for declared type 'big'",
+   "dynamic_wall": "unsupported:no layout for declared type 'big'",
    "manifest_status": "parsed",
    "name": "va-arg-4.c",
    "sha256": "35e96b3784d0410911414106b592d48cb8188f8ab18fcb503c43fe25a596a966",
@@ -29591,8 +29638,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "more arguments than parameters",
-   "dynamic_wall": "unsupported:more arguments than parameters",
+   "detail": "string literal (inch 4: it needs a static object)",
+   "dynamic_wall": "unsupported:string literal (inch 4",
    "manifest_status": "parsed",
    "name": "va-arg-9.c",
    "sha256": "d81cf4ba2a988b659534a2037ecff6039bac090a41e316dad99cfd094c743cba",

@@ -11,8 +11,8 @@
   "gcc.c-torture/execute": {
    "not-parsed": 321,
    "oracle-tests-compiler": 1,
-   "passed": 653,
-   "refused-libc": 38,
+   "passed": 654,
+   "refused-libc": 37,
    "refused-ub": 36,
    "refused-unsupported": 821,
    "timeout": 48
@@ -29,8 +29,8 @@
  "counts": {
   "not-parsed": 350,
   "oracle-tests-compiler": 1,
-  "passed": 806,
-  "refused-libc": 44,
+  "passed": 807,
+  "refused-libc": 43,
   "refused-ub": 40,
   "refused-unsupported": 923,
   "timeout": 50
@@ -1866,14 +1866,6 @@
    "present": 1,
    "sole": 1,
    "wall": "libc-call: __builtin_strncpy"
-  },
-  {
-   "files": [
-    "pr122000.c"
-   ],
-   "present": 1,
-   "sole": 1,
-   "wall": "libc-call: __sync_add_and_fetch_8"
   },
   {
    "files": [
@@ -4133,8 +4125,8 @@
   }
  ],
  "manifest_hash": "3250f77d0b3c9cbacd18a3a2bf49763fb98a2d1b8c29552a642ed84d2ef943b4",
- "measured_at_utc": "2026-11-12T15:12:56Z",
- "measured_commit": "8e98fe7e54ac8b52db4db31d62cebfe92eac8048",
+ "measured_at_utc": "2026-11-12T15:24:43Z",
+ "measured_commit": "de4c5e09ea08f48dd86d1dba9fb21f2d7350dc4f",
  "pin": {
   "corpora": [
    "C1",
@@ -21910,15 +21902,15 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "__sync_add_and_fetch_8",
-   "dynamic_wall": "libc-call: __sync_add_and_fetch_8",
+   "detail": "",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "pr122000.c",
    "sha256": "7b2d3a0ae25c0e225dca35b2f36029752db2541460ec59c7be568c1cab070372",
    "static_walls": [
     "libc-call"
    ],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",

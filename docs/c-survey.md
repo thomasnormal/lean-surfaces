@@ -2,10 +2,10 @@
 
 Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manifest.
 
-- verdicts: 806/2214 MATCH (passed 806, failed 0, oracle 0)
+- verdicts: 807/2214 MATCH (passed 807, failed 0, oracle 0)
 - manifest SHA-256: `3250f77d0b3c9cbacd18a3a2bf49763fb98a2d1b8c29552a642ed84d2ef943b4`
-- measured commit: `8e98fe7e54ac8b52db4db31d62cebfe92eac8048`
-- measured at: `2026-11-12T15:12:56Z`
+- measured commit: `de4c5e09ea08f48dd86d1dba9fb21f2d7350dc4f`
+- measured at: `2026-11-12T15:24:43Z`
 
 ## Verdict counts
 
@@ -13,8 +13,8 @@ Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manife
 | --- | ---: |
 | `not-parsed` | 350 |
 | `oracle-tests-compiler` | 1 |
-| `passed` | 806 |
-| `refused-libc` | 44 |
+| `passed` | 807 |
+| `refused-libc` | 43 |
 | `refused-ub` | 40 |
 | `refused-unsupported` | 923 |
 | `timeout` | 50 |
@@ -31,8 +31,8 @@ Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manife
 | `c-testsuite/single-exec` | `timeout` | 2 |
 | `gcc.c-torture/execute` | `not-parsed` | 321 |
 | `gcc.c-torture/execute` | `oracle-tests-compiler` | 1 |
-| `gcc.c-torture/execute` | `passed` | 653 |
-| `gcc.c-torture/execute` | `refused-libc` | 38 |
+| `gcc.c-torture/execute` | `passed` | 654 |
+| `gcc.c-torture/execute` | `refused-libc` | 37 |
 | `gcc.c-torture/execute` | `refused-ub` | 36 |
 | `gcc.c-torture/execute` | `refused-unsupported` | 821 |
 | `gcc.c-torture/execute` | `timeout` | 48 |
@@ -187,7 +187,6 @@ The run's first refusal, normalized by construct; `sole` counts rows whose first
 | `libc-call: __builtin_frame_address` | 1 | 1 | frame-address.c |
 | `libc-call: __builtin_snprintf` | 1 | 1 | pr78622.c |
 | `libc-call: __builtin_strncpy` | 1 | 1 | pr93249.c |
-| `libc-call: __sync_add_and_fetch_8` | 1 | 1 | pr122000.c |
 | `libc-call: exit (an argument is not a literal 0 — which exit was reached is unknown)` | 1 | 1 | 970217-1.c |
 | `libc-call: fopen` | 1 | 1 | 00187.c |
 | `libc-call: main_test` | 1 | 1 | builtins/lib/main.c |

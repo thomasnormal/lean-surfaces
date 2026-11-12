@@ -3,7 +3,7 @@ import LeanModels.Sv.HierarchyNode2
 
 /-! Source-shaped hierarchy is a general SV E fixture, independent of any
 RISC-V core.  The instance remains a node, with child design and source port
-connections retained; `runHier2` names the still-open composition executor. -/
+connections retained; `runHierE0` composes the direct child without flattening. -/
 
 namespace Examples.«system-verilog».sem2.hierarchy_instance
 
@@ -27,9 +27,9 @@ load_design_sv2 hierarchyInstance
 #guard match hierarchyInstance.pdesign.instantiateNode2
     hierarchyInstance.plib [] with
   | .ok node =>
-      match runHier2 node σ_src 32
+      match runHierE0 node σ_src 32
           [[("a", LVec.lit "1")]] with
-      | .unsupported "Instance:hierarchy: source-shaped instance nodes require the E composition route; no flattening rewrite is applied" => true
+      | .ok [st] => SvState.showSignal st "y" == "1"
       | _ => false
   | _ => false
 

@@ -9,6 +9,7 @@ other processes remain loud through the source-shaped `Unsupported` node.
 import Lean
 import LeanModels.Sv.Ingest2
 import LeanModels.Sv.Kernel.RunEArray
+import LeanModels.Sv.HierarchyNode2
 
 open Lean (Json)
 open LeanModels.Sv
@@ -107,7 +108,7 @@ def main (argv : List String) : IO UInt32 := do
   | [envPath, casesPath, caseName, sigmaName] => do
     let envText ← IO.FS.readFile ⟨envPath⟩
     let casesText ← IO.FS.readFile ⟨casesPath⟩
-    let r : Except String (Design2 × List SvState × List String × Nat) := do
+    let r : Except String (Design2 × Option HierNode2 × List SvState × List String × Nat) := do
       let (pd, lib) ← loadHierString envText
       match pd.crossCheck with
       | [] => pure ()
@@ -122,13 +123,24 @@ def main (argv : List String) : IO UInt32 := do
       let (pd, args) ← resolvePoint pd (getFOpt case "params")
       unless (if lib.isEmpty then pd.int32Agrees args else pd.int32AgreesH lib args) do
         .error "int32: an INT-class constant expression leaves the 32-bit range at these parameters"
-      let flatTop := lib.isEmpty || GenItem.listInstFree pd.generates
-      let inst := if flatTop then pd.instantiateG2 args (PDesign.surfaceFuel args)
-        else pd.instantiateH lib args (PDesign.surfaceFuel args)
-      let d ← match inst with
-        | .ok d => pure d
-        | .timeout => .error "instantiate2: generate fuel exhausted"
-        | .unsupported m => .error s!"instantiate2: {m}"
+      let sourceHier := match pd.generates with
+        | [.inst _] => !lib.isEmpty
+        | _ => false
+      let (d, node?) ← if sourceHier then
+        let node ← match pd.instantiateNode2 lib args with
+          | .ok n => pure n
+          | .timeout => .error "instantiateNode2: generate fuel exhausted"
+          | .unsupported m => .error s!"instantiateNode2: {m}"
+        pure (node.core, some node)
+      else
+        let flatTop := lib.isEmpty || GenItem.listInstFree pd.generates
+        let inst := if flatTop then pd.instantiateG2 args (PDesign.surfaceFuel args)
+          else pd.instantiateH lib args (PDesign.surfaceFuel args)
+        let d ← match inst with
+          | .ok d => pure d
+          | .timeout => .error "instantiate2: generate fuel exhausted"
+          | .unsupported m => .error s!"instantiate2: {m}"
+        pure (d, none)
       unless d.namesNodup do .error "instantiateH: two declarations of one name after flattening"
       -- Keep the source-shaped alias admission boundary in E-core-0 aligned
       -- with the ordinary loader: IEEE 1800-2023 §§4.7–4.8 leave the update
@@ -143,10 +155,10 @@ def main (argv : List String) : IO UInt32 := do
         | _ => pure ()
       let entries ← (← stimulusArray case).toList.mapM (parseEntry d)
       let signals ← (← getArrF case "signals").toList.mapM (fun s => s.getStr?)
-      pure (d, entries, signals, fuel)
+      pure (d, node?, entries, signals, fuel)
     match r with
     | .error e => err e
-    | .ok (d, entries, signals, fuel) =>
+    | .ok (d, node?, entries, signals, fuel) =>
       let σ ← match sigmaOf sigmaName with
         | .ok σ => pure σ
         | .error e => return (← err e)
@@ -156,13 +168,19 @@ def main (argv : List String) : IO UInt32 := do
         let sign := if dc.isSigned then "signed" else "unsigned"
         if dc.isInput then out.putStrLn s!"PORT {dc.name} in {dc.width} {sign}"
         else if dc.isOutput then out.putStrLn s!"PORT {dc.name} out {dc.width} {sign}"
-      match LeanModels.Sv.Kernel.runE0Array E σ fuel entries with
+      let result := match node? with
+        | some node => runHierE0 node σ fuel entries
+        | none =>
+            match LeanModels.Sv.Kernel.runE0Array E σ fuel entries with
+            | .ok rows => .ok (rows.map fun row : LeanModels.Sv.Kernel.E0Row => E.view row.2.store)
+            | .timeout => .timeout
+            | .unsupported m => .unsupported m
+      match result with
       | .timeout => err "E-core-0: timeout (executor fuel exhausted)"
       | .unsupported m => err s!"E-core-0: unsupported: {m}"
       | .ok rows =>
           let mut k := 0
-          for row in rows do
-            let st := E.view row.2.store
+          for st in rows do
             let cells := signals.map fun s => s!"{s}={SvState.showSignal st s}"
             out.putStrLn (s!"CYCLE {k} " ++ " ".intercalate cells)
             k := k + 1

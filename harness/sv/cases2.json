@@ -783,6 +783,27 @@
       "measured": "A parameterized generate loop drives every bit of an output wire exactly once; the source-shaped AssignL windows are admitted as a net-as-variable and the trace matches Icarus."
     },
     {
+      "name": "hierarchy_instance_e",
+      "example": "sem2/hierarchy_instance",
+      "top": "hierarchy_instance",
+      "signals": [
+        "a",
+        "y"
+      ],
+      "stimulus": [
+        {
+          "a": "0"
+        },
+        {
+          "a": "1"
+        },
+        {
+          "a": "x"
+        }
+      ],
+      "measured": "2026-11-12: one direct child remains a source-shaped instance node; its input and output port nets are composed through the child E run and agree with Icarus and Xcelium."
+    },
+    {
       "name": "hierarchy_parameterized_output_wire",
       "example": "sem2/hierarchy_parameterized",
       "top": "hierarchy_parameterized",

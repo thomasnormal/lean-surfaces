@@ -12,30 +12,30 @@
   "gcc.c-torture/execute": {
    "not-ingested": 19,
    "not-parsed": 321,
-   "passed": 559,
-   "refused-libc": 122,
-   "refused-ub": 31,
-   "refused-unsupported": 822,
-   "timeout": 44
+   "passed": 565,
+   "refused-libc": 110,
+   "refused-ub": 32,
+   "refused-unsupported": 826,
+   "timeout": 45
   },
   "gcc.c23-run": {
    "not-ingested": 1,
    "not-parsed": 28,
    "passed": 1,
-   "refused-libc": 2,
+   "refused-libc": 1,
    "refused-ub": 1,
-   "refused-unsupported": 43
+   "refused-unsupported": 44
   }
  },
  "corpus": "C1-C3 (gcc torture, c-testsuite, gcc c23-run)",
  "counts": {
   "not-ingested": 25,
   "not-parsed": 350,
-  "passed": 670,
-  "refused-libc": 132,
-  "refused-ub": 34,
-  "refused-unsupported": 957,
-  "timeout": 46
+  "passed": 676,
+  "refused-libc": 119,
+  "refused-ub": 35,
+  "refused-unsupported": 962,
+  "timeout": 47
  },
  "dynamic_wall_ranking": [
   {
@@ -571,6 +571,7 @@
     "20040313-1.c",
     "20050224-1.c",
     "20060905-1.c",
+    "20081218-1.c",
     "951204-1.c",
     "961017-1.c",
     "961017-2.c",
@@ -611,8 +612,8 @@
     "ssad-run.c",
     "usad-run.c"
    ],
-   "present": 46,
-   "sole": 46,
+   "present": 47,
+   "sole": 47,
    "wall": "timeout"
   },
   {
@@ -820,6 +821,7 @@
     "loop-15.c",
     "pr17252.c",
     "pr21173.c",
+    "pr33870.c",
     "pr34099-2.c",
     "pr34099.c",
     "pr40386.c",
@@ -834,8 +836,8 @@
     "pr99079.c",
     "ptr-arith-1.c"
    ],
-   "present": 34,
-   "sole": 34,
+   "present": 35,
+   "sole": 35,
    "wall": "undefined-behavior"
   },
   {
@@ -985,6 +987,7 @@
     "pr113787.c",
     "pr114396.c",
     "pr117498.c",
+    "pr123978.c",
     "pr124358.c",
     "pr126405-2.c",
     "pr126405.c",
@@ -998,8 +1001,8 @@
     "pr97421-1.c",
     "subcmp-1.c"
    ],
-   "present": 24,
-   "sole": 24,
+   "present": 25,
+   "sole": 25,
    "wall": "unsupported:declaration outside a block"
   },
   {
@@ -1010,6 +1013,7 @@
     "20000910-1.c",
     "20011126-2.c",
     "20020503-1.c",
+    "20030606-1.c",
     "20050502-1.c",
     "20060910-1.c",
     "20070201-1.c",
@@ -1028,8 +1032,8 @@
     "pr54985.c",
     "pr71631.c"
    ],
-   "present": 23,
-   "sole": 23,
+   "present": 24,
+   "sole": 24,
    "wall": "unsupported:pointer used as an integer (no ptr\u2194int cast in tier)"
   },
   {
@@ -1157,22 +1161,6 @@
   },
   {
    "files": [
-    "20030606-1.c",
-    "20030717-1.c",
-    "20041218-1.c",
-    "20081218-1.c",
-    "memset-4.c",
-    "pr119428.c",
-    "pr123978.c",
-    "pr33870.c",
-    "pr77718.c"
-   ],
-   "present": 9,
-   "sole": 9,
-   "wall": "libc-call: __builtin_memset"
-  },
-  {
-   "files": [
     "pr105613.c",
     "pr110817-1.c",
     "pr110817-2.c",
@@ -1202,21 +1190,6 @@
    "present": 9,
    "sole": 9,
    "wall": "unsupported:no layout for declared type 'float'"
-  },
-  {
-   "files": [
-    "20001203-2.c",
-    "20040823-1.c",
-    "20050826-1.c",
-    "20071219-1.c",
-    "990513-1.c",
-    "gcc/testsuite/gcc.dg/c23-empty-init-5.c",
-    "pr35472.c",
-    "pr43236.c"
-   ],
-   "present": 8,
-   "sole": 8,
-   "wall": "libc-call: memset"
   },
   {
    "files": [
@@ -1486,6 +1459,17 @@
   },
   {
    "files": [
+    "00072.c",
+    "00073.c",
+    "20000819-1.c",
+    "990513-1.c"
+   ],
+   "present": 4,
+   "sole": 4,
+   "wall": "unsupported:not an integer type: 'int *'"
+  },
+  {
+   "files": [
     "20031003-1.c",
     "pr38048-2.c",
     "pr66233.c"
@@ -1543,6 +1527,16 @@
    "present": 3,
    "sole": 3,
    "wall": "libc-call: exit (an argument is not a literal 0 \u2014 which exit was reached is unknown)"
+  },
+  {
+   "files": [
+    "20011024-1.c",
+    "20050826-1.c",
+    "string-opt-18.c"
+   ],
+   "present": 3,
+   "sole": 3,
+   "wall": "libc-call: memcpy"
   },
   {
    "files": [
@@ -1626,16 +1620,6 @@
   },
   {
    "files": [
-    "00072.c",
-    "00073.c",
-    "20000819-1.c"
-   ],
-   "present": 3,
-   "sole": 3,
-   "wall": "unsupported:not an integer type: 'int *'"
-  },
-  {
-   "files": [
     "20000223-1.c",
     "align-3.c",
     "zerolen-2.c"
@@ -1695,6 +1679,15 @@
   },
   {
    "files": [
+    "pr57130.c",
+    "pr77718.c"
+   ],
+   "present": 2,
+   "sole": 2,
+   "wall": "libc-call: __builtin_memcmp"
+  },
+  {
+   "files": [
     "20021011-1.c",
     "921117-1.c"
    ],
@@ -1740,21 +1733,21 @@
   },
   {
    "files": [
-    "20011024-1.c",
-    "string-opt-18.c"
-   ],
-   "present": 2,
-   "sole": 2,
-   "wall": "libc-call: memcpy"
-  },
-  {
-   "files": [
     "loop-2f.c",
     "loop-2g.c"
    ],
    "present": 2,
    "sole": 2,
    "wall": "libc-call: open"
+  },
+  {
+   "files": [
+    "gcc/testsuite/gcc.dg/c23-empty-init-5.c",
+    "gcc/testsuite/gcc.dg/c23-empty-init-warn-17.c"
+   ],
+   "present": 2,
+   "sole": 2,
+   "wall": "unsupported:DesignatedInitUpdateExpr"
   },
   {
    "files": [
@@ -2120,14 +2113,6 @@
   },
   {
    "files": [
-    "pr57130.c"
-   ],
-   "present": 1,
-   "sole": 1,
-   "wall": "libc-call: __builtin_memcmp"
-  },
-  {
-   "files": [
     "pr78622.c"
    ],
    "present": 1,
@@ -2232,6 +2217,14 @@
   },
   {
    "files": [
+    "20001203-2.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "libc-call: get_discrete_bounds"
+  },
+  {
+   "files": [
     "20021127-1.c"
    ],
    "present": 1,
@@ -2253,6 +2246,14 @@
    "present": 1,
    "sole": 1,
    "wall": "libc-call: main_test"
+  },
+  {
+   "files": [
+    "pr43236.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "libc-call: memcmp"
   },
   {
    "files": [
@@ -2325,14 +2326,6 @@
    "present": 1,
    "sole": 1,
    "wall": "unsupported:ConstantExpr"
-  },
-  {
-   "files": [
-    "gcc/testsuite/gcc.dg/c23-empty-init-warn-17.c"
-   ],
-   "present": 1,
-   "sole": 1,
-   "wall": "unsupported:DesignatedInitUpdateExpr"
   },
   {
    "files": [
@@ -3269,6 +3262,14 @@
    "present": 1,
    "sole": 1,
    "wall": "unsupported:no layout for parameter type 'int *restrict'"
+  },
+  {
+   "files": [
+    "pr119428.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "unsupported:not an integer type: 'unsigned char *'"
   },
   {
    "files": [
@@ -4328,8 +4329,8 @@
   }
  ],
  "manifest_hash": "1de1a60c299d5bb51dae7ca001b0a008010cad0b25670cde2090c08bfc1a84ce",
- "measured_at_utc": "2026-11-12T07:45:00Z",
- "measured_commit": "1918610c7",
+ "measured_at_utc": "2026-11-12T08:00:00Z",
+ "measured_commit": "35b2e85c9",
  "pin": null,
  "rows": [
   {
@@ -7898,8 +7899,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "memset",
-   "dynamic_wall": "libc-call: memset",
+   "detail": "get_discrete_bounds",
+   "dynamic_wall": "libc-call: get_discrete_bounds",
    "manifest_status": "parsed",
    "name": "20001203-2.c",
    "sha256": "7cadd06740113c17aa0f79396a0b832269f3ba374b55c64b5af654750b9efd78",
@@ -9560,8 +9561,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "__builtin_memset",
-   "dynamic_wall": "libc-call: __builtin_memset",
+   "detail": "pointer used as an integer (no ptr\u2194int cast in tier)",
+   "dynamic_wall": "unsupported:pointer used as an integer (no ptr\u2194int cast in tier)",
    "manifest_status": "parsed",
    "name": "20030606-1.c",
    "sha256": "341fec31cd56cc2cd043df3a94a0706e096fb9c6a189162ed4c324b2fd6c0124",
@@ -9569,7 +9570,7 @@
     "libc-call",
     "type-layout"
    ],
-   "verdict": "refused-libc"
+   "verdict": "refused-unsupported"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -9637,8 +9638,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "__builtin_memset",
-   "dynamic_wall": "libc-call: __builtin_memset",
+   "detail": "",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "20030717-1.c",
    "sha256": "c104496dfac2cde6fbbf2ace57788e9df5fa6ea2ca791652a8caa9585d043281",
@@ -9646,7 +9647,7 @@
     "libc-call",
     "type-layout"
    ],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -10332,15 +10333,15 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "memset",
-   "dynamic_wall": "libc-call: memset",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "20040823-1.c",
    "sha256": "cce264d81c911a8eb4a391842234064d0ced758186d59bdbe081bc9d6cdc0ccc",
    "static_walls": [
     "libc-call"
    ],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -10516,8 +10517,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "__builtin_memset",
-   "dynamic_wall": "libc-call: __builtin_memset",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "20041218-1.c",
    "sha256": "b5d1601f6799841f2bae31fac4e6e3f754cae2c1d23a4342665fd42f6668ffee",
@@ -10526,7 +10527,7 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -10826,8 +10827,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "memset",
-   "dynamic_wall": "libc-call: memset",
+   "detail": "memcpy",
+   "dynamic_wall": "libc-call: memcpy",
    "manifest_status": "parsed",
    "name": "20050826-1.c",
    "sha256": "12d49e96da44d258cf40619706a5605b3638de8421ba1e4e55faf5487cacc23d",
@@ -11387,8 +11388,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "memset",
-   "dynamic_wall": "libc-call: memset",
+   "detail": "",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "20071219-1.c",
    "sha256": "812db2e2f763b4790dab920ea5f0750e8061de9d80132c34c414cc73c7e86e62",
@@ -11396,7 +11397,7 @@
     "libc-call",
     "type-layout"
    ],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -11615,8 +11616,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "__builtin_memset",
-   "dynamic_wall": "libc-call: __builtin_memset",
+   "detail": "",
+   "dynamic_wall": "timeout",
    "manifest_status": "parsed",
    "name": "20081218-1.c",
    "sha256": "f8a063c3a29bbea7c8f108c12c7eece2f2e4bfa5fa11640ae94f1e68351146a0",
@@ -11624,7 +11625,7 @@
     "libc-call",
     "type-layout"
    ],
-   "verdict": "refused-libc"
+   "verdict": "timeout"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -15288,8 +15289,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "memset",
-   "dynamic_wall": "libc-call: memset",
+   "detail": "not an integer type: 'int *'",
+   "dynamic_wall": "unsupported:not an integer type: 'int *'",
    "manifest_status": "parsed",
    "name": "990513-1.c",
    "sha256": "efc5173b45881fa5320d70c2b39564e0f17e1f1423de6f7e5a945bc5ec690fd6",
@@ -15297,7 +15298,7 @@
     "libc-call",
     "type-layout"
    ],
-   "verdict": "refused-libc"
+   "verdict": "refused-unsupported"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -18564,8 +18565,8 @@
   },
   {
    "corpus": "gcc.c23-run",
-   "detail": "memset",
-   "dynamic_wall": "libc-call: memset",
+   "detail": "out of tier: DesignatedInitUpdateExpr",
+   "dynamic_wall": "unsupported:DesignatedInitUpdateExpr",
    "manifest_status": "parsed",
    "name": "gcc/testsuite/gcc.dg/c23-empty-init-5.c",
    "sha256": "d9dd88de8b98e54c7503bf6f0711f6292841b52fd0a011181273f3f670022b54",
@@ -18575,7 +18576,7 @@
     "unsupported:DesignatedInitUpdateExpr",
     "unsupported:OffsetOfExpr"
    ],
-   "verdict": "refused-libc"
+   "verdict": "refused-unsupported"
   },
   {
    "corpus": "gcc.c23-run",
@@ -20876,8 +20877,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "__builtin_memset",
-   "dynamic_wall": "libc-call: __builtin_memset",
+   "detail": "",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "memset-4.c",
    "sha256": "a607f718ab3fb6d56f4190534a528d24b9f428f6b184d69922b10223909fcd0d",
@@ -20885,7 +20886,7 @@
     "libc-call",
     "type-layout"
    ],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -22050,8 +22051,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "__builtin_memset",
-   "dynamic_wall": "libc-call: __builtin_memset",
+   "detail": "not an integer type: 'unsigned char *'",
+   "dynamic_wall": "unsupported:not an integer type: 'unsigned char *'",
    "manifest_status": "parsed",
    "name": "pr119428.c",
    "sha256": "c61ae0c7e78c2776c192ea5271c4735eb8ebb4c993cec54011edf1e7ac7e6c76",
@@ -22059,7 +22060,7 @@
     "libc-call",
     "type-layout"
    ],
-   "verdict": "refused-libc"
+   "verdict": "refused-unsupported"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -22178,8 +22179,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "__builtin_memset",
-   "dynamic_wall": "libc-call: __builtin_memset",
+   "detail": "declaration outside a block",
+   "dynamic_wall": "unsupported:declaration outside a block",
    "manifest_status": "parsed",
    "name": "pr123978.c",
    "sha256": "1ed8a36af452bfd14d600d31c3ce62b3d9241009455c4399adece59506cb5e9f",
@@ -22187,7 +22188,7 @@
     "libc-call",
     "type-layout"
    ],
-   "verdict": "refused-libc"
+   "verdict": "refused-unsupported"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -23261,8 +23262,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "__builtin_memset",
-   "dynamic_wall": "libc-call: __builtin_memset",
+   "detail": "LeanModels.C.C23.MemFault.nonValueRepresentation 3 0",
+   "dynamic_wall": "undefined-behavior",
    "manifest_status": "parsed",
    "name": "pr33870.c",
    "sha256": "64a9b80786fb99086ef2e1f0a05000b05528e43ec0ca7846e6aac45beebb629b",
@@ -23270,7 +23271,7 @@
     "libc-call",
     "type-layout"
    ],
-   "verdict": "refused-libc"
+   "verdict": "refused-ub"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -23473,8 +23474,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "memset",
-   "dynamic_wall": "libc-call: memset",
+   "detail": "",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "pr35472.c",
    "sha256": "fa2411b43c65fd0e7f3b1603e2c94ad77bac9700eaf5c1d8bea4a109da988718",
@@ -23482,7 +23483,7 @@
     "libc-call",
     "type-layout"
    ],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -24273,8 +24274,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "memset",
-   "dynamic_wall": "libc-call: memset",
+   "detail": "memcmp",
+   "dynamic_wall": "libc-call: memcmp",
    "manifest_status": "parsed",
    "name": "pr43236.c",
    "sha256": "c3d866d0679f94f16edbb549c30e71caac8283759be12a9a4d4f3c93f1c3f521",
@@ -27084,8 +27085,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "__builtin_memset",
-   "dynamic_wall": "libc-call: __builtin_memset",
+   "detail": "__builtin_memcmp",
+   "dynamic_wall": "libc-call: __builtin_memcmp",
    "manifest_status": "parsed",
    "name": "pr77718.c",
    "sha256": "382853d1420d8e80bda3d226a5614e1c3ee95c181daeae2816bea2a0634335d0",

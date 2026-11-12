@@ -431,6 +431,18 @@ def execStmt : Nat → Ctx → Stmt → ExecM Flow
     | .compound body _ => do
         let m₀ ← get
         let base := m₀.count
+        let runMemset : List CVal → EvalM CVal := fun vs =>
+          match vs with
+          | [p, byte, count] => do
+              let q ← asPtr p
+              let (_, b) ← asInt byte
+              let (_, n) ← asInt count
+              if n < 0 then refuseUnsupported "memset: negative size"
+              else do
+                let bs := List.replicate n.toNat (CByte.conc (UInt8.ofNat b.toNat))
+                writeMem (fun m => m.storeBytes q bs)
+                pure (.ptr q)
+          | _ => refuseUnsupported "memset: wrong argument count"
         let f ← execBlock fuel ctx body
         let m₁ ← get
         set (m₁.killFrom base)
@@ -710,6 +722,18 @@ def callFn : Nat → Program → LeanModels.C.FunctionDefn → List CVal → Exe
           refuseUnsupported "unnamed pointer parameter (array-bound effects are not retained by clang)"
         let m₀ ← get
         let base := m₀.count
+        let runMemset : List CVal → ExecM CVal := fun vs =>
+          match vs with
+          | [p, byte, count] => do
+              let q ← asPtr p
+              let (_, b) ← asInt byte
+              let (_, n) ← asInt count
+              if n < 0 then refuseUnsupported "memset: negative size"
+              else do
+                let bs := List.replicate n.toNat (CByte.conc (UInt8.ofNat b.toNat))
+                liftEval (writeMem (fun m => m.storeBytes q bs))
+                pure (.ptr q)
+          | _ => refuseUnsupported "memset: wrong argument count"
         -- The callee's own call handler: one fuel less, so the recursion
         -- terminates on the fuel and on nothing else.
         let handler : CallHandler := fun callee vs =>
@@ -724,7 +748,9 @@ def callFn : Nat → Program → LeanModels.C.FunctionDefn → List CVal → Exe
               if nm == "abort" || nm == "exit" then
                 throw (.libc nm)
               else match prog.findId? declaration with
-                | none => throw (.libc nm)
+                | none =>
+                    if nm == "memset" || nm == "__builtin_memset" then runMemset vs
+                    else throw (.libc nm)
                 | some g => callFn fuel prog g vs
             | none => match prog.findId? declaration with
               | none => throw (.libc declaration.value)
@@ -737,7 +763,9 @@ def callFn : Nat → Program → LeanModels.C.FunctionDefn → List CVal → Exe
           | some nm => match prog.find? nm with
             -- One of the 27 externals: cause `libc`, which retires by
             -- widening the slice and never pools with the other two.
-            | none => throw (.libc nm)
+            | none =>
+              if nm == "memset" || nm == "__builtin_memset" then runMemset vs
+              else throw (.libc nm)
             -- A NESTED call to a defined function. `evalArgs` has already
             -- evaluated `vs` in the CALLER's scope (§6.5.3.3p4), so this is
             -- the ordinary call, one fuel down — the recursion this whole

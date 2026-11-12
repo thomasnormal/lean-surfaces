@@ -51,6 +51,7 @@ Python 3.9 compatible.
 """
 
 import argparse
+import copy
 import importlib.util
 import json
 import os
@@ -263,15 +264,37 @@ def run_cpython(mod, fname, args):
     fn = getattr(mod, fname, None)
     if fn is None:
         return {"status": "harness-error", "msg": "no function %r" % fname}
+    py_args = [from_typed(a) for a in args]
+    before = copy.deepcopy(py_args)
     try:
-        v = fn(*[from_typed(a) for a in args])
+        v = fn(*py_args)
     except Exception as e:  # runtime errors are data, not harness failures
         name = type(e).__name__
-        return {"status": "exn", "exn": name}
+        result = {"status": "exn", "exn": name}
+        _add_observed_args(result, py_args, before)
+        return result
     try:
-        return {"status": "ok", "value": to_canonical_value(v)}
+        result = {"status": "ok", "value": to_canonical_value(v)}
     except Unmappable as u:
-        return {"status": "unmappable", "type": str(u)}
+        result = {"status": "unmappable", "type": str(u)}
+    _add_observed_args(result, py_args, before)
+    return result
+
+
+def _add_observed_args(result, args, before):
+    """Attach post-call argument state for rows that request observations."""
+    try:
+        result["args_after"] = [to_canonical_value(v) for v in args]
+        result["mutated"] = args != before
+    except Unmappable as u:
+        result["args_after_refused"] = str(u)
+
+
+def _same_result(left, right):
+    """Compare the semantic result while ignoring opt-in observation fields."""
+    fields = ("status", "value", "exn", "exnmsg", "type", "msg")
+    return {k: left.get(k) for k in fields if k in left} == \
+        {k: right.get(k) for k in fields if k in right}
 
 
 def run_lean_batch(runner_cmd, jobs, on_result, batch_flags=()):
@@ -418,12 +441,13 @@ def main(argv=None):
         cases = json.load(f)
 
     # Pass 1: CPython side of every row, plus its batch job line.
-    calls = []    # (call_repr, expect, cpy_result)
+    calls = []    # (call_repr, expect, cpy_result, observe_args)
     jobs = []
     for case in cases:
         src = case["file"]
         fname = case["function"]
         expect = case.get("expect", "match")
+        observe_args = bool(case.get("observations", False))
         json_path = os.path.splitext(src)[0] + ".json"
         try:
             mod = load_module(src)
@@ -439,7 +463,7 @@ def main(argv=None):
                 cpy, trace = run_cpython(mod, fname, args), None
             else:
                 cpy, trace = run_cpython_clock(mod, fname, args, clock_spec)
-            calls.append((call, expect, cpy))
+            calls.append((call, expect, cpy, observe_args))
             jobs.append(batch_job(json_path, fname, args, fuel, trace,
                                   case.get("recursion_base")))
 
@@ -451,7 +475,7 @@ def main(argv=None):
 
     def on_result(i, lean):
         nonlocal failures, whitelisted
-        call, expect, cpy = calls[i]
+        call, expect, cpy, observe_args = calls[i]
         if opts.proof_interpreter and lean.get("status") in ("unsupported",
                                                              "timeout"):
             # Loud, never wrong: the proof interpreter's tier is narrower
@@ -462,7 +486,7 @@ def main(argv=None):
         elif opts.proof_interpreter and expect == "unsupported":
             # A row the runner must refuse. Here it must MATCH or refuse
             # (above): an answer is compared to CPython like any other.
-            if cpy == lean:
+            if _same_result(cpy, lean):
                 verdict = "MATCH"
             else:
                 verdict = "MISMATCH"
@@ -479,15 +503,22 @@ def main(argv=None):
                lean.get("status") in ("runner-error",):
                 verdict = "ERROR"
                 failures += 1
-            elif cpy == lean:
+            elif _same_result(cpy, lean):
                 verdict = "MATCH"
             else:
+                verdict = "MISMATCH"
+                failures += 1
+        if observe_args and verdict == "MATCH":
+            if cpy.get("args_after") != lean.get("args_after") or \
+               cpy.get("mutated") != lean.get("mutated"):
                 verdict = "MISMATCH"
                 failures += 1
         rows.append((call, pretty(cpy), pretty(lean), verdict))
         print("[%d/%d] %-10s %s" % (i + 1, len(jobs), verdict, call),
               file=sys.stderr)
 
+    if any(call[3] for call in calls):
+        batch_flags = list(batch_flags) + ["--observations"]
     run_lean_batch(runner_cmd, jobs, on_result, batch_flags)
 
     widths = [

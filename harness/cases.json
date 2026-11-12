@@ -1772,5 +1772,8 @@
 ,
   {"file": "harness/abc_internal_attr.py", "function": "probe", "args": [[]], "expect": "unsupported", "note": "Internal _abc_ attribute access is a loud closed-function boundary; CPython 3.9.25 raises AttributeError."},
   {"file": "harness/main_import_boundary.py", "function": "probe", "args": [[]], "expect": "unsupported", "note": "from __main__ import ... depends on the runner live module; CPython 3.9.25 supplies it, so the closed-function model refuses rather than fabricating a module."},
-  {"file": "harness/inspect_doc_boundary.py", "function": "probe", "args": [[]], "expect": "unsupported", "note": "CPython supplies builtin scalar __doc__ text; the closed-function model refuses this documentation table rather than fabricating it."}
+  {"file": "harness/inspect_doc_boundary.py", "function": "probe", "args": [[]], "expect": "unsupported", "note": "CPython supplies builtin scalar __doc__ text; the closed-function model refuses this documentation table rather than fabricating it."},
+
+  {"file": "Examples/python/bench_heapq_sift/bench_heapq_sift.py", "function": "_siftup", "args": [[{"t": "list", "v": [{"t": "int", "v": "5"}, {"t": "int", "v": "1"}, {"t": "int", "v": "2"}, {"t": "int", "v": "7"}, {"t": "int", "v": "4"}, {"t": "int", "v": "3"}]}, 0]], "expect": "match", "observations": true, "note": "heapq helper mutation is compared through the batch observation boundary."},
+  {"file": "Examples/python/bench_heapq_sift/bench_heapq_sift.py", "function": "_siftdown", "args": [[{"t": "list", "v": [{"t": "int", "v": "1"}, {"t": "int", "v": "3"}, {"t": "int", "v": "2"}, {"t": "int", "v": "7"}, {"t": "int", "v": "4"}, {"t": "int", "v": "0"}]}, 0, 5]], "expect": "match", "observations": true, "note": "heapq helper mutation is compared through the batch observation boundary."}
 ]

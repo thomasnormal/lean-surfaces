@@ -68,8 +68,8 @@
    "observed_decl_no_layout": 17,
    "observed_decl_without_static_candidate": 4,
    "static_and_observed_decl": 13,
-   "static_candidate_without_observed_decl": 110,
-   "static_present": 123,
+   "static_candidate_without_observed_decl": 111,
+   "static_present": 124,
    "static_sole": 41
   },
   "gcc.c-torture/execute": {
@@ -127,8 +127,16 @@
      "files": 3
     },
     {
+     "detail": "no layout for declared type 'T'",
+     "files": 3
+    },
+    {
      "detail": "no layout for declared type '_Complex float'",
      "files": 3
+    },
+    {
+     "detail": "no layout for declared type 'Point'",
+     "files": 2
     },
     {
      "detail": "no layout for declared type 'long double'",
@@ -155,10 +163,6 @@
      "files": 2
     },
     {
-     "detail": "no layout for declared type 'T'",
-     "files": 2
-    },
-    {
      "detail": "no layout for declared type 'struct c'",
      "files": 2
     },
@@ -172,6 +176,10 @@
     },
     {
      "detail": "no layout for declared type 'double[4]'",
+     "files": 2
+    },
+    {
+     "detail": "no layout for declared type 'const struct try[6]'",
      "files": 2
     },
     {
@@ -203,7 +211,19 @@
      "files": 1
     },
     {
+     "detail": "no layout for declared type 'struct write_data'",
+     "files": 1
+    },
+    {
      "detail": "no layout for declared type 'double[1]'",
+     "files": 1
+    },
+    {
+     "detail": "no layout for declared type 'struct brfic_args'",
+     "files": 1
+    },
+    {
+     "detail": "no layout for declared type 'struc'",
      "files": 1
     },
     {
@@ -287,6 +307,10 @@
      "files": 1
     },
     {
+     "detail": "no layout for declared type 'struct printf_spec'",
+     "files": 1
+    },
+    {
      "detail": "no layout for declared type 'int[len][len]'",
      "files": 1
     },
@@ -311,6 +335,10 @@
      "files": 1
     },
     {
+     "detail": "no layout for declared type 'double (*)()'",
+     "files": 1
+    },
+    {
      "detail": "no layout for declared type 'double[6]'",
      "files": 1
     },
@@ -319,11 +347,11 @@
      "files": 1
     },
     {
-     "detail": "no layout for declared type 'Point'",
+     "detail": "no layout for declared type 't_be'",
      "files": 1
     },
     {
-     "detail": "no layout for declared type 't_be'",
+     "detail": "no layout for declared type 'a_struct'",
      "files": 1
     },
     {
@@ -396,10 +424,6 @@
     },
     {
      "detail": "no layout for declared type 'float[8]'",
-     "files": 1
-    },
-    {
-     "detail": "no layout for declared type 'const struct try[6]'",
      "files": 1
     },
     {
@@ -503,6 +527,10 @@
      "files": 1
     },
     {
+     "detail": "no layout for declared type 'uint32_t[16]'",
+     "files": 1
+    },
+    {
      "detail": "no layout for declared type 'struct mystruct'",
      "files": 1
     },
@@ -563,6 +591,10 @@
      "files": 1
     },
     {
+     "detail": "no layout for declared type 'const A3_28 *const'",
+     "files": 1
+    },
+    {
      "detail": "no layout for declared type 'struct tty_driver'",
      "files": 1
     },
@@ -592,13 +624,13 @@
     }
    ],
    "files": 1918,
-   "observed_any_no_layout": 256,
-   "observed_decl_no_layout": 235,
+   "observed_any_no_layout": 292,
+   "observed_decl_no_layout": 246,
    "observed_decl_without_static_candidate": 23,
-   "static_and_observed_decl": 212,
-   "static_candidate_without_observed_decl": 697,
-   "static_present": 909,
-   "static_sole": 308
+   "static_and_observed_decl": 223,
+   "static_candidate_without_observed_decl": 724,
+   "static_present": 947,
+   "static_sole": 321
   },
   "gcc.c23-run": {
    "decl_messages": [
@@ -1496,8 +1528,8 @@
    }
   ]
  },
- "survey_commit": "04e05fa491c9104d03fdbdf1edc98eb20bd220f4",
- "survey_measured_at_utc": "2026-11-12T12:48:42Z",
+ "survey_commit": "f97e994a0",
+ "survey_measured_at_utc": "2026-11-12T18:58:23Z",
  "survey_schema": "c-survey-0.1",
  "top_decl_messages": [
   {
@@ -1557,6 +1589,10 @@
    "files": 3
   },
   {
+   "detail": "no layout for declared type 'T'",
+   "files": 3
+  },
+  {
    "detail": "no layout for declared type '_Complex float'",
    "files": 3
   },
@@ -1570,6 +1606,10 @@
   },
   {
    "detail": "no layout for declared type 'S'",
+   "files": 2
+  },
+  {
+   "detail": "no layout for declared type 'Point'",
    "files": 2
   },
   {
@@ -1597,10 +1637,6 @@
    "files": 2
   },
   {
-   "detail": "no layout for declared type 'T'",
-   "files": 2
-  },
-  {
    "detail": "no layout for declared type 'struct c'",
    "files": 2
   },
@@ -1614,6 +1650,10 @@
   },
   {
    "detail": "no layout for declared type 'double[4]'",
+   "files": 2
+  },
+  {
+   "detail": "no layout for declared type 'const struct try[6]'",
    "files": 2
   },
   {
@@ -1677,7 +1717,19 @@
    "files": 1
   },
   {
+   "detail": "no layout for declared type 'struct write_data'",
+   "files": 1
+  },
+  {
    "detail": "no layout for declared type 'double[1]'",
+   "files": 1
+  },
+  {
+   "detail": "no layout for declared type 'struct brfic_args'",
+   "files": 1
+  },
+  {
+   "detail": "no layout for declared type 'struc'",
    "files": 1
   },
   {
@@ -1761,6 +1813,10 @@
    "files": 1
   },
   {
+   "detail": "no layout for declared type 'struct printf_spec'",
+   "files": 1
+  },
+  {
    "detail": "no layout for declared type 'int[len][len]'",
    "files": 1
   },
@@ -1785,6 +1841,10 @@
    "files": 1
   },
   {
+   "detail": "no layout for declared type 'double (*)()'",
+   "files": 1
+  },
+  {
    "detail": "no layout for declared type 'double[6]'",
    "files": 1
   },
@@ -1793,11 +1853,11 @@
    "files": 1
   },
   {
-   "detail": "no layout for declared type 'Point'",
+   "detail": "no layout for declared type 't_be'",
    "files": 1
   },
   {
-   "detail": "no layout for declared type 't_be'",
+   "detail": "no layout for declared type 'a_struct'",
    "files": 1
   },
   {
@@ -1866,10 +1926,6 @@
   },
   {
    "detail": "no layout for declared type 'float[8]'",
-   "files": 1
-  },
-  {
-   "detail": "no layout for declared type 'const struct try[6]'",
    "files": 1
   },
   {
@@ -1969,6 +2025,10 @@
    "files": 1
   },
   {
+   "detail": "no layout for declared type 'uint32_t[16]'",
+   "files": 1
+  },
+  {
    "detail": "no layout for declared type 'struct mystruct'",
    "files": 1
   },
@@ -2029,6 +2089,10 @@
    "files": 1
   },
   {
+   "detail": "no layout for declared type 'const A3_28 *const'",
+   "files": 1
+  },
+  {
    "detail": "no layout for declared type 'struct tty_driver'",
    "files": 1
   },
@@ -2078,12 +2142,12 @@
   }
  ],
  "totals": {
-  "observed_any_no_layout": 285,
-  "observed_decl_no_layout": 261,
+  "observed_any_no_layout": 321,
+  "observed_decl_no_layout": 272,
   "observed_decl_without_static_candidate": 28,
-  "static_and_observed_decl": 233,
-  "static_candidate_without_observed_decl": 828,
-  "static_present": 1061,
-  "static_sole": 353
+  "static_and_observed_decl": 244,
+  "static_candidate_without_observed_decl": 856,
+  "static_present": 1100,
+  "static_sole": 366
  }
 }

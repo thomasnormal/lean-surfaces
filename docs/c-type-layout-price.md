@@ -2,17 +2,17 @@
 
 This report compares the envelope-derived candidate wall with the runner's first refusal.
 
-- survey commit: `04e05fa491c9104d03fdbdf1edc98eb20bd220f4`
-- survey measured at: `2026-11-12T12:48:42Z`
-- static candidates: 1061 present, 353 sole
-- observed declaration `no layout`: 261 (candidate overlap 233)
+- survey commit: `f97e994a0`
+- survey measured at: `2026-11-12T18:58:23Z`
+- static candidates: 1100 present, 366 sole
+- observed declaration `no layout`: 272 (candidate overlap 244)
 - observed declaration refusals without a static candidate: 28
-- static candidates without an observed declaration refusal: 828
+- static candidates without an observed declaration refusal: 856
 
 | corpus | static present | static sole | observed declaration no-layout | overlap |
 | --- | ---: | ---: | ---: | ---: |
-| `c-testsuite/single-exec` | 123 | 41 | 17 | 13 |
-| `gcc.c-torture/execute` | 909 | 308 | 235 | 212 |
+| `c-testsuite/single-exec` | 124 | 41 | 17 | 13 |
+| `gcc.c-torture/execute` | 947 | 321 | 246 | 223 |
 | `gcc.c23-run` | 29 | 4 | 9 | 8 |
 
 ## Most frequent observed declaration refusals
@@ -33,12 +33,12 @@ This report compares the envelope-derived candidate wall with the runner's first
 | `no layout for declared type 'A'` | 3 |
 | `no layout for declared type 'int[n % 1000 + 1]'` | 3 |
 | `no layout for declared type 'struct S[2]'` | 3 |
+| `no layout for declared type 'T'` | 3 |
 | `no layout for declared type '_Complex float'` | 3 |
 | `no layout for declared type 'enum bar'` | 3 |
 | `no layout for declared type 'enum E'` | 2 |
 | `no layout for declared type 'S'` | 2 |
-| `no layout for declared type 'long double'` | 2 |
-| `no layout for declared type 'struct A'` | 2 |
+| `no layout for declared type 'Point'` | 2 |
 
 ## `struct S` parser-envelope dependencies
 

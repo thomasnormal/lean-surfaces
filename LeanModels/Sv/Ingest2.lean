@@ -574,6 +574,17 @@ partial def parsePStmt (j : Json) : Except String PStmt := do
           | none => pure none
           | some dj => pure (some (← parsePStmt dj))
         return .caseStmt subject items dflt mode check
+    | "SysCall" =>
+        -- System tasks in an `initial` elaboration check are retained as a
+        -- named source node.  The ordinary Stmt2 tier has no system-task
+        -- constructor, so keep the task loud there; E's initial-check
+        -- admission recognizes only the `$fatal`/`$error` pair below.
+        let name ← getStrField j "name"
+        let fatal := match getOptField j "fatal_task" with
+          | some (Json.bool true) => true
+          | _ => false
+        return .unsupported ("SysCall:" ++ if fatal then "$fatal" else name)
+          "system task is outside the frozen procedural statement tier"
     | "LocalDecl" =>
         -- Retain unsupported block-local declarations in the procedural
         -- envelope.  Stmt2 is frozen and has no scoped declaration node, but

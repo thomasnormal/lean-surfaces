@@ -1597,8 +1597,47 @@ structure EDesign2 where
   processes : Array EProcess2
 deriving Repr, Inhabited
 
+private def initialCheckTask : PStmt → Option String
+  | .unsupported k _ =>
+      if k == "SysCall:$fatal" then some "$fatal"
+      else if k == "SysCall:$error" then some "$error"
+      else none
+  | _ => none
+
+private def initialCheckStmt (env : IEnv) : PStmt → Except String Unit
+  | .block body => initialCheckList body
+  | .ifStmt cond yes no => do
+      let v ← evalInt env cond
+      let selected := if v != 0 then some yes else no
+      match selected with
+      | none => pure ()
+      | some branch =>
+          match initialCheckTask branch with
+          | some "$fatal" => throw "elaboration check executes $fatal"
+          | some "$error" => pure ()
+          | _ => throw "initial process is not an elaboration check"
+  | .unsupported k _ =>
+      match initialCheckTask (.unsupported k "") with
+      | some "$error" => pure ()
+      | some "$fatal" => throw "elaboration check executes $fatal"
+      | _ => throw "initial process is not an elaboration check"
+  | _ => throw "initial process is not an elaboration check"
+where
+  initialCheckList : List PStmt → Except String Unit
+    | [] => pure ()
+    | s :: rest => do
+        initialCheckStmt env s
+        initialCheckList rest
+
+private def initialCheckAdmits (env : IEnv) (body : PStmt) : Except String Unit :=
+  initialCheckStmt env body
+
 def instEProcess2 (env : IEnv) (elems : List (String × Nat)) : PProcess → EProcess2
   | .alwaysImplicit b => .alwaysImplicit (instStmt2 env elems b)
+  | .initial b =>
+      match initialCheckAdmits env b with
+      | .ok () => .ordinary (.alwaysComb (.block #[]))
+      | .error msg => .ordinary (.unsupported "Initial:check" msg)
   | p => .ordinary (instProcess2 env elems p)
 
 /-- The typed-constant width pass used by the E view. This is deliberately a

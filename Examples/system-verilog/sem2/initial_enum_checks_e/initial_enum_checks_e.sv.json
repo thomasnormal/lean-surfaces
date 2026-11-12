@@ -1,0 +1,370 @@
+{
+  "schema_version": "sv-0.2",
+  "language": "systemverilog",
+  "frontend": {
+    "name": "pyslang",
+    "family": "pyslang-11"
+  },
+  "mode": "symbolic",
+  "top": "initial_enum_checks_e",
+  "source_files": [
+    {
+      "path": "Examples/system-verilog/sem2/initial_enum_checks_e/initial_enum_checks_e.sv",
+      "sha256": "fe07824d86e08b159c4040e0ee1a21868c3409ff0a3768296be7649e50e96995"
+    }
+  ],
+  "packages": [
+    "initial_enum_checks_pkg"
+  ],
+  "design": {
+    "kind": "Design",
+    "modules": [
+      {
+        "kind": "Module",
+        "span": {
+          "line": 6,
+          "col": 1,
+          "end_line": 17,
+          "end_col": 10
+        },
+        "name": "initial_enum_checks_e",
+        "imports": [],
+        "params": [],
+        "types": [
+          {
+            "kind": "EnumType",
+            "span": {
+              "line": 3,
+              "col": 11,
+              "end_line": 3,
+              "end_col": 55
+            },
+            "name": "mode_t",
+            "from_package": "initial_enum_checks_pkg",
+            "base_width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 3,
+                      "col": 23,
+                      "end_line": 3,
+                      "end_col": 24
+                    },
+                    "value": 1,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 3,
+                      "col": 25,
+                      "end_line": 3,
+                      "end_col": 26
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 2
+            },
+            "members": [
+              {
+                "name": "IDLE",
+                "value": 0
+              },
+              {
+                "name": "RUN",
+                "value": 1
+              }
+            ]
+          }
+        ],
+        "ports": [
+          {
+            "kind": "Port",
+            "span": {
+              "line": 7,
+              "col": 21,
+              "end_line": 7,
+              "end_col": 22
+            },
+            "name": "a",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 7,
+                      "col": 16,
+                      "end_line": 7,
+                      "end_col": 17
+                    },
+                    "value": 1,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 7,
+                      "col": 18,
+                      "end_line": 7,
+                      "end_col": 19
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 2
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 8,
+              "col": 16,
+              "end_line": 8,
+              "end_col": 17
+            },
+            "name": "y",
+            "dir": "out",
+            "width": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            }
+          }
+        ],
+        "decls": [],
+        "processes": [
+          {
+            "kind": "Initial",
+            "span": {
+              "line": 10,
+              "col": 3,
+              "end_line": 15,
+              "end_col": 6
+            },
+            "body": {
+              "kind": "Block",
+              "span": {
+                "line": 10,
+                "col": 11,
+                "end_line": 15,
+                "end_col": 6
+              },
+              "stmts": [
+                {
+                  "kind": "If",
+                  "span": {
+                    "line": 11,
+                    "col": 5,
+                    "end_line": 12,
+                    "end_col": 43
+                  },
+                  "cond": {
+                    "kind": "Binary",
+                    "span": {
+                      "line": 11,
+                      "col": 9,
+                      "end_line": 11,
+                      "end_col": 45
+                    },
+                    "width": 1,
+                    "op": "!=",
+                    "left": {
+                      "kind": "EnumRef",
+                      "span": {
+                        "line": 11,
+                        "col": 9,
+                        "end_line": 11,
+                        "end_col": 37
+                      },
+                      "type": "mode_t",
+                      "member": "RUN",
+                      "from_package": "initial_enum_checks_pkg"
+                    },
+                    "right": {
+                      "kind": "Literal",
+                      "span": {
+                        "line": 11,
+                        "col": 41,
+                        "end_line": 11,
+                        "end_col": 45
+                      },
+                      "width": 2,
+                      "bits": "01"
+                    }
+                  },
+                  "then": {
+                    "kind": "SysCall",
+                    "span": {
+                      "line": 12,
+                      "col": 7,
+                      "end_line": 12,
+                      "end_col": 43
+                    },
+                    "name": "$finish",
+                    "format": null,
+                    "args": [
+                      {
+                        "kind": "Int",
+                        "span": {
+                          "line": 12,
+                          "col": 14,
+                          "end_line": 12,
+                          "end_col": 15
+                        },
+                        "value": 1,
+                        "resolved_width": 32
+                      },
+                      {
+                        "kind": "Literal",
+                        "span": {
+                          "line": 12,
+                          "col": 17,
+                          "end_line": 12,
+                          "end_col": 41
+                        },
+                        "width": 176,
+                        "bits": "01010010010101010100111000100000011001010110111001110101011011010010000001110110011000010110110001110101011001010010000001100011011010000110000101101110011001110110010101100100"
+                      }
+                    ],
+                    "arg_signed": [
+                      true,
+                      false
+                    ],
+                    "fatal_task": true
+                  },
+                  "else": null
+                },
+                {
+                  "kind": "If",
+                  "span": {
+                    "line": 13,
+                    "col": 5,
+                    "end_line": 14,
+                    "end_col": 41
+                  },
+                  "cond": {
+                    "kind": "Binary",
+                    "span": {
+                      "line": 13,
+                      "col": 9,
+                      "end_line": 13,
+                      "end_col": 46
+                    },
+                    "width": 1,
+                    "op": "!=",
+                    "left": {
+                      "kind": "EnumRef",
+                      "span": {
+                        "line": 13,
+                        "col": 9,
+                        "end_line": 13,
+                        "end_col": 38
+                      },
+                      "type": "mode_t",
+                      "member": "IDLE",
+                      "from_package": "initial_enum_checks_pkg"
+                    },
+                    "right": {
+                      "kind": "Literal",
+                      "span": {
+                        "line": 13,
+                        "col": 42,
+                        "end_line": 13,
+                        "end_col": 46
+                      },
+                      "width": 2,
+                      "bits": "00"
+                    }
+                  },
+                  "then": {
+                    "kind": "SysCall",
+                    "span": {
+                      "line": 14,
+                      "col": 7,
+                      "end_line": 14,
+                      "end_col": 41
+                    },
+                    "name": "$error",
+                    "format": "IDLE enum value changed",
+                    "args": [],
+                    "arg_signed": []
+                  },
+                  "else": null
+                }
+              ]
+            }
+          },
+          {
+            "kind": "Assign",
+            "span": {
+              "line": 16,
+              "col": 10,
+              "end_line": 16,
+              "end_col": 49
+            },
+            "target": {
+              "kind": "Ident",
+              "span": {
+                "line": 16,
+                "col": 10,
+                "end_line": 16,
+                "end_col": 11
+              },
+              "width": 1,
+              "name": "y"
+            },
+            "value": {
+              "kind": "Binary",
+              "span": {
+                "line": 16,
+                "col": 15,
+                "end_line": 16,
+                "end_col": 48
+              },
+              "width": 1,
+              "op": "==",
+              "left": {
+                "kind": "Ident",
+                "span": {
+                  "line": 16,
+                  "col": 15,
+                  "end_line": 16,
+                  "end_col": 16
+                },
+                "width": 2,
+                "name": "a"
+              },
+              "right": {
+                "kind": "EnumRef",
+                "span": {
+                  "line": 16,
+                  "col": 20,
+                  "end_line": 16,
+                  "end_col": 48
+                },
+                "type": "mode_t",
+                "member": "RUN",
+                "from_package": "initial_enum_checks_pkg"
+              }
+            }
+          }
+        ],
+        "generates": [],
+        "others": []
+      }
+    ],
+    "others": []
+  },
+  "lean_blocks": []
+}

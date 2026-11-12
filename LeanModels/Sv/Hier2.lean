@@ -948,7 +948,11 @@ def PDesign.paramEnvH (envI : IEnv) (d : PDesign) (args : List Int) : Res IEnv :
           | .ok w => pure (some (n, w))
           | .error e => Res.unsupported s!"parameter '{n}' type: {e}"
   let env2 := { env2 with pwidths := pws }
-  .ok { env2 with dims := dimTable env2 d.decls }
+  -- Keep the source-shaped automatic-function table in the hierarchical
+  -- environment, exactly as the flat `instantiate2From` path does.  Without
+  -- this field the conservative-extension theorem cannot identify the two
+  -- elaborations once a function is present in the module.
+  .ok { env2 with dims := dimTable env2 d.decls, functions := d.functions }
 
 /-- The child instantiator of `instantiateRec`: the definition from the
 library, the instance's parameter point (`PInst.given`, `PDesign.atPoint`),

@@ -336,6 +336,14 @@ checked before dispatch; frame entry fails only when the current count is
 already at the limit. -/
 abbrev pythonFrameFull (depth : Nat) : Prop := depth >= pythonRecursionLimit
 
+/-! At the pinned boundary a Python frame may still enter while the nested
+C-call unit is already full. This is the small arithmetic fact behind the
+separate recursive-entry workers used by both interpreters. -/
+theorem python_frame_then_c_boundary :
+    ¬ pythonFrameFull (pythonRecursionLimit - 1) ∧
+      pythonRecursionFull (pythonRecursionLimit - 1) := by
+  simp [pythonFrameFull, pythonRecursionFull, pythonRecursionLimit]
+
 /-- The script/monadic runner's module boundary contributes one virtual frame;
 the closed-function `callFunction` surface starts at ordinary depth zero so
 its body and the `CallsIn` frame theorem share one execution geometry. -/

@@ -1765,5 +1765,7 @@
   {"file": "harness/iteration_probe.py", "function": "live_list_growth", "args": [[]], "expect": "match", "note": "The heap list cursor observes growth as CPython listiterator does."},
   {"file": "harness/render_probe.py", "function": "scalar_str", "args": [[]], "expect": "match", "note": "Scalar str() uses the shared immediate rendering worker."},
   {"file": "harness/render_probe.py", "function": "tuple_repr", "args": [[]], "expect": "match", "note": "Tuple repr() uses the heap-aware active-path rendering worker."},
-  {"file": "harness/render_probe.py", "function": "list_repr", "args": [[]], "expect": "match", "note": "List repr() uses the heap-aware container rendering worker."}
+  {"file": "harness/render_probe.py", "function": "list_repr", "args": [[]], "expect": "match", "note": "List repr() uses the heap-aware container rendering worker."},
+  {"file": "harness/recursive_entry_probe.py", "function": "frame_then_int", "args": [[2], [994], [997]], "recursion_base": 2, "expect": "match", "note": "Python frame entry and nested int C-call use distinct recursion units."},
+  {"file": "harness/recursive_entry_probe.py", "function": "frame_then_str", "args": [[2], [994], [997]], "recursion_base": 2, "expect": "match", "note": "Python frame entry and nested str C-call use distinct recursion units."}
 ]

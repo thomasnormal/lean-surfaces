@@ -16,8 +16,13 @@ The three ordinary combinational rows all match both simulators:
 The latch and self-read boundaries are explicit.  `latch_comb` also matches
 both simulators in 8 cycles.  `rbw_comb` remains a loud
 `AlwaysComb:self-read` refusal, so it has no E verdict and is not counted as a
-match.  There are no simulator disagreements or unavailable oracles in this
-probe, and no row flipped relative to the frozen baseline.
+match.  The next dynamic-index boundary, `t2_combw`, is a loud
+`10.4.1: blocking assignment target is not a static in-range window` refusal;
+the fresh Icarus Verilog 13.0 receipt is
+`00001111,01001111,00001111,10100101,00000000,11111110`.  Xcelium was not
+available in this run, so no Xcelium result is claimed for that refusal.  There
+are no simulator disagreements in the admitted rows and no row flipped
+relative to the frozen baseline.
 
 The receipts were produced with:
 

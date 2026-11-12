@@ -1214,7 +1214,7 @@ merge locals merely because their paths or names coincide. See
 Phase 1 of the CV32E40P program adds a second extraction mode:
 
 ```
-python3.12 extractors/sv/extract.py --top <module> <files...> [-I <incdir>] [-o out.json]
+python3.12 extractors/sv/extract.py --top <module> <files...> [-I <incdir>] [-D NAME[=VALUE]] [-o out.json]
 ```
 
 All sources are compiled as **one** slang compilation (multi-file is for
@@ -1223,6 +1223,12 @@ the named top module is emitted, as one envelope (default output path: next
 to the file that defines the top module, `<file>.sv.json`). Everything in
 this section is **additive**: single-file mode (`--top` absent) is untouched
 and remains byte-identical at schema `sv-0.1`.
+
+Each `-D NAME` or `-D NAME=VALUE` is passed to Slang's own SystemVerilog
+preprocessor before parsing. The selected preprocessor branch is therefore
+the source seen by the ordinary AST conversion; the extractor does not
+perform textual substitution. The same definitions are applied to every
+probe-point re-extraction when `--probe-points` is used.
 
 Two design laws govern this mode (they are the point of the program):
 

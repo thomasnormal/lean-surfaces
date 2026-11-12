@@ -34862,7 +34862,8 @@ def convert_module_sym(sm, inst):
 
 
 def process_symbolic(top, sources, incdirs, out_path, probed=False,
-                     retain_loops=True, retain_proc_rewrites=False):
+                     retain_loops=True, retain_proc_rewrites=False,
+                     defines=None):
     """`--top` mode: compile all sources as ONE slang compilation (name
     resolution across packages/files) and emit the top module in the
     extended symbolic vocabulary as one sv-0.2 envelope. `probed`: the
@@ -34895,10 +34896,13 @@ def process_symbolic(top, sources, incdirs, out_path, probed=False,
             "sha256": hashlib.sha256(data).hexdigest(),
         })
 
-    if incdirs:
+    if incdirs or defines:
         sm_obj = pyslang.SourceManager()
         popt = pyslang.parsing.PreprocessorOptions()
-        popt.additionalIncludePaths = list(incdirs)
+        if incdirs:
+            popt.additionalIncludePaths = list(incdirs)
+        if defines:
+            popt.predefines = list(defines)
         bag = pyslang.Bag([popt])
         tree = SyntaxTree.fromFiles(list(sources), sm_obj, bag)
     else:
@@ -35158,7 +35162,8 @@ def _probe_strip_spans(node):
 
 
 def write_probe_sidecar(top, sources, incdirs, out_path, points,
-                        retain_loops=True, retain_proc_rewrites=False):
+                        retain_loops=True, retain_proc_rewrites=False,
+                        defines=None):
     """Extract `top` at every probe point (`parse_probe_points`) and write
     the sidecar next to the envelope `out_path` (already written at the
     defaults). Returns the sidecar path. Each point holds its overrides,
@@ -35193,11 +35198,15 @@ def write_probe_sidecar(top, sources, incdirs, out_path, points,
             try:
                 process_symbolic(top, sources, incdirs, tmp,
                                  retain_loops=retain_loops,
-                                 retain_proc_rewrites=retain_proc_rewrites)
+                                 retain_proc_rewrites=retain_proc_rewrites,
+                                 defines=defines)
                 # The P-elaborated hierarchy (slang's own instance values).
-                if incdirs:
+                if incdirs or defines:
                     popt = pyslang.parsing.PreprocessorOptions()
-                    popt.additionalIncludePaths = list(incdirs)
+                    if incdirs:
+                        popt.additionalIncludePaths = list(incdirs)
+                    if defines:
+                        popt.predefines = list(defines)
                     tree = SyntaxTree.fromFiles(list(sources), pyslang.SourceManager(),
                                                 pyslang.Bag([popt]))
                 else:
@@ -35283,7 +35292,7 @@ def _compilation_with_choice(choice):
     return Compilation(pyslang.Bag([options]))
 
 
-def process_file(source_path, min_typ_max="typ"):
+def process_file(source_path, min_typ_max="typ", defines=None):
     global _SOURCE_BYTES
     try:
         with open(source_path, "rb") as f:
@@ -35298,7 +35307,14 @@ def process_file(source_path, min_typ_max="typ"):
     except UnicodeDecodeError as e:
         raise ExtractError("%s: not valid UTF-8: %s" % (source_path, e))
 
-    tree = SyntaxTree.fromText(text, name=rel_posix(source_path))
+    if defines:
+        popt = pyslang.parsing.PreprocessorOptions()
+        popt.predefines = list(defines)
+        tree = SyntaxTree.fromText(
+            text, pyslang.SourceManager(), rel_posix(source_path), "",
+            pyslang.Bag([popt]))
+    else:
+        tree = SyntaxTree.fromText(text, name=rel_posix(source_path))
     comp = _compilation_with_choice(min_typ_max)
     comp.addSyntaxTree(tree)
     sm = tree.sourceManager
@@ -35340,6 +35356,10 @@ def main(argv=None):
     parser.add_argument("-I", dest="incdirs", action="append", default=[],
                         metavar="DIR", help="`include search dir "
                         "(symbolic mode only)")
+    parser.add_argument("-D", "--define", dest="defines", action="append",
+                        default=[], metavar="NAME[=VALUE]",
+                        help="predefine NAME (or NAME=VALUE) in Slang's "
+                             "SystemVerilog preprocessor")
     parser.add_argument("-o", dest="out", default=None, metavar="OUT.json",
                         help="symbolic mode: output path (default: next to "
                         "the file defining the top module)")
@@ -35375,13 +35395,15 @@ def main(argv=None):
             out = process_symbolic(args.top, args.sources, args.incdirs,
                                    args.out, probed=points is not None,
                                    retain_loops=args.retain_loops,
-                                   retain_proc_rewrites=args.retain_proc_rewrites)
+                                   retain_proc_rewrites=args.retain_proc_rewrites,
+                                   defines=args.defines)
             print(out)
             if points is not None:
                 print(write_probe_sidecar(args.top, args.sources, args.incdirs,
                                           out, points,
                                           retain_loops=args.retain_loops,
-                                          retain_proc_rewrites=args.retain_proc_rewrites))
+                                          retain_proc_rewrites=args.retain_proc_rewrites,
+                                          defines=args.defines))
         else:
             if args.incdirs or args.out:
                 raise ExtractError("-I/-o require --top (symbolic mode)")
@@ -35390,7 +35412,7 @@ def main(argv=None):
             if args.retain_loops:
                 raise ExtractError("--retain-loops requires --top (symbolic mode)")
             for src in args.sources:
-                process_file(src, args.min_typ_max)
+                process_file(src, args.min_typ_max, defines=args.defines)
     except ExtractError as e:
         print("error: %s" % e, file=sys.stderr)
         return 1

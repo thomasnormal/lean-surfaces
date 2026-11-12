@@ -220,7 +220,10 @@ partial def parseExpr (j : Json) : Except String Expr := do
         return .typeTrait (← getStr j "trait") (← getOptStr j "arg_type")
           (← optSub "sub") (← ty) span
     | "ConstantExpr" =>
-        return .constExpr (← getStr j "value") (← optSub "sub") (← ty) span
+        let value? ← getOptStr j "value"
+        match value? with
+        | some value => return .constExpr value (← optSub "sub") (← ty) span
+        | none => return .unsupported "ConstantExpr" "unfolded constant expression" span
     | "Unsupported" =>
         return .unsupported (← getStr j "c_kind") (← getStr j "text") span
     | other =>
@@ -304,6 +307,12 @@ partial def parseStmt (j : Json) : Except String Stmt := do
     | "BreakStmt" => return .breakS span
     | "ContinueStmt" => return .continueS span
     | "NullStmt" => return .nullStmt span
+    | "SwitchStmt" => return .switchS (← expr "cond") (← stmt "body") span
+    | "CaseStmt" =>
+        match expr "value" with
+        | .ok value => return .caseS value (← stmt "body") span
+        | .error reason => return .unsupported "CaseStmt" reason span
+    | "DefaultStmt" => return .defaultS (← stmt "body") span
     | "GotoStmt" => return .goto (← getStr j "label") span
     | "LabelStmt" => return .label (← getStr j "label") (← stmt "body") span
     | "Unsupported" =>

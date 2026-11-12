@@ -201,6 +201,9 @@ inductive Stmt where
   | continueS (span : CSpan)
   /-- §6.8.3 — the empty statement; it has no effect. -/
   | nullStmt (span : CSpan)
+  | switchS (cond : Expr) (body : Stmt) (span : CSpan)
+  | caseS (value : Expr) (body : Stmt) (span : CSpan)
+  | defaultS (body : Stmt) (span : CSpan)
   | goto (label : String) (span : CSpan)
   | label (name : String) (body : Stmt) (span : CSpan)
   /-- An expression in statement position. -/
@@ -430,6 +433,9 @@ def Stmt.substmts : Stmt → List Stmt
   | s@(.whileS _ b _) => s :: b.substmts
   | s@(.doS b _ _) => s :: b.substmts
   | s@(.label _ b _) => s :: b.substmts
+  | s@(.switchS _ b _) => s :: b.substmts
+  | s@(.caseS _ b _) => s :: b.substmts
+  | s@(.defaultS b _) => s :: b.substmts
   | s => [s]
 
 /-- The expressions a statement holds DIRECTLY (its own operands), not
@@ -444,6 +450,9 @@ def Stmt.ownExprs : Stmt → List Expr
   | .ret (some v) _ => v.subexprs
   | .expr e _ => e.subexprs
   | .nullStmt _ => []
+  | .switchS c _ _ => c.subexprs
+  | .caseS v _ _ => v.subexprs
+  | .defaultS _ _ => []
   | _ => []
 
 namespace TranslationUnit

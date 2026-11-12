@@ -332,7 +332,75 @@ fuel is a bound on total work rather than on iterations alone. The
 `∃ n, ∀ fuel ≥ n` threshold form is unaffected: it quantifies over fuel
 from outside. -/
 
+inductive SwitchItem where
+  | label (value : Option Expr)
+  | stmt (s : Stmt)
+
+def switchCaseTail : Stmt → List SwitchItem
+  | .caseS v b _ => .label (some v) :: switchCaseTail b
+  | .defaultS b _ => .label none :: switchCaseTail b
+  | s => [.stmt s]
+
+def switchItems : Stmt → List SwitchItem
+  | .compound body _ => body.flatMap switchItems
+  | .caseS v b _ => .label (some v) :: switchCaseTail b
+  | .defaultS b _ => .label none :: switchCaseTail b
+  | s => [.stmt s]
+
+def containsCaseLabel (s : Stmt) : Bool :=
+  s.substmts.any fun t => match t with
+    | .caseS .. | .defaultS .. => true
+    | _ => false
+
+def switchHasNestedLabel : Stmt → Bool
+  | .compound body _ => body.any fun s =>
+      match s with
+      | .caseS _ b _ | .defaultS b _ => containsCaseLabel b
+      | _ => containsCaseLabel s
+  | s => containsCaseLabel s
+
+def switchFindAux (ctx : Ctx) (cv : CVal) :
+    List SwitchItem → Option (List Stmt) → Option (List Stmt) → EvalM (Option (List Stmt))
+  | [], selected, fallback =>
+      pure ((selected.orElse (fun _ => fallback)).map List.reverse)
+  | .label label :: rest, selected, fallback =>
+      match selected with
+      | some _ => switchFindAux ctx cv rest selected fallback
+      | none =>
+          match label with
+          | none => switchFindAux ctx cv rest none (some [])
+          | some e => do
+              let v ← evalExpr ctx e
+              let (_, a) ← asInt cv
+              let (_, b) ← asInt v
+              if a == b then switchFindAux ctx cv rest (some []) fallback
+              else switchFindAux ctx cv rest none fallback
+  | .stmt s :: rest, selected, fallback =>
+      match selected, fallback with
+      | some acc, _ => switchFindAux ctx cv rest (some (s :: acc)) fallback
+      | none, some acc => switchFindAux ctx cv rest none (some (s :: acc))
+      | none, none => switchFindAux ctx cv rest none none
+  termination_by items _ _ => items.length
+
+def switchFind (ctx : Ctx) (cv : CVal) (body : Stmt) : EvalM (Option (List Stmt)) :=
+  switchFindAux ctx cv (switchItems body) none none
+
 mutual
+
+def execSwitch : Nat → Ctx → Expr → Stmt → ExecM Flow
+  | 0, _, _, _ => exhausted
+  | fuel + 1, ctx, cond, body => do
+      if switchHasNestedLabel body then
+        refuseUnsupported "case label nested in a control statement"
+      let cv ← evalE ctx cond
+      let selected ← switchFind ctx cv body
+      match selected with
+      | none => pure .normal
+      | some statements => do
+          let f ← execBlock fuel ctx statements
+          match f with
+          | .brk => pure .normal
+          | other => pure other
 
 /-- §6.8 — execute one statement, yielding how it completed. -/
 def execStmt : Nat → Ctx → Stmt → ExecM Flow
@@ -351,6 +419,9 @@ def execStmt : Nat → Ctx → Stmt → ExecM Flow
     -- discarded. 297 sites, the largest statement class in the corpus.
     | .expr e _ => do let _ ← evalE ctx e; pure .normal
     | .nullStmt _ => pure .normal
+    | .switchS c body _ => execSwitch fuel ctx c body
+    | .caseS _ _ _ | .defaultS _ _ =>
+        refuseUnsupported "case/default escaped a switch body"
     -- §6.8.5.1 — `if`. Measured: only 51 of 253 carry an `else`, so the
     -- else-less arm is the common path and is written first.
     | .ifS c t none _ => do

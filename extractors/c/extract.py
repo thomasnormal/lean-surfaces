@@ -66,7 +66,7 @@ DECLS = {"FunctionDecl", "VarDecl", "ParmVarDecl", "FieldDecl", "RecordDecl",
          "TypedefDecl", "EnumDecl", "EnumConstantDecl"}
 STMTS = {"CompoundStmt", "DeclStmt", "IfStmt", "ForStmt", "WhileStmt", "DoStmt",
          "ReturnStmt", "BreakStmt", "ContinueStmt", "GotoStmt", "LabelStmt",
-         "NullStmt"}
+         "NullStmt", "SwitchStmt", "CaseStmt", "DefaultStmt"}
 EXPRS = {"IntegerLiteral", "CharacterLiteral", "StringLiteral", "FloatingLiteral",
          "DeclRefExpr", "MemberExpr", "ArraySubscriptExpr", "CallExpr",
          "BinaryOperator", "CompoundAssignOperator", "UnaryOperator",
@@ -449,6 +449,20 @@ class Extractor:
     def e_NullStmt(self, n):
         return {}
 
+    def e_SwitchStmt(self, n):
+        c = nonempty(n)
+        return {"cond": self.node(c[0] if c else None),
+                "body": self.node(c[1] if len(c) > 1 else None)}
+
+    def e_CaseStmt(self, n):
+        c = kids(n)
+        return {"value": self.node(c[0] if c else None),
+                "body": self.node(c[1] if len(c) > 1 else None)}
+
+    def e_DefaultStmt(self, n):
+        c = kids(n)
+        return {"body": self.node(c[0]) if c else None}
+
     def e_GotoStmt(self, n):
         return {"label": self.labels.get(n.get("targetLabelDeclId"))}
 
@@ -561,7 +575,18 @@ class Extractor:
 
     def e_ConstantExpr(self, n):
         c = kids(n)
-        return {"value": n.get("value"),
+        v = n.get("value")
+        def folded(node):
+            if node.get("value") is not None:
+                return node.get("value")
+            for child in kids(node):
+                got = folded(child)
+                if got is not None:
+                    return got
+            return None
+        if v is None and c:
+            v = folded(c[0])
+        return {"value": None if v is None else str(v),
                 "sub": self.node(c[0]) if c else None, "type": qual(n)}
 
 

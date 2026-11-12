@@ -50,4 +50,16 @@ theorem sva_valueEq_xread_left {trace trace' : List SvState} {index : Nat}
   cases heq
   simp [SvaValue.eval, exprAt, hsource, hconcrete]
 
+theorem sva_past_zero_xread {trace trace' : List SvState} {index : Nat}
+    {name : String} {source concrete : LVec}
+    (hsource : trace[index]? = some ([(name, source)]))
+    (hconcrete : trace'[index]? = some ([(name, concrete)]))
+    (hknown : source.bits.toList.all Logic.isKnown = true)
+    (hread : XRead source concrete) :
+    SvaValue.eval trace index (.past 0 (.ident name)) =
+      SvaValue.eval trace' index (.past 0 (.ident name)) := by
+  have heq := xRead_eq_of_known hknown hread
+  cases heq
+  simp [SvaValue.eval, exprAt, hsource, hconcrete]
+
 end LeanModels.Sv.Kernel

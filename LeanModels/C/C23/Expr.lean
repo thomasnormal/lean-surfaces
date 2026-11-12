@@ -572,12 +572,14 @@ def storeAt (p : Ptr) (ty : CType) (v : CVal) : EvalM Unit :=
 `none` is an INDIRECT call — measured 19, every one through `movecb`. -/
 def calleeName : Expr → Option String
   | .implicitCast _ s _ _ => calleeName s
+  | .cast _ s _ _ => calleeName s
   | .paren s _ _ => calleeName s
   | .declRef _ n "FunctionDecl" _ _ => some n
   | _ => none
 
 def calleeId : Expr → Option DeclarationId
   | .implicitCast _ s _ _ => calleeId s
+  | .cast _ s _ _ => calleeId s
   | .paren s _ _ => calleeId s
   | .declRef (some id) _ "FunctionDecl" _ _ => some id
   | _ => none

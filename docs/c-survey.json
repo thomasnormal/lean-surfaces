@@ -12,10 +12,10 @@
   "gcc.c-torture/execute": {
    "not-ingested": 19,
    "not-parsed": 321,
-   "passed": 596,
-   "refused-libc": 72,
+   "passed": 598,
+   "refused-libc": 69,
    "refused-ub": 33,
-   "refused-unsupported": 831,
+   "refused-unsupported": 832,
    "timeout": 46
   },
   "gcc.c23-run": {
@@ -31,10 +31,10 @@
  "counts": {
   "not-ingested": 25,
   "not-parsed": 350,
-  "passed": 708,
-  "refused-libc": 80,
+  "passed": 710,
+  "refused-libc": 77,
   "refused-ub": 36,
-  "refused-unsupported": 967,
+  "refused-unsupported": 968,
   "timeout": 48
  },
  "dynamic_wall_ranking": [
@@ -1453,16 +1453,6 @@
   },
   {
    "files": [
-    "20021120-3.c",
-    "pr78586.c",
-    "pr79327.c"
-   ],
-   "present": 3,
-   "sole": 3,
-   "wall": "libc-call: __builtin_sprintf"
-  },
-  {
-   "files": [
     "970214-1.c",
     "970214-2.c",
     "970217-1.c"
@@ -2245,6 +2235,14 @@
    "present": 1,
    "sole": 1,
    "wall": "unsupported:GenericSelectionExpr"
+  },
+  {
+   "files": [
+    "pr79327.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "unsupported:__builtin_sprintf"
   },
   {
    "files": [
@@ -4248,8 +4246,8 @@
   }
  ],
  "manifest_hash": "1de1a60c299d5bb51dae7ca001b0a008010cad0b25670cde2090c08bfc1a84ce",
- "measured_at_utc": "2026-11-12T09:44:59Z",
- "measured_commit": "7959598cd",
+ "measured_at_utc": "2026-11-12T09:55:31Z",
+ "measured_commit": "ab2da33fa",
  "pin": null,
  "rows": [
   {
@@ -9162,8 +9160,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "__builtin_sprintf",
-   "dynamic_wall": "libc-call: __builtin_sprintf",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "20021120-3.c",
    "sha256": "015a0910b2a6c7f94aad21ca1d54984e7760c78077dd53a38b876338d51fc086",
@@ -9172,7 +9170,7 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -27115,8 +27113,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "__builtin_sprintf",
-   "dynamic_wall": "libc-call: __builtin_sprintf",
+   "detail": "",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "pr78586.c",
    "sha256": "b381c8f7fbc30e3f92c3a3c29047466b0bf0a914c5bafaf6aa5c43593891c204",
@@ -27125,7 +27123,7 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -27251,8 +27249,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "__builtin_sprintf",
-   "dynamic_wall": "libc-call: __builtin_sprintf",
+   "detail": "__builtin_sprintf: unsupported format",
+   "dynamic_wall": "unsupported:__builtin_sprintf",
    "manifest_status": "parsed",
    "name": "pr79327.c",
    "sha256": "462f173d138956bb675d6a98de5a649fabf8253d9dd5cc147b9cafdd9d8fe8f5",
@@ -27261,7 +27259,7 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-libc"
+   "verdict": "refused-unsupported"
   },
   {
    "corpus": "gcc.c-torture/execute",

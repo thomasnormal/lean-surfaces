@@ -746,6 +746,26 @@ def callFn : Nat → Program → LeanModels.C.FunctionDefn → List CVal → Exe
                 liftEval (writeMem (fun m => m.storeBytes dp bs))
                 pure (.ptr dp)
           | _ => refuseUnsupported "memcpy: wrong argument count"
+        let runSprintf : List CVal → ExecM CVal := fun vs =>
+          match vs with
+          | [dst, fmt, value] => do
+              let dp ← asPtr dst
+              let fp ← asPtr fmt
+              let (_, n) ← asInt value
+              let m ← get
+              let (_, fo, off) ← liftEval (m.resolve fp 0)
+              let pattern := fo.bytes.drop off
+              let ok := match pattern with
+                | [.conc 37, .conc 100, .conc 0] => true
+                | [.conc 37, .conc 108, .conc 117, .conc 0] => true
+                | _ => false
+              if !ok then refuseUnsupported "__builtin_sprintf: unsupported format"
+              else
+                let chars := (toString n).toList
+                let bytes := chars.map (fun c => CByte.conc (UInt8.ofNat c.toNat)) ++ [CByte.conc 0]
+                liftEval (writeMem (fun mem => mem.storeBytes dp bytes))
+                pure (.int IntTy.int_ (bytes.length - 1))
+          | _ => refuseUnsupported "__builtin_sprintf: wrong argument count"
         let runBuiltinStrcpy : List CVal → ExecM CVal := fun vs =>
           match vs with
           | [dst, src] => do
@@ -882,6 +902,8 @@ def callFn : Nat → Program → LeanModels.C.FunctionDefn → List CVal → Exe
             | some nm =>
               if nm == "__builtin_strcmp" || nm == "strcmp" then
                 runStrcmp vs
+              else if nm == "__builtin_sprintf" then
+                runSprintf vs
               else if nm == "__builtin_strcpy" then
                 runBuiltinStrcpy vs
               else if nm == "strlen" then
@@ -914,6 +936,7 @@ def callFn : Nat → Program → LeanModels.C.FunctionDefn → List CVal → Exe
             -- widening the slice and never pools with the other two.
             | none =>
               if nm == "__builtin_strcmp" || nm == "strcmp" then runStrcmp vs
+              else if nm == "__builtin_sprintf" then runSprintf vs
               else if nm == "__builtin_strcpy" then runBuiltinStrcpy vs
               else if nm == "strlen" then runStrlen vs
               else if nm == "memset" || nm == "__builtin_memset" then runMemset vs

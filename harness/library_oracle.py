@@ -614,6 +614,16 @@ def main(argv=None):
                 row["skipped"] = "public name is %s after the body ran" % impl
                 result["functions"].append(row)
                 continue
+            if impl.startswith("override:"):
+                # The approved model is shown the file's Python AST.  A
+                # guarded accelerator import may replace that name with a C
+                # function after the body runs; comparing the model's pure
+                # definition to the C implementation is an instrument error,
+                # not a semantic disagreement.  Keep the function visible
+                # and record the measured accelerator wall explicitly.
+                row["skipped"] = "runtime name is %s (C accelerator override); accelerator equivalence is unmeasured" % impl
+                result["functions"].append(row)
+                continue
             if UNSAFE_CALL.match(name):
                 row["skipped"] = "unsafe verb (harness/library_oracle.py UNSAFE_CALL)"
                 result["functions"].append(row)

@@ -7,6 +7,11 @@ source offset and character width.  The C extractor can join these records by
 offset without decoding source text.  The plugin is an observation tool, not
 a second C parser or an admitted semantic layer.
 
+`floating_bits_probe.cpp` is the corresponding parser-native observation for
+`FloatingLiteral` nodes.  It records Clang's rounded APFloat bit pattern,
+width, source span, and AST type for joining to the envelope.  The probe does
+not decode a C spelling in Python or Lean.
+
 Build it against the matching Clang/LLVM development installation outside the
 repository:
 
@@ -27,6 +32,20 @@ frontend:
 ```sh
 python3 harness/c_string_bytes_determinism.py \
   --clang "$LEAN_C_CLANG" --plugin "$LEAN_C_STRING_BYTES_PLUGIN" file.c
+```
+
+Build and check the floating-literal probe outside the repository:
+
+```sh
+export LEAN_C_FLOATING_BITS_PLUGIN=/outside/the/repo/floating_bits_probe.so
+"$LEAN_C_CLANGXX" --no-default-config -std=c++17 -fPIC -shared -fno-rtti \
+  -I"$LEAN_C_HEADERS/include" extractors/c/floating_bits_probe.cpp \
+  -L"$LEAN_C_LIBS" -Wl,-rpath,"$LEAN_C_LIBS" -Wl,--no-undefined \
+  -l:libclang-cpp.so.21.1 -l:libLLVM.so.21.1 -o "$LEAN_C_FLOATING_BITS_PLUGIN"
+python3 harness/c_floating_bits_determinism.py --self-test \
+  --clang "$LEAN_C_CLANG" --plugin "$LEAN_C_FLOATING_BITS_PLUGIN"
+python3 harness/c_floating_bits_determinism.py \
+  --clang "$LEAN_C_CLANG" --plugin "$LEAN_C_FLOATING_BITS_PLUGIN" file.c
 ```
 
 The semantic tier remains loud for escaped and non-ASCII strings until these

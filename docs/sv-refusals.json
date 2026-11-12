@@ -956,6 +956,9 @@
     "extractor": [
      "AssignmentExpression:compound",
      "AssignmentExpression:compound-read-width"
+    ],
+    "lean": [
+     "AssignmentExpression:compound"
     ]
    },
    "where": [
@@ -1543,6 +1546,9 @@
     "extractor": [
      "TimedStatement:*",
      "ProceduralBlockSymbol:ImplicitEventControl"
+    ],
+    "lean": [
+     "ProceduralBlockSymbol:Always"
     ]
    },
    "where": [
@@ -1631,6 +1637,9 @@
    "kinds": {
     "extractor": [
      "SignalEventControl:iff-reset"
+     ],
+     "lean": [
+      "AlwaysPosedge:reset-iff"
     ]
    },
    "where": [
@@ -1859,16 +1868,11 @@
    "proposed": false,
    "prerequisite": "remaining case semantics: symbolic range/pattern matching and dynamic/effectful case diagnostics",
    "plan": "CASEFEAT",
-   "kinds": {
-    "extractor": [
-     "CaseStatement:*"
-    ],
-    "lean": [
-     "CaseCheck:unique",
-     "CaseCheck:unique0",
-     "CaseCheck:priority"
-    ]
-   },
+    "kinds": {
+     "extractor": [
+      "CaseStatement:*"
+     ]
+    },
    "where": [
     {
      "file": "extractors/sv/extract.py",
@@ -2156,6 +2160,9 @@
      "@default:_convert_sym_call_expr",
      "CallExpression",
      "SubroutineSymbol:Subroutine"
+    ],
+    "lean": [
+     "CallExpression:user-function"
     ]
    },
    "where": [
@@ -2622,6 +2629,9 @@
      "Initializer:x-literal-parametric-width",
      "Initializer:unsized-xz-element",
      "PortConnection:unsized-xz"
+    ],
+    "lean": [
+     "ConversionExpression:unsized-xz"
     ]
    },
    "where": [
@@ -2879,7 +2889,13 @@
    },
    "kinds": {
     "extractor": [
-     "ExpressionStatement:CallExpression"
+     "ExpressionStatement:CallExpression",
+     "CallExpression:*",
+     "SystemTask:readmemh",
+     "SystemTask:readmemh:missing-file",
+     "SystemTask:readmemh:shape",
+     "SystemTask:readmemh:short-file",
+     "SystemTask:readmemh:xz-digit"
     ]
    },
    "where": [
@@ -3878,7 +3894,8 @@
    },
    "kinds": {
     "extractor": [
-     "*:*"
+     "*:*",
+     "SubroutineSymbol:empty-task"
     ]
    },
    "where": [
@@ -4646,6 +4663,9 @@
    "kinds": {
     "lean": [
      "PortConn:net-width"
+    ],
+    "extractor": [
+     "PortConnection:net-width"
     ]
    },
    "where": [
@@ -6577,12 +6597,6 @@
    "proposed": false,
    "prerequisite": "an NBA queue inside the comb settle loop, or a decision to refuse at instantiation like the other guards",
    "plan": "SEQ",
-   "match": [
-    {
-     "file": "LeanModels/Sv/Sem2.lean",
-     "text": "inside always_comb is outside the cycle semantics"
-    }
-   ],
    "where": [
     {
      "file": "LeanModels/Sv/Sem2.lean",
@@ -6630,12 +6644,6 @@
    "why": "This is how every extractor Unsupported node and every loud instantiation process surfaces. `load_design_sv2` does NOT refuse a design merely for holding loud nodes; it refuses only the kinds listed under Loader gates.",
    "category": "refused-now",
    "proposed": false,
-   "match": [
-    {
-     "file": "LeanModels/Sv/Sem2.lean",
-     "text": "unsupported expression '"
-    }
-   ],
    "where": [
     {
      "file": "LeanModels/Sv/Sem2.lean",
@@ -6742,7 +6750,7 @@
     "lean-loader"
    ],
    "trigger": "H: always_comb begin y = a; $display(\"x\"); end",
-   "why": "Statement-position SysCall nodes remain a parser-level refusal. Initial processes are decoded as the named Unsupported node `ProceduralBlockSymbol:Initial`, so the envelope reaches the normal loud-process path.",
+   "why": "Statement-position SysCall nodes remain a parser-level refusal. Initial processes are decoded as the named T2 unsupported node, so the envelope reaches the normal loud-process path.",
    "category": "later",
    "proposed": false,
    "prerequisite": "$display and friends are inert for a combinational task but the loader must still parse them (no plan item)",
@@ -6754,7 +6762,7 @@
    },
    "kinds": {
     "lean": [
-     "ProceduralBlockSymbol:Initial"
+     "T2:Initial"
     ]
    },
    "match": [
@@ -6770,7 +6778,7 @@
     }
    ],
    "verified_by_run": true,
-   "notes": "Envelope shape verified with the extractor; Initial is retained as `ProceduralBlockSymbol:Initial`, while the Lean rejection here is the statement-position SysCall parser path.",
+   "notes": "Envelope shape verified with the extractor; the Lean rejection here is the statement-position SysCall parser path, while the cycle adapter reports T2:Initial for initial processes.",
    "decided_by": "Thomas 2026-10-29: approved the refused-now and later classifications of the register"
   },
   {

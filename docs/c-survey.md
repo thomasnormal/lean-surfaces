@@ -2,10 +2,10 @@
 
 Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manifest.
 
-- verdicts: 862/2214 MATCH (passed 862, failed 0, oracle 0)
+- verdicts: 864/2214 MATCH (passed 864, failed 0, oracle 0)
 - manifest SHA-256: `eb2ea162993fd287a86d680d539ca5a9bba4f09b045a6ad663aaf88cdc3f445d`
-- measured commit: `10747fb1f`
-- measured at: `2026-11-12T18:28:04Z`
+- measured commit: `f48b99cfa`
+- measured at: `2026-11-12T18:31:49Z`
 
 ## Verdict counts
 
@@ -13,10 +13,10 @@ Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manife
 | --- | ---: |
 | `not-parsed` | 294 |
 | `oracle-tests-compiler` | 1 |
-| `passed` | 862 |
-| `refused-libc` | 48 |
+| `passed` | 864 |
+| `refused-libc` | 45 |
 | `refused-ub` | 69 |
-| `refused-unsupported` | 887 |
+| `refused-unsupported` | 888 |
 | `timeout` | 53 |
 
 ## Counts by corpus
@@ -30,10 +30,10 @@ Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manife
 | `c-testsuite/single-exec` | `timeout` | 2 |
 | `gcc.c-torture/execute` | `not-parsed` | 267 |
 | `gcc.c-torture/execute` | `oracle-tests-compiler` | 1 |
-| `gcc.c-torture/execute` | `passed` | 703 |
-| `gcc.c-torture/execute` | `refused-libc` | 42 |
+| `gcc.c-torture/execute` | `passed` | 705 |
+| `gcc.c-torture/execute` | `refused-libc` | 39 |
 | `gcc.c-torture/execute` | `refused-ub` | 60 |
-| `gcc.c-torture/execute` | `refused-unsupported` | 794 |
+| `gcc.c-torture/execute` | `refused-unsupported` | 795 |
 | `gcc.c-torture/execute` | `timeout` | 51 |
 | `gcc.c23-run` | `not-parsed` | 27 |
 | `gcc.c23-run` | `passed` | 2 |
@@ -124,7 +124,6 @@ The run's first refusal, normalized by construct; `sole` counts rows whose first
 | `unsupported:string literal with escape or non-ASCII spelling` | 4 | 4 | 20010325-1.c, printf-1.c, wchar_t-1.c, widechar-3.c |
 | `libc-call: __builtin_abort` | 3 | 3 | gcc/testsuite/gcc.dg/c23-nullptr-5.c, pr77767.c, pr97325.c |
 | `libc-call: __builtin_expect` | 3 | 3 | 00214.c, 20020418-1.c, pr115277.c |
-| `libc-call: memcmp` | 3 | 3 | 20050502-2.c, pr43236.c, string-opt-17.c |
 | `unsupported:ExprWithCleanups` | 3 | 3 | 20041124-1.c, 950628-1.c, pr30185.c |
 | `unsupported:function-to-pointer decay (inch 5)` | 3 | 3 | 20041212-1.c, 20101011-1.c, pr42231.c |
 | `unsupported:no layout for declared type 'A'` | 3 | 3 | 20010118-1.c, restrict-1.c, strct-pack-2.c |
@@ -217,6 +216,7 @@ The run's first refusal, normalized by construct; `sole` counts rows whose first
 | `unsupported:extern object 'p' has no definition in the translation unit` | 1 | 1 | gcc/testsuite/gcc.dg/c23-unreachable-1.c |
 | `unsupported:function instrumentation is outside the tier` | 1 | 1 | eeprof-1.c |
 | `unsupported:long double integer-to-floating conversion` | 1 | 1 | 930622-2.c |
+| `unsupported:memcmp` | 1 | 1 | 20050502-2.c |
 | `unsupported:no layout for compound literal type 'A'` | 1 | 1 | 20020206-2.c |
 | `unsupported:no layout for compound literal type 'T'` | 1 | 1 | 20071029-1.c |
 | `unsupported:no layout for compound literal type 'V'` | 1 | 1 | pr109040.c |

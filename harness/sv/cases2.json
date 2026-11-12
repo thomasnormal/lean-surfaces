@@ -73192,5 +73192,15 @@
     "refusal": "Clock:edge",
     "measured": "2026-11-12: Icarus Verilog 13.0 and Xcelium 24.03-s004 execute the four-cycle fixed-array shift; E names the first wall as Clock:edge before the looped memory update, with no clocked semantics claimed."
   }
+  ,{
+    "name": "for_loop_e_boundary",
+    "example": "sem2/for_loop_e",
+    "top": "for_loop_e",
+    "clock": "clk",
+    "signals": ["d", "q"],
+    "stimulus": [{"d": "00000000"}, {"d": "10100101"}, {"d": "01011010"}, {"d": "11110000"}],
+    "refusal": "Clock:edge",
+    "measured": "2026-11-12: Icarus Verilog 13.0 and Xcelium 24.03-s004 execute the looped four-cell shift; ordinary E refuses at Clock:edge before the loop target, with no clocked or memory semantics claimed."
+  }
   ]
 }

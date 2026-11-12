@@ -2,19 +2,19 @@
  "by_corpus": {
   "c-testsuite/single-exec": {
    "not-parsed": 1,
-   "passed": 152,
+   "passed": 154,
    "refused-libc": 5,
    "refused-ub": 3,
-   "refused-unsupported": 57,
+   "refused-unsupported": 55,
    "timeout": 2
   },
   "gcc.c-torture/execute": {
    "not-parsed": 321,
    "oracle-tests-compiler": 1,
-   "passed": 654,
+   "passed": 655,
    "refused-libc": 37,
    "refused-ub": 36,
-   "refused-unsupported": 821,
+   "refused-unsupported": 820,
    "timeout": 48
   },
   "gcc.c23-run": {
@@ -29,10 +29,10 @@
  "counts": {
   "not-parsed": 350,
   "oracle-tests-compiler": 1,
-  "passed": 807,
+  "passed": 810,
   "refused-libc": 43,
   "refused-ub": 40,
-  "refused-unsupported": 923,
+  "refused-unsupported": 920,
   "timeout": 50
  },
  "dynamic_wall_ranking": [
@@ -742,6 +742,7 @@
     "00182.c",
     "20000412-6.c",
     "20000801-1.c",
+    "20000819-1.c",
     "20000910-1.c",
     "20011126-2.c",
     "20020503-1.c",
@@ -759,17 +760,19 @@
     "950714-1.c",
     "961125-1.c",
     "990222-1.c",
+    "990513-1.c",
     "loop-12.c",
     "pr116799.c",
     "pr20601-1.c",
     "pr27073.c",
     "pr34176.c",
     "pr34415.c",
+    "pr36038.c",
     "pr54985.c",
     "pr71631.c"
    ],
-   "present": 30,
-   "sole": 30,
+   "present": 33,
+   "sole": 33,
    "wall": "unsupported:pointer used as an integer (no ptr\u2194int cast in tier)"
   },
   {
@@ -1287,17 +1290,6 @@
    "present": 4,
    "sole": 4,
    "wall": "unsupported:no layout for declared type 'union U'"
-  },
-  {
-   "files": [
-    "00072.c",
-    "00073.c",
-    "20000819-1.c",
-    "990513-1.c"
-   ],
-   "present": 4,
-   "sole": 4,
-   "wall": "unsupported:not an integer type: 'int *'"
   },
   {
    "files": [
@@ -3005,22 +2997,6 @@
   },
   {
    "files": [
-    "pr36038.c"
-   ],
-   "present": 1,
-   "sole": 1,
-   "wall": "unsupported:not an integer type: 'long long *'"
-  },
-  {
-   "files": [
-    "pr119428.c"
-   ],
-   "present": 1,
-   "sole": 1,
-   "wall": "unsupported:not an integer type: 'unsigned char *'"
-  },
-  {
-   "files": [
     "20001011-1.c"
    ],
    "present": 1,
@@ -4125,8 +4101,8 @@
   }
  ],
  "manifest_hash": "3250f77d0b3c9cbacd18a3a2bf49763fb98a2d1b8c29552a642ed84d2ef943b4",
- "measured_at_utc": "2026-11-12T15:24:43Z",
- "measured_commit": "de4c5e09ea08f48dd86d1dba9fb21f2d7350dc4f",
+ "measured_at_utc": "2026-11-12T15:45:35Z",
+ "measured_commit": "e646567600c850eb9af9645aaa7a0c6944b7b2cd",
  "pin": {
   "corpora": [
    "C1",
@@ -4904,27 +4880,27 @@
   },
   {
    "corpus": "c-testsuite/single-exec",
-   "detail": "not an integer type: 'int *'",
-   "dynamic_wall": "unsupported:not an integer type: 'int *'",
+   "detail": "",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "00072.c",
    "sha256": "07366ff0f6aaa9665afc381e9fac90eea429bae99e52e5da526edecf4bc0144d",
    "static_walls": [
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "c-testsuite/single-exec",
-   "detail": "not an integer type: 'int *'",
-   "dynamic_wall": "unsupported:not an integer type: 'int *'",
+   "detail": "",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "00073.c",
    "sha256": "c0195e8a7f37097075866fd07cd832c80e8d594f80da4aa5ee2394aae320af46",
    "static_walls": [
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "c-testsuite/single-exec",
@@ -7419,8 +7395,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "not an integer type: 'int *'",
-   "dynamic_wall": "unsupported:not an integer type: 'int *'",
+   "detail": "pointer used as an integer (no ptr\u2194int cast in tier)",
+   "dynamic_wall": "unsupported:pointer used as an integer (no ptr\u2194int cast in tier)",
    "manifest_status": "parsed",
    "name": "20000819-1.c",
    "sha256": "111c68973feb0c699822694cde27f683151db7d97b5c0a97a3966e7a6f2005e0",
@@ -15092,8 +15068,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "not an integer type: 'int *'",
-   "dynamic_wall": "unsupported:not an integer type: 'int *'",
+   "detail": "pointer used as an integer (no ptr\u2194int cast in tier)",
+   "dynamic_wall": "unsupported:pointer used as an integer (no ptr\u2194int cast in tier)",
    "manifest_status": "parsed",
    "name": "990513-1.c",
    "sha256": "efc5173b45881fa5320d70c2b39564e0f17e1f1423de6f7e5a945bc5ec690fd6",
@@ -21853,8 +21829,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "not an integer type: 'unsigned char *'",
-   "dynamic_wall": "unsupported:not an integer type: 'unsigned char *'",
+   "detail": "",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "pr119428.c",
    "sha256": "c61ae0c7e78c2776c192ea5271c4735eb8ebb4c993cec54011edf1e7ac7e6c76",
@@ -21862,7 +21838,7 @@
     "libc-call",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -23328,8 +23304,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "not an integer type: 'long long *'",
-   "dynamic_wall": "unsupported:not an integer type: 'long long *'",
+   "detail": "pointer used as an integer (no ptr\u2194int cast in tier)",
+   "dynamic_wall": "unsupported:pointer used as an integer (no ptr\u2194int cast in tier)",
    "manifest_status": "parsed",
    "name": "pr36038.c",
    "sha256": "9dc503485913322bc0fb4dbd8fcc64f04b0522435773dfcc8faab0e200ce5a07",

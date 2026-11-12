@@ -2,10 +2,10 @@
 
 Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manifest.
 
-- verdicts: 807/2214 MATCH (passed 807, failed 0, oracle 0)
+- verdicts: 810/2214 MATCH (passed 810, failed 0, oracle 0)
 - manifest SHA-256: `3250f77d0b3c9cbacd18a3a2bf49763fb98a2d1b8c29552a642ed84d2ef943b4`
-- measured commit: `de4c5e09ea08f48dd86d1dba9fb21f2d7350dc4f`
-- measured at: `2026-11-12T15:24:43Z`
+- measured commit: `e646567600c850eb9af9645aaa7a0c6944b7b2cd`
+- measured at: `2026-11-12T15:45:35Z`
 
 ## Verdict counts
 
@@ -13,10 +13,10 @@ Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manife
 | --- | ---: |
 | `not-parsed` | 350 |
 | `oracle-tests-compiler` | 1 |
-| `passed` | 807 |
+| `passed` | 810 |
 | `refused-libc` | 43 |
 | `refused-ub` | 40 |
-| `refused-unsupported` | 923 |
+| `refused-unsupported` | 920 |
 | `timeout` | 50 |
 
 ## Counts by corpus
@@ -24,17 +24,17 @@ Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manife
 | corpus | verdict | files |
 | --- | --- | ---: |
 | `c-testsuite/single-exec` | `not-parsed` | 1 |
-| `c-testsuite/single-exec` | `passed` | 152 |
+| `c-testsuite/single-exec` | `passed` | 154 |
 | `c-testsuite/single-exec` | `refused-libc` | 5 |
 | `c-testsuite/single-exec` | `refused-ub` | 3 |
-| `c-testsuite/single-exec` | `refused-unsupported` | 57 |
+| `c-testsuite/single-exec` | `refused-unsupported` | 55 |
 | `c-testsuite/single-exec` | `timeout` | 2 |
 | `gcc.c-torture/execute` | `not-parsed` | 321 |
 | `gcc.c-torture/execute` | `oracle-tests-compiler` | 1 |
-| `gcc.c-torture/execute` | `passed` | 654 |
+| `gcc.c-torture/execute` | `passed` | 655 |
 | `gcc.c-torture/execute` | `refused-libc` | 37 |
 | `gcc.c-torture/execute` | `refused-ub` | 36 |
-| `gcc.c-torture/execute` | `refused-unsupported` | 821 |
+| `gcc.c-torture/execute` | `refused-unsupported` | 820 |
 | `gcc.c-torture/execute` | `timeout` | 48 |
 | `gcc.c23-run` | `not-parsed` | 28 |
 | `gcc.c23-run` | `passed` | 1 |
@@ -93,7 +93,7 @@ The run's first refusal, normalized by construct; `sole` counts rows whose first
 | `unsupported:extern object 'inside_main' has no definition in the translation unit` | 38 | 38 | builtins/20010124-1-lib.c, builtins/complex-1-lib.c, builtins/fputs-lib.c, builtins/lib/abs.c, builtins/lib/bfill.c |
 | `unsupported:string literal (inch 4` | 38 | 38 | 00115.c, 00204.c, 00208.c, 00217.c, 20000801-4.c |
 | `unsupported:floating literal (floats are a named decision)` | 37 | 37 | 20020720-1.c, 20030914-1.c, 20080502-1.c, 20080529-1.c, 920501-8.c |
-| `unsupported:pointer used as an integer (no ptr↔int cast in tier)` | 30 | 30 | 00032.c, 00173.c, 00182.c, 20000412-6.c, 20000801-1.c |
+| `unsupported:pointer used as an integer (no ptr↔int cast in tier)` | 33 | 33 | 00032.c, 00173.c, 00182.c, 20000412-6.c, 20000801-1.c |
 | `unsupported:more arguments than parameters` | 29 | 29 | 20000519-1.c, 20071213-1.c, 920726-1.c, 931004-10.c, 931004-12.c |
 | `unsequenced-effects` | 27 | 27 | 00121.c, 20001228-1.c, 20051021-1.c, 20060102-1.c, 20060929-1.c |
 | `unsupported:no layout for declared type 'double'` | 27 | 27 | 00178.c, 20000731-1.c, 20011217-1.c, 20040831-1.c, 20190901-1.c |
@@ -124,7 +124,6 @@ The run's first refusal, normalized by construct; `sole` counts rows whose first
 | `unsupported:indirect call through a non-FunctionDecl reference` | 4 | 4 | 00089.c, 20010122-1.c, pr34768-1.c, pr34768-2.c |
 | `unsupported:no layout for declared type 'const double'` | 4 | 4 | cbrt.c, ieee/hugeval.c, ieee/unsafe-fp-assoc-1.c, ieee/unsafe-fp-assoc.c |
 | `unsupported:no layout for declared type 'union U'` | 4 | 4 | bitfld-6.c, bitfld-7.c, pr86492.c, pr88739.c |
-| `unsupported:not an integer type: 'int *'` | 4 | 4 | 00072.c, 00073.c, 20000819-1.c, 990513-1.c |
 | `libc-call: __builtin_abort` | 3 | 3 | gcc/testsuite/gcc.dg/c23-nullptr-5.c, pr77767.c, pr97325.c |
 | `libc-call: __builtin_expect` | 3 | 3 | 00214.c, 20020418-1.c, pr115277.c |
 | `unsupported:ExprWithCleanups` | 3 | 3 | 20041124-1.c, 950628-1.c, pr30185.c |
@@ -329,8 +328,6 @@ The run's first refusal, normalized by construct; `sole` counts rows whose first
 | `unsupported:no layout for parameter type 'int *restrict'` | 1 | 1 | pr38212.c |
 | `unsupported:non-object declaration in a block` | 1 | 1 | 00078.c |
 | `unsupported:not an integer type: 'T'` | 1 | 1 | pr84169.c |
-| `unsupported:not an integer type: 'long long *'` | 1 | 1 | pr36038.c |
-| `unsupported:not an integer type: 'unsigned char *'` | 1 | 1 | pr119428.c |
 | `unsupported:not an lvalue: PredefinedExpr` | 1 | 1 | 20001011-1.c |
 | `unsupported:operator '-' on pointers from different arrays` | 1 | 1 | 950710-1.c |
 | `unsupported:operator '-' on pointers without array provenance` | 1 | 1 | 980701-1.c |

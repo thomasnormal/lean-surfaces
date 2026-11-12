@@ -2,10 +2,10 @@
 
 Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manifest.
 
-- verdicts: 420/2214 scored (passed 420, failed 0)
+- verdicts: 592/2214 MATCH (passed 592, failed 0, oracle 2)
 - manifest SHA-256: `0bedbf73d044d862f64a5272f8b8559fc2b0b3d6a9ad4c7bd1e28bc52d5acd61`
-- measured commit: `d76d729d3`
-- measured at: `2026-11-12T01:18:00Z`
+- measured commit: `81310e3bd`
+- measured at: `2026-11-12T03:12:00Z`
 
 ## Verdict counts
 
@@ -13,10 +13,11 @@ Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manife
 | --- | ---: |
 | `not-ingested` | 25 |
 | `not-parsed` | 350 |
-| `passed` | 420 |
-| `refused-libc` | 278 |
+| `oracle` | 2 |
+| `passed` | 592 |
+| `refused-libc` | 99 |
 | `refused-ub` | 31 |
-| `refused-unsupported` | 1066 |
+| `refused-unsupported` | 1071 |
 | `timeout` | 44 |
 
 ## Counts by corpus
@@ -32,16 +33,17 @@ Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manife
 | `c-testsuite/single-exec` | `timeout` | 2 |
 | `gcc.c-torture/execute` | `not-ingested` | 19 |
 | `gcc.c-torture/execute` | `not-parsed` | 321 |
-| `gcc.c-torture/execute` | `passed` | 323 |
-| `gcc.c-torture/execute` | `refused-libc` | 272 |
+| `gcc.c-torture/execute` | `oracle` | 2 |
+| `gcc.c-torture/execute` | `passed` | 495 |
+| `gcc.c-torture/execute` | `refused-libc` | 95 |
 | `gcc.c-torture/execute` | `refused-ub` | 28 |
-| `gcc.c-torture/execute` | `refused-unsupported` | 913 |
+| `gcc.c-torture/execute` | `refused-unsupported` | 916 |
 | `gcc.c-torture/execute` | `timeout` | 42 |
 | `gcc.c23-run` | `not-ingested` | 1 |
 | `gcc.c23-run` | `not-parsed` | 28 |
-| `gcc.c23-run` | `refused-libc` | 4 |
+| `gcc.c23-run` | `refused-libc` | 2 |
 | `gcc.c23-run` | `refused-ub` | 1 |
-| `gcc.c23-run` | `refused-unsupported` | 42 |
+| `gcc.c23-run` | `refused-unsupported` | 44 |
 
 ## Static wall ranking
 
@@ -54,9 +56,9 @@ Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manife
 | `cast:IntegralToPointer` | 3 | 26 | 00214.c, 20000314-1.c, 20000622-1.c, 20010329-1.c, 20021010-2.c |
 | `unsequenced-effects` | 3 | 20 | 00121.c, 20001228-1.c, 20020406-1.c, 20060102-1.c, 20230802-1.c |
 | `cast:PointerToIntegral` | 2 | 27 | 00144.c, 20000622-1.c, 20011121-1.c, 20030811-1.c, 20050215-1.c |
-| `unsupported:EmptyDecl` | 2 | 6 | 20050106-1.c, 20230630-2.c, 20230630-4.c, builtin-bitops-1.c, pr34154.c |
 | `unsupported:StmtExpr` | 1 | 10 | 00213.c, 00214.c, 20000703-1.c, 20000917-1.c, 20001203-2.c |
 | `unsupported:AddrLabelExpr` | 1 | 8 | 20040302-1.c, 20041214-1.c, 20071210-1.c, 920501-4.c, 920501-5.c |
+| `unsupported:EmptyDecl` | 1 | 6 | 20050106-1.c, 20230630-2.c, 20230630-4.c, builtin-bitops-1.c, pr34154.c |
 | `unsupported:CXXBoolLiteralExpr` | 1 | 4 | 20010604-1.c, 20210505-1.c, gcc/testsuite/gcc.dg/c23-bool-1.c, gcc/testsuite/gcc.dg/c23-bool-2.c |
 | `unsupported:ChooseExpr` | 1 | 1 | pr19449.c |
 | `string-literal` | 0 | 262 | 00025.c, 00026.c, 00056.c, 00058.c, 00112.c |
@@ -81,6 +83,7 @@ Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manife
 | `unsupported:StaticAssertDecl` | 0 | 2 | gcc/testsuite/gcc.dg/c23-bool-2.c, gcc/testsuite/gcc.dg/c23-digit-separators-1.c |
 | `unsupported:BinaryConditionalOperator` | 0 | 1 | pr68249.c |
 | `unsupported:CXXNullPtrLiteralExpr` | 0 | 1 | gcc/testsuite/gcc.dg/c23-nullptr-5.c |
+| `unsupported:CaseStmt` | 0 | 1 | pr34154.c |
 | `unsupported:LabelDecl` | 0 | 1 | 980526-1.c |
 | `unsupported:NullStmt` | 0 | 1 | gcc/testsuite/gcc.dg/c23-labels-1.c |
 | `unsupported:TypeTraitExpr` | 0 | 1 | builtin-types-compatible-p.c |

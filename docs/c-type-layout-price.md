@@ -2,18 +2,18 @@
 
 This report compares the envelope-derived candidate wall with the runner's first refusal.
 
-- survey commit: `d76d729d3`
-- survey measured at: `2026-11-12T01:18:00Z`
+- survey commit: `81310e3bd`
+- survey measured at: `2026-11-12T03:12:00Z`
 - static candidates: 1061 present, 353 sole
-- observed declaration `no layout`: 208 (candidate overlap 180)
+- observed declaration `no layout`: 209 (candidate overlap 181)
 - observed declaration refusals without a static candidate: 28
-- static candidates without an observed declaration refusal: 881
+- static candidates without an observed declaration refusal: 880
 
 | corpus | static present | static sole | observed declaration no-layout | overlap |
 | --- | ---: | ---: | ---: | ---: |
 | `c-testsuite/single-exec` | 123 | 41 | 16 | 12 |
 | `gcc.c-torture/execute` | 909 | 308 | 187 | 164 |
-| `gcc.c23-run` | 29 | 4 | 5 | 4 |
+| `gcc.c23-run` | 29 | 4 | 6 | 5 |
 
 ## Most frequent observed declaration refusals
 

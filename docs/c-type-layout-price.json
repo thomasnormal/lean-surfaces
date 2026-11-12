@@ -479,6 +479,10 @@
   "gcc.c23-run": {
    "decl_messages": [
     {
+     "detail": "no layout for declared type 'int (*)[++i]'",
+     "files": 1
+    },
+    {
      "detail": "no layout for declared type 'const struct s'",
      "files": 1
     },
@@ -500,11 +504,11 @@
     }
    ],
    "files": 76,
-   "observed_any_no_layout": 6,
-   "observed_decl_no_layout": 5,
+   "observed_any_no_layout": 7,
+   "observed_decl_no_layout": 6,
    "observed_decl_without_static_candidate": 1,
-   "static_and_observed_decl": 4,
-   "static_candidate_without_observed_decl": 25,
+   "static_and_observed_decl": 5,
+   "static_candidate_without_observed_decl": 24,
    "static_present": 29,
    "static_sole": 4
   }
@@ -512,8 +516,8 @@
  "corpus": "C1-C3 (gcc torture, c-testsuite, gcc c23-run)",
  "interpretation": "type-layout is a candidate wall, not a dynamic verdict: the static heuristic over-approximates the files that reach a missing layout and misses some declaration types. Price a tier from observed no-layout refusals, retaining the static ranking for discovery.",
  "schema": "c-type-layout-price-0.1",
- "survey_commit": "d76d729d3",
- "survey_measured_at_utc": "2026-11-12T01:18:00Z",
+ "survey_commit": "81310e3bd",
+ "survey_measured_at_utc": "2026-11-12T03:12:00Z",
  "survey_schema": "c-survey-0.1",
  "top_decl_messages": [
   {
@@ -945,6 +949,10 @@
    "files": 1
   },
   {
+   "detail": "no layout for declared type 'int (*)[++i]'",
+   "files": 1
+  },
+  {
    "detail": "no layout for declared type 'const struct s'",
    "files": 1
   },
@@ -962,11 +970,11 @@
   }
  ],
  "totals": {
-  "observed_any_no_layout": 231,
-  "observed_decl_no_layout": 208,
+  "observed_any_no_layout": 232,
+  "observed_decl_no_layout": 209,
   "observed_decl_without_static_candidate": 28,
-  "static_and_observed_decl": 180,
-  "static_candidate_without_observed_decl": 881,
+  "static_and_observed_decl": 181,
+  "static_candidate_without_observed_decl": 880,
   "static_present": 1061,
   "static_sole": 353
  }

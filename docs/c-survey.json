@@ -12,33 +12,35 @@
   "gcc.c-torture/execute": {
    "not-ingested": 19,
    "not-parsed": 321,
-   "passed": 323,
-   "refused-libc": 272,
+   "oracle": 2,
+   "passed": 495,
+   "refused-libc": 95,
    "refused-ub": 28,
-   "refused-unsupported": 913,
+   "refused-unsupported": 916,
    "timeout": 42
   },
   "gcc.c23-run": {
    "not-ingested": 1,
    "not-parsed": 28,
-   "refused-libc": 4,
+   "refused-libc": 2,
    "refused-ub": 1,
-   "refused-unsupported": 42
+   "refused-unsupported": 44
   }
  },
  "corpus": "C1-C3 (gcc torture, c-testsuite, gcc c23-run)",
  "counts": {
   "not-ingested": 25,
   "not-parsed": 350,
-  "passed": 420,
-  "refused-libc": 278,
+  "oracle": 2,
+  "passed": 592,
+  "refused-libc": 99,
   "refused-ub": 31,
-  "refused-unsupported": 1066,
+  "refused-unsupported": 1071,
   "timeout": 44
  },
  "manifest_hash": "0bedbf73d044d862f64a5272f8b8559fc2b0b3d6a9ad4c7bd1e28bc52d5acd61",
- "measured_at_utc": "2026-11-12T01:18:00Z",
- "measured_commit": "d76d729d3",
+ "measured_at_utc": "2026-11-12T03:12:00Z",
+ "measured_commit": "81310e3bd",
  "pin": "C1-C3",
  "rows": [
   {
@@ -2474,21 +2476,21 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id24",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "20000205-1.c",
    "sha256": "51b7890a58802a8e311d7bc2963984358ffafef407f3cace9ca82c68cd6de502",
    "static_walls": [],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id24",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "20000217-1.c",
    "sha256": "1a8fb6700a78fe49012edb566d677b1efab8b50b55ac49a9c65134d6f8108d8c",
    "static_walls": [],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -2504,21 +2506,21 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id24",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "20000224-1.c",
    "sha256": "073521bd57e46a3da0fb090b442aa08d1545311fb190798d5da0d39a39c6848a",
    "static_walls": [],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id24",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "20000225-1.c",
    "sha256": "63fdce3542af1e8d094e51b335cd90e2adf0d219141fc1f0a76ea1347c195bc6",
    "static_walls": [],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -2540,23 +2542,23 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id24",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "20000314-1.c",
    "sha256": "4879268963d5d9f6f54f716eee27400cb92e5d48b77b878e504f8122fc2c3eb5",
    "static_walls": [
     "cast:IntegralToPointer"
    ],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id24",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "20000314-2.c",
    "sha256": "b4fa95723c728ed2fb6e36dd2b7fdc63e03dee71d80d02421fb21db04f685195",
    "static_walls": [],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -2660,32 +2662,32 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id24",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "20000422-1.c",
    "sha256": "078e1cbb43ab1dce2316b994399a527392ec93407ec688895d1f165e2a29def5",
    "static_walls": [
     "type-layout"
    ],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id24",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "20000503-1.c",
    "sha256": "7516f08b602db5d1585413be8d744a1eed47857a1b9ecf5797180ae52755e9f0",
    "static_walls": [],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id24",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "20000511-1.c",
    "sha256": "564537b2ff8730f74db065204aaa179164461b5c71bbf030af53d9a78d72678b",
    "static_walls": [],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -2702,30 +2704,30 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id24",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "20000519-2.c",
    "sha256": "02d1194c1e2dc7f0027f2c45aad9270de8868e117cc32f18f1c35486155f77f1",
    "static_walls": [],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id24",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "20000523-1.c",
    "sha256": "697ae064713b1562adf3e5d1abd64fd2e6e48ef1b9d0d9cf74b9f320a5622e68",
    "static_walls": [],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id24",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "20000528-1.c",
    "sha256": "a26fadeb8f212fef177302c3c3b8dc406bdc6cf30b08d8db238ea4c0a35c8948",
    "static_walls": [],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -2754,14 +2756,14 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id24",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "20000605-2.c",
    "sha256": "2d85d1e5fea9bf9942a0cc328ff702f2850b741ebd845ed1c4898d7c0ec9326b",
    "static_walls": [
     "type-layout"
    ],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -2824,21 +2826,21 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id24",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "20000706-3.c",
    "sha256": "0b19ef2eea1a5593fec40349e9aa911e53eb29be7b73d67d24c1408b82ce1282",
    "static_walls": [],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id24",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "20000706-4.c",
    "sha256": "f817f8f5bc2ba6cceeea5a2618127393aee66c1780feddb40bcd17dd4e3dc66b",
    "static_walls": [],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -2864,21 +2866,21 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id24",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "20000715-1.c",
    "sha256": "7712d2f40bdefa2835d4d4cc9f24e4ad713da8c4b2fe57cfa8add40fdc97db00",
    "static_walls": [],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id24",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "20000715-2.c",
    "sha256": "8bc7062d447df62ddccec55b1a295a8298fa57ff0ffdabf4a98a62cf2ab9ee14",
    "static_walls": [],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -2893,12 +2895,12 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id24",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "20000717-2.c",
    "sha256": "39a27adb8d6eb15ad96757f9ee95bd033c66b34d0d0bdda0bcfb0e0d416b9fd1",
    "static_walls": [],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -2966,12 +2968,12 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id24",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "20000731-2.c",
    "sha256": "90180488617d4f3058fb9ffc2f056ec69d39bdcfafc15bb8b32539b17a8c04b7",
    "static_walls": [],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -3142,14 +3144,14 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id24",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "20001013-1.c",
    "sha256": "4d9d1b9498ad3b08e1449aa1662ac063ef918bb98ae4bc28b11fabac389b435d",
    "static_walls": [
     "type-layout"
    ],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -3193,21 +3195,21 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id24",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "20001027-1.c",
    "sha256": "c9404231f1f3dfd9b3c9198c4d1e7e01947c8b109eba015d8f482bb8cbc76131",
    "static_walls": [],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id24",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "20001031-1.c",
    "sha256": "cb8db08cf327da916fa00dd8c3a1e167f7d4c37398c712d80fdb8d6e86275596",
    "static_walls": [],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -3220,12 +3222,12 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id24",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "20001108-1.c",
    "sha256": "94865503c72e48e5168c0781da368511090b82b1e0c7e02bada16416961bf8a2",
    "static_walls": [],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -3238,12 +3240,12 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id24",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "20001112-1.c",
    "sha256": "0422f822077b3e7d973b6f91760986df1a8ad5c3bd9a44f9a8144efb0728bf8b",
    "static_walls": [],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -3316,12 +3318,12 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id24",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "20001221-1.c",
    "sha256": "205cc89718065562af0b2e9139c4cd3d22a8a98b0768acb62e4a4b4d0ff31aa1",
    "static_walls": [],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -3349,23 +3351,23 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id18",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "20010106-1.c",
    "sha256": "a4c5a6c32a786cdd6ac04b9d72242ce760a748dac2536db0adb112eb210395ab",
    "static_walls": [],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id24",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "20010114-1.c",
    "sha256": "1190b3f6bb758cfac627298d5234504698ed44b5d15f1f3c387ad139929e1ac2",
    "static_walls": [
     "type-layout"
    ],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -3393,12 +3395,12 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id18",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "20010119-1.c",
    "sha256": "dfdec1ffd03ff2f4e376e6786a50705284a16f272b54ddb109ff8d22b5c9b25c",
    "static_walls": [],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -3437,12 +3439,12 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id24",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "20010206-1.c",
    "sha256": "2038046f9eecc31018ec21fa558e0e23d6d4f31274c56bd3c03a8f72b7864627",
    "static_walls": [],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -3455,23 +3457,23 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id24",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "20010221-1.c",
    "sha256": "992dd8385f82e4741923b6a9db4506e185cf3d7c4a5ec6b378aca106c9ee451e",
    "static_walls": [],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id24",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "20010222-1.c",
    "sha256": "6a9c9cf6dd5765de2d75759ea18dbe4bda86217f4c9b3fb778be77c8c42402b4",
    "static_walls": [
     "type-layout"
    ],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -3531,21 +3533,21 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id24",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "20010422-1.c",
    "sha256": "3fec496c0aaf1fb6c155db50fa05a7d35d0af37b7e0be0714c6a4f78fdc62c1a",
    "static_walls": [],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id24",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "20010518-1.c",
    "sha256": "bde14a49ba089c07b0a4605007ca63e1f8e965a9f78679b7dec058b1c2c33458",
    "static_walls": [],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -3561,12 +3563,12 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id24",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "20010520-1.c",
    "sha256": "2f061db6e41430571f7b8b3a25d2ba831096a015f8bd07ad7ffe45ab912cad49",
    "static_walls": [],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -3599,12 +3601,12 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id24",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "20010711-1.c",
    "sha256": "4568c70db4bb510d4cdd377e709bb8b4bede150ce8e3929492081a5423ea40c7",
    "static_walls": [],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -3617,12 +3619,12 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id24",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "20010723-1.c",
    "sha256": "34d1ddc8a529969312474756683224b6ee6c3c048fdb7a1548e53d2a59589aeb",
    "static_walls": [],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -3778,12 +3780,12 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id18",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "20011115-1.c",
    "sha256": "aa4aea234e3ee7de5c7251735d6cea3dcccdfe8a325743411e4fa75825690215",
    "static_walls": [],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -3856,21 +3858,21 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id18",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "20011223-1.c",
    "sha256": "83deb1a68358698bf3af29211f8906f834bf1a78fad34521f6061193e8cbd83c",
    "static_walls": [],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id24",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "20020103-1.c",
    "sha256": "788a37795283320b9b140127fa818cd4b3b739fffff37e6f0b99c87b83cd3eb7",
    "static_walls": [],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -3892,21 +3894,21 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id18",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "20020118-1.c",
    "sha256": "b0fb4e5dc583e43f4a85d934fd155d00a08c45d2a2a4d7a482dc581e0a5bd0d4",
    "static_walls": [],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id24",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "20020127-1.c",
    "sha256": "98b59a9520af112160f3e6d7f8ae89fe50f73c5751ba69a2fb10205b0d5571eb",
    "static_walls": [],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -3921,12 +3923,12 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id24",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "20020201-1.c",
    "sha256": "d5c07362874bcc0f3e4bc227e108d52bdb443bf6d0065ebfa0fbc6c3f8863125",
    "static_walls": [],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -3975,30 +3977,30 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id24",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "20020216-1.c",
    "sha256": "0cfe88ef20a98ee80e36af184a0baba47554a52dbf86ddf739f5bb46f2f097d6",
    "static_walls": [],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id24",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "20020219-1.c",
    "sha256": "192bb02b0a49a4ce29c3c057182aeeedca55d1f505f4b7e70955035a58860003",
    "static_walls": [],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id24",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "20020225-1.c",
    "sha256": "c6a8c7718084137dde538bdc17aa063e00b45e254226c0c843c44c7d26b9efd5",
    "static_walls": [],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -4014,12 +4016,12 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id24",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "20020226-1.c",
    "sha256": "3ba682f1593eee980158a39db57d3086ae7489b0ee155d23a3637ceae2bcd031",
    "static_walls": [],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -4036,12 +4038,12 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id24",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "20020307-1.c",
    "sha256": "ace07ee4b0b4151010c89f19dae85252c5643d04ff8f18f0a855a2ec12566597",
    "static_walls": [],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -4079,23 +4081,23 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id24",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "20020328-1.c",
    "sha256": "a2b0d6dd7b5ba53e8a7485ca88e682543ee7bda12212b711c04751b44766456e",
    "static_walls": [],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id24",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "20020402-1.c",
    "sha256": "1ac3858f0cf40ea167e72685a2a3b45b5bcc0de4319714477f620f9e3a72bb5d",
    "static_walls": [
     "type-layout"
    ],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -4190,12 +4192,12 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id24",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "20020423-1.c",
    "sha256": "2da19699ae2fcc9cf377c79ae231bd2d27d5955a65b58a23dbd587f345b7fee3",
    "static_walls": [],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -4219,12 +4221,12 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id24",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "20020508-1.c",
    "sha256": "5d5239d6ad458aa5c338c23356642843d86bb53dc334243d2eef98c475287f4f",
    "static_walls": [],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -4266,21 +4268,21 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id24",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "20020611-1.c",
    "sha256": "8fa0cf5561f13d676e5fdea090249f4d7ba830ba9c4198411a06b386d3ff9564",
    "static_walls": [],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id24",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "20020614-1.c",
    "sha256": "ef266436cdc856d30e213fcc3b57efb419f552a9d99c3d2ac928568ba41525aa",
    "static_walls": [],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -4307,12 +4309,12 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id24",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "20020716-1.c",
    "sha256": "6f64cb17fa8b395c02385f85f9110ed4ea0472109bb3c711090dd7d962522bd8",
    "static_walls": [],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -4328,12 +4330,12 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id24",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "20020805-1.c",
    "sha256": "226a07a497e478f09ef36e1fddc9fcd5ee38110092e06a0048c32f1a07c52665",
    "static_walls": [],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -4395,12 +4397,12 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id24",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "20021010-1.c",
    "sha256": "78fe1b1aa0dbeac717906236d143485f766353be11829195da1c4b7e9d4dac60",
    "static_walls": [],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -4493,12 +4495,12 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id24",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "20021118-3.c",
    "sha256": "110553c9ebc5c98f7e8d5faf88e77a1c2ddce0d61ada1e1ede7e405392b1e2be",
    "static_walls": [],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -4523,12 +4525,12 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id24",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "20021120-2.c",
    "sha256": "968900cb0c60a0c2ab9f7d0367f3d495ad7d0501989e743989eaf8a934816523",
    "static_walls": [],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -4578,14 +4580,14 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id24",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "20030105-1.c",
    "sha256": "12b3716f2a55b88d4d16c030467995fbf941c69d5f894f1c8d9d53c5bbb6fa68",
    "static_walls": [
     "type-layout"
    ],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -4609,12 +4611,12 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id24",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "20030120-1.c",
    "sha256": "914ef41c03c5b1d59f89f09c2e53580b69609f2e136d2a334baa1bead2058760",
    "static_walls": [],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -4639,12 +4641,12 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id24",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "20030128-1.c",
    "sha256": "3d606a32adf8d5e057ada86ec08f335cc71f5c27a7b37211a8c0060543595da1",
    "static_walls": [],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -4680,12 +4682,12 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id24",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "20030218-1.c",
    "sha256": "d10590bec8c2d3b0cf515406d5f1ee36d2fb9ec22b692ff4cd48fb94ea9441bc",
    "static_walls": [],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -4732,14 +4734,14 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id39",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "20030313-1.c",
    "sha256": "03c9b1ca6b81a7d22b5b6ba53944ed307b482a794d42c91d468f8762b10034c0",
    "static_walls": [
     "type-layout"
    ],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -4936,23 +4938,23 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id24",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "20030828-1.c",
    "sha256": "7d477c89c2cc448efbd3fc84f5ec28d2319fd4aea369d1687d0582b267ae358d",
    "static_walls": [],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id24",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "20030828-2.c",
    "sha256": "727bea182a0597e8b785318501c445de9a420b662c0a56c9cdd4571072ce3992",
    "static_walls": [
     "type-layout"
    ],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -4985,12 +4987,12 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id24",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "20030913-1.c",
    "sha256": "a6d0500794f7c9b05dee803663d36401fe9aab45030b45d17d47f702eb7fd7f0",
    "static_walls": [],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -5191,14 +5193,14 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id24",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "20040218-1.c",
    "sha256": "3526f342845053cfef27f3ff382e5ace0e8b075b7e2576656334620c367553d4",
    "static_walls": [
     "type-layout"
    ],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -5273,12 +5275,12 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id24",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "20040319-1.c",
    "sha256": "b5b1d6d4d388205d1a9a585e7232ddba4cd8f5f9e1c8f634837769b66f91f444",
    "static_walls": [],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -5438,12 +5440,12 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id24",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "20040706-1.c",
    "sha256": "2fca55258e2155817048a0638d38c05416ebed4937474df79ee99edbe96ef0d2",
    "static_walls": [],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -5496,14 +5498,14 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id24",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "20040805-1.c",
    "sha256": "198e9b0dc6d142d80e7358a32189d7e573aa6f54491412ccd1b8cdbd2debcae7",
    "static_walls": [
     "type-layout"
    ],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -5518,12 +5520,12 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id18",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "20040820-1.c",
    "sha256": "1e03cea5a93a0ebc41e5ddd466a14f2479a670e8eef6742d38be56b14dd20f4a",
    "static_walls": [],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -5560,14 +5562,14 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id24",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "20041011-1.c",
    "sha256": "b63f53b18e2f0adfe899cddee05a384b7c0af6f82a4699a42bb1af37dd741b47",
    "static_walls": [
     "type-layout"
    ],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -5651,14 +5653,14 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id24",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "20041210-1.c",
    "sha256": "ddaa0e1b657e1cf4839ba5512c5754608616445e551b2620bed87eb4215c34ac",
    "static_walls": [
     "type-layout"
    ],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -5671,12 +5673,12 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id24",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "20041213-2.c",
    "sha256": "2dac1e5a7e1cde1c2bff674cb60c941c3421151274fe6990798563023d707fed",
    "static_walls": [],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -5816,12 +5818,12 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id246",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "20050131-1.c",
    "sha256": "066cfdeb4da41648a286696b4299ffa2b9651bb608ee71febb30c79bd69a6f58",
    "static_walls": [],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -5903,12 +5905,12 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id24",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "20050410-1.c",
    "sha256": "f1aead7f4aa06d4db2ccc4ec530b8f100cb5c61c39fbcf66122d9953a8228307",
    "static_walls": [],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -6285,12 +6287,12 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id24",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "20070424-1.c",
    "sha256": "c7a4463c514d3c21a0b6a968b61ed246c467e9922345c203a415538c89144249",
    "static_walls": [],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -6316,12 +6318,12 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id24",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "20070623-1.c",
    "sha256": "1c1a5d0c0dcca7b33840e3b73d9e2ed5d54158311c030ea0e102109a5ae0d7ae",
    "static_walls": [],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -7040,12 +7042,12 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id24",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "20120817-1.c",
    "sha256": "4e37d4752fa0eead66bc9d1bc6f404677ba4456b165912b5f8f6b294e6d21332",
    "static_walls": [],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -7464,21 +7466,21 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id24",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "900409-1.c",
    "sha256": "aee2eb07577f9c75284dd3804c72798d6a3b678248946cfe451a260d2a32569e",
    "static_walls": [],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id18",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "920202-1.c",
    "sha256": "a6f9fe4917abfe155bf6588643bc7a60c9d804845c32312b190109fe94756571",
    "static_walls": [],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -7500,14 +7502,14 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id18",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "920410-1.c",
    "sha256": "7ac5e7a8b7e472de925cd418e7752866bf573bf3ecdee0bcacd19847f9355622",
    "static_walls": [
     "type-layout"
    ],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -7744,21 +7746,21 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id24",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "920711-1.c",
    "sha256": "0171f311b1dbd6781006874da911a992f296e03afead0c28efb73c047656a539",
    "static_walls": [],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id24",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "920721-1.c",
    "sha256": "825aa1d99b918dbe6f43a36f4fbed6950caf055a7796bd25b1bdc85120a5fd6c",
    "static_walls": [],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -7851,12 +7853,12 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id24",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "920829-1.c",
    "sha256": "148c166644a7dc3405dc053520bb3497ba3419e65eae0974b562c0145f538d4e",
    "static_walls": [],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -7990,21 +7992,21 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id24",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "921029-1.c",
    "sha256": "3a911bd2d597bc76bc443901621d126d8cb11a418751a55411d52f3a0e568c7f",
    "static_walls": [],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id24",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "921104-1.c",
    "sha256": "e43448ceebdf958ea4d12e6892efe27fb9133c1e47dd9587a896c669447abc4c",
    "static_walls": [],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -8090,12 +8092,12 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id24",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "921202-2.c",
    "sha256": "4d4cef20c60174f035cffe0c1e0ad245d8af241f2c856f99a17497a02e1c22bf",
    "static_walls": [],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -8288,14 +8290,14 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id18",
+   "detail": "native O0/sanitizer linker failure; no oracle result claimed",
    "manifest_status": "parsed",
    "name": "930526-1.c",
    "sha256": "da7154965988a7b90e2ce3d8b025e8808828e703fb677cb11d50b5c50a518395",
    "static_walls": [
     "type-layout"
    ],
-   "verdict": "refused-libc"
+   "verdict": "oracle"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -8326,14 +8328,14 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id24",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "930603-2.c",
    "sha256": "397703ea45bdd366389e7da3010b687af889b19f51dc45c91dac7d5db59e61f9",
    "static_walls": [
     "type-layout"
    ],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -8898,12 +8900,12 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id24",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "941031-1.c",
    "sha256": "fdeafb33fadf498cc96bae257d4b092f9750df6195e3989322ab525c3da6d5a7",
    "static_walls": [],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -8961,30 +8963,30 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id24",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "950426-2.c",
    "sha256": "f4b79b96ddbb5c1c8f378ad8936f8bda15d393483b6c740cb90a39387f2ec6f7",
    "static_walls": [],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id24",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "950503-1.c",
    "sha256": "38936efc0271c2eece85c7f8542c591c1c7efd226435af6f29eaae84c3b4e8eb",
    "static_walls": [],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id24",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "950511-1.c",
    "sha256": "57e1823f60f8969bafcc21b386fbb6b3e33fade27b58d8e6e6bc382d710aec14",
    "static_walls": [],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -9028,12 +9030,12 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id24",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "950612-1.c",
    "sha256": "48456e0489018edbf04eedd35d8621ee701d06f28a8730c1b2d72e09d93eb8ed",
    "static_walls": [],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -9067,12 +9069,12 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id24",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "950706-1.c",
    "sha256": "fe267ea35866fd8fa0f9008698643817b1208f5c5ab02cdf0933559517fe8695",
    "static_walls": [],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -9120,39 +9122,39 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id24",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "950915-1.c",
    "sha256": "b41884d8d0acb996b10d8170ae18405da72edb8e937dc9b170190ee63f3de8f1",
    "static_walls": [],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id24",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "950929-1.c",
    "sha256": "22acc09033a609e07c1e5a63cf21abdbf2aa7a726d28c902e3980367844b9448",
    "static_walls": [],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id24",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "951003-1.c",
    "sha256": "08edc9f35994cee3f0c5b7535f91f7cb74347059cb7d3821f48e9355c8f92a94",
    "static_walls": [],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id24",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "951115-1.c",
    "sha256": "e2260d2b5263465c66bbf2c5261e3537fbe21049d071806b9c5acda62d85a29c",
    "static_walls": [],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -9220,12 +9222,12 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id24",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "960219-1.c",
    "sha256": "5adeb325c3716f499d6b7597b767e02ecd299cbea4a1989a5492ff7d50e45882",
    "static_walls": [],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -9240,39 +9242,39 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id24",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "960302-1.c",
    "sha256": "9ce86979f1fd618a95f8bac098e6f09eeade89a265f0a6d22b5f1c31e9dbe5c4",
    "static_walls": [],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id521",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "960311-1.c",
    "sha256": "21fcafc37fe262dcda49667ae8ef960f12674891a3dfa07dca1267f8a26e25e2",
    "static_walls": [],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id521",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "960311-2.c",
    "sha256": "d1e80c97d668b29cc55b0650260cb9cc04ca2845e5dbdd5a8d81d98356c98b22",
    "static_walls": [],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id521",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "960311-3.c",
    "sha256": "311195ffd56c660c9a99df242c4c7d6eaf195667fb11d6f11b998e20f1883d39",
    "static_walls": [],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -9306,14 +9308,14 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id24",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "960326-1.c",
    "sha256": "ab2c155d1cf9692238d8c114dbf3cea3ff61415a12d992a1f53f66c8f1dafda3",
    "static_walls": [
     "type-layout"
    ],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -9370,14 +9372,14 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id24",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "960419-2.c",
    "sha256": "1554c6d30c8e1dbd62cf68f19651d0c4b62744b62132531ecfbdba4dc3273a50",
    "static_walls": [
     "type-layout"
    ],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -9422,21 +9424,21 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id24",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "960801-1.c",
    "sha256": "3a7b23009e50e4715f3ef3a416682f3ad56f1859dcbbe6a3fd601b16b4de6679",
    "static_walls": [],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id24",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "960802-1.c",
    "sha256": "71cbcf29668cbce53f6c8f02fb46476b721c77b2181f9e231c6bdcc704b30774",
    "static_walls": [],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -9458,12 +9460,12 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id24",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "961004-1.c",
    "sha256": "6a51f104ebe1747db8f7727cd1cad3bdf9b3c1cdbac3dca2b1137f4102d31d71",
    "static_walls": [],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -9503,21 +9505,21 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id24",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "961122-1.c",
    "sha256": "34116eda4778a1081f088dc2d8e7244942e07a500ef7a55d428bac6276d18cf7",
    "static_walls": [],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id24",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "961122-2.c",
    "sha256": "8b4797488df14dbeb01d402cab97a04bef3bca0c56242c7443bc34cd3018f967",
    "static_walls": [],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -9533,23 +9535,23 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id24",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "961206-1.c",
    "sha256": "e3631c13368a57549e58b2e3f8717dba1947dda72b31dd13c0888c28421c3733",
    "static_walls": [],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id24",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "961213-1.c",
    "sha256": "71dac08b4547ca177c4b301a74bb44a769ca61d607ecafc2afae5911cc08ede0",
    "static_walls": [
     "type-layout"
    ],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -9564,7 +9566,7 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id18",
+   "detail": "exit (an argument is not a literal 0 \u2014 which exit was reached is unknown)",
    "manifest_status": "parsed",
    "name": "970214-1.c",
    "sha256": "b187ebc071f72cc8146a68bf03b6125cdd4b466dc4f74c8d069a9105b74e9007",
@@ -9573,7 +9575,7 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id18",
+   "detail": "exit (an argument is not a literal 0 \u2014 which exit was reached is unknown)",
    "manifest_status": "parsed",
    "name": "970214-2.c",
    "sha256": "a10fb6166dedc13c0573f70cac10815be56eb24da8e04c672d3d1950cf9e51df",
@@ -9582,7 +9584,7 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id18",
+   "detail": "exit (an argument is not a literal 0 \u2014 which exit was reached is unknown)",
    "manifest_status": "parsed",
    "name": "970217-1.c",
    "sha256": "e9673ba3f83475198d3dffb393af8a4bb883b49415d5fc97ac0894ac42a9a866",
@@ -9626,14 +9628,14 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id24",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "980424-1.c",
    "sha256": "19758aa6d8fcfce3bb660596ffef386a4579709cfec8d9a6548bba9768cbde14",
    "static_walls": [
     "type-layout"
    ],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -9686,7 +9688,7 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id24",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "980526-1.c",
    "sha256": "d5ebe319fe190619ef9d83c10ed5e0f401f731b0db66432036afa8930f2d7deb",
@@ -9696,7 +9698,7 @@
     "unsupported:IndirectGotoStmt",
     "unsupported:LabelDecl"
    ],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -9784,14 +9786,14 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id24",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "980612-1.c",
    "sha256": "aa6fce063bfb606248d80aa051d0e0bc2b3a82095be097f127a0b4db2b23b82e",
    "static_walls": [
     "type-layout"
    ],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -9863,21 +9865,21 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id24",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "980929-1.c",
    "sha256": "264441276187246a930926fd238da3eddd5ba2834d28125185fd318ac2fe7359",
    "static_walls": [],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id24",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "981001-1.c",
    "sha256": "7fe260b4dd9a69cd7f0d9425494434182bd5d9dc6442febab5bdc5ca607829a0",
    "static_walls": [],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -9899,12 +9901,12 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id24",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "981206-1.c",
    "sha256": "6ecec366969f210ccd29afa072f2588602a0ac29322d80992a8cc4cf810f97cc",
    "static_walls": [],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -9938,12 +9940,12 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id24",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "990127-1.c",
    "sha256": "66e9cb40921b11452649f4e071d3189292c06c1afa0a59edac15a158daa444da",
    "static_walls": [],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -10009,12 +10011,12 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id24",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "990324-1.c",
    "sha256": "6238a1b539047c78096a4b6fe946efaf6370ac6524476d0b207265bfc6f63a85",
    "static_walls": [],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -10030,14 +10032,14 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id24",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "990404-1.c",
    "sha256": "6010db8e3b3c76a5cd766ee588df3c8dbd932d42ccbc2663d8eeb898843d75c2",
    "static_walls": [
     "type-layout"
    ],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -10100,23 +10102,23 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id24",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "990527-1.c",
    "sha256": "fe0ba9784d35bf8582e2274907eb3fbc910c1fe441f845aeb01667cc07752490",
    "static_walls": [],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id24",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "990531-1.c",
    "sha256": "47d4ab307699cf7ab941f097b1455e63f758fbcbd159164652e410aa4027441d",
    "static_walls": [
     "type-layout"
    ],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -10141,23 +10143,23 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id24",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "990804-1.c",
    "sha256": "fb0ab862da003e1d182e03960d1cc63f9a57fee867f6d93f13efa2675975428f",
    "static_walls": [],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id24",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "990811-1.c",
    "sha256": "4bbbe311e6daf32490099024c84a20236073981e1f0164ebba0df2cb5fb035a3",
    "static_walls": [
     "type-layout"
    ],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -10173,12 +10175,12 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id24",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "990827-1.c",
    "sha256": "01205efdabc82a58439eab3da95f8545230db1a981683bae6f6e063173dae5aa",
    "static_walls": [],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -10193,12 +10195,12 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id24",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "990923-1.c",
    "sha256": "c660780d67c81f06f24728b176e4af4cfa14293f396938ca5b25c29ae7e47606",
    "static_walls": [],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -10231,12 +10233,12 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id24",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "991023-1.c",
    "sha256": "7d906f51770252c9ab5f062016e32eb25eb29539b66c2e8c9085a4c5a15428dc",
    "static_walls": [],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -10284,21 +10286,21 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id18",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "991202-1.c",
    "sha256": "ee5ae79161fdd63fb50d02b86d9fe8ef59758e5d5829e21dd5e99497af56aa80",
    "static_walls": [],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id24",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "991202-2.c",
    "sha256": "13e2ce9fe593c862a4e9e70b3972cc454154ae35e9fc26642f722f38dcee687c",
    "static_walls": [],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -10313,12 +10315,12 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id24",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "991216-1.c",
    "sha256": "6498e63a6ef64193ea67b521badf04297b65afe6010040d33bc1119c6238d320",
    "static_walls": [],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -10335,21 +10337,21 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id24",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "991216-4.c",
    "sha256": "f48eeaf54f632006fe802dd3ea0a6273c3a81442f4d8b64315664331f654596f",
    "static_walls": [],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id24",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "991221-1.c",
    "sha256": "de8bae63da1da6cc582f19270d2610024ce137cbdd167a4ad707780bd67edf9c",
    "static_walls": [],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -10511,12 +10513,12 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id24",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "arith-1.c",
    "sha256": "8877e7b682e657302d50e0a18b054f975c58d3d3d548354f24ca1eb0214369be",
    "static_walls": [],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -12401,14 +12403,14 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id18",
+   "detail": "call through an incompatible function-pointer cast",
    "manifest_status": "parsed",
    "name": "call-trap-1.c",
    "sha256": "3f808825872c27c6417b33e5a075358d64326787edeafdc4f7fe25444550f5f0",
    "static_walls": [
     "libc-call"
    ],
-   "verdict": "refused-libc"
+   "verdict": "refused-unsupported"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -12713,12 +12715,12 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id24",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "divconst-3.c",
    "sha256": "0bfdf96bdef459e65aa2f685f7b75a7fed6709a64af91ba048e3e75429fe3bae",
    "static_walls": [],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -12749,12 +12751,12 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id18",
+   "detail": "function instrumentation is outside the tier",
    "manifest_status": "parsed",
    "name": "eeprof-1.c",
    "sha256": "0925cd20ca15fe3f0e98e38b3b2c8249ab19342dbc8b2aeb7ad2f69f644380a2",
    "static_walls": [],
-   "verdict": "refused-libc"
+   "verdict": "refused-unsupported"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -12943,14 +12945,14 @@
   },
   {
    "corpus": "gcc.c23-run",
-   "detail": "id18",
+   "detail": "no layout for declared type 'int (*)[++i]'",
    "manifest_status": "parsed",
    "name": "gcc/testsuite/gcc.dg/c23-auto-2.c",
    "sha256": "310c5a4186732cabf9db01422c273afca75c34e2a5776f6c2516313b4747b960",
    "static_walls": [
     "type-layout"
    ],
-   "verdict": "refused-libc"
+   "verdict": "refused-unsupported"
   },
   {
    "corpus": "gcc.c23-run",
@@ -13436,14 +13438,14 @@
   },
   {
    "corpus": "gcc.c23-run",
-   "detail": "id18",
+   "detail": "unnamed pointer parameter (array-bound effects are not retained by clang)",
    "manifest_status": "parsed",
    "name": "gcc/testsuite/gcc.dg/c23-parm-omit-3.c",
    "sha256": "13e76b74390725a8f66fcd32b54aa8af6e9ebfa09aa7cfee72947c7c5f49d8a2",
    "static_walls": [
     "type-layout"
    ],
-   "verdict": "refused-libc"
+   "verdict": "refused-unsupported"
   },
   {
    "corpus": "gcc.c23-run",
@@ -14629,14 +14631,14 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id24",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "index-1.c",
    "sha256": "48d563f99bd170a52645c3f304c99593ade3b8218a8b595f32165faa3645ae04",
    "static_walls": [
     "type-layout"
    ],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -14682,25 +14684,25 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id24",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "longlong.c",
    "sha256": "2321db0e0b17d50ba4be43baf85c73c11ebcdfe81f25a91cecc18ded577660b0",
    "static_walls": [
     "type-layout"
    ],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id24",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "loop-1.c",
    "sha256": "79bb299d7424c4e3defd5f3dabc23c501a4b93a7fb93f4f9410357a8604edd47",
    "static_walls": [
     "type-layout"
    ],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -14747,14 +14749,14 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id24",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "loop-14.c",
    "sha256": "ab63e076f306f7666631e52a79a6e203b4ecb14b4c5800719c2e3f4b48ba9e92",
    "static_walls": [
     "type-layout"
    ],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -14778,14 +14780,14 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id24",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "loop-2b.c",
    "sha256": "f22fa29d3fd942b2069ec1fcdb6764cd6afc6070001c2026f236aaf24c4d1e29",
    "static_walls": [
     "type-layout"
    ],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -14877,21 +14879,21 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id24",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "loop-4.c",
    "sha256": "199c081bfbe49d0b4b7bbb2c2e6a404974f28d575c8a50201ceed71f0b421fc1",
    "static_walls": [],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id24",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "loop-4b.c",
    "sha256": "72a5f595e3ca39a1dbdf065edca341c6492aa7d8ec88b31575ec116e85413412",
    "static_walls": [],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -14906,21 +14908,21 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id24",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "loop-6.c",
    "sha256": "52ec11e4f2721d66321ecafc1ced0b316b83421f8ec0b73cad990c3a1df6cbf2",
    "static_walls": [],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id24",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "loop-7.c",
    "sha256": "5387ccf2a081e6a05f5adf2857402c9ebed48b79c2a9834318bfce2457ebe297",
    "static_walls": [],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -16561,12 +16563,12 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id24",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "pr19606.c",
    "sha256": "07944398e3ce4cbd7a5e08e9c19851e7651ebaec0aab6484783a36739c44aa7b",
    "static_walls": [],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -16610,23 +16612,23 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id66",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "pr20466-1.c",
    "sha256": "2cf090f940d1ea65a9f88e90dc807c5893452da75fff466e450d75d3b6ce5715",
    "static_walls": [],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id88",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "pr20527-1.c",
    "sha256": "88a81977ad38ca400f1bbee5219e04b021b8bdbacb42c0365fb2a5e8a54dad1a",
    "static_walls": [
     "type-layout"
    ],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -16674,12 +16676,12 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id24",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "pr21964-1.c",
    "sha256": "298553df1d5eaca148c8d777649872a96fea99ced1b8317f14eab472680e0f74",
    "static_walls": [],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -16692,14 +16694,14 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id18",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "pr22061-2.c",
    "sha256": "83cee733bdfc7b9202cf65401ebae32ebdf2f9bf47f16b9394d7d8f974bcd071",
    "static_walls": [
     "type-layout"
    ],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -16936,12 +16938,12 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id18",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "pr25125.c",
    "sha256": "ec15940c525cdcf888b5e4620d19796ba0cada1f7f34f1d3823e802d7288ad17",
    "static_walls": [],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -16990,23 +16992,23 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id18",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "pr27364.c",
    "sha256": "b80a3964eba972703914768e9e42f2e0c47bab839988e5a84ceef623c52b462b",
    "static_walls": [
     "libc-call"
    ],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id24",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "pr27671-1.c",
    "sha256": "0cecdfca3506b3ce453cde946748b53e1b2664ef38c32e19c575e795018ea70e",
    "static_walls": [],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -17019,12 +17021,12 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id24",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "pr28403.c",
    "sha256": "7b377354cee5f43fef48fb8672dc45d7c413c089e5c6d0afb434e7d2b4bec00e",
    "static_walls": [],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -17242,12 +17244,12 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id24",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "pr31605.c",
    "sha256": "2eff9d90632f4b0f4dce986401aa19c8b1cc05c49bbf8f0e2d87a7ff2142e3a7",
    "static_walls": [],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -17416,14 +17418,15 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id37",
+   "detail": "GNU case range is outside the tier",
    "manifest_status": "parsed",
    "name": "pr34154.c",
    "sha256": "edae4e9e3f74389c5fac0193e76bc3795b8aba369c7eea72ac658db62babae11",
    "static_walls": [
+    "unsupported:CaseStmt",
     "unsupported:EmptyDecl"
    ],
-   "verdict": "refused-libc"
+   "verdict": "refused-unsupported"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -17836,12 +17839,12 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id18",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "pr38819.c",
    "sha256": "abd9788631f67895893a450426e0b97592ccfe1a84ff03d8fc32f8b8b9abda6d",
    "static_walls": [],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -18380,12 +18383,12 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id18",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "pr44202-1.c",
    "sha256": "fdf427b70f5bd6d3e42911846f66eaabc70951b6c56309e21a296c50b4acc34c",
    "static_walls": [],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -18666,12 +18669,12 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id18",
+   "detail": "",
    "manifest_status": "parsed",
    "name": "pr48809.c",
    "sha256": "ead81f5b72daacf02299339b743fae70c42608bfade30b337a2287991020b671",
    "static_walls": [],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -19264,12 +19267,12 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id24",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "pr57144.c",
    "sha256": "28542a6ac8384ecfeea73c22052fd2fc00c1b3443066c075a58cd720bc513fb8",
    "static_walls": [],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -19540,12 +19543,12 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id18",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "pr58640.c",
    "sha256": "a29d561d095ebf54642c26b4e0f9eaabf89e2882415421cdc5a1d0c14baad089",
    "static_walls": [],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -19722,14 +19725,14 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id24",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "pr59747.c",
    "sha256": "9b4d0a2678c82aa974df3df199c260c664894b8877aa8a66a911fe59f4c50333",
    "static_walls": [
     "type-layout"
    ],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -20554,12 +20557,12 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id246",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "pr69320-1.c",
    "sha256": "3f9aa7db3c39e73987a234303e12e2da96736c9e92b0c87d1776f2c406168e7b",
    "static_walls": [],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -20572,23 +20575,23 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id246",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "pr69320-3.c",
    "sha256": "832107426fb30bcaa4eb4251cb469bbd68eb338819a90d1a9eb3771b8835994b",
    "static_walls": [
     "type-layout"
    ],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id246",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "pr69320-4.c",
    "sha256": "a3d2e18e9f501ec20f559c7ab2385ccec7129836ba46ff773b89e7ecdd00c967",
    "static_walls": [],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -20749,12 +20752,12 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id18",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "pr71335.c",
    "sha256": "5f41a1e8f470aabb4b9bef183e01c492621464f1ce13d8439cfab4908dcb0a8b",
    "static_walls": [],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -20767,7 +20770,7 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id18",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "pr71550.c",
    "sha256": "c3a7aba35712c06dcf78e7eacaaacfb625eb1de140f4ae251c63b56d7e1e55f2",
@@ -20776,7 +20779,7 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -21027,14 +21030,14 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id18",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "pr78856.c",
    "sha256": "74152c8adf410bbf77d913010179609da616b7f501010c5b96a7aad62e5e1fe6",
    "static_walls": [
     "type-layout"
    ],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -23067,14 +23070,14 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id24",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "struct-ini-1.c",
    "sha256": "7077c0a084e069dc9c0125d9d450891999a96bab930f94ff8002062fc1cfed49",
    "static_walls": [
     "type-layout"
    ],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -23100,14 +23103,14 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id24",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "struct-ini-4.c",
    "sha256": "eabc4545118729a6c907121b39470b5c790d84f31e0ca842feb7af731509f37e",
    "static_walls": [
     "type-layout"
    ],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -23165,12 +23168,12 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id24",
+   "detail": "native O0/sanitizer linker failure; no oracle result claimed",
    "manifest_status": "parsed",
    "name": "unroll-1.c",
    "sha256": "b3db97295c240d2eb09cd5e6b8528ba4912e1cec3b0d4b0b5ea35ab572d5b468",
    "static_walls": [],
-   "verdict": "refused-libc"
+   "verdict": "oracle"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -23195,12 +23198,12 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id24",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "usmul.c",
    "sha256": "402942f5c9cf2599e8799f0d531c494e01f0e060c05c6e18f9292b96902749c5",
    "static_walls": [],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -23633,12 +23636,12 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id18",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "vrp-4.c",
    "sha256": "4271f45ada2e4f4ac60e9b638223a73978e4c71132941e3a03727c80c45d9b46",
    "static_walls": [],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -23683,12 +23686,12 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id24",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "widechar-1.c",
    "sha256": "03b6b6cc8759d8a9a821e60f3c632d5a7bd7b39785ed97c5857592799211602d",
    "static_walls": [],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -25671,19 +25674,6 @@
   },
   {
    "files": [
-    "20050106-1.c",
-    "20230630-2.c",
-    "20230630-4.c",
-    "builtin-bitops-1.c",
-    "pr34154.c",
-    "pr37573.c"
-   ],
-   "present": 6,
-   "sole": 2,
-   "wall": "unsupported:EmptyDecl"
-  },
-  {
-   "files": [
     "00213.c",
     "00214.c",
     "20000703-1.c",
@@ -25713,6 +25703,19 @@
    "present": 8,
    "sole": 1,
    "wall": "unsupported:AddrLabelExpr"
+  },
+  {
+   "files": [
+    "20050106-1.c",
+    "20230630-2.c",
+    "20230630-4.c",
+    "builtin-bitops-1.c",
+    "pr34154.c",
+    "pr37573.c"
+   ],
+   "present": 6,
+   "sole": 1,
+   "wall": "unsupported:EmptyDecl"
   },
   {
    "files": [
@@ -26473,6 +26476,14 @@
    "present": 1,
    "sole": 0,
    "wall": "unsupported:CXXNullPtrLiteralExpr"
+  },
+  {
+   "files": [
+    "pr34154.c"
+   ],
+   "present": 1,
+   "sole": 0,
+   "wall": "unsupported:CaseStmt"
   },
   {
    "files": [

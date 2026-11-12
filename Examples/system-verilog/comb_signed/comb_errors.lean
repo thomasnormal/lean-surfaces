@@ -86,7 +86,7 @@ example (W : Nat) (hW : 1 ≤ W) (hR : (W : Int) < 2147483648) : CombDesign (sg_
   sv_structure
 
 /--
-error: sv_structure: outside the supported fragment — site `plain#0`: an operand of a signed comparison that is not a whole signed signal, a sized literal, an unsized constant or a sign-extension marker around a whole signed signal or a sized literal (the fragment reads a signed comparison of two signed signals declared with the same dimensions, of a whole signed signal with a constant, and of such operands extended with their sign bits, `SignedResize`, IEEE 1800-2023 §11.8.2; a select or an operation as an operand is outside it)
+error: sv_structure: outside the supported fragment — site `plain#0`: a signed comparison with an operation (`+`) as an operand, such as `(a + b) >= 0`: the operation is context-determined, so it is taken at the comparison's width, its signed operands extended with their sign bits where they are narrower (IEEE 1800-2023 §11.6.1, §11.8.2, the envelope's `SignedResize` inside the operation); the fragment reads a signed comparison of whole signed signals, sized literals, unsized constants and sign-extension markers around a whole signed signal or a sized literal, not of an operation
 -/
 #guard_msgs (whitespace := lax) in
 example (W : Nat) (hW : 1 ≤ W) (hR : (W : Int) < 2147483648) : CombDesign (sg_cmp_opd.sem W) := by
@@ -123,7 +123,7 @@ example (W : Nat) (hW : 1 ≤ W) (hR : (W : Int) < 2147483648) : CombDesign (asr
 
 -- a signal of a parameter width against a marked literal: refused (at `W < 8` the signal would be extended)
 /--
-error: sv_structure: outside the supported fragment — site `plain#0`: a signed comparison with a sign-extended operand the fragment does not read (the narrower operand of a signed comparison is extended with its sign bit to the comparison's width, IEEE 1800-2023 §11.8.2, and the envelope marks it `SignedResize`; the fragment reads that marker around a whole signed signal or a sized literal, compared with an unsized constant, with another marked operand, or with a whole signed signal declared with constant dimensions at least as wide: here the marked operand is an operation or a select, or the unmarked signal is not declared with constant dimensions at least as wide)
+error: sv_structure: outside the supported fragment — site `plain#0`: a signed comparison of the signed signal `x`, whose declared width is not a constant (it depends on a parameter), with a sign-extended sized literal of 8 bits: at a point where `x` is narrower than 8 bits it is the operand to extend with its sign bit (IEEE 1800-2023 §11.8.2), which the envelope, elaborated at the default point, does not mark, and the semantics refuses there (`Resize:signed`); the fragment reads such a comparison when `x` is declared with constant dimensions of at least 8 bits
 -/
 #guard_msgs (whitespace := lax) in
 example (W : Nat) (hW : 1 ≤ W) (hR : (W : Int) < 2147483648) : CombDesign (sg_cmp_sext_param.sem W) := by
@@ -131,7 +131,7 @@ example (W : Nat) (hW : 1 ≤ W) (hR : (W : Int) < 2147483648) : CombDesign (sg_
 
 -- the marked operands inside an operation
 /--
-error: sv_structure: outside the supported fragment — site `plain#0`: an operand of a signed comparison that is not a whole signed signal, a sized literal, an unsized constant or a sign-extension marker around a whole signed signal or a sized literal (the fragment reads a signed comparison of two signed signals declared with the same dimensions, of a whole signed signal with a constant, and of such operands extended with their sign bits, `SignedResize`, IEEE 1800-2023 §11.8.2; a select or an operation as an operand is outside it)
+error: sv_structure: outside the supported fragment — site `plain#0`: a signed comparison with an operation (`+`) as an operand, such as `(a + b) >= 0`: the operation is context-determined, so it is taken at the comparison's width, its signed operands extended with their sign bits where they are narrower (IEEE 1800-2023 §11.6.1, §11.8.2, the envelope's `SignedResize` inside the operation); the fragment reads a signed comparison of whole signed signals, sized literals, unsized constants and sign-extension markers around a whole signed signal or a sized literal, not of an operation
 -/
 #guard_msgs (whitespace := lax) in
 example : CombDesign sg_cmp_sext_op.sem := by
@@ -139,7 +139,7 @@ example : CombDesign sg_cmp_sext_op.sem := by
 
 -- an explicit `$signed(...)` call: the extractor keeps its extension loud
 /--
-error: sv_structure: outside the supported fragment — site `plain#0`: a signed comparison whose operand the envelope marks `ConversionExpression:width`: the extractor refuses the sign extension of this operand (it marks the extension of a plain signed signal or a signed literal `SignedResize`, IEEE 1800-2023 §11.8.2, which the fragment reads, and keeps another conversion, such as an explicit `$signed(...)` call, loud), so the semantics lowers this site to a loud node and no equation holds for it
+error: sv_structure: outside the supported fragment — site `plain#0`: a signed comparison whose operand `$signed(x[3:0])` the envelope marks `ConversionExpression:width`: the extractor refuses the sign extension of this operand (it marks the extension of a plain signed signal or a signed literal `SignedResize`, IEEE 1800-2023 §11.8.2, which the fragment reads, and keeps another conversion, such as an explicit `$signed(...)` call of a select, loud), so the semantics lowers this site to a loud node and no equation holds for it
 -/
 #guard_msgs (whitespace := lax) in
 example : CombDesign sg_cmp_sext_sel.sem := by

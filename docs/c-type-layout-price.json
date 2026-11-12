@@ -675,7 +675,7 @@
  },
  "corpus": "C1-C3 (gcc torture, c-testsuite, gcc c23-run)",
  "interpretation": "type-layout is a candidate wall, not a dynamic verdict: the static heuristic over-approximates the files that reach a missing layout and misses some declaration types. Price a tier from observed no-layout refusals, retaining the static ranking for discovery.",
- "schema": "c-type-layout-price-0.1",
+ "schema": "c-type-layout-price-0.2",
  "struct_S_dependencies": {
   "files": 22,
   "interpretation": "field records come directly from the approved Clang envelope; an empty list means the envelope has no named S record, not that a layout was guessed.",
@@ -1525,6 +1525,107 @@
      }
     ],
     "variable_refs": []
+   }
+  ]
+ },
+ "struct_S_scalar_price": {
+  "by_class": {
+   "anonymous-field": 1,
+   "attribute-or-nested-node": 5,
+   "direct-scalar-fields": 10,
+   "non-scalar-field": 6
+  },
+  "direct_scalar_files": 10,
+  "files": 22,
+  "interpretation": "direct-scalar-fields is a candidate for the smallest layout slice: every member is a named parser FieldDecl with a direct profile integer/character type or fixed scalar array. This is a price only; it does not claim that a row has no later wall.",
+  "rows": [
+   {
+    "classification": "non-scalar-field",
+    "name": "00087.c"
+   },
+   {
+    "classification": "attribute-or-nested-node",
+    "name": "20050107-1.c"
+   },
+   {
+    "classification": "non-scalar-field",
+    "name": "20081103-1.c"
+   },
+   {
+    "classification": "non-scalar-field",
+    "name": "20100708-1.c"
+   },
+   {
+    "classification": "attribute-or-nested-node",
+    "name": "20171008-1.c"
+   },
+   {
+    "classification": "direct-scalar-fields",
+    "name": "20230630-1.c"
+   },
+   {
+    "classification": "direct-scalar-fields",
+    "name": "20230630-2.c"
+   },
+   {
+    "classification": "direct-scalar-fields",
+    "name": "20230630-3.c"
+   },
+   {
+    "classification": "direct-scalar-fields",
+    "name": "20230630-4.c"
+   },
+   {
+    "classification": "non-scalar-field",
+    "name": "pr101188.c"
+   },
+   {
+    "classification": "non-scalar-field",
+    "name": "pr108498-2.c"
+   },
+   {
+    "classification": "non-scalar-field",
+    "name": "pr47538.c"
+   },
+   {
+    "classification": "direct-scalar-fields",
+    "name": "pr49123.c"
+   },
+   {
+    "classification": "attribute-or-nested-node",
+    "name": "pr52979-1.c"
+   },
+   {
+    "classification": "attribute-or-nested-node",
+    "name": "pr52979-2.c"
+   },
+   {
+    "classification": "anonymous-field",
+    "name": "pr58984.c"
+   },
+   {
+    "classification": "direct-scalar-fields",
+    "name": "pr65215-3.c"
+   },
+   {
+    "classification": "direct-scalar-fields",
+    "name": "pr65215-4.c"
+   },
+   {
+    "classification": "direct-scalar-fields",
+    "name": "pr70127.c"
+   },
+   {
+    "classification": "attribute-or-nested-node",
+    "name": "pr79737-1.c"
+   },
+   {
+    "classification": "direct-scalar-fields",
+    "name": "pr89195.c"
+   },
+   {
+    "classification": "direct-scalar-fields",
+    "name": "pr97764.c"
    }
   ]
  },

@@ -17,6 +17,42 @@ DEFAULT_INPUT = ROOT / "docs" / "c-survey.json"
 DEFAULT_JSON = ROOT / "docs" / "c-type-layout-price.json"
 DEFAULT_PAGE = ROOT / "docs" / "c-type-layout-price.md"
 
+# This is deliberately narrower than the interpreter's complete profile.  It
+# prices only records whose envelope fields are direct integer/character
+# scalars (or fixed arrays of those scalars), with no attributes, anonymous
+# members, pointers, typedefs, floating values, or nested records.  The
+# classifier never interprets a spelling; it is a conservative report over
+# the parser's already structured field `type` values.
+_DIRECT_SCALARS = {
+    "char", "signed char", "unsigned char", "_Bool", "bool",
+    "short", "short int", "unsigned short", "int", "unsigned int",
+    "unsigned", "long", "unsigned long", "long long",
+    "unsigned long long", "long int", "unsigned long int",
+    "__int128", "unsigned __int128",
+}
+_SCALAR_ARRAY = re.compile(r"^(.+)\[([0-9]+)\]$")
+
+
+def _direct_scalar_type(typ):
+    if typ in _DIRECT_SCALARS:
+        return True
+    m = _SCALAR_ARRAY.fullmatch(typ or "")
+    return bool(m and m.group(1) in _DIRECT_SCALARS)
+
+
+def classify_struct_fields(fields):
+    """Return a conservative parser-envelope layout price for one record."""
+    if not fields:
+        return "empty-record"
+    for field in fields:
+        if field.get("kind") != "FieldDecl":
+            return "attribute-or-nested-node"
+        if not field.get("name"):
+            return "anonymous-field"
+        if not _direct_scalar_type(field.get("type")):
+            return "non-scalar-field"
+    return "direct-scalar-fields"
+
 
 def is_decl_layout(row):
     return (row.get("verdict") == "refused-unsupported" and
@@ -128,7 +164,7 @@ def price(data, manifest_path=None):
             ],
         }
     report = {
-        "schema": "c-type-layout-price-0.1",
+        "schema": "c-type-layout-price-0.2",
         "survey_schema": data.get("schema"),
         "survey_commit": data.get("measured_commit"),
         "survey_measured_at_utc": data.get("measured_at_utc"),
@@ -168,6 +204,23 @@ def price(data, manifest_path=None):
             "field records come directly from the approved Clang envelope; an "
             "empty list means the envelope has no named S record, not that a "
             "layout was guessed."
+        ),
+    }
+    classifications = Counter(classify_struct_fields(fields)
+                              for fields in dependencies.values())
+    report["struct_S_scalar_price"] = {
+        "files": len(dependencies),
+        "direct_scalar_files": classifications["direct-scalar-fields"],
+        "by_class": dict(sorted(classifications.items())),
+        "rows": [
+            {"name": name, "classification": classify_struct_fields(fields)}
+            for name, fields in sorted(dependencies.items())
+        ],
+        "interpretation": (
+            "direct-scalar-fields is a candidate for the smallest layout slice: "
+            "every member is a named parser FieldDecl with a direct profile "
+            "integer/character type or fixed scalar array. This is a price only; "
+            "it does not claim that a row has no later wall."
         ),
     }
     joins = envelope_identity_joins(data, manifest_path)
@@ -222,6 +275,14 @@ def render(report):
                 for field in item["fields"])
             lines.append("| `%s` | %s |" % (item["name"], fields or "<none>"))
         lines += ["", deps.get("interpretation", ""), ""]
+    scalar = report.get("struct_S_scalar_price", {})
+    if scalar.get("rows"):
+        lines += ["", "## `struct S` direct-scalar layout price", "",
+                  "- direct scalar candidate files: %d" % scalar.get("direct_scalar_files", 0),
+                  "", "| file | classification |", "| --- | --- |"]
+        for item in scalar["rows"]:
+            lines.append("| `%s` | `%s` |" % (item["name"], item["classification"]))
+        lines += ["", scalar.get("interpretation", ""), ""]
     joins = report.get("struct_S_identity_joins", {})
     if joins.get("rows"):
         lines += ["", "## `struct S` declaration-identity joins", "",
@@ -257,6 +318,13 @@ def self_test():
         raise SystemExit("c_type_layout_price --self-test: got %r want %r" % (got, want))
     if envelope_identity_joins({"rows": []}, None) != {}:
         raise SystemExit("c_type_layout_price --self-test: empty identity join changed")
+    if classify_struct_fields([{"kind": "FieldDecl", "name": "x", "type": "int"},
+                              {"kind": "FieldDecl", "name": "a", "type": "char[4]"}]) != "direct-scalar-fields":
+        raise SystemExit("c_type_layout_price --self-test: scalar record not classified")
+    if classify_struct_fields([{"kind": "FieldDecl", "name": "p", "type": "int *"}]) != "non-scalar-field":
+        raise SystemExit("c_type_layout_price --self-test: pointer was classified as scalar")
+    if classify_struct_fields([{"kind": "Unsupported", "c_kind": "PackedAttr"}]) != "attribute-or-nested-node":
+        raise SystemExit("c_type_layout_price --self-test: attribute was classified as a field")
     print("c_type_layout_price --self-test: ok")
 
 

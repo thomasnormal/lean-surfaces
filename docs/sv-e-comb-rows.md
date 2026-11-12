@@ -190,3 +190,8 @@ The chained and nested four-state condition row, `wpg_if_chain`, runs from its
 source-shaped envelope and matches Icarus Verilog 13.0 and Xcelium 24.03-s004
 for all 21 cycles.  It is an E-MATCH and does not change the frozen migration
 count.
+
+The four-state conditional-expression row, `wpg_tern_x`, runs from its
+source-shaped envelope and matches Icarus Verilog 13.0 and Xcelium 24.03-s004
+for all 49 cycles.  It is an E-MATCH and does not change the frozen migration
+count.

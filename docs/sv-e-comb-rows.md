@@ -78,6 +78,11 @@ source-shaped envelope and matches Icarus Verilog 13.0 and Xcelium 24.03-s004
 for all 8 cycles.  It is an E-MATCH and does not change the frozen migration
 count.
 
+The E runner now applies the same source-shaped alias admission guard as the
+ordinary loader.  `acg_alias_assign` is therefore a loud
+`AlwaysComb:alias-read` refusal, matching the pinned legacy refusal and the
+IEEE 1800-2023 §§4.7–4.8 boundary; it is not executed as an E result.
+
 The receipts were produced with:
 
 ```text

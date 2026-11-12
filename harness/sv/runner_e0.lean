@@ -130,6 +130,11 @@ def main (argv : List String) : IO UInt32 := do
         | .timeout => .error "instantiate2: generate fuel exhausted"
         | .unsupported m => .error s!"instantiate2: {m}"
       unless d.namesNodup do .error "instantiateH: two declarations of one name after flattening"
+      -- Keep the source-shaped alias admission boundary in E-core-0 aligned
+      -- with the ordinary loader: IEEE 1800-2023 §§4.7–4.8 leave the update
+      -- order of a continuous copy and an always_comb wake-up open, so a
+      -- block that reads such a copy before writing its source must refuse.
+      let d := d.aliasGuard
       for p in d.processes do
         match p with
         | .unsupported k msg => .error s!"{k}: {msg}"

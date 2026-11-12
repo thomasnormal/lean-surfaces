@@ -9,6 +9,7 @@ other processes remain loud through the source-shaped `Unsupported` node.
 import Lean
 import LeanModels.Sv.Ingest2
 import LeanModels.Sv.Kernel.RunEArray
+import LeanModels.Sv.Kernel.Core0Entry
 import LeanModels.Sv.HierarchyNode2
 
 open Lean (Json)
@@ -108,7 +109,7 @@ def main (argv : List String) : IO UInt32 := do
   | [envPath, casesPath, caseName, sigmaName] => do
     let envText ← IO.FS.readFile ⟨envPath⟩
     let casesText ← IO.FS.readFile ⟨casesPath⟩
-    let r : Except String (Design2 × Option HierNode2 × List SvState × List String × Nat) := do
+    let r : Except String (Design2 × Option HierNode2 × List SvState × List String × Nat × Option EDesign2) := do
       let (pd, lib) ← loadHierString envText
       match pd.crossCheck with
       | [] => pure ()
@@ -149,22 +150,28 @@ def main (argv : List String) : IO UInt32 := do
       -- order of a continuous copy and an always_comb wake-up open, so a
       -- block that reads such a copy before writing its source must refuse.
       let d := d.aliasGuard
+      let sourceE := pd.processes.any fun p =>
+        match p with | .alwaysImplicit _ => true | _ => false
       for p in d.processes do
         match p with
-        | .unsupported k msg => .error s!"{k}: {msg}"
+        | .unsupported k msg =>
+            if sourceE then pure () else .error s!"{k}: {msg}"
         | .alwaysFF _ _ | .alwaysPlain _ _ | .alwaysFFR _ _ _ _ =>
             .error "E-core-0: edge/timed process is outside the comb fragment"
         | _ => pure ()
       let entries ← (← stimulusArray case).toList.mapM (parseEntry d)
       let signals ← (← getArrF case "signals").toList.mapM (fun s => s.getStr?)
-      pure (d, node?, entries, signals, fuel)
+      let eDesign? := if sourceE then some (pd.instantiateDE2 args) else none
+      pure (d, node?, entries, signals, fuel, eDesign?)
     match r with
     | .error e => err e
-    | .ok (d, node?, entries, signals, fuel) =>
+    | .ok (d, node?, entries, signals, fuel, eDesign?) =>
       let σ ← match sigmaOf sigmaName with
         | .ok σ => pure σ
         | .error e => return (← err e)
-      let E := LeanModels.Sv.Kernel.Elab.ofDesign2 d
+      let E := match eDesign? with
+        | some ed => LeanModels.Sv.Kernel.Elab.ofEDesign2 ed
+        | none => LeanModels.Sv.Kernel.Elab.ofDesign2 d
       let out ← IO.getStdout
       for dc in d.decls do
         let sign := if dc.isSigned then "signed" else "unsigned"

@@ -73042,6 +73042,16 @@
         }
       ],
       "measured": "2026-11-09: signed literal widening into a 16-bit signed expression and mixed unsigned expression; Icarus agrees with the symbolic route under IEEE 1800-2023 §11.8.1–11.8.2."
+    },
+
+    {
+      "name": "always_star_timezero_e",
+      "example": "sem2/always_star_timezero_e",
+      "top": "always_star_timezero_e",
+      "signals": ["k", "y_star", "y_comb"],
+      "stimulus": [{"a": "0011"}, {"a": "1010"}, {"a": "xz01"}, {"a": "zzzz"}],
+      "measured": "2026-11-12: source-shaped always @* remains waiting at time zero and wakes on input changes; E receipt and pinned simulators retain the documented startup split."
     }
+
   ]
 }

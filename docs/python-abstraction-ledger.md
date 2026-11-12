@@ -20,6 +20,7 @@ an abstraction.
 | Allocation cannot fail inside the modeled heap | list/dict/set/class/generator allocation | fixed materialization budgets and unsupported boundaries replace environment-dependent memory exhaustion; no fabricated result is returned | range/list/set/dict differential rows; `memory-model.md` allocation rules |
 | Wall-clock values are not guessed | `time.time()` and clock-dependent code | the trace is an explicit `World.clock` input, but the current integer trace cannot represent CPython binary64 readings, so a consumed read refuses; dead reads remain exact | clock battery and `memory-model.md` trace-clock section |
 | Rendering tables are finite and explicit | `str`, `repr`, `print`, container rendering | admitted scalar/container forms use the shared renderer; sets, identity objects, unsupported Unicode rendering, and unbounded recursion remain loud | `repr_script`, `print_set`, `print_nonascii`, `docs/python-protocol-census.md` rendering row |
+| Two interpreter surfaces observe the same structured domain | Every differential row is run by the runner and, where the proof tier admits it, by `Semantics.lean` | the runner currently observes 4,968 rows and the proof interpreter 4,845; a refusal in the narrower proof tier is evidence of its declared boundary, never a disagreement | `harness/interpreter_ledger.py`, `harness/diff_test.py --proof-interpreter` |
 
 ## Platform and oracle assumptions
 

@@ -55,6 +55,7 @@ def acceptance_gates(root):
         ("py-declared-divergences", [python, "harness/pyc_divergence_probe.py"]),
         ("py-harness", [python, "harness/diff_test.py", "--no-build", "--runner", runner]),
         ("py-foundation-edge-generator", [python, "harness/foundation_edges.py", "--diff"]),
+        ("py-interpreter-ledger", [python, "harness/interpreter_ledger.py"]),
         ("py-accelerator-domains", [python, "harness/accelerator_domains.py"]),
         ("py-statement-smoke", [python, "harness/statement_smoke.py"]),
         ("py-runner-stamp", [python, "harness/runner_stamp.py"]),

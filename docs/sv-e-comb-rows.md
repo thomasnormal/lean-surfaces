@@ -4,7 +4,7 @@
 <!-- Source: harness/sv/cases2.json; backend: e0; simulator request: both. -->
 
 This page is generated from one batched E differential run over the committed source-shaped envelopes.
-The frozen migration number is 547/684; these Step 4 receipts are reported separately.
+The frozen migration number is 554/684; these Step 4 receipts are reported separately.
 
 | row | shape | cycles | verdict | simulators |
 | --- | --- | ---: | --- | --- |

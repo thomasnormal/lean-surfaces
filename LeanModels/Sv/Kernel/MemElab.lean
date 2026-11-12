@@ -19,7 +19,8 @@ open Kernel
 def evalMemDim (env : IEnv) (d : PDim) : Except String (Int × Int) := do
   return (← evalInt env d.msb, ← evalInt env d.lsb)
 
-def PDecl.memShape? (env : IEnv) (pd : PDecl) : Except String (Option MemShape) :=
+def PDecl.memShapeWithId? (env : IEnv) (pd : PDecl) (id : MemId) :
+    Except String (Option MemShape) :=
   match pd.unpackedDims with
   | [] => .ok none
   | [d] => do
@@ -28,18 +29,24 @@ def PDecl.memShape? (env : IEnv) (pd : PDecl) : Except String (Option MemShape) 
       if w == 0 then
         .error s!"decl '{pd.name}': zero-width unpacked element"
       else
-        .ok (some { name := pd.name, elemWidth := w, msb, lsb })
+        .ok (some ({ name := pd.name, elemWidth := w, msb := msb, lsb := lsb, id := id, signed := pd.isSigned, twoState := pd.twoState, isNet := pd.isNet } : MemShape))
   | _ :: _ :: _ =>
       .error s!"decl '{pd.name}': nested unpacked memory rank outside E (UnpackedDecl:rank)"
 
+/-- Compatibility view for source-shaped adapters that do not carry a scope
+path.  Canonical elaboration uses `memShapeWithId?` with the declaration's
+source ordinal. -/
+def PDecl.memShape? (env : IEnv) (pd : PDecl) : Except String (Option MemShape) :=
+  pd.memShapeWithId? env ({} : Kernel.MemId)
+
 def PDesign.memShapesAt (env : IEnv) : PDesign → Except String (List MemShape)
-  | d => go d.decls
+  | d => go d.decls 0
 where
-  go : List PDecl → Except String (List MemShape)
-    | [] => .ok []
-    | pd :: rest => do
-        let tail ← go rest
-        match ← pd.memShape? env with
+  go : List PDecl → Nat → Except String (List MemShape)
+    | [], _ => .ok []
+    | pd :: rest, i => do
+        let tail ← go rest (i + 1)
+        match ← pd.memShapeWithId? env ({ decl := i } : Kernel.MemId) with
         | none => .ok tail
         | some shape => .ok (shape :: tail)
 

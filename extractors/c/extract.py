@@ -69,6 +69,7 @@ STMTS = {"CompoundStmt", "DeclStmt", "IfStmt", "ForStmt", "WhileStmt", "DoStmt",
          "NullStmt", "SwitchStmt", "CaseStmt", "DefaultStmt"}
 EXPRS = {"IntegerLiteral", "CharacterLiteral", "StringLiteral", "FloatingLiteral",
          "CXXBoolLiteralExpr",
+         "ChooseExpr",
          "DeclRefExpr", "MemberExpr", "ArraySubscriptExpr", "CallExpr",
          "BinaryOperator", "CompoundAssignOperator", "UnaryOperator",
          "ConditionalOperator", "ParenExpr", "ImplicitCastExpr", "CStyleCastExpr",
@@ -496,6 +497,13 @@ class Extractor:
         # Clang supplies the parser's semantic boolean value; retain it as a
         # boolean field rather than reparsing the source spelling.
         return {"value": n.get("value"), "type": qual(n)}
+
+    def e_ChooseExpr(self, n):
+        cs = kids(n)
+        if len(cs) != 3:
+            raise SystemExit("extract.py: ChooseExpr did not retain condition and both branches")
+        return {"cond": self.node(cs[0]), "then": self.node(cs[1]),
+                "else": self.node(cs[2]), "type": qual(n)}
 
     def e_DeclRefExpr(self, n):
         d = n.get("referencedDecl") or {}

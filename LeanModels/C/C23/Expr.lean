@@ -588,6 +588,14 @@ def charLiteralValue (n : Int) : Int :=
     if b >= 128 then b - 256 else b
   else n
 
+def chooseCond : Expr → Option Bool
+  | .constExpr value _ _ _ =>
+      match value.toInt? with
+      | some n => some (n != 0)
+      | none => none
+  | .paren sub _ _ => chooseCond sub
+  | _ => none
+
 /-- The non-short-circuit binary rules, once both operands have values. -/
 def evalArith (ctx : Ctx) (op : String) (lv rv : CVal) (ty : CType) : EvalM CVal :=
   match lv, rv with
@@ -929,6 +937,11 @@ def evalExpr (ctx : Ctx) : Expr → EvalM CVal
       | none => refuseUnsupported s!"integer literal spelling '{v}'"
   | .boolLit b _ _ =>
       pure (.int IntTy.bool_ (if b then 1 else 0))
+  | .choose cond yes no _ _ =>
+      match chooseCond cond with
+      | some true => evalExpr ctx yes
+      | some false => evalExpr ctx no
+      | none => refuseUnsupported "ChooseExpr condition is not a folded integer constant"
   | .charLit v ty _ => do
       let t ← intTyOf (ctx.layout.normalizeTy ty)
       match v.toInt? with
@@ -1232,6 +1245,7 @@ def Expr.nodeIsPure : Expr → Bool
   | .unop op _ _ _ _ => op != "++" && op != "--"
   -- §6.5.17.3 — `a op= b` stores.
   | .compoundAssign .. => false
+  | .choose .. => false
   -- §6.5.3.3 — an opaque callee. This is the constructor that makes the
   -- J.1(16) domain non-empty, and inch 5's repair is what made it REACHABLE.
   | .call .. => false
@@ -1634,6 +1648,7 @@ private theorem memInvariant_core (ctx : Ctx) : ∀ (n : Nat) (e : Expr), e.size
       cases e with
       | intLit _ _ _ => exact ⟨by open_eval; mem_inv, by open_lvalue; mem_inv⟩
       | boolLit _ _ _ => exact ⟨by open_eval; mem_inv, by open_lvalue; mem_inv⟩
+      | choose _ _ _ _ _ => exact ⟨by open_eval; mem_inv, by open_lvalue; mem_inv⟩
       | charLit _ _ _ => exact ⟨by open_eval; mem_inv, by open_lvalue; mem_inv⟩
       | strLit _ _ _ => exact ⟨by open_eval; mem_inv, by open_lvalue; mem_inv⟩
       | floatLit _ _ _ => exact ⟨by open_eval; mem_inv, by open_lvalue; mem_inv⟩

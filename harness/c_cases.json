@@ -66,6 +66,12 @@
     "return_value": 0
   },
   {
+    "id": "choose-expr",
+    "source": "int main(void) { return __builtin_choose_expr(1, 7, 9); }",
+    "expect": "match",
+    "return_value": 7
+  },
+  {
     "id": "compound-signed-char",
     "source": "int main(void) { signed char s = 127; s += 1; return s; }",
     "expect": "match",

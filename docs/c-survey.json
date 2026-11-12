@@ -12,10 +12,10 @@
   "gcc.c-torture/execute": {
    "not-ingested": 19,
    "not-parsed": 321,
-   "passed": 498,
+   "passed": 499,
    "refused-libc": 95,
    "refused-ub": 28,
-   "refused-unsupported": 915,
+   "refused-unsupported": 914,
    "timeout": 42
   },
   "gcc.c23-run": {
@@ -30,15 +30,15 @@
  "counts": {
   "not-ingested": 25,
   "not-parsed": 350,
-  "passed": 595,
+  "passed": 596,
   "refused-libc": 99,
   "refused-ub": 31,
-  "refused-unsupported": 1070,
+  "refused-unsupported": 1069,
   "timeout": 44
  },
  "manifest_hash": "1de1a60c299d5bb51dae7ca001b0a008010cad0b25670cde2090c08bfc1a84ce",
- "measured_at_utc": "2026-11-12T03:38:00Z",
- "measured_commit": "d7159d66a",
+ "measured_at_utc": "2026-11-12T04:05:00Z",
+ "measured_commit": "d508b5aa1",
  "pin": null,
  "rows": [
   {
@@ -16534,14 +16534,14 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "out of tier: ChooseExpr",
+   "detail": "",
    "manifest_status": "parsed",
    "name": "pr19449.c",
    "sha256": "7aa9b10d8a3b245025e25950b03927a21e94ee7e5c5fea98e76e17ecf2c659a2",
    "static_walls": [
-    "unsupported:ChooseExpr"
+    "libc-call"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -25246,6 +25246,7 @@
     "pr126405.c",
     "pr15262-1.c",
     "pr17377.c",
+    "pr19449.c",
     "pr22141-1.c",
     "pr22141-2.c",
     "pr27260.c",
@@ -25567,8 +25568,8 @@
     "vprintf-chk-1.c",
     "widechar-3.c"
    ],
-   "present": 737,
-   "sole": 212,
+   "present": 738,
+   "sole": 213,
    "wall": "libc-call"
   },
   {
@@ -25709,14 +25710,6 @@
    "present": 6,
    "sole": 1,
    "wall": "unsupported:EmptyDecl"
-  },
-  {
-   "files": [
-    "pr19449.c"
-   ],
-   "present": 1,
-   "sole": 1,
-   "wall": "unsupported:ChooseExpr"
   },
   {
    "files": [

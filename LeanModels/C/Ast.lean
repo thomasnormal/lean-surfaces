@@ -123,6 +123,8 @@ inductive Expr where
   | floatLit (value : String) (ty : CType) (span : CSpan)
   /-- C23's `true`/`false` literals, retained from clang's semantic node. -/
   | boolLit (value : Bool) (ty : CType) (span : CSpan)
+  /-- GNU `__builtin_choose_expr`: condition and both parser branches. -/
+  | choose (cond thenBranch elseBranch : Expr) (ty : CType) (span : CSpan)
   /-- A name, with the kind of declaration it resolved to. -/
   | declRef (id : Option DeclarationId) (name : String) (declKind : String)
       (ty : CType) (span : CSpan)
@@ -284,6 +286,7 @@ consumer refuses rather than inventing one. -/
 def Expr.ty : Expr → CType
   | .intLit _ t _ | .charLit _ t _ | .strLit _ t _ | .floatLit _ t _ => t
   | .boolLit _ t _ => t
+  | .choose _ _ _ t _ => t
   | .declRef _ _ _ t _ => t
   | .member _ _ _ t _ | .index _ _ t _ | .call _ _ t _ => t
   | .binop _ _ _ t _ | .compoundAssign _ _ _ _ _ t _ => t
@@ -302,6 +305,7 @@ def Expr.kindName : Expr → String
   | .strLit .. => "StringLiteral"
   | .floatLit .. => "FloatingLiteral"
   | .boolLit .. => "CXXBoolLiteralExpr"
+  | .choose .. => "ChooseExpr"
   | .declRef .. => "DeclRefExpr"
   | .member .. => "MemberExpr"
   | .index .. => "ArraySubscriptExpr"
@@ -330,6 +334,7 @@ def Expr.subexprs : Expr → List Expr
   | e@(.compoundAssign _ l r _ _ _ _) => e :: (l.subexprs ++ r.subexprs)
   | e@(.unop _ s _ _ _) => e :: s.subexprs
   | e@(.cond c t f _ _) => e :: (c.subexprs ++ t.subexprs ++ f.subexprs)
+  | e@(.choose c t f _ _) => e :: (c.subexprs ++ t.subexprs ++ f.subexprs)
   | e@(.paren s _ _) => e :: s.subexprs
   | e@(.implicitCast _ s _ _) => e :: s.subexprs
   | e@(.cast _ s _ _) => e :: s.subexprs
@@ -396,6 +401,10 @@ def Expr.sizes (es : List Expr) : Nat := (es.flatMap Expr.subexprs).length
 
 @[simp] theorem Expr.size_cond (c a b : Expr) (t : CType) (sp : CSpan) :
     (Expr.cond c a b t sp).size = c.size + a.size + b.size + 1 := by
+  simp [Expr.size, Expr.subexprs] <;> omega
+
+@[simp] theorem Expr.size_choose (c a b : Expr) (t : CType) (sp : CSpan) :
+    (Expr.choose c a b t sp).size = c.size + a.size + b.size + 1 := by
   simp [Expr.size, Expr.subexprs] <;> omega
 
 @[simp] theorem Expr.size_implicitCast (sub : Expr) (ck : String) (t : CType) (sp : CSpan) :

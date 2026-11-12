@@ -270,7 +270,7 @@ partial def parseDecl (j : Json) : Except String Decl := do
         return .param (id.map DeclarationId.mk) (← getOptStr j "name")
           (← getStr j "type") span
     | "FieldDecl" =>
-        return .field (← getStr j "name") (← getStr j "type") (← getOptNat j "bits") span
+        return .field (← getOptStr j "name") (← getStr j "type") (← getOptNat j "bits") span
     | "RecordDecl" =>
         return .record ((← getOptStr j "decl_id").map DeclarationId.mk) (← getOptStr j "name")
           (← (← getArr j "fields").mapM parseDecl) span

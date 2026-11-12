@@ -1,42 +1,41 @@
 {
  "by_corpus": {
   "c-testsuite/single-exec": {
-   "not-ingested": 5,
+   "not-ingested": 2,
    "not-parsed": 1,
    "passed": 151,
    "refused-libc": 5,
    "refused-ub": 3,
-   "refused-unsupported": 53,
+   "refused-unsupported": 56,
    "timeout": 2
   },
   "gcc.c-torture/execute": {
-   "not-ingested": 19,
+   "not-ingested": 12,
    "not-parsed": 321,
    "oracle-tests-compiler": 1,
    "passed": 647,
    "refused-libc": 42,
    "refused-ub": 36,
-   "refused-unsupported": 804,
+   "refused-unsupported": 811,
    "timeout": 48
   },
   "gcc.c23-run": {
-   "not-ingested": 1,
    "not-parsed": 28,
    "passed": 1,
    "refused-libc": 1,
    "refused-ub": 1,
-   "refused-unsupported": 44
+   "refused-unsupported": 45
   }
  },
  "corpus": "C1-C3 (gcc torture, c-testsuite, gcc c23-run)",
  "counts": {
-  "not-ingested": 25,
+  "not-ingested": 14,
   "not-parsed": 350,
   "oracle-tests-compiler": 1,
   "passed": 799,
   "refused-libc": 48,
   "refused-ub": 40,
-  "refused-unsupported": 901,
+  "refused-unsupported": 912,
   "timeout": 50
  },
  "dynamic_wall_ranking": [
@@ -915,38 +914,6 @@
   },
   {
    "files": [
-    "00046.c",
-    "00050.c",
-    "00078.c",
-    "00198.c",
-    "00216.c",
-    "20011008-3.c",
-    "20050107-1.c",
-    "20050119-1.c",
-    "20050119-2.c",
-    "20071030-1.c",
-    "20090113-2.c",
-    "20090113-3.c",
-    "20090527-1.c",
-    "930408-1.c",
-    "960301-1.c",
-    "anon-1.c",
-    "bswap-2.c",
-    "builtin-types-compatible-p.c",
-    "enum-1.c",
-    "gcc/testsuite/gcc.dg/c23-tag-5.c",
-    "pr49768.c",
-    "pr58984.c",
-    "pr87053.c",
-    "struct-cpy-1.c",
-    "struct-ini-2.c"
-   ],
-   "present": 25,
-   "sole": 25,
-   "wall": "ingestion"
-  },
-  {
-   "files": [
     "00087.c",
     "20081103-1.c",
     "20100708-1.c",
@@ -961,6 +928,7 @@
     "pr49123.c",
     "pr52979-1.c",
     "pr52979-2.c",
+    "pr58984.c",
     "pr65215-3.c",
     "pr65215-4.c",
     "pr70127.c",
@@ -968,8 +936,8 @@
     "pr89195.c",
     "pr97764.c"
    ],
-   "present": 20,
-   "sole": 20,
+   "present": 21,
+   "sole": 21,
    "wall": "unsupported:no layout for declared type 'struct S'"
   },
   {
@@ -998,6 +966,27 @@
    "present": 20,
    "sole": 20,
    "wall": "unsupported:pointer bit-cast across incompatible effective types"
+  },
+  {
+   "files": [
+    "00078.c",
+    "00198.c",
+    "20011008-3.c",
+    "20050107-1.c",
+    "20050119-1.c",
+    "20050119-2.c",
+    "20071030-1.c",
+    "20090113-2.c",
+    "20090113-3.c",
+    "20090527-1.c",
+    "930408-1.c",
+    "builtin-types-compatible-p.c",
+    "enum-1.c",
+    "struct-cpy-1.c"
+   ],
+   "present": 14,
+   "sole": 14,
+   "wall": "ingestion"
   },
   {
    "files": [
@@ -1553,6 +1542,15 @@
   },
   {
    "files": [
+    "00150.c",
+    "00216.c"
+   ],
+   "present": 2,
+   "sole": 2,
+   "wall": "unsupported:initializer list (inch 4)"
+  },
+  {
+   "files": [
     "00153.c",
     "pr56799.c"
    ],
@@ -1814,6 +1812,15 @@
   },
   {
    "files": [
+    "extzvsi.c",
+    "struct-ini-2.c"
+   ],
+   "present": 2,
+   "sole": 2,
+   "wall": "unsupported:unbound declaration 'id40' (name 'x')"
+  },
+  {
+   "files": [
     "pr15296.c",
     "pr19687.c"
    ],
@@ -2068,14 +2075,6 @@
    "present": 1,
    "sole": 1,
    "wall": "unsupported:function instrumentation is outside the tier"
-  },
-  {
-   "files": [
-    "00150.c"
-   ],
-   "present": 1,
-   "sole": 1,
-   "wall": "unsupported:initializer list (inch 4)"
   },
   {
    "files": [
@@ -2607,6 +2606,14 @@
   },
   {
    "files": [
+    "00046.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "unsupported:no layout for declared type 's'"
+  },
+  {
+   "files": [
     "zero-struct-2.c"
    ],
    "present": 1,
@@ -2727,6 +2734,14 @@
   },
   {
    "files": [
+    "gcc/testsuite/gcc.dg/c23-tag-5.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "unsupported:no layout for declared type 'struct product_iSfd_'"
+  },
+  {
+   "files": [
     "pr30778.c"
    ],
    "present": 1,
@@ -2844,6 +2859,14 @@
    "present": 1,
    "sole": 1,
    "wall": "unsupported:no layout for declared type 'union at6'"
+  },
+  {
+   "files": [
+    "bswap-2.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "unsupported:no layout for declared type 'union bf_or_uint32'"
   },
   {
    "files": [
@@ -3255,6 +3278,14 @@
   },
   {
    "files": [
+    "pr49768.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "unsupported:src/pr49768.c"
+  },
+  {
+   "files": [
     "simd-4.c"
    ],
    "present": 1,
@@ -3583,6 +3614,14 @@
   },
   {
    "files": [
+    "pr87053.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "unsupported:unbound declaration 'id26' (name 'u')"
+  },
+  {
+   "files": [
     "pr43784.c"
    ],
    "present": 1,
@@ -3660,6 +3699,14 @@
    "present": 1,
    "sole": 1,
    "wall": "unsupported:unbound declaration 'id28' (name 'terminate_me')"
+  },
+  {
+   "files": [
+    "00050.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "unsupported:unbound declaration 'id28' (name 'v')"
   },
   {
    "files": [
@@ -3743,6 +3790,14 @@
   },
   {
    "files": [
+    "anon-1.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "unsupported:unbound declaration 'id32' (name 'foo')"
+  },
+  {
+   "files": [
     "20030224-2.c"
    ],
    "present": 1,
@@ -3780,6 +3835,14 @@
    "present": 1,
    "sole": 1,
    "wall": "unsupported:unbound declaration 'id33' (name 't')"
+  },
+  {
+   "files": [
+    "960301-1.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "unsupported:unbound declaration 'id34' (name 'foo')"
   },
   {
    "files": [
@@ -3828,14 +3891,6 @@
    "present": 1,
    "sole": 1,
    "wall": "unsupported:unbound declaration 'id38' (name 's')"
-  },
-  {
-   "files": [
-    "extzvsi.c"
-   ],
-   "present": 1,
-   "sole": 1,
-   "wall": "unsupported:unbound declaration 'id40' (name 'x')"
   },
   {
    "files": [
@@ -4039,8 +4094,8 @@
   }
  ],
  "manifest_hash": "1de1a60c299d5bb51dae7ca001b0a008010cad0b25670cde2090c08bfc1a84ce",
- "measured_at_utc": "2026-11-12T12:28:46Z",
- "measured_commit": "46407152521560bf23321ebe8f36d8ffba64b63b",
+ "measured_at_utc": "2026-11-12T12:41:00Z",
+ "measured_commit": "9c69ae1c1491d8dbfa56a7de7c31404dad353c55",
  "pin": null,
  "rows": [
   {
@@ -4526,8 +4581,8 @@
   },
   {
    "corpus": "c-testsuite/single-exec",
-   "detail": "envelope: RecordDecl: FieldDecl: field 'name': String expected",
-   "dynamic_wall": "ingestion",
+   "detail": "no layout for declared type 's'",
+   "dynamic_wall": "unsupported:no layout for declared type 's'",
    "manifest_status": "parsed",
    "name": "00046.c",
    "sha256": "d305cc5d9d0c1eba74b24b9a6210188aa60ad30bceeb1492891d1683df06b203",
@@ -4535,7 +4590,7 @@
     "type-layout",
     "unsupported:IndirectFieldDecl"
    ],
-   "verdict": "not-ingested"
+   "verdict": "refused-unsupported"
   },
   {
    "corpus": "c-testsuite/single-exec",
@@ -4575,8 +4630,8 @@
   },
   {
    "corpus": "c-testsuite/single-exec",
-   "detail": "envelope: RecordDecl: FieldDecl: field 'name': String expected",
-   "dynamic_wall": "ingestion",
+   "detail": "unbound declaration 'id28' (name 'v')",
+   "dynamic_wall": "unsupported:unbound declaration 'id28' (name 'v')",
    "manifest_status": "parsed",
    "name": "00050.c",
    "sha256": "b79bcd69deb7ed7ef69bff378a72c724ef44de0ec83e6e9d4241d4d432fcd142",
@@ -4584,7 +4639,7 @@
     "type-layout",
     "unsupported:IndirectFieldDecl"
    ],
-   "verdict": "not-ingested"
+   "verdict": "refused-unsupported"
   },
   {
    "corpus": "c-testsuite/single-exec",
@@ -6592,8 +6647,8 @@
   },
   {
    "corpus": "c-testsuite/single-exec",
-   "detail": "envelope: RecordDecl: FieldDecl: field 'name': String expected",
-   "dynamic_wall": "ingestion",
+   "detail": "initializer list (inch 4)",
+   "dynamic_wall": "unsupported:initializer list (inch 4)",
    "manifest_status": "parsed",
    "name": "00216.c",
    "sha256": "023f99bc5046f940b3cb9d6f3070c3a9d7c1dfe295cdd74d3b155ed774df28c0",
@@ -6603,7 +6658,7 @@
     "type-layout",
     "unsupported:IndirectFieldDecl"
    ],
-   "verdict": "not-ingested"
+   "verdict": "refused-unsupported"
   },
   {
    "corpus": "c-testsuite/single-exec",
@@ -14094,15 +14149,15 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "envelope: RecordDecl: FieldDecl: field 'name': String expected",
-   "dynamic_wall": "ingestion",
+   "detail": "unbound declaration 'id34' (name 'foo')",
+   "dynamic_wall": "unsupported:unbound declaration 'id34' (name 'foo')",
    "manifest_status": "parsed",
    "name": "960301-1.c",
    "sha256": "ef8e12e181b13b7ddb6b9f315376c392f5aefa2b2c91d802d42e32d3b267f50c",
    "static_walls": [
     "type-layout"
    ],
-   "verdict": "not-ingested"
+   "verdict": "refused-unsupported"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -15486,8 +15541,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "envelope: RecordDecl: RecordDecl: FieldDecl: field 'name': String expected",
-   "dynamic_wall": "ingestion",
+   "detail": "unbound declaration 'id32' (name 'foo')",
+   "dynamic_wall": "unsupported:unbound declaration 'id32' (name 'foo')",
    "manifest_status": "parsed",
    "name": "anon-1.c",
    "sha256": "adaca6603e2dc32c71d1e28b401308cee049d4d8aa1791a7e5ffeeec14e6f061",
@@ -15495,7 +15550,7 @@
     "type-layout",
     "unsupported:IndirectFieldDecl"
    ],
-   "verdict": "not-ingested"
+   "verdict": "refused-unsupported"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -15788,8 +15843,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "envelope: RecordDecl: FieldDecl: field 'name': String expected",
-   "dynamic_wall": "ingestion",
+   "detail": "no layout for declared type 'union bf_or_uint32'",
+   "dynamic_wall": "unsupported:no layout for declared type 'union bf_or_uint32'",
    "manifest_status": "parsed",
    "name": "bswap-2.c",
    "sha256": "89b664eba9f6220422b3395c3d96099c591b0f3fdcbf154da9e992fcf8c3e22c",
@@ -15797,7 +15852,7 @@
     "libc-call",
     "type-layout"
    ],
-   "verdict": "not-ingested"
+   "verdict": "refused-unsupported"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -18797,8 +18852,8 @@
   },
   {
    "corpus": "gcc.c23-run",
-   "detail": "envelope: FunctionDecl: CompoundStmt: DeclStmt: RecordDecl: RecordDecl: FieldDecl: field 'name': String expected",
-   "dynamic_wall": "ingestion",
+   "detail": "no layout for declared type 'struct product_iSfd_'",
+   "dynamic_wall": "unsupported:no layout for declared type 'struct product_iSfd_'",
    "manifest_status": "parsed",
    "name": "gcc/testsuite/gcc.dg/c23-tag-5.c",
    "sha256": "0dc510dd608e787173112876c29fde1266d59f37a564784a612d0dfe446a47c3",
@@ -18807,7 +18862,7 @@
     "type-layout",
     "unsupported:IndirectFieldDecl"
    ],
-   "verdict": "not-ingested"
+   "verdict": "refused-unsupported"
   },
   {
    "corpus": "gcc.c23-run",
@@ -24601,15 +24656,15 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "envelope: FunctionDecl: CompoundStmt: DeclStmt: RecordDecl: FieldDecl: field 'name': String expected",
-   "dynamic_wall": "ingestion",
+   "detail": "src/pr49768.c:8:10)'",
+   "dynamic_wall": "unsupported:src/pr49768.c",
    "manifest_status": "parsed",
    "name": "pr49768.c",
    "sha256": "04b34346cd3a09c6ccfa687dba7e2ef21d25a99d57183a2ad6a720140d4ad1a4",
    "static_walls": [
     "type-layout"
    ],
-   "verdict": "not-ingested"
+   "verdict": "refused-unsupported"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -25431,8 +25486,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "envelope: RecordDecl: FieldDecl: field 'name': String expected",
-   "dynamic_wall": "ingestion",
+   "detail": "no layout for declared type 'struct S'",
+   "dynamic_wall": "unsupported:no layout for declared type 'struct S'",
    "manifest_status": "parsed",
    "name": "pr58984.c",
    "sha256": "6a381d191ff13091896ce1c93245da2ab5efa82c7bf8dff15aa29d74903bf7a7",
@@ -25440,7 +25495,7 @@
     "libc-call",
     "type-layout"
    ],
-   "verdict": "not-ingested"
+   "verdict": "refused-unsupported"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -27649,8 +27704,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "envelope: RecordDecl: FieldDecl: field 'name': String expected",
-   "dynamic_wall": "ingestion",
+   "detail": "unbound declaration 'id26' (name 'u')",
+   "dynamic_wall": "unsupported:unbound declaration 'id26' (name 'u')",
    "manifest_status": "parsed",
    "name": "pr87053.c",
    "sha256": "3e6a38afab0b543c442a405f78d874aa37e590d43b38659a0f35f8c3e0471a39",
@@ -27660,7 +27715,7 @@
     "type-layout",
     "unsupported:IndirectFieldDecl"
    ],
-   "verdict": "not-ingested"
+   "verdict": "refused-unsupported"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -29222,15 +29277,15 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "envelope: RecordDecl: FieldDecl: field 'name': String expected",
-   "dynamic_wall": "ingestion",
+   "detail": "unbound declaration 'id40' (name 'x')",
+   "dynamic_wall": "unsupported:unbound declaration 'id40' (name 'x')",
    "manifest_status": "parsed",
    "name": "struct-ini-2.c",
    "sha256": "ebfe970ec4c78b51a18ee2f945c294d1b857e431288d33b013368517cab00f1b",
    "static_walls": [
     "type-layout"
    ],
-   "verdict": "not-ingested"
+   "verdict": "refused-unsupported"
   },
   {
    "corpus": "gcc.c-torture/execute",

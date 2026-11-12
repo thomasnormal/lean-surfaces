@@ -244,7 +244,8 @@ def recordHasUnsupported (fields : List Decl) : Bool :=
 def fieldsOf (fields : List Decl) : Option (List (String × CType)) :=
   if recordHasBitfield fields || recordHasUnsupported fields || fields.isEmpty then none
   else some (fields.filterMap fun d => match d with
-    | .field fn fty _ _ => some (fn, fty)
+    | .field (some fn) fty _ _ => some (fn, fty)
+    | .field none _ _ _ => none
     | _ => none)
 
 mutual

@@ -4,20 +4,23 @@ Generated from `harness/library_corpus.json` (CPython 3.9.25, 183 modules) and t
 
 The refreshed baseline has **12 VERIFIED public-function modules**, with 4,091 of 8,677 driven calls matching, **0 call DIVERGEs**, 8 calls that did not finish, and 41 canonical-value gaps. The run is free of decided mismatches; unfinished calls remain separately reported and are not counted as agreement. The 12 VERIFIED modules are `fstring_shadow`, `g1_lab`, `gcd`, `init_lab`, `midpoint`, `my_abs`, `nested_flow`, `sum_to`, `tut_01`, `tut_02`, `tut_03`, and `fnprint`.
 
+The function-level scoreboard has **21 VERIFIED functions out of 540 modeled public functions**, with 503 matching calls among the function calls driven by this survey. A function is counted when at least one pinned CPython call returns normally and every driven call for that function matches; C-accelerator and unsafe-call entries are explicit skips and are outside the modeled-function denominator. The current top wall would potentially flip **21 functions** in total, including 8 import-walled functions.
+
 The call denominator is lower than the first run because the oracle now records CPython C-accelerator overrides (`override:*`) as explicit `accelerator equivalence is unmeasured` skips. It never compares a pure-Python AST definition with a replacement C function. The four DIVERGE families from the prior refresh (`inspect.getdoc`, `arith.mod`, `gen_lab.drain_unbound`, and `str_lab.fmt_bare_leftover`) are now either matched or explicitly refused.
 
-The observed refusal ranking is measured by both presence and `sole` census walls. It was generated from the complete survey JSON with
+The observed refusal ranking is measured by function flips first, then newly agreed calls, with `sole` and `present` retained as context. It was generated from the complete survey JSON with
 `python3 harness/library_rank.py --provenance census:library --json /tmp/library-rank-current.json /tmp/library-current.json`.
-The price columns are the measured surface in the rows that fired each wall, not a prediction that every row will flip:
-modules, public functions, driven calls, matched calls, and rows that would become `VERIFIED` if that wall alone were removed.
+The price columns are measured surfaces, not promises: modules, public functions, driven calls, matched calls, rows that would become verified, and functions that would become verified if that wall alone were removed.
 
-| Wall | Present | Sole | Modules | Public functions | Driven calls | Matched calls | Potential VERIFIED |
-|---|---:|---:|---:|---:|---:|---:|---:|
-| `import` | 30 | 7 | 30 | 97 | 560 | 142 | 1 |
-| `accelerator-unmeasured` | 1 | 1 | 1 | 0 | 0 | 0 | 0 |
-| `node:DictComp` | 1 | 1 | 1 | 3 | 24 | 16 | 0 |
-| `class-creation` | 62 | 0 | 62 | 383 | 2,015 | 183 | 1 |
-| `definition-order` | 34 | 0 | 34 | 284 | 1,288 | 162 | 0 |
+| Wall | Present | Sole | Modules | Public functions | Driven calls | Matched calls | Potential rows | Function flips |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|
+| `import` | 30 | 7 | 30 | 77 | 560 | 142 | 1 | 8 |
+| `class-creation` | 62 | 0 | 62 | 282 | 2,015 | 183 | 1 | 6 |
+| `definition-order` | 34 | 0 | 34 | 178 | 1,288 | 162 | 0 | 6 |
+| `node:DictComp` | 1 | 1 | 1 | 3 | 24 | 16 | 0 | 1 |
+| `accelerator-unmeasured` | 1 | 1 | 1 | 0 | 0 | 0 | 0 | 0 |
+
+The import function-flip set is `{email._encoded_words.len_b, email.base64mime.header_length, email.charset.add_alias, email.charset.add_charset, email.charset.add_codec, email.encoders.encode_noop, gettext.textdomain, html.unescape}`. These are the first targets for the authorized measured opaque-module arm; `rsa_inverse` remains a separate annotation-observation check.
 
 The remaining observed messages are one accelerator-domain wall, one heap `+` wall, one unsupported `try/except` wall, one missing `frozenset` builtin, and one list `.extend` wall. They remain recorded per module in the JSON result and are not silently omitted from the ranking.
 

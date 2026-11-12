@@ -63,6 +63,18 @@ def summarise(rows):
     return counts, scored, len(rows), first_failure
 
 
+def portable_detail(detail):
+    """Drop the machine-specific cache prefix from source locations."""
+    marker = "/src/"
+    if marker in detail:
+        pos = detail.rfind(marker)
+        start = pos
+        while start and detail[start - 1] not in " \t('\"":
+            start -= 1
+        return detail[:start] + "src/" + detail[pos + len(marker):]
+    return detail
+
+
 def render(counts, scored, total, first_failure):
     out = ["gcc.c-torture %d/%d scored  (passed %d, failed %d)"
            % (scored, total, counts["passed"], counts["failed"]),
@@ -106,11 +118,13 @@ def main():
         for _name, token, detail in rows:
             if token in SCORED:
                 continue
-            # Frontend diagnostics include the outside cache's absolute path;
-            # retain the test-relative part so the committed histogram does
-            # not change merely because a runner chose another cache root.
-            if token == "not-parsed" and "/src/" in detail:
-                detail = detail[detail.rfind("/src/") + 1:]
+            # Diagnostics include the outside cache's absolute path; retain
+            # the test-relative part so the committed histogram does not
+            # change merely because a runner chose another cache root.  This
+            # applies to semantic refusals too (anonymous Clang types can
+            # carry their source location in the message), not only frontend
+            # diagnostics.
+            detail = portable_detail(detail)
             key = token if not detail else token + ": " + detail
             histogram[key] = histogram.get(key, 0) + 1
         payload = {
@@ -194,6 +208,10 @@ def selftest():
     counts3, scored3, total3, _ = summarise(parse(
         ["p\tpassed\t\n", "q\tfailed\treached abort\n", "r\ttimeout\t\n"]))
     check("scored counts failed as a score", (scored3, total3), (2, 3))
+
+    check("histogram details do not retain an absolute cache path",
+          portable_detail("at /scratch/cache/src/2000.c:4:2") ==
+          "at src/2000.c:4:2", True)
 
     # an unknown token is refused, never silently bucketed
     try:

@@ -73262,5 +73262,23 @@
     "refusal": "T2:Initial",
     "measured": "2026-11-12: the parser retains the initial `$fatal` system call; ordinary E refuses the initial process as T2:Initial, while Icarus Verilog 13.0 and Xcelium 24.03-s004 accept the source-level simulation row."
   }
+  ,{
+    "name": "generate_parameter_e_w8",
+    "example": "sem2/generate_parameter_e",
+    "top": "generate_parameter_e",
+    "params": {"W": 8},
+    "signals": ["x", "y"],
+    "stimulus": [{"x": "0"}, {"x": "1"}, {"x": "x"}, {"x": "z"}],
+    "measured": "2026-11-12: a bound generate parameter W=8 selects the source branch `assign y=x`; E matches Icarus Verilog 13.0 and Xcelium 24.03-s004."
+  },
+  {
+    "name": "generate_parameter_e_w4",
+    "example": "sem2/generate_parameter_e",
+    "top": "generate_parameter_e",
+    "params": {"W": 4},
+    "signals": ["x", "y"],
+    "stimulus": [{"x": "0"}, {"x": "1"}, {"x": "x"}, {"x": "z"}],
+    "measured": "2026-11-12: a bound generate parameter W=4 selects the source branch `assign y=!x`; E matches Icarus Verilog 13.0 and Xcelium 24.03-s004."
+  }
   ]
 }

@@ -1,0 +1,149 @@
+{
+  "schema_version": "sv-0.2",
+  "language": "systemverilog",
+  "frontend": {
+    "name": "pyslang",
+    "family": "pyslang-11"
+  },
+  "mode": "symbolic",
+  "top": "invalid_continuous_assign_e",
+  "source_files": [
+    {
+      "path": "Examples/system-verilog/sem2/invalid_continuous_assign_e/invalid_continuous_assign_e.sv",
+      "sha256": "1e220dcf11140d669faabe993996d3f01eef76bc8289acb8ca402e4818d75afa"
+    }
+  ],
+  "packages": [],
+  "design": {
+    "kind": "Design",
+    "modules": [
+      {
+        "kind": "Module",
+        "span": {
+          "line": 1,
+          "col": 1,
+          "end_line": 3,
+          "end_col": 10
+        },
+        "name": "invalid_continuous_assign_e",
+        "imports": [],
+        "params": [],
+        "types": [],
+        "ports": [
+          {
+            "kind": "Port",
+            "span": {
+              "line": 1,
+              "col": 54,
+              "end_line": 1,
+              "end_col": 55
+            },
+            "name": "x",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 1,
+                      "col": 49,
+                      "end_line": 1,
+                      "end_col": 50
+                    },
+                    "value": 7,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 1,
+                      "col": 51,
+                      "end_line": 1,
+                      "end_col": 52
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 8
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 1,
+              "col": 76,
+              "end_line": 1,
+              "end_col": 77
+            },
+            "name": "y",
+            "dir": "out",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 1,
+                      "col": 71,
+                      "end_line": 1,
+                      "end_col": 72
+                    },
+                    "value": 7,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 1,
+                      "col": 73,
+                      "end_line": 1,
+                      "end_col": 74
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 8
+            }
+          }
+        ],
+        "decls": [],
+        "processes": [
+          {
+            "kind": "Unsupported",
+            "span": {
+              "line": 2,
+              "col": 10,
+              "end_line": 2,
+              "end_col": 31
+            },
+            "sv_kind": "ContinuousAssignSymbol:InvalidExpression",
+            "text": "y = {x, missing} >> 1"
+          }
+        ],
+        "generates": [],
+        "others": [
+          {
+            "kind": "Unsupported",
+            "span": {
+              "line": 2,
+              "col": 18,
+              "end_line": 2,
+              "end_col": 18
+            },
+            "sv_kind": "SlangError:UndeclaredIdentifier",
+            "text": "invalid_continuous_assign_e.sv:2: use of undeclared identifier 'missing'"
+          }
+        ]
+      }
+    ],
+    "others": []
+  },
+  "lean_blocks": []
+}

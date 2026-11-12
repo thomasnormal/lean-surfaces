@@ -73219,5 +73219,14 @@
     "stimulus": [{"x": "0"}, {"x": "1"}, {"x": "x"}, {"x": "z"}],
     "measured": "2026-11-12: Slang elaborates the implicit-net assignment target as a declared one-bit net; E and both pinned simulators propagate x to y and preserve the source-shaped target."
   }
+  ,{
+    "name": "invalid_continuous_assign_e",
+    "example": "sem2/invalid_continuous_assign_e",
+    "top": "invalid_continuous_assign_e",
+    "signals": ["x", "y"],
+    "stimulus": [{"x": "00000000"}],
+    "refusal": "ContinuousAssignSymbol:InvalidExpression",
+    "measured": "2026-11-12: Slang rejects the undeclared concatenation operand `missing` with ContinuousAssignSymbol:InvalidExpression; no simulator oracle is claimed because the approved frontend rejects the source before simulation."
+  }
   ]
 }

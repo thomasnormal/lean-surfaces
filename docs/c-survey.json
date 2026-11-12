@@ -1,10 +1,10 @@
 {
  "by_corpus": {
   "c-testsuite/single-exec": {
-   "passed": 157,
+   "passed": 158,
    "refused-libc": 3,
    "refused-ub": 8,
-   "refused-unsupported": 50,
+   "refused-unsupported": 49,
    "timeout": 2
   },
   "gcc.c-torture/execute": {
@@ -12,8 +12,8 @@
    "oracle-tests-compiler": 1,
    "passed": 710,
    "refused-libc": 31,
-   "refused-ub": 61,
-   "refused-unsupported": 797,
+   "refused-ub": 62,
+   "refused-unsupported": 796,
    "timeout": 51
   },
   "gcc.c23-run": {
@@ -28,10 +28,10 @@
  "counts": {
   "not-parsed": 294,
   "oracle-tests-compiler": 1,
-  "passed": 869,
+  "passed": 870,
   "refused-libc": 36,
-  "refused-ub": 70,
-  "refused-unsupported": 891,
+  "refused-ub": 71,
+  "refused-unsupported": 889,
   "timeout": 53
  },
  "dynamic_wall_ranking": [
@@ -514,12 +514,13 @@
     "pr86714.c",
     "pr99079.c",
     "ptr-arith-1.c",
+    "return-addr.c",
     "strcpy-2.c",
     "strlen-2.c",
     "strlen-6.c"
    ],
-   "present": 70,
-   "sole": 70,
+   "present": 71,
+   "sole": 71,
    "wall": "undefined-behavior"
   },
   {
@@ -1034,19 +1035,6 @@
   },
   {
    "files": [
-    "00212.c",
-    "00213.c",
-    "gcc/testsuite/gcc.dg/c23-float-2.c",
-    "gcc/testsuite/gcc.dg/c23-float-3.c",
-    "gcc/testsuite/gcc.dg/c23-float-4.c",
-    "return-addr.c"
-   ],
-   "present": 6,
-   "sole": 6,
-   "wall": "cast:ToVoid"
-  },
-  {
-   "files": [
     "gcc/testsuite/gcc.dg/c23-empty-init-5.c",
     "gcc/testsuite/gcc.dg/c23-empty-init-warn-1.c",
     "gcc/testsuite/gcc.dg/c23-empty-init-warn-17.c",
@@ -1143,6 +1131,17 @@
    "present": 4,
    "sole": 4,
    "wall": "cast:FloatingCast"
+  },
+  {
+   "files": [
+    "gcc/testsuite/gcc.dg/c23-bool-1.c",
+    "gcc/testsuite/gcc.dg/c23-float-2.c",
+    "gcc/testsuite/gcc.dg/c23-float-3.c",
+    "gcc/testsuite/gcc.dg/c23-float-4.c"
+   ],
+   "present": 4,
+   "sole": 4,
+   "wall": "unsupported:GenericSelectionExpr"
   },
   {
    "files": [
@@ -1584,6 +1583,15 @@
   },
   {
    "files": [
+    "00213.c",
+    "00215.c"
+   ],
+   "present": 2,
+   "sole": 2,
+   "wall": "unsupported:printf"
+  },
+  {
+   "files": [
     "ieee/20000320-1.c",
     "pr44468.c"
    ],
@@ -1892,14 +1900,6 @@
    "present": 1,
    "sole": 1,
    "wall": "unsupported:GCCAsmStmt"
-  },
-  {
-   "files": [
-    "gcc/testsuite/gcc.dg/c23-bool-1.c"
-   ],
-   "present": 1,
-   "sole": 1,
-   "wall": "unsupported:GenericSelectionExpr"
   },
   {
    "files": [
@@ -3063,14 +3063,6 @@
   },
   {
    "files": [
-    "00215.c"
-   ],
-   "present": 1,
-   "sole": 1,
-   "wall": "unsupported:printf"
-  },
-  {
-   "files": [
     "00205.c"
    ],
    "present": 1,
@@ -4223,8 +4215,8 @@
   }
  ],
  "manifest_hash": "eb2ea162993fd287a86d680d539ca5a9bba4f09b045a6ad663aaf88cdc3f445d",
- "measured_at_utc": "2026-11-12T18:43:11Z",
- "measured_commit": "18e62e635",
+ "measured_at_utc": "2026-11-12T18:50:59Z",
+ "measured_commit": "HEAD",
  "pin": {
   "corpora": [
    "C1",
@@ -6727,8 +6719,8 @@
   },
   {
    "corpus": "c-testsuite/single-exec",
-   "detail": "castKind 'ToVoid'",
-   "dynamic_wall": "cast:ToVoid",
+   "detail": "",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "00212.c",
    "sha256": "13317e3f7e71347dee512fb89cf51b245c6155cca0563447941297afba1fc163",
@@ -6737,12 +6729,12 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "c-testsuite/single-exec",
-   "detail": "castKind 'ToVoid'",
-   "dynamic_wall": "cast:ToVoid",
+   "detail": "printf: unsupported format",
+   "dynamic_wall": "unsupported:printf",
    "manifest_status": "parsed",
    "name": "00213.c",
    "sha256": "5ed538b99fd0718984ef80e4cad7f442f51128688f531ae3b2d6f5e5a3ab28a5",
@@ -18795,8 +18787,8 @@
   },
   {
    "corpus": "gcc.c23-run",
-   "detail": "castKind 'ToVoid'",
-   "dynamic_wall": "cast:ToVoid",
+   "detail": "out of tier: GenericSelectionExpr",
+   "dynamic_wall": "unsupported:GenericSelectionExpr",
    "manifest_status": "parsed",
    "name": "gcc/testsuite/gcc.dg/c23-float-2.c",
    "sha256": "7018e704d1742c50aa52643da141033f0000d751e3ee07349545db851b2e2d3a",
@@ -18809,8 +18801,8 @@
   },
   {
    "corpus": "gcc.c23-run",
-   "detail": "castKind 'ToVoid'",
-   "dynamic_wall": "cast:ToVoid",
+   "detail": "out of tier: GenericSelectionExpr",
+   "dynamic_wall": "unsupported:GenericSelectionExpr",
    "manifest_status": "parsed",
    "name": "gcc/testsuite/gcc.dg/c23-float-3.c",
    "sha256": "3a69ae019b8f68f08dbb340f40eea80a880e7377add063468cb47b91cc81f1bd",
@@ -18823,8 +18815,8 @@
   },
   {
    "corpus": "gcc.c23-run",
-   "detail": "castKind 'ToVoid'",
-   "dynamic_wall": "cast:ToVoid",
+   "detail": "out of tier: GenericSelectionExpr",
+   "dynamic_wall": "unsupported:GenericSelectionExpr",
    "manifest_status": "parsed",
    "name": "gcc/testsuite/gcc.dg/c23-float-4.c",
    "sha256": "12aabedf9fbd84b9370e91c289de10780ee1a836053382cb381e8e60883d6648",
@@ -28963,8 +28955,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "castKind 'ToVoid'",
-   "dynamic_wall": "cast:ToVoid",
+   "detail": "LeanModels.C.C23.MemFault.relationalAcrossObjects",
+   "dynamic_wall": "undefined-behavior",
    "manifest_status": "parsed",
    "name": "return-addr.c",
    "sha256": "c8df956259082f63135debd4f9cf98bcb8158edec7dfafef387985a57a7aad9d",
@@ -28973,7 +28965,7 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "refused-ub"
   },
   {
    "corpus": "gcc.c-torture/execute",

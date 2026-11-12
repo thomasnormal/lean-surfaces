@@ -1031,6 +1031,23 @@ def callFn : Nat → Program → LeanModels.C.FunctionDefn → List CVal → Exe
               | some n => pure (.ptr { sp with off := sp.off + n })
               | none => pure (.ptr Ptr.null)
           | _ => refuseUnsupported "strchr: wrong argument count"
+        let runStrrchr : List CVal → ExecM CVal := fun vs =>
+          match vs with
+          | [src, ch] => do
+              let sp ← asPtr src
+              let (_, needle) ← asInt ch
+              let m ← get
+              let (_, source, off) ← liftEval (m.resolve sp 0)
+              let rec scanRr : List CByte → Nat → Option Nat → Option Nat
+                | [], _, last => last
+                | .conc x :: rest, n, last =>
+                    if x == 0 then last
+                    else scanRr rest (n + 1) (if x.toNat == (needle % 256).toNat then some n else last)
+                | _, _, _ => none
+              match scanRr (source.bytes.drop off) 0 none with
+              | some n => pure (.ptr { sp with off := sp.off + n })
+              | none => pure (.ptr Ptr.null)
+          | _ => refuseUnsupported "strrchr: wrong argument count"
         let runAlloca : List CVal → ExecM CVal := fun vs =>
           match vs with
           | [size] => do
@@ -1182,6 +1199,8 @@ def callFn : Nat → Program → LeanModels.C.FunctionDefn → List CVal → Exe
                 runBuiltinPrefetch vs
               else if nm == "strchr" then
                 runStrchr vs
+              else if nm == "strrchr" then
+                runStrrchr vs
               else if nm == "printf" || nm == "__builtin_printf" then
                 runPrintf vs
               else if nm == "abort" || nm == "exit" then
@@ -1231,6 +1250,7 @@ def callFn : Nat → Program → LeanModels.C.FunctionDefn → List CVal → Exe
               else if nm == "__builtin_expect" then runBuiltinExpect vs
               else if nm == "__builtin_prefetch" then runBuiltinPrefetch vs
               else if nm == "strchr" then runStrchr vs
+              else if nm == "strrchr" then runStrrchr vs
               else if nm == "__builtin_alloca" then runAlloca vs
               else if nm == "__builtin_ffs" then runFfs vs
               else if nm == "__builtin_mul_overflow" then runArithOverflow "mul" vs

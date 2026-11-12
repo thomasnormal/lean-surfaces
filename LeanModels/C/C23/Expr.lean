@@ -808,6 +808,11 @@ def evalExpr (ctx : Ctx) : Expr → EvalM CVal
         let v ← evalExpr ctx sub
         let b ← truthy v
         pure (ofBool (!b))
+      else if op == "~" then do
+        -- C23 §6.5.4.3p4: integer promotions precede bitwise complement.
+        let v ← evalExpr ctx sub
+        let (t, n) ← asInt v
+        pure (.int t (bitNot t n))
       else if op == "-" then do
         -- §6.5.4.3p3 — unary minus OVERFLOWS at `-INT_MIN`: `J.2(35)`.
         let v ← evalExpr ctx sub

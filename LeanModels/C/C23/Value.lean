@@ -368,6 +368,11 @@ def IntTy.residue (t : IntTy) (v : Int) : Nat :=
 def bitAnd (t : IntTy) (a b : Int) : Int := t.wrap ((t.residue a &&& t.residue b : Nat))
 def bitOr (t : IntTy) (a b : Int) : Int := t.wrap ((t.residue a ||| t.residue b : Nat))
 def bitXor (t : IntTy) (a b : Int) : Int := t.wrap ((t.residue a ^^^ t.residue b : Nat))
+/-! §6.5.4.3p4: complement each bit of the promoted operand.  The mask is
+the operand's complete N-bit representation, so signed and unsigned values
+share the same representation rule and `wrap` closes it back into the type. -/
+def bitNot (t : IntTy) (a : Int) : Int :=
+  t.wrap ((t.residue a ^^^ ((2 : Nat) ^ t.bits) - 1 : Nat))
 
 /-- Integer conversion, C23 §6.3.1.3.
 
@@ -457,6 +462,8 @@ the gate against the paragraph rather than against this file's prose. -/
 #guard bitXor IntTy.int_ 12 10 == 6
 #guard bitAnd IntTy.int_ (-1) 255 == 255       -- -1 is all-ones under two's complement
 #guard bitXor IntTy.int_ (-1) (-1) == 0
+#guard bitNot IntTy.int_ 0 == -1
+#guard bitNot IntTy.uint 0 == 4294967295
 #guard bitOr IntTy.uint 0 4294967295 == 4294967295
 #guard bitAnd IntTy.char_ (-1) 255 == -1       -- 8-bit: all-ones closes back to -1
 

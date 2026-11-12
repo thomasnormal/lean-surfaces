@@ -31176,7 +31176,9 @@ def _sym_runtime_signed_widening(sm, e, op, inner, tw):
         if not (op.type.isIntegral and e.type.isIntegral
                 and op.type.isSigned and e.type.isSigned):
             return None
-        if type(op).__name__ == "CallExpression":
+        if (type(op).__name__ == "CallExpression"
+                and (not getattr(op, "isSystemCall", False)
+                     or getattr(op, "subroutineName", None) not in ("$signed", "$unsigned"))):
             return None
         if e.conversionKind not in (ConversionKind.Implicit, ConversionKind.Propagated):
             return None

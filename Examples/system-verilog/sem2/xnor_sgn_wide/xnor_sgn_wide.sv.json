@@ -334,26 +334,68 @@
                 "width": 8,
                 "op": "^",
                 "left": {
-                  "kind": "Unsupported",
+                  "kind": "SignedResize",
                   "span": {
                     "line": 9,
                     "col": 14,
                     "end_line": 9,
                     "end_col": 25
                   },
-                  "sv_kind": "ConversionExpression:width",
-                  "text": "$signed(ua)"
+                  "width": 8,
+                  "operand": {
+                    "kind": "Cast",
+                    "span": {
+                      "line": 9,
+                      "col": 14,
+                      "end_line": 9,
+                      "end_col": 25
+                    },
+                    "width": 4,
+                    "signed": true,
+                    "operand": {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 9,
+                        "col": 22,
+                        "end_line": 9,
+                        "end_col": 24
+                      },
+                      "width": 4,
+                      "name": "ua"
+                    }
+                  }
                 },
                 "right": {
-                  "kind": "Unsupported",
+                  "kind": "SignedResize",
                   "span": {
                     "line": 9,
                     "col": 29,
                     "end_line": 9,
                     "end_col": 40
                   },
-                  "sv_kind": "ConversionExpression:width",
-                  "text": "$signed(ub)"
+                  "width": 8,
+                  "operand": {
+                    "kind": "Cast",
+                    "span": {
+                      "line": 9,
+                      "col": 29,
+                      "end_line": 9,
+                      "end_col": 40
+                    },
+                    "width": 4,
+                    "signed": true,
+                    "operand": {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 9,
+                        "col": 37,
+                        "end_line": 9,
+                        "end_col": 39
+                      },
+                      "width": 4,
+                      "name": "ub"
+                    }
+                  }
                 }
               }
             }

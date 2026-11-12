@@ -204,3 +204,7 @@ The conditional evaluation-order row, `wpg_order`, runs from its
 source-shaped envelope and matches Icarus Verilog 13.0 and Xcelium 24.03-s004
 for all 27 cycles.  It is an E-MATCH and does not change the frozen migration
 count.
+
+The four-state carry-chain row, `wpg_carry`, runs from its source-shaped
+envelope and matches Icarus Verilog 13.0 and Xcelium 24.03-s004 for all 32
+cycles.  It is an E-MATCH and does not change the frozen migration count.

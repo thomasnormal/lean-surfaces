@@ -1182,6 +1182,8 @@ def evalOpen (K : Kont) (m : Module) : Expr → SemF RVal
                     | vs => raisePy (.typeError s!"float.is_integer() takes no arguments ({vs.length} given)")
                   else
                     raisePy .attributeError
+              | .callable _ =>
+                  refuse "attribute access on a callable value is outside the closed-function tier"
               | r =>
                   raisePy .attributeError
           | f => refuse s!"calling a non-name expression ('{f.kindName}') is outside the v0 tier"
@@ -1431,6 +1433,7 @@ def evalOpen (K : Kont) (m : Module) : Expr → SemF RVal
           let st ← get
           liftRunAt (attrReadResult m st a attr)
       | .ntuple tn fields xs => ntupleAttrM m tn fields xs attr
+      | .callable _ => refuse "attribute access on a callable value is outside the closed-function tier"
       | r =>
           raisePy .attributeError
   | .ifExp t b o _ => do

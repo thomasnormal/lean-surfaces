@@ -1,0 +1,82 @@
+{
+  "schema_version": "0.1",
+  "language": "python",
+  "frontend": {
+    "name": "cpython-ast",
+    "version": "3.9.25"
+  },
+  "source_file": "harness/abc_internal_attr.py",
+  "source_sha256": "621537d2723ae5e4b5863ccc4cb31ba5b8341845d9449b6009279760412bd6d2",
+  "module": {
+    "kind": "Module",
+    "body": [
+      {
+        "kind": "Expr",
+        "span": {
+          "lineno": 1,
+          "col_offset": 0,
+          "end_lineno": 1,
+          "end_col_offset": 81
+        },
+        "value": {
+          "kind": "Constant",
+          "span": {
+            "lineno": 1,
+            "col_offset": 0,
+            "end_lineno": 1,
+            "end_col_offset": 81
+          },
+          "value": {
+            "type": "str",
+            "value": "ABC-style internal attribute access stays outside the closed-function tier."
+          }
+        }
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 2,
+          "col_offset": 0,
+          "end_lineno": 3,
+          "end_col_offset": 40
+        },
+        "name": "probe",
+        "args": [],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 3,
+              "col_offset": 4,
+              "end_lineno": 3,
+              "end_col_offset": 40
+            },
+            "value": {
+              "kind": "Attribute",
+              "span": {
+                "lineno": 3,
+                "col_offset": 11,
+                "end_lineno": 3,
+                "end_col_offset": 40
+              },
+              "value": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 3,
+                  "col_offset": 11,
+                  "end_lineno": 3,
+                  "end_col_offset": 14
+                },
+                "id": "int"
+              },
+              "attr": "_abc_invalidation_counter"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "lean_blocks": []
+}

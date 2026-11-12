@@ -6753,7 +6753,9 @@ dunder guard). Dict/list attributes are their built-in methods — loud in
 read position. -/
 def attrReadPlan (m : Module) (h : Heap) (a : Addr) (attr : String) :
     AttrReadPlan :=
-  match Heap.get? h a with
+  if attr.startsWith "_abc_" then
+    .refuse "ABC internal class attributes are outside the closed-function tier"
+  else match Heap.get? h a with
   | some (.dictView ..) => .refuse "dictionary view operation is outside the tier"
   | some (.instance ci attrs) =>
     (match Env.lookup attrs.toList attr with
@@ -10474,6 +10476,8 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
         -- indexing by declared position — pure, world-preserving; a
         -- SUBCLASS method name is the loud bound-method refusal (H5)
         Run.liftRes st (ntupleAttr m tn fields xs attr)
+      | .callable name =>
+        .unsupported "attribute access on a callable value is outside the closed-function tier"
       | r =>
         .exn st .attributeError
     | .ifExp t b o _ =>

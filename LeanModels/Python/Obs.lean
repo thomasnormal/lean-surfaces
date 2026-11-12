@@ -3484,6 +3484,7 @@ theorem worldInv (m : Module) (hm : m.heapFree = true) (fuel : Nat) :
         refine .bind (ihE st recv hfree) fun st₁ r h₁ => ?_
         cases r <;>
           first
+          | exact .unsupported
           | exact .exn
           | exact .liftResF h₁ _
           | exact fun s₂ v₂ he => (attrReadResult_ok he) ▸ h₁

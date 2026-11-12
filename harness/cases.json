@@ -1769,4 +1769,6 @@
   {"file": "harness/recursive_entry_probe.py", "function": "frame_then_int", "args": [[2], [994], [997]], "recursion_base": 2, "expect": "match", "note": "Python frame entry and nested int C-call use distinct recursion units."},
   {"file": "harness/recursive_entry_probe.py", "function": "frame_then_str", "args": [[2], [994], [997]], "recursion_base": 2, "expect": "match", "note": "Python frame entry and nested str C-call use distinct recursion units."},
   {"file": "harness/list_boundary_mutation.py", "function": "left", "args": [[{"t": "list", "v": [1, 3, 5]}]], "expect": "match", "note": "Boundary-passed list mutation is visible after heap-threaded thaw."}
+,
+  {"file": "harness/abc_internal_attr.py", "function": "probe", "args": [[]], "expect": "unsupported", "note": "Internal _abc_ attribute access is a loud closed-function boundary; CPython 3.9.25 raises AttributeError."}
 ]

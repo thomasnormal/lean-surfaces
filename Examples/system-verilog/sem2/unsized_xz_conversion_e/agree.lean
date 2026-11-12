@@ -10,15 +10,7 @@ set_option maxRecDepth 100000 in
 load_design_sv2 unsizedXZConversionE
   from "Examples/system-verilog/sem2/unsized_xz_conversion_e/unsized_xz_conversion_e.sv.json"
 
-#guard unsizedXZConversionE.pdesign.others ==
-  [("ConversionExpression:xz-literal-parametric", "'bx"),
-   ("IntegerLiteral:unsized-xz-parametric", "'bx"),
-   ("ConversionExpression:xz-literal-parametric", "'bz"),
-   ("IntegerLiteral:unsized-xz-parametric", "'bz"),
-   ("ConversionExpression:xz-literal-parametric", "'hx0"),
-   ("IntegerLiteral:unsized-xz-parametric", "'hx0"),
-   ("ConversionExpression:xz-literal-parametric", "'hz1"),
-   ("IntegerLiteral:unsized-xz-parametric", "'hz1")]
+#guard unsizedXZConversionE.pdesign.others == []
 
 private def sourceBody : PStmt :=
   match unsizedXZConversionE.pdesign.processes with

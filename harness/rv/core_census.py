@@ -34,6 +34,13 @@ from typing import Any, Iterable, Optional
 SCHEMA = "sv-core-census/1"
 STATUSES = ("ADMITTED", "REFUSED", "NOT REACHED")
 
+# The extractor retains this parser node source-shaped.  Canonical E's
+# `Param2.instExpr2` supplies the concrete destination width and applies
+# IEEE 1800-2023 §5.7.1, so it is an admitted expression leaf rather than a
+# generic unsupported wall.  Other x/z markers remain loud and stay out of
+# this set.
+ADMITTED_EXPRESSION_MARKERS = {"ConversionExpression:unsized-xz"}
+
 # This is the exact message in LeanModels.Sv.Param.untypedWidthMsg.  Keeping
 # it here makes a census row useful without requiring a Lean process merely to
 # print the first cross-check wall.
@@ -101,6 +108,8 @@ def _first_unsupported(node: Any, context: str = "expression") -> Optional[tuple
             sv_kind = node.get("sv_kind")
             if not isinstance(sv_kind, str):
                 sv_kind = "Unsupported"
+            if sv_kind in ADMITTED_EXPRESSION_MARKERS:
+                return None
             return context, sv_kind
         kind = node.get("kind", "")
         next_context = context
@@ -581,6 +590,7 @@ def _fixture() -> dict[str, Any]:
                     "processes": [
                         {"kind": "Assign", "span": {"line": 4}, "target": {"kind": "Ident", "name": "a"}, "value": {"kind": "Int", "value": 0}},
                         {"kind": "AlwaysPosedge", "span": {"line": 5}, "body": {"kind": "Block", "stmts": []}},
+                        {"kind": "Assign", "span": {"line": 9}, "target": {"kind": "Ident", "name": "a"}, "value": {"kind": "Unsupported", "sv_kind": "ConversionExpression:unsized-xz", "text": "x"}},
                     ],
                     "generates": [{"kind": "GenerateIf", "span": {"line": 6}, "cond": {"kind": "Int", "value": 0}, "then": [{"kind": "Assign", "span": {"line": 7}}], "else": []}],
                     "others": [{"kind": "Unsupported", "sv_kind": "NetSymbol:net-z", "text": "z", "span": {"line": 8}}],
@@ -599,13 +609,14 @@ def self_test() -> None:
         (3, "declaration", "REFUSED"),
         (4, "continuous_assign", "ADMITTED"),
         (5, "process", "ADMITTED"),
+        (9, "continuous_assign", "ADMITTED"),
         (6, "module_member", "ADMITTED"),
         (7, "continuous_assign", "NOT REACHED"),
         (8, "module_member", "REFUSED"),
     ]
     if statuses != expected:
         raise AssertionError(f"self-test rows differ:\nexpected={expected!r}\nactual={statuses!r}")
-    if result["counts"] != {"ADMITTED": 5, "REFUSED": 2, "NOT REACHED": 1}:
+    if result["counts"] != {"ADMITTED": 6, "REFUSED": 2, "NOT REACHED": 1}:
         raise AssertionError(result["counts"])
     print("core_census --self-test ok")
 

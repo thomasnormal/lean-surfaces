@@ -712,20 +712,13 @@ class UnsizedXZRefusals(unittest.TestCase):
 # Round 5 repair (Lane A, 2026-10-29; verifier of the round-5 INIT repair):
 #
 # (L) THE x/z LITERAL CHOKE POINT (`_sym_xz_literal_scan`, one bound-tree
-# walk per converted module, findings in its `others`). In a scope whose
-# context widths differ between points (a module with an overridable
-# parameter, a generate-for body) every unsized x/z-top literal is loud
-# (`IntegerLiteral:unsized-xz-parametric`) and so is every x/z-bearing
-# literal under an implicit conversion that changes its width
-# (`ConversionExpression:xz-literal-parametric`): the envelope fixed its
-# value at the default point (no conversion at a 32-bit default, a folded
-# `Literal` at a narrower one) and Lean zero-extended it elsewhere. A
-# declaration initializer `_sym_decl_init` decides from the literal is the
-# exception. In any scope, `$unsigned` of an unsized x/z-top literal widened
-# by its context is loud (`CallExpression:unsized-xz-cast`: Icarus
-# zero-extends, the Yosys netlist extends the x/z). An input port actual
-# holding an unsized x/z-top literal is `PortConnection:unsized-xz` at any
-# width.
+# walk per converted module, findings in its `others`). A family-wide
+# unsized x/z conversion that remains as the parser's own
+# `ConversionExpression:unsized-xz` marker is now admitted: E applies
+# IEEE 1800-2023 §5.7.1 at the concrete destination width. The scan still
+# refuses a default-point `Literal`/`Resize` whose width can change, constant
+# positions, `$unsigned`'s oracle split, and input-port actuals. A declaration
+# initializer `_sym_decl_init` decides from the literal as before.
 
 
 def module_others(env, module=0):
@@ -734,6 +727,17 @@ def module_others(env, module=0):
 
 class XZLiteralScan(unittest.TestCase):
     """(L)."""
+
+    def test_family_unsized_conversion_is_source_shaped_and_admitted(self):
+        env = extract_sym(
+            "module top #(parameter int N = 40) (output logic [N-1:0] y); "
+            "assign y = 'hx0; endmodule\n", "top")
+        top = env["design"]["modules"][0]
+        self.assertEqual(module_others(env), [])
+        self.assertEqual(top["processes"][0]["value"]["sv_kind"],
+                         "ConversionExpression:unsized-xz")
+        self.assertEqual(top["processes"][0]["value"]["text"],
+                         "x" * 28 + "0000")
 
     def test_family_literals_are_loud_at_any_default(self):
         for n, rhs, kind in (
@@ -773,8 +777,7 @@ class XZLiteralScan(unittest.TestCase):
             "endmodule\n", "top")
         found = [o for o in env["design"]["modules"][0]["others"]
                  if o.get("sv_kind") == "IntegerLiteral:unsized-xz-parametric"]
-        self.assertEqual([o["span"]["line"] for o in found], [1])
-        self.assertEqual(len(found), 1)
+        self.assertEqual(found, [])
         procs = env["design"]["modules"][0]["processes"]
         self.assertEqual(procs[0]["value"]["bits"], "x" * 36 + "0000")
 

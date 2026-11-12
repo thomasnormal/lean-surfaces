@@ -255,30 +255,7 @@
           }
         ],
         "generates": [],
-        "others": [
-          {
-            "kind": "Unsupported",
-            "span": {
-              "line": 14,
-              "col": 18,
-              "end_line": 14,
-              "end_col": 22
-            },
-            "sv_kind": "ConversionExpression:xz-literal-parametric",
-            "text": "'hz1"
-          },
-          {
-            "kind": "Unsupported",
-            "span": {
-              "line": 14,
-              "col": 18,
-              "end_line": 14,
-              "end_col": 22
-            },
-            "sv_kind": "IntegerLiteral:unsized-xz-parametric",
-            "text": "'hz1"
-          }
-        ]
+        "others": []
       }
     ],
     "others": []

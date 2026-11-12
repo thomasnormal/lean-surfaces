@@ -30481,6 +30481,12 @@ class SymCtx:
         self.enum_by_key = {}         # (name, from_package) -> node
         self.packages = set()         # package names actually referenced
         self.instance_modules = []    # definitions instantiated (F3), first-use order
+        # Source ranges of unsized x/z conversions that remain as the
+        # parser's source-shaped marker.  The family-wide x/z metadata scan
+        # runs after expression conversion and must not turn these already
+        # handled nodes back into loud module members.  Constant-position and
+        # other x/z markers are deliberately not recorded here.
+        self.unsized_xz_conversions = set()
 
 
 class _SymPos:
@@ -32223,6 +32229,7 @@ def _sym_xz_literal_scan(sm, body):
     found = []
     seen = set()
     marked = getattr(_SYM, "xz_decl_literals", None) or set()
+    handled = getattr(_SYM, "unsized_xz_conversions", None) or set()
 
     def flag(node, kind, key):
         if key is None or (kind, key) not in seen:
@@ -32233,7 +32240,8 @@ def _sym_xz_literal_scan(sm, body):
         cname = type(node).__name__
         if cname == "IntegerLiteral":
             key = _sym_range_key(node)
-            if dep and key not in marked and _sym_unsized_xz_top(node):
+            if (dep and key not in marked and key not in handled
+                    and _sym_unsized_xz_top(node)):
                 flag(node, "IntegerLiteral:unsized-xz-parametric", key)
             return
         if cname != "ConversionExpression":
@@ -32248,7 +32256,7 @@ def _sym_xz_literal_scan(sm, body):
             if (dep and bits is not None and set(bits) - set("01")
                     and int(core.type.bitWidth) != int(node.type.bitWidth)):
                 key = _sym_range_key(core)
-                if key not in marked:
+                if key not in marked and key not in handled:
                     flag(node, "ConversionExpression:xz-literal-parametric",
                          key)
         elif (ccname == "CallExpression"
@@ -32395,6 +32403,15 @@ def _sym_unsized_xz_widening(sm, e, op, tw):
         # IEEE 1800-2023 §5.7.1 at its concrete destination width.  Using
         # the canonical MSB-first bit spelling avoids losing mixed forms such
         # as `'hx0`/`'hz1` when source text is unavailable on a bound node.
+        # The source-shaped marker is evaluated by the E loader at the
+        # concrete destination width.  Remember its literal range so the
+        # later family scan does not append a stale default-point refusal;
+        # constant-position and other x/z boundaries never pass through this
+        # branch and therefore remain loud.
+        if _SYM is not None:
+            key = _sym_range_key(op)
+            if key is not None:
+                _SYM.unsized_xz_conversions.add(key)
         return unsupported(sm, e, "ConversionExpression:unsized-xz",
                            svint_bits(op.value))
     return signed_metadata({

@@ -3,42 +3,42 @@
   "c-testsuite/single-exec": {
    "not-ingested": 7,
    "not-parsed": 1,
-   "passed": 94,
+   "passed": 95,
    "refused-libc": 2,
    "refused-ub": 2,
-   "refused-unsupported": 112,
+   "refused-unsupported": 111,
    "timeout": 2
   },
   "gcc.c-torture/execute": {
    "not-ingested": 20,
    "not-parsed": 321,
-   "passed": 289,
-   "refused-libc": 250,
-   "refused-ub": 26,
-   "refused-unsupported": 970,
+   "passed": 317,
+   "refused-libc": 261,
+   "refused-ub": 28,
+   "refused-unsupported": 929,
    "timeout": 42
   },
   "gcc.c23-run": {
    "not-ingested": 1,
    "not-parsed": 28,
-   "refused-libc": 2,
+   "refused-libc": 3,
    "refused-ub": 1,
-   "refused-unsupported": 44
+   "refused-unsupported": 43
   }
  },
  "corpus": "C1-C3 (gcc torture, c-testsuite, gcc c23-run)",
  "counts": {
   "not-ingested": 28,
   "not-parsed": 350,
-  "passed": 383,
-  "refused-libc": 254,
-  "refused-ub": 29,
-  "refused-unsupported": 1126,
+  "passed": 412,
+  "refused-libc": 266,
+  "refused-ub": 31,
+  "refused-unsupported": 1083,
   "timeout": 44
  },
  "manifest_hash": "953938cce1637cf91ba3dda661a9b9309cd83f0ebf7d7f17cc1a36704295f367",
- "measured_at_utc": "2026-11-12T00:55:00Z",
- "measured_commit": "d29d83597",
+ "measured_at_utc": "2026-11-12T01:15:00Z",
+ "measured_commit": "3877f5cca",
  "pin": null,
  "rows": [
   {
@@ -1288,14 +1288,14 @@
   },
   {
    "corpus": "c-testsuite/single-exec",
-   "detail": "unary operator '~'",
+   "detail": "",
    "manifest_status": "parsed",
    "name": "00126.c",
    "sha256": "6eb2b340b8f67c2fa0bc6cc179a8fc8445592a1deab10bb9888d7613fc366bfa",
    "static_walls": [
     "operator:~"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "c-testsuite/single-exec",
@@ -2497,14 +2497,14 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "unary operator '~'",
+   "detail": "id24",
    "manifest_status": "parsed",
    "name": "20000205-1.c",
    "sha256": "51b7890a58802a8e311d7bc2963984358ffafef407f3cace9ca82c68cd6de502",
    "static_walls": [
     "operator:~"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "refused-libc"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -2898,14 +2898,14 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "unary operator '~'",
+   "detail": "id24",
    "manifest_status": "parsed",
    "name": "20000715-2.c",
    "sha256": "8bc7062d447df62ddccec55b1a295a8298fa57ff0ffdabf4a98a62cf2ab9ee14",
    "static_walls": [
     "operator:~"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "refused-libc"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -3946,14 +3946,14 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "unary operator '~'",
+   "detail": "id24",
    "manifest_status": "parsed",
    "name": "20020127-1.c",
    "sha256": "98b59a9520af112160f3e6d7f8ae89fe50f73c5751ba69a2fb10205b0d5571eb",
    "static_walls": [
     "operator:~"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "refused-libc"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -4589,7 +4589,7 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "unary operator '~'",
+   "detail": "not an lvalue: StringLiteral",
    "manifest_status": "parsed",
    "name": "20021120-3.c",
    "sha256": "015a0910b2a6c7f94aad21ca1d54984e7760c78077dd53a38b876338d51fc086",
@@ -5395,25 +5395,25 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "unary operator '~'",
+   "detail": "",
    "manifest_status": "parsed",
    "name": "20040409-3.c",
    "sha256": "ea51feab3c4e52e6070320975026d9ad04ffa583b940d429257f531be4dccfdf",
    "static_walls": [
     "operator:~"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "unary operator '~'",
+   "detail": "LeanModels.C.C23.UB.signedOverflow \"-\" { signed := true, bits := 32 } 2147483648",
    "manifest_status": "parsed",
    "name": "20040409-3w.c",
    "sha256": "f9e7d5b4833c6dae714796204cb1899bdcb0781cf5560e22e8c3ea0e1d609293",
    "static_walls": [
     "operator:~"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "refused-ub"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -5635,7 +5635,7 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "unary operator '~'",
+   "detail": "id24",
    "manifest_status": "parsed",
    "name": "20041011-1.c",
    "sha256": "b63f53b18e2f0adfe899cddee05a384b7c0af6f82a4699a42bb1af37dd741b47",
@@ -5643,7 +5643,7 @@
     "operator:~",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "refused-libc"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -6406,14 +6406,14 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "unary operator '~'",
+   "detail": "id24",
    "manifest_status": "parsed",
    "name": "20070623-1.c",
    "sha256": "1c1a5d0c0dcca7b33840e3b73d9e2ed5d54158311c030ea0e102109a5ae0d7ae",
    "static_walls": [
     "operator:~"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "refused-libc"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -6700,7 +6700,7 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "unary operator '~'",
+   "detail": "",
    "manifest_status": "parsed",
    "name": "20080519-1.c",
    "sha256": "ea531e6842a76abcf8fac16bc8de8d3a883e30819695caa8f7fcf5c7e6dfee94",
@@ -6708,7 +6708,7 @@
     "operator:~",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -7020,7 +7020,7 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "unary operator '~'",
+   "detail": "",
    "manifest_status": "parsed",
    "name": "20110418-1.c",
    "sha256": "c4f60d357a8e31c2d78f5d0f9c6c2dc2f925181a67ed3e9169d838aeef389955",
@@ -7028,7 +7028,7 @@
     "libc-call",
     "operator:~"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -7193,7 +7193,7 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "unary operator '~'",
+   "detail": "",
    "manifest_status": "parsed",
    "name": "20140212-1.c",
    "sha256": "207b91ef9f39b961d2be4cce9a0d1f5df5a945c7d06322b97a1017f8b822cddc",
@@ -7201,7 +7201,7 @@
     "assignment-call",
     "operator:~"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -7415,7 +7415,7 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "unary operator '~'",
+   "detail": "",
    "manifest_status": "parsed",
    "name": "20190228-1.c",
    "sha256": "bc848ce532bba0a74f91510400197b4a73ae2df044241890bc84d046b7920ccc",
@@ -7423,7 +7423,7 @@
     "libc-call",
     "operator:~"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -7580,14 +7580,14 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "unary operator '~'",
+   "detail": "id24",
    "manifest_status": "parsed",
    "name": "900409-1.c",
    "sha256": "aee2eb07577f9c75284dd3804c72798d6a3b678248946cfe451a260d2a32569e",
    "static_walls": [
     "operator:~"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "refused-libc"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -8119,14 +8119,14 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "unary operator '~'",
+   "detail": "id24",
    "manifest_status": "parsed",
    "name": "921104-1.c",
    "sha256": "e43448ceebdf958ea4d12e6892efe27fb9133c1e47dd9587a896c669447abc4c",
    "static_walls": [
     "operator:~"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "refused-libc"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -8434,14 +8434,14 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "unary operator '~'",
+   "detail": "LeanModels.C.C23.UB.signedOverflow \"+\" { signed := true, bits := 32 } 2147483648",
    "manifest_status": "parsed",
    "name": "930529-1.c",
    "sha256": "77047a2cb413c71bb8245fa16912d0b20c3a535450008893d09d4f8f1ccdf87c",
    "static_walls": [
     "operator:~"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "refused-ub"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -9099,14 +9099,14 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "unary operator '~'",
+   "detail": "id24",
    "manifest_status": "parsed",
    "name": "950503-1.c",
    "sha256": "38936efc0271c2eece85c7f8542c591c1c7efd226435af6f29eaae84c3b4e8eb",
    "static_walls": [
     "operator:~"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "refused-libc"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -9933,7 +9933,7 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "unary operator '~'",
+   "detail": "id24",
    "manifest_status": "parsed",
    "name": "980612-1.c",
    "sha256": "aa6fce063bfb606248d80aa051d0e0bc2b3a82095be097f127a0b4db2b23b82e",
@@ -9941,7 +9941,7 @@
     "operator:~",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "refused-libc"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -10676,14 +10676,14 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "unary operator '~'",
+   "detail": "id24",
    "manifest_status": "parsed",
    "name": "arith-1.c",
    "sha256": "8877e7b682e657302d50e0a18b054f975c58d3d3d548354f24ca1eb0214369be",
    "static_walls": [
     "operator:~"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "refused-libc"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -13238,7 +13238,7 @@
   },
   {
    "corpus": "gcc.c23-run",
-   "detail": "unary operator '~'",
+   "detail": "id27",
    "manifest_status": "parsed",
    "name": "gcc/testsuite/gcc.dg/c23-empty-init-5.c",
    "sha256": "d9dd88de8b98e54c7503bf6f0711f6292841b52fd0a011181273f3f670022b54",
@@ -13249,7 +13249,7 @@
     "unsupported:DesignatedInitUpdateExpr",
     "unsupported:OffsetOfExpr"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "refused-libc"
   },
   {
    "corpus": "gcc.c23-run",
@@ -14820,14 +14820,14 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "unary operator '~'",
+   "detail": "",
    "manifest_status": "parsed",
    "name": "ifcvt-onecmpl-abs-1.c",
    "sha256": "6e369cadba49486cbe8a2e61289aa88012f1ebe6ad68711a119b8cd1f1922786",
    "static_walls": [
     "operator:~"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -15639,7 +15639,7 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "unary operator '~'",
+   "detail": "",
    "manifest_status": "parsed",
    "name": "pr101335.c",
    "sha256": "8fba905c8245087e6053e4252743ede28cd9f43fc1052f4d00fc0cf3e15295a9",
@@ -15647,7 +15647,7 @@
     "libc-call",
     "operator:~"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -16034,7 +16034,7 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "unary operator '~'",
+   "detail": "",
    "manifest_status": "parsed",
    "name": "pr110252-3.c",
    "sha256": "626de6a01b209a80f364ddc544bfcc6fd4a6faf0ac48fe1615897e1297efbce2",
@@ -16042,11 +16042,11 @@
     "libc-call",
     "operator:~"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "unary operator '~'",
+   "detail": "",
    "manifest_status": "parsed",
    "name": "pr110252-4.c",
    "sha256": "b380a9bea5c2d04feca648d19b624e0d4a2c69b005c4fce89d6f1c6e21ab1d2e",
@@ -16054,7 +16054,7 @@
     "libc-call",
     "operator:~"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -16242,14 +16242,14 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "unary operator '~'",
+   "detail": "",
    "manifest_status": "parsed",
    "name": "pr112581-1.c",
    "sha256": "db5e90fccdab610f90aca74504197121d502921f4870316afd4464fdedb9c6d1",
    "static_walls": [
     "operator:~"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -16416,7 +16416,7 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "unary operator '~'",
+   "detail": "",
    "manifest_status": "parsed",
    "name": "pr118638.c",
    "sha256": "a717de8c9b3e63e3b97b9d748905bd0ccf92f15e3640b60debe31a1abead4f64",
@@ -16424,7 +16424,7 @@
     "libc-call",
     "operator:~"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -16461,7 +16461,7 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "unary operator '~'",
+   "detail": "break, continue or goto escaped a function body",
    "manifest_status": "parsed",
    "name": "pr119291.c",
    "sha256": "7dbfd419cfb2d453bea955c97df92b82bdab1d3d95c92dd14719ca739b2bf33f",
@@ -16486,7 +16486,7 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "unary operator '~'",
+   "detail": "",
    "manifest_status": "parsed",
    "name": "pr120630.c",
    "sha256": "1aa8d360e44df6da762d8eef80684cb41c933c4c1139626c03ef57dabf690def",
@@ -16496,7 +16496,7 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -17785,14 +17785,14 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "unary operator '~'",
+   "detail": "",
    "manifest_status": "parsed",
    "name": "pr35390.c",
    "sha256": "f6f2b725a208c88e48f4df762164f9de9071d7a5398be5b23f4a83458083b87f",
    "static_walls": [
     "operator:~"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -18936,14 +18936,14 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "unary operator '~'",
+   "detail": "",
    "manifest_status": "parsed",
    "name": "pr48717.c",
    "sha256": "038cf4ac5beedd6fb223b147f5908c496c8d21080d4ef2d39006c7abe6017ed8",
    "static_walls": [
     "operator:~"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -19928,7 +19928,7 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "unary operator '~'",
+   "detail": "",
    "manifest_status": "parsed",
    "name": "pr59101.c",
    "sha256": "f3e74fd714aa69cfb55133b9ada17634670a701f5488e08cf308a0c1b9fbeaa0",
@@ -19936,7 +19936,7 @@
     "libc-call",
     "operator:~"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -20348,7 +20348,7 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "unary operator '~'",
+   "detail": "",
    "manifest_status": "parsed",
    "name": "pr64957.c",
    "sha256": "209c1e8e9625746a75658e71766383dd212a3cb9cb11513029154bff7058800e",
@@ -20356,7 +20356,7 @@
     "libc-call",
     "operator:~"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -20583,7 +20583,7 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "unary operator '~'",
+   "detail": "",
    "manifest_status": "parsed",
    "name": "pr66757.c",
    "sha256": "698a7fc20809c08659d70693ba7123dc59ed75a420b003566b5d20665d429c54",
@@ -20591,7 +20591,7 @@
     "libc-call",
     "operator:~"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -20731,7 +20731,7 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "unary operator '~'",
+   "detail": "",
    "manifest_status": "parsed",
    "name": "pr68376-1.c",
    "sha256": "041431963290c31c50cc2797cca44d6bed80766ebdd237ce4c4b8649832f1626",
@@ -20739,18 +20739,18 @@
     "libc-call",
     "operator:~"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "unary operator '~'",
+   "detail": "",
    "manifest_status": "parsed",
    "name": "pr68376-2.c",
    "sha256": "f6a4ad11a0e7b68075136815f3f7fdc95d52811aacfe4e23fde7c64f3de44582",
    "static_walls": [
     "operator:~"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -20836,25 +20836,25 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "unary operator '~'",
+   "detail": "",
    "manifest_status": "parsed",
    "name": "pr68911.c",
    "sha256": "6f2e549dc1708cbc106c255778cc04ff1a8e75944e0ef005b2ec654e494f79f0",
    "static_walls": [
     "operator:~"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "unary operator '~'",
+   "detail": "",
    "manifest_status": "parsed",
    "name": "pr69097-1.c",
    "sha256": "778f956ec467f9b9eae0dfd741bbc51fac57494136cb28878aa78422565aeab7",
    "static_walls": [
     "operator:~"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -20869,14 +20869,14 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "unary operator '~'",
+   "detail": "id246",
    "manifest_status": "parsed",
    "name": "pr69320-1.c",
    "sha256": "3f9aa7db3c39e73987a234303e12e2da96736c9e92b0c87d1776f2c406168e7b",
    "static_walls": [
     "operator:~"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "refused-libc"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -20940,7 +20940,7 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "unary operator '~'",
+   "detail": "",
    "manifest_status": "parsed",
    "name": "pr70005.c",
    "sha256": "259727df2c6dda05906c3386cb85c67f7439c17e090d10d91daeaa72b184e9cb",
@@ -20948,7 +20948,7 @@
     "libc-call",
     "operator:~"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -21525,14 +21525,14 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "unary operator '~'",
+   "detail": "",
    "manifest_status": "parsed",
    "name": "pr81503.c",
    "sha256": "1a41a3226daee3b21e7600656ed0de29d95a65df1b18369b312dec7720482fcb",
    "static_walls": [
     "operator:~"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -21570,7 +21570,7 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "unary operator '~'",
+   "detail": "",
    "manifest_status": "parsed",
    "name": "pr81913.c",
    "sha256": "148d7eaa549818b5f2e27327b6265085a946365d726004bbf740265feb14ec91",
@@ -21578,7 +21578,7 @@
     "libc-call",
     "operator:~"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -21627,7 +21627,7 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "unary operator '~'",
+   "detail": "compound literal (inch 4: it needs an object)",
    "manifest_status": "parsed",
    "name": "pr82524.c",
    "sha256": "396b3905e87fb23ff60e00b001acafe160aa23d81beea6fd2a30a89838201409",
@@ -21683,7 +21683,7 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "unary operator '~'",
+   "detail": "",
    "manifest_status": "parsed",
    "name": "pr83383.c",
    "sha256": "d3086f67547883e6cd68a5972542b70d79d4dbe70b2ade47f6194e9b883a5b39",
@@ -21692,7 +21692,7 @@
     "operator:~",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -21836,14 +21836,14 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "unary operator '~'",
+   "detail": "",
    "manifest_status": "parsed",
    "name": "pr85582-1.c",
    "sha256": "cd50c6c19fe72e63d61711e9c05a226d32f5fa9f69aba1706b12e4d6f01f284a",
    "static_walls": [
     "operator:~"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -22651,7 +22651,7 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "unary operator '~'",
+   "detail": "",
    "manifest_status": "parsed",
    "name": "pr97888-1.c",
    "sha256": "77b428e5d6455abd88ed092974bb80d6225a0655d383befb3a0d9f7f92cf3fad",
@@ -22659,7 +22659,7 @@
     "libc-call",
     "operator:~"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -22982,14 +22982,14 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "unary operator '~'",
+   "detail": "",
    "manifest_status": "parsed",
    "name": "shiftopt-1.c",
    "sha256": "fa73efd08a8c4ea955d7c53744fe1b8cb151e53751ec5af10a6a616f02d16ea3",
    "static_walls": [
     "operator:~"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",

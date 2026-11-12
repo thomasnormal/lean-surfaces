@@ -2,10 +2,10 @@
 
 Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manifest.
 
-- verdicts: 696/2214 MATCH (passed 696, failed 0, oracle 0)
+- verdicts: 697/2214 MATCH (passed 697, failed 0, oracle 0)
 - manifest SHA-256: `1de1a60c299d5bb51dae7ca001b0a008010cad0b25670cde2090c08bfc1a84ce`
-- measured commit: `e8e8f7a5d`
-- measured at: `2026-11-12T08:50:35Z`
+- measured commit: `1f31707b9`
+- measured at: `2026-11-12T09:14:25Z`
 
 ## Verdict counts
 
@@ -13,10 +13,10 @@ Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manife
 | --- | ---: |
 | `not-ingested` | 25 |
 | `not-parsed` | 350 |
-| `passed` | 696 |
-| `refused-libc` | 94 |
+| `passed` | 697 |
+| `refused-libc` | 92 |
 | `refused-ub` | 36 |
-| `refused-unsupported` | 965 |
+| `refused-unsupported` | 966 |
 | `timeout` | 48 |
 
 ## Counts by corpus
@@ -32,10 +32,10 @@ Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manife
 | `c-testsuite/single-exec` | `timeout` | 2 |
 | `gcc.c-torture/execute` | `not-ingested` | 19 |
 | `gcc.c-torture/execute` | `not-parsed` | 321 |
-| `gcc.c-torture/execute` | `passed` | 585 |
-| `gcc.c-torture/execute` | `refused-libc` | 85 |
+| `gcc.c-torture/execute` | `passed` | 586 |
+| `gcc.c-torture/execute` | `refused-libc` | 83 |
 | `gcc.c-torture/execute` | `refused-ub` | 33 |
-| `gcc.c-torture/execute` | `refused-unsupported` | 829 |
+| `gcc.c-torture/execute` | `refused-unsupported` | 830 |
 | `gcc.c-torture/execute` | `timeout` | 46 |
 | `gcc.c23-run` | `not-ingested` | 1 |
 | `gcc.c23-run` | `not-parsed` | 28 |
@@ -103,7 +103,7 @@ The run's first refusal, normalized by construct; `sole` counts rows whose first
 | `unsupported:more arguments than parameters` | 26 | 26 | 20000519-1.c, 20071213-1.c, 920726-1.c, 931004-10.c, 931004-12.c |
 | `ingestion` | 25 | 25 | 00046.c, 00050.c, 00078.c, 00198.c, 00216.c |
 | `unsupported:declaration outside a block` | 25 | 25 | 20230802-1.c, bitops-1.c, bswap-3.c, minmaxcmp-1.c, pr104814.c |
-| `unsupported:pointer used as an integer (no ptr↔int cast in tier)` | 24 | 24 | 00032.c, 00182.c, 20000801-1.c, 20000910-1.c, 20011126-2.c |
+| `unsupported:pointer used as an integer (no ptr↔int cast in tier)` | 25 | 25 | 00032.c, 00182.c, 20000801-1.c, 20000910-1.c, 20011126-2.c |
 | `unsupported:no layout for declared type 'struct S'` | 20 | 20 | 00087.c, 20081103-1.c, 20100708-1.c, 20171008-1.c, 20230630-1.c |
 | `unsupported:pointer bit-cast across incompatible effective types` | 20 | 20 | 00103.c, 20001017-2.c, 20050316-1.c, 20050607-1.c, 20060412-1.c |
 | `cast:PointerToIntegral` | 12 | 12 | 20011121-1.c, 941014-1.c, 980526-2.c, alloca-1.c, loop-2c.c |
@@ -152,7 +152,6 @@ The run's first refusal, normalized by construct; `sole` counts rows whose first
 | `unsupported:unbound declaration 'id25' (name 's')` | 3 | 3 | pr40404.c, pr48973-1.c, pr48973-2.c |
 | `unsupported:unbound declaration 'id27' (name 'x')` | 3 | 3 | 20030209-1.c, 960405-1.c, 991030-1.c |
 | `libc-call: __builtin_strcpy` | 2 | 2 | 20021011-1.c, 921117-1.c |
-| `libc-call: __builtin_strlen` | 2 | 2 | pr110914.c, pr116799.c |
 | `libc-call: bar` | 2 | 2 | 20000722-1.c, 20000801-2.c |
 | `libc-call: f` | 2 | 2 | 20030203-1.c, 980505-1.c |
 | `libc-call: f1` | 2 | 2 | 20020227-1.c, 20020529-1.c |

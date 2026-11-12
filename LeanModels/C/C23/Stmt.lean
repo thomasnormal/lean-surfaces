@@ -746,6 +746,22 @@ def callFn : Nat → Program → LeanModels.C.FunctionDefn → List CVal → Exe
                 liftEval (writeMem (fun m => m.storeBytes dp bs))
                 pure (.ptr dp)
           | _ => refuseUnsupported "memcpy: wrong argument count"
+        let runStrlen : List CVal → ExecM CVal := fun vs =>
+          match vs with
+          | [src] => do
+              let sp ← asPtr src
+              let m ← get
+              let (_, source, off) ← liftEval (m.resolve sp 0)
+              let rec scan : List CByte → Nat → Option Nat
+                | [], _ => none
+                | b :: rest, n =>
+                    match b with
+                    | .conc x => if x == 0 then some n else scan rest (n + 1)
+                    | _ => none
+              match scan (source.bytes.drop off) 0 with
+              | some n => pure (.int IntTy.ulong n)
+              | none => refuseUnsupported "strlen: no concrete NUL in object"
+          | _ => refuseUnsupported "strlen: wrong argument count"
         let runAlloca : List CVal → ExecM CVal := fun vs =>
           match vs with
           | [size] => do
@@ -808,6 +824,7 @@ def callFn : Nat → Program → LeanModels.C.FunctionDefn → List CVal → Exe
                 | none =>
                     if nm == "memset" || nm == "__builtin_memset" then runMemset vs
                     else if nm == "memcpy" || nm == "__builtin_memcpy" then runMemcpy vs
+                    else if nm == "__builtin_strlen" then runStrlen vs
                     else if nm == "__builtin_alloca" then runAlloca vs
                     else if nm == "__builtin_ffs" then runFfs vs
                     else if nm == "__builtin_mul_overflow" then runArithOverflow "mul" vs
@@ -828,6 +845,7 @@ def callFn : Nat → Program → LeanModels.C.FunctionDefn → List CVal → Exe
             | none =>
               if nm == "memset" || nm == "__builtin_memset" then runMemset vs
               else if nm == "memcpy" || nm == "__builtin_memcpy" then runMemcpy vs
+              else if nm == "__builtin_strlen" then runStrlen vs
               else if nm == "__builtin_alloca" then runAlloca vs
               else if nm == "__builtin_ffs" then runFfs vs
               else if nm == "__builtin_mul_overflow" then runArithOverflow "mul" vs

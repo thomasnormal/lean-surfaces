@@ -12,10 +12,10 @@
   "gcc.c-torture/execute": {
    "not-ingested": 19,
    "not-parsed": 321,
-   "passed": 585,
-   "refused-libc": 85,
+   "passed": 586,
+   "refused-libc": 83,
    "refused-ub": 33,
-   "refused-unsupported": 829,
+   "refused-unsupported": 830,
    "timeout": 46
   },
   "gcc.c23-run": {
@@ -31,10 +31,10 @@
  "counts": {
   "not-ingested": 25,
   "not-parsed": 350,
-  "passed": 696,
-  "refused-libc": 94,
+  "passed": 697,
+  "refused-libc": 92,
   "refused-ub": 36,
-  "refused-unsupported": 965,
+  "refused-unsupported": 966,
   "timeout": 48
  },
  "dynamic_wall_ranking": [
@@ -1027,6 +1027,7 @@
     "950714-1.c",
     "961125-1.c",
     "990222-1.c",
+    "pr116799.c",
     "pr20601-1.c",
     "pr27073.c",
     "pr34176.c",
@@ -1034,8 +1035,8 @@
     "pr54985.c",
     "pr71631.c"
    ],
-   "present": 24,
-   "sole": 24,
+   "present": 25,
+   "sole": 25,
    "wall": "unsupported:pointer used as an integer (no ptr\u2194int cast in tier)"
   },
   {
@@ -1628,15 +1629,6 @@
    "present": 2,
    "sole": 2,
    "wall": "libc-call: __builtin_strcpy"
-  },
-  {
-   "files": [
-    "pr110914.c",
-    "pr116799.c"
-   ],
-   "present": 2,
-   "sole": 2,
-   "wall": "libc-call: __builtin_strlen"
   },
   {
    "files": [
@@ -4288,8 +4280,8 @@
   }
  ],
  "manifest_hash": "1de1a60c299d5bb51dae7ca001b0a008010cad0b25670cde2090c08bfc1a84ce",
- "measured_at_utc": "2026-11-12T08:50:35Z",
- "measured_commit": "e8e8f7a5d",
+ "measured_at_utc": "2026-11-12T09:14:25Z",
+ "measured_commit": "1f31707b9",
  "pin": null,
  "rows": [
   {
@@ -21620,8 +21612,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "__builtin_strlen",
-   "dynamic_wall": "libc-call: __builtin_strlen",
+   "detail": "",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "pr110914.c",
    "sha256": "f00c55da1029a7214d391a05e0983bfb4e0c43a3dcce34035423de0f78d515df",
@@ -21630,7 +21622,7 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -21888,8 +21880,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "__builtin_strlen",
-   "dynamic_wall": "libc-call: __builtin_strlen",
+   "detail": "pointer used as an integer (no ptr\u2194int cast in tier)",
+   "dynamic_wall": "unsupported:pointer used as an integer (no ptr\u2194int cast in tier)",
    "manifest_status": "parsed",
    "name": "pr116799.c",
    "sha256": "4c8b152e9be0e30fabe1ce363fddcd56e98107b8df401c0668b76260c6e7182d",
@@ -21898,7 +21890,7 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-libc"
+   "verdict": "refused-unsupported"
   },
   {
    "corpus": "gcc.c-torture/execute",

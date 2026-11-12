@@ -93,11 +93,13 @@ power-up of an unreset two-state register, or metastability. The executable
 resolver keeps those as explicit switches with strict defaults; this note does
 not decide them.
 
-`LeanModels.Sv.Kernel.XResolve` currently contains the interim
-`DecisionKnown` predicate and `TypedResolution` lemmas. Their correlation
-wording is a migration scaffold, not the final X-E relation. The implementation
-step replaces that predicate with the per-read witness and then lifts it
-through `Core0Proc`, `Core1Edge`, `MemE`, `Sva`, `Observe`, `Contract`, and the
+`LeanModels.Sv.Kernel.XResolve` now contains the kernel-facing `XRead` and
+`XReadRun` relations, together with the known-read projection theorem
+`xRead_eq_of_known` and its paired-list refinement `xReadRun_eq_of_known`.
+The older `DecisionKnown` predicate and `TypedResolution` lemmas remain as a
+compatibility scaffold for current proofs; their correlation wording is not
+the X-E authority. The next implementation step lifts `XReadRun` through
+`Core0Proc`, `Core1Edge`, `MemE`, `Sva`, `Observe`, `Contract`, and the
 cycle/run bridges. No new AST constructor, semantic fuel, run2 meaning, or
 MemCycle meaning is required.
 

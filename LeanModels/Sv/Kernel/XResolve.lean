@@ -160,6 +160,57 @@ theorem concretizations_of_known {v : LVec}
   rw [resolveBits_known _ h]
   simp [Array.toArray_toList]
 
+/-! ## X-E's independent read interface
+
+`LVec.Resolves` is the historical value relation above. The interface used by
+the new X-E route names the per-read boundary explicitly: each read carries
+its own witness from the source value to one concrete value. A list of reads
+uses a structural paired-list relation, so no witness is shared between two
+positions. -/
+
+/-- One read-site resolution. A later read constructs a fresh `XRead` even
+when its source value has the same bits. -/
+def XRead (source concrete : LVec) : Prop :=
+  concrete ∈ LVec.concretizations source
+
+/-- A run's read witnesses, one independent witness per consulted site. -/
+inductive XReadRun : List LVec → List LVec → Prop where
+  | nil : XReadRun [] []
+  | cons {source concrete : LVec} {sources concreteTail : List LVec} :
+      XRead source concrete → XReadRun sources concreteTail →
+      XReadRun (source :: sources) (concrete :: concreteTail)
+
+theorem xRead_eq_of_known {source concrete : LVec}
+    (hknown : source.bits.toList.all Logic.isKnown = true)
+    (hread : XRead source concrete) : source = concrete := by
+  unfold XRead at hread
+  rw [concretizations_of_known hknown] at hread
+  have heq : concrete = source := by simpa using hread
+  exact heq.symm
+
+theorem xReadRun_cons {source concrete : LVec}
+    {sources concreteTail : List LVec}
+    (hhead : XRead source concrete)
+    (htail : XReadRun sources concreteTail) :
+    XReadRun (source :: sources) (concrete :: concreteTail) :=
+  .cons hhead htail
+
+theorem xReadRun_eq_of_known : ∀ {sources concrete : List LVec},
+    (∀ source ∈ sources, source.bits.toList.all Logic.isKnown = true) →
+    XReadRun sources concrete → sources = concrete
+  | [], [], _, .nil => rfl
+  | source :: sources, concrete :: concreteTail, hknown, .cons hhead htail => by
+      have hheadEq := xRead_eq_of_known
+        (hknown source (by simp)) hhead
+      have htailKnown : ∀ value ∈ sources,
+          value.bits.toList.all Logic.isKnown = true := by
+        intro value hvalue
+        exact hknown value (by simp [hvalue])
+      have htailEq := xReadRun_eq_of_known htailKnown htail
+      cases hheadEq
+      cases htailEq
+      rfl
+
 theorem decisionKnown_of_allKnown {v : LVec}
     (h : v.bits.toList.all Logic.isKnown = true) : DecisionKnown v := by
   intro w z hw hz

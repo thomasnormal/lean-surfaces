@@ -266,6 +266,11 @@
     "note": "The `_bisect` import is outside the admitted accelerator domain; the pure insort fallback remains available as a separate no-import shape."
   },
   {
+    "file": "harness/scripts/decimal_accelerator.py",
+    "expect": "unsupported",
+    "note": "decimal.py defines no public pure-Python functions; its guarded _decimal accelerator import is an unmeasured wall with zero PY-REAL payoff."
+  },
+  {
     "file": "harness/scripts/insort_alias_script.py",
     "expect": "match",
     "note": "alias tier composed with list.insert: the bisect consumer shape end to end"

@@ -134,8 +134,10 @@ def main (argv : List String) : IO UInt32 := do
         pure (node.core, some node)
       else
         let flatTop := lib.isEmpty || GenItem.listInstFree pd.generates
-        let inst := if flatTop then pd.instantiateG2 args (PDesign.surfaceFuel args)
-          else pd.instantiateH lib args (PDesign.surfaceFuel args)
+        let inst := if flatTop then
+          if pd.functions.isEmpty then pd.instantiateG2 args (PDesign.surfaceFuel args)
+          else pd.instantiateFunctions2 args (PDesign.surfaceFuel args)
+        else pd.instantiateH lib args (PDesign.surfaceFuel args)
         let d ← match inst with
           | .ok d => pure d
           | .timeout => .error "instantiate2: generate fuel exhausted"

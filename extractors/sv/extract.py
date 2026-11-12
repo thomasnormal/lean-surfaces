@@ -29494,6 +29494,7 @@ def convert_module(sm, inst):
     ports = []
     decls = _convert_static_procedural_storage(sm, members)
     processes = []
+    functions = []
     others = []
     global _ELAB_CURRENT_SCOPE
     for m, route in members:
@@ -34752,6 +34753,64 @@ def _sym_instance_definitions(tree, source_map, top, module):
     return modules, others, packages
 
 
+def _sym_function_node(sm, subroutine):
+    """Retain one parser-shaped pure automatic function declaration.
+
+    The first E rung is intentionally limited to input-only formals and one
+    return expression (including the supported local/conditional helpers).
+    The call remains a FunctionCall node; the declaration supplies its body
+    for the E elaborator instead of being erased into the caller expression.
+    """
+    try:
+        if str(getattr(subroutine, "subroutineKind", "")).split(".")[-1] != "Function":
+            return unsupported(sm, subroutine, "SubroutineSymbol:kind")
+        if not bool(getattr(subroutine, "isAutomatic", True)):
+            return unsupported(sm, subroutine, "SubroutineSymbol:static",
+                               "static function storage is outside the E function profile")
+        formals = list(getattr(subroutine, "arguments", []))
+        if any(str(getattr(f, "direction", "")).split(".")[-1] != "In"
+               for f in formals):
+            return unsupported(sm, subroutine, "SubroutineSymbol:formal",
+                               "function formals must be input-only")
+        returned = _literal_function_result(subroutine)
+        if returned is None:
+            returned = _sym_local_return_expression(subroutine)
+        if returned is None:
+            shape = _sym_conditional_function_shape(subroutine)
+            if shape is not None:
+                return unsupported(sm, subroutine, "SubroutineSymbol:conditional",
+                                   "conditional function body is not yet a source-shaped return node")
+            return unsupported(sm, subroutine, "SubroutineSymbol:body",
+                               "function body is outside the straight-line return profile")
+        dtype, reason = _dtype_sym(sm, subroutine.returnType,
+                                   _decl_type_syntax(subroutine), allow_signed=True)
+        if dtype is None:
+            return unsupported(sm, subroutine, "SubroutineSymbol:return-" + (reason or "type"))
+        formal_nodes = []
+        formal_bindings = []
+        for formal in formals:
+            fdtype, freason = _dtype_sym(sm, formal.type,
+                                         _decl_type_syntax(formal), allow_signed=True)
+            if fdtype is None:
+                return unsupported(sm, subroutine, "SubroutineSymbol:formal-" + (freason or "type"))
+            formal_node = {"kind": "Var", "span": sym_span(sm, formal),
+                                 "name": formal.name, "width": fdtype,
+                                 "dir": "in", "init": None}
+            formal_nodes.append(formal_node)
+            formal_bindings.append((formal, {"kind": "Ident", "span": sym_span(sm, formal),
+                                             "width": fdtype.get("resolved", formal.type.bitWidth),
+                                             "name": formal.name}))
+        with _SymCallBinding(formal_bindings):
+            body = convert_expr(sm, returned)
+        if body is None or body.get("kind") == "Unsupported":
+            return unsupported(sm, subroutine, "SubroutineSymbol:body")
+        return {"kind": "Function", "span": sym_span(sm, subroutine),
+                "name": subroutine.name, "automatic": True,
+                "return_type": dtype, "formals": formal_nodes, "body": body}
+    except Exception as exc:
+        return internal_error(exc)
+
+
 def _sym_package_params(sm):
     """Retain fixed-width integral package parameters for sv-0.2.
 
@@ -34834,6 +34893,7 @@ def convert_module_sym(sm, inst):
     ports = []
     decls = []
     processes = []
+    functions = []
     generates = []
     others = []
     properties = []
@@ -34886,6 +34946,12 @@ def convert_module_sym(sm, inst):
                 generates.append(convert_generate_for(sm, m))
             elif k == "Instance":
                 generates.append(convert_instance_sym(sm, m))
+            elif k == "Subroutine" and _RETAIN_PROC_REWRITES:
+                retained = _sym_function_node(sm, m)
+                if isinstance(retained, dict) and retained.get("kind") == "Function":
+                    functions.append(retained)
+                elif retained is not None:
+                    others.append(retained)
             elif k == "GenerateBlock":
                 run = []
                 j = i
@@ -34972,6 +35038,7 @@ def convert_module_sym(sm, inst):
         "types": _SYM.enum_nodes,
         "ports": ports,
         "decls": decls,
+        **({"functions": functions} if functions else {}),
         "processes": processes,
         "generates": generates,
         "others": others,

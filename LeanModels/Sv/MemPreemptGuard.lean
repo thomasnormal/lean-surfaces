@@ -62,7 +62,7 @@ open Kernel
 mutual
   def PExpr.memPreemptReads (d : MemDesign2) : PExpr → List BWin
     | .lit _ | .paramRef _ _ | .genvarRef _ | .enumRef _ _ _ | .int _
-    | .fill _ | .unsupported _ _ => []
+    | .fill _ | .functionCall _ _ | .unsupported _ _ => []
     | .ident n => memPreemptWhole d n
     | .unary _ a | .resize _ a | .signedResize _ a | .squash2 _ a
     | .sysCall _ a | .reduce _ a | .cast _ a => PExpr.memPreemptReads d a

@@ -89,6 +89,7 @@ deriving instance Lean.ToExpr for EnumVal
 deriving instance Lean.ToExpr for PEnumMember
 deriving instance Lean.ToExpr for PEnumType
 deriving instance Lean.ToExpr for PDecl
+deriving instance Lean.ToExpr for PFunction
 deriving instance Lean.ToExpr for PReadmemh
 deriving instance Lean.ToExpr for PCellRef
 deriving instance Lean.ToExpr for PStmt
@@ -311,8 +312,8 @@ partial def parsePExpr (j : Json) : Except String PExpr := do
             return .arrayPart name indices mode (← parsePExpr (← getField pj "left"))
               (← parsePExpr (← getField pj "right"))
     | "FunctionCall" =>
-        return .unsupported "CallExpression:user-function"
-          "source-level user-function call is retained; the frozen expression AST has no call constructor"
+        return .functionCall (← getStrField j "name")
+          (← (← (← getField j "args").getArr?).toList.mapM parsePExpr)
     | "Unsupported" =>
         let (svKind, text) ← parseUnsupportedFields j
         return .unsupported svKind text
@@ -823,6 +824,7 @@ def parseModule2 (j : Json) : Except String PDesign :=
     let mut enums : List PEnumType := []
     let mut decls : List PDecl := []
     let mut processes : List PProcess := []
+    let mut functions : List PFunction := []
     let mut generates : List GenItem := []
     let mut others : List (String × String) := []
     let mut properties : List PProperty := []
@@ -885,6 +887,17 @@ def parseModule2 (j : Json) : Except String PDesign :=
       match ← getKind dj with
       | "Unsupported" => others := others ++ [← parseUnsupportedFields dj]
       | _ => decls := decls ++ [← parsePDecl dj]
+    for fj in (← match getOptField j "functions" with
+      | none => pure #[]
+      | some f => f.getArr? |>.mapError (fun _ => "field 'functions' is not an array")) do
+      let fname ← getStrField fj "name"
+      let automatic := match getOptField fj "automatic" with
+        | some (Json.bool b) => b
+        | _ => true
+      let returnType ← withCtx s!"function '{fname}' return type" (parsePType (← getField fj "return_type"))
+      let formals ← (← (← getField fj "formals").getArr?).toList.mapM parsePDecl
+      let body ← withCtx s!"function '{fname}' body" (parsePExpr (← getField fj "body"))
+      functions := functions ++ [{ name := fname, formals, returnType, body, automatic }]
     for pj in (← (← getField j "processes").getArr?) do
       processes := processes ++ [← parsePProcess pj]
     for gj in (← (← getField j "generates").getArr?) do
@@ -928,7 +941,7 @@ def parseModule2 (j : Json) : Except String PDesign :=
       match ← getKind oj with
       | "Unsupported" => others := others ++ [← parseUnsupportedFields oj]
       | other => throw s!"unknown module member kind {other.quote}"
-    return { name := name, params := params, localParams := localParams, packageParams := packageParams, enums := enums, decls := decls, processes := processes, generates := generates, others := others, properties := properties, readmemh := readmemh, cellRefs := cellRefs }
+    return { name := name, params := params, localParams := localParams, packageParams := packageParams, enums := enums, decls := decls, functions := functions, processes := processes, generates := generates, others := others, properties := properties, readmemh := readmemh, cellRefs := cellRefs }
 
 /-- An sv-0.2 envelope: parametric design + provenance metadata. -/
 structure Envelope2 where

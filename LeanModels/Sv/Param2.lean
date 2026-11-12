@@ -111,6 +111,7 @@ def PExpr.readsSignal : PExpr → Bool
   | .binary _ l r | .bitSel l r | .repl l r => l.readsSignal || r.readsSignal
   | .partSel b m l | .ternary b m l => b.readsSignal || m.readsSignal || l.readsSignal
   | .concat ps => PExpr.readsSignalList ps
+  | .functionCall _ args => PExpr.readsSignalList args
   | .lit _ | .paramRef .. | .genvarRef _ | .enumRef .. | .int _ | .fill _
   | .unsupported .. => false
 
@@ -508,6 +509,7 @@ widths from `elems`). -/
 def selfWidth2 (env : IEnv) (elems : List (String × Nat)) : PExpr → Option Nat
   | .lit v => some v.width
   | .ident n => env.widths.lookup n
+  | .functionCall n _ => env.functions.find? (fun f => f.name == n) |>.map (fun f => f.returnType.width env) |>.bind (·.toOption)
   | .paramRef n none => some ((env.pwidths.lookup n).getD (paramNWidth env n))
   | .paramRef n (some pkg) => (env.packageConstType pkg n).map Prod.fst
   | .genvarRef _ | .int _ | .sysCall .. => some 32
@@ -596,6 +598,7 @@ def divOperandWidth2 (env : IEnv) (elems : List (String × Nat)) : PExpr → Opt
   | .paramRef name (some pkg) => (env.packageConstType pkg name).map Prod.fst
   | .genvarRef _ | .int _ | .sysCall .. => some 32
   | .enumRef name _ pkg => env.enumWidth name pkg
+  | .functionCall .. => none
   | .fill _ => none
   | .unary (.m0 .lnot) _ => some 1
   | .unary (.m0 _) operand | .unary .plus operand => divOperandWidth2 env elems operand
@@ -800,6 +803,93 @@ widening guard). -/
   | .cast s _ => s
   | _ => false
 
+/-! Substitute only the source-level function's input formals.  This is the
+elaboration rule for the admitted pure automatic function profile; it never
+parses source text or rewrites an unsupported body. -/
+partial def substFunction (bindings : List (String × PExpr)) : PExpr → PExpr
+  | .ident n => bindings.lookup n |>.getD (.ident n)
+  | .lit v => .lit v
+  | .paramRef n p => .paramRef n p
+  | .genvarRef n => .genvarRef n
+  | .enumRef t m p => .enumRef t m p
+  | .int v => .int v
+  | .fill b => .fill b
+  | .unary op a => .unary op (substFunction bindings a)
+  | .binary op l r => .binary op (substFunction bindings l) (substFunction bindings r)
+  | .ternary c t e => .ternary (substFunction bindings c) (substFunction bindings t)
+      (substFunction bindings e)
+  | .concat ps => .concat (ps.map (substFunction bindings))
+  | .resize w a => .resize w (substFunction bindings a)
+  | .signedResize w a => .signedResize w (substFunction bindings a)
+  | .squash2 w a => .squash2 w (substFunction bindings a)
+  | .sysCall f a => .sysCall f (substFunction bindings a)
+  | .bitSel b i => .bitSel (substFunction bindings b) (substFunction bindings i)
+  | .partSel b m l => .partSel (substFunction bindings b) (substFunction bindings m)
+      (substFunction bindings l)
+  | .repl n a => .repl (substFunction bindings n) (substFunction bindings a)
+  | .reduce op a => .reduce op (substFunction bindings a)
+  | .cast s a => .cast s (substFunction bindings a)
+  | .arrayElem n is => .arrayElem n (is.map (substFunction bindings))
+  | .arrayPart n is mode a b => .arrayPart n (is.map (substFunction bindings)) mode
+      (substFunction bindings a) (substFunction bindings b)
+  | .functionCall n as => .functionCall n (as.map (substFunction bindings))
+  | .unsupported k t => .unsupported k t
+
+def expandFunctionCallsGo (env : IEnv) : PExpr → PExpr
+  | .functionCall name args =>
+      match env.functions.find? (fun f => f.name == name) with
+      | some f => substFunction (f.formals.zip args |>.map fun (formal, actual) => (formal.name, actual)) f.body
+      | none => .functionCall name args
+  | .unary op a => .unary op (expandFunctionCallsGo env a)
+  | .binary op l r => .binary op (expandFunctionCallsGo env l) (expandFunctionCallsGo env r)
+  | .ternary c t e => .ternary (expandFunctionCallsGo env c) (expandFunctionCallsGo env t)
+      (expandFunctionCallsGo env e)
+  | .concat ps => .concat (ps.map (expandFunctionCallsGo env))
+  | .resize w a => .resize w (expandFunctionCallsGo env a)
+  | .signedResize w a => .signedResize w (expandFunctionCallsGo env a)
+  | .squash2 w a => .squash2 w (expandFunctionCallsGo env a)
+  | .sysCall f a => .sysCall f (expandFunctionCallsGo env a)
+  | .bitSel b i => .bitSel (expandFunctionCallsGo env b) (expandFunctionCallsGo env i)
+  | .partSel b m l => .partSel (expandFunctionCallsGo env b) (expandFunctionCallsGo env m)
+      (expandFunctionCallsGo env l)
+  | .repl n a => .repl (expandFunctionCallsGo env n) (expandFunctionCallsGo env a)
+  | .reduce op a => .reduce op (expandFunctionCallsGo env a)
+  | .cast s a => .cast s (expandFunctionCallsGo env a)
+  | .arrayElem n is => .arrayElem n (is.map (expandFunctionCallsGo env))
+  | .arrayPart n is mode a b => .arrayPart n (is.map (expandFunctionCallsGo env)) mode
+      (expandFunctionCallsGo env a) (expandFunctionCallsGo env b)
+  | e => e
+
+def expandFunctionCalls (env : IEnv) (e : PExpr) : PExpr :=
+  if env.functions.isEmpty then e else expandFunctionCallsGo env e
+
+partial def expandFunctionStmt (env : IEnv) : PStmt → PStmt
+  | .blockingAssign t v => .blockingAssign t (expandFunctionCalls env v)
+  | .nbaAssign t v => .nbaAssign t (expandFunctionCalls env v)
+  | .ifStmt c yes no => .ifStmt (expandFunctionCalls env c)
+      (expandFunctionStmt env yes) (no.map (expandFunctionStmt env))
+  | .block body => .block (body.map (expandFunctionStmt env))
+  | .forLoop i init test step body => .forLoop i (expandFunctionCalls env init)
+      (expandFunctionCalls env test) (expandFunctionCalls env step) (expandFunctionStmt env body)
+  | .blockingAssignL t v => .blockingAssignL t (expandFunctionCalls env v)
+  | .nbaAssignL t v => .nbaAssignL t (expandFunctionCalls env v)
+  | .caseStmt subj items default mode check =>
+      .caseStmt (expandFunctionCalls env subj)
+        (items.map fun (pats, body) => (pats.map (expandFunctionCalls env), expandFunctionStmt env body))
+        (default.map (expandFunctionStmt env)) mode check
+  | .unsupported k t => .unsupported k t
+
+def expandFunctionProcess (env : IEnv) : PProcess → PProcess
+  | .alwaysFF c b => .alwaysFF c (expandFunctionStmt env b)
+  | .alwaysPlain c b => .alwaysPlain c (expandFunctionStmt env b)
+  | .alwaysComb b => .alwaysComb (expandFunctionStmt env b)
+  | .alwaysImplicit b => .alwaysImplicit (expandFunctionStmt env b)
+  | .assign t v => .assign t (expandFunctionCalls env v)
+  | .assignL t v => .assignL t (expandFunctionCalls env v)
+  | .alwaysFFR c r b high => .alwaysFFR c r (expandFunctionStmt env b) high
+  | .initial b => .initial (expandFunctionStmt env b)
+  | .unsupported k t => .unsupported k t
+
 mutual
 /-- Lower a value-position expression to `Expr2` at context width `ctx`.
 Total: failures are loud `Expr2.unsupported` nodes, reached-sensitive. -/
@@ -807,6 +897,9 @@ def instExpr2 (env : IEnv) (elems : List (String × Nat)) (ctx : Option Nat) :
     PExpr → Expr2
   | .lit v => .lit v
   | .ident n => .ident n
+  | .functionCall name _ =>
+      .unsupported "CallExpression:user-function"
+        s!"source-shaped function '{name}' awaits the E function-body evaluator"
   | .int v => intLit2 ctx v
   | .fill b =>
       match ctx with
@@ -1571,7 +1664,7 @@ def PDesign.instantiateE2From (envI : IEnv) (d : PDesign) (args : List Int)
       (d.params.map (fun p => (p.name, p.type?))
         ++ d.localParams.map (fun lp => (lp.name, lp.type?)))
     let env2 := { env2 with pwidths := pws }
-    let env2 := { env2 with dims := dimTable env2 d.decls }
+    let env2 := { env2 with dims := dimTable env2 d.decls, functions := d.functions }
     let decls ← buildDecls env2 d.decls
     let elems ← buildElems env2 d.decls
     let envP := { env2 with widths := decls.map fun dc => (dc.name, dc.width) }
@@ -1686,7 +1779,7 @@ def PDesign.instantiate2From (envI : IEnv) (d : PDesign) (args : List Int)
     let env2 := { env2 with pwidths := pws }
     -- The packed-array geometry, evaluated ONCE in the declaration scope:
     -- no genvar bound during generate expansion reaches a declared range.
-    let env2 := { env2 with dims := dimTable env2 d.decls }
+    let env2 := { env2 with dims := dimTable env2 d.decls, functions := d.functions }
     let decls ← buildDecls env2 d.decls
     let elems ← buildElems env2 d.decls
     let envP := { env2 with widths := decls.map fun dc => (dc.name, dc.width) }
@@ -1706,6 +1799,7 @@ def PDesign.instantiate2 (d : PDesign) (args : List Int) (iterFuel : Nat := 4096
   -- parameter point. The unbounded path is retained only for proofs and the
   -- explicit `int32Agrees` diagnostic.
   d.instantiate2From { int32 := true } args iterFuel
+
 
 /-- **The 32-bit `int` agreement check** at a parameter point: the design
 `instantiate2` builds equals the one built with exact 32-bit `int`

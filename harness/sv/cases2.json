@@ -786,14 +786,13 @@
       "name": "function_inline_e",
       "example": "sem2/symbolic_inline_function",
       "top": "symbolic_inline_function",
-      "refusal": "CallExpression:user-function",
       "signals": ["a", "y", "z"],
       "stimulus": [
         {"a": "0000"},
         {"a": "0101"},
         {"a": "1111"}
       ],
-      "measured": "2026-11-12: Slang marks this source-level automatic function call as an inline expression in the envelope; E refuses the lowered marker until a source-shaped function node is available."
+      "measured": "2026-11-12: source-shaped automatic input-only functions are retained as Function and FunctionCall nodes; E evaluates the return expression with the actual bound to the formal, matching Icarus and Xcelium."
     },
     {
       "name": "hierarchy_instance_e",

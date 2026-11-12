@@ -433,6 +433,7 @@ def memExprReadsArray : PExpr → Bool
   | .partSel a b c | .ternary a b c =>
       memExprReadsArray a || memExprReadsArray b || memExprReadsArray c
   | .concat xs => memExprReadsArrayList xs
+  | .functionCall _ xs => memExprReadsArrayList xs
   | .lit _ | .ident _ | .paramRef .. | .genvarRef _ | .enumRef .. | .int _
   | .fill _ | .unsupported .. => false
 

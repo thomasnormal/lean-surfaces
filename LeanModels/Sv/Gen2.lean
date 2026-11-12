@@ -489,7 +489,13 @@ def PDesign.paramEnv2 (d : PDesign) (args : List Int) : Res IEnv := do
           | .ok w => pure (some (n, w))
           | .error e => Res.unsupported s!"parameter '{n}' type: {e}"
   let env2 := { env2 with pwidths := pws }
-  .ok { env2 with dims := dimTable env2 d.decls }
+  .ok { env2 with dims := dimTable env2 d.decls, functions := d.functions }
+
+def PDesign.instantiateFunctions2 (d : PDesign) (args : List Int)
+    (iterFuel : Nat := 4096) : Res Design2 := do
+  let env ← d.paramEnv2 args
+  let expanded := { d with processes := d.processes.map (expandFunctionProcess env) }
+  expanded.instantiate2 args iterFuel
 
 /-- The process-and-declaration environment: `env` with the declared widths
 of `decls` (what `instantiate2` instantiates processes and generates in). -/

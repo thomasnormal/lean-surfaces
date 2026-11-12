@@ -326,6 +326,8 @@ inductive PExpr where
   /-- `arrayElem`'s path followed by a part select on the NEXT dimension:
   `[a:b]`, `[a +: b]`, `[a -: b]` (`PartMode`). -/
   | arrayPart (name : String) (indices : List PExpr) (mode : PartMode) (a b : PExpr)
+  /-- Source-shaped automatic function call. -/
+  | functionCall (name : String) (args : List PExpr)
   | unsupported (svKind : String) (text : String)
 deriving Repr, BEq, Inhabited
 
@@ -430,6 +432,17 @@ structure PDecl where
   flatBase : Option String := none
   /-- Constant unpacked index of a flattened one-rank cell. -/
   flatIndex : Option Int := none
+deriving Repr, BEq, Inhabited
+
+/-! A narrow source-shaped function declaration.  The first E function rung
+admits automatic input-only functions with one return expression; locals,
+side effects, recursion and non-input formals remain loud at ingestion. -/
+structure PFunction where
+  name : String
+  formals : List PDecl
+  returnType : PType
+  body : PExpr
+  automatic : Bool := true
 deriving Repr, BEq, Inhabited
 
 /-- A literal-file `$readmemh` task retained as module metadata.  The
@@ -655,6 +668,7 @@ structure PDesign where
   packageParams : List (String × PParam) := []
   enums : List PEnumType
   decls : List PDecl
+  functions : List PFunction := []
   processes : List PProcess
   generates : List GenItem
   others : List (String × String) := []
@@ -682,6 +696,7 @@ structure IEnv where
   widths : List (String × Nat) := []
   enums : List (String × Nat) := []
   members : List ((String × String) × LVec) := []
+  functions : List PFunction := []
   /-- Declared widths of TYPED parameters/localparams (semantic tier;
   untyped parameters are 32-bit ints and are absent here). -/
   pwidths : List (String × Nat) := []
@@ -919,7 +934,7 @@ def PExpr.isInt (env : IEnv) : PExpr → Bool
   | .unary (.m0 .neg) a | .unary (.m0 .pos) a | .unary .plus a => a.isInt env
   | .binary op l r => op.intArith && l.isInt env && r.isInt env
   | .ternary _ t e => t.isInt env && e.isInt env
-  | _ => false
+  | .functionCall .. | _ => false
 
 -- The INT-class test computes on syntax (and `vals` lookups): a `simp` that
 -- unfolds `evalInt` decides it by itself.
@@ -938,6 +953,7 @@ def PExpr.mentionsAny (names : List String) : PExpr → Bool
   | .concat ps | .arrayElem _ ps => PExpr.mentionsAnyList names ps
   | .arrayPart _ ps _ a b =>
       PExpr.mentionsAnyList names ps || a.mentionsAny names || b.mentionsAny names
+  | .functionCall _ args => PExpr.mentionsAnyList names args
   | .lit _ | .ident _ | .genvarRef _ | .enumRef .. | .int _ | .fill _
   | .unsupported .. => false
 
@@ -982,7 +998,7 @@ def PExpr.readsSignalConst : PExpr → Bool
       b.readsSignalConst || m.readsSignalConst || l.readsSignalConst
   | .concat ps => PExpr.readsSignalConstList ps
   | .lit _ | .paramRef .. | .genvarRef _ | .enumRef .. | .int _
-  | .fill _ | .unsupported .. => false
+  | .fill _ | .functionCall .. | .unsupported .. => false
 
 def PExpr.readsSignalConstList : List PExpr → Bool
   | [] => false
@@ -1250,6 +1266,7 @@ def ctype (env : IEnv) : PExpr → Except String (Nat × Bool)
       let lv ← evalAt env (← ctype env l) l
       if lv ≤ mv then .ok ((mv - lv).toNat + 1, false) else .error "bad part-select bounds"
   | .ident n => .error s!"signal '{n}' in a constant context"
+  | .functionCall n _ => .error s!"function '{n}' in a constant context"
   | .arrayElem n _ | .arrayPart n .. => .error s!"signal '{n}' in a constant context"
   | .fill _ => .error "unbased-unsized literal in a constant context (no context width)"
   | .concat ps => do
@@ -1448,6 +1465,7 @@ def evalAt (env : IEnv) (ty : Nat × Bool) : PExpr → Except String Int
         .ok (convertConst fw ty.1 ty.2
           (Int.ofNat (((bv.emod ((2 : Int) ^ wb)).toNat >>> lv.toNat) % 2 ^ fw)))
   | .ident n => .error s!"signal '{n}' in a constant context"
+  | .functionCall n _ => .error s!"function '{n}' in a constant context"
   | .arrayElem n _ | .arrayPart n .. => .error s!"signal '{n}' in a constant context"
   | .fill _ => .error "unbased-unsized literal in a constant context (no context width)"
   | .concat ps => do
@@ -1618,6 +1636,7 @@ def evalInt (env : IEnv) : PExpr → Except String Int
       | some n => .ok (n : Int)
       | none => .error "x/z literal in a constant context"
   | .ident n => .error s!"signal '{n}' in a constant context"
+  | .functionCall n _ => .error s!"function '{n}' in a constant context"
   | .paramRef n none =>
       match env.vals.lookup n with
       | some v => .ok v
@@ -2004,6 +2023,7 @@ def selfWidth (env : IEnv) : PExpr → Option Nat
   | .concat parts => selfWidthSum env parts
   | .resize w _ | .signedResize w _ => some w
   | .squash2 w _ => some w
+  | .functionCall .. => none
   -- Semantic-tier nodes: the M0 layer does not know element widths
   -- (`Param2.lean`'s `selfWidth2` does); `none` = unknowable here.
   | .bitSel .. | .partSel .. | .repl .. | .arrayElem .. | .arrayPart .. => none
@@ -2046,6 +2066,7 @@ def divOperandWidth (env : IEnv) : PExpr → Option Nat
   | .reduce .. => some 1
   | .cast _ operand => divOperandWidth env operand
   | .bitSel .. | .partSel .. | .repl .. | .arrayElem .. | .arrayPart ..
+  | .functionCall ..
   | .unsupported .. => none
 
 def divOperandWidthSum (env : IEnv) : List PExpr → Option Nat
@@ -2202,6 +2223,7 @@ def instExpr (env : IEnv) (ctx : Option Nat) : PExpr → Expr
   | .cast .. => .unsupported "T2:Cast" "cast outside the M0 tier"
   | .arrayElem .. | .arrayPart .. =>
       .unsupported "T2:ArraySel" "packed-array select path outside the M0 tier"
+  | .functionCall n _ => .unsupported "CallExpression:user-function" s!"function '{n}' outside the M0 tier"
   | .unsupported k t => .unsupported k t
 
 /-- Concat parts: each part is self-determined (an inner fill with no

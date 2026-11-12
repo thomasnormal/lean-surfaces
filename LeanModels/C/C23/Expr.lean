@@ -631,7 +631,8 @@ def chooseCond : Expr → Option Bool
   | _ => none
 
 /-- The non-short-circuit binary rules, once both operands have values. -/
-def evalArith (ctx : Ctx) (op : String) (lv rv : CVal) (ty : CType) : EvalM CVal :=
+def evalArith (ctx : Ctx) (op : String) (lv rv : CVal) (ty : CType)
+    (elemTy : Option CType := none) : EvalM CVal :=
   match lv, rv with
   -- §6.5.7p8 — pointer + integer, and it is the pointer rule that applies
   -- whenever either operand is one. Measured: 8 `+`, 4 `-`.
@@ -655,7 +656,37 @@ def evalArith (ctx : Ctx) (op : String) (lv rv : CVal) (ty : CType) : EvalM CVal
   -- §6.5.10p7 vs §6.5.9p6 — the asymmetry: `==`/`!=` across unrelated
   -- objects is DEFINED, `<` and friends are UNDEFINED.
   | .ptr a, .ptr b =>
-      if op == "==" || op == "!=" then do
+      if op == "-" then
+        -- C23 §6.5.7p9: subtracting pointers is defined only within one
+        -- array (including its one-past element), and the byte distance must
+        -- be an exact multiple of the element size.  The envelope retains
+        -- the object and array-bound provenance; a missing or mismatched
+        -- bound is refused rather than treated as a fabricated address.
+        match a.obj, b.obj, a.bound, b.bound with
+        | some ao, some bo, some ab, some bb =>
+            if ao != bo || ab != bb then
+              refuseUnsupported "operator '-' on pointers from different arrays"
+            else
+              match elemTy.bind (fun t => (pointeeOf t).bind ctx.layout.size) with
+              | none => refuseUnsupported "operator '-' on pointers with unknown element size"
+              | some esz =>
+                  if esz == 0 then
+                    refuseUnsupported "operator '-' on pointers with zero element size"
+                  else
+                    let d := a.off - b.off
+                    if d % (esz : Int) != 0 then
+                      refuseUnsupported "operator '-' on pointers with non-integral element distance"
+                    else
+                      let q := d / (esz : Int)
+                      match intTyOf? (ctx.layout.normalizeTy ty) with
+                      | none => refuseUnsupported "operator '-' pointer difference has unknown result type"
+                      | some rt =>
+                          if !rt.inRange q then
+                            refuseUnsupported "operator '-' pointer difference is out of range"
+                          else pure (.int rt q)
+        | _, _, _, _ =>
+            refuseUnsupported "operator '-' on pointers without array provenance"
+      else if op == "==" || op == "!=" then do
         let boundary ← readMem (fun m => .ok (Mem.ptrEqBoundary m a b))
         if boundary then
           refuseUnsupported "pointer equality at an unspecified adjacent boundary"
@@ -905,7 +936,7 @@ def evalExpr (ctx : Ctx) : Expr → EvalM CVal
       else do
         let lv ← evalExpr ctx l
         let rv ← evalExpr ctx r
-        evalArith ctx op lv rv ty
+        evalArith ctx op lv rv ty (some l.ty)
 
   -- §6.5.16p4 — `?:`, the third short-circuit: EXACTLY ONE arm runs. 42 sites.
   | .cond c t e _ _ => do
@@ -1586,9 +1617,10 @@ theorem intBinop' (op : String) (t : IntTy) (a b : Int) :
     | exact refuseUB' _
     | exact refuseUnsupported' _
 
-theorem evalArith' (ctx : Ctx) (op : String) (lv rv : CVal) (ty : CType) :
-    MemInvariant (evalArith ctx op lv rv ty) := by
-  cases lv <;> cases rv <;>
+theorem evalArith' (ctx : Ctx) (op : String) (lv rv : CVal) (ty : CType)
+    (elemTy : Option CType := none) :
+    MemInvariant (evalArith ctx op lv rv ty elemTy) := by
+  cases elemTy <;> cases lv <;> cases rv <;>
     first | simp only [evalArith] | rw [evalArith.eq_def]
   repeat (any_goals split)
   all_goals first

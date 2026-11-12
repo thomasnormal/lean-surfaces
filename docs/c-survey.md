@@ -2,10 +2,10 @@
 
 Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manifest.
 
-- verdicts: 802/2214 MATCH (passed 802, failed 0, oracle 0)
+- verdicts: 805/2214 MATCH (passed 805, failed 0, oracle 0)
 - manifest SHA-256: `3250f77d0b3c9cbacd18a3a2bf49763fb98a2d1b8c29552a642ed84d2ef943b4`
-- measured commit: `9e5a4f750b3c7b9e10393682d20ec1a8ab4a8b03`
-- measured at: `2026-11-12T14:05:11Z`
+- measured commit: `66485f27fa86a8877c53929045856c1f53711da1`
+- measured at: `2026-11-12T14:28:51Z`
 
 ## Verdict counts
 
@@ -13,10 +13,10 @@ Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manife
 | --- | ---: |
 | `not-parsed` | 350 |
 | `oracle-tests-compiler` | 1 |
-| `passed` | 802 |
+| `passed` | 805 |
 | `refused-libc` | 45 |
 | `refused-ub` | 40 |
-| `refused-unsupported` | 926 |
+| `refused-unsupported` | 923 |
 | `timeout` | 50 |
 
 ## Counts by corpus
@@ -24,17 +24,17 @@ Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manife
 | corpus | verdict | files |
 | --- | --- | ---: |
 | `c-testsuite/single-exec` | `not-parsed` | 1 |
-| `c-testsuite/single-exec` | `passed` | 151 |
+| `c-testsuite/single-exec` | `passed` | 152 |
 | `c-testsuite/single-exec` | `refused-libc` | 5 |
 | `c-testsuite/single-exec` | `refused-ub` | 3 |
-| `c-testsuite/single-exec` | `refused-unsupported` | 58 |
+| `c-testsuite/single-exec` | `refused-unsupported` | 57 |
 | `c-testsuite/single-exec` | `timeout` | 2 |
 | `gcc.c-torture/execute` | `not-parsed` | 321 |
 | `gcc.c-torture/execute` | `oracle-tests-compiler` | 1 |
-| `gcc.c-torture/execute` | `passed` | 650 |
+| `gcc.c-torture/execute` | `passed` | 652 |
 | `gcc.c-torture/execute` | `refused-libc` | 39 |
 | `gcc.c-torture/execute` | `refused-ub` | 36 |
-| `gcc.c-torture/execute` | `refused-unsupported` | 823 |
+| `gcc.c-torture/execute` | `refused-unsupported` | 821 |
 | `gcc.c-torture/execute` | `timeout` | 48 |
 | `gcc.c23-run` | `not-parsed` | 28 |
 | `gcc.c23-run` | `passed` | 1 |
@@ -115,7 +115,6 @@ The run's first refusal, normalized by construct; `sole` counts rows whose first
 | `unsupported:StmtExpr` | 6 | 6 | 20000703-1.c, 20000917-1.c, 20020206-1.c, 20020320-1.c, 930406-1.c |
 | `unsupported:break, continue or goto escaped a function body` | 6 | 6 | 00010.c, 00199.c, 20030909-1.c, 20040704-1.c, pr119291.c |
 | `unsupported:integer-to-floating conversion (floats` | 6 | 6 | 20020321-1.c, 920710-1.c, 930622-2.c, gofast.c, ieee/compare-fp-3.c |
-| `unsupported:operator '-' on two pointers` | 6 | 6 | 00037.c, 20021015-1.c, 20021204-1.c, 950710-1.c, 980701-1.c |
 | `cast:FloatingToIntegral` | 5 | 5 | 00175.c, 20031003-1.c, 20041113-1.c, pr38048-2.c, pr66233.c |
 | `libc-call: __builtin_malloc` | 5 | 5 | 20071018-1.c, 20071120-1.c, pr36765.c, pr43008.c, pr84339.c |
 | `unsupported:no layout for declared type '_Complex double'` | 5 | 5 | 20030910-1.c, 960512-1.c, complex-1.c, complex-2.c, ieee/cdivchkd.c |
@@ -332,8 +331,11 @@ The run's first refusal, normalized by construct; `sole` counts rows whose first
 | `unsupported:no layout for parameter type 'int *restrict'` | 1 | 1 | pr38212.c |
 | `unsupported:non-object declaration in a block` | 1 | 1 | 00078.c |
 | `unsupported:not an integer type: 'T'` | 1 | 1 | pr84169.c |
+| `unsupported:not an integer type: 'long long *'` | 1 | 1 | pr36038.c |
 | `unsupported:not an integer type: 'unsigned char *'` | 1 | 1 | pr119428.c |
 | `unsupported:not an lvalue: PredefinedExpr` | 1 | 1 | 20001011-1.c |
+| `unsupported:operator '-' on pointers from different arrays` | 1 | 1 | 950710-1.c |
+| `unsupported:operator '-' on pointers without array provenance` | 1 | 1 | 980701-1.c |
 | `unsupported:printf` | 1 | 1 | 00215.c |
 | `unsupported:sizeof: no layout for operand type 'PT[9]'` | 1 | 1 | 00205.c |
 | `unsupported:sizeof: no layout for operand type 'Union'` | 1 | 1 | 20051113-1.c |

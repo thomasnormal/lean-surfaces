@@ -1,0 +1,198 @@
+{
+  "schema_version": "sv-0.2",
+  "language": "systemverilog",
+  "frontend": {
+    "name": "pyslang",
+    "family": "pyslang-11"
+  },
+  "mode": "symbolic",
+  "top": "typed_array_e",
+  "source_files": [
+    {
+      "path": "Examples/system-verilog/sem2/typed_array_e/typed_array_e.sv",
+      "sha256": "87f9fa6112b8f5cb8e14421741d8ae51244f8bd2543180f697a3d50185613886"
+    }
+  ],
+  "packages": [],
+  "design": {
+    "kind": "Design",
+    "modules": [
+      {
+        "kind": "Module",
+        "span": {
+          "line": 1,
+          "col": 1,
+          "end_line": 4,
+          "end_col": 10
+        },
+        "name": "typed_array_e",
+        "imports": [],
+        "params": [],
+        "types": [],
+        "ports": [
+          {
+            "kind": "Port",
+            "span": {
+              "line": 1,
+              "col": 40,
+              "end_line": 1,
+              "end_col": 41
+            },
+            "name": "x",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 1,
+                      "col": 35,
+                      "end_line": 1,
+                      "end_col": 36
+                    },
+                    "value": 7,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 1,
+                      "col": 37,
+                      "end_line": 1,
+                      "end_col": 38
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 8
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 1,
+              "col": 62,
+              "end_line": 1,
+              "end_col": 63
+            },
+            "name": "y",
+            "dir": "out",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 1,
+                      "col": 57,
+                      "end_line": 1,
+                      "end_col": 58
+                    },
+                    "value": 7,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 1,
+                      "col": 59,
+                      "end_line": 1,
+                      "end_col": 60
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 8
+            }
+          }
+        ],
+        "decls": [
+          {
+            "kind": "Unsupported",
+            "span": {
+              "line": 2,
+              "col": 14,
+              "end_line": 2,
+              "end_col": 26
+            },
+            "sv_kind": "NetSymbol:type",
+            "text": "values [0:3]"
+          }
+        ],
+        "processes": [
+          {
+            "kind": "Assign",
+            "span": {
+              "line": 3,
+              "col": 10,
+              "end_line": 3,
+              "end_col": 27
+            },
+            "target": {
+              "kind": "Ident",
+              "span": {
+                "line": 3,
+                "col": 10,
+                "end_line": 3,
+                "end_col": 11
+              },
+              "width": 8,
+              "name": "y"
+            },
+            "value": {
+              "kind": "Binary",
+              "span": {
+                "line": 3,
+                "col": 14,
+                "end_line": 3,
+                "end_col": 27
+              },
+              "width": 8,
+              "op": "^",
+              "left": {
+                "kind": "Ident",
+                "span": {
+                  "line": 3,
+                  "col": 14,
+                  "end_line": 3,
+                  "end_col": 23
+                },
+                "width": 8,
+                "name": "values[0]"
+              },
+              "right": {
+                "kind": "Ident",
+                "span": {
+                  "line": 3,
+                  "col": 26,
+                  "end_line": 3,
+                  "end_col": 27
+                },
+                "width": 8,
+                "name": "x"
+              }
+            }
+          }
+        ],
+        "generates": [],
+        "others": [],
+        "cell_refs": [
+          {
+            "name": "values[0]",
+            "base": "values",
+            "index": 0
+          }
+        ]
+      }
+    ],
+    "others": []
+  },
+  "lean_blocks": []
+}

@@ -73228,5 +73228,14 @@
     "refusal": "ContinuousAssignSymbol:InvalidExpression",
     "measured": "2026-11-12: Slang rejects the undeclared concatenation operand `missing` with ContinuousAssignSymbol:InvalidExpression; no simulator oracle is claimed because the approved frontend rejects the source before simulation."
   }
+  ,{
+    "name": "typed_array_e_boundary",
+    "example": "sem2/typed_array_e",
+    "top": "typed_array_e",
+    "signals": ["x", "y"],
+    "stimulus": [{"x": "00000000"}, {"x": "10100101"}],
+    "refusal": "NetSymbol:type",
+    "measured": "2026-11-12: Slang retains the typed unpacked net declaration as NetSymbol:type; ordinary E refuses the declaration before evaluating the continuous read."
+  }
   ]
 }

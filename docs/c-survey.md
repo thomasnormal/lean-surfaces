@@ -2,10 +2,10 @@
 
 Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manifest.
 
-- verdicts: 625/2214 MATCH (passed 625, failed 0, oracle 0)
+- verdicts: 632/2214 MATCH (passed 632, failed 0, oracle 0)
 - manifest SHA-256: `1de1a60c299d5bb51dae7ca001b0a008010cad0b25670cde2090c08bfc1a84ce`
-- measured commit: `d4d88b49c`
-- measured at: `2026-11-12T06:58:00Z`
+- measured commit: `8538c1ccc`
+- measured at: `2026-11-12T07:10:00Z`
 
 ## Verdict counts
 
@@ -13,10 +13,10 @@ Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manife
 | --- | ---: |
 | `not-ingested` | 25 |
 | `not-parsed` | 350 |
-| `passed` | 625 |
-| `refused-libc` | 130 |
-| `refused-ub` | 33 |
-| `refused-unsupported` | 1005 |
+| `passed` | 632 |
+| `refused-libc` | 131 |
+| `refused-ub` | 34 |
+| `refused-unsupported` | 996 |
 | `timeout` | 46 |
 
 ## Counts by corpus
@@ -32,10 +32,10 @@ Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manife
 | `c-testsuite/single-exec` | `timeout` | 2 |
 | `gcc.c-torture/execute` | `not-ingested` | 19 |
 | `gcc.c-torture/execute` | `not-parsed` | 321 |
-| `gcc.c-torture/execute` | `passed` | 514 |
-| `gcc.c-torture/execute` | `refused-libc` | 120 |
-| `gcc.c-torture/execute` | `refused-ub` | 30 |
-| `gcc.c-torture/execute` | `refused-unsupported` | 870 |
+| `gcc.c-torture/execute` | `passed` | 521 |
+| `gcc.c-torture/execute` | `refused-libc` | 121 |
+| `gcc.c-torture/execute` | `refused-ub` | 31 |
+| `gcc.c-torture/execute` | `refused-unsupported` | 861 |
 | `gcc.c-torture/execute` | `timeout` | 44 |
 | `gcc.c23-run` | `not-ingested` | 1 |
 | `gcc.c23-run` | `not-parsed` | 28 |
@@ -90,7 +90,7 @@ The run's first refusal, normalized by construct; `sole` counts rows whose first
 | wall | sole | present | example files |
 | --- | ---: | ---: | --- |
 | `frontend` | 350 | 350 | 00209.c, 20000112-1.c, 20000227-1.c, 20000314-3.c, 20000412-3.c |
-| `libc-call` | 130 | 130 | 00025.c, 00040.c, 00176.c, 00179.c, 00180.c |
+| `libc-call` | 131 | 131 | 00025.c, 00040.c, 00176.c, 00179.c, 00180.c |
 | `unsupported:no definition for 'main'` | 97 | 97 | 20040705-1.c, 20040705-2.c, 20040709-3.c, builtins/20010124-1.c, builtins/abs-1.c |
 | `unsupported:string literal with escape or non-ASCII spelling` | 56 | 56 | 00056.c, 00125.c, 00131.c, 00132.c, 00154.c |
 | `timeout` | 46 | 46 | 00041.c, 00128.c, 20020108-1.c, 20030916-1.c, 20040313-1.c |
@@ -98,10 +98,10 @@ The run's first refusal, normalized by construct; `sole` counts rows whose first
 | `unsupported:extern object 'inside_main' has no definition in the translation unit` | 38 | 38 | builtins/20010124-1-lib.c, builtins/complex-1-lib.c, builtins/fputs-lib.c, builtins/lib/abs.c, builtins/lib/bfill.c |
 | `unsupported:string literal (inch 4` | 38 | 38 | 00115.c, 00204.c, 00208.c, 00217.c, 20000801-4.c |
 | `unsupported:floating literal (floats are a named decision)` | 36 | 36 | 20020720-1.c, 20080502-1.c, 20080529-1.c, 920501-8.c, 980205.c |
-| `undefined-behavior` | 33 | 33 | 00141.c, 00144.c, 20010409-1.c, 20020129-1.c, 20020508-2.c |
+| `undefined-behavior` | 34 | 34 | 00141.c, 00144.c, 20010409-1.c, 20020129-1.c, 20020508-2.c |
 | `unsupported:no layout for declared type 'double'` | 27 | 27 | 00178.c, 20000731-1.c, 20011217-1.c, 20040831-1.c, 20190901-1.c |
+| `unsequenced-effects` | 26 | 26 | 00121.c, 20001228-1.c, 20051021-1.c, 20060102-1.c, 20060929-1.c |
 | `ingestion` | 25 | 25 | 00046.c, 00050.c, 00078.c, 00198.c, 00216.c |
-| `unsequenced-effects` | 25 | 25 | 00121.c, 20001228-1.c, 20051021-1.c, 20060102-1.c, 20060929-1.c |
 | `unsupported:declaration outside a block` | 24 | 24 | 20230802-1.c, bitops-1.c, bswap-3.c, minmaxcmp-1.c, pr104814.c |
 | `unsupported:pointer used as an integer (no ptr↔int cast in tier)` | 23 | 23 | 00032.c, 00182.c, 20000801-1.c, 20000910-1.c, 20011126-2.c |
 | `unsupported:no layout for declared type 'struct S'` | 20 | 20 | 00087.c, 20081103-1.c, 20100708-1.c, 20171008-1.c, 20230630-1.c |
@@ -134,8 +134,6 @@ The run's first refusal, normalized by construct; `sole` counts rows whose first
 | `unsupported:ExprWithCleanups` | 3 | 3 | 20041124-1.c, 950628-1.c, pr30185.c |
 | `unsupported:function-to-pointer decay (inch 5)` | 3 | 3 | 20041212-1.c, 20101011-1.c, pr42231.c |
 | `unsupported:no layout for declared type 'A'` | 3 | 3 | 20010118-1.c, restrict-1.c, strct-pack-2.c |
-| `unsupported:no layout for declared type 'S'` | 3 | 3 | 00153.c, pr56799.c, pr85582-2.c |
-| `unsupported:no layout for declared type 'T'` | 3 | 3 | 920908-1.c, pr84169.c, pr98474.c |
 | `unsupported:no layout for declared type 'enum bar'` | 3 | 3 | gcc/testsuite/gcc.dg/c23-tag-alias-1.c, gcc/testsuite/gcc.dg/c23-tag-alias-2.c, gcc/testsuite/gcc.dg/c23-tag-alias-3.c |
 | `unsupported:no layout for declared type 'int[n % 1000 + 1]'` | 3 | 3 | 20040811-1.c, pr43220.c, vla-dealloc-1.c |
 | `unsupported:no layout for declared type 'struct foo'` | 3 | 3 | 00140.c, bf-pack-1.c, gcc/testsuite/gcc.dg/c23-tag-alias-7.c |
@@ -148,7 +146,8 @@ The run's first refusal, normalized by construct; `sole` counts rows whose first
 | `unsupported:extern object 'abs_called' has no definition in the translation unit` | 2 | 2 | builtins/abs-1-lib.c, builtins/uabs-1-lib.c |
 | `unsupported:extern object 'x' has no definition in the translation unit` | 2 | 2 | 00094.c, 00110.c |
 | `unsupported:goto skips a block declaration` | 2 | 2 | 00129.c, gcc/testsuite/gcc.dg/c23-labels-1.c |
-| `unsupported:no layout for declared type 'U'` | 2 | 2 | 20180131-1.c, pr85582-3.c |
+| `unsupported:no layout for declared type 'S'` | 2 | 2 | 00153.c, pr56799.c |
+| `unsupported:no layout for declared type 'T'` | 2 | 2 | 920908-1.c, pr98474.c |
 | `unsupported:no layout for declared type '_Complex float'` | 2 | 2 | complex-6.c, pr38969.c |
 | `unsupported:no layout for declared type 'const float'` | 2 | 2 | ieee/20010114-2.c, ieee/20030331-1.c |
 | `unsupported:no layout for declared type 'double[4]'` | 2 | 2 | ieee/acc1.c, ieee/acc2.c |
@@ -165,16 +164,13 @@ The run's first refusal, normalized by construct; `sole` counts rows whose first
 | `unsupported:no layout for declared type 'struct packed_ushort'` | 2 | 2 | 20170401-1.c, pr45070.c |
 | `unsupported:no layout for declared type 'struct1'` | 2 | 2 | pr86659-1.c, pr86659-2.c |
 | `unsupported:no layout for declared type 'v16di'` | 2 | 2 | pr123625-2.c, pr126405-3.c |
-| `unsupported:not an integer type: '__int128'` | 2 | 2 | pr122943.c, pr63302.c |
 | `unsupported:not an integer type: 'struct A'` | 2 | 2 | pr42154.c, pr82388.c |
 | `unsupported:not an integer type: 'struct a'` | 2 | 2 | 20001024-1.c, alias-access-path-1.c |
 | `unsupported:not an integer type: 'struct trio'` | 2 | 2 | 20000717-1.c, 20000717-5.c |
-| `unsupported:not an integer type: 'unsigned __int128'` | 2 | 2 | pr65170.c, pr93213.c |
 | `unsupported:sizeof: no layout for operand type 'float'` | 2 | 2 | ieee/20000320-1.c, pr44468.c |
 | `unsupported:sizeof: no layout for operand type 'struct A'` | 2 | 2 | bitfld-2.c, strlen-7.c |
 | `unsupported:unbound declaration 'id15' (name 'a')` | 2 | 2 | gcc/testsuite/gcc.dg/c23-imaginary-constants-1.c, gcc/testsuite/gcc.dg/c23-imaginary-constants-7.c |
 | `unsupported:unbound declaration 'id15' (name 'dnan')` | 2 | 2 | ieee/fp-cmp-6.c, ieee/fp-cmp-9.c |
-| `unsupported:unbound declaration 'id19' (name 'b')` | 2 | 2 | bitfld-signed1-1.c, pr84748.c |
 | `unsupported:unbound declaration 'id19' (name 's')` | 2 | 2 | 00047.c, pr37882.c |
 | `unsupported:unbound declaration 'id19' (name 'x')` | 2 | 2 | pr32244-1.c, pr34971.c |
 | `unsupported:unbound declaration 'id21' (name 'a')` | 2 | 2 | 00091.c, pr56837.c |
@@ -212,6 +208,7 @@ The run's first refusal, normalized by construct; `sole` counts rows whose first
 | `unsupported:no layout for declared type 'T0 *const'` | 1 | 1 | 991016-1.c |
 | `unsupported:no layout for declared type 'TRIAL'` | 1 | 1 | strct-pack-1.c |
 | `unsupported:no layout for declared type 'Test1'` | 1 | 1 | 990525-2.c |
+| `unsupported:no layout for declared type 'U'` | 1 | 1 | 20180131-1.c |
 | `unsupported:no layout for declared type 'V2SF'` | 1 | 1 | 20050316-2.c |
 | `unsupported:no layout for declared type 'V32'` | 1 | 1 | pr70903.c |
 | `unsupported:no layout for declared type 'V[32]'` | 1 | 1 | ieee/pr72824-2.c |
@@ -291,7 +288,6 @@ The run's first refusal, normalized by construct; `sole` counts rows whose first
 | `unsupported:no layout for declared type 'union at6'` | 1 | 1 | pr23324.c |
 | `unsupported:no layout for declared type 'union tree_node'` | 1 | 1 | 00218.c |
 | `unsupported:no layout for declared type 'union u'` | 1 | 1 | 20000603-1.c |
-| `unsupported:no layout for declared type 'unsigned __int128'` | 1 | 1 | pr54471.c |
 | `unsupported:no layout for declared type 'v4qi'` | 1 | 1 | pr60960.c |
 | `unsupported:no layout for declared type 'v8qi'` | 1 | 1 | simd-6.c |
 | `unsupported:no layout for declared type 'void *volatile'` | 1 | 1 | pr84521.c |
@@ -374,6 +370,7 @@ The run's first refusal, normalized by construct; `sole` counts rows whose first
 | `unsupported:unbound declaration 'id18' (name 's')` | 1 | 1 | 20051104-1.c |
 | `unsupported:unbound declaration 'id18' (name 'x')` | 1 | 1 | pr33382.c |
 | `unsupported:unbound declaration 'id185' (name 'w')` | 1 | 1 | pr47337.c |
+| `unsupported:unbound declaration 'id19' (name 'b')` | 1 | 1 | bitfld-signed1-1.c |
 | `unsupported:unbound declaration 'id19' (name 'f')` | 1 | 1 | signed1bitfield-1.c |
 | `unsupported:unbound declaration 'id197' (name 't')` | 1 | 1 | 20011113-1.c |
 | `unsupported:unbound declaration 'id20' (name 'b')` | 1 | 1 | pr59388.c |
@@ -394,7 +391,6 @@ The run's first refusal, normalized by construct; `sole` counts rows whose first
 | `unsupported:unbound declaration 'id25' (name 'v')` | 1 | 1 | 20050215-1.c |
 | `unsupported:unbound declaration 'id25' (name 'x')` | 1 | 1 | 20030109-1.c |
 | `unsupported:unbound declaration 'id26' (name 'a')` | 1 | 1 | 20020213-1.c |
-| `unsupported:unbound declaration 'id26' (name 'j')` | 1 | 1 | pr117095.c |
 | `unsupported:unbound declaration 'id26' (name 'v')` | 1 | 1 | pr43784.c |
 | `unsupported:unbound declaration 'id27' (name 'a')` | 1 | 1 | 20031215-1.c |
 | `unsupported:unbound declaration 'id27' (name 'd')` | 1 | 1 | 20001121-1.c |

@@ -108,6 +108,12 @@
     "error": "string literal with escape"
   },
   {
+    "id": "int128-value",
+    "source": "int main(void) { __int128 x = ((__int128)1 << 64) + 3; return x > 0 ? 0 : 1; }",
+    "expect": "match",
+    "return_value": 0
+  },
+  {
     "id": "compound-signed-char",
     "source": "int main(void) { signed char s = 127; s += 1; return s; }",
     "expect": "match",

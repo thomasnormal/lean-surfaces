@@ -12,10 +12,10 @@
   "gcc.c-torture/execute": {
    "not-ingested": 19,
    "not-parsed": 321,
-   "passed": 514,
-   "refused-libc": 120,
-   "refused-ub": 30,
-   "refused-unsupported": 870,
+   "passed": 521,
+   "refused-libc": 121,
+   "refused-ub": 31,
+   "refused-unsupported": 861,
    "timeout": 44
   },
   "gcc.c23-run": {
@@ -31,10 +31,10 @@
  "counts": {
   "not-ingested": 25,
   "not-parsed": 350,
-  "passed": 625,
-  "refused-libc": 130,
-  "refused-ub": 33,
-  "refused-unsupported": 1005,
+  "passed": 632,
+  "refused-libc": 131,
+  "refused-ub": 34,
+  "refused-unsupported": 996,
   "timeout": 46
  },
  "dynamic_wall_ranking": [
@@ -510,6 +510,7 @@
     "pr78586.c",
     "pr78622.c",
     "pr79327.c",
+    "pr84169.c",
     "pr84339.c",
     "pr85095.c",
     "pr89434.c",
@@ -528,8 +529,8 @@
     "string-opt-18.c",
     "strlen-5.c"
    ],
-   "present": 130,
-   "sole": 130,
+   "present": 131,
+   "sole": 131,
    "wall": "libc-call"
   },
   {
@@ -964,13 +965,14 @@
     "pr56051.c",
     "pr57124.c",
     "pr58831.c",
+    "pr63302.c",
     "pr7284-1.c",
     "pr79121.c",
     "pr99079.c",
     "ptr-arith-1.c"
    ],
-   "present": 33,
-   "sole": 33,
+   "present": 34,
+   "sole": 34,
    "wall": "undefined-behavior"
   },
   {
@@ -1009,6 +1011,39 @@
   },
   {
    "files": [
+    "00121.c",
+    "20001228-1.c",
+    "20051021-1.c",
+    "20060102-1.c",
+    "20060929-1.c",
+    "20230510-1.c",
+    "930930-2.c",
+    "991202-3.c",
+    "bswap-1.c",
+    "builtin-bitops-1.c",
+    "cvt-1.c",
+    "divconst-2.c",
+    "ieee/pr109386.c",
+    "pr17377.c",
+    "pr20100-1.c",
+    "pr20621-1.c",
+    "pr33142.c",
+    "pr42721.c",
+    "pr44858.c",
+    "pr55137.c",
+    "pr57875.c",
+    "pr58943.c",
+    "pr65215-2.c",
+    "pr68648.c",
+    "pr91635.c",
+    "pr93213.c"
+   ],
+   "present": 26,
+   "sole": 26,
+   "wall": "unsequenced-effects"
+  },
+  {
+   "files": [
     "00046.c",
     "00050.c",
     "00078.c",
@@ -1038,38 +1073,6 @@
    "present": 25,
    "sole": 25,
    "wall": "ingestion"
-  },
-  {
-   "files": [
-    "00121.c",
-    "20001228-1.c",
-    "20051021-1.c",
-    "20060102-1.c",
-    "20060929-1.c",
-    "20230510-1.c",
-    "930930-2.c",
-    "991202-3.c",
-    "bswap-1.c",
-    "builtin-bitops-1.c",
-    "cvt-1.c",
-    "divconst-2.c",
-    "ieee/pr109386.c",
-    "pr17377.c",
-    "pr20100-1.c",
-    "pr20621-1.c",
-    "pr33142.c",
-    "pr42721.c",
-    "pr44858.c",
-    "pr55137.c",
-    "pr57875.c",
-    "pr58943.c",
-    "pr65215-2.c",
-    "pr68648.c",
-    "pr91635.c"
-   ],
-   "present": 25,
-   "sole": 25,
-   "wall": "unsequenced-effects"
   },
   {
    "files": [
@@ -1566,26 +1569,6 @@
   },
   {
    "files": [
-    "00153.c",
-    "pr56799.c",
-    "pr85582-2.c"
-   ],
-   "present": 3,
-   "sole": 3,
-   "wall": "unsupported:no layout for declared type 'S'"
-  },
-  {
-   "files": [
-    "920908-1.c",
-    "pr84169.c",
-    "pr98474.c"
-   ],
-   "present": 3,
-   "sole": 3,
-   "wall": "unsupported:no layout for declared type 'T'"
-  },
-  {
-   "files": [
     "gcc/testsuite/gcc.dg/c23-tag-alias-1.c",
     "gcc/testsuite/gcc.dg/c23-tag-alias-2.c",
     "gcc/testsuite/gcc.dg/c23-tag-alias-3.c"
@@ -1703,12 +1686,21 @@
   },
   {
    "files": [
-    "20180131-1.c",
-    "pr85582-3.c"
+    "00153.c",
+    "pr56799.c"
    ],
    "present": 2,
    "sole": 2,
-   "wall": "unsupported:no layout for declared type 'U'"
+   "wall": "unsupported:no layout for declared type 'S'"
+  },
+  {
+   "files": [
+    "920908-1.c",
+    "pr98474.c"
+   ],
+   "present": 2,
+   "sole": 2,
+   "wall": "unsupported:no layout for declared type 'T'"
   },
   {
    "files": [
@@ -1856,15 +1848,6 @@
   },
   {
    "files": [
-    "pr122943.c",
-    "pr63302.c"
-   ],
-   "present": 2,
-   "sole": 2,
-   "wall": "unsupported:not an integer type: '__int128'"
-  },
-  {
-   "files": [
     "pr42154.c",
     "pr82388.c"
    ],
@@ -1889,15 +1872,6 @@
    "present": 2,
    "sole": 2,
    "wall": "unsupported:not an integer type: 'struct trio'"
-  },
-  {
-   "files": [
-    "pr65170.c",
-    "pr93213.c"
-   ],
-   "present": 2,
-   "sole": 2,
-   "wall": "unsupported:not an integer type: 'unsigned __int128'"
   },
   {
    "files": [
@@ -1934,15 +1908,6 @@
    "present": 2,
    "sole": 2,
    "wall": "unsupported:unbound declaration 'id15' (name 'dnan')"
-  },
-  {
-   "files": [
-    "bitfld-signed1-1.c",
-    "pr84748.c"
-   ],
-   "present": 2,
-   "sole": 2,
-   "wall": "unsupported:unbound declaration 'id19' (name 'b')"
   },
   {
    "files": [
@@ -2248,6 +2213,14 @@
    "present": 1,
    "sole": 1,
    "wall": "unsupported:no layout for declared type 'Test1'"
+  },
+  {
+   "files": [
+    "20180131-1.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "unsupported:no layout for declared type 'U'"
   },
   {
    "files": [
@@ -2880,14 +2853,6 @@
    "present": 1,
    "sole": 1,
    "wall": "unsupported:no layout for declared type 'union u'"
-  },
-  {
-   "files": [
-    "pr54471.c"
-   ],
-   "present": 1,
-   "sole": 1,
-   "wall": "unsupported:no layout for declared type 'unsigned __int128'"
   },
   {
    "files": [
@@ -3547,6 +3512,14 @@
   },
   {
    "files": [
+    "bitfld-signed1-1.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "unsupported:unbound declaration 'id19' (name 'b')"
+  },
+  {
+   "files": [
     "signed1bitfield-1.c"
    ],
    "present": 1,
@@ -3704,14 +3677,6 @@
    "present": 1,
    "sole": 1,
    "wall": "unsupported:unbound declaration 'id26' (name 'a')"
-  },
-  {
-   "files": [
-    "pr117095.c"
-   ],
-   "present": 1,
-   "sole": 1,
-   "wall": "unsupported:unbound declaration 'id26' (name 'j')"
   },
   {
    "files": [
@@ -4163,8 +4128,8 @@
   }
  ],
  "manifest_hash": "1de1a60c299d5bb51dae7ca001b0a008010cad0b25670cde2090c08bfc1a84ce",
- "measured_at_utc": "2026-11-12T06:58:00Z",
- "measured_commit": "d4d88b49c",
+ "measured_at_utc": "2026-11-12T07:10:00Z",
+ "measured_commit": "8538c1ccc",
  "pin": null,
  "rows": [
   {
@@ -21777,15 +21742,15 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "unbound declaration 'id26' (name 'j')",
-   "dynamic_wall": "unsupported:unbound declaration 'id26' (name 'j')",
+   "detail": "",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "pr117095.c",
    "sha256": "d2785321e996f432cf05df8afe8e1d08cf3ea895cc7ccd73a0ccc7600d513ec8",
    "static_walls": [
     "libc-call"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -21946,15 +21911,15 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "not an integer type: '__int128'",
-   "dynamic_wall": "unsupported:not an integer type: '__int128'",
+   "detail": "",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "pr122943.c",
    "sha256": "8ea3ac0eeda989033311c68e415e42ab7171647ea61e65db1386326f40fe146d",
    "static_walls": [
     "libc-call"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -24988,13 +24953,13 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "no layout for declared type 'unsigned __int128'",
-   "dynamic_wall": "unsupported:no layout for declared type 'unsigned __int128'",
+   "detail": "",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "pr54471.c",
    "sha256": "efa3e402e1baff6def4a881c69c3ca8db8867206f10e97e1b098b570559ab14f",
    "static_walls": [],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -25914,15 +25879,15 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "not an integer type: '__int128'",
-   "dynamic_wall": "unsupported:not an integer type: '__int128'",
+   "detail": "LeanModels.C.C23.UB.shiftNegativeOperand (-1)",
+   "dynamic_wall": "undefined-behavior",
    "manifest_status": "parsed",
    "name": "pr63302.c",
    "sha256": "eb8cf4285b292457a770b7170dc8470beaec2c813262d9de0fa19f843736049a",
    "static_walls": [
     "libc-call"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "refused-ub"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -26093,15 +26058,15 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "not an integer type: 'unsigned __int128'",
-   "dynamic_wall": "unsupported:not an integer type: 'unsigned __int128'",
+   "detail": "",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "pr65170.c",
    "sha256": "e53b8ecef0f9ec1c676e3e7bf6b81d54567d73f6f4b8539c009f08000a0150d8",
    "static_walls": [
     "libc-call"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -27496,15 +27461,15 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "no layout for declared type 'T'",
-   "dynamic_wall": "unsupported:no layout for declared type 'T'",
+   "detail": "id28",
+   "dynamic_wall": "libc-call",
    "manifest_status": "parsed",
    "name": "pr84169.c",
    "sha256": "0446c97e3f9728fec5703b18a571142da7920a1f7ae84aca6e14dc7432345f0b",
    "static_walls": [
     "libc-call"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "refused-libc"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -27555,15 +27520,15 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "unbound declaration 'id19' (name 'b')",
-   "dynamic_wall": "unsupported:unbound declaration 'id19' (name 'b')",
+   "detail": "",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "pr84748.c",
    "sha256": "c4c08466fb13a612110da22bdf0dbe4d4b72c349461093de6f757a648f90ddf8",
    "static_walls": [
     "libc-call"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -27646,27 +27611,27 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "no layout for declared type 'S'",
-   "dynamic_wall": "unsupported:no layout for declared type 'S'",
+   "detail": "",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "pr85582-2.c",
    "sha256": "62621a3b67d3ec395ca500d8a3f0521f444d82f0027af542816498a9687fa6a9",
    "static_walls": [
     "libc-call"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "no layout for declared type 'U'",
-   "dynamic_wall": "unsupported:no layout for declared type 'U'",
+   "detail": "",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "pr85582-3.c",
    "sha256": "5f566f4795eba3052f5d36c828ebbbde6e72af377a4e979664998c006a340faa",
    "static_walls": [
     "libc-call"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -28095,8 +28060,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "not an integer type: 'unsigned __int128'",
-   "dynamic_wall": "unsupported:not an integer type: 'unsigned __int128'",
+   "detail": "unsequenced side effects in compound assignment",
+   "dynamic_wall": "unsequenced-effects",
    "manifest_status": "parsed",
    "name": "pr93213.c",
    "sha256": "4217ebc7d4b628787de4cfce560f459f384c20fa55aaad1e1f6e1281febb478c",

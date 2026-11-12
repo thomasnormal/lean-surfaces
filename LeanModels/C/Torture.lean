@@ -123,6 +123,7 @@ def torScalarSize : CType → Option Nat
   | "int" | "unsigned int" | "unsigned" => some 4
   | "long" | "unsigned long" | "long long" | "unsigned long long"
   | "long int" | "unsigned long int" => some 8
+  | "__int128" | "unsigned __int128" => some 16
   | t => if t.endsWith "*" || LeanModels.C.isConstPointerToArray t
          then some 8 else none
 

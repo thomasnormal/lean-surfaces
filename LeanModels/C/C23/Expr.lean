@@ -257,6 +257,8 @@ def intTyOf? (ty : CType) : Option IntTy :=
   | "const unsigned long" => some IntTy.ulong
   | "const uint64_t" => some IntTy.ulong
   | "const uint32_t" => some IntTy.uint
+  | "__int128" => some IntTy.int128_
+  | "unsigned __int128" => some IntTy.uint128
   | _ => none
 
 /-- The integer type of an expression, or a refusal naming the spelling.

@@ -92,6 +92,8 @@ def int_ : IntTy := ⟨true, 32⟩
 def uint : IntTy := ⟨false, 32⟩
 def long_ : IntTy := ⟨true, 64⟩
 def ulong : IntTy := ⟨false, 64⟩
+def int128_ : IntTy := ⟨true, 128⟩
+def uint128 : IntTy := ⟨false, 128⟩
 
 /-- `2 ^ bits`, the modulus. -/
 def modulus (t : IntTy) : Int := (2 : Int) ^ t.bits

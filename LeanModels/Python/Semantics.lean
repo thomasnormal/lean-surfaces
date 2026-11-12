@@ -6168,6 +6168,30 @@ def evalBinOpH (h : Heap) (op : BinOp) (a b : RVal) : Res (Heap × RVal) :=
   if op == .bitAnd && setLikeRefH h a && setLikeRefH h b then
     .unsupported "set intersection iteration order is outside the tier (CPython table construction is not modeled)"
   else if op == .mult then evalBinOpMultH h op a b
+  else if op == .mod then
+    match a, b with
+    | .str fmt, .ref addr =>
+      match Heap.get? h addr with
+      | some (.list _) =>
+          if !fmt.toList.any (· == '%') then .ok (h, .str fmt)
+          else
+            match evalBinOp op a b with
+            | .ok v => .ok (h, v)
+            | .exn e => .exn e
+            | .timeout => .timeout
+            | .unsupported msg => .unsupported msg
+      | _ =>
+          match evalBinOp op a b with
+          | .ok v => .ok (h, v)
+          | .exn e => .exn e
+          | .timeout => .timeout
+          | .unsupported msg => .unsupported msg
+    | _, _ =>
+        match evalBinOp op a b with
+        | .ok v => .ok (h, v)
+        | .exn e => .exn e
+        | .timeout => .timeout
+        | .unsupported msg => .unsupported msg
   else
     match evalBinOp op a b with
     | .ok value => .ok (h, value)

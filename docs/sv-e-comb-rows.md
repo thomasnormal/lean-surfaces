@@ -195,3 +195,7 @@ The four-state conditional-expression row, `wpg_tern_x`, runs from its
 source-shaped envelope and matches Icarus Verilog 13.0 and Xcelium 24.03-s004
 for all 49 cycles.  It is an E-MATCH and does not change the frozen migration
 count.
+
+The context-sized conditional row, `wpg_tern_ctx`, runs from its source-shaped
+envelope and matches Icarus Verilog 13.0 and Xcelium 24.03-s004 for all 12
+cycles.  It is an E-MATCH and does not change the frozen migration count.

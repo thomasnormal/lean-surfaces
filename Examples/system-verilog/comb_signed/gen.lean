@@ -36,6 +36,9 @@ under the width obligation of `sv_equations` (no operand is implicitly widened, 
   the context, `Expr2.resizeSigned`, at every width) and the recognizer reads it against an unsized constant, another
   marked operand, or a signal declared with constant dimensions at least as wide (`scmpSxRd?`); `comb_proof.lean` proves
   each bit as the order of the two's-complement integers;
+* `amt_sel.sv`: part selects of a signed input as the amounts of `<<` and `>>` (a select is unsigned, §11.8.1, and the
+  amount of a shift is unsigned in any case, §11.4.10): the recognizer reads each as the select of the plain signal
+  (`shAmtRd?`), which `instDivOperand2` lowers alike (`iDO_uncast`);
 * `ssel.sv`: bit and part selects of signed inputs, unsigned values (IEEE 1800-2023 §11.8.1): the sign bit, the low bits,
   a bit inside `^`, and `{a[W-1], a[W-1:1]}` (`comb_proof.lean`, for every width `W ≥ 2`). The twin reads each select
   of the plain signal;
@@ -67,6 +70,7 @@ load_design_sv2 signed_decl from "Examples/system-verilog/comb_signed/signed_dec
 load_design_sv2 scmp_mixed from "Examples/system-verilog/comb_signed/scmp_mixed.sv.json"
 load_design_sv2 scmp_sext from "Examples/system-verilog/comb_signed/scmp_sext.sv.json"
 load_design_sv2 scmp_sext_w from "Examples/system-verilog/comb_signed/scmp_sext_w.sv.json"
+load_design_sv2 amt_sel from "Examples/system-verilog/comb_signed/amt_sel.sv.json"
 
 -- The design as written has signed reads: the recognizer refuses them, and summarizes the unsigned twin.
 #guard sadd.pdesign.summary.toOption.isNone
@@ -159,6 +163,14 @@ load_design_sv2 scmp_sext_w from "Examples/system-verilog/comb_signed/scmp_sext_
 #guard (match run2 (scmp_sext_w.sem 4) σ_src 1000 [[("x", .ofNat 4 7)], [("x", .ofNat 4 8)]] with
   | .ok [s1, s2] => (SvState.lookup s1 "y").map LVec.toBinString == some "1" &&
       (SvState.lookup s2 "y").map LVec.toBinString == some "0"
+  | _ => false)
+
+-- Selects of a signed input as shift amounts: the summary reads them (`x[2:0]`, `x[7:5]`); a run with `a = 0xB5`,
+-- `x = 8'b1010_0011`: `y = a << 3`, `z = a >> 5`, as local Icarus 12.0 prints them.
+#guard amt_sel.pdesign.summary.toOption.isSome
+#guard (match run2 amt_sel.sem σ_src 1000 [[("a", .ofNat 8 0xB5), ("x", .ofNat 8 0xA3)]] with
+  | .ok [st] => (SvState.lookup st "y").map LVec.toBinString == some "10101000" &&
+      (SvState.lookup st "z").map LVec.toBinString == some "00000101"
   | _ => false)
 
 -- A run at `W = 4`, `a = -6` (1010), `s = 1`: `y = a >>> 1 = -3` (1101), `z = 1101`, `l = a << 1 = 0100`; and at `s = 5`

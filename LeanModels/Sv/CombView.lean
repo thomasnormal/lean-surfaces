@@ -983,7 +983,7 @@ def leafRefusal : PExpr → String
 /-- The refusal of a select whose base is not an identifier. -/
 def selBaseRefusal (kind : String) : PExpr → String
   | .cast true (.ident n) =>
-      s!"a select of the signed signal `{n}` in a position the tactics do not read through the unsigned twin (they read a select of a signed signal, an unsigned value, IEEE 1800-2023 §11.8.1, where it is an operand of a continuous assign, the actual of a module's input port or the left operand of a shift; an index, a shift amount and an `always_comb` body are outside the fragment)"
+      s!"a select of the signed signal `{n}` in a position the tactics do not read through the unsigned twin (they read a select of a signed signal, an unsigned value, IEEE 1800-2023 §11.8.1, where it is an operand of a continuous assign, the actual of a module's input port or an operand of a shift; an index and an `always_comb` body are outside the fragment)"
   | _ => s!"{kind} select of a non-identifier base"
 
 /-- A read of one access. -/
@@ -1303,10 +1303,14 @@ def shOpdRd? (ds : List DeclT) : PExpr → Except String (List Acc)
 /-- The AMOUNT of a shift (WP-B2 gate 4b): as `shOpdRd?`, or a bare genvar (`a << i` in a generate loop), a constant of
 the instance that reads nothing. `instDivOperand2` lowers it at its own width, 32 bits (`divOperandWidth2 (.genvarRef _)`), to
 the literal of its value. (A genvar under a conversion marker has its own lowering arm, a refusal of a negative value:
-not read.) -/
+not read.) A bit or part select of a signed signal is read as the select of the plain signal: a select is an unsigned
+value (IEEE 1800-2023 §11.8.1), the amount is unsigned anyway (§11.4.10), and `instDivOperand2` lowers the two alike
+(`iDO_uncast`). -/
 def shAmtRd? (ds : List DeclT) : PExpr → Except String (List Acc)
   | .genvarRef _ => .ok []
   | .paramRef _ none => .ok []
+  | .bitSel (.cast true (.ident n)) i => shOpdRd? ds (.bitSel (.ident n) i)
+  | .partSel (.cast true (.ident n)) m l => shOpdRd? ds (.partSel (.ident n) m l)
   | e => shOpdRd? ds e
 
 /-- No constant of the instance and no replication in a right-hand side, in ONE cheap traversal (`noConst_spec`): the

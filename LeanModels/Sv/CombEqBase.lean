@@ -1722,10 +1722,12 @@ theorem shOpd_len {ds : List DeclT} {e : PExpr} {rs : List Acc} (h : shOpdRd? ds
 /-- The amount of a shift: a genvar (a constant, no access) or a shift operand. -/
 theorem shAmt_len {ds : List DeclT} {e : PExpr} {rs : List Acc} (h : shAmtRd? ds e = .ok rs) :
     rs.length = cnt e := by
-  rcases shAmtRd?_cases h with ⟨g, rfl, rfl⟩ | ⟨n, rfl, rfl⟩ | h'
+  rcases shAmtRd?_cases h with ⟨g, rfl, rfl⟩ | ⟨n, rfl, rfl⟩ | h' | ⟨⟨n, ⟨i, rfl⟩ | ⟨m, l, rfl⟩⟩, h'⟩
   · simp [cnt]
   · simp [cnt]
   · exact shOpd_len h'
+  · simpa [cnt, PExpr.uncast] using shOpd_len h'
+  · simpa [cnt, PExpr.uncast] using shOpd_len h'
 
 /-- **The skeleton of a recognized shift**: `Sk.sh` over the mirror `skD` of the left operand's lowering
 (`instDivOperand2`) at the signedness of the operator (`shSign`). -/
@@ -1750,10 +1752,12 @@ theorem shOpd_leaves {ds : List DeclT} {e : PExpr} {rs : List Acc} (h : shOpdRd?
 
 theorem shAmt_leaves {ds : List DeclT} {e : PExpr} {rs : List Acc} (h : shAmtRd? ds e = .ok rs) :
     (skT e rs).leaves = rs := by
-  rcases shAmtRd?_cases h with ⟨g, rfl, rfl⟩ | ⟨n, rfl, rfl⟩ | h'
+  rcases shAmtRd?_cases h with ⟨g, rfl, rfl⟩ | ⟨n, rfl, rfl⟩ | h' | ⟨⟨n, ⟨i, rfl⟩ | ⟨m, l, rfl⟩⟩, h'⟩
   · simp [skT, Sk.leaves]
   · simp [skT, Sk.leaves]
   · exact shOpd_leaves h'
+  · exact shOpd_leaves (e := .bitSel (.ident n) i) h'
+  · exact shOpd_leaves (e := .partSel (.ident n) m l) h'
 
 /-! ### Concatenation operands (WP-B2 gate 3b): the helper lemmas of the parts -/
 
@@ -1947,11 +1951,13 @@ theorem cnt_peel : ∀ p : PExpr, cnt p.peelMk = cnt p
 
 theorem skAmt_eq {ds : List DeclT} {r : PExpr} {rb : List Acc} (h : shAmtRd? ds r = .ok rb) (as : List Acc) :
     skAmt r as = skT r as := by
-  rcases shAmtRd?_cases h with ⟨g, rfl, -⟩ | ⟨n, rfl, -⟩ | h'
+  rcases shAmtRd?_cases h with ⟨g, rfl, -⟩ | ⟨n, rfl, -⟩ | h' | ⟨⟨n, ⟨i, rfl⟩ | ⟨m, l, rfl⟩⟩, -⟩
   · rfl
   · rfl
   · rcases shOpdKind h' with ⟨v, rfl⟩ | ⟨k, rfl⟩ | ⟨n, rfl⟩ | ⟨b, i, rfl⟩ | ⟨n, is, rfl⟩ | ⟨n, is, m, a, b, rfl⟩ |
       ⟨b, m, l, rfl⟩ <;> rfl
+  · rfl
+  · rfl
 
 theorem rdsOfD1?_len {ds : List DeclT} : ∀ (v : PExpr) (rs : List Acc), rdsOfD1? ds v = .ok rs → rs.length = cnt v
   | .lit _, rs, h => by simp [rdsOfD1?] at h; subst h; simp [cnt]

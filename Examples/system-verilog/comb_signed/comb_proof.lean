@@ -30,6 +30,7 @@ order `evalPure2` computes through `LVec.toInt?`.
   wider, narrower and of its width: each bit is the order of the two's-complement integers.
 * `scmp_sext_w_correct`: `y = x >= 0` with `x` of a parameter width `W`, at every `W ≥ 1` in the `int` range (the
   comparison is at `max W 32` bits).
+* `amt_sel_correct`: part selects of a signed input as shift amounts (`amt_sel.sv`): `y = a <<< x[2:0]`, `z = a >>> x[7:5]`.
 -/
 
 open LeanModels.Sv LeanModels.Sv.CombView LeanModels.Sv.CombEq
@@ -398,6 +399,53 @@ theorem scmp_sext_w_correct (W : Nat) (hW : 1 ≤ W) (hR : (W : Int) < 214748364
     simp only [BitVec.sle, BitVec.toInt_signExtend_of_le (Nat.le_max_left W 32), h0] at eq_y_1
     exact lookup_bool known_y_1 eq_y_1
   all_goals (refine inKnown_ofBitVec hX ?_; omega)
+
+/-- The `BitVec` of a zero-extended operand read at its own width. -/
+theorem bv_zext_self {W : Nat} (f : Nat → Bool) : XF.bv W (fun x => XF.zext W f x) = XF.bv W f :=
+  XF.bv_congr_lt (fun k hk => by simp [XF.zext, hk])
+
+/-- A window of a signal holding the port value `z`. -/
+theorem bv_window_of_lookup {N : Nat} {st : SvState} {n : String} {z : BitVec N}
+    (h : SvState.lookup st n = some (LVec.ofBitVec z)) (off len : Nat) (hle : off + len ≤ N) :
+    XF.bv len (fun k => st.boolAt n (off + k)) = z.extractLsb' off len := by
+  apply BitVec.eq_of_getLsbD_eq
+  intro i hi
+  rw [XF.getLsbD_bv hi, BitVec.getLsbD_extractLsb', SvState.boolAt_ofBitVec h (by omega)]
+  simp [hi]
+
+/-- **Selects of a signed input as shift amounts**: `y = a << x[2:0]`, `z = a >> x[7:5]`. -/
+theorem amt_sel_correct :
+    amt_sel.sem ⊨₂ spec2 fun _ tr => ∀ (c : Nat) (st : SvState), tr[c]? = some st →
+      ∀ (v u : BitVec 8), SvState.lookup st "a" = some (LVec.ofBitVec v) →
+        SvState.lookup st "x" = some (LVec.ofBitVec u) →
+        SvState.lookup st "y" = some (LVec.ofBitVec (v <<< (u.extractLsb' 0 3).toNat)) ∧
+        SvState.lookup st "z" = some (LVec.ofBitVec (v >>> (u.extractLsb' 5 3).toNat)) := by
+  obtain ⟨hc, ha⟩ : CombDesign amt_sel.sem ∧ Acyclic amt_sel.sem := by
+    sv_structure (rank := rippleRank (fun _ => 0) (fun _ _ _ => 0))
+  refine Models2.of_comb_pointwise hc (fun st heqs hsh => ?_)
+  intro v u hA hX
+  sv_equations
+  · have e8 : Int.natAbs 7 + 1 = 8 := rfl
+    have e3 : Int.toNat 3 = 3 := rfl
+    have e3' : (7 - 5 + 1 : Int).toNat = 3 := rfl
+    have e5 : Int.toNat 5 = 5 := rfl
+    rw [e8] at eq_y_1 eq_z_1 known_y_1 known_z_1
+    rw [e3] at eq_y_1
+    rw [e3', e5] at eq_z_1
+    have hw0 := bv_window_of_lookup hX 0 3 (by omega)
+    simp only [Nat.zero_add] at hw0
+    refine ⟨?_, ?_⟩
+    · rw [lookup_bv known_y_1 (by omega), XF.bv_congr_lt eq_y_1, XF.bv_shlBits_gen, bv_zext_self, bv_of_lookup hA,
+        hw0]
+    · rw [lookup_bv known_z_1 (by omega), XF.bv_congr_lt eq_z_1, XF.bv_shrBits, bv_of_lookup hA,
+        bv_window_of_lookup hX 5 3 (by omega), BitVec.setWidth_eq]
+  all_goals first
+    | (refine inKnown_ofBitVec hA ?_; omega)
+    | (refine inKnown_ofBitVec hX ?_; omega)
+
+/-- info: 'Examples.«system-verilog».comb_signed.comb_proof.amt_sel_correct' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms amt_sel_correct
 
 /-- info: 'Examples.«system-verilog».comb_signed.comb_proof.signed_decl_correct' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in

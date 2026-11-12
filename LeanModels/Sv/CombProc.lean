@@ -560,7 +560,7 @@ theorem idxFree_shAmt (C : Ctx σ E elems DW DG EW ns) {dw : String → Nat}
     (hdw : ∀ n, (DW n).isSome = true → DW n = some (dw n)) {ds : List DeclT} {e : PExpr} {rs : List Acc}
     (h : shAmtRd? ds e = .ok rs) (hacc : ∀ a ∈ rs, AccOK σ DW DG EW ns a) (s : Bool) (c : Option Nat) :
     (instDivOperand2 E elems s c e).idxFree = true := by
-  rcases shAmtRd?_cases h with ⟨g, rfl, rfl⟩ | ⟨n, rfl, rfl⟩ | h'
+  rcases shAmtRd?_cases h with ⟨g, rfl, rfl⟩ | ⟨n, rfl, rfl⟩ | h' | h'
   · have e1 : instDivOperand2 E elems s c (.genvarRef g) = fitDivOperand2 s c (some 32)
         (instExpr2 E elems (some 32) (.genvarRef g)) := by
       simp [instDivOperand2, divOperandWidth2]
@@ -576,6 +576,9 @@ theorem idxFree_shAmt (C : Ctx σ E elems DW DG EW ns) {dw : String → Nat}
       simp [hc, hv, hn, hs, divOperandWidth2, instExpr2, intLit2_eq, fitDivOperand2,
         Expr2.idxFree] <;> cases s <;> split <;> simp [Expr2.idxFree, *]
   · exact idxFree_shOpd C hdw h' hacc s c
+  · obtain ⟨-, h'⟩ := h'
+    rw [← iDO_uncast]
+    exact idxFree_shOpd C hdw h' hacc s c
 
 /-! ### The left operand of a shift (`rdsOfD?`) through `instDivOperand2`: no `index` node -/
 

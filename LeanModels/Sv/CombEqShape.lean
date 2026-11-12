@@ -1187,7 +1187,7 @@ theorem shAmt_shape (C : Ctx σ E elems DW DG EW ns) {dw : String → Nat}
     shiftAmtWidth2 E elems x = some ((skT x rs).width σ dw) ∧
     instDivOperand2 E elems s c x =
       fitDivOperand2 s c (some ((skT x rs).width σ dw)) ((skT x rs).low σ dw ((skT x rs).width σ dw)) := by
-  rcases shAmtRd?_cases h with ⟨g, rfl, rfl⟩ | ⟨n, rfl, rfl⟩ | h'
+  rcases shAmtRd?_cases h with ⟨g, rfl, rfl⟩ | ⟨n, rfl, rfl⟩ | h' | h'
   · have hb : E.intVal? g = some (σ g) := C.agree g (hg g rfl)
     have e1 : instDivOperand2 E elems s c (.genvarRef g) =
         fitDivOperand2 s c (some 32) (.lit (LVec.ofInt 32 (σ g))) := by
@@ -1214,6 +1214,14 @@ theorem shAmt_shape (C : Ctx σ E elems DW DG EW ns) {dw : String → Nat}
       cases x <;> simp_all [shiftAmtWidth2, shOpdRd?]
     rw [hx]
     exact shOpd_shape C hdw h' hacc s c
+  · -- a select of a signed signal, read as the select of the plain signal
+    obtain ⟨⟨n, hn⟩, h'⟩ := h'
+    obtain ⟨d1, d2⟩ := shOpd_shape C hdw h' hacc s c
+    have hu : skT x.uncast rs = skT x rs := by rcases hn with ⟨i, rfl⟩ | ⟨m, l, rfl⟩ <;> rfl
+    rw [hu] at d1 d2
+    refine ⟨?_, ?_⟩
+    · rcases hn with ⟨i, rfl⟩ | ⟨m, l, rfl⟩ <;> (simp only [shiftAmtWidth2]; rw [← dow_uncast]; exact d1)
+    · rw [← iDO_uncast]; exact d2
 
 /-- **An operand of a signed comparison** (`scmpRd?`: a whole signed signal, a sized literal, an unsized constant): its
 self-width is its skeleton's, and fitted to a context its skeleton meets the width contract at, it is the skeleton lowered

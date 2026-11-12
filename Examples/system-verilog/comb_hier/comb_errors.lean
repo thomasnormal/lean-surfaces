@@ -87,7 +87,7 @@ example : CombDesign signed_port_wide.sem := by
 
 -- A select of a signed signal inside the child: the child is refused.
 /--
-error: sv_structure: this design instantiates modules, and the hierarchy summary (`CombHier.lean`) does not read it: instance `leaf`: module `signed_child_leaf` is outside the supported fragment — site `plain#0`: a select of the signed signal `a` in a position the tactics do not read through the unsigned twin (they read a select of a signed signal, an unsigned value, IEEE 1800-2023 §11.8.1, where it is an operand of a continuous assign, the actual of a module's input port or the left operand of a shift; an index, a shift amount and an `always_comb` body are outside the fragment)
+error: sv_structure: this design instantiates modules, and the hierarchy summary (`CombHier.lean`) does not read it: instance `leaf`: module `signed_child_leaf` is outside the supported fragment — site `plain#0`: a select of the signed signal `a` in a position the tactics do not read through the unsigned twin (they read a select of a signed signal, an unsigned value, IEEE 1800-2023 §11.8.1, where it is an operand of a continuous assign, the actual of a module's input port or an operand of a shift; an index and an `always_comb` body are outside the fragment)
 -/
 #guard_msgs (whitespace := lax) in
 example : CombDesign signed_child.sem := by

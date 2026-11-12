@@ -2386,17 +2386,42 @@ theorem rd_shOpd (C : Ctx σ E elems DW DG EW ns) {ds : List DeclT} {e : PExpr} 
   · simp [instExpr2, RdOK, Expr2.unsupportedFree, Expr2.reads, Expr2.idents]
   · exact inst_leaf C hl (hacc a (by simp)) _
 
-/-- The amount of a shift is a bare genvar (a constant of the instance) or a shift operand. -/
+/-- The amount of a shift is a bare genvar (a constant of the instance), a shift operand, or a select of a signed signal
+read as the select of the plain signal (`PExpr.uncast`). -/
 theorem shAmtRd?_cases {ds : List DeclT} {e : PExpr} {rs : List Acc} (h : shAmtRd? ds e = .ok rs) :
     (∃ g, e = .genvarRef g ∧ rs = []) ∨
-    (∃ n, e = .paramRef n none ∧ rs = []) ∨ shOpdRd? ds e = .ok rs := by
+    (∃ n, e = .paramRef n none ∧ rs = []) ∨ shOpdRd? ds e = .ok rs ∨
+    ((∃ n, (∃ i, e = .bitSel (.cast true (.ident n)) i) ∨ (∃ m l, e = .partSel (.cast true (.ident n)) m l)) ∧
+      shOpdRd? ds e.uncast = .ok rs) := by
   cases e with
   | genvarRef g => left; exact ⟨g, rfl, by simpa [shAmtRd?] using h.symm⟩
   | paramRef n pkg =>
       cases pkg with
       | none => right; left; exact ⟨n, rfl, by simpa [shAmtRd?] using h⟩
-      | some p => right; right; simpa [shAmtRd?] using h
-  | _ => right; right; simpa [shAmtRd?] using h
+      | some p => right; right; left; simpa [shAmtRd?] using h
+  | bitSel b i =>
+      cases b with
+      | cast s x =>
+          cases s with
+          | true =>
+              cases x with
+              | ident n =>
+                  exact Or.inr (Or.inr (Or.inr ⟨⟨n, Or.inl ⟨i, rfl⟩⟩, by simpa [shAmtRd?, PExpr.uncast] using h⟩))
+              | _ => right; right; left; simpa [shAmtRd?] using h
+          | false => right; right; left; simpa [shAmtRd?] using h
+      | _ => right; right; left; simpa [shAmtRd?] using h
+  | partSel b m l =>
+      cases b with
+      | cast s x =>
+          cases s with
+          | true =>
+              cases x with
+              | ident n =>
+                  exact Or.inr (Or.inr (Or.inr ⟨⟨n, Or.inr ⟨m, l, rfl⟩⟩, by simpa [shAmtRd?, PExpr.uncast] using h⟩))
+              | _ => right; right; left; simpa [shAmtRd?] using h
+          | false => right; right; left; simpa [shAmtRd?] using h
+      | _ => right; right; left; simpa [shAmtRd?] using h
+  | _ => right; right; left; simpa [shAmtRd?] using h
 
 theorem cnames_binary_l {op : SymBinOp} {l r : PExpr} {n : String} (h : n ∈ l.cnames) :
     n ∈ (PExpr.binary op l r).cnames := by simp [PExpr.cnames, h]
@@ -2602,39 +2627,6 @@ theorem inst_partsW (C : Ctx σ E elems DW DG EW ns) {ds : List DeclT} :
           rw [instParts2_cons]
           exact RdOK.concat_cons h1 h2
 
-/-- **The reads of the amount of a shift**, at any context: as `rd_shOpd`, or a genvar bound in the instance (a literal of
-its value at the amount's own width). -/
-theorem rd_shAmt (C : Ctx σ E elems DW DG EW ns) {ds : List DeclT} {e : PExpr} {rs : List Acc}
-    (h : shAmtRd? ds e = .ok rs) (hacc : ∀ a ∈ rs, AccOK σ DW DG EW ns a)
-    (hg : ∀ g, e = .genvarRef g → g ∈ ns)
-    (hp : ∀ n, e = .paramRef n none → n ∈ ns) (c : Option Nat) :
-    RdOK σ rs (instDivOperand2 E elems false c e) := by
-  rcases shAmtRd?_cases h with ⟨g, rfl, rfl⟩ | ⟨n, rfl, rfl⟩ | h'
-  · have hb : E.intVal? g = some (σ g) := C.agree g (hg g rfl)
-    have e1 : instDivOperand2 E elems false c (.genvarRef g) =
-        fitDivOperand2 false c (some 32) (instExpr2 E elems (some 32) (.genvarRef g)) := by
-      simp [instDivOperand2, instExpr2, hb, divOperandWidth2] <;> first | done | rfl
-    rw [e1]
-    refine RdOK.fitDiv ?_ false _ _
-    cases hx : E.vals.lookup g <;>
-      cases hn : E.nvals.lookup g <;>
-      simp [instExpr2, intLit2_eq, IEnv.intVal?, hx, hn, RdOK, Expr2.unsupportedFree, Expr2.reads, Expr2.idents] at hb ⊢ <;>
-      split at hb <;> simp_all [instExpr2, intLit2_eq, RdOK, Expr2.unsupportedFree, Expr2.reads, Expr2.idents]
-  · have hb : E.intVal? n = some (σ n) := C.agree n (hp n rfl)
-    have e1 : instDivOperand2 E elems false c (.paramRef n none) =
-        fitDivOperand2 false c (some 32) (instExpr2 E elems (some 32) (.paramRef n none)) := by
-      rcases IEnv.intVal?_cases hb with hv | ⟨w, s, hn, rfl, rfl⟩
-      · simp [instDivOperand2, instExpr2, IEnv.intVal?, hv]
-      · cases hx : E.vals.lookup n <;> simp [instDivOperand2, instExpr2, IEnv.intVal?, hx, hn]
-    rw [e1]
-    refine RdOK.fitDiv ?_ false _ _
-    cases hx : E.vals.lookup n <;>
-      cases hn' : E.nvals.lookup n <;>
-      by_cases hs : n ∈ E.stale <;>
-      simp [instExpr2, intLit2_eq, IEnv.intVal?, hx, hn', hs, RdOK, Expr2.unsupportedFree, Expr2.reads, Expr2.idents] at hb ⊢ <;>
-      split at hb <;> simp_all [instExpr2, intLit2_eq, RdOK, Expr2.unsupportedFree, Expr2.reads, Expr2.idents]
-  · exact rd_shOpd C h' hacc false c
-
 /-- A leaf the recognizer reads is a shift operand too. -/
 theorem shOpdRd?_of_rdsLeaf {ds : List DeclT} {e : PExpr} {rs : List Acc} (h : rdsLeaf? ds e = .ok rs) :
     shOpdRd? ds e = .ok rs := by
@@ -2739,6 +2731,42 @@ theorem iDO_uncast (s : Bool) (c : Option Nat) (e : PExpr) :
             simp only [PExpr.uncast, instDivOperand2, divOperandWidth2, elemOf, instExpr2_partSel_castU]
       | _ => rfl
   | _ => rfl
+
+/-- **The reads of the amount of a shift**, at any context: as `rd_shOpd`, or a genvar bound in the instance (a literal of
+its value at the amount's own width). -/
+theorem rd_shAmt (C : Ctx σ E elems DW DG EW ns) {ds : List DeclT} {e : PExpr} {rs : List Acc}
+    (h : shAmtRd? ds e = .ok rs) (hacc : ∀ a ∈ rs, AccOK σ DW DG EW ns a)
+    (hg : ∀ g, e = .genvarRef g → g ∈ ns)
+    (hp : ∀ n, e = .paramRef n none → n ∈ ns) (c : Option Nat) :
+    RdOK σ rs (instDivOperand2 E elems false c e) := by
+  rcases shAmtRd?_cases h with ⟨g, rfl, rfl⟩ | ⟨n, rfl, rfl⟩ | h' | h'
+  · have hb : E.intVal? g = some (σ g) := C.agree g (hg g rfl)
+    have e1 : instDivOperand2 E elems false c (.genvarRef g) =
+        fitDivOperand2 false c (some 32) (instExpr2 E elems (some 32) (.genvarRef g)) := by
+      simp [instDivOperand2, instExpr2, hb, divOperandWidth2] <;> first | done | rfl
+    rw [e1]
+    refine RdOK.fitDiv ?_ false _ _
+    cases hx : E.vals.lookup g <;>
+      cases hn : E.nvals.lookup g <;>
+      simp [instExpr2, intLit2_eq, IEnv.intVal?, hx, hn, RdOK, Expr2.unsupportedFree, Expr2.reads, Expr2.idents] at hb ⊢ <;>
+      split at hb <;> simp_all [instExpr2, intLit2_eq, RdOK, Expr2.unsupportedFree, Expr2.reads, Expr2.idents]
+  · have hb : E.intVal? n = some (σ n) := C.agree n (hp n rfl)
+    have e1 : instDivOperand2 E elems false c (.paramRef n none) =
+        fitDivOperand2 false c (some 32) (instExpr2 E elems (some 32) (.paramRef n none)) := by
+      rcases IEnv.intVal?_cases hb with hv | ⟨w, s, hn, rfl, rfl⟩
+      · simp [instDivOperand2, instExpr2, IEnv.intVal?, hv]
+      · cases hx : E.vals.lookup n <;> simp [instDivOperand2, instExpr2, IEnv.intVal?, hx, hn]
+    rw [e1]
+    refine RdOK.fitDiv ?_ false _ _
+    cases hx : E.vals.lookup n <;>
+      cases hn' : E.nvals.lookup n <;>
+      by_cases hs : n ∈ E.stale <;>
+      simp [instExpr2, intLit2_eq, IEnv.intVal?, hx, hn', hs, RdOK, Expr2.unsupportedFree, Expr2.reads, Expr2.idents] at hb ⊢ <;>
+      split at hb <;> simp_all [instExpr2, intLit2_eq, RdOK, Expr2.unsupportedFree, Expr2.reads, Expr2.idents]
+  · exact rd_shOpd C h' hacc false c
+  · obtain ⟨-, h'⟩ := h'
+    rw [← iDO_uncast]
+    exact rd_shOpd C h' hacc false c
 
 theorem dow_peel : ∀ p : PExpr, divOperandWidth2 E elems p.peelMk = divOperandWidth2 E elems p
   | .resize _ e => by simp only [PExpr.peelMk, divOperandWidth2]; exact dow_peel e

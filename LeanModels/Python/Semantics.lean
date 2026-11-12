@@ -12217,9 +12217,12 @@ def proofCellGeneratorUnsafe (m : Module) (fname : String) : Bool :=
             | _ => false)
           !(initialized && !reboundAfter && f.body.toList.any (proofCellDrainStmt g.name))
 
+def publicThawArgs (m : Module) (h : Heap) (args : Array Val) : Heap × Array RVal :=
+  if m.heapFree then (h, RVal.thawArgs args) else RVal.thawArgsH h args
+
 def callFunction (m : Module) (fname : String) (args : Array Val) (fuel : Nat) : Res Val :=
   let w0 := initWorld m
-  let (h0, rargs) := RVal.thawArgsH w0.heap args
+  let (h0, rargs) := publicThawArgs m w0.heap args
   Run.toPublic fuel
     (callIn m fuel { w0 with heap := h0 } fname rargs)
 
@@ -12239,7 +12242,7 @@ for `"clock"`-carrying rows. `callFunction m f args fuel` IS
 def callFunctionClock (m : Module) (fname : String) (args : Array Val)
     (clock : List Int) (fuel : Nat) : Res Val :=
   let w0 := { initWorld m with clock := clock }
-  let (h0, rargs) := RVal.thawArgsH w0.heap args
+  let (h0, rargs) := publicThawArgs m w0.heap args
   Run.toPublic fuel
     (callIn m fuel { w0 with heap := h0 } fname rargs)
 

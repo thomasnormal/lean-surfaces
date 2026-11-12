@@ -267,6 +267,7 @@ theorem CallsTo.callsIn_frame {m : Module} {fname : String}
       (initWorld m) (RVal.thaw v) := by
   obtain ⟨fuel, hf⟩ := h
   unfold callFunction at hf
+  simp only [publicThawArgs, hm, ↓reduceIte] at hf
   revert hf
   cases hc : callIn m fuel (initWorld m) fname (RVal.thawArgs args) with
   | ok w' rv =>

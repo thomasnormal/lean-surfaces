@@ -2576,8 +2576,8 @@ theorem callFunction_mono {m : Module} {fname : String} {args : Array Val}
     ∀ fuel' ≥ fuel, callFunction m fname args fuel' = r := by
   intro fuel' hf
   simp only [callFunction] at h ⊢
-  let h0 := (RVal.thawArgsH (initWorld m).heap args).fst
-  let rargs := (RVal.thawArgsH (initWorld m).heap args).snd
+  let h0 := (publicThawArgs m (initWorld m).heap args).fst
+  let rargs := (publicThawArgs m (initWorld m).heap args).snd
   let w0 : World := { initWorld m with heap := h0 }
   have h' : Run.toPublic fuel (callIn m fuel w0 fname rargs) = r := by
     exact h

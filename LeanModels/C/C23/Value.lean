@@ -182,6 +182,9 @@ inductive UB where
   /-- **`J.2(49)`**, §6.5.8p4: `<<` whose result is not representable in
   the promoted signed type. -/
   | shiftOverflow (v : Int) (count : Int) (ty : IntTy)
+  /-- C23 §7.16.1.1p2: incompatible type supplied to `va_arg`; the
+  normative clause does not have a separate numbered J.2 entry. -/
+  | vaArgTypeMismatch (requested actual : String)
 deriving Repr, Inhabited, BEq
 
 /-- The result of a value-level operation: an answer, or a loud refusal

@@ -651,16 +651,18 @@ def isPtrIntType (ty : CType) : Bool :=
 
 def checkVaType (ctx : Ctx) (ty : CType) (v : CVal) : EvalM CVal :=
   match v with
-  | .int _ _ =>
-      -- The envelope's `CType` may be a typedef spelling (for example `L`);
-      -- the frontend has already applied default argument promotions and the
-      -- cursor stores that resolved value.  Integer compatibility is therefore
-      -- accepted only within the parser's integer class; no ABI width is used.
+  | .int actual _ =>
       match intTyOf? (ctx.layout.normalizeTy ty) with
-      | some _ => pure v
+      | some expected =>
+          if expected == actual then pure v
+          else refuseValue (.vaArgTypeMismatch ty s!"{actual.signed}:{actual.bits}")
       | none => refuseUnsupported s!"va_arg requested unsupported type '{ty}'"
-  | .ptr _ | .float32 _ | .float64 _ =>
-      refuseUnsupported s!"va_arg compatibility for non-integer type '{ty}' is not in the ABI-independent slice"
+  | .ptr _ => if isPtrType ty then pure v
+             else refuseValue (.vaArgTypeMismatch ty "pointer")
+  | .float32 _ => if ty == "float" then pure v
+                 else refuseValue (.vaArgTypeMismatch ty "binary32")
+  | .float64 _ => if ty == "double" then pure v
+                 else refuseValue (.vaArgTypeMismatch ty "binary64")
   | .aggregate _ _ | .undef | .ptrInt _ =>
       refuseUnsupported s!"va_arg requested unsupported value type '{ty}'"
 

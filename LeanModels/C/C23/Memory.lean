@@ -857,13 +857,15 @@ def cause : Refusal → Cause
 /-- The Annex J.2 index, where the refusal is UB and the annex has one. -/
 def j2 : Refusal → Option String
   | .memUB f => f.j2
-  | .valueUB u => some (match u with
-      | .signedOverflow .. => "J.2(35)"
-      | .divideByZero _ => "J.2(41)"
-      | .divideOverflow => "J.2(35)"
-      | .floatingToIntegralOutOfRange _ => "J.2(16)"
-      | .shiftCountTooLarge .. | .shiftCountNegative _ => "J.2(48)"
-      | .shiftNegativeOperand _ | .shiftOverflow .. => "J.2(49)")
+  | .valueUB u =>
+      match u with
+      | .signedOverflow .. => some "J.2(35)"
+      | .divideByZero _ => some "J.2(41)"
+      | .divideOverflow => some "J.2(35)"
+      | .floatingToIntegralOutOfRange _ => some "J.2(16)"
+      | .shiftCountTooLarge .. | .shiftCountNegative _ => some "J.2(48)"
+      | .shiftNegativeOperand _ | .shiftOverflow .. => some "J.2(49)"
+      | .vaArgTypeMismatch .. => none
   | .libc _ => none
 
 end Refusal

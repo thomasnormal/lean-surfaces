@@ -896,6 +896,28 @@ def callFn : Nat → Program → LeanModels.C.FunctionDefn → List CVal → Exe
                   pure (.ptr dp)
               | none => refuseUnsupported "__builtin_strcpy: non-concrete or unterminated string"
           | _ => refuseUnsupported "__builtin_strcpy: wrong argument count"
+        let runStrcat : List CVal → ExecM CVal := fun vs =>
+          match vs with
+          | [dst, src] => do
+              let dp ← asPtr dst
+              let sp ← asPtr src
+              let m ← get
+              let (_, target, targetOff) ← liftEval (m.resolve dp 0)
+              let (_, source, sourceOff) ← liftEval (m.resolve sp 0)
+              let rec takeStringConcat : List CByte → Option (List CByte)
+                | [] => none
+                | .conc x :: rest =>
+                    if x == 0 then some []
+                    else (takeStringConcat rest).map (fun tail => CByte.conc x :: tail)
+                | _ => none
+              match takeStringConcat (target.bytes.drop targetOff),
+                    takeStringConcat (source.bytes.drop sourceOff) with
+              | some left, some right =>
+                  liftEval (writeMem (fun mem =>
+                    mem.storeBytes dp (left ++ right ++ [CByte.conc 0])))
+                  pure (.ptr dp)
+              | _, _ => refuseUnsupported "strcat: non-concrete or unterminated string"
+          | _ => refuseUnsupported "strcat: wrong argument count"
         let runBuiltinExpect : List CVal → ExecM CVal := fun vs =>
           match vs with
           | [value, _] => pure value
@@ -1114,6 +1136,8 @@ def callFn : Nat → Program → LeanModels.C.FunctionDefn → List CVal → Exe
                 runBuiltinStrcpy vs
               else if nm == "strncpy" || nm == "__builtin_strncpy" then
                 runStrncpy vs
+              else if nm == "strcat" || nm == "__builtin_strcat" then
+                runStrcat vs
               else if nm == "strlen" then
                 runStrlen vs
               else if nm == "__builtin_bswap16" then
@@ -1163,6 +1187,7 @@ def callFn : Nat → Program → LeanModels.C.FunctionDefn → List CVal → Exe
               else if nm == "__builtin_sprintf" || nm == "sprintf" then runSprintf vs
               else if nm == "__builtin_strcpy" || nm == "strcpy" then runBuiltinStrcpy vs
               else if nm == "strncpy" || nm == "__builtin_strncpy" then runStrncpy vs
+              else if nm == "strcat" || nm == "__builtin_strcat" then runStrcat vs
               else if nm == "strlen" then runStrlen vs
               else if nm == "printf" || nm == "__builtin_printf" then runPrintf vs
               else if nm == "memset" || nm == "__builtin_memset" then runMemset vs

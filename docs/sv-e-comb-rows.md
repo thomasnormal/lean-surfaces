@@ -247,3 +247,9 @@ source-shaped envelope and matches Xcelium 24.03-s004 for all 3 cycles.  The
 corpus is Xcelium-only for this syntax, so no Icarus result is claimed.  This
 is an E-MATCH against the available pinned oracle and does not change the
 frozen migration count.
+
+The streaming assignment into a packed struct, `streaming_leading_bits`, is
+outside the current E static-window profile and is refused with
+`10.4.1: blocking assignment target is not a static in-range window`.  Its
+legacy source-shaped receipt matches Xcelium 24.03-s004 for all 3 cycles; no E
+verdict or Icarus result is claimed.

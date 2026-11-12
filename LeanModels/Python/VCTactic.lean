@@ -1701,6 +1701,9 @@ def closeRun (ctx : VCCtx) (tags : PostTags) (g : MVarId) (Q r prf : Lean.Expr) 
 def closeRfl (g : MVarId) : MetaM Unit := do
   g.withContext do
     let t ← instantiateMVars (← g.getType)
+    let t ← if t.getAppFn.isConstOf ``autoParam then
+      pure (t.getArg! 0)
+    else pure t
     let some (_, lhs, _) := t.eq?
       | throwError "py_vcgen: expected an equation side goal:{indentExpr t}"
     let closed ← try

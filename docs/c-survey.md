@@ -2,10 +2,10 @@
 
 Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manifest.
 
-- verdicts: 697/2214 MATCH (passed 697, failed 0, oracle 0)
+- verdicts: 700/2214 MATCH (passed 700, failed 0, oracle 0)
 - manifest SHA-256: `1de1a60c299d5bb51dae7ca001b0a008010cad0b25670cde2090c08bfc1a84ce`
-- measured commit: `1f31707b9`
-- measured at: `2026-11-12T09:14:25Z`
+- measured commit: `d33c23c40`
+- measured at: `2026-11-12T09:18:40Z`
 
 ## Verdict counts
 
@@ -13,8 +13,8 @@ Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manife
 | --- | ---: |
 | `not-ingested` | 25 |
 | `not-parsed` | 350 |
-| `passed` | 697 |
-| `refused-libc` | 92 |
+| `passed` | 700 |
+| `refused-libc` | 89 |
 | `refused-ub` | 36 |
 | `refused-unsupported` | 966 |
 | `timeout` | 48 |
@@ -32,8 +32,8 @@ Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manife
 | `c-testsuite/single-exec` | `timeout` | 2 |
 | `gcc.c-torture/execute` | `not-ingested` | 19 |
 | `gcc.c-torture/execute` | `not-parsed` | 321 |
-| `gcc.c-torture/execute` | `passed` | 586 |
-| `gcc.c-torture/execute` | `refused-libc` | 83 |
+| `gcc.c-torture/execute` | `passed` | 589 |
+| `gcc.c-torture/execute` | `refused-libc` | 80 |
 | `gcc.c-torture/execute` | `refused-ub` | 33 |
 | `gcc.c-torture/execute` | `refused-unsupported` | 830 |
 | `gcc.c-torture/execute` | `timeout` | 46 |
@@ -134,7 +134,6 @@ The run's first refusal, normalized by construct; `sole` counts rows whose first
 | `cast:FloatingToIntegral` | 3 | 3 | 20031003-1.c, pr38048-2.c, pr66233.c |
 | `libc-call: __builtin_abort` | 3 | 3 | gcc/testsuite/gcc.dg/c23-nullptr-5.c, pr77767.c, pr97325.c |
 | `libc-call: __builtin_expect` | 3 | 3 | 00214.c, 20020418-1.c, pr115277.c |
-| `libc-call: __builtin_memcmp` | 3 | 3 | pr57130.c, pr59229.c, pr77718.c |
 | `libc-call: __builtin_sprintf` | 3 | 3 | 20021120-3.c, pr78586.c, pr79327.c |
 | `libc-call: __builtin_strcmp` | 3 | 3 | 921006-1.c, 930725-1.c, pr60062.c |
 | `libc-call: exit (an argument is not a literal 0 — which exit was reached is unknown)` | 3 | 3 | 970214-1.c, 970214-2.c, 970217-1.c |

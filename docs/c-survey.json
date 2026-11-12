@@ -12,8 +12,8 @@
   "gcc.c-torture/execute": {
    "not-ingested": 19,
    "not-parsed": 321,
-   "passed": 586,
-   "refused-libc": 83,
+   "passed": 589,
+   "refused-libc": 80,
    "refused-ub": 33,
    "refused-unsupported": 830,
    "timeout": 46
@@ -31,8 +31,8 @@
  "counts": {
   "not-ingested": 25,
   "not-parsed": 350,
-  "passed": 697,
-  "refused-libc": 92,
+  "passed": 700,
+  "refused-libc": 89,
   "refused-ub": 36,
   "refused-unsupported": 966,
   "timeout": 48
@@ -1450,16 +1450,6 @@
    "present": 3,
    "sole": 3,
    "wall": "libc-call: __builtin_expect"
-  },
-  {
-   "files": [
-    "pr57130.c",
-    "pr59229.c",
-    "pr77718.c"
-   ],
-   "present": 3,
-   "sole": 3,
-   "wall": "libc-call: __builtin_memcmp"
   },
   {
    "files": [
@@ -4280,8 +4270,8 @@
   }
  ],
  "manifest_hash": "1de1a60c299d5bb51dae7ca001b0a008010cad0b25670cde2090c08bfc1a84ce",
- "measured_at_utc": "2026-11-12T09:14:25Z",
- "measured_commit": "1f31707b9",
+ "measured_at_utc": "2026-11-12T09:18:40Z",
+ "measured_commit": "d33c23c40",
  "pin": null,
  "rows": [
   {
@@ -25286,8 +25276,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "__builtin_memcmp",
-   "dynamic_wall": "libc-call: __builtin_memcmp",
+   "detail": "",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "pr57130.c",
    "sha256": "02486b8b9bdd58a0f840d1f8b727c325d16d92032a31cda078d222f833cc510c",
@@ -25295,7 +25285,7 @@
     "libc-call",
     "type-layout"
    ],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -25734,8 +25724,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "__builtin_memcmp",
-   "dynamic_wall": "libc-call: __builtin_memcmp",
+   "detail": "",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "pr59229.c",
    "sha256": "baa810f41ea53ccf4d1374734d2f1ec51b9b7dcecebe7483845bf763e4ce953d",
@@ -25744,7 +25734,7 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -27036,8 +27026,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "__builtin_memcmp",
-   "dynamic_wall": "libc-call: __builtin_memcmp",
+   "detail": "",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "pr77718.c",
    "sha256": "382853d1420d8e80bda3d226a5614e1c3ee95c181daeae2816bea2a0634335d0",
@@ -27046,7 +27036,7 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",

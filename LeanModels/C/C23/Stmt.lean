@@ -746,6 +746,27 @@ def callFn : Nat → Program → LeanModels.C.FunctionDefn → List CVal → Exe
                 liftEval (writeMem (fun m => m.storeBytes dp bs))
                 pure (.ptr dp)
           | _ => refuseUnsupported "memcpy: wrong argument count"
+        let runMemcmp : List CVal → ExecM CVal := fun vs =>
+          match vs with
+          | [left, right, count] => do
+              let lp ← asPtr left
+              let rp ← asPtr right
+              let (_, n) ← asInt count
+              if n < 0 then refuseUnsupported "memcmp: negative size"
+              else do
+                let a ← liftEval (readMem (fun m => m.loadBytes lp n.toNat))
+                let b ← liftEval (readMem (fun m => m.loadBytes rp n.toNat))
+                let rec cmp : List CByte → List CByte → Option Int
+                  | [], [] => some 0
+                  | .conc x :: xs, .conc y :: ys =>
+                      if x < y then some (-1)
+                      else if x > y then some 1
+                      else cmp xs ys
+                  | _, _ => none
+                match cmp a b with
+                | some v => pure (.int IntTy.int_ v)
+                | none => refuseUnsupported "memcmp: non-concrete byte"
+          | _ => refuseUnsupported "memcmp: wrong argument count"
         let runStrlen : List CVal → ExecM CVal := fun vs =>
           match vs with
           | [src] => do
@@ -824,6 +845,7 @@ def callFn : Nat → Program → LeanModels.C.FunctionDefn → List CVal → Exe
                 | none =>
                     if nm == "memset" || nm == "__builtin_memset" then runMemset vs
                     else if nm == "memcpy" || nm == "__builtin_memcpy" then runMemcpy vs
+                    else if nm == "__builtin_memcmp" then runMemcmp vs
                     else if nm == "__builtin_strlen" then runStrlen vs
                     else if nm == "__builtin_alloca" then runAlloca vs
                     else if nm == "__builtin_ffs" then runFfs vs
@@ -845,6 +867,7 @@ def callFn : Nat → Program → LeanModels.C.FunctionDefn → List CVal → Exe
             | none =>
               if nm == "memset" || nm == "__builtin_memset" then runMemset vs
               else if nm == "memcpy" || nm == "__builtin_memcpy" then runMemcpy vs
+              else if nm == "__builtin_memcmp" then runMemcmp vs
               else if nm == "__builtin_strlen" then runStrlen vs
               else if nm == "__builtin_alloca" then runAlloca vs
               else if nm == "__builtin_ffs" then runFfs vs

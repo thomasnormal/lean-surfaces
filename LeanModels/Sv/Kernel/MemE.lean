@@ -1,6 +1,7 @@
 import LeanModels.Sv.Kernel.MemElab
 import LeanModels.Sv.Gen2
 import LeanModels.Sv.Loop2
+import LeanModels.Sv.PreemptGuard2
 
 /-!
 # The first source-shaped memory step in E
@@ -20,6 +21,7 @@ this file is the E-side state and one-cycle transition only.
 namespace LeanModels.Sv.Kernel
 
 open LeanModels.Sv
+open LeanModels.Sv.CombGuard
 
 set_option autoImplicit false
 
@@ -97,12 +99,39 @@ def MemEDesign.shape? (d : MemEDesign) (pd : PDecl) : Except String MemShape := 
 
 def MemEDesign.init (d : MemEDesign) : MemEState :=
   { scalar := d.decls.map (fun dc =>
-      (dc.name, dc.init.getD (if dc.isNet then LVec.replicate dc.width .lz
-        else LVec.xVec dc.width)))
+      let value := dc.init.getD (if dc.isNet then LVec.replicate dc.width .lz
+        else LVec.xVec dc.width)
+      (dc.name, if dc.twoState then value.toTwoState else value))
     memory := MemState.ofShapes (d.memDecls.filterMap fun pd =>
       match pd.memShape? d.env with
       | .ok (some shape) => some shape
       | _ => none) }
+
+private def firstMemEOrderConflict : List ProcessAccess → Nat → Option (Nat × Nat)
+  | [], _ => none
+  | a :: rest, i =>
+      match rest.findIdx? (fun b => CombGuard.touches a.1 b.2) with
+      | some j => some (i, i + j + 1)
+      | none => firstMemEOrderConflict rest (i + 1)
+
+/-! The memory profile makes one source-order pass over continuous drivers.
+    A driver that reads a signal written by a later driver would require a
+    second settle pass (§10.3/§4.5); refuse that shape before returning a
+    stale value. -/
+def MemEDesign.memoryOrderReport (d : MemEDesign) : Option (String × String) :=
+  let comb := d.processes.filter fun p =>
+    match p with
+    | .assign .. | .assignL .. | .alwaysComb .. => true
+    | _ => false
+  let elems := d.elemWidths
+  let wd := fun n => d.env.widths.lookup n
+  let accesses := comb.map fun p =>
+    Process2.preemptAccess wd (instProcess2 d.env elems p)
+  match firstMemEOrderConflict accesses 0 with
+  | none => none
+  | some (i, j) =>
+      some ("Schedule:comb-source-order",
+        s!"comb process {i} reads a signal written by later comb process {j}; the source-order memory pass would need a second settle pass under IEEE 1800-2023 §10.3/§4.5")
 
 /-! ## Literal-file initialization -/
 
@@ -839,13 +868,18 @@ def MemEDesign.ofPDesign (d : PDesign) (args : List Int) : Res MemEDesign := do
               .ok (dc :: tail)
   let ds ← decls d.decls
   let ds := ds ++ memEOtherDecls d.others
+  let envD := { env with widths := ds.map (fun dc => (dc.name, dc.width)) }
   let mems := d.decls.filter fun pd => !pd.unpackedDims.isEmpty
-  match d.memShapesAt env with
+  match d.memShapesAt envD with
   | .ok _ => pure ()
   | .error e => .unsupported e
-  .ok { name := d.name, env := env, decls := ds, memDecls := mems,
-        processes := d.processes, others := d.others,
-        readmemh := d.readmemh, sourceDecls := d.decls }
+  let result : MemEDesign :=
+    { name := d.name, env := envD, decls := ds, memDecls := mems,
+      processes := d.processes, others := d.others,
+      readmemh := d.readmemh, sourceDecls := d.decls }
+  match result.memoryOrderReport with
+  | none => .ok result
+  | some (kind, msg) => .unsupported s!"{kind}: {msg}"
 
 end Kernel
 

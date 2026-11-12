@@ -496,7 +496,8 @@ def asInt (v : CVal) : EvalM (IntTy × Int) :=
 the tier carries clang's `qualType` string rather than a type tree
 (`docs/c-envelope-schema.md` §3). Measured: 199 distinct pointer/array
 spellings on expression nodes, every one ending in `*` or `]`. -/
-def isPtrType (ty : CType) : Bool := ty.endsWith "*"
+def isPtrType (ty : CType) : Bool :=
+  ty.endsWith "*" || (ty.contains "(*)" && ty.endsWith "]")
 
 /-- The POINTEE spelling of a pointer type: `int *` → `int`, `const S *` →
 `const S`. `none` when the spelling is not a pointer at all.

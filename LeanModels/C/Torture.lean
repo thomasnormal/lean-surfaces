@@ -123,17 +123,21 @@ def torScalarSize : CType → Option Nat
   | "int" | "unsigned int" | "unsigned" => some 4
   | "long" | "unsigned long" | "long long" | "unsigned long long"
   | "long int" | "unsigned long int" => some 8
-  | t => if t.endsWith "*" then some 8 else none
+  | t => if t.endsWith "*" || (t.contains "(*)" && t.endsWith "]")
+         then some 8 else none
 
 /-- The envelope's ordinary declaration types are flat Clang spellings.
 Admit only the closed spelling fragment consumed by the profile layout; any
 declarator grammar that this tier cannot represent as a tree is rejected at
 the layout boundary instead of being partially peeled into a different type.
 The guard is deliberately conservative for function-pointer and postfix-
-qualified forms, nested array syntax, and elaborated scope spellings. -/
+qualified forms, while admitting constant nested-array syntax and its
+pointer-to-array object form. Variable extents and elaborated scope spellings
+remain outside the fragment. -/
 def typeSpellingAdmitted (t : CType) : Bool :=
-  !t.contains "(*" && !t.endsWith " const" && !t.endsWith " volatile" &&
-  !t.contains "][" && !t.contains ") [" && !t.contains "::"
+  ((!t.contains "(*") || (t.contains "(*)" && t.endsWith "]")) &&
+  !t.endsWith " const" && !t.endsWith " volatile" &&
+  !t.contains ") [" && !t.contains "::"
 
 /-- Drop the qualifiers. Exact: `const`/`volatile` do not change a size. -/
 def stripQuals : Nat → CType → CType
@@ -143,13 +147,26 @@ def stripQuals : Nat → CType → CType
       else if t.startsWith "volatile " then stripQuals n ((t.drop 9).toString)
       else t
 
-/-- `T[N]` → `(T, N)`. **Single dimension only**: `int[2][3]` splits into
-three parts and gets `none`, which is a named zero rather than a guess. -/
+/-- `T[N]` → `(T, N)`. Constant nested arrays are walked from the outermost
+extent inward; variable extents still return `none`. -/
 def arrayOf (t : CType) : Option (CType × Nat) :=
   if !typeSpellingAdmitted t || !t.endsWith "]" then none
-  else match ((t.dropEnd 1).toString).splitOn "[" with
-       | [e, ext] => ext.toNat?.map fun n => (e, n)
-       | _ => none
+  else
+    match t.splitOn "[" with
+    | base :: ext :: rest =>
+        if !ext.endsWith "]" then none
+        else
+          match ext.dropEnd 1 |>.toString.toNat? with
+          | none => none
+          | some n => some (String.intercalate "[" (base :: rest), n)
+    | _ => none
+
+-- The layout fragment is intentionally small and executable at elaboration:
+-- nested constant arrays, pointer-to-array objects, and no variable extents.
+#guard arrayOf "int[2][1]" == some ("int[1]", 2)
+#guard arrayOf "int[n % 1000 + 1]" == none
+#guard torScalarSize "int (*)[1]" == some 8
+#guard typeSpellingAdmitted "int (*)(int)" == false
 
 /-- The unit's own typedefs, as a spelling map. A lookup, not a
 computation — so resolving through it invents nothing. -/

@@ -657,7 +657,11 @@ def parsePProcess (j : Json) : Except String PProcess := do
         | .ok lhs => return .assignL lhs value
     | "Unsupported" =>
         let (svKind, text) ← parseUnsupportedFields j
-        return .unsupported svKind text
+        if svKind.startsWith "SignalEventControl:" then
+          return .unsupported "Clock:implicit"
+            "event-controlled process has no supported edge or implicit sensitivity semantics"
+        else
+          return .unsupported svKind text
     | other => throw s!"unknown process kind {other.quote}"
 
 /-! ## Module instances (F3) -/

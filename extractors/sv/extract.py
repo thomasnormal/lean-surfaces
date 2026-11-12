@@ -13635,6 +13635,34 @@ def _sym_select_checked(sm, e, cname, node):
 
 def _convert_sym_select_expr(sm, e, cname):
     if cname == "ElementSelectExpression":
+        # The retained procedural route keeps a fixed one-rank unpacked
+        # select source-shaped as `ArraySel`, just like a parameter-sized
+        # memory.  The ordinary symbolic route deliberately keeps its
+        # historical flat-cell lowering; this branch is opt-in so the
+        # canonical E memory node sees the parser's own select and can apply
+        # IEEE 1800-2023 §7.4.6 run-time index rules at execution time.
+        if _SYM is not None and _RETAIN_PROC_REWRITES:
+            try:
+                root = e.value
+                if type(root).__name__ == "NamedValueExpression":
+                    shape = _fixed_array_dimensions(
+                        root.type.canonicalType, max_cells=None)
+                    if shape is not None and len(shape[0]) == 1:
+                        with _SymPos():
+                            index = _convert_expr(sm, e.selector)
+                        return {
+                            "kind": "ArraySel",
+                            "span": node_span(sm, e),
+                            "width": _safe_width(e),
+                            "name": root.symbol.name,
+                            "indices": [index],
+                            "part": None,
+                            "unpacked": True,
+                        }
+            except Exception:
+                # A failed source-shaped conversion must remain loud through
+                # the normal select path; never fabricate a flat cell here.
+                pass
         # A parameter-dependent fixed unpacked array must remain a
         # source-shaped ArraySel path. The legacy fixed-array helper below
         # intentionally lowers only stable default-point cells; using it for
@@ -20870,9 +20898,10 @@ def _sym_runtime_unpacked_lhs(lhs):
     """Whether a dynamic write is outside the source-shaped memory route.
 
     Parameter-dependent one-rank memories retain their ``ArraySel`` target
-    and are resolved by E at run time. Fixed arrays still use the existing
-    finite-cell lowering, so their dynamic writes retain the old loud
-    boundary in the scalar route.
+    and are resolved by E at run time. In retained procedural mode fixed
+    one-rank arrays take the same source-shaped route; without that opt-in,
+    fixed arrays keep the existing finite-cell lowering and loud compound
+    boundary.
     """
     try:
         if type(lhs).__name__ != "ElementSelectExpression":
@@ -20880,6 +20909,10 @@ def _sym_runtime_unpacked_lhs(lhs):
         array_type = lhs.value.type.canonicalType
         if type(array_type).__name__ != "FixedSizeUnpackedArrayType":
             return False
+        if _RETAIN_PROC_REWRITES:
+            shape = _fixed_array_dimensions(array_type, max_cells=None)
+            if shape is not None and len(shape[0]) == 1:
+                return False
         if _literal_integral_value(lhs.selector) is not None:
             return False
         return not _sym_array_point_dependent(None, lhs.value.symbol)
@@ -20894,9 +20927,14 @@ def _sym_retained_unpacked_lhs(lhs):
         if type(lhs).__name__ != "ElementSelectExpression":
             return False
         array_type = lhs.value.type.canonicalType
-        return (type(array_type).__name__ == "FixedSizeUnpackedArrayType"
-                and _literal_integral_value(lhs.selector) is None
-                and _sym_array_point_dependent(None, lhs.value.symbol))
+        if type(array_type).__name__ != "FixedSizeUnpackedArrayType":
+            return False
+        if _literal_integral_value(lhs.selector) is not None:
+            return False
+        if _RETAIN_PROC_REWRITES:
+            shape = _fixed_array_dimensions(array_type, max_cells=None)
+            return shape is not None and len(shape[0]) == 1
+        return _sym_array_point_dependent(None, lhs.value.symbol)
     except Exception:
         return False
 
@@ -32485,10 +32523,20 @@ def _sym_unsized_xz_widening(sm, e, op, tw):
 def convert_var_sym(sm, m):
     if is_inert_2state_floating_decl(m):
         return {"kind": "Empty", "span": sym_span(sm, m)}
-    if _sym_array_point_dependent(sm, m):
+    retain_fixed = False
+    if _RETAIN_PROC_REWRITES:
+        try:
+            fixed = _fixed_array_dimensions(m.type.canonicalType,
+                                            max_cells=None)
+            retain_fixed = fixed is not None and len(fixed[0]) == 1
+        except Exception:
+            retain_fixed = False
+    if _sym_array_point_dependent(sm, m) or retain_fixed:
         retained = _convert_unpacked_decl_sym(sm, m)
-        return (retained if retained is not None else
-                unsupported(sm, m, "VariableSymbol:default-point-array"))
+        if retained is not None:
+            return retained
+        if _sym_array_point_dependent(sm, m):
+            return unsupported(sm, m, "VariableSymbol:default-point-array")
     array_decls = convert_fixed_array_vars_sym(sm, m)
     if array_decls is not None:
         return array_decls
@@ -32523,8 +32571,15 @@ def _convert_unpacked_decl_sym(sm, m, direction=None, isym=None):
         array_type = m.type.canonicalType
         if type(array_type).__name__ != "FixedSizeUnpackedArrayType":
             return None
-        if not _sym_array_point_dependent(sm, symbol):
-            return None
+        shape_is_parametric = _sym_array_point_dependent(sm, symbol)
+        if not shape_is_parametric:
+            # `--retain-proc-rewrites` is the source-shaped canonical-E
+            # memory route.  Keep a fixed one-rank declaration there too;
+            # the non-retained route continues to flatten it into cells.
+            fixed = _fixed_array_dimensions(array_type, max_cells=None)
+            if not (_RETAIN_PROC_REWRITES and fixed is not None
+                    and len(fixed[0]) == 1):
+                return None
         shape = _fixed_array_dimensions(array_type, max_cells=None)
         if shape is None:
             return None

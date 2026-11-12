@@ -36,12 +36,15 @@ def kinds(node, found=None):
 
 
 class SymbolicArraySelects(unittest.TestCase):
-    def extract(self, source):
+    def extract(self, source, retain_loops=False, retain_proc_rewrites=False):
         with tempfile.TemporaryDirectory() as directory:
             src = Path(directory) / "fixture.sv"
             out = Path(directory) / "fixture.sv.json"
             src.write_text(source)
-            extract.process_symbolic("top", [str(src)], [], str(out))
+            extract.process_symbolic(
+                "top", [str(src)], [], str(out),
+                retain_loops=retain_loops,
+                retain_proc_rewrites=retain_proc_rewrites)
             return json.loads(out.read_text())["design"]["modules"][0]
 
     def test_nested_generate_target_keeps_genvar_labels(self):
@@ -132,17 +135,14 @@ class SymbolicArraySelects(unittest.TestCase):
         self.assertEqual(value["kind"], "BitSel")
         self.assertEqual(value["value"]["kind"], "BitSel")
 
-    def test_dynamic_fixed_unpacked_target_expands_to_cells(self):
+    def test_dynamic_fixed_unpacked_target_stays_loud(self):
         module = self.extract(
             "module top (input logic [3:0] source, input logic [1:0] index,"
             " output logic [3:0] out [0:1]);"
             " always_comb out[index] = source; endmodule")
         statement = module["processes"][0]["body"]
-        self.assertEqual(statement["kind"], "If")
-        self.assertEqual(statement["cond"]["op"], "===")
-        self.assertEqual(statement["then"]["target"]["name"], "out[0]")
-        self.assertEqual(statement["else"]["then"]["target"]["name"], "out[1]")
-        self.assertIsNone(statement["else"]["else"])
+        self.assertEqual(statement["kind"], "Unsupported")
+        self.assertEqual(statement["sv_kind"], "AssignmentExpression:target")
 
     def test_dynamic_fixed_unpacked_read_expands_to_conditionals(self):
         module = self.extract(
@@ -242,6 +242,30 @@ class SymbolicArraySelects(unittest.TestCase):
         statement = module["processes"][0]["body"]
         self.assertEqual(statement["kind"], "Unsupported")
         self.assertEqual(statement["sv_kind"], "ElementSelect:default-point-index")
+
+    def test_retained_fixed_memory_loop_keeps_runtime_array_path(self):
+        module = self.extract(
+            "module top (input logic clk, input logic [3:0] d,"
+            " input logic [1:0] index, output logic [3:0] q);"
+            " logic [3:0] mem [0:3];"
+            " always_ff @(posedge clk) begin"
+            " for (int i = 1; i < 4; i++) mem[i] <= mem[i-1];"
+            " mem[0] <= d; end"
+            " assign q = mem[index]; endmodule",
+            retain_loops=True, retain_proc_rewrites=True)
+        declaration = next(d for d in module["decls"] if d["name"] == "mem")
+        self.assertEqual(declaration["kind"], "UnpackedDecl")
+        process = module["processes"][0]
+        self.assertEqual(process["body"]["stmts"][0]["kind"], "For")
+        loop_assign = process["body"]["stmts"][0]["body"]
+        self.assertEqual(loop_assign["target"]["kind"], "ArraySel")
+        self.assertTrue(loop_assign["target"]["unpacked"])
+        self.assertEqual(loop_assign["value"]["kind"], "ArraySel")
+        self.assertTrue(loop_assign["value"]["unpacked"])
+        self.assertEqual(process["body"]["stmts"][1]["target"]["kind"],
+                         "ArraySel")
+        self.assertEqual(module["processes"][1]["value"]["kind"], "ArraySel")
+        self.assertTrue(module["processes"][1]["value"]["unpacked"])
 
     def test_unexpected_failure_on_3d_chain_is_loud(self):
         # A failure inside the ArraySel builder must not fall back to the

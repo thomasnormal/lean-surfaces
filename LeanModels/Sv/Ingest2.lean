@@ -217,6 +217,14 @@ code only, no theorems mention the parser. -/
 partial def parsePExpr (j : Json) : Except String PExpr := do
   let kind ← getKind j
   withCtx kind do
+    -- Slang's extractor may attach this marker when it has already folded a
+    -- user-function call into an ordinary expression.  That is not a
+    -- parser-shaped function node, so retaining it as a normal expression
+    -- would silently change the source semantics (§13.4).  Keep the wall
+    -- loud until the E function node is admitted.
+    if (getOptField j "user_function_inline").isSome then
+      return .unsupported "CallExpression:user-function"
+        "extractor supplied a lowered user-function expression; source-shaped E function calls are not admitted"
     match kind with
     | "Literal" =>
         let width ← getNatField j "width"

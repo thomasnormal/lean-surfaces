@@ -783,6 +783,19 @@
       "measured": "A parameterized generate loop drives every bit of an output wire exactly once; the source-shaped AssignL windows are admitted as a net-as-variable and the trace matches Icarus."
     },
     {
+      "name": "function_inline_e",
+      "example": "sem2/symbolic_inline_function",
+      "top": "symbolic_inline_function",
+      "refusal": "CallExpression:user-function",
+      "signals": ["a", "y", "z"],
+      "stimulus": [
+        {"a": "0000"},
+        {"a": "0101"},
+        {"a": "1111"}
+      ],
+      "measured": "2026-11-12: Slang marks this source-level automatic function call as an inline expression in the envelope; E refuses the lowered marker until a source-shaped function node is available."
+    },
+    {
       "name": "hierarchy_instance_e",
       "example": "sem2/hierarchy_instance",
       "top": "hierarchy_instance",

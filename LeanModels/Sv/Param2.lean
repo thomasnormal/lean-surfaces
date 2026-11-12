@@ -158,10 +158,12 @@ only the width must be constant) is a READ-only tier over a 1-D vector
 with a descending range: `dynPartPlan` and `dynBaseRead` lower it to a
 shift of the x-padded vector, exact in every out-of-range bit and on an x/z
 base. The base's self-determined width picks the reading: unsigned below 32
-bits (`dynPartRead`), a two's-complement `int` at exactly 32 (`dynPartRead32`
-— Icarus 12.0 and Yosys 0.53 both read a 32-bit index that way; measured
-2026-10-28), loud above (they disagree). A dynamic base on a target, on an
-ascending range, or after an element select is loud (`ArraySel:dynamic`).
+bits and at exactly 32 bits (`dynPartRead`; IEEE 1800-2023 §11.8.1 makes the
+32-bit unsigned expression type decisive), loud above (the tools disagree).
+The former `dynPartRead32` two's-complement reading followed Icarus 12.0 and
+Yosys 0.53 but was a wrong answer for the pinned Xcelium/IEEE case and is no
+longer selected. A dynamic base on a target, on an ascending range, or after
+an element select is loud (`ArraySel:dynamic`).
 A constant label far outside its dimension (`partOffsetsWild`: a 32-bit
 unsigned wrap such as `UI - 1` at 0) is loud too — the two tools read it
 differently.
@@ -427,14 +429,13 @@ def dynPartRead32 (n : String) (w q c : Nat) (e : Expr2) : Expr2 :=
     (.lit (LVec.xVec w))
 
 /-- The reading of a run-time part-select base by its self-determined width
-`bw` (the base lowered to `e` at that width): unsigned below 32 bits
-(`dynPartRead` — every tool agrees), two's complement at exactly 32
-(`dynPartRead32`), loud above (Icarus truncates a wider index to its low 32
-bits, Yosys does not — measured: a 40-bit base `2^32 + 1` reads `v[4:1]` in
-Icarus and all x in Yosys). -/
+`bw` (the base lowered to `e` at that width): unsigned below and at 32 bits
+(`dynPartRead`), loud above (Icarus truncates a wider index to its low 32 bits,
+Yosys does not — measured: a 40-bit base `2^32 + 1` reads `v[4:1]` in Icarus
+and all x in Yosys). -/
 def dynBaseRead (n : String) (w q c bw : Nat) (e : Expr2) : Expr2 :=
   if bw < 32 then dynPartRead n w q c e
-  else if bw = 32 then dynPartRead32 n w q c e
+  else if bw = 32 then dynPartRead n w q c e
   else .unsupported "ArraySel:dynamic"
     s!"run-time part-select base of {bw} bits (wider than 32: Icarus truncates it, Yosys does not)"
 
@@ -2319,10 +2320,10 @@ private def dynPlanLoud (r : Option (Except String (Nat × Nat × Nat))) : Bool 
   | _ => false
 #guard (arrayPartTarget arrEnv "v" [] .up (.ident "sel") (.int 4)).toOption.isNone
 #guard selfWidth2 arrEnv [] (.arrayPart "v" [] .down (.ident "sel") (.int 4)) == some 4
--- The base's width picks the reading: a 32-bit base is two's complement
--- (`dynPartRead32`), a wider one is loud (Icarus and Yosys disagree).
+-- The base's width picks the reading: a 32-bit base is unsigned
+-- (`dynPartRead`), and a wider one is loud (Icarus and Yosys disagree).
 #guard instExpr2 arrEnv [] none (.arrayPart "v" [] .up (.ident "s32") (.int 4))
-  == dynPartRead32 "v" 4 0 8 (.ident "s32")
+  == dynPartRead "v" 4 0 8 (.ident "s32")
 #guard match instExpr2 arrEnv [] none (.arrayPart "v" [] .up (.ident "s40") (.int 4)) with
   | .unsupported "ArraySel:dynamic" _ => true
   | _ => false
@@ -2400,8 +2401,8 @@ private def pDynPartOv : PDesign :=
 
 /-- `dyn32`: 32-bit run-time bases (`v[s - 2 +: 4]` and `v[s - 2 -: 4]`, `s`
 4 bits: the unsized `2` makes the base `Resize32(s) - 2`, 32-bit unsigned)
-read as two's complement, as Icarus 12.0 and Yosys 0.53 both do (verifier
-probe `pa.sv`, `v = 10110111`: `s = 0` gives `11xx`). Envelope twin: rows
+read as unsigned per IEEE 1800-2023 §11.8.1: a negative arithmetic result is
+the large unsigned address and therefore reads all x. Envelope twin: rows
 `dyn32_*`. -/
 private def pDyn32 : PDesign :=
   { name := "dyn32"
@@ -2426,7 +2427,7 @@ private def pDyn32 : PDesign :=
          [("s", LVec.ofNat 4 1)], [("s", LVec.ofNat 4 2)], [("s", LVec.ofNat 4 9)],
          [("s", LVec.ofNat 4 15)], [("s", LVec.lit "x001")]])).map
         (fun tr => tr.map fun st => (SvState.showSignal st "du", SvState.showSignal st "dd"))
-      == some [("11xx", "xxxx"), ("111x", "xxxx"), ("0111", "1xxx"), ("xxx1", "1011"),
+      == some [("xxxx", "xxxx"), ("xxxx", "xxxx"), ("0111", "1xxx"), ("xxx1", "1011"),
                ("xxxx", "xxxx"), ("xxxx", "xxxx")]
 
 /-! ## Width and typing at non-default parameter points (2026-10-28)

@@ -381,17 +381,15 @@ stage refuses a run-time select whose index can leave its declared range
 all x), so no flag choice removes the declaration (docs/sv-xcelium-reference.md,
 section 6).
 
-**What is NOT declared.** Row `dyn32` keeps its 22 differing cells and is not declared:
-8 of them are a different cause. Xcelium reads a 32-bit UNSIGNED base as unsigned
-(`s - 2` at `s = 0, 1` is `32'hFFFFFFFE` and `32'hFFFFFFFF`, wholly out of range, all x;
-`b32 = 32'hFFFFFFFE`, `32'hFFFFFFFF`), as the typing rules of 11.8.1 imply, and the
-model, Icarus and Yosys read it as a two's-complement `int` (`Param2.lean`
-`dynPartRead32`, the header of `dyn32.sv`). On a vector with a negative range the
-difference is visible without the partial rule: `w[3:-4]` with an unsigned 32-bit
-`bu = 32'hFFFFFFFE` gives `w[bu +: 4] = xxxx` in Xcelium and `1101` in Icarus, and a
-signed `bi = -2` gives `1101` in both. That is the model's recorded decision
-against the reference, not a departure of the reference from the standard, and round 6
-is refusal-only, so it is an open item (docs/sv-xcelium-audit.md, 6.4).
+The former `dyn32` open item is closed by the E fix recorded on 2026-11-12:
+`dynBaseRead` now uses the unsigned `dynPartRead` at exactly 32 bits, as
+11.8.1 requires. The underflow cells (`s - 2` at `s = 0, 1`) therefore read
+all x, and Icarus Verilog 13.0 matches E on every cycle. The remaining
+Xcelium differences are exactly the partial-overhang cells already covered by
+the declaration above, so `dyn32` now carries the declaration
+`xcelium-runtime-partial-part-select-all-x-dyn32` with its own pinned trace.
+The old `dynPartRead32` two's-complement route is retained only as an unused
+diagnostic definition; it no longer determines E's result.
 
 ## String literal escapes `\a \v \f`: Xcelium reads the plain letter (2026-11-01)
 

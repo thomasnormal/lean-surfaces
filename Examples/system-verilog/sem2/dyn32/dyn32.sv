@@ -1,20 +1,17 @@
 // Run-time indexed part-select bases of EXACTLY 32 bits (verifier probes
 // pa/pb, 2026-10-28). `s - 2` is 32-bit unsigned (the unsized `2` widens
-// `s`), yet Icarus 12.0 and Yosys 0.53 both read a 32-bit index as a
-// two's-complement int: `v[s - 2 +: 4]` at s = 0 is v[1:-2], two bits in
-// range. The model reads it the same way (Param2 `dynPartRead32`). Bases
-// wider than 32 bits are refused (the tools disagree there). Rows:
+// `s`), so an underflow is a large unsigned address and reads all x under
+// IEEE 1800-2023 §11.8.1. The E model follows that typing rule. Bases wider
+// than 32 bits are refused (the tools disagree there). Rows:
 // harness/sv/cases2.json `dyn32` and `dyn32_part`.
 //
 // Xcelium 24.03-s004 (the reference simulator) reads such a base as UNSIGNED,
 // as the typing rules of IEEE 1800-2023 11.8.1 imply: `s - 2` at s = 0 is
-// 32'hFFFFFFFE, wholly out of range, all x. So on those cells (8 of the 22 that
-// row `dyn32` pins as differing from Xcelium) the model, Icarus and Yosys are
-// the outliers: an open item, docs/sv-xcelium-audit.md 6.4. Xcelium also
-// returns all x for a base that leaves the vector only PARTLY, where the
-// model reads the LRM's per-bit value (11.5.1): a declared departure, rows
-// `dyn32_part` and `partsel_dyn*` (docs/sv-oracle-disagreements.md, "Run-time
-// part-select bases that leave the vector").
+// 32'hFFFFFFFE, wholly out of range, all x. Xcelium also returns all x for a
+// base that leaves the vector only PARTLY, where the model reads the LRM's
+// per-bit value (11.5.1): a declared departure on `dyn32`, `dyn32_part` and
+// `partsel_dyn*` (docs/sv-oracle-disagreements.md, "Run-time part-select bases
+// that leave the vector"). Icarus Verilog 13.0 matches the model on these rows.
 module dyn32 (
   input  logic [7:0]  v,
   input  logic [3:0]  s,

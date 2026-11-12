@@ -1864,7 +1864,7 @@ def guardShr32 (signed : Bool) (a b : Int) : Except String Int :=
 
 /-- Generate guards use the same signed 32-bit integer arithmetic as `int`.
 In particular, bitwise operations preserve the signed operand bit pattern. -/
-def evalGenGuard (env : IEnv) : PExpr → Except String Int
+def evalGenGuard32 (env : IEnv) : PExpr → Except String Int
   | .int v => .ok (guard32 v)
   | .paramRef n none =>
       match guardLookup env n with
@@ -1882,15 +1882,15 @@ def evalGenGuard (env : IEnv) : PExpr → Except String Int
           | some (v, _, _) => .ok (guard32 v)
           | none => .error s!"package-scoped parameter '{p}::{n}'"
   | .unary op a => do
-      let v ← evalGenGuard env a
+      let v ← evalGenGuard32 env a
       match op with
       | .m0 .neg => .ok (guard32 (-v))
       | .m0 .pos | .plus => .ok (guard32 v)
       | .m0 .lnot => .ok (guard32 (b2i (v == 0)))
       | _ => .error "operator outside generate integer guards"
   | .binary op l r => do
-      let a ← evalGenGuard env l
-      let b ← evalGenGuard env r
+      let a ← evalGenGuard32 env l
+      let b ← evalGenGuard32 env r
       match op with
       | .m0 .add => .ok (guard32 (a + b))
       | .m0 .sub => .ok (guard32 (a - b))
@@ -1910,12 +1910,27 @@ def evalGenGuard (env : IEnv) : PExpr → Except String Int
       | .m0 (.shr signed) => guardShr32 signed a b
       | .shr => guardShr32 false a b
       | _ => .error "operator outside generate integer guards"
-  | .resize _ a | .signedResize _ a | .squash2 _ a | .cast _ a => evalGenGuard env a
+  | .resize _ a | .signedResize _ a | .squash2 _ a | .cast _ a => evalGenGuard32 env a
   | .sysCall .clog2 a => do
-      let v ← evalGenGuard env a
+      let v ← evalGenGuard32 env a
       if v < 0 then .error "$clog2 of a negative value"
       else .ok (guard32 (clog2 v.toNat : Int))
   | _ => .error "expression outside generate integer guards"
+
+/-! A generate condition is a constant expression, so its operands retain
+their IEEE self-determined widths.  The legacy 32-bit guard above remains the
+fallback for the small integer-guard vocabulary whose `ctype` is deliberately
+structural (bitwise forms, for example).  Typed parameters and localparams
+whose comparison width exceeds 32 bits must go through `evalAt`; forcing them
+through `guard32` changes the selected generate branch (`fold_cgrow`, where
+`U` is 33 or 40 bits). -/
+def evalGenGuard (env : IEnv) (e : PExpr) : Except String Int :=
+  match ctype env e with
+  | .ok ty =>
+      match evalAt env ty e with
+      | .ok v => .ok v
+      | .error _ => evalGenGuard32 env e
+  | .error _ => evalGenGuard32 env e
 
 #guard (match evalGenGuard { nvals := [("N", (16, 32, true))] } (.paramRef "N" none) with
   | .ok 16 => true | _ => false)
@@ -1923,6 +1938,17 @@ def evalGenGuard (env : IEnv) : PExpr → Except String Int
     (.binary (.m0 .and)
       (.binary (.m0 .sub) (.paramRef "N" none) (.int 6)) (.int 1)) with
   | .ok 1 => true | _ => false)
+
+-- A typed parameter keeps its own width in a generate comparison.  In
+-- particular, 33-bit `U = 2^32` is greater than 5 and `U + 1 == 1` is false;
+-- evaluating either guard as a signed 32-bit integer selects the wrong branch.
+private def wideGenerateEnv : IEnv :=
+  { nvals := [("U", (4294967296, 33, false))] }
+#guard (evalGenGuard wideGenerateEnv
+    (.binary (.m0 .gt) (.paramRef "U" none) (.int 5))).toOption == some 1
+#guard (evalGenGuard wideGenerateEnv
+    (.binary (.m0 .eq)
+      (.binary (.m0 .add) (.paramRef "U" none) (.int 1)) (.int 1))).toOption == some 0
 
 /-! ## Package constants -/
 

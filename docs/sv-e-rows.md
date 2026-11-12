@@ -30,3 +30,10 @@ multi-point cross-check.  The row's source and envelope were unchanged.
 Thus the initial migration number is **547 E-MATCH rows out of 684**.  The
 three measured divergences and the 16 declared divergences remain separate
 from E-MATCH; no row is silently counted as agreement.
+
+The frozen S0 number above is historical.  The 2026-11-12 triage closed the
+two `fold_cgrow` rows (`fold_cgrow_n33` and `fold_cgrow_n40`) by evaluating
+typed generate guards at their own widths, so the current E count is
+**549/684**.  `dyn32` now follows the unsigned 32-bit base rule and its only
+remaining difference is the declared Xcelium partial-overhang behavior; it is
+not counted as an E-MATCH.

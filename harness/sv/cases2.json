@@ -7923,7 +7923,60 @@
           "s": "01z0",
           "v": "1x0z1100"
         }
-      ]
+      ],
+      "oracle_disagreement": {
+        "id": "xcelium-runtime-partial-part-select-all-x-dyn32",
+        "sim": "xcelium",
+        "declared": "2026-11-12",
+        "reference": "IEEE 1800-2023 11.5.1 and 11.8.1: indexed part-select bases are evaluated in their self-determined unsigned 32-bit expression type; a run-time select that is partly out of range returns x only in the out-of-range bits. The E model now follows that rule; Xcelium 24.03-s004 returns all x for the partly overhanging cells.",
+        "observed": "After the E fix for the unsigned 32-bit base, Icarus Verilog 13.0 matches the model on every dyn32 cycle. Xcelium 24.03-s004 matches in-range and wholly out-of-range cells but returns all x for the partly overhanging run-time reads, the same departure recorded by dyn32_part.",
+        "retirement_condition": "When Xcelium reads partly overhanging run-time part-selects with the per-bit IEEE value, the declaration must be removed; it is also removed if the E tier refuses run-time bases that can leave the vector.",
+        "source_sha256": "02199565c1267c22d3623943e4f66b30353cbe3b3632cbf4bb41a0f8105e2a0c",
+        "envelope_sha256": "5b052f72bc0293fc7291979263ba2e6c93ed554e3c73e48b190208fd11d3b32b",
+        "case_sha256": "bbbcc225f9cc7de732a5f751c93bfd5992f139450e9c231ad48f74af10589d3b",
+        "testbench_sha256": "723e13bcb4b5061e7da01c68fc0b1d16038853336b7ae1798dba88b6af958334",
+        "sigma": "src",
+        "sim_trace": [
+          "CYCLE 0 v=10110111 s=0000 b32=11111111111111111111111111111110 minus2=xxxx minus2_dn=xxxx m32=xxxx o32=xxxx d32=xxxx",
+          "CYCLE 1 v=10110111 s=0001 b32=10000000000000000000000000000001 minus2=xxxx minus2_dn=xxxx m32=xxxx o32=xxxx d32=xxxx",
+          "CYCLE 2 v=10110111 s=0010 b32=00000000000000000000000000001001 minus2=0111 minus2_dn=xxxx m32=0111 o32=xxxx d32=xxxx",
+          "CYCLE 3 v=10110111 s=0011 b32=00000000000000000000000000000011 minus2=1011 minus2_dn=xxxx m32=1011 o32=0110 d32=0111",
+          "CYCLE 4 v=10110111 s=0100 b32=11111111111111111111111111111111 minus2=1101 minus2_dn=xxxx m32=1101 o32=xxxx d32=xxxx",
+          "CYCLE 5 v=10110111 s=0101 b32=11111111111111111111111111111100 minus2=0110 minus2_dn=0111 m32=0110 o32=xxxx d32=xxxx",
+          "CYCLE 6 v=10110111 s=0110 b32=0000000000000000000000000000x001 minus2=1011 minus2_dn=1011 m32=1011 o32=xxxx d32=xxxx",
+          "CYCLE 7 v=10110111 s=0111 b32=z0000000000000000000000000000001 minus2=xxxx minus2_dn=1101 m32=xxxx o32=xxxx d32=xxxx",
+          "CYCLE 8 v=01001110 s=1000 b32=11111111111111111111111111111110 minus2=xxxx minus2_dn=1001 m32=xxxx o32=xxxx d32=xxxx",
+          "CYCLE 9 v=01001110 s=1001 b32=10000000000000000000000000000001 minus2=xxxx minus2_dn=0100 m32=xxxx o32=xxxx d32=xxxx",
+          "CYCLE 10 v=01001110 s=1010 b32=00000000000000000000000000001001 minus2=xxxx minus2_dn=xxxx m32=xxxx o32=xxxx d32=xxxx",
+          "CYCLE 11 v=01001110 s=1011 b32=00000000000000000000000000000011 minus2=xxxx minus2_dn=xxxx m32=xxxx o32=1001 d32=1110",
+          "CYCLE 12 v=01001110 s=1100 b32=11111111111111111111111111111111 minus2=xxxx minus2_dn=xxxx m32=xxxx o32=xxxx d32=xxxx",
+          "CYCLE 13 v=01001110 s=1101 b32=11111111111111111111111111111100 minus2=xxxx minus2_dn=xxxx m32=xxxx o32=xxxx d32=xxxx",
+          "CYCLE 14 v=01001110 s=1110 b32=0000000000000000000000000000x001 minus2=xxxx minus2_dn=xxxx m32=xxxx o32=xxxx d32=xxxx",
+          "CYCLE 15 v=01001110 s=1111 b32=z0000000000000000000000000000001 minus2=xxxx minus2_dn=xxxx m32=xxxx o32=xxxx d32=xxxx",
+          "CYCLE 16 v=01001110 s=x010 b32=z0000000000000000000000000000001 minus2=xxxx minus2_dn=xxxx m32=xxxx o32=xxxx d32=xxxx",
+          "CYCLE 17 v=1x0z1100 s=01z0 b32=z0000000000000000000000000000001 minus2=xxxx minus2_dn=xxxx m32=xxxx o32=xxxx d32=xxxx"
+        ],
+        "lean_trace": [
+          "CYCLE 0 v=10110111 s=0000 b32=11111111111111111111111111111110 minus2=xxxx minus2_dn=xxxx m32=xxxx o32=xxxx d32=xxxx",
+          "CYCLE 1 v=10110111 s=0001 b32=10000000000000000000000000000001 minus2=xxxx minus2_dn=xxxx m32=xxxx o32=xxxx d32=xxxx",
+          "CYCLE 2 v=10110111 s=0010 b32=00000000000000000000000000001001 minus2=0111 minus2_dn=1xxx m32=0111 o32=xxxx d32=xx10",
+          "CYCLE 3 v=10110111 s=0011 b32=00000000000000000000000000000011 minus2=1011 minus2_dn=11xx m32=1011 o32=0110 d32=0111",
+          "CYCLE 4 v=10110111 s=0100 b32=11111111111111111111111111111111 minus2=1101 minus2_dn=111x m32=1101 o32=xxxx d32=xxxx",
+          "CYCLE 5 v=10110111 s=0101 b32=11111111111111111111111111111100 minus2=0110 minus2_dn=0111 m32=0110 o32=xxxx d32=xxxx",
+          "CYCLE 6 v=10110111 s=0110 b32=0000000000000000000000000000x001 minus2=1011 minus2_dn=1011 m32=1011 o32=xxxx d32=xxxx",
+          "CYCLE 7 v=10110111 s=0111 b32=z0000000000000000000000000000001 minus2=x101 minus2_dn=1101 m32=x101 o32=xxxx d32=xxxx",
+          "CYCLE 8 v=01001110 s=1000 b32=11111111111111111111111111111110 minus2=xx01 minus2_dn=1001 m32=xx01 o32=xxxx d32=xxxx",
+          "CYCLE 9 v=01001110 s=1001 b32=10000000000000000000000000000001 minus2=xxx0 minus2_dn=0100 m32=xxx0 o32=xxxx d32=xxxx",
+          "CYCLE 10 v=01001110 s=1010 b32=00000000000000000000000000001001 minus2=xxxx minus2_dn=x010 m32=xxxx o32=xxxx d32=xx01",
+          "CYCLE 11 v=01001110 s=1011 b32=00000000000000000000000000000011 minus2=xxxx minus2_dn=xx01 m32=xxxx o32=1001 d32=1110",
+          "CYCLE 12 v=01001110 s=1100 b32=11111111111111111111111111111111 minus2=xxxx minus2_dn=xxx0 m32=xxxx o32=xxxx d32=xxxx",
+          "CYCLE 13 v=01001110 s=1101 b32=11111111111111111111111111111100 minus2=xxxx minus2_dn=xxxx m32=xxxx o32=xxxx d32=xxxx",
+          "CYCLE 14 v=01001110 s=1110 b32=0000000000000000000000000000x001 minus2=xxxx minus2_dn=xxxx m32=xxxx o32=xxxx d32=xxxx",
+          "CYCLE 15 v=01001110 s=1111 b32=z0000000000000000000000000000001 minus2=xxxx minus2_dn=xxxx m32=xxxx o32=xxxx d32=xxxx",
+          "CYCLE 16 v=01001110 s=x010 b32=z0000000000000000000000000000001 minus2=xxxx minus2_dn=xxxx m32=xxxx o32=xxxx d32=xxxx",
+          "CYCLE 17 v=1x0z1100 s=01z0 b32=z0000000000000000000000000000001 minus2=xxxx minus2_dn=xxxx m32=xxxx o32=xxxx d32=xxxx"
+        ]
+      }
     },
     {
       "name": "param_types",

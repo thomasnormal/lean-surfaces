@@ -10,11 +10,11 @@
   "gcc.c-torture/execute": {
    "not-parsed": 267,
    "oracle-tests-compiler": 1,
-   "passed": 740,
+   "passed": 751,
    "refused-libc": 29,
-   "refused-ub": 63,
-   "refused-unsupported": 758,
-   "timeout": 60
+   "refused-ub": 66,
+   "refused-unsupported": 743,
+   "timeout": 61
   },
   "gcc.c23-run": {
    "not-parsed": 27,
@@ -28,11 +28,11 @@
  "counts": {
   "not-parsed": 294,
   "oracle-tests-compiler": 1,
-  "passed": 902,
+  "passed": 913,
   "refused-libc": 33,
-  "refused-ub": 72,
-  "refused-unsupported": 850,
-  "timeout": 62
+  "refused-ub": 75,
+  "refused-unsupported": 835,
+  "timeout": 63
  },
  "dynamic_wall_ranking": [
   {
@@ -518,10 +518,13 @@
     "return-addr.c",
     "strcpy-2.c",
     "strlen-2.c",
-    "strlen-6.c"
+    "strlen-6.c",
+    "va-arg-1.c",
+    "va-arg-17.c",
+    "va-arg-20.c"
    ],
-   "present": 72,
-   "sole": 72,
+   "present": 75,
+   "sole": 75,
    "wall": "undefined-behavior"
   },
   {
@@ -556,6 +559,7 @@
     "memcpy-1.c",
     "memcpy-bi.c",
     "mode-dependent-address.c",
+    "multi-ix.c",
     "nestfunc-4.c",
     "pr107881-1.c",
     "pr110252-1.c",
@@ -589,59 +593,9 @@
     "subcmp-1.c",
     "usad-run.c"
    ],
-   "present": 62,
-   "sole": 62,
+   "present": 63,
+   "sole": 63,
    "wall": "timeout"
-  },
-  {
-   "files": [
-    "20000519-1.c",
-    "20071213-1.c",
-    "920501-8.c",
-    "920726-1.c",
-    "931004-10.c",
-    "931004-12.c",
-    "931004-14.c",
-    "931004-2.c",
-    "931004-4.c",
-    "931004-6.c",
-    "931004-8.c",
-    "980205.c",
-    "980608-1.c",
-    "980716-1.c",
-    "991216-2.c",
-    "gcc/testsuite/gcc.dg/c23-stdarg-9.c",
-    "multi-ix.c",
-    "pr117432.c",
-    "pr64979.c",
-    "stdarg-2.c",
-    "stdarg-4.c",
-    "strct-stdarg-1.c",
-    "strct-varg-1.c",
-    "va-arg-1.c",
-    "va-arg-10.c",
-    "va-arg-11.c",
-    "va-arg-12.c",
-    "va-arg-13.c",
-    "va-arg-15.c",
-    "va-arg-16.c",
-    "va-arg-17.c",
-    "va-arg-18.c",
-    "va-arg-19.c",
-    "va-arg-2.c",
-    "va-arg-20.c",
-    "va-arg-21.c",
-    "va-arg-23.c",
-    "va-arg-24.c",
-    "va-arg-5.c",
-    "va-arg-7.c",
-    "va-arg-8.c",
-    "va-arg-9.c",
-    "va-arg-trap-1.c"
-   ],
-   "present": 43,
-   "sole": 43,
-   "wall": "unsupported:more arguments than parameters"
   },
   {
    "files": [
@@ -718,10 +672,11 @@
     "pr44683.c",
     "pr58574.c",
     "pr68390.c",
-    "pr92618.c"
+    "pr92618.c",
+    "va-arg-15.c"
    ],
-   "present": 27,
-   "sole": 27,
+   "present": 28,
+   "sole": 28,
    "wall": "unsupported:no layout for declared type 'double'"
   },
   {
@@ -791,6 +746,7 @@
     "20060929-1.c",
     "20230802-1.c",
     "920501-6.c",
+    "920726-1.c",
     "930930-2.c",
     "bswap-1.c",
     "builtin-bitops-1.c",
@@ -800,11 +756,35 @@
     "pr57875.c",
     "pr58943.c",
     "pr91635.c",
-    "pr93213.c"
+    "pr93213.c",
+    "va-arg-10.c",
+    "va-arg-9.c"
    ],
-   "present": 16,
-   "sole": 16,
+   "present": 19,
+   "sole": 19,
    "wall": "unsequenced-effects"
+  },
+  {
+   "files": [
+    "20020720-1.c",
+    "920501-8.c",
+    "941021-1.c",
+    "980205.c",
+    "980605-1.c",
+    "990127-2.c",
+    "cvt-1.c",
+    "ieee/920810-1.c",
+    "ieee/compare-fp-2.c",
+    "ieee/fp-cmp-7.c",
+    "ieee/mzero6.c",
+    "ieee/pr108540-1.c",
+    "ieee/pr108540-2.c",
+    "ieee/pr109008.c",
+    "va-arg-7.c"
+   ],
+   "present": 15,
+   "sole": 15,
+   "wall": "unsupported:no layout for parameter type 'double'"
   },
   {
    "files": [
@@ -843,25 +823,6 @@
    "present": 12,
    "sole": 12,
    "wall": "unsupported:integer-to-pointer conversion is not an unchanged uintptr_t/intptr_t round-trip"
-  },
-  {
-   "files": [
-    "20020720-1.c",
-    "941021-1.c",
-    "980605-1.c",
-    "990127-2.c",
-    "cvt-1.c",
-    "ieee/920810-1.c",
-    "ieee/compare-fp-2.c",
-    "ieee/fp-cmp-7.c",
-    "ieee/mzero6.c",
-    "ieee/pr108540-1.c",
-    "ieee/pr108540-2.c",
-    "ieee/pr109008.c"
-   ],
-   "present": 12,
-   "sole": 12,
-   "wall": "unsupported:no layout for parameter type 'double'"
   },
   {
    "files": [
@@ -930,6 +891,36 @@
   },
   {
    "files": [
+    "20030914-1.c",
+    "20080502-1.c",
+    "gcc/testsuite/gcc.dg/c23-float-1.c",
+    "ieee/20010226-1.c",
+    "ieee/pr36332.c",
+    "pr44942.c",
+    "va-arg-5.c",
+    "va-arg-6.c"
+   ],
+   "present": 8,
+   "sole": 8,
+   "wall": "unsupported:long double floating literal"
+  },
+  {
+   "files": [
+    "931004-10.c",
+    "931004-12.c",
+    "931004-14.c",
+    "931004-2.c",
+    "931004-4.c",
+    "931004-6.c",
+    "931004-8.c",
+    "strct-stdarg-1.c"
+   ],
+   "present": 8,
+   "sole": 8,
+   "wall": "unsupported:va_arg requested unsupported value type 'struct tiny'"
+  },
+  {
+   "files": [
     "20020406-1.c",
     "960521-1.c",
     "990628-1.c",
@@ -941,20 +932,6 @@
    "present": 7,
    "sole": 7,
    "wall": "libc-call: malloc"
-  },
-  {
-   "files": [
-    "20030914-1.c",
-    "20080502-1.c",
-    "gcc/testsuite/gcc.dg/c23-float-1.c",
-    "ieee/20010226-1.c",
-    "ieee/pr36332.c",
-    "pr44942.c",
-    "va-arg-6.c"
-   ],
-   "present": 7,
-   "sole": 7,
-   "wall": "unsupported:long double floating literal"
   },
   {
    "files": [
@@ -1052,6 +1029,19 @@
   },
   {
    "files": [
+    "20010325-1.c",
+    "980608-1.c",
+    "printf-1.c",
+    "va-arg-21.c",
+    "wchar_t-1.c",
+    "widechar-3.c"
+   ],
+   "present": 6,
+   "sole": 6,
+   "wall": "unsupported:string literal with escape or non-ASCII spelling"
+  },
+  {
+   "files": [
     "20071018-1.c",
     "20071120-1.c",
     "pr36765.c",
@@ -1140,17 +1130,6 @@
    "present": 4,
    "sole": 4,
    "wall": "unsupported:no layout for declared type 'union U'"
-  },
-  {
-   "files": [
-    "20010325-1.c",
-    "printf-1.c",
-    "wchar_t-1.c",
-    "widechar-3.c"
-   ],
-   "present": 4,
-   "sole": 4,
-   "wall": "unsupported:string literal with escape or non-ASCII spelling"
   },
   {
    "files": [
@@ -1368,6 +1347,15 @@
   },
   {
    "files": [
+    "gcc/testsuite/gcc.dg/c23-stdarg-9.c",
+    "va-arg-2.c"
+   ],
+   "present": 2,
+   "sole": 2,
+   "wall": "unsupported:more arguments than parameters"
+  },
+  {
+   "files": [
     "20000808-1.c",
     "950607-2.c"
    ],
@@ -1536,6 +1524,15 @@
    "present": 2,
    "sole": 2,
    "wall": "unsupported:no layout for declared type 'v16di'"
+  },
+  {
+   "files": [
+    "va-arg-12.c",
+    "va-arg-18.c"
+   ],
+   "present": 2,
+   "sole": 2,
+   "wall": "unsupported:no layout for parameter type 'L'"
   },
   {
    "files": [
@@ -2008,6 +2005,14 @@
    "present": 1,
    "sole": 1,
    "wall": "unsupported:no layout for declared type 'RenderInfo'"
+  },
+  {
+   "files": [
+    "va-arg-13.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "unsupported:no layout for declared type 'ScanfState'"
   },
   {
    "files": [
@@ -2907,6 +2912,14 @@
   },
   {
    "files": [
+    "va-arg-16.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "unsupported:no layout for parameter type 'TYPE'"
+  },
+  {
+   "files": [
     "20001024-1.c"
    ],
    "present": 1,
@@ -2968,6 +2981,14 @@
    "present": 1,
    "sole": 1,
    "wall": "unsupported:not an integer type: 'T'"
+  },
+  {
+   "files": [
+    "stdarg-4.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "unsupported:not an integer type: 'double'"
   },
   {
    "files": [
@@ -3731,6 +3752,14 @@
   },
   {
    "files": [
+    "stdarg-2.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "unsupported:unbound declaration 'id29' (name 'gap')"
+  },
+  {
+   "files": [
     "20051012-1.c"
    ],
    "present": 1,
@@ -3776,6 +3805,14 @@
    "present": 1,
    "sole": 1,
    "wall": "unsupported:unbound declaration 'id30' (name 'y')"
+  },
+  {
+   "files": [
+    "va-arg-trap-1.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "unsupported:unbound declaration 'id31' (name 'ap')"
   },
   {
    "files": [
@@ -4152,11 +4189,19 @@
    "present": 1,
    "sole": 1,
    "wall": "unsupported:unnamed pointer parameter (array-bound effects are not retained by clang)"
+  },
+  {
+   "files": [
+    "strct-varg-1.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "unsupported:va_arg requested unsupported value type 'struct s'"
   }
  ],
- "manifest_hash": "eb2ea162993fd287a86d680d539ca5a9bba4f09b045a6ad663aaf88cdc3f445d",
- "measured_at_utc": "2026-11-12T23:19:34Z",
- "measured_commit": "607332175",
+ "manifest_hash": "48c9925f3aded9fbda4cd5ea5539d5c5c4aafd5dd5f0621f0edaacba58370bfa",
+ "measured_at_utc": "2026-11-12T23:40:00Z",
+ "measured_commit": "7fc434865",
  "pin": {
   "corpora": [
    "C1",
@@ -7069,17 +7114,16 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "more arguments than parameters",
-   "dynamic_wall": "unsupported:more arguments than parameters",
+   "detail": "",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "20000519-1.c",
    "sha256": "52e57c1675511bacccab6a6a6af556a225ccf0d0094ebe36d76d0a5ce202c6ea",
    "static_walls": [
     "libc-call",
-    "type-layout",
-    "unsupported:VAArgExpr"
+    "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -11232,17 +11276,16 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "more arguments than parameters",
-   "dynamic_wall": "unsupported:more arguments than parameters",
+   "detail": "",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "20071213-1.c",
    "sha256": "9b95dc93a8a8244f9f0fb97cb71013b229e361c542e51e1783bc4610f39c462b",
    "static_walls": [
     "libc-call",
-    "type-layout",
-    "unsupported:VAArgExpr"
+    "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -12512,16 +12555,15 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "more arguments than parameters",
-   "dynamic_wall": "unsupported:more arguments than parameters",
+   "detail": "no layout for parameter type 'double'",
+   "dynamic_wall": "unsupported:no layout for parameter type 'double'",
    "manifest_status": "parsed",
    "name": "920501-8.c",
    "sha256": "cb8282773b7c14ebe4c0d9bc436fc102145e62f43f2358affa849f01cd6ac1e6",
    "static_walls": [
     "libc-call",
     "string-literal",
-    "type-layout",
-    "unsupported:VAArgExpr"
+    "type-layout"
    ],
    "verdict": "refused-unsupported"
   },
@@ -12690,16 +12732,15 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "more arguments than parameters",
-   "dynamic_wall": "unsupported:more arguments than parameters",
+   "detail": "unsequenced side effects in compound assignment",
+   "dynamic_wall": "unsequenced-effects",
    "manifest_status": "parsed",
    "name": "920726-1.c",
    "sha256": "af90ff5eeb8799ed0e0d255bd276fbcac8bf6d890785a7fe998b82758e59d393",
    "static_walls": [
     "libc-call",
     "string-literal",
-    "type-layout",
-    "unsupported:VAArgExpr"
+    "type-layout"
    ],
    "verdict": "refused-unsupported"
   },
@@ -13540,15 +13581,14 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "more arguments than parameters",
-   "dynamic_wall": "unsupported:more arguments than parameters",
+   "detail": "va_arg requested unsupported value type 'struct tiny'",
+   "dynamic_wall": "unsupported:va_arg requested unsupported value type 'struct tiny'",
    "manifest_status": "parsed",
    "name": "931004-10.c",
    "sha256": "e309602b58651c94a95591af48d56495187a0ecaef392cc9d6dbaf0c96c674df",
    "static_walls": [
     "libc-call",
-    "type-layout",
-    "unsupported:VAArgExpr"
+    "type-layout"
    ],
    "verdict": "refused-unsupported"
   },
@@ -13566,15 +13606,14 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "more arguments than parameters",
-   "dynamic_wall": "unsupported:more arguments than parameters",
+   "detail": "va_arg requested unsupported value type 'struct tiny'",
+   "dynamic_wall": "unsupported:va_arg requested unsupported value type 'struct tiny'",
    "manifest_status": "parsed",
    "name": "931004-12.c",
    "sha256": "2e8eb60038e1cebb1439745893fcd9c285639180177dcc2b9de0f818c6814099",
    "static_walls": [
     "libc-call",
-    "type-layout",
-    "unsupported:VAArgExpr"
+    "type-layout"
    ],
    "verdict": "refused-unsupported"
   },
@@ -13592,29 +13631,27 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "more arguments than parameters",
-   "dynamic_wall": "unsupported:more arguments than parameters",
+   "detail": "va_arg requested unsupported value type 'struct tiny'",
+   "dynamic_wall": "unsupported:va_arg requested unsupported value type 'struct tiny'",
    "manifest_status": "parsed",
    "name": "931004-14.c",
    "sha256": "690c04d80d7a571ca5e94777e2939f0e7c20004a7e328397b9f692b20e167673",
    "static_walls": [
     "libc-call",
-    "type-layout",
-    "unsupported:VAArgExpr"
+    "type-layout"
    ],
    "verdict": "refused-unsupported"
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "more arguments than parameters",
-   "dynamic_wall": "unsupported:more arguments than parameters",
+   "detail": "va_arg requested unsupported value type 'struct tiny'",
+   "dynamic_wall": "unsupported:va_arg requested unsupported value type 'struct tiny'",
    "manifest_status": "parsed",
    "name": "931004-2.c",
    "sha256": "f00e81760f99222bac9d543f2868031bbc5cd7fc5a539eaf674c66e2a3cfad95",
    "static_walls": [
     "libc-call",
-    "type-layout",
-    "unsupported:VAArgExpr"
+    "type-layout"
    ],
    "verdict": "refused-unsupported"
   },
@@ -13632,15 +13669,14 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "more arguments than parameters",
-   "dynamic_wall": "unsupported:more arguments than parameters",
+   "detail": "va_arg requested unsupported value type 'struct tiny'",
+   "dynamic_wall": "unsupported:va_arg requested unsupported value type 'struct tiny'",
    "manifest_status": "parsed",
    "name": "931004-4.c",
    "sha256": "bf6f0ae1dd87118dcfc921f5faff4ff122f041f9ec0ed04b8f7c2ff3496f8be3",
    "static_walls": [
     "libc-call",
-    "type-layout",
-    "unsupported:VAArgExpr"
+    "type-layout"
    ],
    "verdict": "refused-unsupported"
   },
@@ -13658,15 +13694,14 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "more arguments than parameters",
-   "dynamic_wall": "unsupported:more arguments than parameters",
+   "detail": "va_arg requested unsupported value type 'struct tiny'",
+   "dynamic_wall": "unsupported:va_arg requested unsupported value type 'struct tiny'",
    "manifest_status": "parsed",
    "name": "931004-6.c",
    "sha256": "7299d2123bddad05c27e6147221863db907004007218f97ac78d36caa57e3973",
    "static_walls": [
     "libc-call",
-    "type-layout",
-    "unsupported:VAArgExpr"
+    "type-layout"
    ],
    "verdict": "refused-unsupported"
   },
@@ -13684,15 +13719,14 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "more arguments than parameters",
-   "dynamic_wall": "unsupported:more arguments than parameters",
+   "detail": "va_arg requested unsupported value type 'struct tiny'",
+   "dynamic_wall": "unsupported:va_arg requested unsupported value type 'struct tiny'",
    "manifest_status": "parsed",
    "name": "931004-8.c",
    "sha256": "ee628a68257bb72e28c09060828905f40a21d55aba748cf7e7d45f05a2fc3bf9",
    "static_walls": [
     "libc-call",
-    "type-layout",
-    "unsupported:VAArgExpr"
+    "type-layout"
    ],
    "verdict": "refused-unsupported"
   },
@@ -14702,15 +14736,14 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "more arguments than parameters",
-   "dynamic_wall": "unsupported:more arguments than parameters",
+   "detail": "no layout for parameter type 'double'",
+   "dynamic_wall": "unsupported:no layout for parameter type 'double'",
    "manifest_status": "parsed",
    "name": "980205.c",
    "sha256": "12b700b76e4f3efe5726e041f39d370f71140cea0a6da7e7a84581af34845ce3",
    "static_walls": [
     "libc-call",
-    "type-layout",
-    "unsupported:VAArgExpr"
+    "type-layout"
    ],
    "verdict": "refused-unsupported"
   },
@@ -14891,16 +14924,15 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "more arguments than parameters",
-   "dynamic_wall": "unsupported:more arguments than parameters",
+   "detail": "string literal with escape or non-ASCII spelling",
+   "dynamic_wall": "unsupported:string literal with escape or non-ASCII spelling",
    "manifest_status": "parsed",
    "name": "980608-1.c",
    "sha256": "588cf65bb572c64a84b3dcd18c3c078973b97cb6365308c146077c6623dd7412",
    "static_walls": [
     "libc-call",
     "string-literal",
-    "type-layout",
-    "unsupported:VAArgExpr"
+    "type-layout"
    ],
    "verdict": "refused-unsupported"
   },
@@ -14977,18 +15009,17 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "more arguments than parameters",
-   "dynamic_wall": "unsupported:more arguments than parameters",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "980716-1.c",
    "sha256": "d189e2baf735a74eac5e1e25df6337877b239b370e5307eebb93078a74c20576",
    "static_walls": [
     "libc-call",
     "string-literal",
-    "type-layout",
-    "unsupported:VAArgExpr"
+    "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -15498,17 +15529,16 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "more arguments than parameters",
-   "dynamic_wall": "unsupported:more arguments than parameters",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "991216-2.c",
    "sha256": "6da27e5d003c8d1270f7a3daad574d2e138e218ab4b071c533e89f050b4a16ea",
    "static_walls": [
     "libc-call",
-    "type-layout",
-    "unsupported:VAArgExpr"
+    "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -20901,17 +20931,16 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "more arguments than parameters",
-   "dynamic_wall": "unsupported:more arguments than parameters",
+   "detail": "",
+   "dynamic_wall": "timeout",
    "manifest_status": "parsed",
    "name": "multi-ix.c",
    "sha256": "c419fe0b5c2f4ba23408553432f6a8fef6ea671ec815146fb8e08a11c9940fd1",
    "static_walls": [
     "libc-call",
-    "type-layout",
-    "unsupported:VAArgExpr"
+    "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "timeout"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -21903,17 +21932,16 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "more arguments than parameters",
-   "dynamic_wall": "unsupported:more arguments than parameters",
+   "detail": "",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "pr117432.c",
    "sha256": "358d4a6891006ad25eb04f99e55096f70dba93ef0056a8a30f1da268b73025af",
    "static_walls": [
     "libc-call",
-    "type-layout",
-    "unsupported:VAArgExpr"
+    "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -26175,17 +26203,16 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "more arguments than parameters",
-   "dynamic_wall": "unsupported:more arguments than parameters",
+   "detail": "",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "pr64979.c",
    "sha256": "ebc80502935f4fca2dd98ae330c1da1e7e06d88ac8fa25d9f0a108ecc601e066",
    "static_walls": [
     "libc-call",
-    "type-layout",
-    "unsupported:VAArgExpr"
+    "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -29106,15 +29133,14 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "more arguments than parameters",
-   "dynamic_wall": "unsupported:more arguments than parameters",
+   "detail": "unbound declaration 'id29' (name 'gap')",
+   "dynamic_wall": "unsupported:unbound declaration 'id29' (name 'gap')",
    "manifest_status": "parsed",
    "name": "stdarg-2.c",
    "sha256": "560b59b0eeaa2d180429fb10e96bb98373fcde1c85aa0601bc915bfc57546b73",
    "static_walls": [
     "libc-call",
-    "type-layout",
-    "unsupported:VAArgExpr"
+    "type-layout"
    ],
    "verdict": "refused-unsupported"
   },
@@ -29135,16 +29161,15 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "more arguments than parameters",
-   "dynamic_wall": "unsupported:more arguments than parameters",
+   "detail": "not an integer type: 'double'",
+   "dynamic_wall": "unsupported:not an integer type: 'double'",
    "manifest_status": "parsed",
    "name": "stdarg-4.c",
    "sha256": "df92949fcdfbb1dec3c0d7fdad72e494a01ab6d678bd237196fa300234673e54",
    "static_walls": [
     "cast:FloatingToIntegral",
     "libc-call",
-    "type-layout",
-    "unsupported:VAArgExpr"
+    "type-layout"
    ],
    "verdict": "refused-unsupported"
   },
@@ -29251,29 +29276,27 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "more arguments than parameters",
-   "dynamic_wall": "unsupported:more arguments than parameters",
+   "detail": "va_arg requested unsupported value type 'struct tiny'",
+   "dynamic_wall": "unsupported:va_arg requested unsupported value type 'struct tiny'",
    "manifest_status": "parsed",
    "name": "strct-stdarg-1.c",
    "sha256": "ec51bc0af8c8f24d46dbac8bdd811e120c7e5fd3b81648a48c7163d4280a4d78",
    "static_walls": [
     "libc-call",
-    "type-layout",
-    "unsupported:VAArgExpr"
+    "type-layout"
    ],
    "verdict": "refused-unsupported"
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "more arguments than parameters",
-   "dynamic_wall": "unsupported:more arguments than parameters",
+   "detail": "va_arg requested unsupported value type 'struct s'",
+   "dynamic_wall": "unsupported:va_arg requested unsupported value type 'struct s'",
    "manifest_status": "parsed",
    "name": "strct-varg-1.c",
    "sha256": "8b9d0f63a946ddf96a8693c67ea786314140c055e72b1cf2b36b9f30b121a2b1",
    "static_walls": [
     "libc-call",
-    "type-layout",
-    "unsupported:VAArgExpr"
+    "type-layout"
    ],
    "verdict": "refused-unsupported"
   },
@@ -29605,72 +29628,67 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "more arguments than parameters",
-   "dynamic_wall": "unsupported:more arguments than parameters",
+   "detail": "LeanModels.C.C23.UB.vaArgTypeMismatch \"L\" \"true:64\"",
+   "dynamic_wall": "undefined-behavior",
    "manifest_status": "parsed",
    "name": "va-arg-1.c",
    "sha256": "0f7f0d1e757998090be6c94dd8920fd0e2a1c94e0162d670dd777814e026080f",
    "static_walls": [
     "libc-call",
-    "type-layout",
-    "unsupported:VAArgExpr"
+    "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "refused-ub"
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "more arguments than parameters",
-   "dynamic_wall": "unsupported:more arguments than parameters",
+   "detail": "unsequenced side effects in binary operands",
+   "dynamic_wall": "unsequenced-effects",
    "manifest_status": "parsed",
    "name": "va-arg-10.c",
    "sha256": "5cb2d6ed423c050aaa81f9a50ce99c3dd43e88f2757c460a46a8b5836b09c4df",
    "static_walls": [
     "libc-call",
     "string-literal",
-    "type-layout",
-    "unsupported:VAArgExpr"
+    "type-layout"
    ],
    "verdict": "refused-unsupported"
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "more arguments than parameters",
-   "dynamic_wall": "unsupported:more arguments than parameters",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "va-arg-11.c",
    "sha256": "d45a0dfea3dca4640a8b8f01cdc27f77c513ef6dcb2ee54f4c0aea98fb7d21b4",
    "static_walls": [
     "libc-call",
-    "type-layout",
-    "unsupported:VAArgExpr"
+    "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "more arguments than parameters",
-   "dynamic_wall": "unsupported:more arguments than parameters",
+   "detail": "no layout for parameter type 'L'",
+   "dynamic_wall": "unsupported:no layout for parameter type 'L'",
    "manifest_status": "parsed",
    "name": "va-arg-12.c",
    "sha256": "3ac1c4f014534ca3b3c10d0fc66df11b7d2fe0e97fff567fd00560029e470662",
    "static_walls": [
     "libc-call",
-    "type-layout",
-    "unsupported:VAArgExpr"
+    "type-layout"
    ],
    "verdict": "refused-unsupported"
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "more arguments than parameters",
-   "dynamic_wall": "unsupported:more arguments than parameters",
+   "detail": "no layout for declared type 'ScanfState'",
+   "dynamic_wall": "unsupported:no layout for declared type 'ScanfState'",
    "manifest_status": "parsed",
    "name": "va-arg-13.c",
    "sha256": "279279f98774c877ba8c2915b734a42166ab4f90ec7fba6b5f569b6ce3890d92",
    "static_walls": [
     "libc-call",
-    "type-layout",
-    "unsupported:VAArgExpr"
+    "type-layout"
    ],
    "verdict": "refused-unsupported"
   },
@@ -29690,8 +29708,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "more arguments than parameters",
-   "dynamic_wall": "unsupported:more arguments than parameters",
+   "detail": "no layout for declared type 'double'",
+   "dynamic_wall": "unsupported:no layout for declared type 'double'",
    "manifest_status": "parsed",
    "name": "va-arg-15.c",
    "sha256": "bc9aefd3656145f3f3e0110bab4fe674903e26cdb8c23b474e6f185e5d705a3d",
@@ -29699,68 +29717,63 @@
     "cast:IntegralToFloating",
     "libc-call",
     "string-literal",
-    "type-layout",
-    "unsupported:VAArgExpr"
+    "type-layout"
    ],
    "verdict": "refused-unsupported"
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "more arguments than parameters",
-   "dynamic_wall": "unsupported:more arguments than parameters",
+   "detail": "no layout for parameter type 'TYPE'",
+   "dynamic_wall": "unsupported:no layout for parameter type 'TYPE'",
    "manifest_status": "parsed",
    "name": "va-arg-16.c",
    "sha256": "214db61e9e8a8749953ce90aa8d439142f6e51cca19d298af7cf268eb448b00a",
    "static_walls": [
     "libc-call",
-    "type-layout",
-    "unsupported:VAArgExpr"
+    "type-layout"
    ],
    "verdict": "refused-unsupported"
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "more arguments than parameters",
-   "dynamic_wall": "unsupported:more arguments than parameters",
+   "detail": "LeanModels.C.C23.UB.vaArgTypeMismatch \"TYPE\" \"binary64\"",
+   "dynamic_wall": "undefined-behavior",
    "manifest_status": "parsed",
    "name": "va-arg-17.c",
    "sha256": "e3bd464100e2fc2a2657d338e921a84ff7e2626e1b04ca51fde765b56fd3f046",
    "static_walls": [
     "libc-call",
     "string-literal",
-    "type-layout",
-    "unsupported:VAArgExpr"
+    "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "refused-ub"
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "more arguments than parameters",
-   "dynamic_wall": "unsupported:more arguments than parameters",
+   "detail": "no layout for parameter type 'L'",
+   "dynamic_wall": "unsupported:no layout for parameter type 'L'",
    "manifest_status": "parsed",
    "name": "va-arg-18.c",
    "sha256": "5164ef08accb5ddac18b0d27f4406fded13ae687a456aaeb76df3ba8f8cde462",
    "static_walls": [
     "libc-call",
-    "type-layout",
-    "unsupported:VAArgExpr"
+    "type-layout"
    ],
    "verdict": "refused-unsupported"
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "more arguments than parameters",
-   "dynamic_wall": "unsupported:more arguments than parameters",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "va-arg-19.c",
    "sha256": "e0251e5c3506f5909a206d4523019424f7890dc5033296693ddd7cf35d165331",
    "static_walls": [
     "libc-call",
     "string-literal",
-    "type-layout",
-    "unsupported:VAArgExpr"
+    "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -29779,22 +29792,21 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "more arguments than parameters",
-   "dynamic_wall": "unsupported:more arguments than parameters",
+   "detail": "LeanModels.C.C23.UB.vaArgTypeMismatch \"unsigned long long\" \"true:64\"",
+   "dynamic_wall": "undefined-behavior",
    "manifest_status": "parsed",
    "name": "va-arg-20.c",
    "sha256": "5a664bf0f0e716f4534dc388535e562b4976cd06cffbd96a2fd2a6a7c3a7e5b7",
    "static_walls": [
     "libc-call",
-    "type-layout",
-    "unsupported:VAArgExpr"
+    "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "refused-ub"
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "more arguments than parameters",
-   "dynamic_wall": "unsupported:more arguments than parameters",
+   "detail": "string literal with escape or non-ASCII spelling",
+   "dynamic_wall": "unsupported:string literal with escape or non-ASCII spelling",
    "manifest_status": "parsed",
    "name": "va-arg-21.c",
    "sha256": "dedc44188f3fd1c561cd63e1d964c7f0beb5c077b4802c961b0eb7f4a6c7fbd9",
@@ -29821,32 +29833,30 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "more arguments than parameters",
-   "dynamic_wall": "unsupported:more arguments than parameters",
+   "detail": "",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "va-arg-23.c",
    "sha256": "3a2323c7449a4fb47db61e20103522b204413ba862aafa78a145e23b74a171d6",
    "static_walls": [
     "libc-call",
-    "type-layout",
-    "unsupported:VAArgExpr"
+    "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "more arguments than parameters",
-   "dynamic_wall": "unsupported:more arguments than parameters",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "va-arg-24.c",
    "sha256": "8233497b9ce5e3bfb95e0904a1dcc22fe247159184cbad4aa312712884f1bc7e",
    "static_walls": [
     "libc-call",
     "string-literal",
-    "type-layout",
-    "unsupported:VAArgExpr"
+    "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -29880,15 +29890,14 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "more arguments than parameters",
-   "dynamic_wall": "unsupported:more arguments than parameters",
+   "detail": "long double floating literal",
+   "dynamic_wall": "unsupported:long double floating literal",
    "manifest_status": "parsed",
    "name": "va-arg-5.c",
    "sha256": "c4f21f1570c49976849ab2d5cb5fe9a49ae430ff19d27a3dd9069c0c6df8f2dd",
    "static_walls": [
     "libc-call",
-    "type-layout",
-    "unsupported:VAArgExpr"
+    "type-layout"
    ],
    "verdict": "refused-unsupported"
   },
@@ -29908,44 +29917,41 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "more arguments than parameters",
-   "dynamic_wall": "unsupported:more arguments than parameters",
+   "detail": "no layout for parameter type 'double'",
+   "dynamic_wall": "unsupported:no layout for parameter type 'double'",
    "manifest_status": "parsed",
    "name": "va-arg-7.c",
    "sha256": "d566662a26a3f877293048b058ac53e7ed8ccdb93717ded2a73ed96a836d4226",
    "static_walls": [
     "libc-call",
-    "type-layout",
-    "unsupported:VAArgExpr"
+    "type-layout"
    ],
    "verdict": "refused-unsupported"
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "more arguments than parameters",
-   "dynamic_wall": "unsupported:more arguments than parameters",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "va-arg-8.c",
    "sha256": "d3d69b63bca0f643c44af9e58cc010b11f952aa646e5cccf135d45563d26813b",
    "static_walls": [
     "libc-call",
-    "type-layout",
-    "unsupported:VAArgExpr"
+    "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "more arguments than parameters",
-   "dynamic_wall": "unsupported:more arguments than parameters",
+   "detail": "unsequenced side effects in binary operands",
+   "dynamic_wall": "unsequenced-effects",
    "manifest_status": "parsed",
    "name": "va-arg-9.c",
    "sha256": "d81cf4ba2a988b659534a2037ecff6039bac090a41e316dad99cfd094c743cba",
    "static_walls": [
     "libc-call",
     "string-literal",
-    "type-layout",
-    "unsupported:VAArgExpr"
+    "type-layout"
    ],
    "verdict": "refused-unsupported"
   },
@@ -29961,15 +29967,14 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "more arguments than parameters",
-   "dynamic_wall": "unsupported:more arguments than parameters",
+   "detail": "unbound declaration 'id31' (name 'ap')",
+   "dynamic_wall": "unsupported:unbound declaration 'id31' (name 'ap')",
    "manifest_status": "parsed",
    "name": "va-arg-trap-1.c",
    "sha256": "6fbbc2681a834c531d94a5e7c2d29fc13ce41857d726387ab0c7ef6e0f7e7dad",
    "static_walls": [
     "libc-call",
-    "type-layout",
-    "unsupported:VAArgExpr"
+    "type-layout"
    ],
    "verdict": "refused-unsupported"
   },
@@ -32589,71 +32594,6 @@
   },
   {
    "files": [
-    "00204.c",
-    "20000519-1.c",
-    "20041113-1.c",
-    "20041214-1.c",
-    "20071213-1.c",
-    "920501-8.c",
-    "920625-1.c",
-    "920726-1.c",
-    "920908-1.c",
-    "931004-10.c",
-    "931004-12.c",
-    "931004-14.c",
-    "931004-2.c",
-    "931004-4.c",
-    "931004-6.c",
-    "931004-8.c",
-    "980205.c",
-    "980608-1.c",
-    "980716-1.c",
-    "991216-2.c",
-    "gcc/testsuite/gcc.dg/c23-stdarg-9.c",
-    "multi-ix.c",
-    "pr117432.c",
-    "pr38151.c",
-    "pr44575.c",
-    "pr44942.c",
-    "pr64979.c",
-    "pr92904.c",
-    "stdarg-1.c",
-    "stdarg-2.c",
-    "stdarg-3.c",
-    "stdarg-4.c",
-    "strct-stdarg-1.c",
-    "strct-varg-1.c",
-    "va-arg-1.c",
-    "va-arg-10.c",
-    "va-arg-11.c",
-    "va-arg-12.c",
-    "va-arg-13.c",
-    "va-arg-14.c",
-    "va-arg-15.c",
-    "va-arg-16.c",
-    "va-arg-17.c",
-    "va-arg-18.c",
-    "va-arg-19.c",
-    "va-arg-2.c",
-    "va-arg-20.c",
-    "va-arg-22.c",
-    "va-arg-23.c",
-    "va-arg-24.c",
-    "va-arg-26.c",
-    "va-arg-4.c",
-    "va-arg-5.c",
-    "va-arg-6.c",
-    "va-arg-7.c",
-    "va-arg-8.c",
-    "va-arg-9.c",
-    "va-arg-trap-1.c"
-   ],
-   "present": 58,
-   "sole": 0,
-   "wall": "unsupported:VAArgExpr"
-  },
-  {
-   "files": [
     "00174.c",
     "00175.c",
     "00204.c",
@@ -32783,6 +32723,31 @@
    "present": 27,
    "sole": 0,
    "wall": "unsupported:PackedAttr"
+  },
+  {
+   "files": [
+    "00204.c",
+    "20041113-1.c",
+    "20041214-1.c",
+    "920625-1.c",
+    "920908-1.c",
+    "gcc/testsuite/gcc.dg/c23-stdarg-9.c",
+    "pr38151.c",
+    "pr44575.c",
+    "pr44942.c",
+    "pr92904.c",
+    "stdarg-1.c",
+    "stdarg-3.c",
+    "va-arg-14.c",
+    "va-arg-2.c",
+    "va-arg-22.c",
+    "va-arg-26.c",
+    "va-arg-4.c",
+    "va-arg-6.c"
+   ],
+   "present": 18,
+   "sole": 0,
+   "wall": "unsupported:VAArgExpr"
   },
   {
    "files": [

@@ -73245,5 +73245,13 @@
     "stimulus": [{"a": "0"}, {"a": "1"}, {"a": "x"}, {"a": "z"}],
     "measured": "2026-11-12: a complete single continuous driver makes the output wire’s resolution identity; E retains `isNet` and matches Icarus Verilog 13.0 and Xcelium 24.03-s004 for 0, 1, x and z."
   }
+  ,{
+    "name": "timed_event_loop_e",
+    "example": "sem2/timed_event_loop_e",
+    "top": "timed_event_loop_e",
+    "signals": ["x", "y"],
+    "stimulus": [{"x": "00000000"}, {"x": "00000001"}, {"x": "10100100"}, {"x": "11111111"}, {"x": "xxxxxxxx"}],
+    "measured": "2026-11-12: the source loop is elaborated by Slang into eight parser-shaped conditional arms; canonical E matches Icarus Verilog 13.0 and Xcelium 24.03-s004 over known and unknown inputs."
+  }
   ]
 }

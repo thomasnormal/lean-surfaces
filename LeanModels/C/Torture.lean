@@ -327,6 +327,28 @@ def checkedRecordLayout? (fields : List Decl) (layout : RecordLayout) :
   if recordLayoutWellFormed layout &&
       recordLayoutMatchesFields fields layout.fields then some layout else none
 
+/-! A checked, identity-backed aggregate fact.  The type key is only the
+spelling Clang itself attached to the declaration (`struct S`/`union U`);
+the fact is admitted only after the declaration id and every field have
+matched the parser-native layout observation above.  No size or offset is
+reconstructed from that spelling. -/
+def observedRecordFacts (envl : Envelope) :
+    List (CType × List (String × CType) × RecordLayout) :=
+  let ds := allDecls envl
+  ds.filterMap fun d => match d with
+    | .record (some _) (some nm) fields (some layout) _ =>
+        match checkedRecordLayout? fields layout with
+        | none => none
+        | some checked =>
+            if checked.fields.any (fun field => field.bitfield) || recordHasUnsupported fields then none
+            else
+              let tag := if checked.tagKind == "union" then "union " else "struct "
+              let members := fields.filterMap fun field => match field with
+                | .field name ty _ _ => some (name.getD "", ty)
+                | _ => none
+              some (tag ++ nm, members, checked)
+    | _ => none
+
 
 #guard recordLayoutWellFormed {
   offset := 0, tokenLength := 1, name := "S", tagKind := "struct",
@@ -427,14 +449,30 @@ def fieldOffIn (tds : List (CType × CType))
 def layoutFor (envl : Envelope) : Layout :=
   let tds := typedefsOf envl
   let recs := recordsOf envl
-  { size := fun t => (sizeAlign tds recs 16 t).map (·.1)
+  let observed := observedRecordFacts envl
+  let observedFor := fun t : CType =>
+    let t0 := stripQuals 8 t
+    let t1 := if t0.endsWith "*" then
+      stripQuals 8 (t0.dropEnd 1).toString.trimAsciiEnd.toString
+      else t0
+    observed.find? (fun row => row.1 == t1)
+  { size := fun t => match observedFor t with
+      | some (_, _, layout) => some layout.sizeBytes
+      | none => (sizeAlign tds recs 16 t).map (·.1)
     elem := fun t => arrayOf (resolve tds 8 t)
-    fieldOff := fun t f => fieldOffIn tds recs 16 t f
+    fieldOff := fun t f => match observedFor t with
+      | some (_, _, layout) =>
+          layout.fields.find? (fun field => field.name == f)
+            |>.map (fun field => field.offsetBits / 8)
+      | none => fieldOffIn tds recs 16 t f
     members := fun t =>
-      let rt := resolve tds 8 (stripQuals 8 t)
-      let r := (recs.find? (·.1 == rt)).orElse (fun _ =>
-        (recordTag rt).bind (fun tag => recs.find? (·.1 == tag)))
-      r.map (·.2)
+      match observedFor t with
+      | some (_, members, _) => some members
+      | none =>
+          let rt := resolve tds 8 (stripQuals 8 t)
+          let r := (recs.find? (·.1 == rt)).orElse (fun _ =>
+            (recordTag rt).bind (fun tag => recs.find? (·.1 == tag)))
+          r.map (·.2)
     -- The evaluator's own normalizer, built from THIS unit's typedefs. The
     -- table in `intTyOf?` cannot do this job: `ull` is `unsigned long` in one
     -- test and `unsigned long long` in another, so the answer is a property

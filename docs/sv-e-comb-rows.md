@@ -177,3 +177,7 @@ profile under IEEE 1800-2023 §4.7.  No simulator result is claimed.
 The procedural four-way case row, `mux4_case`, runs from its source-shaped
 envelope and matches Icarus Verilog 13.0 and Xcelium 24.03-s004 for all 8
 cycles.  It is an E-MATCH and does not change the frozen migration count.
+
+The one-hot procedural decoder, `onehot_dec`, runs from its source-shaped
+envelope and matches Icarus Verilog 13.0 and Xcelium 24.03-s004 for all 12
+cycles.  It is an E-MATCH and does not change the frozen migration count.

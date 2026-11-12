@@ -60,7 +60,7 @@ elab "load_c_program " name:ident " from " path:str : command => do
   unless envl.language == "c" do
     throwErrorAt path
       "load_c_program: '{pathStr}' has language '{envl.language}', expected 'c'"
-  unless envl.profileId == acceptedProfile do
+  unless envl.profileId == acceptedProfile || envl.profileId == acceptedProfile ++ "-c17" do
     throwErrorAt path
       "load_c_program: '{pathStr}' was extracted under profile '{envl.profileId}', but this ingester pins '{acceptedProfile}'. The profile is an INPUT to the AST, not a stamp on it — an envelope from another profile is a different program (docs/c-envelope-schema.md §0)."
   let declName := (← getCurrNamespace) ++ name.getId

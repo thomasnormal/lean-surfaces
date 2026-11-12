@@ -724,7 +724,12 @@ def externals(tu, target, loc_cls):
             for nm in sorted(used - defined)]
 
 
-def extract(path, source_name=None):
+def extract(path, source_name=None, standard="c23"):
+    global PROFILE_FLAGS, AST_FLAGS
+    if standard not in ("c17", "c23"):
+        die("unsupported C standard %s" % standard)
+    PROFILE_FLAGS = ["-std=" + standard, "-D_FORTIFY_SOURCE=0"]
+    AST_FLAGS = PROFILE_FLAGS + ["-fsyntax-only", "-Xclang", "-ast-dump=json"]
     check_profile()
     src = open(path, "rb").read()
     tu = canonicalize_ids(clang_json(path))
@@ -786,7 +791,7 @@ def extract(path, source_name=None):
         "schema_version": SCHEMA_VERSION,
         "language": "c",
         "frontend": {"name": "clang-ast-json", "version": frontend_version()},
-        "profile_id": PROFILE_ID,
+        "profile_id": PROFILE_ID + ("-c17" if standard == "c17" else ""),
         "profile_flags": PROFILE_FLAGS,
         "source_file": rel,
         "source_sha256": hashlib.sha256(src).hexdigest(),
@@ -843,6 +848,8 @@ def main():
                     help="the path to record as source_file (the corpus lives "
                          "in another repository, so its own path is not "
                          "relative to this one)")
+    ap.add_argument("--std", choices=("c17", "c23"), default="c23",
+                    help="C language edition for the pinned frontend")
     ap.add_argument("--selftest", action="store_true",
                     help="run the instrument's own checks; no clang, no source")
     args = ap.parse_args()
@@ -852,7 +859,7 @@ def main():
         die("no source given (and --selftest was not requested)")
     if not os.path.exists(args.source):
         die("no such file: %s" % args.source)
-    env, unsup = extract(args.source, args.source_name)
+    env, unsup = extract(args.source, args.source_name, args.std)
     text = json.dumps(env, indent=2) + "\n"
     if args.output:
         with open(args.output, "w") as fh:

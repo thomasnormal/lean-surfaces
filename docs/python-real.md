@@ -6,14 +6,19 @@ The refreshed baseline has **12 VERIFIED public-function modules**, with 4,091 o
 
 The call denominator is lower than the first run because the oracle now records CPython C-accelerator overrides (`override:*`) as explicit `accelerator equivalence is unmeasured` skips. It never compares a pure-Python AST definition with a replacement C function. The four DIVERGE families from the prior refresh (`inspect.getdoc`, `arith.mod`, `gen_lab.drain_unbound`, and `str_lab.fmt_bare_leftover`) are now either matched or explicitly refused.
 
-The observed refusal ranking is measured by both presence and `sole` census walls:
+The observed refusal ranking is measured by both presence and `sole` census walls. It was generated from the complete survey JSON with
+`python3 harness/library_rank.py --provenance census:library --json /tmp/library-rank-current.json /tmp/library-current.json`.
+The price columns are the measured surface in the rows that fired each wall, not a prediction that every row will flip:
+modules, public functions, and driven calls.
 
-| Wall | Present | Sole |
-|---|---:|---:|
-| `class-creation` | 19 | 0 |
-| `import` | 14 | 6 |
-| `node:ImportFrom:accelerator-unmeasured` | 1 | 1 |
+| Wall | Present | Sole | Modules | Public functions | Driven calls |
+|---|---:|---:|---:|---:|---:|
+| `import` | 30 | 7 | 30 | 97 | 560 |
+| `accelerator-unmeasured` | 1 | 1 | 1 | 0 | 0 |
+| `node:DictComp` | 1 | 1 | 1 | 3 | 24 |
+| `class-creation` | 62 | 0 | 62 | 383 | 2,015 |
+| `definition-order` | 34 | 0 | 34 | 284 | 1,288 |
 
-The remaining observed messages are four function-body definition-order walls, one heap `+` wall, one unsupported `try/except` wall, and one missing `frozenset` builtin. These are recorded per module in the JSON result and are not silently ranked as a named census wall.
+The remaining observed messages are one accelerator-domain wall, one heap `+` wall, one unsupported `try/except` wall, one missing `frozenset` builtin, and one list `.extend` wall. They remain recorded per module in the JSON result and are not silently omitted from the ranking.
 
-The baseline command used pinned `python3.9`, fixed fuel (`100000` body, `10000` call), eight calls per public function, a 600-second body bound, and a 60-second per-module call bound. Results were merged with `library_survey.py --merge`; no module occurred in more than one chunk. The merged run is marked incomplete because eight calls did not finish within their bounds.
+The baseline command used pinned `python3.9`, fixed fuel (`200000` body, `10000` call), eight calls per public function, a 900-second body bound, and a 120-second per-module call bound. The complete run covered all 183 manifest and in-repo rows in one survey; its eight unfinished calls remain explicit and are not counted as agreement.

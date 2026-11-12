@@ -184,12 +184,24 @@ def self_test():
          "nfunctions": 1, "ncalls": 2},
         {"module": "d", "observed_wall": "msg:builtin 'frozenset' exists", "census_walls": [],
          "nfunctions": 4, "ncalls": 0},
+        # A sole DictComp wall can still leave every public function already
+        # verified through calls that do not evaluate the module-level
+        # comprehension.  It must therefore price at zero function flips.
+        {"module": "dictcomp", "observed_wall": "node:DictComp",
+         "census_walls": ["node:DictComp"], "verdict": "PARTIAL",
+         "oracle": {"functions": [
+             {"name": "safe", "calls": [{"oracle": {"status": "ok"}}]},
+         ]},
+         "calls": [{"function": "safe", "verdict": "MATCH",
+                     "cpython": {"status": "ok"}}]},
     ]
     got = rank(rows)
-    assert [x["wall"] for x in got] == ["import", "class-creation", "frozenset"]
-    assert got[0]["sole"] == 1 and got[0]["present"] == 2
-    assert got[1]["sole"] == 1 and got[1]["driven_calls"] == 2
-    assert got[2]["sole"] == 0
+    assert [x["wall"] for x in got] == ["node:DictComp", "import", "class-creation", "frozenset"]
+    by_wall = {item["wall"]: item for item in got}
+    assert by_wall["import"]["sole"] == 1 and by_wall["import"]["present"] == 2
+    assert by_wall["class-creation"]["sole"] == 1 and by_wall["class-creation"]["driven_calls"] == 2
+    assert by_wall["frozenset"]["sole"] == 0
+    assert by_wall["node:DictComp"]["potential_verified_functions"] == 0
     print("library_rank self-test: 3 walls, 0 failures")
 
 

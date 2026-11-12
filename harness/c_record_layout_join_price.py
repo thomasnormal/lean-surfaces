@@ -44,6 +44,24 @@ def classify(node):
     return "joined"
 
 
+def layout_summary(node):
+    layout = node.get("record_layout")
+    if not layout:
+        return None
+    fields = layout.get("fields", [])
+    return {
+        "size_bytes": layout.get("size_bytes"),
+        "alignment_bytes": layout.get("alignment_bytes"),
+        "bitfield_count": sum(bool(field.get("bitfield")) for field in fields),
+        "bitfields": [
+            {"name": field.get("name"),
+             "offset_bits": field.get("offset_bits"),
+             "width_bits": field.get("width_bits")}
+            for field in fields if field.get("bitfield")
+        ],
+    }
+
+
 def run(args):
     manifest = json.loads(Path(args.manifest).read_text())
     cache = Path(manifest["cache"])
@@ -77,12 +95,17 @@ def run(args):
         classes = [classify(node) for node in nodes]
         rows.append({"name": item["name"], "records": len(nodes),
                      "classes": classes,
+                     "layouts": [summary for node in nodes
+                                 if (summary := layout_summary(node)) is not None],
                      "joined": bool(nodes) and all(c == "joined" for c in classes)})
     report = {"schema": "c-record-layout-join-price-0.1",
               "record_name": args.record_name, "rows": rows,
               "files": len(rows),
               "files_with_record": sum(row["records"] > 0 for row in rows),
-              "files_fully_joined": sum(row["joined"] for row in rows)}
+              "files_fully_joined": sum(row["joined"] for row in rows),
+              "files_with_bitfields": sum(
+                  any(layout["bitfield_count"] for layout in row["layouts"])
+                  for row in rows)}
     if args.json:
         Path(args.json).write_text(json.dumps(report, indent=1, sort_keys=True) + "\n")
     print(json.dumps(report, indent=1, sort_keys=True))

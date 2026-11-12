@@ -25,6 +25,21 @@ theorem execFF_if_resolved {d : Design2} {st : SvState} {c : Expr2}
   simp only [execFF, heval]
   exact (hresolved.branch_eq (execFF d st t) (execFFOpt d st e)).symm
 
+/-- Known-read refinement for the independent X-E relation at an edge body.
+    `execFF` stays the exact source-shaped evaluator; this is only its
+    proof-facing branch bridge. -/
+theorem execFF_if_xread {d : Design2} {st : SvState} {c : Expr2}
+    {t : Stmt2} {e : Option Stmt2} {concrete result : LVec}
+    (heval : evalPure2 st c = .ok result)
+    (hknown : result.bits.toList.all Logic.isKnown = true)
+    (hread : XRead result concrete) :
+    execFF d st (.ifStmt c t e) =
+      (if concrete.condTrue then execFF d st t else execFFOpt d st e) := by
+  simp only [execFF, heval]
+  have heq := xRead_eq_of_known hknown hread
+  cases heq
+  rfl
+
 /- A known condition is enough to construct the bridge's witness. -/
 example {d : Design2} {st : SvState} {c : Expr2} {t : Stmt2}
     {e : Option Stmt2} {result : LVec}

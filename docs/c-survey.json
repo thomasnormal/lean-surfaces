@@ -3,18 +3,18 @@
   "c-testsuite/single-exec": {
    "passed": 155,
    "refused-libc": 5,
-   "refused-ub": 3,
-   "refused-unsupported": 55,
+   "refused-ub": 7,
+   "refused-unsupported": 51,
    "timeout": 2
   },
   "gcc.c-torture/execute": {
    "not-parsed": 267,
    "oracle-tests-compiler": 1,
-   "passed": 673,
-   "refused-libc": 38,
-   "refused-ub": 37,
-   "refused-unsupported": 854,
-   "timeout": 48
+   "passed": 675,
+   "refused-libc": 39,
+   "refused-ub": 56,
+   "refused-unsupported": 831,
+   "timeout": 49
   },
   "gcc.c23-run": {
    "not-parsed": 27,
@@ -28,11 +28,11 @@
  "counts": {
   "not-parsed": 294,
   "oracle-tests-compiler": 1,
-  "passed": 829,
-  "refused-libc": 44,
-  "refused-ub": 41,
-  "refused-unsupported": 955,
-  "timeout": 50
+  "passed": 831,
+  "refused-libc": 45,
+  "refused-ub": 64,
+  "refused-unsupported": 928,
+  "timeout": 51
  },
  "dynamic_wall_ranking": [
   {
@@ -354,6 +354,7 @@
     "builtins/memcmp.c",
     "builtins/memcpy-chk-lib.c",
     "builtins/memmove-2-lib.c",
+    "builtins/memmove-2.c",
     "builtins/memmove-chk-lib.c",
     "builtins/memmove-lib.c",
     "builtins/mempcpy-2-lib.c",
@@ -383,6 +384,7 @@
     "builtins/strcpy-2.c",
     "builtins/strcpy-chk-lib.c",
     "builtins/strcpy-lib.c",
+    "builtins/strcpy.c",
     "builtins/strcspn-lib.c",
     "builtins/strcspn.c",
     "builtins/strlen-2-lib.c",
@@ -439,9 +441,80 @@
     "ieee/pr38016.c",
     "pr71626-2.c"
    ],
-   "present": 100,
-   "sole": 100,
+   "present": 102,
+   "sole": 102,
    "wall": "unsupported:no definition for 'main'"
+  },
+  {
+   "files": [
+    "00115.c",
+    "00141.c",
+    "00144.c",
+    "00200.c",
+    "00204.c",
+    "00208.c",
+    "00217.c",
+    "20000314-3.c",
+    "20000801-4.c",
+    "20001203-2.c",
+    "20010409-1.c",
+    "20010915-1.c",
+    "20020129-1.c",
+    "20020404-1.c",
+    "20020508-2.c",
+    "20020508-3.c",
+    "20021219-1.c",
+    "20030404-1.c",
+    "20031204-1.c",
+    "20040409-1w.c",
+    "20040409-2w.c",
+    "20040409-3w.c",
+    "20041214-1.c",
+    "20050826-1.c",
+    "20060110-1.c",
+    "20060110-2.c",
+    "20070724-1.c",
+    "20080222-1.c",
+    "20121108-1.c",
+    "20191023-1.c",
+    "920612-1.c",
+    "930123-1.c",
+    "930529-1.c",
+    "950704-1.c",
+    "960317-1.c",
+    "960321-1.c",
+    "990524-1.c",
+    "builtins/memmove.c",
+    "gcc/testsuite/gcc.dg/c23-complit-1.c",
+    "loop-15.c",
+    "memchr-1.c",
+    "pr17252.c",
+    "pr21173.c",
+    "pr22493-1.c",
+    "pr23047.c",
+    "pr33870.c",
+    "pr34099-2.c",
+    "pr34099.c",
+    "pr40386.c",
+    "pr41750.c",
+    "pr43629.c",
+    "pr56051.c",
+    "pr57124.c",
+    "pr58831.c",
+    "pr63302.c",
+    "pr7284-1.c",
+    "pr79121.c",
+    "pr86528.c",
+    "pr86714.c",
+    "pr99079.c",
+    "ptr-arith-1.c",
+    "strcpy-2.c",
+    "strlen-2.c",
+    "strlen-6.c"
+   ],
+   "present": 64,
+   "sole": 64,
+   "wall": "undefined-behavior"
   },
   {
    "files": [
@@ -490,111 +563,63 @@
     "pr82387.c",
     "pr85529-2.c",
     "pr87290.c",
+    "pr88693.c",
     "pr95731.c",
     "pr98736.c",
     "shiftdi-2.c",
     "ssad-run.c",
     "usad-run.c"
    ],
-   "present": 50,
-   "sole": 50,
+   "present": 51,
+   "sole": 51,
    "wall": "timeout"
   },
   {
    "files": [
-    "00141.c",
-    "00144.c",
-    "00200.c",
-    "20001203-2.c",
-    "20010409-1.c",
-    "20020129-1.c",
-    "20020508-2.c",
-    "20020508-3.c",
-    "20030404-1.c",
-    "20040409-1w.c",
-    "20040409-2w.c",
-    "20040409-3w.c",
-    "20050826-1.c",
-    "20060110-1.c",
-    "20060110-2.c",
-    "20080222-1.c",
-    "20191023-1.c",
-    "920612-1.c",
-    "930529-1.c",
-    "950704-1.c",
-    "960317-1.c",
-    "gcc/testsuite/gcc.dg/c23-complit-1.c",
-    "loop-15.c",
-    "pr17252.c",
-    "pr21173.c",
-    "pr22493-1.c",
-    "pr23047.c",
-    "pr33870.c",
-    "pr34099-2.c",
-    "pr34099.c",
-    "pr40386.c",
-    "pr41750.c",
-    "pr43629.c",
-    "pr56051.c",
-    "pr57124.c",
-    "pr58831.c",
-    "pr63302.c",
-    "pr7284-1.c",
-    "pr79121.c",
-    "pr99079.c",
-    "ptr-arith-1.c"
-   ],
-   "present": 41,
-   "sole": 41,
-   "wall": "undefined-behavior"
-  },
-  {
-   "files": [
-    "00115.c",
-    "00204.c",
-    "00208.c",
-    "00217.c",
-    "20000314-3.c",
-    "20000801-4.c",
-    "20001229-1.c",
-    "20010915-1.c",
-    "20011128-1.c",
-    "20020404-1.c",
-    "20021219-1.c",
-    "20030221-1.c",
-    "20031204-1.c",
-    "20041214-1.c",
-    "20050502-2.c",
-    "20070724-1.c",
-    "20121108-1.c",
-    "930123-1.c",
-    "960321-1.c",
-    "960327-1.c",
-    "990524-1.c",
-    "builtins/memmove-2.c",
-    "builtins/memmove.c",
+    "builtins/20010124-1-lib.c",
+    "builtins/complex-1-lib.c",
+    "builtins/fputs-lib.c",
+    "builtins/lib/abs.c",
+    "builtins/lib/bfill.c",
+    "builtins/lib/bzero.c",
+    "builtins/lib/chk.c",
+    "builtins/lib/fprintf.c",
+    "builtins/lib/memchr.c",
+    "builtins/lib/memcmp.c",
+    "builtins/lib/memmove.c",
+    "builtins/lib/mempcpy.c",
+    "builtins/lib/memset.c",
+    "builtins/lib/printf.c",
+    "builtins/lib/sprintf.c",
+    "builtins/lib/stpcpy.c",
+    "builtins/lib/strcat.c",
+    "builtins/lib/strchr.c",
+    "builtins/lib/strcmp.c",
+    "builtins/lib/strcpy.c",
+    "builtins/lib/strcspn.c",
+    "builtins/lib/strlen.c",
+    "builtins/lib/strncat.c",
+    "builtins/lib/strncmp.c",
+    "builtins/lib/strncpy.c",
+    "builtins/lib/strnlen.c",
+    "builtins/lib/strpbrk.c",
+    "builtins/lib/strrchr.c",
+    "builtins/lib/strspn.c",
+    "builtins/lib/strstr.c",
+    "builtins/memops-asm-lib.c",
     "builtins/memops-asm.c",
-    "builtins/strcpy.c",
+    "builtins/mempcpy-2.c",
+    "builtins/mempcpy.c",
+    "builtins/strcat.c",
+    "builtins/strlen-2.c",
     "builtins/strlen-3.c",
-    "memchr-1.c",
-    "p18298.c",
-    "pr65369.c",
-    "pr86528.c",
-    "pr86714.c",
-    "pr88693.c",
-    "strcpy-2.c",
-    "strlen-2.c",
-    "strlen-3.c",
-    "strlen-4.c",
-    "strlen-6.c",
-    "va-arg-10.c",
-    "va-arg-2.c",
-    "va-arg-9.c",
-    "wchar_t-1.c"
+    "builtins/strpcpy-2.c",
+    "builtins/strpcpy.c",
+    "builtins/strstr-asm-lib.c"
    ],
-   "present": 41,
-   "sole": 41,
-   "wall": "unsupported:string literal (inch 4"
+   "present": 40,
+   "sole": 40,
+   "wall": "unsupported:extern object 'inside_main' has no definition in the translation unit"
   },
   {
    "files": [
@@ -644,51 +669,6 @@
   },
   {
    "files": [
-    "builtins/20010124-1-lib.c",
-    "builtins/complex-1-lib.c",
-    "builtins/fputs-lib.c",
-    "builtins/lib/abs.c",
-    "builtins/lib/bfill.c",
-    "builtins/lib/bzero.c",
-    "builtins/lib/chk.c",
-    "builtins/lib/fprintf.c",
-    "builtins/lib/memchr.c",
-    "builtins/lib/memcmp.c",
-    "builtins/lib/memmove.c",
-    "builtins/lib/mempcpy.c",
-    "builtins/lib/memset.c",
-    "builtins/lib/printf.c",
-    "builtins/lib/sprintf.c",
-    "builtins/lib/stpcpy.c",
-    "builtins/lib/strcat.c",
-    "builtins/lib/strchr.c",
-    "builtins/lib/strcmp.c",
-    "builtins/lib/strcpy.c",
-    "builtins/lib/strcspn.c",
-    "builtins/lib/strlen.c",
-    "builtins/lib/strncat.c",
-    "builtins/lib/strncmp.c",
-    "builtins/lib/strncpy.c",
-    "builtins/lib/strnlen.c",
-    "builtins/lib/strpbrk.c",
-    "builtins/lib/strrchr.c",
-    "builtins/lib/strspn.c",
-    "builtins/lib/strstr.c",
-    "builtins/memops-asm-lib.c",
-    "builtins/mempcpy-2.c",
-    "builtins/mempcpy.c",
-    "builtins/strcat.c",
-    "builtins/strlen-2.c",
-    "builtins/strpcpy-2.c",
-    "builtins/strpcpy.c",
-    "builtins/strstr-asm-lib.c"
-   ],
-   "present": 38,
-   "sole": 38,
-   "wall": "unsupported:extern object 'inside_main' has no definition in the translation unit"
-  },
-  {
-   "files": [
     "00032.c",
     "00173.c",
     "00182.c",
@@ -698,6 +678,7 @@
     "20000910-1.c",
     "20011126-2.c",
     "20020503-1.c",
+    "20030221-1.c",
     "20030606-1.c",
     "20030920-1.c",
     "20050502-1.c",
@@ -713,6 +694,7 @@
     "930429-1.c",
     "931110-2.c",
     "950714-1.c",
+    "960327-1.c",
     "961125-1.c",
     "990222-1.c",
     "990513-1.c",
@@ -726,8 +708,8 @@
     "pr54985.c",
     "pr71631.c"
    ],
-   "present": 36,
-   "sole": 36,
+   "present": 38,
+   "sole": 38,
    "wall": "unsupported:pointer used as an integer (no ptr\u2194int cast in tier)"
   },
   {
@@ -752,18 +734,21 @@
     "strct-stdarg-1.c",
     "strct-varg-1.c",
     "va-arg-1.c",
+    "va-arg-10.c",
     "va-arg-11.c",
     "va-arg-13.c",
     "va-arg-19.c",
+    "va-arg-2.c",
     "va-arg-20.c",
     "va-arg-21.c",
     "va-arg-23.c",
     "va-arg-24.c",
     "va-arg-8.c",
+    "va-arg-9.c",
     "va-arg-trap-1.c"
    ],
-   "present": 29,
-   "sole": 29,
+   "present": 32,
+   "sole": 32,
    "wall": "unsupported:more arguments than parameters"
   },
   {
@@ -1257,6 +1242,17 @@
   },
   {
    "files": [
+    "20010325-1.c",
+    "printf-1.c",
+    "wchar_t-1.c",
+    "widechar-3.c"
+   ],
+   "present": 4,
+   "sole": 4,
+   "wall": "unsupported:string literal with escape or non-ASCII spelling"
+  },
+  {
+   "files": [
     "gcc/testsuite/gcc.dg/c23-nullptr-5.c",
     "pr77767.c",
     "pr97325.c"
@@ -1377,16 +1373,6 @@
   },
   {
    "files": [
-    "20010325-1.c",
-    "printf-1.c",
-    "widechar-3.c"
-   ],
-   "present": 3,
-   "sole": 3,
-   "wall": "unsupported:string literal with escape or non-ASCII spelling"
-  },
-  {
-   "files": [
     "20000223-1.c",
     "align-3.c",
     "zerolen-2.c"
@@ -1443,6 +1429,15 @@
    "present": 2,
    "sole": 2,
    "wall": "libc-call: calloc"
+  },
+  {
+   "files": [
+    "20050502-2.c",
+    "pr43236.c"
+   ],
+   "present": 2,
+   "sole": 2,
+   "wall": "libc-call: memcmp"
   },
   {
    "files": [
@@ -1877,14 +1872,6 @@
   },
   {
    "files": [
-    "pr43236.c"
-   ],
-   "present": 1,
-   "sole": 1,
-   "wall": "libc-call: memcmp"
-  },
-  {
-   "files": [
     "string-opt-18.c"
    ],
    "present": 1,
@@ -2250,6 +2237,14 @@
    "present": 1,
    "sole": 1,
    "wall": "unsupported:no layout for declared type 'client_t'"
+  },
+  {
+   "files": [
+    "strlen-4.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "unsupported:no layout for declared type 'const A3_28 *const'"
   },
   {
    "files": [
@@ -2813,6 +2808,14 @@
   },
   {
    "files": [
+    "pr65369.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "unsupported:no layout for declared type 'uint32_t[16]'"
+  },
+  {
+   "files": [
     "20181120-1.c"
    ],
    "present": 1,
@@ -3338,6 +3341,22 @@
    "present": 1,
    "sole": 1,
    "wall": "unsupported:src/strncmp-1.c"
+  },
+  {
+   "files": [
+    "p18298.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "unsupported:strcmp"
+  },
+  {
+   "files": [
+    "strlen-3.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "unsupported:strlen"
   },
   {
    "files": [
@@ -4165,8 +4184,8 @@
   }
  ],
  "manifest_hash": "a3923b705e70c7f50d563f899b865e3cee8b7eaf084974c6fdc107be9249850f",
- "measured_at_utc": "2026-11-12T16:03:20Z",
- "measured_commit": "cf7bd488ea965e5e9108ebdfd9975b64bb0375a8",
+ "measured_at_utc": "2026-11-12T16:12:00Z",
+ "measured_commit": "391e289b317a58006fe9ee46308c84b0f3ccf6a8",
  "pin": {
   "corpora": [
    "C1",
@@ -5406,8 +5425,8 @@
   },
   {
    "corpus": "c-testsuite/single-exec",
-   "detail": "string literal (inch 4: it needs a static object)",
-   "dynamic_wall": "unsupported:string literal (inch 4",
+   "detail": "LeanModels.C.C23.MemFault.outOfBounds 0 0 8 4",
+   "dynamic_wall": "undefined-behavior",
    "manifest_status": "parsed",
    "name": "00115.c",
    "sha256": "c48f8d78b36796c2db906dfb40256e4ac7bda00089b043fa8c838be5f75c0956",
@@ -5415,7 +5434,7 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "refused-ub"
   },
   {
    "corpus": "c-testsuite/single-exec",
@@ -6554,8 +6573,8 @@
   },
   {
    "corpus": "c-testsuite/single-exec",
-   "detail": "string literal (inch 4: it needs a static object)",
-   "dynamic_wall": "unsupported:string literal (inch 4",
+   "detail": "LeanModels.C.C23.MemFault.outOfBounds 0 0 8 1",
+   "dynamic_wall": "undefined-behavior",
    "manifest_status": "parsed",
    "name": "00204.c",
    "sha256": "cfa12d12c391f845fbc18176b14ae8f169cd680e1971902b10a4ac6f556530ea",
@@ -6567,7 +6586,7 @@
     "unsupported:ExprWithCleanups",
     "unsupported:VAArgExpr"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "refused-ub"
   },
   {
    "corpus": "c-testsuite/single-exec",
@@ -6613,8 +6632,8 @@
   },
   {
    "corpus": "c-testsuite/single-exec",
-   "detail": "string literal (inch 4: it needs a static object)",
-   "dynamic_wall": "unsupported:string literal (inch 4",
+   "detail": "LeanModels.C.C23.MemFault.nonValueRepresentation 4 0",
+   "dynamic_wall": "undefined-behavior",
    "manifest_status": "parsed",
    "name": "00208.c",
    "sha256": "976ea0c08aac9af89c979c9db72c1792100f4e9f8ea2b70324b87db0c21f99e5",
@@ -6623,7 +6642,7 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "refused-ub"
   },
   {
    "corpus": "c-testsuite/single-exec",
@@ -6743,8 +6762,8 @@
   },
   {
    "corpus": "c-testsuite/single-exec",
-   "detail": "string literal (inch 4: it needs a static object)",
-   "dynamic_wall": "unsupported:string literal (inch 4",
+   "detail": "LeanModels.C.C23.MemFault.nonValueRepresentation 0 4",
+   "dynamic_wall": "undefined-behavior",
    "manifest_status": "parsed",
    "name": "00217.c",
    "sha256": "a4095fd4b3b5e44aebc438f1375d161831d6f7e60140f61dc39e40ff975848fc",
@@ -6753,7 +6772,7 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "refused-ub"
   },
   {
    "corpus": "c-testsuite/single-exec",
@@ -6934,8 +6953,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "string literal (inch 4: it needs a static object)",
-   "dynamic_wall": "unsupported:string literal (inch 4",
+   "detail": "LeanModels.C.C23.MemFault.outOfBounds 0 0 8 5",
+   "dynamic_wall": "undefined-behavior",
    "manifest_status": "parsed",
    "name": "20000314-3.c",
    "sha256": "06bd1936f096dda238eebe9d0cf19d0045686205e7c02c03fe03af39cd80660d",
@@ -6943,7 +6962,7 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "refused-ub"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -7428,8 +7447,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "string literal (inch 4: it needs a static object)",
-   "dynamic_wall": "unsupported:string literal (inch 4",
+   "detail": "LeanModels.C.C23.MemFault.outOfBounds 1 0 8 2",
+   "dynamic_wall": "undefined-behavior",
    "manifest_status": "parsed",
    "name": "20000801-4.c",
    "sha256": "efe9b035f866bad4e0877ab1ed5a7ae16153dc83987f7525e5c93548e920ce24",
@@ -7437,7 +7456,7 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "refused-ub"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -7805,8 +7824,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "string literal (inch 4: it needs a static object)",
-   "dynamic_wall": "unsupported:string literal (inch 4",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "20001229-1.c",
    "sha256": "b8f2121c18a55a8b5bd7f28beb2c195521a3d9715d15e91452153a93ec4784b5",
@@ -7814,7 +7833,7 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -8158,8 +8177,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "string literal (inch 4: it needs a static object)",
-   "dynamic_wall": "unsupported:string literal (inch 4",
+   "detail": "LeanModels.C.C23.MemFault.outOfBounds 4 0 8 2",
+   "dynamic_wall": "undefined-behavior",
    "manifest_status": "parsed",
    "name": "20010915-1.c",
    "sha256": "079287a9978b9ab65d73a966feb4a5b2962386f23619512e92c469b094e380bc",
@@ -8168,7 +8187,7 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "refused-ub"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -8332,8 +8351,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "string literal (inch 4: it needs a static object)",
-   "dynamic_wall": "unsupported:string literal (inch 4",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "20011128-1.c",
    "sha256": "c0aa0f8c57aa1d2fe55f22e545e40c9ac50808744b1dbb80cfd0903d519130e9",
@@ -8341,7 +8360,7 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -8661,8 +8680,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "string literal (inch 4: it needs a static object)",
-   "dynamic_wall": "unsupported:string literal (inch 4",
+   "detail": "LeanModels.C.C23.MemFault.outOfBounds 0 0 8 6",
+   "dynamic_wall": "undefined-behavior",
    "manifest_status": "parsed",
    "name": "20020404-1.c",
    "sha256": "f5f91edded3a8567ad743ab424dc8ab903db5e2fe828af56f492e165a5a8da26",
@@ -8670,7 +8689,7 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "refused-ub"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -9152,8 +9171,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "string literal (inch 4: it needs a static object)",
-   "dynamic_wall": "unsupported:string literal (inch 4",
+   "detail": "LeanModels.C.C23.MemFault.nonValueRepresentation 0 5",
+   "dynamic_wall": "undefined-behavior",
    "manifest_status": "parsed",
    "name": "20021219-1.c",
    "sha256": "615082c73ac1c9b6e037096e6119133798e9ff10cc188fbbe8057c7ffb7b40ca",
@@ -9161,7 +9180,7 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "refused-ub"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -9287,8 +9306,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "string literal (inch 4: it needs a static object)",
-   "dynamic_wall": "unsupported:string literal (inch 4",
+   "detail": "pointer used as an integer (no ptr\u2194int cast in tier)",
+   "dynamic_wall": "unsupported:pointer used as an integer (no ptr\u2194int cast in tier)",
    "manifest_status": "parsed",
    "name": "20030221-1.c",
    "sha256": "8ef3dfbb4073e72612ff4c6bc619338cbba186897f074e71ab3d669582a62d99",
@@ -9757,8 +9776,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "string literal (inch 4: it needs a static object)",
-   "dynamic_wall": "unsupported:string literal (inch 4",
+   "detail": "LeanModels.C.C23.MemFault.nonValueRepresentation 0 0",
+   "dynamic_wall": "undefined-behavior",
    "manifest_status": "parsed",
    "name": "20031204-1.c",
    "sha256": "f312b548f8ad48c4650e1c9598de8c702c605cb349fb7a0e7a50e1a993bf2431",
@@ -9767,7 +9786,7 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "refused-ub"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -10376,8 +10395,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "string literal (inch 4: it needs a static object)",
-   "dynamic_wall": "unsupported:string literal (inch 4",
+   "detail": "LeanModels.C.C23.MemFault.outOfBounds 0 0 8 7",
+   "dynamic_wall": "undefined-behavior",
    "manifest_status": "parsed",
    "name": "20041214-1.c",
    "sha256": "e6436d9cb5a6b0fffed64c76e64e45fd3cfec5ba9d034c6ab6f297423cb8b90b",
@@ -10389,7 +10408,7 @@
     "unsupported:IndirectGotoStmt",
     "unsupported:VAArgExpr"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "refused-ub"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -10641,8 +10660,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "string literal (inch 4: it needs a static object)",
-   "dynamic_wall": "unsupported:string literal (inch 4",
+   "detail": "memcmp",
+   "dynamic_wall": "libc-call: memcmp",
    "manifest_status": "parsed",
    "name": "20050502-2.c",
    "sha256": "b16fc089d1975840561e3f3b7af8720741cfb5d0b3cb76e48255820c3e1a7f0f",
@@ -10651,7 +10670,7 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "refused-libc"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -11081,8 +11100,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "string literal (inch 4: it needs a static object)",
-   "dynamic_wall": "unsupported:string literal (inch 4",
+   "detail": "LeanModels.C.C23.MemFault.outOfBounds 0 0 8 2",
+   "dynamic_wall": "undefined-behavior",
    "manifest_status": "parsed",
    "name": "20070724-1.c",
    "sha256": "5e4411fd212ae68848181eb2b6eb7005334c11d49928bb78e06598f5ea0193ee",
@@ -11090,7 +11109,7 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "refused-ub"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -11886,8 +11905,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "string literal (inch 4: it needs a static object)",
-   "dynamic_wall": "unsupported:string literal (inch 4",
+   "detail": "LeanModels.C.C23.MemFault.nonValueRepresentation 0 3",
+   "dynamic_wall": "undefined-behavior",
    "manifest_status": "parsed",
    "name": "20121108-1.c",
    "sha256": "5f5958f038cc3cdd6f07d711409b5f540eaeb840bdf46497aaaf9707b2726066",
@@ -11896,7 +11915,7 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "refused-ub"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -13137,8 +13156,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "string literal (inch 4: it needs a static object)",
-   "dynamic_wall": "unsupported:string literal (inch 4",
+   "detail": "LeanModels.C.C23.MemFault.outOfBounds 3 0 8 2",
+   "dynamic_wall": "undefined-behavior",
    "manifest_status": "parsed",
    "name": "930123-1.c",
    "sha256": "6b72ba783309901d04e4ffc7d0f7f03cb2af0a36cb6a0587bad0ca4d27535b78",
@@ -13146,7 +13165,7 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "refused-ub"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -14367,8 +14386,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "string literal (inch 4: it needs a static object)",
-   "dynamic_wall": "unsupported:string literal (inch 4",
+   "detail": "LeanModels.C.C23.MemFault.nonValueRepresentation 0 0",
+   "dynamic_wall": "undefined-behavior",
    "manifest_status": "parsed",
    "name": "960321-1.c",
    "sha256": "f8acc81e63ebec44a47de53fbfac869723d03484c83a2be69d19e3918148d347",
@@ -14376,7 +14395,7 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "refused-ub"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -14392,8 +14411,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "string literal (inch 4: it needs a static object)",
-   "dynamic_wall": "unsupported:string literal (inch 4",
+   "detail": "pointer used as an integer (no ptr\u2194int cast in tier)",
+   "dynamic_wall": "unsupported:pointer used as an integer (no ptr\u2194int cast in tier)",
    "manifest_status": "parsed",
    "name": "960327-1.c",
    "sha256": "92408d01ffcc6f11882093609e60c2321660e10bddbcae75f5b63799fa552a59",
@@ -15227,8 +15246,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "string literal (inch 4: it needs a static object)",
-   "dynamic_wall": "unsupported:string literal (inch 4",
+   "detail": "LeanModels.C.C23.MemFault.outOfBounds 0 0 8 6",
+   "dynamic_wall": "undefined-behavior",
    "manifest_status": "parsed",
    "name": "990524-1.c",
    "sha256": "eae9e2f7911318038833aad9b1636e1f9ffedec73493854547859606dd8d9538",
@@ -15236,7 +15255,7 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "refused-ub"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -16693,8 +16712,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "string literal (inch 4: it needs a static object)",
-   "dynamic_wall": "unsupported:string literal (inch 4",
+   "detail": "no definition for 'main'",
+   "dynamic_wall": "unsupported:no definition for 'main'",
    "manifest_status": "parsed",
    "name": "builtins/memmove-2.c",
    "sha256": "b60dfe8e2e6631fbd5acf4d1cb5cf29cf6d6212815a9773e992325ea6a3bee9d",
@@ -16737,8 +16756,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "string literal (inch 4: it needs a static object)",
-   "dynamic_wall": "unsupported:string literal (inch 4",
+   "detail": "LeanModels.C.C23.MemFault.outOfBounds 0 0 8 4",
+   "dynamic_wall": "undefined-behavior",
    "manifest_status": "parsed",
    "name": "builtins/memmove.c",
    "sha256": "856ff4798b9b1b8c5081432f37bddd45c080e117e788782035cebe546d7c6aa1",
@@ -16747,7 +16766,7 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "refused-ub"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -16761,8 +16780,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "string literal (inch 4: it needs a static object)",
-   "dynamic_wall": "unsupported:string literal (inch 4",
+   "detail": "extern object 'inside_main' has no definition in the translation unit",
+   "dynamic_wall": "unsupported:extern object 'inside_main' has no definition in the translation unit",
    "manifest_status": "parsed",
    "name": "builtins/memops-asm.c",
    "sha256": "48c4b37d8025ea739be2b51a18762ac82a0856235faa4396a1cce67031c33373",
@@ -17240,8 +17259,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "string literal (inch 4: it needs a static object)",
-   "dynamic_wall": "unsupported:string literal (inch 4",
+   "detail": "no definition for 'main'",
+   "dynamic_wall": "unsupported:no definition for 'main'",
    "manifest_status": "parsed",
    "name": "builtins/strcpy.c",
    "sha256": "a1d14a66f4382dbcbef023721b22721f2062ad86d5ad2eb386c20f31a40b393a",
@@ -17312,8 +17331,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "string literal (inch 4: it needs a static object)",
-   "dynamic_wall": "unsupported:string literal (inch 4",
+   "detail": "extern object 'inside_main' has no definition in the translation unit",
+   "dynamic_wall": "unsupported:extern object 'inside_main' has no definition in the translation unit",
    "manifest_status": "parsed",
    "name": "builtins/strlen-3.c",
    "sha256": "4be16d6f3e21333d79960d22d1c76134c70c06fe6d7f74b06980f3bfb8c6840f",
@@ -20690,8 +20709,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "string literal (inch 4: it needs a static object)",
-   "dynamic_wall": "unsupported:string literal (inch 4",
+   "detail": "LeanModels.C.C23.MemFault.outOfBounds 1 0 8 1",
+   "dynamic_wall": "undefined-behavior",
    "manifest_status": "parsed",
    "name": "memchr-1.c",
    "sha256": "fd62059556391313f163e4cca4c1f02898fdc77d579dd9a0fc61c5347c0c0f3d",
@@ -20700,7 +20719,7 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "refused-ub"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -21015,8 +21034,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "string literal (inch 4: it needs a static object)",
-   "dynamic_wall": "unsupported:string literal (inch 4",
+   "detail": "strcmp: non-concrete or unterminated string",
+   "dynamic_wall": "unsupported:strcmp",
    "manifest_status": "parsed",
    "name": "p18298.c",
    "sha256": "1513035cef91896f4384dec29c2aaf310fa7a4902adc43aa725cccb883106995",
@@ -26306,8 +26325,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "string literal (inch 4: it needs a static object)",
-   "dynamic_wall": "unsupported:string literal (inch 4",
+   "detail": "no layout for declared type 'uint32_t[16]'",
+   "dynamic_wall": "unsupported:no layout for declared type 'uint32_t[16]'",
    "manifest_status": "parsed",
    "name": "pr65369.c",
    "sha256": "8078474ab452306b8f45be23c335852cdaaaa541a63268bf5639f3aa2a753735",
@@ -27837,8 +27856,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "string literal (inch 4: it needs a static object)",
-   "dynamic_wall": "unsupported:string literal (inch 4",
+   "detail": "LeanModels.C.C23.MemFault.outOfBounds 0 0 8 4",
+   "dynamic_wall": "undefined-behavior",
    "manifest_status": "parsed",
    "name": "pr86528.c",
    "sha256": "af206bddf203102d7dacd2a1eb95adfc187aa8b0ce304b607bd42686d68d2f4f",
@@ -27847,7 +27866,7 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "refused-ub"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -27877,8 +27896,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "string literal (inch 4: it needs a static object)",
-   "dynamic_wall": "unsupported:string literal (inch 4",
+   "detail": "LeanModels.C.C23.MemFault.outOfBounds 0 0 8 6",
+   "dynamic_wall": "undefined-behavior",
    "manifest_status": "parsed",
    "name": "pr86714.c",
    "sha256": "d33772251fbc170de4fea0464aa8f90aa3b929407613ed3d59193c14b7fccc15",
@@ -27887,7 +27906,7 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "refused-ub"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -27944,8 +27963,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "string literal (inch 4: it needs a static object)",
-   "dynamic_wall": "unsupported:string literal (inch 4",
+   "detail": "",
+   "dynamic_wall": "timeout",
    "manifest_status": "parsed",
    "name": "pr88693.c",
    "sha256": "ad4fd22a0cacfb3851fce1aa1d6356071daba3f42b95a81668bc4b6045d8bf46",
@@ -27954,7 +27973,7 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "timeout"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -29196,8 +29215,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "string literal (inch 4: it needs a static object)",
-   "dynamic_wall": "unsupported:string literal (inch 4",
+   "detail": "LeanModels.C.C23.MemFault.outOfBounds 0 0 8 7",
+   "dynamic_wall": "undefined-behavior",
    "manifest_status": "parsed",
    "name": "strcpy-2.c",
    "sha256": "b59479450c7a33ca4b9e48c181d7aee5673cdb3481f33bd18594b30b6e9ac014",
@@ -29206,7 +29225,7 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "refused-ub"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -29343,8 +29362,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "string literal (inch 4: it needs a static object)",
-   "dynamic_wall": "unsupported:string literal (inch 4",
+   "detail": "LeanModels.C.C23.MemFault.outOfBounds 0 0 8 6",
+   "dynamic_wall": "undefined-behavior",
    "manifest_status": "parsed",
    "name": "strlen-2.c",
    "sha256": "0e7016a417851de83c72fa3f8a831300aca2d163a55c65576afd7d1f691d74cf",
@@ -29353,12 +29372,12 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "refused-ub"
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "string literal (inch 4: it needs a static object)",
-   "dynamic_wall": "unsupported:string literal (inch 4",
+   "detail": "strlen: no concrete NUL in object",
+   "dynamic_wall": "unsupported:strlen",
    "manifest_status": "parsed",
    "name": "strlen-3.c",
    "sha256": "3d9d348f6e0a8dcb6db3950378215846746479c90a9d566ab2465df8373efde6",
@@ -29371,8 +29390,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "string literal (inch 4: it needs a static object)",
-   "dynamic_wall": "unsupported:string literal (inch 4",
+   "detail": "no layout for declared type 'const A3_28 *const'",
+   "dynamic_wall": "unsupported:no layout for declared type 'const A3_28 *const'",
    "manifest_status": "parsed",
    "name": "strlen-4.c",
    "sha256": "44a8f219723f11de84643fd2c9dff8af0a28fa1a23121bf8879d86c41fc6a6b0",
@@ -29399,8 +29418,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "string literal (inch 4: it needs a static object)",
-   "dynamic_wall": "unsupported:string literal (inch 4",
+   "detail": "LeanModels.C.C23.MemFault.outOfBounds 2 0 8 6",
+   "dynamic_wall": "undefined-behavior",
    "manifest_status": "parsed",
    "name": "strlen-6.c",
    "sha256": "06b9b66210c9f2f154dd882779051d415a24c3de166269c10ff8efe4f6a06e1d",
@@ -29409,7 +29428,7 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "refused-ub"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -29629,8 +29648,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "string literal (inch 4: it needs a static object)",
-   "dynamic_wall": "unsupported:string literal (inch 4",
+   "detail": "more arguments than parameters",
+   "dynamic_wall": "unsupported:more arguments than parameters",
    "manifest_status": "parsed",
    "name": "va-arg-10.c",
    "sha256": "5cb2d6ed423c050aaa81f9a50ce99c3dd43e88f2757c460a46a8b5836b09c4df",
@@ -29774,8 +29793,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "string literal (inch 4: it needs a static object)",
-   "dynamic_wall": "unsupported:string literal (inch 4",
+   "detail": "more arguments than parameters",
+   "dynamic_wall": "unsupported:more arguments than parameters",
    "manifest_status": "parsed",
    "name": "va-arg-2.c",
    "sha256": "3f1f43cf070b5103f384bda5e96482340b8a21bdb2d801bcce3a2b459fbde81e",
@@ -29946,8 +29965,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "string literal (inch 4: it needs a static object)",
-   "dynamic_wall": "unsupported:string literal (inch 4",
+   "detail": "more arguments than parameters",
+   "dynamic_wall": "unsupported:more arguments than parameters",
    "manifest_status": "parsed",
    "name": "va-arg-9.c",
    "sha256": "d81cf4ba2a988b659534a2037ecff6039bac090a41e316dad99cfd094c743cba",
@@ -30125,8 +30144,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "string literal (inch 4: it needs a static object)",
-   "dynamic_wall": "unsupported:string literal (inch 4",
+   "detail": "string literal with escape or non-ASCII spelling",
+   "dynamic_wall": "unsupported:string literal with escape or non-ASCII spelling",
    "manifest_status": "parsed",
    "name": "wchar_t-1.c",
    "sha256": "a7f170a402ed9a12a8e4214009f94facfb14ca96325a7c3b3a90b566afe7fa01",

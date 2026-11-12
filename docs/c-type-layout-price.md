@@ -72,7 +72,7 @@ field records come directly from the approved Clang envelope; an empty list mean
 
 ## `struct S` direct-scalar layout price
 
-- direct scalar candidate files: 10
+- direct scalar candidate files: 0
 
 | file | classification |
 | --- | --- |
@@ -81,23 +81,23 @@ field records come directly from the approved Clang envelope; an empty list mean
 | `20081103-1.c` | `non-scalar-field` |
 | `20100708-1.c` | `non-scalar-field` |
 | `20171008-1.c` | `attribute-or-nested-node` |
-| `20230630-1.c` | `direct-scalar-fields` |
-| `20230630-2.c` | `direct-scalar-fields` |
-| `20230630-3.c` | `direct-scalar-fields` |
-| `20230630-4.c` | `direct-scalar-fields` |
+| `20230630-1.c` | `bit-field` |
+| `20230630-2.c` | `bit-field` |
+| `20230630-3.c` | `bit-field` |
+| `20230630-4.c` | `bit-field` |
 | `pr101188.c` | `non-scalar-field` |
-| `pr108498-2.c` | `non-scalar-field` |
+| `pr108498-2.c` | `bit-field` |
 | `pr47538.c` | `non-scalar-field` |
-| `pr49123.c` | `direct-scalar-fields` |
+| `pr49123.c` | `bit-field` |
 | `pr52979-1.c` | `attribute-or-nested-node` |
 | `pr52979-2.c` | `attribute-or-nested-node` |
-| `pr58984.c` | `anonymous-field` |
-| `pr65215-3.c` | `direct-scalar-fields` |
-| `pr65215-4.c` | `direct-scalar-fields` |
-| `pr70127.c` | `direct-scalar-fields` |
+| `pr58984.c` | `bit-field` |
+| `pr65215-3.c` | `bit-field` |
+| `pr65215-4.c` | `bit-field` |
+| `pr70127.c` | `bit-field` |
 | `pr79737-1.c` | `attribute-or-nested-node` |
-| `pr89195.c` | `direct-scalar-fields` |
-| `pr97764.c` | `direct-scalar-fields` |
+| `pr89195.c` | `bit-field` |
+| `pr97764.c` | `bit-field` |
 
 direct-scalar-fields is a candidate for the smallest layout slice: every member is a named parser FieldDecl with a direct profile integer/character type or fixed scalar array. This is a price only; it does not claim that a row has no later wall.
 

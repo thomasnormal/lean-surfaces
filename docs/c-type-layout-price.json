@@ -683,6 +683,7 @@
    {
     "fields": [
      {
+      "bits": null,
       "c_kind": null,
       "kind": "FieldDecl",
       "name": "fptr",
@@ -694,12 +695,14 @@
    {
     "fields": [
      {
+      "bits": null,
       "c_kind": "ModeAttr",
       "kind": "Unsupported",
       "name": null,
       "type": null
      },
      {
+      "bits": null,
       "c_kind": "ModeAttr",
       "kind": "Unsupported",
       "name": null,
@@ -711,18 +714,21 @@
    {
     "fields": [
      {
+      "bits": null,
       "c_kind": null,
       "kind": "FieldDecl",
       "name": "c",
       "type": "char"
      },
      {
+      "bits": null,
       "c_kind": null,
       "kind": "FieldDecl",
       "name": "arr",
       "type": "char[4]"
      },
      {
+      "bits": null,
       "c_kind": null,
       "kind": "FieldDecl",
       "name": "f",
@@ -734,18 +740,21 @@
    {
     "fields": [
      {
+      "bits": null,
       "c_kind": null,
       "kind": "FieldDecl",
       "name": "for_alignment",
       "type": "double"
      },
      {
+      "bits": null,
       "c_kind": null,
       "kind": "RecordDecl",
       "name": null,
       "type": null
      },
      {
+      "bits": null,
       "c_kind": null,
       "kind": "FieldDecl",
       "name": "a",
@@ -757,30 +766,35 @@
    {
     "fields": [
      {
+      "bits": null,
       "c_kind": "AlignedAttr",
       "kind": "Unsupported",
       "name": null,
       "type": null
      },
      {
+      "bits": null,
       "c_kind": null,
       "kind": "FieldDecl",
       "name": "c1",
       "type": "char"
      },
      {
+      "bits": null,
       "c_kind": null,
       "kind": "FieldDecl",
       "name": "c2",
       "type": "char"
      },
      {
+      "bits": null,
       "c_kind": null,
       "kind": "FieldDecl",
       "name": "c3",
       "type": "char"
      },
      {
+      "bits": null,
       "c_kind": null,
       "kind": "FieldDecl",
       "name": "c4",
@@ -792,30 +806,35 @@
    {
     "fields": [
      {
+      "bits": 12,
       "c_kind": null,
       "kind": "FieldDecl",
       "name": "i",
       "type": "short"
      },
      {
+      "bits": 1,
       "c_kind": null,
       "kind": "FieldDecl",
       "name": "c1",
       "type": "char"
      },
      {
+      "bits": 1,
       "c_kind": null,
       "kind": "FieldDecl",
       "name": "c2",
       "type": "char"
      },
      {
+      "bits": 1,
       "c_kind": null,
       "kind": "FieldDecl",
       "name": "c3",
       "type": "char"
      },
      {
+      "bits": 1,
       "c_kind": null,
       "kind": "FieldDecl",
       "name": "c4",
@@ -827,30 +846,35 @@
    {
     "fields": [
      {
+      "bits": 12,
       "c_kind": null,
       "kind": "FieldDecl",
       "name": "i",
       "type": "short"
      },
      {
+      "bits": 1,
       "c_kind": null,
       "kind": "FieldDecl",
       "name": "c1",
       "type": "char"
      },
      {
+      "bits": 1,
       "c_kind": null,
       "kind": "FieldDecl",
       "name": "c2",
       "type": "char"
      },
      {
+      "bits": 1,
       "c_kind": null,
       "kind": "FieldDecl",
       "name": "c3",
       "type": "char"
      },
      {
+      "bits": 1,
       "c_kind": null,
       "kind": "FieldDecl",
       "name": "c4",
@@ -862,54 +886,63 @@
    {
     "fields": [
      {
+      "bits": 24,
       "c_kind": null,
       "kind": "FieldDecl",
       "name": "i",
       "type": "int"
      },
      {
+      "bits": 1,
       "c_kind": null,
       "kind": "FieldDecl",
       "name": "c1",
       "type": "char"
      },
      {
+      "bits": 1,
       "c_kind": null,
       "kind": "FieldDecl",
       "name": "c2",
       "type": "char"
      },
      {
+      "bits": 1,
       "c_kind": null,
       "kind": "FieldDecl",
       "name": "c3",
       "type": "char"
      },
      {
+      "bits": 1,
       "c_kind": null,
       "kind": "FieldDecl",
       "name": "c4",
       "type": "char"
      },
      {
+      "bits": 1,
       "c_kind": null,
       "kind": "FieldDecl",
       "name": "c5",
       "type": "char"
      },
      {
+      "bits": 1,
       "c_kind": null,
       "kind": "FieldDecl",
       "name": "c6",
       "type": "char"
      },
      {
+      "bits": 1,
       "c_kind": null,
       "kind": "FieldDecl",
       "name": "c7",
       "type": "char"
      },
      {
+      "bits": 1,
       "c_kind": null,
       "kind": "FieldDecl",
       "name": "c8",
@@ -921,54 +954,63 @@
    {
     "fields": [
      {
+      "bits": 24,
       "c_kind": null,
       "kind": "FieldDecl",
       "name": "i",
       "type": "int"
      },
      {
+      "bits": 1,
       "c_kind": null,
       "kind": "FieldDecl",
       "name": "c1",
       "type": "char"
      },
      {
+      "bits": 1,
       "c_kind": null,
       "kind": "FieldDecl",
       "name": "c2",
       "type": "char"
      },
      {
+      "bits": 1,
       "c_kind": null,
       "kind": "FieldDecl",
       "name": "c3",
       "type": "char"
      },
      {
+      "bits": 1,
       "c_kind": null,
       "kind": "FieldDecl",
       "name": "c4",
       "type": "char"
      },
      {
+      "bits": 1,
       "c_kind": null,
       "kind": "FieldDecl",
       "name": "c5",
       "type": "char"
      },
      {
+      "bits": 1,
       "c_kind": null,
       "kind": "FieldDecl",
       "name": "c6",
       "type": "char"
      },
      {
+      "bits": 1,
       "c_kind": null,
       "kind": "FieldDecl",
       "name": "c7",
       "type": "char"
      },
      {
+      "bits": 1,
       "c_kind": null,
       "kind": "FieldDecl",
       "name": "c8",
@@ -980,30 +1022,35 @@
    {
     "fields": [
      {
+      "bits": null,
       "c_kind": null,
       "kind": "FieldDecl",
       "name": "buffer",
       "type": "uint8_t[64]"
      },
      {
+      "bits": null,
       "c_kind": null,
       "kind": "FieldDecl",
       "name": "n",
       "type": "uint16_t"
      },
      {
+      "bits": null,
       "c_kind": null,
       "kind": "FieldDecl",
       "name": "f2",
       "type": "fn2"
      },
      {
+      "bits": null,
       "c_kind": null,
       "kind": "FieldDecl",
       "name": "a",
       "type": "void *"
      },
      {
+      "bits": null,
       "c_kind": null,
       "kind": "FieldDecl",
       "name": "f1",
@@ -1015,48 +1062,56 @@
    {
     "fields": [
      {
+      "bits": 3,
       "c_kind": null,
       "kind": "FieldDecl",
       "name": "a",
       "type": "unsigned int"
      },
      {
+      "bits": 8,
       "c_kind": null,
       "kind": "FieldDecl",
       "name": "b",
       "type": "unsigned int"
      },
      {
+      "bits": 21,
       "c_kind": null,
       "kind": "FieldDecl",
       "name": "c",
       "type": "unsigned int"
      },
      {
+      "bits": null,
       "c_kind": null,
       "kind": "FieldDecl",
       "name": "d",
       "type": "struct U"
      },
      {
+      "bits": null,
       "c_kind": null,
       "kind": "FieldDecl",
       "name": "e",
       "type": "unsigned int"
      },
      {
+      "bits": null,
       "c_kind": null,
       "kind": "FieldDecl",
       "name": "f",
       "type": "struct V"
      },
      {
+      "bits": 5,
       "c_kind": null,
       "kind": "FieldDecl",
       "name": "g",
       "type": "unsigned int"
      },
      {
+      "bits": 27,
       "c_kind": null,
       "kind": "FieldDecl",
       "name": "h",
@@ -1068,24 +1123,28 @@
    {
     "fields": [
      {
+      "bits": null,
       "c_kind": null,
       "kind": "FieldDecl",
       "name": "a",
       "type": "double"
      },
      {
+      "bits": null,
       "c_kind": null,
       "kind": "FieldDecl",
       "name": "b",
       "type": "double"
      },
      {
+      "bits": null,
       "c_kind": null,
       "kind": "FieldDecl",
       "name": "c",
       "type": "double *"
      },
      {
+      "bits": null,
       "c_kind": null,
       "kind": "FieldDecl",
       "name": "d",
@@ -1097,6 +1156,7 @@
    {
     "fields": [
      {
+      "bits": 1,
       "c_kind": null,
       "kind": "FieldDecl",
       "name": "f",
@@ -1108,18 +1168,21 @@
    {
     "fields": [
      {
+      "bits": null,
       "c_kind": "PackedAttr",
       "kind": "Unsupported",
       "name": null,
       "type": null
      },
      {
+      "bits": 31,
       "c_kind": null,
       "kind": "FieldDecl",
       "name": "g",
       "type": "int"
      },
      {
+      "bits": 6,
       "c_kind": null,
       "kind": "FieldDecl",
       "name": "h",
@@ -1131,18 +1194,21 @@
    {
     "fields": [
      {
+      "bits": null,
       "c_kind": "PackedAttr",
       "kind": "Unsupported",
       "name": null,
       "type": null
      },
      {
+      "bits": 31,
       "c_kind": null,
       "kind": "FieldDecl",
       "name": "g",
       "type": "int"
      },
      {
+      "bits": 6,
       "c_kind": null,
       "kind": "FieldDecl",
       "name": "h",
@@ -1154,18 +1220,21 @@
    {
     "fields": [
      {
+      "bits": 8,
       "c_kind": null,
       "kind": "FieldDecl",
       "name": "f0",
       "type": "int"
      },
      {
+      "bits": 6,
       "c_kind": null,
       "kind": "FieldDecl",
       "name": null,
       "type": "int"
      },
      {
+      "bits": 5,
       "c_kind": null,
       "kind": "FieldDecl",
       "name": "f1",
@@ -1177,18 +1246,21 @@
    {
     "fields": [
      {
+      "bits": 24,
       "c_kind": null,
       "kind": "FieldDecl",
       "name": "l1",
       "type": "unsigned long long"
      },
      {
+      "bits": 8,
       "c_kind": null,
       "kind": "FieldDecl",
       "name": "l2",
       "type": "unsigned long long"
      },
      {
+      "bits": 32,
       "c_kind": null,
       "kind": "FieldDecl",
       "name": "l3",
@@ -1200,6 +1272,7 @@
    {
     "fields": [
      {
+      "bits": 48,
       "c_kind": null,
       "kind": "FieldDecl",
       "name": "l1",
@@ -1211,12 +1284,14 @@
    {
     "fields": [
      {
+      "bits": null,
       "c_kind": null,
       "kind": "FieldDecl",
       "name": "f",
       "type": "int"
      },
      {
+      "bits": 2,
       "c_kind": null,
       "kind": "FieldDecl",
       "name": "g",
@@ -1228,36 +1303,42 @@
    {
     "fields": [
      {
+      "bits": null,
       "c_kind": "MaxFieldAlignmentAttr",
       "kind": "Unsupported",
       "name": null,
       "type": null
      },
      {
+      "bits": 18,
       "c_kind": null,
       "kind": "FieldDecl",
       "name": "b",
       "type": "int32_t"
      },
      {
+      "bits": 1,
       "c_kind": null,
       "kind": "FieldDecl",
       "name": "c",
       "type": "int32_t"
      },
      {
+      "bits": 24,
       "c_kind": null,
       "kind": "FieldDecl",
       "name": "d",
       "type": "int32_t"
      },
      {
+      "bits": 15,
       "c_kind": null,
       "kind": "FieldDecl",
       "name": "e",
       "type": "int32_t"
      },
      {
+      "bits": 14,
       "c_kind": null,
       "kind": "FieldDecl",
       "name": "f",
@@ -1269,6 +1350,7 @@
    {
     "fields": [
      {
+      "bits": 24,
       "c_kind": null,
       "kind": "FieldDecl",
       "name": "i",
@@ -1280,18 +1362,21 @@
    {
     "fields": [
      {
+      "bits": 3,
       "c_kind": null,
       "kind": "FieldDecl",
       "name": "b",
       "type": "int"
      },
      {
+      "bits": 28,
       "c_kind": null,
       "kind": "FieldDecl",
       "name": "c",
       "type": "int"
      },
      {
+      "bits": 1,
       "c_kind": null,
       "kind": "FieldDecl",
       "name": "d",
@@ -1530,12 +1615,11 @@
  },
  "struct_S_scalar_price": {
   "by_class": {
-   "anonymous-field": 1,
    "attribute-or-nested-node": 5,
-   "direct-scalar-fields": 10,
-   "non-scalar-field": 6
+   "bit-field": 12,
+   "non-scalar-field": 5
   },
-  "direct_scalar_files": 10,
+  "direct_scalar_files": 0,
   "files": 22,
   "interpretation": "direct-scalar-fields is a candidate for the smallest layout slice: every member is a named parser FieldDecl with a direct profile integer/character type or fixed scalar array. This is a price only; it does not claim that a row has no later wall.",
   "rows": [
@@ -1560,19 +1644,19 @@
     "name": "20171008-1.c"
    },
    {
-    "classification": "direct-scalar-fields",
+    "classification": "bit-field",
     "name": "20230630-1.c"
    },
    {
-    "classification": "direct-scalar-fields",
+    "classification": "bit-field",
     "name": "20230630-2.c"
    },
    {
-    "classification": "direct-scalar-fields",
+    "classification": "bit-field",
     "name": "20230630-3.c"
    },
    {
-    "classification": "direct-scalar-fields",
+    "classification": "bit-field",
     "name": "20230630-4.c"
    },
    {
@@ -1580,7 +1664,7 @@
     "name": "pr101188.c"
    },
    {
-    "classification": "non-scalar-field",
+    "classification": "bit-field",
     "name": "pr108498-2.c"
    },
    {
@@ -1588,7 +1672,7 @@
     "name": "pr47538.c"
    },
    {
-    "classification": "direct-scalar-fields",
+    "classification": "bit-field",
     "name": "pr49123.c"
    },
    {
@@ -1600,19 +1684,19 @@
     "name": "pr52979-2.c"
    },
    {
-    "classification": "anonymous-field",
+    "classification": "bit-field",
     "name": "pr58984.c"
    },
    {
-    "classification": "direct-scalar-fields",
+    "classification": "bit-field",
     "name": "pr65215-3.c"
    },
    {
-    "classification": "direct-scalar-fields",
+    "classification": "bit-field",
     "name": "pr65215-4.c"
    },
    {
-    "classification": "direct-scalar-fields",
+    "classification": "bit-field",
     "name": "pr70127.c"
    },
    {
@@ -1620,11 +1704,11 @@
     "name": "pr79737-1.c"
    },
    {
-    "classification": "direct-scalar-fields",
+    "classification": "bit-field",
     "name": "pr89195.c"
    },
    {
-    "classification": "direct-scalar-fields",
+    "classification": "bit-field",
     "name": "pr97764.c"
    }
   ]

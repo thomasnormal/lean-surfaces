@@ -49,6 +49,8 @@ def classify_struct_fields(fields):
             return "attribute-or-nested-node"
         if not field.get("name"):
             return "anonymous-field"
+        if field.get("bits") is not None:
+            return "bit-field"
         if not _direct_scalar_type(field.get("type")):
             return "non-scalar-field"
     return "direct-scalar-fields"
@@ -96,7 +98,8 @@ def envelope_dependencies(data, manifest_path):
                 if isinstance(typ, str):
                     typ = re.sub(r"[^ ]*/src/", "src/", typ)
                 fields.append({"name": field.get("name"), "type": typ,
-                               "kind": field.get("kind"), "c_kind": field.get("c_kind")})
+                               "kind": field.get("kind"), "c_kind": field.get("c_kind"),
+                               "bits": field.get("bits")})
         out.setdefault(row["name"], fields)
     return out
 
@@ -323,6 +326,8 @@ def self_test():
         raise SystemExit("c_type_layout_price --self-test: scalar record not classified")
     if classify_struct_fields([{"kind": "FieldDecl", "name": "p", "type": "int *"}]) != "non-scalar-field":
         raise SystemExit("c_type_layout_price --self-test: pointer was classified as scalar")
+    if classify_struct_fields([{"kind": "FieldDecl", "name": "b", "type": "int", "bits": 3}]) != "bit-field":
+        raise SystemExit("c_type_layout_price --self-test: bit-field was classified as scalar")
     if classify_struct_fields([{"kind": "Unsupported", "c_kind": "PackedAttr"}]) != "attribute-or-nested-node":
         raise SystemExit("c_type_layout_price --self-test: attribute was classified as a field")
     print("c_type_layout_price --self-test: ok")

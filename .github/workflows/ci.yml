@@ -123,6 +123,15 @@ jobs:
                         sort_keys=True)
               out.write("\n")
           PY
+      - name: Publish red-list summary
+        run: |
+          {
+            echo "## CI red list"
+            echo
+            echo '```json'
+            cat ci-red-list.json
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
       - name: Upload red-list artifact
         uses: actions/upload-artifact@v4
         with:

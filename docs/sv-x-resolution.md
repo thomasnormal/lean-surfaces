@@ -1,5 +1,11 @@
 # Unknown-bit resolution in E
 
+> **Interface update (2026-11-12).** The owner's X-E rule is now specified in
+> [sv-x-interface.md](sv-x-interface.md): resolution is independent at every
+> read site. This file's earlier correlated-concretization wording is retained
+> as migration history only; it is not an authority for new definitions or
+> proofs.
+
 ## 2026-11-08 interim consumer rule
 
 Until the concretization relation is wired through execution, every theorem
@@ -30,15 +36,12 @@ with 0 or 1 and then runs the same source-shaped AST and schedule. The resolved
 semantics is the relation from one E state and environment choice to the set
 of those concrete runs.
 
-The choice is correlated. An uninitialized variable or input bit gets one
-0/1 value for the run and keeps that value when the variable is read again.
-The semantics does not choose a fresh value at each read. A value produced by
-an operation may contain unknown bits; once that value is stored, its chosen
-concretization is retained. If an operation itself is nondeterministic (for
-example, a division-by-zero result), its explicit result witness is part of the
-run choice and is likewise correlated after storage. Scheduling, active-region
-order, clock timing, and environment inputs remain the independent choices
-already quantified by E.
+The original interim draft said that a choice was correlated across a run.
+That wording is superseded by the owner's X-E ruling: each read site receives
+an independent 0/1 resolution until the program writes the resulting value.
+Scheduling, active-region order, clock timing, and environment inputs remain
+the independent choices already quantified by E. See
+[sv-x-interface.md](sv-x-interface.md) for the authoritative relation shape.
 
 At every operation whose result depends on an unknown, the relation includes
 every 0/1 result permitted by the operation's defined four-state rule and the
@@ -69,8 +72,8 @@ in the tier:
 * an out-of-range or unknown select contributes the result of each resolved
   index (an ignored write or an unknown read where the LRM requires it).
 
-These are separate axes of choice. A proof quantifies over their product, while
-preserving correlations within each run.
+These are separate axes of choice. A proof quantifies over their product, with
+the per-read relation applied at each consulted site.
 
 ## Differential testing across refinement levels
 
@@ -130,8 +133,8 @@ as an unproved theorem. The implementation must prove:
 2. **Known-state agreement.** If every value consulted by a decision, select,
    index, or assertion is known, the resolved relation is a singleton and its
    projection equals today's exact evaluator.
-3. **Correlation.** Repeated reads of one stored unknown use the same witness;
-   a state transition and its later observations preserve that witness.
+3. **Per-read resolution.** Every consulted site has its own witness; a later
+   read starts from the stored four-state value and may resolve it independently.
 4. **Derived-view refinement.** Cycle views, contracts, and proof tactics
    quantify over the resolved E relation. They may use the known-state
    sufficient condition, but may not silently select one resolution.
@@ -171,9 +174,9 @@ Each consumer must either carry the witness or move to the resolved relation;
 the inventory is intentionally broader than the current `run2` path because
 all of these definitions can be used by a theorem or a derived view.
 
-The first kernel-facing fragment is now present in
-`LeanModels.Sv.Kernel.XResolve`: `DecisionKnown v` states that all correlated
-concretizations of a condition agree on `condTrue`, and
+The first interim kernel-facing fragment is present in
+`LeanModels.Sv.Kernel.XResolve`: `DecisionKnown v` states that the current
+correlated-concretization scaffold agrees on `condTrue`, and
 `decisionKnown_of_allKnown` proves the cheap sufficient case used by current
 proofs; `DecisionKnown.abstract` exposes the agreement with the abstract
 condition for each concretization. It is a predicate and theorem only; execution remains behind the

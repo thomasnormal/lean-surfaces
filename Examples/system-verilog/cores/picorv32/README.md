@@ -6,6 +6,26 @@ source is YosysHQ's `picorv32` repository at commit
 under the ISC license (`COPYING`).  The pinned source tree was cloned
 read-only; no RTL adaptation was made.
 
+## RISCV_FORMAL R2 envelope
+
+The R2 statement loads the same upstream source with `RISCV_FORMAL` defined,
+so the RVFI ports are present.  The vendored source
+`picorv32_r2.v` is byte-for-byte the pinned upstream `picorv32.v`:
+
+```text
+python3 extractors/sv/extract.py --top picorv32 -D RISCV_FORMAL \
+  -o Examples/system-verilog/cores/picorv32/picorv32_r2.sv.json \
+  Examples/system-verilog/cores/picorv32/picorv32_r2.v
+```
+
+The source SHA-256 is
+`0836050971b3c6cdd28ac3b1e5719a67fb645161912bef1e472e63995ceb062`.
+The resulting envelope is 3,262,705 bytes with SHA-256
+`0bb5dea7b1cc61cab05858396ec2cb5837e25793aa0291c6c89a5109380cf3e8`.
+It has one `picorv32` module and 26 named parameters.  The R2 statement
+records every pinned parameter value explicitly and retains the loader's
+loud refusal at the current `cpuregs` memory wall.
+
 Set `PINNED_PICORV32` to the read-only checkout at that commit.  The original
 symbolic envelope was generated from the single upstream `picorv32.v` source
 with:

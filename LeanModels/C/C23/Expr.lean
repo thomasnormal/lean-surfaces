@@ -981,7 +981,15 @@ def evalExpr (ctx : Ctx) : Expr → EvalM CVal
       else if ck == "FunctionToPointerDecay" then
         refuseUnsupported "function-to-pointer decay (inch 5)"
       else if ck == "IntegralToFloating" then
-        refuseUnsupported "integer-to-floating conversion (floats: a named decision)"
+        do
+        let v ← evalExpr ctx sub
+        let (_, n) ← asInt v
+        if ty == "float" then
+          pure (.float32 (Float32.Model.ofInt n))
+        else if ty == "double" then
+          pure (.float64 (Float.Model.ofInt n))
+        else
+          refuseUnsupported "long double integer-to-floating conversion"
       else refuseUnsupported s!"castKind '{ck}'"
 
   -- ===== §6.5.14 / §6.5.15 — THE DRAIN AMENDMENT =====

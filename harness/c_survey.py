@@ -53,6 +53,31 @@ def portable_detail(detail):
     return detail
 
 
+def dynamic_wall(verdict, detail):
+    """Normalize the first runtime refusal into a rankable construct wall."""
+    if verdict == "refused-unsupported":
+        if detail.startswith("out of tier: "):
+            return "unsupported:" + detail[len("out of tier: "):]
+        if detail.startswith("castKind "):
+            return "cast:" + detail.split("'", 2)[1]
+        if detail.startswith("GNU case range"):
+            return "unsupported:CaseStmt"
+        if detail.startswith("unsequenced side effects"):
+            return "unsequenced-effects"
+        return "unsupported:" + detail.split(":", 1)[0]
+    if verdict == "refused-libc":
+        return "libc-call"
+    if verdict == "refused-ub":
+        return "undefined-behavior"
+    if verdict == "timeout":
+        return "timeout"
+    if verdict == "not-ingested":
+        return "ingestion"
+    if verdict == "not-parsed":
+        return "frontend"
+    return None
+
+
 def portable_manifest(value):
     """Copy a manifest while making cache paths logical rather than absolute."""
     if isinstance(value, dict):
@@ -156,6 +181,7 @@ def build(manifest_path, log_path, commit=None, measured_at=None):
             "verdict": token,
             "detail": detail,
             "static_walls": static_walls(env) if env else [],
+            "dynamic_wall": dynamic_wall(token, detail),
         })
     counts = Counter(row["verdict"] for row in rows)
     by_corpus = {}
@@ -179,6 +205,20 @@ def build(manifest_path, log_path, commit=None, measured_at=None):
                             if item["wall"] in row["static_walls"] and
                             len(row["static_walls"]) == 1)
     ranking.sort(key=lambda x: (-x["sole"], -x["present"], x["wall"]))
+    dynamic_files = {}
+    for row in rows:
+        wall = row.get("dynamic_wall")
+        if wall:
+            dynamic_files.setdefault(wall, []).append(row["name"])
+    dynamic_ranking = []
+    for wall, files in dynamic_files.items():
+        dynamic_ranking.append({
+            "wall": wall,
+            "sole": sum(1 for row in rows if row.get("dynamic_wall") == wall),
+            "present": len(files),
+            "files": sorted(files),
+        })
+    dynamic_ranking.sort(key=lambda x: (-x["sole"], x["wall"]))
     out = {
         "schema": "c-survey-0.1",
         "corpus": manifest.get("corpus", "gcc.c-torture/execute"),
@@ -189,6 +229,7 @@ def build(manifest_path, log_path, commit=None, measured_at=None):
         "by_corpus": {k: dict(sorted(v.items())) for k, v in sorted(by_corpus.items())},
         "rows": rows,
         "wall_ranking": ranking,
+        "dynamic_wall_ranking": dynamic_ranking,
     }
     if commit is not None:
         out["measured_commit"] = commit
@@ -227,6 +268,13 @@ def render(data):
               "`sole` counts files whose only static wall is the named wall; `present` counts all files containing it.",
               "", "| wall | sole | present | example files |", "| --- | ---: | ---: | --- |"]
     for item in data.get("wall_ranking", []):
+        examples = ", ".join(item.get("files", [])[:5])
+        lines.append("| `%s` | %d | %d | %s |" %
+                     (item["wall"], item["sole"], item["present"], examples))
+    lines += ["", "## Dynamic first-refusal ranking", "",
+              "The run's first refusal, normalized by construct; `sole` counts rows whose first refusal is this wall.",
+              "", "| wall | sole | present | example files |", "| --- | ---: | ---: | --- |"]
+    for item in data.get("dynamic_wall_ranking", []):
         examples = ", ".join(item.get("files", [])[:5])
         lines.append("| `%s` | %d | %d | %s |" %
                      (item["wall"], item["sole"], item["present"], examples))
@@ -270,6 +318,9 @@ def selftest():
         return 1
     if portable_detail(m1["tests"][0]["why"]) != "src/x.c:1:1: bad":
         print("c_survey --self-test: diagnostic path was not normalized", file=sys.stderr)
+        return 1
+    if dynamic_wall("refused-unsupported", "out of tier: ChooseExpr") != "unsupported:ChooseExpr":
+        print("c_survey --self-test: dynamic wall normalization failed", file=sys.stderr)
         return 1
     print("c_survey --self-test: ok")
     return 0

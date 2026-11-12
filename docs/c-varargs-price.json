@@ -1,0 +1,852 @@
+{
+ "files": 141,
+ "rows": [
+  {
+   "name": "00140.c",
+   "va_arg_nodes": 0,
+   "variadic_calls": 2,
+   "variadic_functions": 1
+  },
+  {
+   "name": "00204.c",
+   "va_arg_nodes": 14,
+   "variadic_calls": 104,
+   "variadic_functions": 2
+  },
+  {
+   "name": "00210.c",
+   "va_arg_nodes": 0,
+   "variadic_calls": 2,
+   "variadic_functions": 2
+  },
+  {
+   "name": "00211.c",
+   "va_arg_nodes": 0,
+   "variadic_calls": 1,
+   "variadic_functions": 2
+  },
+  {
+   "name": "00213.c",
+   "va_arg_nodes": 0,
+   "variadic_calls": 17,
+   "variadic_functions": 2
+  },
+  {
+   "name": "00214.c",
+   "va_arg_nodes": 0,
+   "variadic_calls": 5,
+   "variadic_functions": 2
+  },
+  {
+   "name": "00215.c",
+   "va_arg_nodes": 0,
+   "variadic_calls": 15,
+   "variadic_functions": 2
+  },
+  {
+   "name": "00217.c",
+   "va_arg_nodes": 0,
+   "variadic_calls": 1,
+   "variadic_functions": 2
+  },
+  {
+   "name": "00218.c",
+   "va_arg_nodes": 0,
+   "variadic_calls": 1,
+   "variadic_functions": 2
+  },
+  {
+   "name": "20000519-1.c",
+   "va_arg_nodes": 1,
+   "variadic_calls": 1,
+   "variadic_functions": 2
+  },
+  {
+   "name": "20020406-1.c",
+   "va_arg_nodes": 0,
+   "variadic_calls": 0,
+   "variadic_functions": 1
+  },
+  {
+   "name": "20021120-3.c",
+   "va_arg_nodes": 0,
+   "variadic_calls": 0,
+   "variadic_functions": 1
+  },
+  {
+   "name": "20030330-1.c",
+   "va_arg_nodes": 0,
+   "variadic_calls": 0,
+   "variadic_functions": 1
+  },
+  {
+   "name": "20030626-1.c",
+   "va_arg_nodes": 0,
+   "variadic_calls": 1,
+   "variadic_functions": 2
+  },
+  {
+   "name": "20030626-2.c",
+   "va_arg_nodes": 0,
+   "variadic_calls": 1,
+   "variadic_functions": 2
+  },
+  {
+   "name": "20030811-1.c",
+   "va_arg_nodes": 0,
+   "variadic_calls": 1,
+   "variadic_functions": 1
+  },
+  {
+   "name": "20030914-2.c",
+   "va_arg_nodes": 0,
+   "variadic_calls": 1,
+   "variadic_functions": 1
+  },
+  {
+   "name": "20040709-1.c",
+   "va_arg_nodes": 0,
+   "variadic_calls": 0,
+   "variadic_functions": 1
+  },
+  {
+   "name": "20040709-2.c",
+   "va_arg_nodes": 0,
+   "variadic_calls": 0,
+   "variadic_functions": 1
+  },
+  {
+   "name": "20041113-1.c",
+   "va_arg_nodes": 4,
+   "variadic_calls": 1,
+   "variadic_functions": 2
+  },
+  {
+   "name": "20041214-1.c",
+   "va_arg_nodes": 3,
+   "variadic_calls": 1,
+   "variadic_functions": 2
+  },
+  {
+   "name": "20070201-1.c",
+   "va_arg_nodes": 0,
+   "variadic_calls": 1,
+   "variadic_functions": 2
+  },
+  {
+   "name": "20071213-1.c",
+   "va_arg_nodes": 4,
+   "variadic_calls": 2,
+   "variadic_functions": 3
+  },
+  {
+   "name": "20080502-1.c",
+   "va_arg_nodes": 0,
+   "variadic_calls": 0,
+   "variadic_functions": 1
+  },
+  {
+   "name": "20121108-1.c",
+   "va_arg_nodes": 0,
+   "variadic_calls": 0,
+   "variadic_functions": 1
+  },
+  {
+   "name": "20141022-1.c",
+   "va_arg_nodes": 0,
+   "variadic_calls": 0,
+   "variadic_functions": 1
+  },
+  {
+   "name": "920501-8.c",
+   "va_arg_nodes": 13,
+   "variadic_calls": 2,
+   "variadic_functions": 2
+  },
+  {
+   "name": "920625-1.c",
+   "va_arg_nodes": 2,
+   "variadic_calls": 2,
+   "variadic_functions": 3
+  },
+  {
+   "name": "920726-1.c",
+   "va_arg_nodes": 2,
+   "variadic_calls": 4,
+   "variadic_functions": 3
+  },
+  {
+   "name": "920908-1.c",
+   "va_arg_nodes": 2,
+   "variadic_calls": 1,
+   "variadic_functions": 2
+  },
+  {
+   "name": "931004-10.c",
+   "va_arg_nodes": 2,
+   "variadic_calls": 1,
+   "variadic_functions": 2
+  },
+  {
+   "name": "931004-12.c",
+   "va_arg_nodes": 2,
+   "variadic_calls": 1,
+   "variadic_functions": 2
+  },
+  {
+   "name": "931004-14.c",
+   "va_arg_nodes": 2,
+   "variadic_calls": 1,
+   "variadic_functions": 2
+  },
+  {
+   "name": "931004-2.c",
+   "va_arg_nodes": 2,
+   "variadic_calls": 1,
+   "variadic_functions": 2
+  },
+  {
+   "name": "931004-4.c",
+   "va_arg_nodes": 2,
+   "variadic_calls": 1,
+   "variadic_functions": 2
+  },
+  {
+   "name": "931004-6.c",
+   "va_arg_nodes": 2,
+   "variadic_calls": 1,
+   "variadic_functions": 2
+  },
+  {
+   "name": "931004-8.c",
+   "va_arg_nodes": 2,
+   "variadic_calls": 1,
+   "variadic_functions": 2
+  },
+  {
+   "name": "980205.c",
+   "va_arg_nodes": 1,
+   "variadic_calls": 1,
+   "variadic_functions": 2
+  },
+  {
+   "name": "980608-1.c",
+   "va_arg_nodes": 6,
+   "variadic_calls": 1,
+   "variadic_functions": 2
+  },
+  {
+   "name": "980716-1.c",
+   "va_arg_nodes": 1,
+   "variadic_calls": 1,
+   "variadic_functions": 2
+  },
+  {
+   "name": "990128-1.c",
+   "va_arg_nodes": 0,
+   "variadic_calls": 0,
+   "variadic_functions": 2
+  },
+  {
+   "name": "991216-2.c",
+   "va_arg_nodes": 3,
+   "variadic_calls": 8,
+   "variadic_functions": 2
+  },
+  {
+   "name": "bcp-1.c",
+   "va_arg_nodes": 0,
+   "variadic_calls": 0,
+   "variadic_functions": 1
+  },
+  {
+   "name": "builtin-constant.c",
+   "va_arg_nodes": 0,
+   "variadic_calls": 0,
+   "variadic_functions": 1
+  },
+  {
+   "name": "builtin-prefetch-1.c",
+   "va_arg_nodes": 0,
+   "variadic_calls": 0,
+   "variadic_functions": 1
+  },
+  {
+   "name": "builtin-prefetch-2.c",
+   "va_arg_nodes": 0,
+   "variadic_calls": 0,
+   "variadic_functions": 1
+  },
+  {
+   "name": "builtin-prefetch-3.c",
+   "va_arg_nodes": 0,
+   "variadic_calls": 0,
+   "variadic_functions": 1
+  },
+  {
+   "name": "builtin-prefetch-4.c",
+   "va_arg_nodes": 0,
+   "variadic_calls": 0,
+   "variadic_functions": 1
+  },
+  {
+   "name": "builtin-prefetch-5.c",
+   "va_arg_nodes": 0,
+   "variadic_calls": 0,
+   "variadic_functions": 1
+  },
+  {
+   "name": "builtin-prefetch-6.c",
+   "va_arg_nodes": 0,
+   "variadic_calls": 0,
+   "variadic_functions": 1
+  },
+  {
+   "name": "builtins/lib/chk.c",
+   "va_arg_nodes": 0,
+   "variadic_calls": 0,
+   "variadic_functions": 5
+  },
+  {
+   "name": "builtins/lib/fprintf.c",
+   "va_arg_nodes": 0,
+   "variadic_calls": 0,
+   "variadic_functions": 3
+  },
+  {
+   "name": "builtins/lib/printf.c",
+   "va_arg_nodes": 0,
+   "variadic_calls": 0,
+   "variadic_functions": 3
+  },
+  {
+   "name": "builtins/lib/sprintf.c",
+   "va_arg_nodes": 0,
+   "variadic_calls": 0,
+   "variadic_functions": 2
+  },
+  {
+   "name": "builtins/sprintf.c",
+   "va_arg_nodes": 0,
+   "variadic_calls": 5,
+   "variadic_functions": 2
+  },
+  {
+   "name": "builtins/strnlen.c",
+   "va_arg_nodes": 0,
+   "variadic_calls": 0,
+   "variadic_functions": 1
+  },
+  {
+   "name": "fprintf-chk-1.c",
+   "va_arg_nodes": 0,
+   "variadic_calls": 22,
+   "variadic_functions": 2
+  },
+  {
+   "name": "gcc/testsuite/gcc.dg/c23-float-4.c",
+   "va_arg_nodes": 0,
+   "variadic_calls": 0,
+   "variadic_functions": 1
+  },
+  {
+   "name": "gcc/testsuite/gcc.dg/c23-stdarg-9.c",
+   "va_arg_nodes": 72,
+   "variadic_calls": 9,
+   "variadic_functions": 17
+  },
+  {
+   "name": "gcc/testsuite/gcc.dg/torture/c23-stdarg-split-1a.c",
+   "va_arg_nodes": 0,
+   "variadic_calls": 10,
+   "variadic_functions": 9
+  },
+  {
+   "name": "ieee/compare-fp-1.c",
+   "va_arg_nodes": 0,
+   "variadic_calls": 0,
+   "variadic_functions": 2
+  },
+  {
+   "name": "ieee/compare-fp-3.c",
+   "va_arg_nodes": 0,
+   "variadic_calls": 0,
+   "variadic_functions": 1
+  },
+  {
+   "name": "ieee/compare-fp-4.c",
+   "va_arg_nodes": 0,
+   "variadic_calls": 0,
+   "variadic_functions": 1
+  },
+  {
+   "name": "ieee/fp-cmp-5.c",
+   "va_arg_nodes": 0,
+   "variadic_calls": 0,
+   "variadic_functions": 6
+  },
+  {
+   "name": "ieee/fp-cmp-8.c",
+   "va_arg_nodes": 0,
+   "variadic_calls": 0,
+   "variadic_functions": 6
+  },
+  {
+   "name": "ieee/inf-4.c",
+   "va_arg_nodes": 0,
+   "variadic_calls": 0,
+   "variadic_functions": 2
+  },
+  {
+   "name": "ieee/pr108540-1.c",
+   "va_arg_nodes": 0,
+   "variadic_calls": 0,
+   "variadic_functions": 3
+  },
+  {
+   "name": "ieee/pr109386.c",
+   "va_arg_nodes": 0,
+   "variadic_calls": 0,
+   "variadic_functions": 1
+  },
+  {
+   "name": "memchr-1.c",
+   "va_arg_nodes": 0,
+   "variadic_calls": 0,
+   "variadic_functions": 1
+  },
+  {
+   "name": "multi-ix.c",
+   "va_arg_nodes": 3,
+   "variadic_calls": 3,
+   "variadic_functions": 7
+  },
+  {
+   "name": "pr108789.c",
+   "va_arg_nodes": 0,
+   "variadic_calls": 0,
+   "variadic_functions": 2
+  },
+  {
+   "name": "pr111863-1.c",
+   "va_arg_nodes": 0,
+   "variadic_calls": 0,
+   "variadic_functions": 1
+  },
+  {
+   "name": "pr117432.c",
+   "va_arg_nodes": 4,
+   "variadic_calls": 4,
+   "variadic_functions": 3
+  },
+  {
+   "name": "pr120630.c",
+   "va_arg_nodes": 0,
+   "variadic_calls": 1,
+   "variadic_functions": 1
+  },
+  {
+   "name": "pr122000.c",
+   "va_arg_nodes": 0,
+   "variadic_calls": 0,
+   "variadic_functions": 2
+  },
+  {
+   "name": "pr19449.c",
+   "va_arg_nodes": 0,
+   "variadic_calls": 0,
+   "variadic_functions": 1
+  },
+  {
+   "name": "pr35456.c",
+   "va_arg_nodes": 0,
+   "variadic_calls": 0,
+   "variadic_functions": 1
+  },
+  {
+   "name": "pr38151.c",
+   "va_arg_nodes": 1,
+   "variadic_calls": 1,
+   "variadic_functions": 2
+  },
+  {
+   "name": "pr44575.c",
+   "va_arg_nodes": 1,
+   "variadic_calls": 1,
+   "variadic_functions": 2
+  },
+  {
+   "name": "pr44942.c",
+   "va_arg_nodes": 4,
+   "variadic_calls": 4,
+   "variadic_functions": 5
+  },
+  {
+   "name": "pr64006.c",
+   "va_arg_nodes": 0,
+   "variadic_calls": 0,
+   "variadic_functions": 1
+  },
+  {
+   "name": "pr64979.c",
+   "va_arg_nodes": 3,
+   "variadic_calls": 1,
+   "variadic_functions": 2
+  },
+  {
+   "name": "pr68381.c",
+   "va_arg_nodes": 0,
+   "variadic_calls": 0,
+   "variadic_functions": 1
+  },
+  {
+   "name": "pr68390.c",
+   "va_arg_nodes": 0,
+   "variadic_calls": 2,
+   "variadic_functions": 2
+  },
+  {
+   "name": "pr71550.c",
+   "va_arg_nodes": 0,
+   "variadic_calls": 0,
+   "variadic_functions": 1
+  },
+  {
+   "name": "pr71554.c",
+   "va_arg_nodes": 0,
+   "variadic_calls": 0,
+   "variadic_functions": 1
+  },
+  {
+   "name": "pr78586.c",
+   "va_arg_nodes": 0,
+   "variadic_calls": 0,
+   "variadic_functions": 1
+  },
+  {
+   "name": "pr78622.c",
+   "va_arg_nodes": 0,
+   "variadic_calls": 0,
+   "variadic_functions": 2
+  },
+  {
+   "name": "pr79286.c",
+   "va_arg_nodes": 0,
+   "variadic_calls": 0,
+   "variadic_functions": 1
+  },
+  {
+   "name": "pr79327.c",
+   "va_arg_nodes": 0,
+   "variadic_calls": 0,
+   "variadic_functions": 1
+  },
+  {
+   "name": "pr84169.c",
+   "va_arg_nodes": 0,
+   "variadic_calls": 0,
+   "variadic_functions": 1
+  },
+  {
+   "name": "pr85095.c",
+   "va_arg_nodes": 0,
+   "variadic_calls": 0,
+   "variadic_functions": 1
+  },
+  {
+   "name": "pr89434.c",
+   "va_arg_nodes": 0,
+   "variadic_calls": 0,
+   "variadic_functions": 1
+  },
+  {
+   "name": "pr90311.c",
+   "va_arg_nodes": 0,
+   "variadic_calls": 0,
+   "variadic_functions": 1
+  },
+  {
+   "name": "pr91450-1.c",
+   "va_arg_nodes": 0,
+   "variadic_calls": 0,
+   "variadic_functions": 1
+  },
+  {
+   "name": "pr91450-2.c",
+   "va_arg_nodes": 0,
+   "variadic_calls": 0,
+   "variadic_functions": 1
+  },
+  {
+   "name": "pr91635.c",
+   "va_arg_nodes": 0,
+   "variadic_calls": 0,
+   "variadic_functions": 1
+  },
+  {
+   "name": "pr92904.c",
+   "va_arg_nodes": 32,
+   "variadic_calls": 140,
+   "variadic_functions": 15
+  },
+  {
+   "name": "pr93213.c",
+   "va_arg_nodes": 0,
+   "variadic_calls": 0,
+   "variadic_functions": 1
+  },
+  {
+   "name": "pr93494.c",
+   "va_arg_nodes": 0,
+   "variadic_calls": 0,
+   "variadic_functions": 1
+  },
+  {
+   "name": "printf-chk-1.c",
+   "va_arg_nodes": 0,
+   "variadic_calls": 22,
+   "variadic_functions": 2
+  },
+  {
+   "name": "return-addr.c",
+   "va_arg_nodes": 0,
+   "variadic_calls": 0,
+   "variadic_functions": 1
+  },
+  {
+   "name": "stdarg-1.c",
+   "va_arg_nodes": 13,
+   "variadic_calls": 9,
+   "variadic_functions": 10
+  },
+  {
+   "name": "stdarg-2.c",
+   "va_arg_nodes": 13,
+   "variadic_calls": 11,
+   "variadic_functions": 12
+  },
+  {
+   "name": "stdarg-3.c",
+   "va_arg_nodes": 9,
+   "variadic_calls": 10,
+   "variadic_functions": 9
+  },
+  {
+   "name": "stdarg-4.c",
+   "va_arg_nodes": 19,
+   "variadic_calls": 9,
+   "variadic_functions": 5
+  },
+  {
+   "name": "strct-stdarg-1.c",
+   "va_arg_nodes": 2,
+   "variadic_calls": 1,
+   "variadic_functions": 2
+  },
+  {
+   "name": "strct-varg-1.c",
+   "va_arg_nodes": 3,
+   "variadic_calls": 1,
+   "variadic_functions": 2
+  },
+  {
+   "name": "strlen-2.c",
+   "va_arg_nodes": 0,
+   "variadic_calls": 0,
+   "variadic_functions": 1
+  },
+  {
+   "name": "strlen-3.c",
+   "va_arg_nodes": 0,
+   "variadic_calls": 0,
+   "variadic_functions": 1
+  },
+  {
+   "name": "strlen-4.c",
+   "va_arg_nodes": 0,
+   "variadic_calls": 117,
+   "variadic_functions": 2
+  },
+  {
+   "name": "strlen-5.c",
+   "va_arg_nodes": 0,
+   "variadic_calls": 0,
+   "variadic_functions": 1
+  },
+  {
+   "name": "strlen-6.c",
+   "va_arg_nodes": 0,
+   "variadic_calls": 0,
+   "variadic_functions": 1
+  },
+  {
+   "name": "va-arg-1.c",
+   "va_arg_nodes": 3,
+   "variadic_calls": 1,
+   "variadic_functions": 2
+  },
+  {
+   "name": "va-arg-10.c",
+   "va_arg_nodes": 2,
+   "variadic_calls": 16,
+   "variadic_functions": 17
+  },
+  {
+   "name": "va-arg-11.c",
+   "va_arg_nodes": 2,
+   "variadic_calls": 1,
+   "variadic_functions": 2
+  },
+  {
+   "name": "va-arg-12.c",
+   "va_arg_nodes": 3,
+   "variadic_calls": 1,
+   "variadic_functions": 2
+  },
+  {
+   "name": "va-arg-13.c",
+   "va_arg_nodes": 1,
+   "variadic_calls": 1,
+   "variadic_functions": 2
+  },
+  {
+   "name": "va-arg-14.c",
+   "va_arg_nodes": 7,
+   "variadic_calls": 1,
+   "variadic_functions": 2
+  },
+  {
+   "name": "va-arg-15.c",
+   "va_arg_nodes": 2,
+   "variadic_calls": 1,
+   "variadic_functions": 2
+  },
+  {
+   "name": "va-arg-16.c",
+   "va_arg_nodes": 9,
+   "variadic_calls": 1,
+   "variadic_functions": 2
+  },
+  {
+   "name": "va-arg-17.c",
+   "va_arg_nodes": 9,
+   "variadic_calls": 1,
+   "variadic_functions": 2
+  },
+  {
+   "name": "va-arg-18.c",
+   "va_arg_nodes": 3,
+   "variadic_calls": 1,
+   "variadic_functions": 2
+  },
+  {
+   "name": "va-arg-19.c",
+   "va_arg_nodes": 9,
+   "variadic_calls": 1,
+   "variadic_functions": 2
+  },
+  {
+   "name": "va-arg-20.c",
+   "va_arg_nodes": 1,
+   "variadic_calls": 1,
+   "variadic_functions": 2
+  },
+  {
+   "name": "va-arg-21.c",
+   "va_arg_nodes": 0,
+   "variadic_calls": 1,
+   "variadic_functions": 2
+  },
+  {
+   "name": "va-arg-22.c",
+   "va_arg_nodes": 21,
+   "variadic_calls": 1,
+   "variadic_functions": 2
+  },
+  {
+   "name": "va-arg-23.c",
+   "va_arg_nodes": 1,
+   "variadic_calls": 1,
+   "variadic_functions": 2
+  },
+  {
+   "name": "va-arg-24.c",
+   "va_arg_nodes": 10,
+   "variadic_calls": 11,
+   "variadic_functions": 11
+  },
+  {
+   "name": "va-arg-26.c",
+   "va_arg_nodes": 1,
+   "variadic_calls": 1,
+   "variadic_functions": 2
+  },
+  {
+   "name": "va-arg-4.c",
+   "va_arg_nodes": 3,
+   "variadic_calls": 1,
+   "variadic_functions": 2
+  },
+  {
+   "name": "va-arg-5.c",
+   "va_arg_nodes": 8,
+   "variadic_calls": 2,
+   "variadic_functions": 3
+  },
+  {
+   "name": "va-arg-6.c",
+   "va_arg_nodes": 9,
+   "variadic_calls": 1,
+   "variadic_functions": 2
+  },
+  {
+   "name": "va-arg-7.c",
+   "va_arg_nodes": 3,
+   "variadic_calls": 1,
+   "variadic_functions": 2
+  },
+  {
+   "name": "va-arg-8.c",
+   "va_arg_nodes": 2,
+   "variadic_calls": 1,
+   "variadic_functions": 2
+  },
+  {
+   "name": "va-arg-9.c",
+   "va_arg_nodes": 1,
+   "variadic_calls": 16,
+   "variadic_functions": 17
+  },
+  {
+   "name": "va-arg-trap-1.c",
+   "va_arg_nodes": 1,
+   "variadic_calls": 1,
+   "variadic_functions": 2
+  },
+  {
+   "name": "vfprintf-1.c",
+   "va_arg_nodes": 0,
+   "variadic_calls": 11,
+   "variadic_functions": 2
+  },
+  {
+   "name": "vfprintf-chk-1.c",
+   "va_arg_nodes": 0,
+   "variadic_calls": 11,
+   "variadic_functions": 2
+  },
+  {
+   "name": "vprintf-1.c",
+   "va_arg_nodes": 0,
+   "variadic_calls": 11,
+   "variadic_functions": 2
+  },
+  {
+   "name": "vprintf-chk-1.c",
+   "va_arg_nodes": 0,
+   "variadic_calls": 11,
+   "variadic_functions": 2
+  }
+ ],
+ "schema": "c-varargs-price-0.1"
+}

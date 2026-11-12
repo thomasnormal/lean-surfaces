@@ -83,6 +83,11 @@ ordinary loader.  `acg_alias_assign` is therefore a loud
 `AlwaysComb:alias-read` refusal, matching the pinned legacy refusal and the
 IEEE 1800-2023 §§4.7–4.8 boundary; it is not executed as an E result.
 
+The transitive port-copy row, `acg_alias_port`, is likewise a loud
+`AlwaysComb:alias-read` refusal from the E runner.  Its pinned legacy receipt
+has the same refusal boundary, so no E verdict or migration-count change is
+claimed.
+
 The receipts were produced with:
 
 ```text

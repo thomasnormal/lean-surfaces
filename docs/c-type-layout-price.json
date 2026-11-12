@@ -1,0 +1,1013 @@
+{
+ "by_corpus": {
+  "c-testsuite/single-exec": {
+   "decl_messages": [
+    {
+     "detail": "no layout for declared type 'enum E'",
+     "files": 2
+    },
+    {
+     "detail": "no layout for declared type 'float'",
+     "files": 2
+    },
+    {
+     "detail": "no layout for declared type 'struct s'",
+     "files": 1
+    },
+    {
+     "detail": "no layout for declared type 'struct S'",
+     "files": 1
+    },
+    {
+     "detail": "no layout for declared type 'int32_t'",
+     "files": 1
+    },
+    {
+     "detail": "no layout for declared type 'int (*(*)(int, int))(int, int)'",
+     "files": 1
+    },
+    {
+     "detail": "no layout for declared type 'char[2][4]'",
+     "files": 1
+    },
+    {
+     "detail": "no layout for declared type 'struct foo'",
+     "files": 1
+    },
+    {
+     "detail": "no layout for declared type 'S'",
+     "files": 1
+    },
+    {
+     "detail": "no layout for declared type 'enum fred'",
+     "files": 1
+    },
+    {
+     "detail": "no layout for declared type 'double'",
+     "files": 1
+    },
+    {
+     "detail": "no layout for declared type 'char[argc]'",
+     "files": 1
+    },
+    {
+     "detail": "no layout for declared type 'union tree_node'",
+     "files": 1
+    },
+    {
+     "detail": "no layout for declared type 'const int *const'",
+     "files": 1
+    },
+    {
+     "detail": "no layout for declared type 'wchar_t[21]'",
+     "files": 1
+    }
+   ],
+   "files": 220,
+   "observed_any_no_layout": 18,
+   "observed_decl_no_layout": 17,
+   "observed_decl_without_static_candidate": 4,
+   "static_and_observed_decl": 13,
+   "static_candidate_without_observed_decl": 110,
+   "static_present": 123,
+   "static_sole": 41
+  },
+  "gcc.c-torture/execute": {
+   "decl_messages": [
+    {
+     "detail": "no layout for declared type 'double'",
+     "files": 25
+    },
+    {
+     "detail": "no layout for declared type 'struct S'",
+     "files": 17
+    },
+    {
+     "detail": "no layout for declared type 'V'",
+     "files": 9
+    },
+    {
+     "detail": "no layout for declared type 'float'",
+     "files": 7
+    },
+    {
+     "detail": "no layout for declared type 'va_list'",
+     "files": 6
+    },
+    {
+     "detail": "no layout for declared type 'struct s'",
+     "files": 5
+    },
+    {
+     "detail": "no layout for declared type '_Complex double'",
+     "files": 4
+    },
+    {
+     "detail": "no layout for declared type 'A'",
+     "files": 3
+    },
+    {
+     "detail": "no layout for declared type 'int[n % 1000 + 1]'",
+     "files": 3
+    },
+    {
+     "detail": "no layout for declared type 'T'",
+     "files": 3
+    },
+    {
+     "detail": "no layout for declared type 'size_t'",
+     "files": 3
+    },
+    {
+     "detail": "no layout for declared type 'int[2][1]'",
+     "files": 2
+    },
+    {
+     "detail": "no layout for declared type 'long double'",
+     "files": 2
+    },
+    {
+     "detail": "no layout for declared type 'struct A'",
+     "files": 2
+    },
+    {
+     "detail": "no layout for declared type 'struct packed_ushort'",
+     "files": 2
+    },
+    {
+     "detail": "no layout for declared type 'U'",
+     "files": 2
+    },
+    {
+     "detail": "no layout for declared type 'struct mouse_button_str'",
+     "files": 2
+    },
+    {
+     "detail": "no layout for declared type '_Complex float'",
+     "files": 2
+    },
+    {
+     "detail": "no layout for declared type 'double[4]'",
+     "files": 2
+    },
+    {
+     "detail": "no layout for declared type 'v16di'",
+     "files": 2
+    },
+    {
+     "detail": "no layout for declared type 'struct U'",
+     "files": 2
+    },
+    {
+     "detail": "no layout for declared type 'st'",
+     "files": 2
+    },
+    {
+     "detail": "no layout for declared type 'S'",
+     "files": 2
+    },
+    {
+     "detail": "no layout for declared type 'struct S1'",
+     "files": 2
+    },
+    {
+     "detail": "no layout for declared type 'union U'",
+     "files": 2
+    },
+    {
+     "detail": "no layout for declared type 'struct1'",
+     "files": 2
+    },
+    {
+     "detail": "no layout for declared type 'struct x'",
+     "files": 1
+    },
+    {
+     "detail": "no layout for declared type 'union u'",
+     "files": 1
+    },
+    {
+     "detail": "no layout for declared type 'RenderInfo'",
+     "files": 1
+    },
+    {
+     "detail": "no layout for declared type 'double[1]'",
+     "files": 1
+    },
+    {
+     "detail": "no layout for declared type 'Data[4]'",
+     "files": 1
+    },
+    {
+     "detail": "no layout for declared type 'volatile a_struct'",
+     "files": 1
+    },
+    {
+     "detail": "no layout for declared type '_Complex double[1]'",
+     "files": 1
+    },
+    {
+     "detail": "no layout for declared type 'float[3]'",
+     "files": 1
+    },
+    {
+     "detail": "no layout for declared type 'io'",
+     "files": 1
+    },
+    {
+     "detail": "no layout for declared type 'struct a'",
+     "files": 1
+    },
+    {
+     "detail": "no layout for declared type 'V2SF'",
+     "files": 1
+    },
+    {
+     "detail": "no layout for declared type 'struct D'",
+     "files": 1
+    },
+    {
+     "detail": "no layout for declared type 'gfc_array_i4'",
+     "files": 1
+    },
+    {
+     "detail": "no layout for declared type 'info_t'",
+     "files": 1
+    },
+    {
+     "detail": "no layout for declared type 'uint32_t'",
+     "files": 1
+    },
+    {
+     "detail": "no layout for declared type 'mp_int'",
+     "files": 1
+    },
+    {
+     "detail": "no layout for declared type 'union U1'",
+     "files": 1
+    },
+    {
+     "detail": "no layout for declared type 't'",
+     "files": 1
+    },
+    {
+     "detail": "no layout for declared type 'double[n]'",
+     "files": 1
+    },
+    {
+     "detail": "no layout for declared type 'struct_list'",
+     "files": 1
+    },
+    {
+     "detail": "no layout for declared type 'four_quarters'",
+     "files": 1
+    },
+    {
+     "detail": "no layout for declared type 'bu'",
+     "files": 1
+    },
+    {
+     "detail": "no layout for declared type 'double[6]'",
+     "files": 1
+    },
+    {
+     "detail": "no layout for declared type 'float[8][2][8][2]'",
+     "files": 1
+    },
+    {
+     "detail": "no layout for declared type 'Point'",
+     "files": 1
+    },
+    {
+     "detail": "no layout for declared type 't_be'",
+     "files": 1
+    },
+    {
+     "detail": "no layout for declared type 'object'",
+     "files": 1
+    },
+    {
+     "detail": "no layout for declared type 'volatile double'",
+     "files": 1
+    },
+    {
+     "detail": "no layout for declared type 'Test1'",
+     "files": 1
+    },
+    {
+     "detail": "no layout for declared type 'T0 *const'",
+     "files": 1
+    },
+    {
+     "detail": "no layout for declared type 'material_type'",
+     "files": 1
+    },
+    {
+     "detail": "no layout for declared type 'int (*)(int, int)'",
+     "files": 1
+    },
+    {
+     "detail": "no layout for declared type 'struct foo'",
+     "files": 1
+    },
+    {
+     "detail": "no layout for declared type 'struct tmp'",
+     "files": 1
+    },
+    {
+     "detail": "no layout for declared type 'struct f'",
+     "files": 1
+    },
+    {
+     "detail": "no layout for declared type 'struct complex'",
+     "files": 1
+    },
+    {
+     "detail": "no layout for declared type 't1'",
+     "files": 1
+    },
+    {
+     "detail": "no layout for declared type 'enum e'",
+     "files": 1
+    },
+    {
+     "detail": "no layout for declared type 'float[8]'",
+     "files": 1
+    },
+    {
+     "detail": "no layout for declared type 'V[32]'",
+     "files": 1
+    },
+    {
+     "detail": "no layout for declared type 'float[32]'",
+     "files": 1
+    },
+    {
+     "detail": "no layout for declared type 'float[4]'",
+     "files": 1
+    },
+    {
+     "detail": "no layout for declared type 'struct c'",
+     "files": 1
+    },
+    {
+     "detail": "no layout for declared type 'int[1][4]'",
+     "files": 1
+    },
+    {
+     "detail": "no layout for declared type 'struct B'",
+     "files": 1
+    },
+    {
+     "detail": "no layout for declared type 'aun'",
+     "files": 1
+    },
+    {
+     "detail": "no layout for declared type 'big_t'",
+     "files": 1
+    },
+    {
+     "detail": "no layout for declared type 'union at6'",
+     "files": 1
+    },
+    {
+     "detail": "no layout for declared type 'struct test2'",
+     "files": 1
+    },
+    {
+     "detail": "no layout for declared type 'struct reg_stat'",
+     "files": 1
+    },
+    {
+     "detail": "no layout for declared type 'struct tree_type'",
+     "files": 1
+    },
+    {
+     "detail": "no layout for declared type 'PgHdr[5]'",
+     "files": 1
+    },
+    {
+     "detail": "no layout for declared type 'int[2][2]'",
+     "files": 1
+    },
+    {
+     "detail": "no layout for declared type 'struct E'",
+     "files": 1
+    },
+    {
+     "detail": "no layout for declared type 'union _D_rep'",
+     "files": 1
+    },
+    {
+     "detail": "no layout for declared type 'neon_s8'",
+     "files": 1
+    },
+    {
+     "detail": "no layout for declared type '_Complex double[12]'",
+     "files": 1
+    },
+    {
+     "detail": "no layout for declared type 'unsigned __int128'",
+     "files": 1
+    },
+    {
+     "detail": "no layout for declared type 'double[32]'",
+     "files": 1
+    },
+    {
+     "detail": "no layout for declared type 'v4qi'",
+     "files": 1
+    },
+    {
+     "detail": "no layout for declared type 'struct mystruct'",
+     "files": 1
+    },
+    {
+     "detail": "no layout for declared type 'struct S[21]'",
+     "files": 1
+    },
+    {
+     "detail": "no layout for declared type 'V32'",
+     "files": 1
+    },
+    {
+     "detail": "no layout for declared type 'struct S0'",
+     "files": 1
+    },
+    {
+     "detail": "no layout for declared type 'void *volatile'",
+     "files": 1
+    },
+    {
+     "detail": "no layout for declared type '__m128i'",
+     "files": 1
+    },
+    {
+     "detail": "no layout for declared type 'creal_T[16]'",
+     "files": 1
+    },
+    {
+     "detail": "no layout for declared type 'Q'",
+     "files": 1
+    },
+    {
+     "detail": "no layout for declared type 'v8qi'",
+     "files": 1
+    },
+    {
+     "detail": "no layout for declared type 'TRIAL'",
+     "files": 1
+    },
+    {
+     "detail": "no layout for declared type 'three_char_t'",
+     "files": 1
+    },
+    {
+     "detail": "no layout for declared type 'X'",
+     "files": 1
+    },
+    {
+     "detail": "no layout for declared type 'three_byte_t'",
+     "files": 1
+    },
+    {
+     "detail": "no layout for declared type 'A0'",
+     "files": 1
+    },
+    {
+     "detail": "no layout for declared type 'struct g'",
+     "files": 1
+    },
+    {
+     "detail": "no layout for declared type 'spinlock_t'",
+     "files": 1
+    }
+   ],
+   "files": 1918,
+   "observed_any_no_layout": 214,
+   "observed_decl_no_layout": 191,
+   "observed_decl_without_static_candidate": 23,
+   "static_and_observed_decl": 168,
+   "static_candidate_without_observed_decl": 741,
+   "static_present": 909,
+   "static_sole": 308
+  },
+  "gcc.c23-run": {
+   "decl_messages": [
+    {
+     "detail": "no layout for declared type 'int (*)[++i]'",
+     "files": 1
+    },
+    {
+     "detail": "no layout for declared type 'const struct s'",
+     "files": 1
+    },
+    {
+     "detail": "no layout for declared type 'volatile long double'",
+     "files": 1
+    },
+    {
+     "detail": "no layout for declared type 'enum bar'",
+     "files": 1
+    },
+    {
+     "detail": "no layout for declared type 'struct bar'",
+     "files": 1
+    },
+    {
+     "detail": "no layout for declared type 'struct foo'",
+     "files": 1
+    }
+   ],
+   "files": 76,
+   "observed_any_no_layout": 7,
+   "observed_decl_no_layout": 6,
+   "observed_decl_without_static_candidate": 1,
+   "static_and_observed_decl": 5,
+   "static_candidate_without_observed_decl": 24,
+   "static_present": 29,
+   "static_sole": 4
+  }
+ },
+ "corpus": "C1-C3 (gcc torture, c-testsuite, gcc c23-run)",
+ "interpretation": "type-layout is a candidate wall, not a dynamic verdict: the static heuristic over-approximates the files that reach a missing layout and misses some declaration types. Price a tier from observed no-layout refusals, retaining the static ranking for discovery.",
+ "schema": "c-type-layout-price-0.1",
+ "survey_commit": "ecac15649",
+ "survey_measured_at_utc": "2026-11-12T01:52:00Z",
+ "survey_schema": "c-survey-0.1",
+ "top_decl_messages": [
+  {
+   "detail": "no layout for declared type 'double'",
+   "files": 26
+  },
+  {
+   "detail": "no layout for declared type 'struct S'",
+   "files": 18
+  },
+  {
+   "detail": "no layout for declared type 'float'",
+   "files": 9
+  },
+  {
+   "detail": "no layout for declared type 'V'",
+   "files": 9
+  },
+  {
+   "detail": "no layout for declared type 'struct s'",
+   "files": 6
+  },
+  {
+   "detail": "no layout for declared type 'va_list'",
+   "files": 6
+  },
+  {
+   "detail": "no layout for declared type '_Complex double'",
+   "files": 4
+  },
+  {
+   "detail": "no layout for declared type 'struct foo'",
+   "files": 3
+  },
+  {
+   "detail": "no layout for declared type 'S'",
+   "files": 3
+  },
+  {
+   "detail": "no layout for declared type 'A'",
+   "files": 3
+  },
+  {
+   "detail": "no layout for declared type 'int[n % 1000 + 1]'",
+   "files": 3
+  },
+  {
+   "detail": "no layout for declared type 'T'",
+   "files": 3
+  },
+  {
+   "detail": "no layout for declared type 'size_t'",
+   "files": 3
+  },
+  {
+   "detail": "no layout for declared type 'enum E'",
+   "files": 2
+  },
+  {
+   "detail": "no layout for declared type 'int[2][1]'",
+   "files": 2
+  },
+  {
+   "detail": "no layout for declared type 'long double'",
+   "files": 2
+  },
+  {
+   "detail": "no layout for declared type 'struct A'",
+   "files": 2
+  },
+  {
+   "detail": "no layout for declared type 'struct packed_ushort'",
+   "files": 2
+  },
+  {
+   "detail": "no layout for declared type 'U'",
+   "files": 2
+  },
+  {
+   "detail": "no layout for declared type 'struct mouse_button_str'",
+   "files": 2
+  },
+  {
+   "detail": "no layout for declared type '_Complex float'",
+   "files": 2
+  },
+  {
+   "detail": "no layout for declared type 'double[4]'",
+   "files": 2
+  },
+  {
+   "detail": "no layout for declared type 'v16di'",
+   "files": 2
+  },
+  {
+   "detail": "no layout for declared type 'struct U'",
+   "files": 2
+  },
+  {
+   "detail": "no layout for declared type 'st'",
+   "files": 2
+  },
+  {
+   "detail": "no layout for declared type 'struct S1'",
+   "files": 2
+  },
+  {
+   "detail": "no layout for declared type 'union U'",
+   "files": 2
+  },
+  {
+   "detail": "no layout for declared type 'struct1'",
+   "files": 2
+  },
+  {
+   "detail": "no layout for declared type 'int32_t'",
+   "files": 1
+  },
+  {
+   "detail": "no layout for declared type 'int (*(*)(int, int))(int, int)'",
+   "files": 1
+  },
+  {
+   "detail": "no layout for declared type 'char[2][4]'",
+   "files": 1
+  },
+  {
+   "detail": "no layout for declared type 'enum fred'",
+   "files": 1
+  },
+  {
+   "detail": "no layout for declared type 'char[argc]'",
+   "files": 1
+  },
+  {
+   "detail": "no layout for declared type 'union tree_node'",
+   "files": 1
+  },
+  {
+   "detail": "no layout for declared type 'const int *const'",
+   "files": 1
+  },
+  {
+   "detail": "no layout for declared type 'wchar_t[21]'",
+   "files": 1
+  },
+  {
+   "detail": "no layout for declared type 'struct x'",
+   "files": 1
+  },
+  {
+   "detail": "no layout for declared type 'union u'",
+   "files": 1
+  },
+  {
+   "detail": "no layout for declared type 'RenderInfo'",
+   "files": 1
+  },
+  {
+   "detail": "no layout for declared type 'double[1]'",
+   "files": 1
+  },
+  {
+   "detail": "no layout for declared type 'Data[4]'",
+   "files": 1
+  },
+  {
+   "detail": "no layout for declared type 'volatile a_struct'",
+   "files": 1
+  },
+  {
+   "detail": "no layout for declared type '_Complex double[1]'",
+   "files": 1
+  },
+  {
+   "detail": "no layout for declared type 'float[3]'",
+   "files": 1
+  },
+  {
+   "detail": "no layout for declared type 'io'",
+   "files": 1
+  },
+  {
+   "detail": "no layout for declared type 'struct a'",
+   "files": 1
+  },
+  {
+   "detail": "no layout for declared type 'V2SF'",
+   "files": 1
+  },
+  {
+   "detail": "no layout for declared type 'struct D'",
+   "files": 1
+  },
+  {
+   "detail": "no layout for declared type 'gfc_array_i4'",
+   "files": 1
+  },
+  {
+   "detail": "no layout for declared type 'info_t'",
+   "files": 1
+  },
+  {
+   "detail": "no layout for declared type 'uint32_t'",
+   "files": 1
+  },
+  {
+   "detail": "no layout for declared type 'mp_int'",
+   "files": 1
+  },
+  {
+   "detail": "no layout for declared type 'union U1'",
+   "files": 1
+  },
+  {
+   "detail": "no layout for declared type 't'",
+   "files": 1
+  },
+  {
+   "detail": "no layout for declared type 'double[n]'",
+   "files": 1
+  },
+  {
+   "detail": "no layout for declared type 'struct_list'",
+   "files": 1
+  },
+  {
+   "detail": "no layout for declared type 'four_quarters'",
+   "files": 1
+  },
+  {
+   "detail": "no layout for declared type 'bu'",
+   "files": 1
+  },
+  {
+   "detail": "no layout for declared type 'double[6]'",
+   "files": 1
+  },
+  {
+   "detail": "no layout for declared type 'float[8][2][8][2]'",
+   "files": 1
+  },
+  {
+   "detail": "no layout for declared type 'Point'",
+   "files": 1
+  },
+  {
+   "detail": "no layout for declared type 't_be'",
+   "files": 1
+  },
+  {
+   "detail": "no layout for declared type 'object'",
+   "files": 1
+  },
+  {
+   "detail": "no layout for declared type 'volatile double'",
+   "files": 1
+  },
+  {
+   "detail": "no layout for declared type 'Test1'",
+   "files": 1
+  },
+  {
+   "detail": "no layout for declared type 'T0 *const'",
+   "files": 1
+  },
+  {
+   "detail": "no layout for declared type 'material_type'",
+   "files": 1
+  },
+  {
+   "detail": "no layout for declared type 'int (*)(int, int)'",
+   "files": 1
+  },
+  {
+   "detail": "no layout for declared type 'struct tmp'",
+   "files": 1
+  },
+  {
+   "detail": "no layout for declared type 'struct f'",
+   "files": 1
+  },
+  {
+   "detail": "no layout for declared type 'struct complex'",
+   "files": 1
+  },
+  {
+   "detail": "no layout for declared type 't1'",
+   "files": 1
+  },
+  {
+   "detail": "no layout for declared type 'enum e'",
+   "files": 1
+  },
+  {
+   "detail": "no layout for declared type 'float[8]'",
+   "files": 1
+  },
+  {
+   "detail": "no layout for declared type 'V[32]'",
+   "files": 1
+  },
+  {
+   "detail": "no layout for declared type 'float[32]'",
+   "files": 1
+  },
+  {
+   "detail": "no layout for declared type 'float[4]'",
+   "files": 1
+  },
+  {
+   "detail": "no layout for declared type 'struct c'",
+   "files": 1
+  },
+  {
+   "detail": "no layout for declared type 'int[1][4]'",
+   "files": 1
+  },
+  {
+   "detail": "no layout for declared type 'struct B'",
+   "files": 1
+  },
+  {
+   "detail": "no layout for declared type 'aun'",
+   "files": 1
+  },
+  {
+   "detail": "no layout for declared type 'big_t'",
+   "files": 1
+  },
+  {
+   "detail": "no layout for declared type 'union at6'",
+   "files": 1
+  },
+  {
+   "detail": "no layout for declared type 'struct test2'",
+   "files": 1
+  },
+  {
+   "detail": "no layout for declared type 'struct reg_stat'",
+   "files": 1
+  },
+  {
+   "detail": "no layout for declared type 'struct tree_type'",
+   "files": 1
+  },
+  {
+   "detail": "no layout for declared type 'PgHdr[5]'",
+   "files": 1
+  },
+  {
+   "detail": "no layout for declared type 'int[2][2]'",
+   "files": 1
+  },
+  {
+   "detail": "no layout for declared type 'struct E'",
+   "files": 1
+  },
+  {
+   "detail": "no layout for declared type 'union _D_rep'",
+   "files": 1
+  },
+  {
+   "detail": "no layout for declared type 'neon_s8'",
+   "files": 1
+  },
+  {
+   "detail": "no layout for declared type '_Complex double[12]'",
+   "files": 1
+  },
+  {
+   "detail": "no layout for declared type 'unsigned __int128'",
+   "files": 1
+  },
+  {
+   "detail": "no layout for declared type 'double[32]'",
+   "files": 1
+  },
+  {
+   "detail": "no layout for declared type 'v4qi'",
+   "files": 1
+  },
+  {
+   "detail": "no layout for declared type 'struct mystruct'",
+   "files": 1
+  },
+  {
+   "detail": "no layout for declared type 'struct S[21]'",
+   "files": 1
+  },
+  {
+   "detail": "no layout for declared type 'V32'",
+   "files": 1
+  },
+  {
+   "detail": "no layout for declared type 'struct S0'",
+   "files": 1
+  },
+  {
+   "detail": "no layout for declared type 'void *volatile'",
+   "files": 1
+  },
+  {
+   "detail": "no layout for declared type '__m128i'",
+   "files": 1
+  },
+  {
+   "detail": "no layout for declared type 'creal_T[16]'",
+   "files": 1
+  },
+  {
+   "detail": "no layout for declared type 'Q'",
+   "files": 1
+  },
+  {
+   "detail": "no layout for declared type 'v8qi'",
+   "files": 1
+  },
+  {
+   "detail": "no layout for declared type 'TRIAL'",
+   "files": 1
+  },
+  {
+   "detail": "no layout for declared type 'three_char_t'",
+   "files": 1
+  },
+  {
+   "detail": "no layout for declared type 'X'",
+   "files": 1
+  },
+  {
+   "detail": "no layout for declared type 'three_byte_t'",
+   "files": 1
+  },
+  {
+   "detail": "no layout for declared type 'A0'",
+   "files": 1
+  },
+  {
+   "detail": "no layout for declared type 'struct g'",
+   "files": 1
+  },
+  {
+   "detail": "no layout for declared type 'spinlock_t'",
+   "files": 1
+  },
+  {
+   "detail": "no layout for declared type 'int (*)[++i]'",
+   "files": 1
+  },
+  {
+   "detail": "no layout for declared type 'const struct s'",
+   "files": 1
+  },
+  {
+   "detail": "no layout for declared type 'volatile long double'",
+   "files": 1
+  },
+  {
+   "detail": "no layout for declared type 'enum bar'",
+   "files": 1
+  },
+  {
+   "detail": "no layout for declared type 'struct bar'",
+   "files": 1
+  }
+ ],
+ "totals": {
+  "observed_any_no_layout": 239,
+  "observed_decl_no_layout": 214,
+  "observed_decl_without_static_candidate": 28,
+  "static_and_observed_decl": 186,
+  "static_candidate_without_observed_decl": 875,
+  "static_present": 1061,
+  "static_sole": 353
+ }
+}

@@ -1816,9 +1816,16 @@ def evalIntExactRec (env : IEnv) : PExpr → Except String Int
         | .div => if b == 0 then .error "division by zero" else .ok (canonInt 32 true (a.tdiv b))
         | .mod => if b == 0 then .error "modulo by zero" else .ok (canonInt 32 true (a.tmod b))
         | .pow => if b < 0 then .error "negative exponent" else .ok (canonInt 32 true (a ^ b.toNat))
-        | .shl | .ashl => if b < 0 then .error "negative shift" else .ok (canonInt 32 true (a * (2 : Int)^b.toNat))
-        | .shr => if b < 0 then .error "negative shift" else .ok (canonInt 32 true (a.tdiv ((2 : Int)^b.toNat)))
-        | .ashr => if b < 0 then .error "negative shift" else .ok (canonInt 32 true (a.fdiv ((2 : Int)^b.toNat)))
+        -- IEEE 1800-2023 §11.4.10 treats a negative shift count as a
+        -- count whose unsigned representation is far beyond the operand;
+        -- the finite 32-bit result is therefore all zeros for these shifts.
+        | .shl | .ashl => if b < 0 then .ok 0 else .ok (canonInt 32 true (a * (2 : Int)^b.toNat))
+        | .shr =>
+            if b < 0 then .ok 0
+            else
+              let ua := if a < 0 then a + (2 : Int) ^ 32 else a
+              .ok (canonInt 32 true (ua.tdiv ((2 : Int)^b.toNat)))
+        | .ashr => if b < 0 then .ok 0 else .ok (canonInt 32 true (a.fdiv ((2 : Int)^b.toNat)))
         | _ => evalSized env (.binary op l r)
       else evalSized env (.binary op l r)
   | e => evalSized env e

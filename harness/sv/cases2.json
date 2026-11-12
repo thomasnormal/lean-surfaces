@@ -73060,6 +73060,15 @@
       "signals": ["sel", "d", "q"],
       "stimulus": [{"sel": "xx", "d": "xxxx"}, {"sel": "00", "d": "0011"}, {"sel": "01", "d": "0011"}, {"sel": "10", "d": "1010"}],
       "measured": "2026-11-12: source-shaped always @* case/latch execution remains waiting at time zero; later input wakes and latch rows are matched."
+    },
+
+    {
+      "name": "int32_negative_shift_e",
+      "example": "sem2/int32_negative_shift_e",
+      "top": "int32_negative_shift_e",
+      "signals": ["left_zero", "right_arith"],
+      "stimulus": [{}],
+      "measured": "2026-11-12: IEEE 1800-2023 §11.4.10 negative shift count is represented by the finite zero result; logical right shift of -8 preserves its unsigned 32-bit bits. E matches both pinned simulators."
     }
 
   ]

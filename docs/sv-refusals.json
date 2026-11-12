@@ -1637,9 +1637,9 @@
    "kinds": {
     "extractor": [
      "SignalEventControl:iff-reset"
-     ],
-     "lean": [
-      "AlwaysPosedge:reset-iff"
+    ],
+    "lean": [
+     "AlwaysPosedge:reset-iff"
     ]
    },
    "where": [
@@ -1868,11 +1868,11 @@
    "proposed": false,
    "prerequisite": "remaining case semantics: symbolic range/pattern matching and dynamic/effectful case diagnostics",
    "plan": "CASEFEAT",
-    "kinds": {
-     "extractor": [
-      "CaseStatement:*"
-     ]
-    },
+   "kinds": {
+    "extractor": [
+     "CaseStatement:*"
+    ]
+   },
    "where": [
     {
      "file": "extractors/sv/extract.py",
@@ -7445,6 +7445,240 @@
    "evidence": "extractors/sv/test_slang_errors.py; svgolf/design/real-world-sv/rb0/ENVELOPE-ERRORS.md (the four repros, the consumer table); svgolf/tests/checker/test_slang_errors.py (an illegal program is still rejected at fourstate for a task with no banned operator)",
    "verified_by_run": true,
    "notes": "Class (a). Measured 2026-11-01 over the 454 committed sv-0.2 envelopes: 451 regenerate byte-identically (envelope and sidecar) with the marker, the other 3 (cv32e40p_alu_div, ff_one, popcnt) need the external cv32e40p checkout; no committed envelope holds a parse or elaboration error, so no admitted row changed. All 780 differential rows (cases2.json) have slang-clean DUT sources. The 17 Examples/*_refuse fixtures are sv-0.1 (M0 mode, `process_file`) envelopes and byte-identical before and after (M0 is untouched: see `holes`). svGolf was already closed through `banlist` (non-empty banlist), `fourstate` (always) and the sidecar; this closes ls-sv alone (a direct `load_design_sv2`, `load_sv` without a task, multi-file verification)."
+  },
+  {
+   "id": "boundary-subroutinesymbol-body",
+   "tag": "SubroutineSymbol:body",
+   "group": "statements",
+   "layers": [
+    "extractor"
+   ],
+   "trigger": "source-shaped clean-room boundary",
+   "why": "Block-local function body metadata remains outside the admitted source-shaped function subset.",
+   "category": "later",
+   "proposed": false,
+   "principle": "P-SAME-PROGRAM",
+   "decided_by": "ls-sv",
+   "since": "2026-11-12",
+   "kinds": {
+    "extractor": [
+     "SubroutineSymbol:body"
+    ]
+   },
+   "where": [],
+   "evidence": "current symbolic extractor and loader boundary",
+   "verified_by_run": false,
+   "notes": "Named loud refusal; no semantics is claimed.",
+   "plan": "USERFN",
+   "prerequisite": "USERFN"
+  },
+  {
+   "id": "boundary-subroutinesymbol-conditional",
+   "tag": "SubroutineSymbol:conditional",
+   "group": "statements",
+   "layers": [
+    "extractor"
+   ],
+   "trigger": "source-shaped clean-room boundary",
+   "why": "Conditional subroutine metadata is outside the admitted source-shaped function subset.",
+   "category": "later",
+   "proposed": false,
+   "principle": "P-SAME-PROGRAM",
+   "decided_by": "ls-sv",
+   "since": "2026-11-12",
+   "kinds": {
+    "extractor": [
+     "SubroutineSymbol:conditional"
+    ]
+   },
+   "where": [],
+   "evidence": "current symbolic extractor and loader boundary",
+   "verified_by_run": false,
+   "notes": "Named loud refusal; no semantics is claimed.",
+   "plan": "USERFN",
+   "prerequisite": "USERFN"
+  },
+  {
+   "id": "boundary-subroutinesymbol-formal",
+   "tag": "SubroutineSymbol:formal",
+   "group": "statements",
+   "layers": [
+    "extractor"
+   ],
+   "trigger": "source-shaped clean-room boundary",
+   "why": "Function formal metadata is outside the admitted source-shaped function subset.",
+   "category": "later",
+   "proposed": false,
+   "principle": "P-SAME-PROGRAM",
+   "decided_by": "ls-sv",
+   "since": "2026-11-12",
+   "kinds": {
+    "extractor": [
+     "SubroutineSymbol:formal"
+    ]
+   },
+   "where": [],
+   "evidence": "current symbolic extractor and loader boundary",
+   "verified_by_run": false,
+   "notes": "Named loud refusal; no semantics is claimed.",
+   "plan": "USERFN",
+   "prerequisite": "USERFN"
+  },
+  {
+   "id": "boundary-subroutinesymbol-formal-all",
+   "tag": "SubroutineSymbol:formal-*",
+   "group": "statements",
+   "layers": [
+    "extractor"
+   ],
+   "trigger": "source-shaped clean-room boundary",
+   "why": "Function formal type metadata is outside the admitted source-shaped function subset.",
+   "category": "later",
+   "proposed": false,
+   "principle": "P-SAME-PROGRAM",
+   "decided_by": "ls-sv",
+   "since": "2026-11-12",
+   "kinds": {
+    "extractor": [
+     "SubroutineSymbol:formal-*"
+    ]
+   },
+   "where": [],
+   "evidence": "current symbolic extractor and loader boundary",
+   "verified_by_run": false,
+   "notes": "Named loud refusal; no semantics is claimed.",
+   "plan": "USERFN",
+   "prerequisite": "USERFN"
+  },
+  {
+   "id": "boundary-subroutinesymbol-kind",
+   "tag": "SubroutineSymbol:kind",
+   "group": "statements",
+   "layers": [
+    "extractor"
+   ],
+   "trigger": "source-shaped clean-room boundary",
+   "why": "Subroutine kind metadata is outside the admitted source-shaped function subset.",
+   "category": "later",
+   "proposed": false,
+   "principle": "P-SAME-PROGRAM",
+   "decided_by": "ls-sv",
+   "since": "2026-11-12",
+   "kinds": {
+    "extractor": [
+     "SubroutineSymbol:kind"
+    ]
+   },
+   "where": [],
+   "evidence": "current symbolic extractor and loader boundary",
+   "verified_by_run": false,
+   "notes": "Named loud refusal; no semantics is claimed.",
+   "plan": "USERFN",
+   "prerequisite": "USERFN"
+  },
+  {
+   "id": "boundary-subroutinesymbol-return-all",
+   "tag": "SubroutineSymbol:return-*",
+   "group": "statements",
+   "layers": [
+    "extractor"
+   ],
+   "trigger": "source-shaped clean-room boundary",
+   "why": "Subroutine return metadata is outside the admitted source-shaped function subset.",
+   "category": "later",
+   "proposed": false,
+   "principle": "P-SAME-PROGRAM",
+   "decided_by": "ls-sv",
+   "since": "2026-11-12",
+   "kinds": {
+    "extractor": [
+     "SubroutineSymbol:return-*"
+    ]
+   },
+   "where": [],
+   "evidence": "current symbolic extractor and loader boundary",
+   "verified_by_run": false,
+   "notes": "Named loud refusal; no semantics is claimed.",
+   "plan": "USERFN",
+   "prerequisite": "USERFN"
+  },
+  {
+   "id": "boundary-subroutinesymbol-static",
+   "tag": "SubroutineSymbol:static",
+   "group": "statements",
+   "layers": [
+    "extractor"
+   ],
+   "trigger": "source-shaped clean-room boundary",
+   "why": "Static subroutine storage is outside the admitted automatic function subset.",
+   "category": "later",
+   "proposed": false,
+   "principle": "P-SAME-PROGRAM",
+   "decided_by": "ls-sv",
+   "since": "2026-11-12",
+   "kinds": {
+    "extractor": [
+     "SubroutineSymbol:static"
+    ]
+   },
+   "where": [],
+   "evidence": "current symbolic extractor and loader boundary",
+   "verified_by_run": false,
+   "notes": "Named loud refusal; no semantics is claimed.",
+   "plan": "USERFN",
+   "prerequisite": "USERFN"
+  },
+  {
+   "id": "boundary-clock-implicit",
+   "tag": "Clock:implicit",
+   "group": "processes",
+   "layers": [
+    "lean-model"
+   ],
+   "trigger": "source-shaped clean-room boundary",
+   "why": "Implicit clock event controls remain loud until their retained event semantics is modeled.",
+   "category": "later",
+   "proposed": false,
+   "principle": "P-SAME-PROGRAM",
+   "decided_by": "ls-sv",
+   "since": "2026-11-12",
+   "kinds": {
+    "lean": [
+     "Clock:implicit"
+    ]
+   },
+   "where": [],
+   "evidence": "current symbolic extractor and loader boundary",
+   "verified_by_run": false,
+   "notes": "Named loud refusal; no semantics is claimed.",
+   "plan": "SEQ",
+   "prerequisite": "SEQ"
+  },
+  {
+   "id": "boundary-initial-check",
+   "tag": "Initial:check",
+   "group": "processes",
+   "layers": [
+    "lean-model"
+   ],
+   "trigger": "source-shaped clean-room boundary",
+   "why": "Initial elaboration checks remain loud in ordinary E until the time-zero contract is modeled.",
+   "category": "later",
+   "proposed": false,
+   "principle": "P-SAME-PROGRAM",
+   "decided_by": "ls-sv",
+   "since": "2026-11-12",
+   "kinds": {
+    "lean": [
+     "Initial:check"
+    ]
+   },
+   "where": [],
+   "evidence": "current symbolic extractor and loader boundary",
+   "verified_by_run": false,
+   "notes": "Named loud refusal; no semantics is claimed.",
+   "plan": "SEQ",
+   "prerequisite": "SEQ"
   }
  ],
  "svgolf": {

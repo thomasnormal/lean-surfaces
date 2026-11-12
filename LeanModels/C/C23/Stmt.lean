@@ -480,10 +480,15 @@ def execStmt : Nat → Ctx → Stmt → ExecM Flow
     | .forS init c inc body _ => do
         match init with
         | some i => do
-            let f ← execStmt fuel ctx i
-            match f with
-            | .normal => execLoop fuel ctx c inc body false
-            | other => pure other
+            match i with
+            | .decl ds _ =>
+                let ctx' ← declare fuel ctx ds
+                execLoop fuel ctx' c inc body false
+            | _ =>
+                let f ← execStmt fuel ctx i
+                match f with
+                | .normal => execLoop fuel ctx c inc body false
+                | other => pure other
         | none => execLoop fuel ctx c inc body false
     -- A bare declaration reaching here is one the block did not thread;
     -- `execBlock` handles them, so this is unreachable in practice and

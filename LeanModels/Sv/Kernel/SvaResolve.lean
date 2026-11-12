@@ -103,4 +103,15 @@ theorem sva_bool_evalLogic_congr {trace trace' : List SvState} {index : Nat}
       SvaBool.evalChecked trace' index right := by
   simp [SvaBool.evalChecked, h]
 
+theorem sva_signal_bool_xread {state state' : SvState} {name : String}
+    {source concrete : LVec}
+    (hsource : SvState.lookup state name = some source)
+    (hconcrete : SvState.lookup state' name = some concrete)
+    (hknown : source.bits.toList.all Logic.isKnown = true)
+    (hread : XRead source concrete) :
+    SvaBool.evalLogic [state] 0 (.signal name) =
+      SvaBool.evalLogic [state'] 0 (.signal name) := by
+  have hs := sva_signalAt_xread hsource hconcrete hknown hread
+  simp [SvaBool.evalLogic, hs]
+
 end LeanModels.Sv.Kernel

@@ -603,41 +603,52 @@ empty memory, and read the outcome.
 them into environment refusals, because both are the exit-status oracle
 speaking — `docs/c23-goal.md` §1.2. Neither is modelled and neither ever
 will be by widening the slice. -/
+def stdoutString : List CByte → String
+  | [] => ""
+  | .conc b :: rest => String.singleton (Char.ofNat b.toNat) ++ stdoutString rest
+  | _ :: rest => stdoutString rest
+
 def scoreEnvelope (fuel : Nat) (envl : Envelope)
-    (oracleSym : Option String) (oracleWhy : String) : Verdict :=
-  let outcome := ExecM.verdict Mem.empty (runEnvelope fuel envl)
+    (oracleSym : Option String) (oracleWhy : String)
+    (expectedStdout : Option String := none) : Verdict :=
+  let outcome := ExecM.run Mem.empty (runEnvelope fuel envl)
   match outcome with
-  | .ok (.int _ 0) | .ok .undef => .passed
-  | .ok (.int _ _) => .failed
-  | .ok (.ptr _) => .failed
-  | .ok (.aggregate _ _) => .failed
-  | .refused (.libc "abort") =>
+  | .ok (.ok value, mem) =>
+      if expectedStdout.isSome && stdoutString mem.stdout != expectedStdout.getD "" then
+        .failed
+      else match value with
+        | .int _ 0 | .undef => .passed
+        | .int _ _ | .ptr _ | .aggregate _ _ => .failed
+  | .ok (.error (.libc "abort"), _) =>
       match oracleSym with
       | some sym =>
           if hasDeclareCallDefine envl sym then .oracleTestsCompiler oracleWhy
           else .failed
       | none => .failed
-  | .refused (.libc "exit") =>
+  | .ok (.error (.libc "exit"), _) =>
       if exitIsAlwaysZero envl then .passedViaExit
       else .refusedLibc "exit (an argument is not a literal 0 — which exit was reached is unknown)"
-  | .refused (.libc n) => .refusedLibc n
-  | .refused (.valueUB u) => .refusedUB (toString (repr u))
-  | .refused (.memUB f) => .refusedUB (toString (repr f))
-  | .unsupported w => .unsupported w
-  | .timeout => .timeout
+  | .ok (.error (.libc n), _) => .refusedLibc n
+  | .ok (.error (.valueUB u), _) => .refusedUB (toString (repr u))
+  | .ok (.error (.memUB f), _) => .refusedUB (toString (repr f))
+  | .error (.unsupported _ msg _) => .unsupported msg
+  | .error .timeout => .timeout
 
 def singleMain (path : String) (fuel : Nat) : IO UInt32 := do
   let contents ← IO.FS.readFile ⟨path⟩
   match parseEnvelopeString contents with
   | .error reason => IO.eprintln s!"ingestion: {reason}"; return 2
   | .ok envl =>
-      match ExecM.verdict Mem.empty (runEnvelope fuel envl) with
-      | .ok (.int _ value) => IO.println s!"ok\t{value}"; return 0
-      | .ok .undef => IO.println "ok\t0"; return 0
-      | .ok value => IO.println s!"ok\t{repr value}"; return 0
-      | .refused reason => IO.eprintln s!"refused\t{repr reason}"; return 3
-      | .unsupported reason => IO.eprintln s!"unsupported\t{reason}"; return 3
-      | .timeout => IO.eprintln "timeout"; return 4
+      match ExecM.run Mem.empty (runEnvelope fuel envl) with
+      | .ok (.ok (.int _ value), mem) =>
+          IO.print (stdoutString mem.stdout); IO.println s!"ok\t{value}"; return 0
+      | .ok (.ok .undef, mem) =>
+          IO.print (stdoutString mem.stdout); IO.println "ok\t0"; return 0
+      | .ok (.ok value, mem) =>
+          IO.print (stdoutString mem.stdout); IO.println s!"ok\t{repr value}"; return 0
+      | .ok (.error reason, _) => IO.eprintln s!"refused\t{repr reason}"; return 3
+      | .error .timeout => IO.eprintln "timeout"; return 4
+      | .error (.unsupported _ reason _) => IO.eprintln s!"unsupported\t{reason}"; return 3
 
 /-! ## The manifest
 
@@ -656,6 +667,7 @@ structure Entry where
   overwhelming majority. See `tools/c_corpus_fetch.py`. -/
   oracleSymbol : Option String
   oracleWhy : String
+  expectedStdout : Option String
 deriving Inhabited
 
 private def str? (j : Lean.Json) (k : String) : String :=
@@ -665,11 +677,13 @@ def parseEntry (j : Lean.Json) : Entry :=
   let env := str? j "envelope"
   let otc := (j.getObjVal? "oracle_tests_compiler").toOption
   let sym := (otc.map (str? · "symbol")).getD ""
+  let expected := (j.getObjVal? "expected_stdout").toOption.bind (fun v => v.getStr?.toOption)
   { name := str? j "name", status := str? j "status"
     envelope := if env.isEmpty then none else some env
     why := str? j "why"
     oracleSymbol := if sym.isEmpty then none else some sym
-    oracleWhy := (otc.map (str? · "citation")).getD "" }
+    oracleWhy := (otc.map (str? · "citation")).getD ""
+    expectedStdout := expected }
 
 def runEntry (fuel : Nat) (e : Entry) : IO Verdict := do
   match e.status, e.envelope with
@@ -682,7 +696,7 @@ def runEntry (fuel : Nat) (e : Entry) : IO Verdict := do
       | .ok contents =>
           match parseEnvelopeString contents with
           | .error err => pure (.notIngested err)
-          | .ok envl => pure (scoreEnvelope fuel envl e.oracleSymbol e.oracleWhy)
+          | .ok envl => pure (scoreEnvelope fuel envl e.oracleSymbol e.oracleWhy e.expectedStdout)
 
 /-! ## The summary
 

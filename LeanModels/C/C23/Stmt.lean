@@ -766,6 +766,53 @@ def callFn : Nat → Program → LeanModels.C.FunctionDefn → List CVal → Exe
                 liftEval (writeMem (fun mem => mem.storeBytes dp bytes))
                 pure (.int IntTy.int_ (bytes.length - 1))
           | _ => refuseUnsupported "__builtin_sprintf: wrong argument count"
+        let runPrintf : List CVal → ExecM CVal := fun vs =>
+          match vs with
+          | fmt :: args => do
+              let fp ← asPtr fmt
+              let m ← get
+              let (_, source, off) ← liftEval (m.resolve fp 0)
+              let rec takePrintfString : List CByte → Option (List CByte)
+                | [] => none
+                | .conc x :: rest =>
+                    if x == 0 then some []
+                    else (takePrintfString rest).map (fun tail => CByte.conc x :: tail)
+                | _ => none
+              let pattern ← match takePrintfString (source.bytes.drop off) with
+                | some bytes => pure bytes
+                | none => refuseUnsupported "printf: non-concrete or unterminated format"
+              let rec format : List CByte → List CVal → ExecM (List CByte)
+                | [], _ => pure []
+                | .conc 37 :: .conc 37 :: rest, as => do
+                    let tail ← format rest as
+                    pure (CByte.conc 37 :: tail)
+                | .conc 37 :: .conc 100 :: rest, a :: as => do
+                    let (_, n) ← asInt a
+                    let tail ← format rest as
+                    pure ((toString n).toList.map (fun c => CByte.conc (UInt8.ofNat c.toNat)) ++ tail)
+                | .conc 37 :: .conc 99 :: rest, a :: as => do
+                    let (_, n) ← asInt a
+                    let tail ← format rest as
+                    pure (CByte.conc (UInt8.ofNat n.toNat) :: tail)
+                | .conc 37 :: .conc 115 :: rest, a :: as => do
+                    let sp ← asPtr a
+                    let current ← get
+                    let (_, string, stringOff) ← liftEval (current.resolve sp 0)
+                    let chars ← match takePrintfString (string.bytes.drop stringOff) with
+                      | some bytes => pure bytes
+                      | none => refuseUnsupported "printf: non-concrete or unterminated string argument"
+                    let tail ← format rest as
+                    pure (chars ++ tail)
+                | .conc 37 :: .conc _ :: _, _ => refuseUnsupported "printf: unsupported format"
+                | .conc 37 :: [], _ => refuseUnsupported "printf: trailing percent"
+                | .conc b :: rest, as => do
+                    let tail ← format rest as
+                    pure (CByte.conc b :: tail)
+                | _, _ => refuseUnsupported "printf: non-concrete format byte"
+              let bytes ← format pattern args
+              modify (fun mem => mem.emitStdout bytes)
+              pure (.int IntTy.int_ bytes.length)
+          | _ => refuseUnsupported "printf: missing format argument"
         let runBuiltinStrcpy : List CVal → ExecM CVal := fun vs =>
           match vs with
           | [dst, src] => do
@@ -908,6 +955,8 @@ def callFn : Nat → Program → LeanModels.C.FunctionDefn → List CVal → Exe
                 runBuiltinStrcpy vs
               else if nm == "strlen" then
                 runStrlen vs
+              else if nm == "printf" || nm == "__builtin_printf" then
+                runPrintf vs
               else if nm == "abort" || nm == "exit" then
                 throw (.libc nm)
               else match prog.findId? declaration with
@@ -939,6 +988,7 @@ def callFn : Nat → Program → LeanModels.C.FunctionDefn → List CVal → Exe
               else if nm == "__builtin_sprintf" then runSprintf vs
               else if nm == "__builtin_strcpy" then runBuiltinStrcpy vs
               else if nm == "strlen" then runStrlen vs
+              else if nm == "printf" || nm == "__builtin_printf" then runPrintf vs
               else if nm == "memset" || nm == "__builtin_memset" then runMemset vs
               else if nm == "memcpy" || nm == "__builtin_memcpy" then runMemcpy vs
               else if nm == "__builtin_strcmp" then runStrcmp vs

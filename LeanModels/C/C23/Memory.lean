@@ -256,11 +256,17 @@ an `ObjId` is stable for the whole execution and provenance never
 dangles into a reused slot. -/
 structure Mem where
   objs : List CObj
+  /-- Bytes emitted by the modeled stdout stream.  This is part of the
+  execution world, not an object with pointer provenance. -/
+  stdout : List CByte := []
 deriving Repr, Inhabited, BEq
 
 namespace Mem
 
-def empty : Mem := ⟨[]⟩
+def empty : Mem := ⟨[], []⟩
+
+def emitStdout (m : Mem) (bytes : List CByte) : Mem :=
+  { m with stdout := m.stdout ++ bytes }
 
 def get? (m : Mem) (o : ObjId) : Option CObj := m.objs[o]?
 
@@ -272,16 +278,16 @@ INDETERMINATE. Returns the new memory and the object's id.
 Every automatic object is created this way on block entry — which is the
 locals-are-objects decision, executed. -/
 def alloc (m : Mem) (dur : Duration) (size : Nat) (ty : Option CType) : Mem × ObjId :=
-  (⟨m.objs ++ [⟨dur, true, List.replicate size .indet, ty⟩]⟩, m.objs.length)
+  ({ m with objs := m.objs ++ [⟨dur, true, List.replicate size .indet, ty⟩] }, m.objs.length)
 
 /-- `calloc`'s object (§7.24.3.2p2): all bits zero, hence determinate. -/
 def allocZeroed (m : Mem) (dur : Duration) (size : Nat) (ty : Option CType) : Mem × ObjId :=
-  (⟨m.objs ++ [⟨dur, true, List.replicate size (.conc 0), ty⟩]⟩, m.objs.length)
+  ({ m with objs := m.objs ++ [⟨dur, true, List.replicate size (.conc 0), ty⟩] }, m.objs.length)
 
 /-- C23 §6.2.4p6 / §7.24.3: end an object's lifetime. The object stays in
 the store as a tombstone — see `CObj.live`. -/
 def kill (m : Mem) (o : ObjId) : Mem :=
-  ⟨m.objs.modify o (fun c => { c with live := false })⟩
+  { m with objs := m.objs.modify o (fun c => { c with live := false }) }
 
 /-- End the lifetime of automatic objects allocated at or after `start`.
 Static objects remain live for the whole execution (§6.2.4p3). -/
@@ -335,7 +341,7 @@ def loadBytes (m : Mem) (p : Ptr) (n : Nat) : MRes (List CByte) := do
 def storeBytes (m : Mem) (p : Ptr) (bs : List CByte) : MRes Mem := do
   let (o, c, off) ← m.resolve p bs.length
   let bytes := (c.bytes.take off) ++ bs ++ (c.bytes.drop (off + bs.length))
-  return ⟨m.objs.set o { c with bytes := bytes }⟩
+  return { m with objs := m.objs.set o { c with bytes := bytes } }
 
 /-! ### §6.2.6.2 Integer representation
 
@@ -583,7 +589,7 @@ def realloc (m : Mem) (p : Ptr) (size : Nat) : MRes (Mem × Ptr) :=
       if c.dur == .allocated && c.live && p.off == 0 then
         let keep := c.bytes.take size
         let fresh := keep ++ List.replicate (size - keep.length) CByte.indet
-        let m' : Mem := ⟨m.objs ++ [⟨.allocated, true, fresh, none⟩]⟩
+        let m' : Mem := { m with objs := m.objs ++ [⟨.allocated, true, fresh, none⟩] }
         .ok (m'.kill o, Ptr.toObjectBound m.objs.length size)
       else .error (.memUB (.freeUnmatched p))
     | none => .error (.memUB (.freeUnmatched p))
@@ -662,7 +668,7 @@ theorem resolve_ok {m : Mem} {p : Ptr} {n : Nat} {o : ObjId} {c : CObj} {off : N
 
 /-- Writing an object leaves it where it was. -/
 @[simp] theorem get?_set_self (m : Mem) (o : ObjId) (c : CObj) (h : o < m.objs.length) :
-    (Mem.mk (m.objs.set o c)).get? o = some c := by
+    ({m with objs := m.objs.set o c}).get? o = some c := by
   simp [get?, h]
 
 /-- C23 §6.2.4p2: once an object's lifetime ends, EVERY access through a

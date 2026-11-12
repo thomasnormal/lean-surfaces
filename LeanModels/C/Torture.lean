@@ -307,6 +307,27 @@ def recordLayoutWellFormed (layout : RecordLayout) : Bool :=
   layout.fields.all (fun field =>
     field.offsetBits % 8 == 0 || field.bitfield)
 
+def recordLayoutMatchesFields : List Decl → List RecordLayoutField → Bool
+  | [], [] => true
+  | .field name _ bits _ :: ds, field :: fs =>
+      (match name with
+       | some nm => field.name == nm
+       | none => field.name == "") &&
+      field.bitfield == bits.isSome &&
+      (match bits, field.widthBits with
+       | some width, some observed => width == observed
+       | none, none => true
+       | _, _ => false) &&
+      recordLayoutMatchesFields ds fs
+  | _ :: ds, fs => recordLayoutMatchesFields ds fs
+  | _, _ => false
+
+def checkedRecordLayout? (fields : List Decl) (layout : RecordLayout) :
+    Option RecordLayout :=
+  if recordLayoutWellFormed layout &&
+      recordLayoutMatchesFields fields layout.fields then some layout else none
+
+
 #guard recordLayoutWellFormed {
   offset := 0, tokenLength := 1, name := "S", tagKind := "struct",
   sizeBytes := 1, alignmentBytes := 1, fields := [] }

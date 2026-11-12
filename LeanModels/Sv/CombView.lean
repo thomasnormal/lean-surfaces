@@ -634,8 +634,7 @@ theorem consts_eq : ∀ v : PExpr, v.consts = (v.cnames, v.rcounts)
   | .functionCall .. => by simp [PExpr.consts, PExpr.cnames, PExpr.rcounts]
   | .paramRef _ none | .paramRef _ (some _) => rfl
   | .lit _ | .fill _ | .ident _ | .bitSel .. | .partSel .. | .arrayElem .. | .arrayPart .. | .genvarRef _
-  | .enumRef .. | .int _ | .sysCall .. | .cast .. | .signedResize .. | .squash2 .. | .unsupported ..
-  | .functionCall .. => by
+  | .enumRef .. | .int _ | .sysCall .. | .cast .. | .signedResize .. | .squash2 .. | .unsupported .. => by
       simp [PExpr.consts, PExpr.cnames, PExpr.rcounts]
 
 /-- The constants of an expression are in scope and its replication counts are non-negative. -/
@@ -1396,7 +1395,7 @@ theorem noConst_spec : ∀ v : PExpr, noConst v = true → v.cnames = [] ∧ v.r
   | .paramRef _ (some _), _ => ⟨rfl, rfl⟩
   | .lit _, _ | .fill _, _ | .ident _, _ | .bitSel .., _ | .partSel .., _ | .arrayElem .., _ | .arrayPart .., _
   | .genvarRef _, _ | .enumRef .., _ | .int _, _ | .sysCall .., _ | .cast .., _
-  | .signedResize .., _ | .squash2 .., _ | .unsupported .., _ | .functionCall .., _ => by
+  | .signedResize .., _ | .squash2 .., _ | .unsupported .., _ => by
       simp [PExpr.cnames, PExpr.rcounts]
 
 /-! ### The left operand of a shift: what `instDivOperand2` lowers

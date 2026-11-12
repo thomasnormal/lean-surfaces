@@ -62,4 +62,17 @@ theorem sva_past_zero_xread {trace trace' : List SvState} {index : Nat}
   cases heq
   simp [SvaValue.eval, exprAt, hsource, hconcrete]
 
+theorem sva_past_xread {trace trace' : List SvState} {index cycles : Nat}
+    {name : String} {source concrete : LVec}
+    (hcycles : cycles ≤ index)
+    (hsource : trace[index - cycles]? = some ([(name, source)]))
+    (hconcrete : trace'[index - cycles]? = some ([(name, concrete)]))
+    (hknown : source.bits.toList.all Logic.isKnown = true)
+    (hread : XRead source concrete) :
+    SvaValue.eval trace index (.past cycles (.ident name)) =
+      SvaValue.eval trace' index (.past cycles (.ident name)) := by
+  have heq := xRead_eq_of_known hknown hread
+  cases heq
+  simp [SvaValue.eval, exprAt, hcycles, hsource, hconcrete]
+
 end LeanModels.Sv.Kernel

@@ -1,8 +1,9 @@
-// Parameter-sized unpacked storage retained as one source-shaped MemE memory.
+// Source-shaped parameterized unpacked storage for canonical E.
+// The loop and memory remain retained nodes; no storage is unrolled.
 module memory_shape_a_e #(parameter integer W = 4, parameter integer P = 3) (
     input logic clk,
     input logic [W-1:0] d,
-    input logic [2:0] idx,
+    input logic [P-1:0] idx,
     output logic [W-1:0] q,
     output logic [W-1:0] selected
 );

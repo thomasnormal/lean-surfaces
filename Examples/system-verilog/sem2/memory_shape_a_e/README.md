@@ -1,9 +1,11 @@
-# MemE parameter-sized unpacked storage
+# Canonical E parameterized unpacked memory, source-shaped loop
 
-This clean-room fixture keeps `logic [W-1:0] s [P]` source-shaped. The retained
-`for (int i = 1; i < P; i++)` writes variable-indexed NBA cells and the
-run-time `s[idx]` read is executed by the existing `MemEDesign`/`MemEState`
-route. It is not unrolled and does not add a second memory representation.
+This clean-room fixture keeps one parameterized unpacked memory and its
+procedural `for` loop as retained `PStmt` nodes. Canonical E evaluates the
+loop at runtime for `(W,P)=(4,3)` and `(8,5)`, issues all cell NBAs from the
+pre-edge state, commits them once, and then settles the continuous drivers.
+The run-time `idx` row is all-x and therefore reads all-x. No memory is
+unrolled and no second memory representation is introduced.
 
-The receipt covers `(W,P)=(4,3)` and `(8,5)`, including an all-x index, against
-Icarus Verilog 13.0 and Xcelium 24.03-s004.
+`check.py` compares 12 rows with Icarus Verilog 13.0 and with Xcelium
+24.03-s004 when the readiness gate admits it.

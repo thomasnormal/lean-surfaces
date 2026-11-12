@@ -477,6 +477,12 @@ theorem ok {st : FrameState} (hslot : Heap.get? st.world.heap a = some o₀) (v 
   · injection h with hst hv; subst hst; subst hv; exact ⟨hslot, rfl⟩
   · exact absurd h (by simp)
 
+theorem okWithLocals {w : World} {l : REnv}
+    (hslot : Heap.get? w.heap a = some o₀) (v : α) :
+    PBF a o₀ o (.ok ({ world := w, locals := l } : FrameState) v)
+      (.ok (({ world := w, locals := l } : FrameState).swapAt a o) v) := by
+  exact PBF.ok hslot v
+
 theorem exn {st : FrameState} (hslot : Heap.get? st.world.heap a = some o₀) (e : PyErr) :
     PBF a o₀ o (α := α) (.exn st e) (.exn (st.swapAt a o) e) := by
   refine ⟨fun st' v' h => ?_, fun st' e' h => ?_⟩
@@ -5007,9 +5013,30 @@ theorem pbExecStmt_succ (htwin : PayloadTwin o₀ o) (ih : PBAll pa o₀ o fuel)
           cases res with
           | none => refine PBF.ok ?_ _; exact hslot
           | some n => exact PBF.exn hslot _
-  | importStmt mod sp => simp only [execStmt]; exact PBF.unsupported
+  | importStmt mod sp =>
+      simp only [execStmt]
+      refine PBF.ite (c := opaqueImportAllowed mod = true) ?_ ?_
+      · intro hc
+        simp [hc, FrameState.swapAt, World.swapAt]
+        exact PBF.okWithLocals (a := pa) (o₀ := o₀) (o := o) hslot RFlow.next
+      · intro hc
+        try simp [hc]
+        exact PBF.unsupported
   | classDef name sp => simp only [execStmt]; exact PBF.unsupported
-  | importFrom mod names star sp => simp only [execStmt]; exact PBF.exn hslot _
+  | importFrom mod names star sp =>
+      simp only [execStmt]
+      refine PBF.ite (c := (mod == "__main__") = true) ?_ ?_
+      · intro hc
+        try simp [hc]
+        exact PBF.unsupported
+      · intro hc
+        refine PBF.ite (c := (opaqueImportAllowed mod && !star) = true) ?_ ?_
+        · intro ha
+          try simp [hc, ha, FrameState.swapAt, World.swapAt]
+          exact PBF.okWithLocals (a := pa) (o₀ := o₀) (o := o) hslot RFlow.next
+        · intro ha
+          try simp [hc, ha]
+          exact PBF.exn hslot _
   | pass sp => simp only [execStmt]; exact PBF.ok hslot _
   | brk sp => simp only [execStmt]; exact PBF.ok hslot _
   | cont sp => simp only [execStmt]; exact PBF.ok hslot _
@@ -5161,7 +5188,13 @@ theorem pbEvalExpr_succ (htwin : PayloadTwin o₀ o) (ih : PBAll pa o₀ o fuel)
       cases r with
       | ref b => exact attrReadResult_pb hs1 htwin m b attr
       | ntuple tn fields xs => exact PBF.liftRes hs1 _
-      | _ => simp only []; exact PBF.exn hs1 _
+      | callable name => exact PBF.unsupported
+      | _ =>
+          refine PBF.ite (c := (attr == "__doc__") = true) ?_ ?_
+          · intro hc
+            exact PBF.unsupported
+          · intro hc
+            exact PBF.exn hs1 PyErr.attributeError
   | ifExp tE bE oE sp =>
       simp only [evalExpr]
       refine PBF.bind (ihE m st tE hslot) fun s1 tv _ hs1 => ?_

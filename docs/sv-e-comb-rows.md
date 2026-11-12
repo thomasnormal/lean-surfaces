@@ -22,6 +22,11 @@ source-shaped envelope and matches Icarus Verilog 13.0 and Xcelium 24.03-s004
 for all 9 cycles.  It is an E-MATCH and does not change the frozen migration
 count.
 
+The eight-bit parameter point, `addsub_comb_n8`, runs from its committed
+source-shaped envelope and matches Icarus Verilog 13.0 and Xcelium 24.03-s004
+for all 14 cycles.  It is an E-MATCH and does not change the frozen migration
+count.
+
 The two-temporary slice, `acg_two_temps`, likewise runs from its committed
 source-shaped envelope and matches Icarus Verilog 13.0 and Xcelium 24.03-s004
 for all 5 cycles.  It is an E-MATCH and does not change the frozen migration

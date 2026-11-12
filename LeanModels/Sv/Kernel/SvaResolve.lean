@@ -114,4 +114,15 @@ theorem sva_signal_bool_xread {state state' : SvState} {name : String}
   have hs := sva_signalAt_xread hsource hconcrete hknown hread
   simp [SvaBool.evalLogic, hs]
 
+theorem sva_signal_checked_xread {state state' : SvState} {name : String}
+    {source concrete : LVec}
+    (hsource : SvState.lookup state name = some source)
+    (hconcrete : SvState.lookup state' name = some concrete)
+    (hknown : source.bits.toList.all Logic.isKnown = true)
+    (hread : XRead source concrete) :
+    SvaBool.evalChecked [state] 0 (.signal name) =
+      SvaBool.evalChecked [state'] 0 (.signal name) := by
+  apply sva_bool_evalLogic_congr
+  exact sva_signal_bool_xread hsource hconcrete hknown hread
+
 end LeanModels.Sv.Kernel

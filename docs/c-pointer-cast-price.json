@@ -1,0 +1,611 @@
+{
+ "counts": {
+  "implicit-pointer-read-or-use": 15,
+  "pointer-arithmetic": 11,
+  "pointer-bit-cast": 4
+ },
+ "interpretation": "Every classification is derived from Clang AST envelope nodes; no pointer address or type spelling is invented. A missing node is priced as a tool gap rather than admitted as a conversion.",
+ "rows": [
+  {
+   "casts": {},
+   "corpus": "c-testsuite/single-exec",
+   "detail": "pointer used as an integer (no ptr\u2194int cast in tier)",
+   "name": "00032.c",
+   "pointer_arithmetic": [],
+   "pointer_types": {
+    "int *": 6
+   },
+   "primary": "implicit-pointer-read-or-use"
+  },
+  {
+   "casts": {
+    "FunctionToPointerDecay": 3
+   },
+   "corpus": "c-testsuite/single-exec",
+   "detail": "pointer used as an integer (no ptr\u2194int cast in tier)",
+   "name": "00173.c",
+   "pointer_arithmetic": [],
+   "pointer_types": {
+    "char *": 15,
+    "const char *": 3,
+    "int (*)(const char *, ...)": 3
+   },
+   "primary": "implicit-pointer-read-or-use"
+  },
+  {
+   "casts": {
+    "FunctionToPointerDecay": 5
+   },
+   "corpus": "c-testsuite/single-exec",
+   "detail": "pointer used as an integer (no ptr\u2194int cast in tier)",
+   "name": "00182.c",
+   "pointer_arithmetic": [],
+   "pointer_types": {
+    "char *": 7,
+    "const char *": 1,
+    "int (*)(const char *, ...)": 1,
+    "int *": 4,
+    "void (*)(int, char *)": 3,
+    "void (*)(unsigned long, char *)": 1
+   },
+   "primary": "implicit-pointer-read-or-use"
+  },
+  {
+   "casts": {
+    "FunctionToPointerDecay": 3
+   },
+   "corpus": "gcc.c-torture/execute",
+   "detail": "pointer used as an integer (no ptr\u2194int cast in tier)",
+   "name": "20000412-6.c",
+   "pointer_arithmetic": [
+    {
+     "op": "+",
+     "type": "unsigned short *"
+    }
+   ],
+   "pointer_types": {
+    "unsigned int (*)(unsigned short, unsigned short *, unsigned short *)": 1,
+    "unsigned short *": 6,
+    "void (*)(int) __attribute__((noreturn))": 1,
+    "void (*)(void) __attribute__((noreturn))": 1
+   },
+   "primary": "pointer-arithmetic"
+  },
+  {
+   "casts": {
+    "BitCast": 2,
+    "FunctionToPointerDecay": 5
+   },
+   "corpus": "gcc.c-torture/execute",
+   "detail": "pointer used as an integer (no ptr\u2194int cast in tier)",
+   "name": "20000801-1.c",
+   "pointer_arithmetic": [
+    {
+     "op": "+",
+     "type": "char *"
+    },
+    {
+     "op": "+",
+     "type": "char *"
+    },
+    {
+     "op": "+",
+     "type": "char *"
+    }
+   ],
+   "pointer_types": {
+    "char *": 13,
+    "void (*)(char *, unsigned int)": 2,
+    "void (*)(int) __attribute__((noreturn))": 2,
+    "void (*)(void) __attribute__((noreturn))": 1
+   },
+   "primary": "pointer-bit-cast"
+  },
+  {
+   "casts": {
+    "FunctionToPointerDecay": 5
+   },
+   "corpus": "gcc.c-torture/execute",
+   "detail": "pointer used as an integer (no ptr\u2194int cast in tier)",
+   "name": "20000910-1.c",
+   "pointer_arithmetic": [],
+   "pointer_types": {
+    "int *": 5,
+    "void (*)(int *)": 1,
+    "void (*)(int)": 1,
+    "void (*)(int) __attribute__((noreturn))": 1,
+    "void (*)(int, int)": 1,
+    "void (*)(void) __attribute__((noreturn))": 1
+   },
+   "primary": "implicit-pointer-read-or-use"
+  },
+  {
+   "casts": {
+    "FunctionToPointerDecay": 1
+   },
+   "corpus": "gcc.c-torture/execute",
+   "detail": "pointer used as an integer (no ptr\u2194int cast in tier)",
+   "name": "20011126-2.c",
+   "pointer_arithmetic": [
+    {
+     "op": "+",
+     "type": "const char *"
+    }
+   ],
+   "pointer_types": {
+    "char *": 2,
+    "const char *": 8,
+    "const char *(*)(const char *, char *)": 1
+   },
+   "primary": "pointer-arithmetic"
+  },
+  {
+   "casts": {
+    "FunctionToPointerDecay": 2
+   },
+   "corpus": "gcc.c-torture/execute",
+   "detail": "pointer used as an integer (no ptr\u2194int cast in tier)",
+   "name": "20020503-1.c",
+   "pointer_arithmetic": [
+    {
+     "op": "+",
+     "type": "char *"
+    }
+   ],
+   "pointer_types": {
+    "char *": 5,
+    "char *(*)(long, char *)": 1,
+    "void (*)(void) __attribute__((noreturn))": 1
+   },
+   "primary": "pointer-arithmetic"
+  },
+  {
+   "casts": {
+    "BitCast": 2,
+    "BuiltinFnToFnPtr": 2,
+    "FunctionToPointerDecay": 5
+   },
+   "corpus": "gcc.c-torture/execute",
+   "detail": "pointer used as an integer (no ptr\u2194int cast in tier)",
+   "name": "20030606-1.c",
+   "pointer_arithmetic": [],
+   "pointer_types": {
+    "int *": 12,
+    "int *(*)(int *, int)": 2,
+    "void (*)(int) __attribute__((noreturn))": 1,
+    "void (*)(void) __attribute__((noreturn))": 2,
+    "void *": 2,
+    "void *(*)(void *, int, unsigned long)": 2
+   },
+   "primary": "pointer-bit-cast"
+  },
+  {
+   "casts": {
+    "BitCast": 1,
+    "FunctionToPointerDecay": 1
+   },
+   "corpus": "gcc.c-torture/execute",
+   "detail": "pointer used as an integer (no ptr\u2194int cast in tier)",
+   "name": "20030920-1.c",
+   "pointer_arithmetic": [],
+   "pointer_types": {
+    "char *": 2,
+    "unsigned char *": 3,
+    "void (*)(void) __attribute__((noreturn))": 1
+   },
+   "primary": "pointer-bit-cast"
+  },
+  {
+   "casts": {
+    "FunctionToPointerDecay": 23
+   },
+   "corpus": "gcc.c-torture/execute",
+   "detail": "pointer used as an integer (no ptr\u2194int cast in tier)",
+   "name": "20050502-1.c",
+   "pointer_arithmetic": [],
+   "pointer_types": {
+    "char *": 27,
+    "const char *": 25,
+    "const char **": 3,
+    "int (*)(const char **)": 2,
+    "int (*)(const char *, const char *)": 10,
+    "int (*)(int)": 1,
+    "void (*)(const char **, char *, bool, bool)": 5,
+    "void (*)(void) __attribute__((noreturn))": 5
+   },
+   "primary": "implicit-pointer-read-or-use"
+  },
+  {
+   "casts": {
+    "FunctionToPointerDecay": 4
+   },
+   "corpus": "gcc.c-torture/execute",
+   "detail": "pointer used as an integer (no ptr\u2194int cast in tier)",
+   "name": "20060910-1.c",
+   "pointer_arithmetic": [
+    {
+     "op": "+",
+     "type": "unsigned char *"
+    }
+   ],
+   "pointer_types": {
+    "int (*)(struct input_ty *)": 2,
+    "struct input_ty *": 4,
+    "unsigned char *": 6,
+    "void (*)(void) __attribute__((noreturn))": 2
+   },
+   "primary": "pointer-arithmetic"
+  },
+  {
+   "casts": {
+    "FunctionToPointerDecay": 3
+   },
+   "corpus": "gcc.c-torture/execute",
+   "detail": "pointer used as an integer (no ptr\u2194int cast in tier)",
+   "name": "20070201-1.c",
+   "pointer_arithmetic": [],
+   "pointer_types": {
+    "char *": 6,
+    "char *(*)(char *, char *)": 1,
+    "const char *": 1,
+    "int (*)(char *restrict, const char *restrict, ...)": 1,
+    "void (*)(void) __attribute__((noreturn))": 1
+   },
+   "primary": "implicit-pointer-read-or-use"
+  },
+  {
+   "casts": {
+    "FunctionToPointerDecay": 3
+   },
+   "corpus": "gcc.c-torture/execute",
+   "detail": "pointer used as an integer (no ptr\u2194int cast in tier)",
+   "name": "20100827-1.c",
+   "pointer_arithmetic": [],
+   "pointer_types": {
+    "char *": 4,
+    "int (*)(char *)": 1,
+    "void (*)(void) __attribute__((noreturn))": 2
+   },
+   "primary": "implicit-pointer-read-or-use"
+  },
+  {
+   "casts": {
+    "BitCast": 4,
+    "FunctionToPointerDecay": 8
+   },
+   "corpus": "gcc.c-torture/execute",
+   "detail": "pointer used as an integer (no ptr\u2194int cast in tier)",
+   "name": "20111208-1.c",
+   "pointer_arithmetic": [
+    {
+     "op": "+",
+     "type": "char *"
+    },
+    {
+     "op": "+",
+     "type": "char *"
+    }
+   ],
+   "pointer_types": {
+    "char *": 13,
+    "const char *": 2,
+    "const void *": 2,
+    "int (*)(char *, char *)": 1,
+    "unsigned long (*)(const char *)": 2,
+    "void (*)(int)": 2,
+    "void (*)(void) __attribute__((noreturn))": 1,
+    "void *": 2,
+    "void *(*)(void *, const void *, unsigned long)": 2
+   },
+   "primary": "pointer-bit-cast"
+  },
+  {
+   "casts": {
+    "FunctionToPointerDecay": 2
+   },
+   "corpus": "gcc.c-torture/execute",
+   "detail": "pointer used as an integer (no ptr\u2194int cast in tier)",
+   "name": "20120808-1.c",
+   "pointer_arithmetic": [
+    {
+     "op": "+",
+     "type": "unsigned char *"
+    },
+    {
+     "op": "+",
+     "type": "unsigned char *"
+    }
+   ],
+   "pointer_types": {
+    "unsigned char *": 11,
+    "void (*)(int) __attribute__((noreturn))": 1,
+    "void (*)(void) __attribute__((noreturn))": 1
+   },
+   "primary": "pointer-arithmetic"
+  },
+  {
+   "casts": {
+    "BuiltinFnToFnPtr": 2,
+    "FunctionToPointerDecay": 1
+   },
+   "corpus": "gcc.c-torture/execute",
+   "detail": "pointer used as an integer (no ptr\u2194int cast in tier)",
+   "name": "20140828-1.c",
+   "pointer_arithmetic": [],
+   "pointer_types": {
+    "int *": 1,
+    "short *": 5,
+    "short *(*)(short *, int, int *)": 1,
+    "void (*)(void) __attribute__((noreturn))": 2
+   },
+   "primary": "implicit-pointer-read-or-use"
+  },
+  {
+   "casts": {
+    "FunctionToPointerDecay": 3
+   },
+   "corpus": "gcc.c-torture/execute",
+   "detail": "pointer used as an integer (no ptr\u2194int cast in tier)",
+   "name": "930429-1.c",
+   "pointer_arithmetic": [
+    {
+     "op": "+",
+     "type": "char *"
+    }
+   ],
+   "pointer_types": {
+    "char *": 4,
+    "char *(*)(char *)": 1,
+    "void (*)(int) __attribute__((noreturn))": 1,
+    "void (*)(void) __attribute__((noreturn))": 1
+   },
+   "primary": "pointer-arithmetic"
+  },
+  {
+   "casts": {
+    "FunctionToPointerDecay": 2
+   },
+   "corpus": "gcc.c-torture/execute",
+   "detail": "pointer used as an integer (no ptr\u2194int cast in tier)",
+   "name": "931110-2.c",
+   "pointer_arithmetic": [],
+   "pointer_types": {
+    "int *": 1,
+    "void (*)(int) __attribute__((noreturn))": 1,
+    "void (*)(void) __attribute__((noreturn))": 1
+   },
+   "primary": "implicit-pointer-read-or-use"
+  },
+  {
+   "casts": {
+    "FunctionToPointerDecay": 2
+   },
+   "corpus": "gcc.c-torture/execute",
+   "detail": "pointer used as an integer (no ptr\u2194int cast in tier)",
+   "name": "950714-1.c",
+   "pointer_arithmetic": [],
+   "pointer_types": {
+    "int *": 4,
+    "void (*)(int) __attribute__((noreturn))": 1,
+    "void (*)(void) __attribute__((noreturn))": 1
+   },
+   "primary": "implicit-pointer-read-or-use"
+  },
+  {
+   "casts": {
+    "FunctionToPointerDecay": 3
+   },
+   "corpus": "gcc.c-torture/execute",
+   "detail": "pointer used as an integer (no ptr\u2194int cast in tier)",
+   "name": "961125-1.c",
+   "pointer_arithmetic": [
+    {
+     "op": "+",
+     "type": "char *"
+    },
+    {
+     "op": "+",
+     "type": "char *"
+    },
+    {
+     "op": "+",
+     "type": "char *"
+    }
+   ],
+   "pointer_types": {
+    "char *": 15,
+    "char *(*)(int, char *, char *, int, int)": 1,
+    "void (*)(int) __attribute__((noreturn))": 1,
+    "void (*)(void) __attribute__((noreturn))": 1
+   },
+   "primary": "pointer-arithmetic"
+  },
+  {
+   "casts": {
+    "FunctionToPointerDecay": 1
+   },
+   "corpus": "gcc.c-torture/execute",
+   "detail": "pointer used as an integer (no ptr\u2194int cast in tier)",
+   "name": "990222-1.c",
+   "pointer_arithmetic": [
+    {
+     "op": "+",
+     "type": "char *"
+    }
+   ],
+   "pointer_types": {
+    "char *": 5,
+    "void (*)(void) __attribute__((noreturn))": 1
+   },
+   "primary": "pointer-arithmetic"
+  },
+  {
+   "casts": {
+    "FunctionToPointerDecay": 2
+   },
+   "corpus": "gcc.c-torture/execute",
+   "detail": "pointer used as an integer (no ptr\u2194int cast in tier)",
+   "name": "loop-12.c",
+   "pointer_arithmetic": [],
+   "pointer_types": {
+    "char *": 4,
+    "int (*)(void)": 1,
+    "void (*)(void)": 1
+   },
+   "primary": "implicit-pointer-read-or-use"
+  },
+  {
+   "casts": {
+    "BuiltinFnToFnPtr": 2,
+    "FunctionToPointerDecay": 2
+   },
+   "corpus": "gcc.c-torture/execute",
+   "detail": "pointer used as an integer (no ptr\u2194int cast in tier)",
+   "name": "pr116799.c",
+   "pointer_arithmetic": [
+    {
+     "op": "+",
+     "type": "const char *"
+    },
+    {
+     "op": "+",
+     "type": "const char *"
+    },
+    {
+     "op": "-",
+     "type": "const char *"
+    },
+    {
+     "op": "-",
+     "type": "const char *"
+    }
+   ],
+   "pointer_types": {
+    "char *": 4,
+    "const char *": 19,
+    "unsigned long (*)(const char *)": 1,
+    "void (*)(const char *, char *)": 1,
+    "void (*)(const char *, const char *, int)": 1,
+    "void (*)(void) __attribute__((noreturn))": 1
+   },
+   "primary": "pointer-arithmetic"
+  },
+  {
+   "casts": {
+    "FunctionToPointerDecay": 12
+   },
+   "corpus": "gcc.c-torture/execute",
+   "detail": "pointer used as an integer (no ptr\u2194int cast in tier)",
+   "name": "pr20601-1.c",
+   "pointer_arithmetic": [
+    {
+     "op": "+",
+     "type": "char **"
+    },
+    {
+     "op": "+",
+     "type": "char **"
+    }
+   ],
+   "pointer_types": {
+    "char *": 18,
+    "char *(*)(char *, unsigned int)": 3,
+    "char **": 14,
+    "int (*)(int)": 1,
+    "int (*)(void)": 1,
+    "int *": 1,
+    "void (*)(int) __attribute__((noreturn))": 1,
+    "void (*)(void) __attribute__((noreturn))": 6
+   },
+   "primary": "pointer-arithmetic"
+  },
+  {
+   "casts": {
+    "FunctionToPointerDecay": 3
+   },
+   "corpus": "gcc.c-torture/execute",
+   "detail": "pointer used as an integer (no ptr\u2194int cast in tier)",
+   "name": "pr27073.c",
+   "pointer_arithmetic": [],
+   "pointer_types": {
+    "int *": 2,
+    "void (*)(int *, int, int, int, short, int, int, int, int, int)": 1,
+    "void (*)(int) __attribute__((noreturn))": 1,
+    "void (*)(void) __attribute__((noreturn))": 1
+   },
+   "primary": "implicit-pointer-read-or-use"
+  },
+  {
+   "casts": {
+    "FunctionToPointerDecay": 3
+   },
+   "corpus": "gcc.c-torture/execute",
+   "detail": "pointer used as an integer (no ptr\u2194int cast in tier)",
+   "name": "pr34176.c",
+   "pointer_arithmetic": [],
+   "pointer_types": {
+    "int (*)(size_t *)": 1,
+    "size_t *": 1,
+    "struct mult_index *": 4,
+    "struct mult_index *(*)(size_t)": 1,
+    "void (*)(void) __attribute__((noreturn))": 1
+   },
+   "primary": "implicit-pointer-read-or-use"
+  },
+  {
+   "casts": {
+    "FunctionToPointerDecay": 1
+   },
+   "corpus": "gcc.c-torture/execute",
+   "detail": "pointer used as an integer (no ptr\u2194int cast in tier)",
+   "name": "pr34415.c",
+   "pointer_arithmetic": [
+    {
+     "op": "+",
+     "type": "const char *"
+    }
+   ],
+   "pointer_types": {
+    "char *": 1,
+    "const char *": 10,
+    "const char *(*)(const char *)": 1
+   },
+   "primary": "pointer-arithmetic"
+  },
+  {
+   "casts": {
+    "FunctionToPointerDecay": 2
+   },
+   "corpus": "gcc.c-torture/execute",
+   "detail": "pointer used as an integer (no ptr\u2194int cast in tier)",
+   "name": "pr54985.c",
+   "pointer_arithmetic": [],
+   "pointer_types": {
+    "ST *": 4,
+    "int (*)(ST *, int)": 1,
+    "void (*)(void) __attribute__((noreturn))": 1
+   },
+   "primary": "implicit-pointer-read-or-use"
+  },
+  {
+   "casts": {
+    "BuiltinFnToFnPtr": 1,
+    "FunctionToPointerDecay": 1
+   },
+   "corpus": "gcc.c-torture/execute",
+   "detail": "pointer used as an integer (no ptr\u2194int cast in tier)",
+   "name": "pr71631.c",
+   "pointer_arithmetic": [],
+   "pointer_types": {
+    "char *": 1,
+    "const char *": 2,
+    "void (*)(const char *)": 1,
+    "void (*)(void) __attribute__((noreturn))": 1
+   },
+   "primary": "implicit-pointer-read-or-use"
+  }
+ ],
+ "schema": "c-pointer-cast-price-0.1",
+ "survey_commit": "04e05fa491c9104d03fdbdf1edc98eb20bd220f4",
+ "survey_measured_at_utc": "2026-11-12T12:48:42Z"
+}

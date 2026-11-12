@@ -2385,6 +2385,68 @@ theorem evalBinOpMultH_swapAt (hslot : Heap.get? h pa = some o₀)
   all_goals try exact heapListRepeatOperandH_swapAt hslot htwin op _ _
   all_goals try exact heapListRepeatOperandRightH_swapAt hslot htwin op _ _
 
+/-- The explicit modulo arm of `evalBinOpH` is payload-blind too.  Keeping
+the operator fixed lets the proof normalize its two nested tests before any
+value elimination. -/
+theorem evalBinOpModH_swapAt (hslot : Heap.get? h pa = some o₀)
+    (htwin : PayloadTwin o₀ o) (a b : RVal) :
+    evalBinOpH (Heap.swapAt h pa o) .mod a b =
+      Res.mapOk (fun p => (Heap.swapAt p.1 pa o, p.2))
+        (evalBinOpH h .mod a b) := by
+  have hthread (r : Res RVal) :
+      (match r with
+       | .ok value => .ok (Heap.swapAt h pa o, value)
+       | .exn e => .exn e
+       | .timeout => .timeout
+       | .unsupported msg => .unsupported msg) =
+        Res.mapOk (fun p => (Heap.swapAt p.1 pa o, p.2))
+          (match r with
+           | .ok value => .ok (h, value)
+           | .exn e => .exn e
+           | .timeout => .timeout
+           | .unsupported msg => .unsupported msg) := by
+    cases r <;> rfl
+  have hmodAnd : (BinOp.mod == BinOp.bitAnd) = false := by decide
+  have hmodMult : (BinOp.mod == BinOp.mult) = false := by decide
+  have hmodSelf : (BinOp.mod == BinOp.mod) = true := by decide
+  have hstrref (fmt : String) (addr : Addr) :
+      evalBinOpH (Heap.swapAt h pa o) .mod (.str fmt) (.ref addr) =
+        Res.mapOk (fun p => (Heap.swapAt p.1 pa o, p.2))
+          (evalBinOpH h .mod (.str fmt) (.ref addr)) := by
+    by_cases haddr : addr = pa
+    · subst addr
+      obtain ⟨q, l₀, c₀, l₁, c₁, rfl, rfl⟩ := htwin
+      simp [evalBinOpH, hmodAnd, hmodMult, hmodSelf,
+        Heap.get?_swapAt_self (Heap.lt_size_of_get? hslot), hslot, Res.mapOk]
+      cases hres : evalBinOp .mod (.str fmt) (.ref pa) <;> simp [hres, Res.mapOk]
+    · cases hget : Heap.get? h addr with
+      | none =>
+          simp [evalBinOpH, hmodAnd, hmodMult, hmodSelf, hget,
+            Heap.get?_swapAt_ne haddr, Res.mapOk,
+            Heap.get?_swapAt_of_ne_slot hslot]
+          cases hres : evalBinOp .mod (.str fmt) (.ref addr) <;> simp [hres, Res.mapOk]
+      | some obj =>
+          cases obj with
+          | list xs =>
+              by_cases hf : (!fmt.toList.any (· == '%')) = true
+              · simp [evalBinOpH, hmodAnd, hmodMult, hmodSelf, hget,
+                  Heap.get?_swapAt_ne haddr, Res.mapOk, hf,
+                  Heap.get?_swapAt_of_ne_slot hslot]
+              · cases hres : evalBinOp .mod (.str fmt) (.ref addr) <;>
+                  simp [evalBinOpH, hmodAnd, hmodMult, hmodSelf, hget,
+                    Heap.get?_swapAt_ne haddr, Res.mapOk, hf, hres,
+                    Heap.get?_swapAt_of_ne_slot hslot]
+          | _ =>
+              simp [evalBinOpH, hmodAnd, hmodMult, hmodSelf, hget,
+                Heap.get?_swapAt_ne haddr, Res.mapOk,
+                Heap.get?_swapAt_of_ne_slot hslot]
+              cases hres : evalBinOp .mod (.str fmt) (.ref addr) <;> simp [hres, Res.mapOk]
+  simp only [evalBinOpH, hmodAnd, Bool.false_and, Bool.false_eq_true,
+    if_false, hmodMult]
+  cases a <;> cases b <;> simp only [hmodSelf, if_true]
+  all_goals try { exact hstrref _ _ }
+  all_goals try { cases hres : evalBinOp .mod _ _ <;> simp [hres, Res.mapOk] }
+
 theorem evalBinOpH_swapAt (hslot : Heap.get? h pa = some o₀)
     (htwin : PayloadTwin o₀ o) (op : BinOp) (a b : RVal) :
     evalBinOpH (Heap.swapAt h pa o) op a b =
@@ -2402,24 +2464,27 @@ theorem evalBinOpH_swapAt (hslot : Heap.get? h pa = some o₀)
            | .timeout => .timeout
            | .unsupported msg => .unsupported msg) := by
     cases r <;> rfl
-  by_cases hop : op == .bitAnd
-  · simp only [evalBinOpH, hop, setLikeRefH_swapAt hslot htwin,
-      setLikeElemsH_swapAt hslot htwin]
-    have hnm : (op == .mult) = false := by
-      cases op <;> try rfl
-      have hf := hop
-      change false = true at hf
-      cases hf
-    split
-    · cases hleft : setLikeElemsH h a <;> cases hright : setLikeElemsH h b <;>
-        simp [hleft, hright, Res.mapOk,
-          Heap.swapAt_push (Heap.lt_size_of_get? hslot), Heap.size_swapAt]
-    · simp only [hnm]
-      exact hthread (evalBinOp op a b)
-  · simp only [evalBinOpH, hop, Bool.false_and, Bool.false_eq_true, if_false]
-    split
-    · exact evalBinOpMultH_swapAt hslot htwin op a b
-    · exact hthread (evalBinOp op a b)
+  cases op with
+  | bitAnd =>
+      simp only [evalBinOpH, beq_self_eq_true, setLikeRefH_swapAt hslot htwin,
+        setLikeElemsH_swapAt hslot htwin]
+      split
+      · cases hleft : setLikeElemsH h a <;> cases hright : setLikeElemsH h b <;>
+          simp [hleft, hright, Res.mapOk,
+            Heap.swapAt_push (Heap.lt_size_of_get? hslot), Heap.size_swapAt]
+      · exact hthread (evalBinOp .bitAnd a b)
+  | mult => exact evalBinOpMultH_swapAt hslot htwin .mult a b
+  | mod => exact evalBinOpModH_swapAt hslot htwin a b
+  | add => exact hthread (evalBinOp .add a b)
+  | sub => exact hthread (evalBinOp .sub a b)
+  | div => exact hthread (evalBinOp .div a b)
+  | floorDiv => exact hthread (evalBinOp .floorDiv a b)
+  | pow => exact hthread (evalBinOp .pow a b)
+  | lshift => exact hthread (evalBinOp .lshift a b)
+  | rshift => exact hthread (evalBinOp .rshift a b)
+  | bitOr => exact hthread (evalBinOp .bitOr a b)
+  | bitXor => exact hthread (evalBinOp .bitXor a b)
+  | matMult => exact hthread (evalBinOp .matMult a b)
 
 theorem evalBinOpH_slot (hslot : Heap.get? h pa = some o₀)
     {op : BinOp} {a b : RVal} {p : Heap × RVal}
@@ -2437,27 +2502,74 @@ theorem evalBinOpH_slot (hslot : Heap.get? h pa = some o₀)
     | exn e => simp at hr
     | timeout => simp at hr
     | unsupported msg => simp at hr
-  by_cases hop : op == .bitAnd
-  · simp only [evalBinOpH, hop] at hw
-    split at hw
-    · cases hw
-    · have hnm : (op == .mult) = false := by
-        cases op <;> try rfl
-        have hf := hop
-        change false = true at hf
-        cases hf
-      simp only [hnm] at hw
-      cases hev : evalBinOp op a b <;> simp only [hev, Res.mapOk] at hw
+  have hmodMult : (BinOp.mod == BinOp.mult) = false := by decide
+  have hmodSelf : (BinOp.mod == BinOp.mod) = true := by decide
+  have hmodAnd : (BinOp.mod == BinOp.bitAnd) = false := by decide
+  have pureIf (cond : Bool) (value : RVal) (r : Res RVal) {q : Heap × RVal}
+      (hr : (if cond = true then .ok (h, value) else
+        match r with
+        | .ok v => .ok (h, v)
+        | .exn e => .exn e
+        | .timeout => .timeout
+        | .unsupported msg => .unsupported msg : Res (Heap × RVal)) = .ok q) :
+      Heap.get? q.1 pa = some o₀ := by
+    by_cases hc : cond = true
+    · simp [hc] at hr
+      cases hr
+      exact hslot
+    · simp [hc] at hr
+      exact pureSlot r hr
+  cases op with
+  | bitAnd =>
+      simp only [evalBinOpH, beq_self_eq_true] at hw
+      split at hw
       · cases hw
-        exact hslot
-      all_goals cases hw
-  · simp only [evalBinOpH, hop, Bool.false_and, Bool.false_eq_true, if_false] at hw
-    split at hw
-    · exact evalBinOpMultH_slot hslot hw
-    · cases hev : evalBinOp op a b <;> simp only [hev, Res.mapOk] at hw
-      · cases hw
-        exact hslot
-      all_goals cases hw
+      · cases hev : evalBinOp .bitAnd a b <;> simp only [hev, Res.mapOk] at hw
+        · cases hw; exact hslot
+        all_goals cases hw
+  | mult => exact evalBinOpMultH_slot hslot hw
+  | mod =>
+      cases a <;> cases b
+      all_goals simp only [evalBinOpH, hmodAnd, hmodMult, hmodSelf,
+        Bool.false_and, Bool.false_eq_true, if_false, if_true] at hw
+      all_goals try
+        cases hres : evalBinOp .mod _ _ with
+        | ok v => rw [hres] at hw; cases hw; exact hslot
+        | exn e => rw [hres] at hw; cases hw
+        | timeout => rw [hres] at hw; cases hw
+        | unsupported msg => rw [hres] at hw; cases hw
+      case str.ref fmt addr =>
+        cases hget : Heap.get? h addr with
+        | none =>
+            cases hres : evalBinOp .mod (.str fmt) (.ref addr) <;>
+              simp [hget, hres, Res.mapOk] at hw
+            · cases hw; exact hslot
+            all_goals cases hw
+        | some obj =>
+            cases obj with
+            | list xs =>
+                by_cases hf : (!fmt.toList.any (· == '%')) = true
+                · simp [hf, hget] at hw
+                  cases hw; exact hslot
+                · cases hres : evalBinOp .mod (.str fmt) (.ref addr) <;>
+                    simp [hf, hget, hres, Res.mapOk] at hw
+                  · cases hw; exact hslot
+                  all_goals cases hw
+            | _ =>
+                cases hres : evalBinOp .mod (.str fmt) (.ref addr) <;>
+                  simp [hget, hres, Res.mapOk] at hw
+                · cases hw; exact hslot
+                all_goals cases hw
+  | add => cases hev : evalBinOp .add a b <;> simp only [evalBinOpH, hev, Res.mapOk] at hw <;> try { cases hw; exact hslot } <;> cases hw
+  | sub => cases hev : evalBinOp .sub a b <;> simp only [evalBinOpH, hev, Res.mapOk] at hw <;> try { cases hw; exact hslot } <;> cases hw
+  | div => cases hev : evalBinOp .div a b <;> simp only [evalBinOpH, hev, Res.mapOk] at hw <;> try { cases hw; exact hslot } <;> cases hw
+  | floorDiv => cases hev : evalBinOp .floorDiv a b <;> simp only [evalBinOpH, hev, Res.mapOk] at hw <;> try { cases hw; exact hslot } <;> cases hw
+  | pow => cases hev : evalBinOp .pow a b <;> simp only [evalBinOpH, hev, Res.mapOk] at hw <;> try { cases hw; exact hslot } <;> cases hw
+  | lshift => cases hev : evalBinOp .lshift a b <;> simp only [evalBinOpH, hev, Res.mapOk] at hw <;> try { cases hw; exact hslot } <;> cases hw
+  | rshift => cases hev : evalBinOp .rshift a b <;> simp only [evalBinOpH, hev, Res.mapOk] at hw <;> try { cases hw; exact hslot } <;> cases hw
+  | bitOr => cases hev : evalBinOp .bitOr a b <;> simp only [evalBinOpH, hev, Res.mapOk] at hw <;> try { cases hw; exact hslot } <;> cases hw
+  | bitXor => cases hev : evalBinOp .bitXor a b <;> simp only [evalBinOpH, hev, Res.mapOk] at hw <;> try { cases hw; exact hslot } <;> cases hw
+  | matMult => cases hev : evalBinOp .matMult a b <;> simp only [evalBinOpH, hev, Res.mapOk] at hw <;> try { cases hw; exact hslot } <;> cases hw
 
 /-- The module-aware slot wrapper is payload-blind for the same reason as
 `heapAttrStore`: the perturbation is a running generator, so a slot-store

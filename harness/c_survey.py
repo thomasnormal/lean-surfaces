@@ -125,6 +125,7 @@ def build(manifest_path, log_path, commit=None, measured_at=None):
             env = json.loads(Path(env_path).read_text())
         rows.append({
             "name": name,
+            "corpus": rec.get("corpus", manifest.get("corpus", "gcc.c-torture/execute")),
             "sha256": rec.get("sha256"),
             "manifest_status": rec.get("status"),
             "verdict": token,
@@ -132,6 +133,9 @@ def build(manifest_path, log_path, commit=None, measured_at=None):
             "static_walls": static_walls(env) if env else [],
         })
     counts = Counter(row["verdict"] for row in rows)
+    by_corpus = {}
+    for row in rows:
+        by_corpus.setdefault(row["corpus"], Counter())[row["verdict"]] += 1
     walls = Counter()
     wall_files = {}
     for row in rows:
@@ -152,11 +156,12 @@ def build(manifest_path, log_path, commit=None, measured_at=None):
     ranking.sort(key=lambda x: (-x["sole"], -x["present"], x["wall"]))
     out = {
         "schema": "c-survey-0.1",
-        "corpus": "gcc.c-torture/execute",
+        "corpus": manifest.get("corpus", "gcc.c-torture/execute"),
         "manifest_hash": manifest_hash,
         "pin": manifest.get("pin"),
         "total": len(rows),
         "counts": dict(sorted(counts.items())),
+        "by_corpus": {k: dict(sorted(v.items())) for k, v in sorted(by_corpus.items())},
         "rows": rows,
         "wall_ranking": ranking,
     }
@@ -173,7 +178,7 @@ def render(data):
     lines = [
         "# C torture survey",
         "",
-        "Generated from the pinned `gcc.c-torture/execute` August 300-test manifest.",
+        "Generated from the pinned `%s` manifest." % data.get("corpus", "C"),
         "",
         "- verdicts: %d/%d scored (passed %d, failed %d)" %
         (scored, data.get("total", 0), counts.get("passed", 0), counts.get("failed", 0)),
@@ -186,6 +191,12 @@ def render(data):
     lines += ["", "## Verdict counts", "", "| verdict | files |", "| --- | ---: |"]
     for key, value in sorted(counts.items()):
         lines.append("| `%s` | %d |" % (key, value))
+    if data.get("by_corpus"):
+        lines += ["", "## Counts by corpus", "", "| corpus | verdict | files |",
+                  "| --- | --- | ---: |"]
+        for corpus, counts in sorted(data["by_corpus"].items()):
+            for verdict, value in sorted(counts.items()):
+                lines.append("| `%s` | `%s` | %d |" % (corpus, verdict, value))
     lines += ["", "## Static wall ranking", "",
               "`sole` counts files whose only static wall is the named wall; `present` counts all files containing it.",
               "", "| wall | sole | present | example files |", "| --- | ---: | ---: | --- |"]

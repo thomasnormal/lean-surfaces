@@ -56,8 +56,13 @@ def _coverage_rows() -> dict[str, tuple[int, int]]:
     sv_rows, sv_match = _row_after_heading(
         sv_text, "## Differential self-consistency", "rows"
     )
+    import json
+    c = json.loads((ROOT / "docs/c-survey.json").read_text(encoding="utf-8"))
+    c_rows = int(c["total"])
+    c_match = int(c["counts"].get("passed", 0))
     return {
         "Python": (python_rows, python_match),
+        "C": (c_rows, c_match),
         "C++": (cpp_rows, cpp_match),
         "SystemVerilog": (sv_rows, sv_match),
     }
@@ -80,6 +85,7 @@ def render_table() -> str:
     rows = _coverage_rows()
     py_total, py_match = rows["Python"]
     py_proof_total, py_proof_match = _python_rows()[2:]
+    c_total, c_match = rows["C"]
     cpp_total, cpp_match = rows["C++"]
     sv_total, sv_match = rows["SystemVerilog"]
     return "\n".join(
@@ -98,6 +104,8 @@ def render_table() -> str:
             f"{py_match:,} / {py_total:,} differential rows "
             f"([coverage](docs/python-coverage.md)); proof interpreter: "
             f"{py_proof_match:,} / {py_proof_total:,} |",
+            f"| C | {_bar(_percent(c_match, c_total))} | "
+            f"{c_match:,} / {c_total:,} survey rows ([survey](docs/c-survey.md)) |",
             f"| C++ | {_bar(_percent(cpp_match, cpp_total))} | "
             f"{cpp_match:,} / {cpp_total:,} differential rows "
             f"([coverage](docs/cpp-coverage.md)) |",

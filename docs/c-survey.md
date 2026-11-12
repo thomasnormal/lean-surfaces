@@ -1,23 +1,47 @@
 # C torture survey
 
-Generated from the pinned `gcc.c-torture/execute` August 300-test manifest.
+Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manifest.
 
-- verdicts: 34/300 scored (passed 34, failed 0)
-- manifest SHA-256: `94e82042f4a8170f60f31ed1fb01f322efeb3b65582a4ec195f02f03ee2fa744`
-- measured commit: `b7e399d33`
-- measured at: `2026-11-11T23:35:00Z`
+- verdicts: 376/2214 scored (passed 376, failed 0)
+- manifest SHA-256: `953938cce1637cf91ba3dda661a9b9309cd83f0ebf7d7f17cc1a36704295f367`
+- measured commit: `eed346f27`
+- measured at: `2026-11-12T00:25:00Z`
 
 ## Verdict counts
 
 | verdict | files |
 | --- | ---: |
-| `not-ingested` | 1 |
-| `not-parsed` | 30 |
-| `passed` | 34 |
-| `refused-libc` | 86 |
-| `refused-ub` | 6 |
-| `refused-unsupported` | 141 |
-| `timeout` | 2 |
+| `not-ingested` | 28 |
+| `not-parsed` | 350 |
+| `passed` | 376 |
+| `refused-libc` | 248 |
+| `refused-ub` | 29 |
+| `refused-unsupported` | 1142 |
+| `timeout` | 41 |
+
+## Counts by corpus
+
+| corpus | verdict | files |
+| --- | --- | ---: |
+| `c-testsuite/single-exec` | `not-ingested` | 7 |
+| `c-testsuite/single-exec` | `not-parsed` | 1 |
+| `c-testsuite/single-exec` | `passed` | 92 |
+| `c-testsuite/single-exec` | `refused-libc` | 2 |
+| `c-testsuite/single-exec` | `refused-ub` | 2 |
+| `c-testsuite/single-exec` | `refused-unsupported` | 114 |
+| `c-testsuite/single-exec` | `timeout` | 2 |
+| `gcc.c-torture/execute` | `not-ingested` | 20 |
+| `gcc.c-torture/execute` | `not-parsed` | 321 |
+| `gcc.c-torture/execute` | `passed` | 284 |
+| `gcc.c-torture/execute` | `refused-libc` | 244 |
+| `gcc.c-torture/execute` | `refused-ub` | 26 |
+| `gcc.c-torture/execute` | `refused-unsupported` | 984 |
+| `gcc.c-torture/execute` | `timeout` | 39 |
+| `gcc.c23-run` | `not-ingested` | 1 |
+| `gcc.c23-run` | `not-parsed` | 28 |
+| `gcc.c23-run` | `refused-libc` | 2 |
+| `gcc.c23-run` | `refused-ub` | 1 |
+| `gcc.c23-run` | `refused-unsupported` | 44 |
 
 ## Static wall ranking
 
@@ -25,25 +49,41 @@ Generated from the pinned `gcc.c-torture/execute` August 300-test manifest.
 
 | wall | sole | present | example files |
 | --- | ---: | ---: | --- |
-| `type-layout` | 57 | 150 | 20000113-1.c, 20000121-1.c, 20000223-1.c, 20000403-1.c, 20000412-1.c |
-| `unsupported:SwitchStmt` | 6 | 9 | 20001130-2.c, 20010106-1.c, 20011109-1.c, 20011219-1.c, 20011223-1.c |
-| `operator:~` | 5 | 8 | 20000205-1.c, 20000715-2.c, 20020127-1.c, 20021120-3.c, 20040409-3.c |
-| `unsupported:NullStmt` | 4 | 5 | 20000412-4.c, 20020108-1.c, 20020716-1.c, 20030909-1.c, 20040811-1.c |
-| `libc-call` | 3 | 35 | 20000519-1.c, 20000703-1.c, 20000910-2.c, 20001011-1.c, 20001203-2.c |
-| `cast:IntegralToPointer` | 2 | 4 | 20000314-1.c, 20000622-1.c, 20010329-1.c, 20021010-2.c |
-| `assignment-call` | 1 | 29 | 20000801-2.c, 20000818-1.c, 20000917-1.c, 20001124-1.c, 20001130-1.c |
-| `unsupported:CXXBoolLiteralExpr` | 1 | 1 | 20010604-1.c |
-| `string-literal` | 0 | 32 | 20000121-1.c, 20000223-1.c, 20000703-1.c, 20000722-1.c, 20000801-4.c |
-| `cast:IntegralToFloating` | 0 | 11 | 20000605-1.c, 20000731-1.c, 20010118-1.c, 20020225-2.c, 20020227-1.c |
-| `cast:FloatingCast` | 0 | 6 | 20000605-1.c, 20020411-1.c, 20020413-1.c, 20030125-1.c, 20040709-1.c |
-| `cast:FloatingToIntegral` | 0 | 6 | 20000605-1.c, 20010118-1.c, 20031003-1.c, 20040709-1.c, 20040709-2.c |
-| `unsupported:PackedAttr` | 0 | 5 | 20010518-2.c, 20020227-1.c, 20030224-2.c, 20040625-1.c, 20040709-2.c |
-| `unsupported:StmtExpr` | 0 | 5 | 20000703-1.c, 20000917-1.c, 20001203-2.c, 20020206-1.c, 20020320-1.c |
-| `cast:PointerToIntegral` | 0 | 3 | 20000622-1.c, 20011121-1.c, 20030811-1.c |
-| `unsequenced-effects` | 0 | 2 | 20001228-1.c, 20020406-1.c |
-| `unsupported:AlignedAttr` | 0 | 2 | 20010904-1.c, 20010904-2.c |
-| `unsupported:AddrLabelExpr` | 0 | 1 | 20040302-1.c |
-| `unsupported:ExprWithCleanups` | 0 | 1 | 20020320-1.c |
-| `unsupported:IndirectGotoStmt` | 0 | 1 | 20040302-1.c |
-| `unsupported:PredefinedExpr` | 0 | 1 | 20001011-1.c |
-| `unsupported:VAArgExpr` | 0 | 1 | 20000519-1.c |
+| `type-layout` | 272 | 1059 | 00015.c, 00016.c, 00017.c, 00018.c, 00019.c |
+| `libc-call` | 164 | 734 | 00025.c, 00040.c, 00056.c, 00087.c, 00089.c |
+| `operator:~` | 25 | 75 | 00104.c, 00126.c, 00214.c, 20000205-1.c, 20000715-2.c |
+| `assignment-call` | 24 | 185 | 00011.c, 00031.c, 00040.c, 00140.c, 00187.c |
+| `unsupported:NullStmt` | 18 | 76 | 00007.c, 00101.c, 00204.c, 00215.c, 00218.c |
+| `unsupported:SwitchStmt` | 13 | 64 | 00051.c, 00143.c, 00158.c, 00182.c, 00193.c |
+| `unsequenced-effects` | 3 | 20 | 00121.c, 20001228-1.c, 20020406-1.c, 20060102-1.c, 20230802-1.c |
+| `cast:PointerToIntegral` | 2 | 27 | 00144.c, 20000622-1.c, 20011121-1.c, 20030811-1.c, 20050215-1.c |
+| `cast:IntegralToPointer` | 2 | 26 | 00214.c, 20000314-1.c, 20000622-1.c, 20010329-1.c, 20021010-2.c |
+| `unsupported:StmtExpr` | 1 | 10 | 00213.c, 00214.c, 20000703-1.c, 20000917-1.c, 20001203-2.c |
+| `unsupported:AddrLabelExpr` | 1 | 8 | 20040302-1.c, 20041214-1.c, 20071210-1.c, 920501-4.c, 920501-5.c |
+| `unsupported:EmptyDecl` | 1 | 6 | 20050106-1.c, 20230630-2.c, 20230630-4.c, builtin-bitops-1.c, pr34154.c |
+| `unsupported:CXXBoolLiteralExpr` | 1 | 4 | 20010604-1.c, 20210505-1.c, gcc/testsuite/gcc.dg/c23-bool-1.c, gcc/testsuite/gcc.dg/c23-bool-2.c |
+| `unsupported:ChooseExpr` | 1 | 1 | pr19449.c |
+| `string-literal` | 0 | 260 | 00025.c, 00026.c, 00056.c, 00058.c, 00112.c |
+| `cast:IntegralToFloating` | 0 | 79 | 00113.c, 00119.c, 00123.c, 00174.c, 00175.c |
+| `unsupported:VAArgExpr` | 0 | 55 | 00204.c, 20000519-1.c, 20041113-1.c, 20041214-1.c, 920501-8.c |
+| `cast:FloatingCast` | 0 | 53 | 00174.c, 00175.c, 00204.c, 20000605-1.c, 20020411-1.c |
+| `unsupported:PackedAttr` | 0 | 26 | 00210.c, 20010518-2.c, 20020227-1.c, 20030224-2.c, 20040625-1.c |
+| `cast:FloatingToIntegral` | 0 | 25 | 00175.c, 20000605-1.c, 20010118-1.c, 20031003-1.c, 20040709-1.c |
+| `unsupported:AlignedAttr` | 0 | 15 | 20010904-1.c, 20010904-2.c, 20171008-1.c, 960117-1.c, 990326-1.c |
+| `unsupported:ImaginaryLiteral` | 0 | 13 | 20041124-1.c, 20041201-1.c, 20070614-1.c, builtins/complex-1.c, complex-1.c |
+| `unsupported:IndirectGotoStmt` | 0 | 7 | 20040302-1.c, 20041214-1.c, 20071210-1.c, 920501-4.c, 920501-5.c |
+| `unsupported:DesignatedInitUpdateExpr` | 0 | 6 | gcc/testsuite/gcc.dg/c23-empty-init-5.c, gcc/testsuite/gcc.dg/c23-empty-init-warn-1.c, gcc/testsuite/gcc.dg/c23-empty-init-warn-17.c, gcc/testsuite/gcc.dg/c23-empty-init-warn-2.c, gcc/testsuite/gcc.dg/c23-empty-init-warn-4.c |
+| `unsupported:ExprWithCleanups` | 0 | 6 | 00204.c, 20020320-1.c, 20041124-1.c, 950628-1.c, gcc/testsuite/gcc.dg/c23-stdarg-9.c |
+| `unsupported:GenericSelectionExpr` | 0 | 6 | 00219.c, gcc/testsuite/gcc.dg/c23-bool-1.c, gcc/testsuite/gcc.dg/c23-bool-2.c, gcc/testsuite/gcc.dg/c23-float-2.c, gcc/testsuite/gcc.dg/c23-float-3.c |
+| `unsupported:IndirectFieldDecl` | 0 | 6 | 00046.c, 00050.c, 00216.c, anon-1.c, gcc/testsuite/gcc.dg/c23-tag-5.c |
+| `unsupported:GCCAsmStmt` | 0 | 4 | 20071211-1.c, 990413-2.c, pr56982.c, pr81588.c |
+| `unsupported:OffsetOfExpr` | 0 | 4 | gcc/testsuite/gcc.dg/c23-empty-init-5.c, pr103255.c, pr30778.c, pr44468.c |
+| `unsupported:MaxFieldAlignmentAttr` | 0 | 3 | 20131127-1.c, pr58570.c, pr79737-1.c |
+| `unsupported:MayAliasAttr` | 0 | 3 | mayalias-2.c, mayalias-3.c, pr43987.c |
+| `unsupported:ModeAttr` | 0 | 3 | 20050107-1.c, 20050119-1.c, 20050119-2.c |
+| `unsupported:PredefinedExpr` | 0 | 2 | 20001011-1.c, pr58831.c |
+| `unsupported:StaticAssertDecl` | 0 | 2 | gcc/testsuite/gcc.dg/c23-bool-2.c, gcc/testsuite/gcc.dg/c23-digit-separators-1.c |
+| `unsupported:BinaryConditionalOperator` | 0 | 1 | pr68249.c |
+| `unsupported:CXXNullPtrLiteralExpr` | 0 | 1 | gcc/testsuite/gcc.dg/c23-nullptr-5.c |
+| `unsupported:LabelDecl` | 0 | 1 | 980526-1.c |
+| `unsupported:TypeTraitExpr` | 0 | 1 | builtin-types-compatible-p.c |

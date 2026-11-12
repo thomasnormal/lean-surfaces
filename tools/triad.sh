@@ -813,9 +813,17 @@ sv_chain_dependents() { # Sv paths -> chain modules; nonzero = the probe had no 
   bash "$root/tools/check_sv_chain.sh" --dependents "$@" </dev/null
 }
 
+python_chain_dependents() { # Python paths -> importing Python modules
+  # LS_GREP_ROOT is a Sv fixture override used by this classifier's tests;
+  # Python's source walker always reads the classified checkout itself.
+  local root="$CLONE"
+  [ -r "$root/tools/check_python_dependents.py" ] || return 2
+  python3 "$root/tools/check_python_dependents.py" "$@" </dev/null
+}
+
 classify_list() {       # reads paths on stdin; sets the CLASS_* globals
   CLASS_RANK=0; CLASS_TIERS=""; CLASS_UNKNOWN=""; CLASS_NOTES=""; BUILD_TARGETS=""
-  local p c rank t tt seen sv_touched=""
+  local p c rank t tt seen sv_touched="" py_touched=""
   while IFS= read -r p; do
     [ -n "$p" ] || continue
     c="$(classify_path "$p")"
@@ -849,6 +857,10 @@ classify_list() {       # reads paths on stdin; sets the CLASS_* globals
       fi
     done
     case "$p" in LeanModels/Sv/*.lean) sv_touched="${sv_touched:+$sv_touched }$p" ;; esac
+    case "$p" in
+      LeanModels/Python.lean|LeanModels/Python/*.lean|Examples/python/*.lean)
+        py_touched="${py_touched:+$py_touched }$p" ;;
+    esac
     fi
     # ASKED OF THE LAKEFILE, NOT OF A DIRECTORY LIST.  This was
     # `docs/*.lean|harness/*.lean|tools/*.lean` — three hard-coded prefixes,
@@ -886,6 +898,18 @@ classify_list() {       # reads paths on stdin; sets the CLASS_* globals
     else
       CLASS_RANK=3
       add_note "the comb-chain modules importing this diff's Sv files could not be read — escalated to a FULL build"
+    fi
+  fi
+  # Python has an umbrella root, but keep the explicit transitive walk here:
+  # it catches a dependent module when a scoped landing names only a leaf and
+  # refuses closed worktrees where the walker itself is unavailable.
+  if [ -n "$py_touched" ] && [ "$CLASS_RANK" != "3" ]; then
+    # shellcheck disable=SC2086
+    if tt="$(python_chain_dependents $py_touched)"; then
+      for t in $tt; do add_build_target "$t"; done
+    else
+      CLASS_RANK=3
+      add_note "the Python modules importing this diff could not be read — escalated to a FULL build"
     fi
   fi
   [ "$CLASS_RANK" = "3" ] && BUILD_TARGETS=""    # spine == every default target
@@ -3619,7 +3643,9 @@ if [ "$SELF_TEST" = "1" ]; then
   LS_GREP_ROOT="$svp"
   cls LeanModels/Python/Surface.lean
   check "a Python landing never runs the Sv probe"  "$(svp_calls)" ""
-  check "  ...and builds what it always built"      "$BUILD_TARGETS" "LeanModels.Python.Surface LeanModels.Python"
+  check "  ...and keeps its direct targets"         "$(printf '%s\n' $BUILD_TARGETS | head -2 | tr '\n' ' ' | sed 's/ *$//')" "LeanModels.Python.Surface LeanModels.Python"
+  pydep_count="$(printf '%s\n' $BUILD_TARGETS | grep -Ec '^LeanModels\.Python\.|^Examples\.python\.')"
+  check "  ...and adds Python dependents"           "$([ "$pydep_count" -gt 0 ] && echo yes || echo no)" "yes"
   cls docs/a.md tools/x.sh
   check "a docs landing never runs it"              "$(svp_calls)" ""
   check "  ...and still builds nothing"             "$BUILD_TARGETS" ""
@@ -3666,7 +3692,7 @@ if [ "$SELF_TEST" = "1" ]; then
         "$(printf '%s\n' "$out" | grep -c 'build     lake build LeanModels.Sv.Obs LeanModels.Sv.CombZed Examples.«system-verilog».ex.proof$')" "1"
 
   cls LeanModels/Python/Surface.lean
-  check "a tier WITH a root adds it"        "$BUILD_TARGETS" "LeanModels.Python.Surface LeanModels.Python"
+  check "a tier WITH a root adds it"        "$(printf '%s\n' $BUILD_TARGETS | grep -c '^LeanModels.Python.Surface$')" "1"
 
   cls LeanModels/Core/Basic.lean
   check "Core -> spine"                     "$(class_name "$CLASS_RANK")" "spine"

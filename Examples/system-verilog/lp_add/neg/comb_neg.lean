@@ -4,8 +4,9 @@ import LeanModels.Sv.CombViewTactic
 /-!
 # Negative tests: localparams the tactics do not accept
 
-Six one-localparam variants of a plain ripple adder (the `.sv` files and the envelopes the extractor
-made from them are in this directory). The localparam is unused: it is refused by what it IS, not by
+Four one-localparam variants of a plain ripple adder (the `.sv` files and the envelopes the extractor
+made from them are in this directory; a fifth, `S = N << 1`, is read since the localparams have the shifts
+of an `int`, and is now `lp_shift/lp_shl.sv`). The localparam is unused: it is refused by what it IS, not by
 where it is read. Each refusal is a message of the tactic naming the localparam and the reason, never a
 Lean elaboration error (the cases `lp_intdiv` and `lp_logic` are checker-legal designs, only outside
 what the tactics read):
@@ -15,7 +16,6 @@ what the tactics read):
   design squashes it (`Squash2`) and wraps it at 2^31, which is false for the huge `N` a `∀ N` theorem
   quantifies over (write `localparam integer`, the 4-state twin, as `lp_add.sv` does);
 * `lp_mulvar` `localparam integer Q = N * N;` — a product of two non-literals (not linear);
-* `lp_shift`  `localparam integer S = N << 1;` — an operator outside `+ - *`, `/ %` by a literal and `$clog2`;
 * `lp_logic`  `localparam logic [7:0] K = 8'd3;` — a type other than `int`/`integer`.
 -/
 
@@ -26,7 +26,6 @@ namespace Examples.«system-verilog».lp_add.neg
 load_design_sv2 lp_divvar from "Examples/system-verilog/lp_add/neg/lp_divvar.sv.json"
 load_design_sv2 lp_intdiv from "Examples/system-verilog/lp_add/neg/lp_intdiv.sv.json"
 load_design_sv2 lp_mulvar from "Examples/system-verilog/lp_add/neg/lp_mulvar.sv.json"
-load_design_sv2 lp_shift from "Examples/system-verilog/lp_add/neg/lp_shift.sv.json"
 load_design_sv2 lp_logic from "Examples/system-verilog/lp_add/neg/lp_logic.sv.json"
 
 /--
@@ -48,13 +47,6 @@ error: sv_structure: outside the supported fragment — localparam `Q`: a produc
 -/
 #guard_msgs (whitespace := lax) in
 example (N : Nat) (hN : 1 ≤ N) : CombDesign (lp_mulvar.sem N) := by
-  sv_structure?
-
-/--
-error: sv_structure: outside the supported fragment — localparam `S`: operator `<<` is outside the v1 fragment (a localparam may use + - *, / % by an integer literal, and `$clog2`)
--/
-#guard_msgs (whitespace := lax) in
-example (N : Nat) (hN : 1 ≤ N) : CombDesign (lp_shift.sem N) := by
   sv_structure?
 
 /--

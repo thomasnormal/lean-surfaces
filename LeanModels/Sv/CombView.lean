@@ -2165,10 +2165,29 @@ inductive CE where
   | clog2 (a : CE)
   /-- `$clog2 (a)` through a 32-bit signed `int` localparam target. -/
   | clog2S (a : CE)
+  /-- `a << b`, and `a <<< b`, which is the same operation (IEEE 1800-2023 §11.4.10). -/
+  | shl (a b : CE)
+  /-- `a >> b`: the logical shift of the 32-bit pattern of `a` (§11.4.10: the vacated bits are zeros). -/
+  | shr (a b : CE)
+  /-- `a >>> b` of an `int` (signed): the arithmetic shift of the 32-bit value of `a` (§11.4.10: the vacated bits take
+  the sign bit). -/
+  | ashr (a b : CE)
 deriving Repr, BEq, DecidableEq, Inhabited
 
 /-- The value of a definition, with `evalInt`'s own operations (`/` and `%` truncate toward zero; `$clog2` is
-`LeanModels.Sv.clog2` of the argument's `toNat`, where `evalInt` refuses a negative argument). -/
+`LeanModels.Sv.clog2` of the argument's `toNat`, where `evalInt` refuses a negative argument).
+
+The shifts are the 32-bit `int` operations of IEEE 1800-2023 §11.4.10 on the values of their operands as 32-bit
+patterns, so that the value is exact for every operand value, not only where the operands stay in the 32-bit range. The
+amount is read as an unsigned 32-bit number (`b % 2^32`: a negative amount is a huge one, and every amount of 32 and
+more shifts every bit out). `<<` is `a * 2^amount`: its low 32 bits, the result, depend only on the low 32 bits of `a`.
+`>>` shifts the 32-bit pattern (`a % 2^32`) with zeros; `>>>` shifts the 32-bit signed value of `a` (`canonInt 32 true a`,
+its two's-complement reading) with its sign, a division by `2^amount` rounded down. So the value's 32-bit
+reading is the IEEE result for EVERY value of the operands' readings, and the agreement `hag` (the value equals the
+instantiation's 32-bit `int` value, which is in the 32-bit range) holds only where the summary's value IS that
+result. The instantiation computes `<<` by `a * 2^b`, `>>` by `Int.tdiv` (refusing a negative `a`) and `>>>` by
+`Int.fdiv`, all of them refusing a negative `b` (`evalInt`); where its operands are in the 32-bit range these are
+the same numbers, which is what the tactics show at a symbolic parameter. -/
 def CE.eval (σ : String → Int) : CE → Int
   | .lit v => v
   | .ref n => σ n
@@ -2179,6 +2198,22 @@ def CE.eval (σ : String → Int) : CE → Int
   | .modK a k => (a.eval σ).tmod k
   | .clog2 a => (LeanModels.Sv.clog2 (a.eval σ).toNat : Int)
   | .clog2S a => canonInt 32 true (LeanModels.Sv.clog2 (a.eval σ).toNat : Int)
+  | .shl a b => a.eval σ * 2 ^ (b.eval σ % 4294967296).toNat
+  | .shr a b => a.eval σ % 4294967296 / 2 ^ (b.eval σ % 4294967296).toNat
+  | .ashr a b => canonInt 32 true (a.eval σ) / 2 ^ (b.eval σ % 4294967296).toNat
+
+/-! The shifts at the values the clean-room rows and local Icarus Verilog 12.0 give (`localparam integer` of the
+expression, printed with `%0d`): `(1 << 33) >> 32` is 0, `(1 << 31) >>> 1` is -1073741824, `(1 << (7 + 24)) >> 30` is 2
+and `(1 << (8 + 24)) >> 30` is 0. -/
+#guard CE.eval (fun _ => 0) (.shr (.shl (.lit 1) (.lit 33)) (.lit 32)) = 0
+#guard CE.eval (fun _ => 0) (.ashr (.shl (.lit 1) (.lit 31)) (.lit 1)) = -1073741824
+#guard CE.eval (fun _ => 7) (.shr (.shl (.lit 1) (.add (.ref "N") (.lit 24))) (.lit 30)) = 2
+#guard CE.eval (fun _ => 8) (.shr (.shl (.lit 1) (.add (.ref "N") (.lit 24))) (.lit 30)) = 0
+/-! The arithmetic shift of a negative value rounds down, an amount of 32 or more leaves the sign, and `>>` shifts the
+pattern with zeros (Icarus: `-8 >>> 1` is -4, `-8 >>> 40` is -1, `-8 >> 1` is 2147483644): -/
+#guard CE.eval (fun _ => 0) (.ashr (.sub (.lit 0) (.lit 8)) (.lit 1)) = -4
+#guard CE.eval (fun _ => 0) (.ashr (.sub (.lit 0) (.lit 8)) (.lit 40)) = -1
+#guard CE.eval (fun _ => 0) (.shr (.sub (.lit 0) (.lit 8)) (.lit 1)) = 2147483644
 
 /-- `$clog2 n ≤ n`: what the generate-fuel obligation (`auto_k`) of a loop bounded by a `$clog2` localparam needs. -/
 theorem clog2_le (n : Nat) : LeanModels.Sv.clog2 n ≤ n := by
@@ -2208,7 +2243,7 @@ def CE.isLit : CE → Bool
 /-- A `$clog2` occurs in the definition (for the refusal message of a 2-state `int` localparam). -/
 def CE.hasClog2 : CE → Bool
   | .clog2 _ | .clog2S _ => true
-  | .add a b | .sub a b | .mul a b => a.hasClog2 || b.hasClog2
+  | .add a b | .sub a b | .mul a b | .shl a b | .shr a b | .ashr a b => a.hasClog2 || b.hasClog2
   | .divK a _ | .modK a _ => a.hasClog2
   | _ => false
 
@@ -2231,8 +2266,12 @@ def ceBin (nm : String) : SymBinOp → CE → CE → Except String CE
       else .error s!"localparam `{nm}`: `%` by the literal {k} is outside the v1 fragment (a positive literal divisor is required)"
   | .mod, _, _ =>
       .error s!"localparam `{nm}`: `%` by a non-literal is outside the v1 fragment (a localparam may take a remainder by an integer literal)"
+  -- the shifts of an `int` (IEEE 1800-2023 §11.4.10): `<<<` is `<<`; `>>>` of a signed operand is arithmetic
+  | .shl, a, b | .ashl, a, b => .ok (.shl a b)
+  | .shr, a, b => .ok (.shr a b)
+  | .ashr, a, b => .ok (.ashr a b)
   | op, _, _ =>
-      .error s!"localparam `{nm}`: operator `{op.sym}` is outside the v1 fragment (a localparam may use + - *, / % by an integer literal, and `$clog2`)"
+      .error s!"localparam `{nm}`: operator `{op.sym}` is outside the v1 fragment (a localparam may use + - *, / % by an integer literal, the shifts << <<< >> >>>, and `$clog2`)"
 
 /-- Recognize a localparam's initializer, in the scope of the names bound before it. -/
 def ceOf? (nm : String) (scope : List String) : PExpr → Except String CE
@@ -2266,9 +2305,9 @@ def ceOf? (nm : String) (scope : List String) : PExpr → Except String CE
       | .error e => .error e
       | .ok c => .ok (.clog2 c)
   | .sysCall .. =>
-      .error s!"localparam `{nm}`: a system call other than `$clog2` is outside the v1 fragment (a localparam may use + - *, / % by an integer literal, and `$clog2`)"
+      .error s!"localparam `{nm}`: a system call other than `$clog2` is outside the v1 fragment (a localparam may use + - *, / % by an integer literal, the shifts << <<< >> >>>, and `$clog2`)"
   | _ =>
-      .error s!"localparam `{nm}`: the initializer is outside the v1 fragment (a localparam may use integer literals, parameters, earlier localparams, + - *, / % by an integer literal, and `$clog2`)"
+      .error s!"localparam `{nm}`: the initializer is outside the v1 fragment (a localparam may use integer literals, parameters, earlier localparams, + - *, / % by an integer literal, the shifts << <<< >> >>>, and `$clog2`)"
 
 /-- The localparam's declared type: `int`/`integer` (packed `[31:0]`, signed or default) or none — the
 INT class, which `bindLocal` binds in `IEnv.vals`, where the parameters are. -/

@@ -1,5 +1,6 @@
-// NEGATIVE FIXTURE (a shift): a correct ripple adder, plus a localparam that the sv_comb tactics
-// refuse with a specific message (see ../comb_neg.lean). The localparam is unused on purpose.
+// A ripple adder with a SHIFT in an unused localparam (`S = N << 1`, IEEE 1800-2023 §11.4.10). It used to be the negative
+// fixture `lp_add/neg/lp_shift.sv` ("operator `<<` is outside the v1 fragment"); the localparam reading now has the
+// shifts of an `int`, so the design is read as written.
 module lp_shift #(parameter int N = 8) (
   input  logic [N-1:0] a, b,
   input  logic         cin,

@@ -39,6 +39,10 @@ def CE.showP : Nat → CE → String
   | p, .divK a k => let t := s!"{a.showP 1} / {k}"; if p ≥ 2 then s!"({t})" else t
   | p, .modK a k => let t := s!"{a.showP 1} % {k}"; if p ≥ 2 then s!"({t})" else t
   | _, .clog2 a | _, .clog2S a => s!"$clog2({a.showP 0})"
+  -- a shift binds less tightly than `+` and `-` (IEEE 1800-2023 Table 11-2): its operands are parenthesized unless atomic
+  | p, .shl a b => let t := s!"{a.showP 1} << {b.showP 1}"; if p ≥ 1 then s!"({t})" else t
+  | p, .shr a b => let t := s!"{a.showP 1} >> {b.showP 1}"; if p ≥ 1 then s!"({t})" else t
+  | p, .ashr a b => let t := s!"{a.showP 1} >>> {b.showP 1}"; if p ≥ 1 then s!"({t})" else t
 
 def CE.show (c : CE) : String := c.showP 0
 

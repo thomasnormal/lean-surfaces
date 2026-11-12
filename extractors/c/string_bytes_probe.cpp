@@ -39,9 +39,11 @@ public:
     llvm::json::Array bytes;
     for (unsigned char byte : literal->getBytes())
       bytes.push_back(static_cast<int64_t>(byte));
-    const auto location = literal->getBeginLoc();
+    const auto location = sources->getExpansionLoc(literal->getBeginLoc());
+    if (!sources->isWrittenInMainFile(location)) return true;
+    const auto end_location = sources->getExpansionLoc(literal->getEndLoc());
     const auto end = clang::Lexer::getLocForEndOfToken(
-        literal->getEndLoc(), 0, *sources, clang::LangOptions());
+        end_location, 0, *sources, clang::LangOptions());
     const auto begin_offset = sources->getFileOffset(location);
     const auto end_offset = end.isValid() ? sources->getFileOffset(end) : begin_offset;
     llvm::json::Object record{

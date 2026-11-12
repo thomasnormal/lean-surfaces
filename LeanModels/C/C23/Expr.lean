@@ -999,18 +999,28 @@ def evalExpr (ctx : Ctx) : Expr → EvalM CVal
       let p ← evalLValue ctx l
       let old ← loadAt p (ctx.layout.normalizeTy l.ty) (ctx.layout.size (ctx.layout.normalizeTy l.ty))
       let rv ← evalExpr ctx r
-      let lhsT ← intTyOf (ctx.layout.normalizeTy computeLHSType)
-      let resultT ← intTyOf (ctx.layout.normalizeTy computeResultType)
-      let (_, oldN) ← asInt old
-      let (_, rvN) ← asInt rv
-      let old' := convert lhsT oldN
-      let rv' := convert resultT rvN
-      let nv ← evalArith ctx (compoundBase op) old' rv' computeResultType
-      let storageT ← intTyOf (ctx.layout.normalizeTy l.ty)
-      let (_, nvN) ← asInt nv
-      let stored := convert storageT nvN
-      storeAt p (ctx.layout.normalizeTy l.ty) stored
-      pure stored
+      match old, rv with
+      | .ptr _, .int _ _ => do
+          -- §6.5.17.3: pointer compound assignment uses the same
+          -- pointer-plus/minus-integer rule as the corresponding binary
+          -- operator, with the lvalue evaluated once.  `evalArith` already
+          -- performs the provenance, bound, and element-size checks.
+          let nv ← evalArith ctx (compoundBase op) old rv computeResultType
+          storeAt p (ctx.layout.normalizeTy l.ty) nv
+          pure nv
+      | _, _ => do
+          let lhsT ← intTyOf (ctx.layout.normalizeTy computeLHSType)
+          let resultT ← intTyOf (ctx.layout.normalizeTy computeResultType)
+          let (_, oldN) ← asInt old
+          let (_, rvN) ← asInt rv
+          let old' := convert lhsT oldN
+          let rv' := convert resultT rvN
+          let nv ← evalArith ctx (compoundBase op) old' rv' computeResultType
+          let storageT ← intTyOf (ctx.layout.normalizeTy l.ty)
+          let (_, nvN) ← asInt nv
+          let stored := convert storageT nvN
+          storeAt p (ctx.layout.normalizeTy l.ty) stored
+          pure stored
 
   -- ===== lvalues reaching value position without a conversion =====
   -- Clang wraps scalar reads in `LValueToRValue`, so these are the

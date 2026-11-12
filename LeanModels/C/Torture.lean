@@ -286,6 +286,31 @@ def recordsOf (envl : Envelope) : List (String × List (String × CType)) :=
     | _ => none
   records ++ anonymous
 
+/-- Frontend layout observations keyed by Clang's declaration identity.  This
+is intentionally separate from `recordsOf`: the latter is the legacy
+spelling-based layout fallback, while this table is the only sound key for a
+future aggregate semantics. -/
+def observedRecordLayouts (envl : Envelope) :
+    List (DeclarationId × RecordLayout) :=
+  let ds := allDecls envl
+  ds.filterMap fun d => match d with
+    | .record (some id) _ _ (some layout) _ => some (id, layout)
+    | _ => none
+
+def observedRecordLayout? (envl : Envelope) (id : DeclarationId) :
+    Option RecordLayout :=
+  (observedRecordLayouts envl).find? (fun entry => entry.1 == id) |>.map (·.2)
+
+def recordLayoutWellFormed (layout : RecordLayout) : Bool :=
+  (layout.tagKind == "struct" || layout.tagKind == "union") &&
+  layout.tokenLength > 0 &&
+  layout.fields.all (fun field =>
+    field.offsetBits % 8 == 0 || field.bitfield)
+
+#guard recordLayoutWellFormed {
+  offset := 0, tokenLength := 1, name := "S", tagKind := "struct",
+  sizeBytes := 1, alignmentBytes := 1, fields := [] }
+
 /-- `struct s` / `union u` → the tag. -/
 def recordTag (t : CType) : Option String :=
   if t.startsWith "struct " then some (t.drop 7).toString

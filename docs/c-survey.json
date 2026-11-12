@@ -12,8 +12,8 @@
   "gcc.c-torture/execute": {
    "not-ingested": 19,
    "not-parsed": 321,
-   "passed": 589,
-   "refused-libc": 80,
+   "passed": 592,
+   "refused-libc": 77,
    "refused-ub": 33,
    "refused-unsupported": 830,
    "timeout": 46
@@ -31,8 +31,8 @@
  "counts": {
   "not-ingested": 25,
   "not-parsed": 350,
-  "passed": 700,
-  "refused-libc": 89,
+  "passed": 703,
+  "refused-libc": 86,
   "refused-ub": 36,
   "refused-unsupported": 966,
   "timeout": 48
@@ -1460,16 +1460,6 @@
    "present": 3,
    "sole": 3,
    "wall": "libc-call: __builtin_sprintf"
-  },
-  {
-   "files": [
-    "921006-1.c",
-    "930725-1.c",
-    "pr60062.c"
-   ],
-   "present": 3,
-   "sole": 3,
-   "wall": "libc-call: __builtin_strcmp"
   },
   {
    "files": [
@@ -4270,8 +4260,8 @@
   }
  ],
  "manifest_hash": "1de1a60c299d5bb51dae7ca001b0a008010cad0b25670cde2090c08bfc1a84ce",
- "measured_at_utc": "2026-11-12T09:18:40Z",
- "measured_commit": "d33c23c40",
+ "measured_at_utc": "2026-11-12T09:33:04Z",
+ "measured_commit": "dc79fb15f",
  "pin": null,
  "rows": [
   {
@@ -12878,8 +12868,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "__builtin_strcmp",
-   "dynamic_wall": "libc-call: __builtin_strcmp",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "921006-1.c",
    "sha256": "21d2c53547fd5d18d2019b248118063b6a5b16112fbe5a258ff5e0dd42d5849f",
@@ -12888,7 +12878,7 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -13489,8 +13479,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "__builtin_strcmp",
-   "dynamic_wall": "libc-call: __builtin_strcmp",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "930725-1.c",
    "sha256": "2921be94d182e4af56d4452f63c551624e91c53e3bdf5ee8c9326f2e4217e012",
@@ -13499,7 +13489,7 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -25837,8 +25827,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "__builtin_strcmp",
-   "dynamic_wall": "libc-call: __builtin_strcmp",
+   "detail": "",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "pr60062.c",
    "sha256": "76562729f3ce8b46ec7c4028fa6ce382b197f683272c71a1bb68cd3028e86409",
@@ -25847,7 +25837,7 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",

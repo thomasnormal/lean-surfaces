@@ -2,10 +2,10 @@
 
 Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manifest.
 
-- verdicts: 700/2214 MATCH (passed 700, failed 0, oracle 0)
+- verdicts: 703/2214 MATCH (passed 703, failed 0, oracle 0)
 - manifest SHA-256: `1de1a60c299d5bb51dae7ca001b0a008010cad0b25670cde2090c08bfc1a84ce`
-- measured commit: `d33c23c40`
-- measured at: `2026-11-12T09:18:40Z`
+- measured commit: `dc79fb15f`
+- measured at: `2026-11-12T09:33:04Z`
 
 ## Verdict counts
 
@@ -13,8 +13,8 @@ Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manife
 | --- | ---: |
 | `not-ingested` | 25 |
 | `not-parsed` | 350 |
-| `passed` | 700 |
-| `refused-libc` | 89 |
+| `passed` | 703 |
+| `refused-libc` | 86 |
 | `refused-ub` | 36 |
 | `refused-unsupported` | 966 |
 | `timeout` | 48 |
@@ -32,8 +32,8 @@ Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manife
 | `c-testsuite/single-exec` | `timeout` | 2 |
 | `gcc.c-torture/execute` | `not-ingested` | 19 |
 | `gcc.c-torture/execute` | `not-parsed` | 321 |
-| `gcc.c-torture/execute` | `passed` | 589 |
-| `gcc.c-torture/execute` | `refused-libc` | 80 |
+| `gcc.c-torture/execute` | `passed` | 592 |
+| `gcc.c-torture/execute` | `refused-libc` | 77 |
 | `gcc.c-torture/execute` | `refused-ub` | 33 |
 | `gcc.c-torture/execute` | `refused-unsupported` | 830 |
 | `gcc.c-torture/execute` | `timeout` | 46 |
@@ -135,7 +135,6 @@ The run's first refusal, normalized by construct; `sole` counts rows whose first
 | `libc-call: __builtin_abort` | 3 | 3 | gcc/testsuite/gcc.dg/c23-nullptr-5.c, pr77767.c, pr97325.c |
 | `libc-call: __builtin_expect` | 3 | 3 | 00214.c, 20020418-1.c, pr115277.c |
 | `libc-call: __builtin_sprintf` | 3 | 3 | 20021120-3.c, pr78586.c, pr79327.c |
-| `libc-call: __builtin_strcmp` | 3 | 3 | 921006-1.c, 930725-1.c, pr60062.c |
 | `libc-call: exit (an argument is not a literal 0 — which exit was reached is unknown)` | 3 | 3 | 970214-1.c, 970214-2.c, 970217-1.c |
 | `libc-call: printf` | 3 | 3 | 00176.c, 00194.c, printf-1.c |
 | `libc-call: strlen` | 3 | 3 | 00025.c, 20050218-1.c, strlen-5.c |

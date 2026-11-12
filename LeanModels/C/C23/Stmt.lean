@@ -746,6 +746,28 @@ def callFn : Nat → Program → LeanModels.C.FunctionDefn → List CVal → Exe
                 liftEval (writeMem (fun m => m.storeBytes dp bs))
                 pure (.ptr dp)
           | _ => refuseUnsupported "memcpy: wrong argument count"
+        let runStrcmp : List CVal → ExecM CVal := fun vs =>
+          match vs with
+          | [left, right] => do
+              let lp ← asPtr left
+              let rp ← asPtr right
+              let m ← get
+              let (_, lo, loff) ← liftEval (m.resolve lp 0)
+              let (_, ro, roff) ← liftEval (m.resolve rp 0)
+              let rec cmpStr : List CByte → List CByte → Option Int
+                | [], _ | _, [] => none
+                | .conc x :: xs, .conc y :: ys =>
+                    if x == 0 && y == 0 then some 0
+                    else if x == 0 then some (-1)
+                    else if y == 0 then some 1
+                    else if x < y then some (-1)
+                    else if x > y then some 1
+                    else cmpStr xs ys
+                | _, _ => none
+              match cmpStr (lo.bytes.drop loff) (ro.bytes.drop roff) with
+              | some v => pure (.int IntTy.int_ v)
+              | none => refuseUnsupported "strcmp: non-concrete or unterminated string"
+          | _ => refuseUnsupported "strcmp: wrong argument count"
         let runMemcmp : List CVal → ExecM CVal := fun vs =>
           match vs with
           | [left, right, count] => do
@@ -839,12 +861,15 @@ def callFn : Nat → Program → LeanModels.C.FunctionDefn → List CVal → Exe
             -- the refusal (`libc id24`) and the oracle arm never sees it.
             match calleeName callee with
             | some nm =>
-              if nm == "abort" || nm == "exit" then
+              if nm == "__builtin_strcmp" then
+                runStrcmp vs
+              else if nm == "abort" || nm == "exit" then
                 throw (.libc nm)
               else match prog.findId? declaration with
                 | none =>
                     if nm == "memset" || nm == "__builtin_memset" then runMemset vs
                     else if nm == "memcpy" || nm == "__builtin_memcpy" then runMemcpy vs
+                    else if nm == "__builtin_strcmp" then runStrcmp vs
                     else if nm == "__builtin_memcmp" then runMemcmp vs
                     else if nm == "__builtin_strlen" then runStrlen vs
                     else if nm == "__builtin_alloca" then runAlloca vs
@@ -865,8 +890,10 @@ def callFn : Nat → Program → LeanModels.C.FunctionDefn → List CVal → Exe
             -- One of the 27 externals: cause `libc`, which retires by
             -- widening the slice and never pools with the other two.
             | none =>
-              if nm == "memset" || nm == "__builtin_memset" then runMemset vs
+              if nm == "__builtin_strcmp" then runStrcmp vs
+              else if nm == "memset" || nm == "__builtin_memset" then runMemset vs
               else if nm == "memcpy" || nm == "__builtin_memcpy" then runMemcpy vs
+              else if nm == "__builtin_strcmp" then runStrcmp vs
               else if nm == "__builtin_memcmp" then runMemcmp vs
               else if nm == "__builtin_strlen" then runStrlen vs
               else if nm == "__builtin_alloca" then runAlloca vs

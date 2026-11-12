@@ -1,0 +1,426 @@
+{
+  "schema_version": "sv-0.2",
+  "language": "systemverilog",
+  "frontend": {
+    "name": "pyslang",
+    "family": "pyslang-11"
+  },
+  "mode": "symbolic",
+  "top": "default_point_array_e",
+  "source_files": [
+    {
+      "path": "Examples/system-verilog/sem2/default_point_array_e/default_point_array_e.sv",
+      "sha256": "f211e9b9a67401c50efc6757a27e38dd730f030aaac0b8a8bab64a58ce8ebd62"
+    }
+  ],
+  "packages": [],
+  "design": {
+    "kind": "Design",
+    "modules": [
+      {
+        "kind": "Module",
+        "span": {
+          "line": 1,
+          "col": 1,
+          "end_line": 9,
+          "end_col": 10
+        },
+        "name": "default_point_array_e",
+        "imports": [],
+        "params": [],
+        "types": [],
+        "ports": [
+          {
+            "kind": "Port",
+            "span": {
+              "line": 1,
+              "col": 42,
+              "end_line": 1,
+              "end_col": 45
+            },
+            "name": "clk",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 1,
+              "col": 65,
+              "end_line": 1,
+              "end_col": 66
+            },
+            "name": "d",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 1,
+                      "col": 60,
+                      "end_line": 1,
+                      "end_col": 61
+                    },
+                    "value": 7,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 1,
+                      "col": 62,
+                      "end_line": 1,
+                      "end_col": 63
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 8
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 1,
+              "col": 87,
+              "end_line": 1,
+              "end_col": 88
+            },
+            "name": "q",
+            "dir": "out",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 1,
+                      "col": 82,
+                      "end_line": 1,
+                      "end_col": 83
+                    },
+                    "value": 7,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 1,
+                      "col": 84,
+                      "end_line": 1,
+                      "end_col": 85
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 8
+            }
+          }
+        ],
+        "decls": [
+          {
+            "kind": "Var",
+            "span": {
+              "line": 2,
+              "col": 15,
+              "end_line": 2,
+              "end_col": 25
+            },
+            "name": "pipe[0]",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 2,
+                      "col": 10,
+                      "end_line": 2,
+                      "end_col": 11
+                    },
+                    "value": 7,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 2,
+                      "col": 12,
+                      "end_line": 2,
+                      "end_col": 13
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 8
+            },
+            "two_state": false,
+            "flat_base": "pipe",
+            "flat_index": 0,
+            "init": null
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 2,
+              "col": 15,
+              "end_line": 2,
+              "end_col": 25
+            },
+            "name": "pipe[1]",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 2,
+                      "col": 10,
+                      "end_line": 2,
+                      "end_col": 11
+                    },
+                    "value": 7,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 2,
+                      "col": 12,
+                      "end_line": 2,
+                      "end_col": 13
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 8
+            },
+            "two_state": false,
+            "flat_base": "pipe",
+            "flat_index": 1,
+            "init": null
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 2,
+              "col": 15,
+              "end_line": 2,
+              "end_col": 25
+            },
+            "name": "pipe[2]",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 2,
+                      "col": 10,
+                      "end_line": 2,
+                      "end_col": 11
+                    },
+                    "value": 7,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 2,
+                      "col": 12,
+                      "end_line": 2,
+                      "end_col": 13
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 8
+            },
+            "two_state": false,
+            "flat_base": "pipe",
+            "flat_index": 2,
+            "init": null
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 2,
+              "col": 15,
+              "end_line": 2,
+              "end_col": 25
+            },
+            "name": "pipe[3]",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 2,
+                      "col": 10,
+                      "end_line": 2,
+                      "end_col": 11
+                    },
+                    "value": 7,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 2,
+                      "col": 12,
+                      "end_line": 2,
+                      "end_col": 13
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 8
+            },
+            "two_state": false,
+            "flat_base": "pipe",
+            "flat_index": 3,
+            "init": null
+          }
+        ],
+        "processes": [
+          {
+            "kind": "AlwaysPosedge",
+            "span": {
+              "line": 4,
+              "col": 3,
+              "end_line": 7,
+              "end_col": 6
+            },
+            "style": "always_ff",
+            "clock": "clk",
+            "body": {
+              "kind": "Block",
+              "span": {
+                "line": 4,
+                "col": 28,
+                "end_line": 7,
+                "end_col": 6
+              },
+              "stmts": [
+                {
+                  "kind": "NonblockingAssign",
+                  "span": {
+                    "line": 5,
+                    "col": 5,
+                    "end_line": 5,
+                    "end_col": 18
+                  },
+                  "target": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 5,
+                      "col": 5,
+                      "end_line": 5,
+                      "end_col": 12
+                    },
+                    "width": 8,
+                    "name": "pipe[0]"
+                  },
+                  "value": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 5,
+                      "col": 16,
+                      "end_line": 5,
+                      "end_col": 17
+                    },
+                    "width": 8,
+                    "name": "d"
+                  }
+                },
+                {
+                  "kind": "Unsupported",
+                  "span": {
+                    "line": 6,
+                    "col": 35,
+                    "end_line": 6,
+                    "end_col": 56
+                  },
+                  "sv_kind": "AssignmentExpression:target",
+                  "text": "pipe[i] <= pipe[i-1];"
+                }
+              ]
+            }
+          },
+          {
+            "kind": "Assign",
+            "span": {
+              "line": 8,
+              "col": 10,
+              "end_line": 8,
+              "end_col": 21
+            },
+            "target": {
+              "kind": "Ident",
+              "span": {
+                "line": 8,
+                "col": 10,
+                "end_line": 8,
+                "end_col": 11
+              },
+              "width": 8,
+              "name": "q"
+            },
+            "value": {
+              "kind": "Ident",
+              "span": {
+                "line": 8,
+                "col": 14,
+                "end_line": 8,
+                "end_col": 21
+              },
+              "width": 8,
+              "name": "pipe[3]"
+            }
+          }
+        ],
+        "generates": [],
+        "others": [],
+        "cell_refs": [
+          {
+            "name": "pipe[0]",
+            "base": "pipe",
+            "index": 0
+          },
+          {
+            "name": "pipe[3]",
+            "base": "pipe",
+            "index": 3
+          }
+        ]
+      }
+    ],
+    "others": []
+  },
+  "lean_blocks": []
+}

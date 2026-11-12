@@ -73171,6 +73171,16 @@
     "stimulus": [{"i": "00"}, {"i": "01"}, {"i": "10"}, {"i": "11"}, {"i": "x0"}],
     "refusal": "UnpackedDecl:memory",
     "measured": "2026-11-12: Icarus Verilog 13.0 and Xcelium 24.03-s004 both read xxxxxxxx for i=00,01,10,11,x0; the source-shaped ArraySel is retained, while ordinary E refuses the unpacked memory declaration rather than flattening it."
+  },
+  {
+    "name": "default_point_array_e",
+    "example": "sem2/default_point_array_e",
+    "top": "default_point_array_e",
+    "clock": "clk",
+    "signals": ["d", "q"],
+    "stimulus": [{"d": "00000000"}, {"d": "10100101"}, {"d": "01011010"}, {"d": "11110000"}],
+    "refusal": "Clock:edge",
+    "measured": "2026-11-12: Icarus Verilog 13.0 and Xcelium 24.03-s004 execute the four-cycle fixed-array shift; E names the first wall as Clock:edge before the looped memory update, with no clocked semantics claimed."
   }
   ]
 }

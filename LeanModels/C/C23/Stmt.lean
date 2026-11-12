@@ -870,6 +870,10 @@ def callFn : Nat → Program → LeanModels.C.FunctionDefn → List CVal → Exe
           match vs with
           | [value, _] => pure value
           | _ => refuseUnsupported "__builtin_expect: wrong argument count"
+        let runBuiltinPrefetch : List CVal → ExecM CVal := fun vs =>
+          match vs with
+          | [_] | [_, _] | [_, _, _] => pure .undef
+          | _ => refuseUnsupported "__builtin_prefetch: wrong argument count"
         let runStrcmp : List CVal → ExecM CVal := fun vs =>
           match vs with
           | [left, right] => do
@@ -1070,6 +1074,8 @@ def callFn : Nat → Program → LeanModels.C.FunctionDefn → List CVal → Exe
                 runSyncAdd8 vs
               else if nm == "__builtin_expect" then
                 runBuiltinExpect vs
+              else if nm == "__builtin_prefetch" then
+                runBuiltinPrefetch vs
               else if nm == "printf" || nm == "__builtin_printf" then
                 runPrintf vs
               else if nm == "abort" || nm == "exit" then
@@ -1114,6 +1120,7 @@ def callFn : Nat → Program → LeanModels.C.FunctionDefn → List CVal → Exe
               else if nm == "__builtin_abs" || nm == "abs" then runAbs vs
               else if nm == "__sync_add_and_fetch_8" then runSyncAdd8 vs
               else if nm == "__builtin_expect" then runBuiltinExpect vs
+              else if nm == "__builtin_prefetch" then runBuiltinPrefetch vs
               else if nm == "__builtin_alloca" then runAlloca vs
               else if nm == "__builtin_ffs" then runFfs vs
               else if nm == "__builtin_mul_overflow" then runArithOverflow "mul" vs

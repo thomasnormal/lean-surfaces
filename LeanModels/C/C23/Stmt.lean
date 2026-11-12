@@ -734,6 +734,18 @@ def callFn : Nat → Program → LeanModels.C.FunctionDefn → List CVal → Exe
                 liftEval (writeMem (fun m => m.storeBytes q bs))
                 pure (.ptr q)
           | _ => refuseUnsupported "memset: wrong argument count"
+        let runMemcpy : List CVal → ExecM CVal := fun vs =>
+          match vs with
+          | [dst, src, count] => do
+              let dp ← asPtr dst
+              let sp ← asPtr src
+              let (_, n) ← asInt count
+              if n < 0 then refuseUnsupported "memcpy: negative size"
+              else do
+                let bs ← liftEval (readMem (fun m => m.loadBytes sp n.toNat))
+                liftEval (writeMem (fun m => m.storeBytes dp bs))
+                pure (.ptr dp)
+          | _ => refuseUnsupported "memcpy: wrong argument count"
         -- The callee's own call handler: one fuel less, so the recursion
         -- terminates on the fuel and on nothing else.
         let handler : CallHandler := fun callee vs =>
@@ -750,6 +762,7 @@ def callFn : Nat → Program → LeanModels.C.FunctionDefn → List CVal → Exe
               else match prog.findId? declaration with
                 | none =>
                     if nm == "memset" || nm == "__builtin_memset" then runMemset vs
+                    else if nm == "memcpy" || nm == "__builtin_memcpy" then runMemcpy vs
                     else throw (.libc nm)
                 | some g => callFn fuel prog g vs
             | none => match prog.findId? declaration with
@@ -765,6 +778,7 @@ def callFn : Nat → Program → LeanModels.C.FunctionDefn → List CVal → Exe
             -- widening the slice and never pools with the other two.
             | none =>
               if nm == "memset" || nm == "__builtin_memset" then runMemset vs
+              else if nm == "memcpy" || nm == "__builtin_memcpy" then runMemcpy vs
               else throw (.libc nm)
             -- A NESTED call to a defined function. `evalArgs` has already
             -- evaluated `vs` in the CALLER's scope (§6.5.3.3p4), so this is

@@ -12,10 +12,10 @@
   "gcc.c-torture/execute": {
    "not-ingested": 19,
    "not-parsed": 321,
-   "passed": 565,
-   "refused-libc": 110,
-   "refused-ub": 32,
-   "refused-unsupported": 826,
+   "passed": 572,
+   "refused-libc": 101,
+   "refused-ub": 33,
+   "refused-unsupported": 827,
    "timeout": 45
   },
   "gcc.c23-run": {
@@ -31,10 +31,10 @@
  "counts": {
   "not-ingested": 25,
   "not-parsed": 350,
-  "passed": 676,
-  "refused-libc": 119,
-  "refused-ub": 35,
-  "refused-unsupported": 962,
+  "passed": 683,
+  "refused-libc": 110,
+  "refused-ub": 36,
+  "refused-unsupported": 963,
   "timeout": 47
  },
  "dynamic_wall_ranking": [
@@ -810,6 +810,7 @@
     "20040409-1w.c",
     "20040409-2w.c",
     "20040409-3w.c",
+    "20050826-1.c",
     "20060110-1.c",
     "20060110-2.c",
     "20080222-1.c",
@@ -836,8 +837,8 @@
     "pr99079.c",
     "ptr-arith-1.c"
    ],
-   "present": 35,
-   "sole": 35,
+   "present": 36,
+   "sole": 36,
    "wall": "undefined-behavior"
   },
   {
@@ -1145,22 +1146,6 @@
   },
   {
    "files": [
-    "20000703-1.c",
-    "20030408-1.c",
-    "20060930-2.c",
-    "20141107-1.c",
-    "pr40668.c",
-    "pr53688.c",
-    "pr59229.c",
-    "pr63843.c",
-    "pr98853-1.c"
-   ],
-   "present": 9,
-   "sole": 9,
-   "wall": "libc-call: __builtin_memcpy"
-  },
-  {
-   "files": [
     "pr105613.c",
     "pr110817-1.c",
     "pr110817-2.c",
@@ -1275,6 +1260,19 @@
   },
   {
    "files": [
+    "20000703-1.c",
+    "20000917-1.c",
+    "20020206-1.c",
+    "20020320-1.c",
+    "930406-1.c",
+    "950906-1.c"
+   ],
+   "present": 6,
+   "sole": 6,
+   "wall": "unsupported:StmtExpr"
+  },
+  {
+   "files": [
     "20020321-1.c",
     "920710-1.c",
     "930622-2.c",
@@ -1321,18 +1319,6 @@
    "present": 5,
    "sole": 5,
    "wall": "libc-call: strcpy"
-  },
-  {
-   "files": [
-    "20000917-1.c",
-    "20020206-1.c",
-    "20020320-1.c",
-    "930406-1.c",
-    "950906-1.c"
-   ],
-   "present": 5,
-   "sole": 5,
-   "wall": "unsupported:StmtExpr"
   },
   {
    "files": [
@@ -1500,6 +1486,16 @@
   },
   {
    "files": [
+    "pr57130.c",
+    "pr59229.c",
+    "pr77718.c"
+   ],
+   "present": 3,
+   "sole": 3,
+   "wall": "libc-call: __builtin_memcmp"
+  },
+  {
+   "files": [
     "20021120-3.c",
     "pr78586.c",
     "pr79327.c"
@@ -1527,16 +1523,6 @@
    "present": 3,
    "sole": 3,
    "wall": "libc-call: exit (an argument is not a literal 0 \u2014 which exit was reached is unknown)"
-  },
-  {
-   "files": [
-    "20011024-1.c",
-    "20050826-1.c",
-    "string-opt-18.c"
-   ],
-   "present": 3,
-   "sole": 3,
-   "wall": "libc-call: memcpy"
   },
   {
    "files": [
@@ -1679,15 +1665,6 @@
   },
   {
    "files": [
-    "pr57130.c",
-    "pr77718.c"
-   ],
-   "present": 2,
-   "sole": 2,
-   "wall": "libc-call: __builtin_memcmp"
-  },
-  {
-   "files": [
     "20021011-1.c",
     "921117-1.c"
    ],
@@ -1739,6 +1716,15 @@
    "present": 2,
    "sole": 2,
    "wall": "libc-call: open"
+  },
+  {
+   "files": [
+    "20011024-1.c",
+    "20030715-1.c"
+   ],
+   "present": 2,
+   "sole": 2,
+   "wall": "libc-call: strcmp"
   },
   {
    "files": [
@@ -2257,6 +2243,14 @@
   },
   {
    "files": [
+    "string-opt-18.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "libc-call: mempcpy"
+  },
+  {
+   "files": [
     "multi-ix.c"
    ],
    "present": 1,
@@ -2278,14 +2272,6 @@
    "present": 1,
    "sole": 1,
    "wall": "libc-call: strchr"
-  },
-  {
-   "files": [
-    "20030715-1.c"
-   ],
-   "present": 1,
-   "sole": 1,
-   "wall": "libc-call: strcmp"
   },
   {
    "files": [
@@ -4329,8 +4315,8 @@
   }
  ],
  "manifest_hash": "1de1a60c299d5bb51dae7ca001b0a008010cad0b25670cde2090c08bfc1a84ce",
- "measured_at_utc": "2026-11-12T08:00:00Z",
- "measured_commit": "35b2e85c9",
+ "measured_at_utc": "2026-11-12T08:15:00Z",
+ "measured_commit": "770f348b8",
  "pin": null,
  "rows": [
   {
@@ -7334,8 +7320,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "__builtin_memcpy",
-   "dynamic_wall": "libc-call: __builtin_memcpy",
+   "detail": "out of tier: StmtExpr",
+   "dynamic_wall": "unsupported:StmtExpr",
    "manifest_status": "parsed",
    "name": "20000703-1.c",
    "sha256": "6e03635f6ee494d6150be8b259217d6ce090c847621f883aa79dc55fc796f41c",
@@ -7345,7 +7331,7 @@
     "type-layout",
     "unsupported:StmtExpr"
    ],
-   "verdict": "refused-libc"
+   "verdict": "refused-unsupported"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -8353,8 +8339,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "memcpy",
-   "dynamic_wall": "libc-call: memcpy",
+   "detail": "strcmp",
+   "dynamic_wall": "libc-call: strcmp",
    "manifest_status": "parsed",
    "name": "20011024-1.c",
    "sha256": "318630ae7d1dd6ab618fb7ff8ebfc135c6154cc1e7479fa430e7c8196a6291e7",
@@ -9538,8 +9524,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "__builtin_memcpy",
-   "dynamic_wall": "libc-call: __builtin_memcpy",
+   "detail": "",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "20030408-1.c",
    "sha256": "b730830bfaf0b0c5b6143bbf01fc554c7a6730872c605ea9e007b8d32427454d",
@@ -9547,7 +9533,7 @@
     "libc-call",
     "type-layout"
    ],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -10827,8 +10813,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "memcpy",
-   "dynamic_wall": "libc-call: memcpy",
+   "detail": "LeanModels.C.C23.MemFault.outOfBounds 0 1 6 2048",
+   "dynamic_wall": "undefined-behavior",
    "manifest_status": "parsed",
    "name": "20050826-1.c",
    "sha256": "12d49e96da44d258cf40619706a5605b3638de8421ba1e4e55faf5487cacc23d",
@@ -10837,7 +10823,7 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-libc"
+   "verdict": "refused-ub"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -11058,8 +11044,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "__builtin_memcpy",
-   "dynamic_wall": "libc-call: __builtin_memcpy",
+   "detail": "",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "20060930-2.c",
    "sha256": "b6b8418cefcd8d23907067f377a5168d454375ae3f4618e9df8c9bfcb9349604",
@@ -11067,7 +11053,7 @@
     "libc-call",
     "type-layout"
    ],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -12118,15 +12104,15 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "__builtin_memcpy",
-   "dynamic_wall": "libc-call: __builtin_memcpy",
+   "detail": "",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "20141107-1.c",
    "sha256": "dd5f737716fbcc0aa3b23a2b3c00bc94de39cb17b03582a4e9f016c3a19e1f0d",
    "static_walls": [
     "libc-call"
    ],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -23972,15 +23958,15 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "__builtin_memcpy",
-   "dynamic_wall": "libc-call: __builtin_memcpy",
+   "detail": "",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "pr40668.c",
    "sha256": "e11fffe59899ff934501ad0ccad617f161291a70addcea34f1d4a104665230f7",
    "static_walls": [
     "libc-call"
    ],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -25140,8 +25126,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "__builtin_memcpy",
-   "dynamic_wall": "libc-call: __builtin_memcpy",
+   "detail": "",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "pr53688.c",
    "sha256": "010877ad5b37612d649fdcfde302dbba2e51c30064dd4da2d93f2ba874ae80a1",
@@ -25150,7 +25136,7 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -25783,8 +25769,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "__builtin_memcpy",
-   "dynamic_wall": "libc-call: __builtin_memcpy",
+   "detail": "__builtin_memcmp",
+   "dynamic_wall": "libc-call: __builtin_memcmp",
    "manifest_status": "parsed",
    "name": "pr59229.c",
    "sha256": "baa810f41ea53ccf4d1374734d2f1ec51b9b7dcecebe7483845bf763e4ce953d",
@@ -26114,8 +26100,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "__builtin_memcpy",
-   "dynamic_wall": "libc-call: __builtin_memcpy",
+   "detail": "",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "pr63843.c",
    "sha256": "259f4c6e20d69368e25db2962d6c4158182640b300d857e65723eaec7f5a25b7",
@@ -26123,7 +26109,7 @@
     "libc-call",
     "type-layout"
    ],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -28770,15 +28756,15 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "__builtin_memcpy",
-   "dynamic_wall": "libc-call: __builtin_memcpy",
+   "detail": "",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "pr98853-1.c",
    "sha256": "a43645ed0862aa463206f73f2aa8a73e3c08c159a0b42ae1f6b87e42d28c161c",
    "static_walls": [
     "libc-call"
    ],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -29339,8 +29325,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "memcpy",
-   "dynamic_wall": "libc-call: memcpy",
+   "detail": "mempcpy",
+   "dynamic_wall": "libc-call: mempcpy",
    "manifest_status": "parsed",
    "name": "string-opt-18.c",
    "sha256": "0db5f8750dce95e307a431131f7da821500c48d19821beec17551f780f6bcb5d",

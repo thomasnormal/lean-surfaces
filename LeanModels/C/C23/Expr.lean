@@ -687,7 +687,11 @@ def pointeeOf (ty : CType) : Option CType :=
 §6.3.2.1p2, the lvalue conversion: **1837 sites, the load-bearing
 implicit of the whole corpus.** -/
 def loadAt (p : Ptr) (ty : CType) (size : Option Nat) : EvalM CVal :=
-  if isPtrType ty then do
+  if ty == "float" then
+    readMem (fun m => Mem.loadFloat32 m p)
+  else if ty == "double" then
+    readMem (fun m => Mem.loadFloat64 m p)
+  else if isPtrType ty then do
     let q ← readMem (fun m => Mem.loadPtr m p)
     pure (.ptr q)
   else if isPtrIntType ty then do
@@ -713,8 +717,10 @@ def storeAt (p : Ptr) (ty : CType) (v : CVal) : EvalM Unit :=
   | .int _ n => do
       let t ← intTyOf ty
       writeMem (fun m => Mem.storeInt m p t n)
-  | .float32 _ | .float64 _ =>
-      refuseUnsupported "floating store without a floating layout"
+  | .float32 f => if ty == "float" then writeMem (fun m => Mem.storeFloat32 m p f)
+                 else refuseUnsupported "floating store without a floating layout"
+  | .float64 f => if ty == "double" then writeMem (fun m => Mem.storeFloat64 m p f)
+                 else refuseUnsupported "floating store without a floating layout"
   | .aggregate _ bs => writeMem (fun m => Mem.storeBytes m p bs)
   | .undef => refuseUnsupported "storing an indeterminate value"
 
@@ -1848,15 +1854,26 @@ theorem asInt' (v : CVal) : MemInvariant (asInt v) := by
 theorem loadAt' (p : Ptr) (ty : CType) (size : Option Nat) : MemInvariant (loadAt p ty size) := by
   unfold loadAt
   split
-  · exact bind (readMem' _) fun _ => pure' _
+  · exact readMem' _
   · split
-    · exact bind (readMem' _) fun _ => pure' _
-    · cases h : intTyOf? ty with
-      | some t => simp [h]; exact readMem' _
-      | none =>
-        cases hs : size with
-        | some n => simp [h, hs]; exact bind (readMem' _) fun _ => pure' _
-        | none => simp [h, hs]; exact refuseUnsupported' _
+    · exact readMem' _
+    · split
+      · exact bind (readMem' _) fun _ => pure' _
+      · cases h : intTyOf? ty with
+        | some t =>
+            split
+            · exact bind (readMem' _) fun _ => pure' _
+            · exact readMem' _
+        | none =>
+          cases hs : size with
+          | some n =>
+              split
+              · exact bind (readMem' _) fun _ => pure' _
+              · exact bind (readMem' _) fun _ => pure' _
+          | none =>
+              split
+              · exact bind (readMem' _) fun _ => pure' _
+              · exact refuseUnsupported' _
 
 theorem intBinop' (op : String) (t : IntTy) (a b : Int) :
     MemInvariant (intBinop op t a b) := by

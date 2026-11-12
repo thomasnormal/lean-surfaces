@@ -398,7 +398,7 @@ def sizeAlign (tds : List (CType × CType))
       -- size question is. Without this, a file-scope `volatile short` has no
       -- size and its whole program refuses (20030128-1.c).
       let t := resolve tds 8 (stripQuals 8 t0)
-      match torScalarSize t with
+      match if t == "float" then some 4 else if t == "double" then some 8 else torScalarSize t with
       | some sz => some (sz, sz)
       | none =>
         match arrayOf t with

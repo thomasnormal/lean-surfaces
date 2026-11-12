@@ -426,6 +426,38 @@ def decodeInt (t : IntTy) (bs : List CByte) : Option Int :=
   | none => none
   | some xs => some (t.wrap (natOfBytes xs))
 
+def encodeFloat32 (f : Float32.Model) : List CByte :=
+  (natToBytes 4 (f.toBits.toNat)).map CByte.conc
+
+def encodeFloat64 (f : Float.Model) : List CByte :=
+  (natToBytes 8 f.toBits.toNat).map CByte.conc
+
+def decodeFloat32 (bs : List CByte) : Option Float32.Model :=
+  if bs.any (fun b => match b with | .conc _ => false | _ => true) then none
+  else some (Float32.Model.ofBits (UInt32.ofNat (natOfBytes (bs.map (fun b => match b with | .conc x => x | _ => 0)))))
+
+def decodeFloat64 (bs : List CByte) : Option Float.Model :=
+  if bs.any (fun b => match b with | .conc _ => false | _ => true) then none
+  else some (Float.Model.ofBits (UInt64.ofNat (natOfBytes (bs.map (fun b => match b with | .conc x => x | _ => 0)))))
+
+def loadFloat32 (m : Mem) (p : Ptr) : MRes CVal := do
+  let bs ← m.loadBytes p 4
+  match decodeFloat32 bs with
+  | some f => pure (.float32 f)
+  | none => .error (.memUB (.nonValueRepresentation (Option.getD p.obj 0) p.off.toNat))
+
+def loadFloat64 (m : Mem) (p : Ptr) : MRes CVal := do
+  let bs ← m.loadBytes p 8
+  match decodeFloat64 bs with
+  | some f => pure (.float64 f)
+  | none => .error (.memUB (.nonValueRepresentation (Option.getD p.obj 0) p.off.toNat))
+
+def storeFloat32 (m : Mem) (p : Ptr) (f : Float32.Model) : MRes Mem :=
+  m.storeBytes p (encodeFloat32 f)
+
+def storeFloat64 (m : Mem) (p : Ptr) (f : Float.Model) : MRes Mem :=
+  m.storeBytes p (encodeFloat64 f)
+
 /-! ### The typed accessors -/
 
 /-- Which indeterminate-read fault a duration raises. `J.2(11)` names

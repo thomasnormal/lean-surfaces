@@ -4939,6 +4939,17 @@ def heapStore (h : Heap) (a : Addr) (k v : RVal) : Res Heap :=
     .exn (.typeError "'set' object does not support item assignment")
   | Option.none => .unsupported danglingMsg
 
+/-! A small H2 worker equation used by the vendored heapq proof route.  The
+list receiver is already at address zero in the singleton heap; an integer
+zero index therefore performs exactly one `List.set` and preserves the heap
+shape.  Keeping this lemma at the worker boundary avoids asking a concrete
+whole-program `rfl` to normalize the interpreter's fuel and frame terms. -/
+theorem heapStore_list_zero (xs : Array RVal) (v : RVal) (hxs : xs.size > 0) :
+    heapStore #[.list xs] 0 (.int 0) v =
+      .ok #[.list (xs.toList.set 0 v).toArray] := by
+  simp [heapStore, Heap.get?, Heap.update, normIndexRaising, normIndex,
+    asInt, pySsizeIndex, pySsizeFits, pySsizeMin, pySsizeMax, hxs]
+
 /-- `len(o)` on a heap object: dict entry count / list length; an
 instance has no `__len__` (dunder guard) — the faithful `TypeError`. -/
 def heapLen (h : Heap) (a : Addr) : Res RVal :=

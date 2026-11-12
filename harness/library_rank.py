@@ -96,7 +96,13 @@ def rank(rows):
                          for call in calls)
             if all_match and normal:
                 item["verified_functions"] += 1
-                if row.get("verdict") != "VERIFIED":
+                # A function is the PY-REAL unit.  A module body can be
+                # PARTIAL because another public function hits a wall while
+                # this function's own driven calls all match; that function
+                # is already VERIFIED and must not be priced as a potential
+                # flip.  Only a wholly refused body leaves such calls out of
+                # the published function score.
+                if row.get("verdict") == "REFUSED":
                     item["potential_verified_functions"] += 1
         verdict = row.get("verdict") or "BODY-REFUSED"
         item["verdicts"][verdict] = item["verdicts"].get(verdict, 0) + 1

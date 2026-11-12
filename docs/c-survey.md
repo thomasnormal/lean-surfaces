@@ -2,10 +2,10 @@
 
 Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manifest.
 
-- verdicts: 870/2214 MATCH (passed 870, failed 0, oracle 0)
+- verdicts: 879/2214 MATCH (passed 879, failed 0, oracle 0)
 - manifest SHA-256: `eb2ea162993fd287a86d680d539ca5a9bba4f09b045a6ad663aaf88cdc3f445d`
-- measured commit: `73902a119`
-- measured at: `2026-11-12T18:51:07Z`
+- measured commit: `HEAD`
+- measured at: `2026-11-12T18:58:11Z`
 
 ## Verdict counts
 
@@ -13,11 +13,11 @@ Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manife
 | --- | ---: |
 | `not-parsed` | 294 |
 | `oracle-tests-compiler` | 1 |
-| `passed` | 870 |
+| `passed` | 879 |
 | `refused-libc` | 36 |
-| `refused-ub` | 71 |
-| `refused-unsupported` | 889 |
-| `timeout` | 53 |
+| `refused-ub` | 72 |
+| `refused-unsupported` | 872 |
+| `timeout` | 60 |
 
 ## Counts by corpus
 
@@ -30,11 +30,11 @@ Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manife
 | `c-testsuite/single-exec` | `timeout` | 2 |
 | `gcc.c-torture/execute` | `not-parsed` | 267 |
 | `gcc.c-torture/execute` | `oracle-tests-compiler` | 1 |
-| `gcc.c-torture/execute` | `passed` | 710 |
+| `gcc.c-torture/execute` | `passed` | 719 |
 | `gcc.c-torture/execute` | `refused-libc` | 31 |
-| `gcc.c-torture/execute` | `refused-ub` | 62 |
-| `gcc.c-torture/execute` | `refused-unsupported` | 796 |
-| `gcc.c-torture/execute` | `timeout` | 51 |
+| `gcc.c-torture/execute` | `refused-ub` | 63 |
+| `gcc.c-torture/execute` | `refused-unsupported` | 779 |
+| `gcc.c-torture/execute` | `timeout` | 58 |
 | `gcc.c23-run` | `not-parsed` | 27 |
 | `gcc.c23-run` | `passed` | 2 |
 | `gcc.c23-run` | `refused-libc` | 2 |
@@ -87,12 +87,11 @@ The run's first refusal, normalized by construct; `sole` counts rows whose first
 | --- | ---: | ---: | --- |
 | `frontend` | 294 | 294 | 20000227-1.c, 20000412-3.c, 20000717-3.c, 20000822-1.c, 20001009-2.c |
 | `unsupported:no definition for 'main'` | 102 | 102 | 20040705-1.c, 20040705-2.c, 20040709-3.c, builtins/20010124-1.c, builtins/abs-1.c |
-| `undefined-behavior` | 71 | 71 | 00032.c, 00115.c, 00141.c, 00144.c, 00200.c |
-| `timeout` | 53 | 53 | 00041.c, 00128.c, 20000412-2.c, 20020108-1.c, 20030916-1.c |
+| `undefined-behavior` | 72 | 72 | 00032.c, 00115.c, 00141.c, 00144.c, 00200.c |
+| `timeout` | 60 | 60 | 00041.c, 00128.c, 20000412-2.c, 20020108-1.c, 20030916-1.c |
 | `unsupported:extern object 'inside_main' has no definition in the translation unit` | 40 | 40 | builtins/20010124-1-lib.c, builtins/complex-1-lib.c, builtins/fputs-lib.c, builtins/lib/abs.c, builtins/lib/bfill.c |
 | `unsupported:more arguments than parameters` | 37 | 37 | 20000519-1.c, 20071213-1.c, 920726-1.c, 931004-10.c, 931004-12.c |
-| `unsequenced-effects` | 28 | 28 | 00121.c, 20001228-1.c, 20051021-1.c, 20060102-1.c, 20060929-1.c |
-| `unsupported:declaration outside a block` | 27 | 27 | 20230802-1.c, alias-access-path-2.c, bitops-1.c, bswap-3.c, minmaxcmp-1.c |
+| `unsequenced-effects` | 36 | 36 | 00121.c, 20001228-1.c, 20051021-1.c, 20060102-1.c, 20060929-1.c |
 | `unsupported:no layout for declared type 'double'` | 27 | 27 | 00178.c, 20000731-1.c, 20011217-1.c, 20040831-1.c, 20190901-1.c |
 | `unsupported:pointer bit-cast across incompatible effective types` | 23 | 23 | 00103.c, 20001017-2.c, 20050316-1.c, 20050607-1.c, 20060412-1.c |
 | `unsupported:no layout for declared type 'struct S'` | 22 | 22 | 00087.c, 20050107-1.c, 20081103-1.c, 20100708-1.c, 20171008-1.c |
@@ -341,6 +340,7 @@ The run's first refusal, normalized by construct; `sole` counts rows whose first
 | `unsupported:no layout for parameter type 'foo_t *const'` | 1 | 1 | pr33669.c |
 | `unsupported:no layout for parameter type 'int **restrict'` | 1 | 1 | 20080506-2.c |
 | `unsupported:no layout for parameter type 'int *restrict'` | 1 | 1 | pr38212.c |
+| `unsupported:no size for pointee of 'int (*)[4]'` | 1 | 1 | pr124358.c |
 | `unsupported:non-object declaration in a block` | 1 | 1 | 00078.c |
 | `unsupported:not an integer type: 'T'` | 1 | 1 | pr84169.c |
 | `unsupported:not an lvalue: PredefinedExpr` | 1 | 1 | 20001011-1.c |
@@ -401,6 +401,7 @@ The run's first refusal, normalized by construct; `sole` counts rows whose first
 | `unsupported:unbound declaration 'id18' (name 'x')` | 1 | 1 | pr33382.c |
 | `unsupported:unbound declaration 'id185' (name 'w')` | 1 | 1 | pr47337.c |
 | `unsupported:unbound declaration 'id19' (name 'b')` | 1 | 1 | bitfld-signed1-1.c |
+| `unsupported:unbound declaration 'id19' (name 'c')` | 1 | 1 | pr97421-1.c |
 | `unsupported:unbound declaration 'id19' (name 'f')` | 1 | 1 | signed1bitfield-1.c |
 | `unsupported:unbound declaration 'id197' (name 't')` | 1 | 1 | 20011113-1.c |
 | `unsupported:unbound declaration 'id20' (name 'b')` | 1 | 1 | pr59388.c |

@@ -10,11 +10,11 @@
   "gcc.c-torture/execute": {
    "not-parsed": 267,
    "oracle-tests-compiler": 1,
-   "passed": 710,
+   "passed": 719,
    "refused-libc": 31,
-   "refused-ub": 62,
-   "refused-unsupported": 796,
-   "timeout": 51
+   "refused-ub": 63,
+   "refused-unsupported": 779,
+   "timeout": 58
   },
   "gcc.c23-run": {
    "not-parsed": 27,
@@ -28,11 +28,11 @@
  "counts": {
   "not-parsed": 294,
   "oracle-tests-compiler": 1,
-  "passed": 870,
+  "passed": 879,
   "refused-libc": 36,
-  "refused-ub": 71,
-  "refused-unsupported": 889,
-  "timeout": 53
+  "refused-ub": 72,
+  "refused-unsupported": 872,
+  "timeout": 60
  },
  "dynamic_wall_ranking": [
   {
@@ -510,6 +510,7 @@
     "pr63302.c",
     "pr7284-1.c",
     "pr79121.c",
+    "pr79286.c",
     "pr86528.c",
     "pr86714.c",
     "pr99079.c",
@@ -519,8 +520,8 @@
     "strlen-2.c",
     "strlen-6.c"
    ],
-   "present": 71,
-   "sole": 71,
+   "present": 72,
+   "sole": 72,
    "wall": "undefined-behavior"
   },
   {
@@ -556,6 +557,10 @@
     "memcpy-bi.c",
     "mode-dependent-address.c",
     "nestfunc-4.c",
+    "pr110252-1.c",
+    "pr123978.c",
+    "pr126405-2.c",
+    "pr126405.c",
     "pr19005.c",
     "pr27260.c",
     "pr37573.c",
@@ -568,19 +573,22 @@
     "pr65418-1.c",
     "pr66556.c",
     "pr68506.c",
+    "pr68532.c",
     "pr78675.c",
     "pr82387.c",
     "pr85529-2.c",
     "pr87290.c",
     "pr88693.c",
+    "pr91137.c",
+    "pr94734.c",
     "pr95731.c",
     "pr98736.c",
     "shiftdi-2.c",
     "ssad-run.c",
     "usad-run.c"
    ],
-   "present": 53,
-   "sole": 53,
+   "present": 60,
+   "sole": 60,
    "wall": "timeout"
   },
   {
@@ -682,14 +690,21 @@
     "20060102-1.c",
     "20060929-1.c",
     "20230510-1.c",
+    "20230802-1.c",
     "920501-6.c",
     "930930-2.c",
     "991202-3.c",
+    "bitops-1.c",
     "bswap-1.c",
+    "bswap-3.c",
     "builtin-bitops-1.c",
     "cvt-1.c",
     "divconst-2.c",
     "ieee/pr109386.c",
+    "minmaxcmp-1.c",
+    "pr107881-1.c",
+    "pr110666-1.c",
+    "pr111431-1.c",
     "pr17377.c",
     "pr20100-1.c",
     "pr20621-1.c",
@@ -703,45 +718,12 @@
     "pr68648.c",
     "pr82524.c",
     "pr91635.c",
-    "pr93213.c"
-   ],
-   "present": 28,
-   "sole": 28,
-   "wall": "unsequenced-effects"
-  },
-  {
-   "files": [
-    "20230802-1.c",
-    "alias-access-path-2.c",
-    "bitops-1.c",
-    "bswap-3.c",
-    "minmaxcmp-1.c",
-    "pr104814.c",
-    "pr107881-1.c",
-    "pr110252-1.c",
-    "pr110666-1.c",
-    "pr111431-1.c",
-    "pr113787.c",
-    "pr114396.c",
-    "pr115277.c",
-    "pr117498.c",
-    "pr123978.c",
-    "pr124358.c",
-    "pr126405-2.c",
-    "pr126405.c",
-    "pr67714.c",
-    "pr68532.c",
-    "pr78559.c",
-    "pr79286.c",
-    "pr90348.c",
-    "pr91137.c",
-    "pr94734.c",
-    "pr97421-1.c",
+    "pr93213.c",
     "subcmp-1.c"
    ],
-   "present": 27,
-   "sole": 27,
-   "wall": "unsupported:declaration outside a block"
+   "present": 36,
+   "sole": 36,
+   "wall": "unsequenced-effects"
   },
   {
    "files": [
@@ -3023,6 +3005,14 @@
   },
   {
    "files": [
+    "pr124358.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "unsupported:no size for pointee of 'int (*)[4]'"
+  },
+  {
+   "files": [
     "00078.c"
    ],
    "present": 1,
@@ -3500,6 +3490,14 @@
    "present": 1,
    "sole": 1,
    "wall": "unsupported:unbound declaration 'id19' (name 'b')"
+  },
+  {
+   "files": [
+    "pr97421-1.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "unsupported:unbound declaration 'id19' (name 'c')"
   },
   {
    "files": [
@@ -4215,8 +4213,8 @@
   }
  ],
  "manifest_hash": "eb2ea162993fd287a86d680d539ca5a9bba4f09b045a6ad663aaf88cdc3f445d",
- "measured_at_utc": "2026-11-12T18:51:07Z",
- "measured_commit": "73902a119",
+ "measured_at_utc": "2026-11-12T18:58:11Z",
+ "measured_commit": "HEAD",
  "pin": {
   "corpora": [
    "C1",
@@ -12355,8 +12353,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "declaration outside a block",
-   "dynamic_wall": "unsupported:declaration outside a block",
+   "detail": "unsequenced side effects in binary operands",
+   "dynamic_wall": "unsequenced-effects",
    "manifest_status": "parsed",
    "name": "20230802-1.c",
    "sha256": "21790d49552c3c162daea7d78c058aeebe56ab4b2f4abbe83a0455ee7b08a439",
@@ -15681,8 +15679,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "declaration outside a block",
-   "dynamic_wall": "unsupported:declaration outside a block",
+   "detail": "",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "alias-access-path-2.c",
    "sha256": "ac94eb840bc0fc8f966cd25630706f2026d0069d9555bfabc88be1ce9bf4a471",
@@ -15690,7 +15688,7 @@
     "libc-call",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -16025,8 +16023,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "declaration outside a block",
-   "dynamic_wall": "unsupported:declaration outside a block",
+   "detail": "unsequenced side effects in binary operands",
+   "dynamic_wall": "unsequenced-effects",
    "manifest_status": "parsed",
    "name": "bitops-1.c",
    "sha256": "af4365ba1e1b2fe87545d82bd9cf8be1fc2b5cfea7237655a135bef0c6247965",
@@ -16066,8 +16064,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "declaration outside a block",
-   "dynamic_wall": "unsupported:declaration outside a block",
+   "detail": "unsequenced side effects in binary operands",
+   "dynamic_wall": "unsequenced-effects",
    "manifest_status": "parsed",
    "name": "bswap-3.c",
    "sha256": "a8081a9c0c78d3eb9ae83b8889764cb05de5162c31be3d1b258070a4223475ec",
@@ -20895,8 +20893,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "declaration outside a block",
-   "dynamic_wall": "unsupported:declaration outside a block",
+   "detail": "unsequenced side effects in binary operands",
+   "dynamic_wall": "unsequenced-effects",
    "manifest_status": "parsed",
    "name": "minmaxcmp-1.c",
    "sha256": "c8373ae57ea0dec72ae5329a74a82f467b092ce0c3f95a8a4ce9181a9bba503e",
@@ -21301,15 +21299,15 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "declaration outside a block",
-   "dynamic_wall": "unsupported:declaration outside a block",
+   "detail": "",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "pr104814.c",
    "sha256": "e4ce851d81f9e0f5994d851606da8524e16d4dbffe5e5458004bd81d7c98a9eb",
    "static_walls": [
     "libc-call"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -21407,8 +21405,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "declaration outside a block",
-   "dynamic_wall": "unsupported:declaration outside a block",
+   "detail": "unsequenced side effects in binary operands",
+   "dynamic_wall": "unsequenced-effects",
    "manifest_status": "parsed",
    "name": "pr107881-1.c",
    "sha256": "4f5bf8c312f703b7a7f11112ec0f1a30b603d1c1e9bbefefb078ccdf79162cab",
@@ -21574,15 +21572,15 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "declaration outside a block",
-   "dynamic_wall": "unsupported:declaration outside a block",
+   "detail": "",
+   "dynamic_wall": "timeout",
    "manifest_status": "parsed",
    "name": "pr110252-1.c",
    "sha256": "2335f7af5967eb8d5aa87e009a07e76103e1cdc0bc95ba2eae4d6dedfe36e715",
    "static_walls": [
     "libc-call"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "timeout"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -21620,8 +21618,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "declaration outside a block",
-   "dynamic_wall": "unsupported:declaration outside a block",
+   "detail": "unsequenced side effects in binary operands",
+   "dynamic_wall": "unsequenced-effects",
    "manifest_status": "parsed",
    "name": "pr110666-1.c",
    "sha256": "e1fe0d3fc5f2e0bf0b9ca15156b0571c390d86c1146912d506fb9a5398db796d",
@@ -21768,8 +21766,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "declaration outside a block",
-   "dynamic_wall": "unsupported:declaration outside a block",
+   "detail": "unsequenced side effects in binary operands",
+   "dynamic_wall": "unsequenced-effects",
    "manifest_status": "parsed",
    "name": "pr111431-1.c",
    "sha256": "321041c1acd0b62fb67aa7d69cf0b2936849bbf927c1357e70c062f036930425",
@@ -21851,8 +21849,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "declaration outside a block",
-   "dynamic_wall": "unsupported:declaration outside a block",
+   "detail": "",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "pr113787.c",
    "sha256": "73e8b58eb348f4decf7e89429747b4f7df3246c55476f5dc9192c7c90cbd002a",
@@ -21860,7 +21858,7 @@
     "libc-call",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -21877,8 +21875,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "declaration outside a block",
-   "dynamic_wall": "unsupported:declaration outside a block",
+   "detail": "",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "pr114396.c",
    "sha256": "23d02e979233f044300c571e65768b6e652330b353ae238eaaed15a7c828c80d",
@@ -21886,7 +21884,7 @@
     "libc-call",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -21924,8 +21922,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "declaration outside a block",
-   "dynamic_wall": "unsupported:declaration outside a block",
+   "detail": "",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "pr115277.c",
    "sha256": "c674fdafda83fbd0d82d8d99185261aba5536ddbd42c98cb329ce512cfe394c2",
@@ -21933,7 +21931,7 @@
     "libc-call",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -21977,13 +21975,13 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "declaration outside a block",
-   "dynamic_wall": "unsupported:declaration outside a block",
+   "detail": "",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "pr117498.c",
    "sha256": "d98e620b649ffa4dbd207f9efa5beaeada6d9fc02b7026e5a3b9ff551be91642",
    "static_walls": [],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -22187,8 +22185,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "declaration outside a block",
-   "dynamic_wall": "unsupported:declaration outside a block",
+   "detail": "",
+   "dynamic_wall": "timeout",
    "manifest_status": "parsed",
    "name": "pr123978.c",
    "sha256": "1ed8a36af452bfd14d600d31c3ce62b3d9241009455c4399adece59506cb5e9f",
@@ -22196,12 +22194,12 @@
     "libc-call",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "timeout"
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "declaration outside a block",
-   "dynamic_wall": "unsupported:declaration outside a block",
+   "detail": "no size for pointee of 'int (*)[4]'",
+   "dynamic_wall": "unsupported:no size for pointee of 'int (*)[4]'",
    "manifest_status": "parsed",
    "name": "pr124358.c",
    "sha256": "4bfac3671278712097cedc58d0c1524f1bec0b73bb30895d10b947b0103806b5",
@@ -22226,8 +22224,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "declaration outside a block",
-   "dynamic_wall": "unsupported:declaration outside a block",
+   "detail": "",
+   "dynamic_wall": "timeout",
    "manifest_status": "parsed",
    "name": "pr126405-2.c",
    "sha256": "0b91ab76b23510d74969a65f5e11595d4136959c60a86495f2baed094478b5f7",
@@ -22235,7 +22233,7 @@
     "libc-call",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "timeout"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -22252,8 +22250,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "declaration outside a block",
-   "dynamic_wall": "unsupported:declaration outside a block",
+   "detail": "",
+   "dynamic_wall": "timeout",
    "manifest_status": "parsed",
    "name": "pr126405.c",
    "sha256": "764416eec91cefdb81ae9de44d37396c6f818f89b4c01c06d349816df4ca9228",
@@ -22261,7 +22259,7 @@
     "libc-call",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "timeout"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -26529,15 +26527,15 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "declaration outside a block",
-   "dynamic_wall": "unsupported:declaration outside a block",
+   "detail": "",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "pr67714.c",
    "sha256": "69fbd7a5251f04ff9b33f51b649cdf3c03abf5a152c5bd65232365d84a1bba45",
    "static_walls": [
     "libc-call"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -26699,8 +26697,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "declaration outside a block",
-   "dynamic_wall": "unsupported:declaration outside a block",
+   "detail": "",
+   "dynamic_wall": "timeout",
    "manifest_status": "parsed",
    "name": "pr68532.c",
    "sha256": "9db2c92f99a575b3a687b0e691577e6c22527686454d608316528d851395ff2c",
@@ -26708,7 +26706,7 @@
     "libc-call",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "timeout"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -27198,15 +27196,15 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "declaration outside a block",
-   "dynamic_wall": "unsupported:declaration outside a block",
+   "detail": "",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "pr78559.c",
    "sha256": "ec8289c0a22cf11ad76d35d713e13074107a384e9b9b18d4b1cf886346afd225",
    "static_walls": [
     "libc-call"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -27332,8 +27330,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "declaration outside a block",
-   "dynamic_wall": "unsupported:declaration outside a block",
+   "detail": "LeanModels.C.C23.MemFault.indetAutomatic 4 0",
+   "dynamic_wall": "undefined-behavior",
    "manifest_status": "parsed",
    "name": "pr79286.c",
    "sha256": "c3792c3d9231d95841fc2efadec802bae368700bf12756a3464ea6b0a369df65",
@@ -27342,7 +27340,7 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "refused-ub"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -28133,8 +28131,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "declaration outside a block",
-   "dynamic_wall": "unsupported:declaration outside a block",
+   "detail": "",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "pr90348.c",
    "sha256": "04fe6743c653de1d60d379db7e724fe3ff7700522031be77c3c4bb1e87f17e36",
@@ -28142,7 +28140,7 @@
     "libc-call",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -28159,8 +28157,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "declaration outside a block",
-   "dynamic_wall": "unsupported:declaration outside a block",
+   "detail": "",
+   "dynamic_wall": "timeout",
    "manifest_status": "parsed",
    "name": "pr91137.c",
    "sha256": "923926c7e51f1ad1398b2743bccf76bf798bd7bff71de9645a38516a0a4b0296",
@@ -28168,7 +28166,7 @@
     "libc-call",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "timeout"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -28505,8 +28503,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "declaration outside a block",
-   "dynamic_wall": "unsupported:declaration outside a block",
+   "detail": "",
+   "dynamic_wall": "timeout",
    "manifest_status": "parsed",
    "name": "pr94734.c",
    "sha256": "037905731554f9a8ff8272b0466db99d49181caa5e11dc145538d5109a0d9c73",
@@ -28514,7 +28512,7 @@
     "libc-call",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "timeout"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -28615,8 +28613,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "declaration outside a block",
-   "dynamic_wall": "unsupported:declaration outside a block",
+   "detail": "unbound declaration 'id19' (name 'c')",
+   "dynamic_wall": "unsupported:unbound declaration 'id19' (name 'c')",
    "manifest_status": "parsed",
    "name": "pr97421-1.c",
    "sha256": "294355995cca11c326670cdd8be011ee3c2c6e53f419c8d1d64460fe00d39d00",
@@ -29590,8 +29588,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "declaration outside a block",
-   "dynamic_wall": "unsupported:declaration outside a block",
+   "detail": "unsequenced side effects in binary operands",
+   "dynamic_wall": "unsequenced-effects",
    "manifest_status": "parsed",
    "name": "subcmp-1.c",
    "sha256": "4a0f1afd79aa5237b4e8118b8e69e2cb1c962d1a6150b1e4a184c39980cef841",

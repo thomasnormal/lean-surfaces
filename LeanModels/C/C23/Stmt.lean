@@ -563,7 +563,7 @@ def declare : Nat → Ctx → List Decl → ExecM Ctx
   | _, ctx, [] => pure ctx
   | fuel + 1, ctx, d :: ds =>
     match d with
-    | .var id name ty storage init _recordId _ => do
+    | .var id name ty storage init _recordId vaList _ => do
         if storage == some "static" then
           match id with
           | some declaration =>
@@ -575,7 +575,7 @@ def declare : Nat → Ctx → List Decl → ExecM Ctx
           match storage with
           | some "auto" | some "register" | some "static" | none => pure ()
           | some s => refuseUnsupported s!"block-scope storage class '{s}' is outside the tier"
-          match ctx.layout.size ty with
+          match if vaList then some 1 else ctx.layout.size ty with
           | none => refuseUnsupported s!"no layout for declared type '{ty}'"
           | some sz => do
             -- §6.2.4p6: an automatic object lives from block entry, with
@@ -676,8 +676,8 @@ def bindParams (lay : Layout) : Ctx → List LeanModels.C.Decl → List CVal →
   | _, _ :: _, [] => refuseUnsupported "fewer arguments than parameters"
   | ctx, d :: ps, v :: vs =>
     match d with
-    | .param id n ty _ =>
-        match lay.size ty with
+    | .param id n ty vaList _ =>
+        match if vaList then some 1 else lay.size ty with
         | none => refuseUnsupported s!"no layout for parameter type '{ty}'"
         | some sz => do
             -- §6.9.2p7 holds for an UNNAMED parameter too: the object
@@ -721,8 +721,14 @@ def callFn : Nat → Program → LeanModels.C.FunctionDefn → List CVal → Exe
     match f.body with
     | none => refuseUnsupported s!"'{f.name}' is a prototype, not a definition"
     | some body => do
+        let fixedArgs := args.take f.params.length
+        let extraArgs := args.drop f.params.length
+        if args.length < f.params.length then
+          refuseUnsupported "fewer arguments than parameters"
+        if !f.variadic && !extraArgs.isEmpty then
+          refuseUnsupported "more arguments than parameters"
         if f.params.any fun d => match d with
-          | .param _ none ty _ => isPtrType ty
+          | .param _ none ty _ _ => isPtrType ty
           | _ => false then
           refuseUnsupported "unnamed pointer parameter (array-bound effects are not retained by clang)"
         let m₀ ← get
@@ -1160,6 +1166,28 @@ def callFn : Nat → Program → LeanModels.C.FunctionDefn → List CVal → Exe
               liftEval (storeAt dp ty (.int t (t.wrap result)))
               pure (.int IntTy.int_ (if overflow then 1 else 0))
           | _ => refuseUnsupported s!"__builtin_{op}_overflow: wrong argument count"
+        let runVaStart : List CVal → ExecM CVal := fun vs =>
+          match vs with
+          | ap :: _ => do
+              let p ← asPtr ap
+              liftEval (writeMem (fun m => Mem.vaStart m p extraArgs))
+              pure .undef
+          | _ => refuseUnsupported "va_start: missing va_list"
+        let runVaCopy : List CVal → ExecM CVal := fun vs =>
+          match vs with
+          | [dst, src] => do
+              let dp ← asPtr dst
+              let sp ← asPtr src
+              liftEval (writeMem (fun m => Mem.vaCopy m dp sp))
+              pure .undef
+          | _ => refuseUnsupported "va_copy: wrong argument count"
+        let runVaEnd : List CVal → ExecM CVal := fun vs =>
+          match vs with
+          | [ap] => do
+              let p ← asPtr ap
+              liftEval (writeMem (fun m => Mem.vaEnd m p))
+              pure .undef
+          | _ => refuseUnsupported "va_end: wrong argument count"
         -- The callee's own call handler: one fuel less, so the recursion
         -- terminates on the fuel and on nothing else.
         let handler : CallHandler := fun callee vs =>
@@ -1173,6 +1201,12 @@ def callFn : Nat → Program → LeanModels.C.FunctionDefn → List CVal → Exe
             | some nm =>
               if nm == "__builtin_strcmp" || nm == "strcmp" then
                 runStrcmp vs
+              else if nm == "__builtin_va_start" || nm == "__builtin_c23_va_start" then
+                runVaStart vs
+              else if nm == "__builtin_va_copy" then
+                runVaCopy vs
+              else if nm == "__builtin_va_end" then
+                runVaEnd vs
               else if nm == "__builtin_sprintf" || nm == "sprintf" then
                 runSprintf vs
               else if nm == "__builtin_strcpy" || nm == "strcpy" then
@@ -1231,6 +1265,9 @@ def callFn : Nat → Program → LeanModels.C.FunctionDefn → List CVal → Exe
             -- widening the slice and never pools with the other two.
             | none =>
               if nm == "__builtin_strcmp" || nm == "strcmp" then runStrcmp vs
+              else if nm == "__builtin_va_start" || nm == "__builtin_c23_va_start" then runVaStart vs
+              else if nm == "__builtin_va_copy" then runVaCopy vs
+              else if nm == "__builtin_va_end" then runVaEnd vs
               else if nm == "__builtin_sprintf" || nm == "sprintf" then runSprintf vs
               else if nm == "__builtin_strcpy" || nm == "strcpy" then runBuiltinStrcpy vs
               else if nm == "strncmp" || nm == "__builtin_strncmp" then runStrncmp vs
@@ -1268,7 +1305,7 @@ def callFn : Nat → Program → LeanModels.C.FunctionDefn → List CVal → Exe
           ({ env := prog.globals, idEnv := prog.globalIds, enums := prog.enums,
              enumIds := prog.enumIds, layout := prog.layout,
              call := handler } : Ctx).withCompoundInit
-        let ctx ← bindParams prog.layout ctx0 f.params args
+        let ctx ← bindParams prog.layout ctx0 f.params fixedArgs
         let flow ← execStmt fuel ctx body
         let m₁ ← get
         set (m₁.killFrom base)

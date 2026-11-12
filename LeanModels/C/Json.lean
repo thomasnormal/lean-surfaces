@@ -265,6 +265,8 @@ partial def parseExpr (j : Json) : Except String Expr := do
         match value? with
         | some value => return .constExpr value (← optSub "sub") (← ty) span
         | none => return .unsupported "ConstantExpr" "unfolded constant expression" span
+    | "VAArgExpr" =>
+        return .vaArg (← sub "ap") (← ty) span
     | "Unsupported" =>
         return .unsupported (← getStr j "c_kind") (← getStr j "text") span
     | other =>
@@ -288,12 +290,13 @@ partial def parseDecl (j : Json) : Except String Decl := do
           (← match getOptNode j "init" with
               | none => pure none
               | some v => some <$> parseExpr v)
-          ((← getOptStr j "record_decl_id").map DeclarationId.mk) span
+          ((← getOptStr j "record_decl_id").map DeclarationId.mk)
+          (← getBool j "va_list") span
     -- `name` is OPTIONAL (§6.7.6.3): absent and `null` are one absence.
     | "ParmVarDecl" =>
         let id ← getOptStr j "decl_id"
         return .param (id.map DeclarationId.mk) (← getOptStr j "name")
-          (← getStr j "type") span
+          (← getStr j "type") (← getBool j "va_list") span
     | "FieldDecl" =>
         return .field (← getOptStr j "name") (← getStr j "type") (← getOptNat j "bits") span
     | "RecordDecl" =>
@@ -376,6 +379,7 @@ def parseFunctionDefn (j : Json) : Except String FunctionDefn :=
     return { id := id.map DeclarationId.mk, name := ← getStr j "name", ty := ← getStr j "type"
              storage := ← getOptStr j "storage"
              params := ← (← getArr j "params").mapM parseDecl
+             variadic := ← getBool j "variadic"
              body := ← (match getOptNode j "body" with
                         | none => pure none
                         | some v => some <$> parseStmt v)

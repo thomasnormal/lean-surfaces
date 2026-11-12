@@ -179,6 +179,12 @@ def writeMem (f : Mem → MRes Mem) : EvalM Unit := do
   | .ok m => set m
   | .error e => throw e
 
+def popVaArg (p : Ptr) : EvalM CVal := do
+  match Mem.vaArg (← get) p with
+  | .ok (v, m) => set m; pure v
+  | .error e => throw e
+
+
 /-- Decode the parser's canonical value for the first string-object slice.
 Only printable ASCII characters are admitted here; escape spellings stay
 loud until the envelope carries their parser-decoded bytes.  The quotes are
@@ -639,6 +645,21 @@ def isPtrType (ty : CType) : Bool :=
 def isPtrIntType (ty : CType) : Bool :=
   let t := ty.trimAscii
   t == "uintptr_t" || t == "intptr_t"
+
+def checkVaType (ctx : Ctx) (ty : CType) (v : CVal) : EvalM CVal :=
+  match v with
+  | .int _ _ =>
+      -- The envelope's `CType` may be a typedef spelling (for example `L`);
+      -- the frontend has already applied default argument promotions and the
+      -- cursor stores that resolved value.  Integer compatibility is therefore
+      -- accepted only within the parser's integer class; no ABI width is used.
+      match intTyOf? (ctx.layout.normalizeTy ty) with
+      | some _ => pure v
+      | none => refuseUnsupported s!"va_arg requested unsupported type '{ty}'"
+  | .ptr _ | .float32 _ | .float64 _ =>
+      refuseUnsupported s!"va_arg compatibility for non-integer type '{ty}' is not in the ABI-independent slice"
+  | .aggregate _ _ | .undef | .ptrInt _ =>
+      refuseUnsupported s!"va_arg requested unsupported value type '{ty}'"
 
 /-- The POINTEE spelling of a pointer type: `int *` → `int`, `const S *` →
 `const S`. `none` when the spelling is not a pointer at all.
@@ -1249,13 +1270,23 @@ def evalExpr (ctx : Ctx) : Expr → EvalM CVal
         match (ctx.enumIds.find? (·.1 == id)).map (·.2) with
         | some n => do let t ← intTyOf (ctx.layout.normalizeTy ty); pure (.int t n)
         | none => refuseUnsupported s!"unknown enum declaration '{id.value}' (name '{name}')"
-      else refuseUnsupported s!"name '{name}' in value position without a conversion"
+      else match ctx.idEnv.lookup? id with
+        | some o =>
+            let p := match ctx.layout.size (ctx.layout.normalizeTy ty) with
+              | some sz => Ptr.toObjectBound o sz | none => Ptr.toObject o
+            loadAt p (ctx.layout.normalizeTy ty) (ctx.layout.size (ctx.layout.normalizeTy ty))
+        | none => refuseUnsupported s!"unbound declaration '{id.value}' (name '{name}')"
   | .declRef none name declKind ty _ =>
       if declKind == "EnumConstantDecl" then
         match (ctx.enums.find? (·.1 == name)).map (·.2) with
         | some n => do let t ← intTyOf (ctx.layout.normalizeTy ty); pure (.int t n)
         | none => refuseUnsupported s!"unknown enum constant '{name}'"
-      else refuseUnsupported s!"name '{name}' in value position without a conversion"
+      else match ctx.env.lookup? name with
+        | some o =>
+            let p := match ctx.layout.size (ctx.layout.normalizeTy ty) with
+              | some sz => Ptr.toObjectBound o sz | none => Ptr.toObject o
+            loadAt p (ctx.layout.normalizeTy ty) (ctx.layout.size (ctx.layout.normalizeTy ty))
+        | none => refuseUnsupported s!"unbound name '{name}'"
 
   -- §6.5.3.3p4 — the arguments are evaluated HERE, in the caller's scope,
   -- and the handler receives VALUES. Still fuel-free: `evalArgs` is in this
@@ -1293,13 +1324,21 @@ def evalExpr (ctx : Ctx) : Expr → EvalM CVal
       match v.toInt? with
       | some n => pure (.int t n)
       | none => refuseUnsupported s!"constant expression '{v}'"
+  | .vaArg ap ty _ => do
+      -- C23 §7.16.1.1: consume the next actual argument from the abstract
+      -- cursor. Compatibility is checked against the parser-resolved,
+      -- default-promoted value; no ABI width or address is invented.
+      let av ← evalExpr ctx ap
+      let p ← asPtr av
+      let v ← popVaArg p
+      checkVaType ctx ty v
   | .initList .. => refuseUnsupported "initializer list (inch 4)"
   | .arrayInitList .. => refuseUnsupported "initializer list in value position"
   | .implicitValueInit .. => refuseUnsupported "implicit value initialization in value position"
   | .unsupported k _ _ => refuseUnsupported s!"out of tier: {k}"
   termination_by e => 2 * e.size + 1
   decreasing_by
-    all_goals (simp_wf <;> (try simp [Expr.size_constExpr]) <;> omega)
+    all_goals (simp_wf <;> (try simp [Expr.size_constExpr, Expr.size, Expr.subexprs]) <;> omega)
 
 /-- §6.5.3.3p4 — a call's arguments, evaluated in the CALLER's scope,
 **left to right**.
@@ -1540,6 +1579,7 @@ def Expr.nodeIsPure : Expr → Bool
   -- §6.5.3.3 — an opaque callee. This is the constructor that makes the
   -- J.1(16) domain non-empty, and inch 5's repair is what made it REACHABLE.
   | .call .. => false
+  | .vaArg .. => false
   -- §6.7.11 — aggregate initialization writes through the layout.
   | .initList .. | .arrayInitList .. | .implicitValueInit .. | .compoundLit .. => false
   | .strLit .. => false
@@ -2023,6 +2063,9 @@ private theorem memInvariant_core (ctx : Ctx) : ∀ (n : Nat) (e : Expr), e.size
                 exact hp.2
               obtain ⟨i1, i2⟩ := ih sub hsub hpure
               exact ⟨by open_eval; mem_inv, by open_lvalue; mem_inv⟩
+      | vaArg ap ty span =>
+          have hbad := Expr.nodeIsPure_of_isPure hp
+          simp [Expr.nodeIsPure] at hbad
       | paren s _ _ =>
           obtain ⟨i1, i2⟩ := ih s (by simp only [Expr.size_paren] at he; omega)
             (Expr.isPure_paren hp)

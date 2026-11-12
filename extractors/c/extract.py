@@ -77,7 +77,7 @@ EXPRS = {"IntegerLiteral", "CharacterLiteral", "StringLiteral", "FloatingLiteral
          "BinaryOperator", "CompoundAssignOperator", "UnaryOperator",
          "ConditionalOperator", "ParenExpr", "ImplicitCastExpr", "CStyleCastExpr",
          "InitListExpr", "ImplicitValueInitExpr", "CompoundLiteralExpr", "UnaryExprOrTypeTraitExpr",
-         "ConstantExpr"}
+         "ConstantExpr", "VAArgExpr"}
 TYPES = {"BuiltinType", "PointerType", "RecordType", "TypedefType",
          "ElaboratedType", "ParenType", "FunctionProtoType"}
 VOCAB = DECLS | STMTS | EXPRS | TYPES
@@ -440,6 +440,7 @@ class Extractor:
         params = [c for c in kids(n) if c.get("kind") == "ParmVarDecl"]
         return {"decl_id": n.get("id"), "name": n.get("name"), "type": qual(n),
                 "storage": n.get("storageClass"),
+                "variadic": bool(n.get("variadic")),
                 "params": self.seq(params),
                 "body": self.node(body) if body else None}
 
@@ -447,6 +448,7 @@ class Extractor:
         init = kids(n)[-1] if n.get("init") and kids(n) else None
         return {"decl_id": n.get("id"), "name": n.get("name"), "type": qual(n),
                 "storage": n.get("storageClass"),
+                "va_list": "__va_list_tag" in (n.get("type") or {}).get("desugaredQualType", ""),
                 "init": self.node(init) if init else None}
 
     def e_ParmVarDecl(self, n):
@@ -456,6 +458,7 @@ class Extractor:
         # synthetic, which would be a fabricated name one field over from a
         # fabricated column.
         out = {"decl_id": n.get("id"), "type": qual(n)}
+        out["va_list"] = "__va_list_tag" in (n.get("type") or {}).get("desugaredQualType", "")
         if n.get("name") is not None:
             out["name"] = n["name"]
         return out
@@ -767,6 +770,12 @@ class Extractor:
 
     def e_ImplicitValueInitExpr(self, n):
         return {"type": qual(n)}
+
+    def e_VAArgExpr(self, n):
+        c = kids(n)
+        if len(c) != 1:
+            raise SystemExit("extract.py: VAArgExpr did not retain its cursor operand")
+        return {"ap": self.node(c[0]), "type": qual(n)}
 
     def e_CompoundLiteralExpr(self, n):
         c = kids(n)

@@ -277,7 +277,7 @@ def recordsOf (envl : Envelope) : List (String × List (String × CType)) :=
     | .record _ (some nm) fields _ _ => (fieldsOf fields).map (fun fs => (nm, fs))
     | _ => none
   let anonymous := ds.filterMap fun d => match d with
-    | .var _ _ ty _ _ (some rid) _ =>
+    | .var _ _ ty _ _ (some rid) _ _ =>
         match ds.find? (fun q => match q with
           | .record id none _ _ _ => id == some rid
           | _ => false) with
@@ -562,7 +562,7 @@ def setupGlobalsWithIds (fuel : Nat) (lay : Layout) :
   | [], acc, ids => pure (acc, ids)
   | d :: ds, acc, ids =>
     match d with
-    | .var declaration nm ty storage init _recordId _ =>
+    | .var declaration nm ty storage init _recordId _vaList _ =>
         match acc.lookup? nm with
         | some o =>
             let ids' := match declaration with
@@ -613,7 +613,7 @@ every function frame inherits.  `declare` then only binds the local spelling
 to that existing object on each invocation. -/
 def staticDecls (envl : Envelope) : List LeanModels.C.Decl :=
   (allDecls envl).filter fun d => match d with
-    | .var _ _ _ (some "static") _ _ _ => true
+    | .var _ _ _ (some "static") _ _ _ _ => true
     | _ => false
 
 def setupStaticsWithIds (fuel : Nat) (lay : Layout) :
@@ -621,7 +621,7 @@ def setupStaticsWithIds (fuel : Nat) (lay : Layout) :
   | [], acc, ids => pure (acc, ids)
   | d :: ds, acc, ids =>
     match d with
-    | .var (some declaration) nm ty _ init _ _ => do
+    | .var (some declaration) nm ty _ init _ _ _ => do
         match lay.size ty with
         | none => refuseUnsupported s!"no layout for declared type '{ty}'"
         | some sz => do
@@ -637,7 +637,7 @@ def setupStaticsWithIds (fuel : Nat) (lay : Layout) :
                 initObject fuel ({ env := acc, idEnv := ids', layout := lay } : Ctx).withCompoundInit
                   (Ptr.toObject o) ty e
                 setupStaticsWithIds fuel lay ds acc ids'
-    | .var none _ _ _ _ _ _ => setupStaticsWithIds fuel lay ds acc ids
+    | .var none _ _ _ _ _ _ _ => setupStaticsWithIds fuel lay ds acc ids
     | _ => setupStaticsWithIds fuel lay ds acc ids
 
 /-- **THE ORACLE-TESTS-COMPILER SHAPE, re-derived from the ingested AST.**

@@ -259,14 +259,60 @@ structure Mem where
   /-- Bytes emitted by the modeled stdout stream.  This is part of the
   execution world, not an object with pointer provenance. -/
   stdout : List CByte := []
+  /-- Abstract `va_list` cursors. Keys are the parser-allocated object ids;
+  the representation deliberately contains no ABI addresses or widths. -/
+  vaCursors : List (ObjId × List CVal) := []
 deriving Repr, Inhabited, BEq
 
 namespace Mem
 
-def empty : Mem := ⟨[], []⟩
+def empty : Mem := ⟨[], [], []⟩
 
 def emitStdout (m : Mem) (bytes : List CByte) : Mem :=
   { m with stdout := m.stdout ++ bytes }
+
+private def vaSet (xs : List (ObjId × List CVal)) (o : ObjId) (vs : List CVal) :
+    List (ObjId × List CVal) :=
+  match xs with
+  | [] => [(o, vs)]
+  | (q, old) :: rest => if q == o then (o, vs) :: rest else (q, old) :: vaSet rest o vs
+
+private def vaGet (xs : List (ObjId × List CVal)) (o : ObjId) : Option (List CVal) :=
+  match xs with
+  | [] => none
+  | (q, vs) :: rest => if q == o then some vs else vaGet rest o
+
+private def vaDrop (xs : List (ObjId × List CVal)) (o : ObjId) : List (ObjId × List CVal) :=
+  match xs with
+  | [] => []
+  | (q, vs) :: rest => if q == o then rest else (q, vs) :: vaDrop rest o
+
+def vaStart (m : Mem) (p : Ptr) (args : List CVal) : MRes Mem :=
+  match p.obj with
+  | none => .error (.memUB (.nullDeref p.off))
+  | some o => .ok { m with vaCursors := vaSet m.vaCursors o args }
+
+def vaCopy (m : Mem) (dst src : Ptr) : MRes Mem :=
+  match dst.obj, src.obj with
+  | some d, some s =>
+      match vaGet m.vaCursors s with
+      | some vs => .ok { m with vaCursors := vaSet m.vaCursors d vs }
+      | none => .error (.memUB (.nonValueRepresentation s 0))
+  | none, _ | _, none => .error (.memUB (.nullDeref 0))
+
+def vaEnd (m : Mem) (p : Ptr) : MRes Mem :=
+  match p.obj with
+  | none => .error (.memUB (.nullDeref p.off))
+  | some o => .ok { m with vaCursors := vaDrop m.vaCursors o }
+
+def vaArg (m : Mem) (p : Ptr) : MRes (CVal × Mem) :=
+  match p.obj with
+  | none => .error (.memUB (.nullDeref p.off))
+  | some o =>
+      match vaGet m.vaCursors o with
+      | none => .error (.memUB (.nonValueRepresentation o 0))
+      | some [] => .error (.memUB (.outOfBounds o 0 1 0))
+      | some (v :: vs) => .ok (v, { m with vaCursors := vaSet m.vaCursors o vs })
 
 def get? (m : Mem) (o : ObjId) : Option CObj := m.objs[o]?
 

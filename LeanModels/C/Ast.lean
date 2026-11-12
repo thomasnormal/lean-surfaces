@@ -175,6 +175,9 @@ inductive Expr where
   | typeTrait (trait : String) (argType : Option CType) (sub : Option Expr)
       (ty : CType) (span : CSpan)
   | constExpr (value : String) (sub : Option Expr) (ty : CType) (span : CSpan)
+  /-- C23 §6.5.3.3 / §7.16: parser-resolved `va_arg` operand and result
+  type. The cursor is abstract state, not an ABI representation. -/
+  | vaArg (ap : Expr) (ty : CType) (span : CSpan)
   /-- Outside the pinned vocabulary: clang's own class name and ≤200 chars
   of source. Never silently dropped, never guessed at. -/
   | unsupported (cKind : String) (text : String) (span : CSpan)
@@ -185,7 +188,7 @@ everything but a function definition. -/
 inductive Decl where
   | var (id : Option DeclarationId) (name : String) (ty : CType)
       (storage : Option String) (init : Option Expr)
-      (recordId : Option DeclarationId) (span : CSpan)
+      (recordId : Option DeclarationId) (vaList : Bool) (span : CSpan)
   /-- A parameter. `name` is **optional**, because C's is: §6.7.6.3 lets a
   prototype declare a parameter with no identifier (`int f(int);`), and
   clang reports one with no `name`.
@@ -195,7 +198,8 @@ inductive Decl where
   real name, and something downstream would eventually look it up. The
   absence is decided in exactly ONE place, `C23.bindParams`
   (`docs/backlog/c.md` 2026-08-24-c-20). -/
-  | param (id : Option DeclarationId) (name : Option String) (ty : CType) (span : CSpan)
+  | param (id : Option DeclarationId) (name : Option String) (ty : CType)
+      (vaList : Bool) (span : CSpan)
   /-- A member declarator. `bits` is the BIT-FIELD WIDTH (§6.7.2.1p4) and
   `none` means "not a bit-field" — the two are different declarations, not
   a present/absent spelling of one. It is carried because `unsigned int b :
@@ -259,6 +263,8 @@ structure FunctionDefn where
   ty : CType
   storage : Option String
   params : List Decl
+  /-- Clang's parser-native `variadic` bit on the function declaration. -/
+  variadic : Bool := false
   body : Option Stmt
   span : CSpan
 deriving Repr, Inhabited
@@ -321,7 +327,7 @@ def Expr.ty : Expr → CType
   | .implicitCast _ _ t _ | .cast _ _ t _ => t
   | .initList _ _ t _ | .compoundLit _ t _ | .implicitValueInit t _ => t
   | .arrayInitList _ _ _ t _ => t
-  | .typeTrait _ _ _ t _ | .constExpr _ _ t _ => t
+  | .typeTrait _ _ _ t _ | .constExpr _ _ t _ | .vaArg _ t _ => t
   | .unsupported .. => ""
 
 /-- clang's own class name for this node, for diagnostics. A refusal a
@@ -350,6 +356,7 @@ def Expr.kindName : Expr → String
   | .compoundLit .. => "CompoundLiteralExpr"
   | .typeTrait .. => "UnaryExprOrTypeTraitExpr"
   | .constExpr .. => "ConstantExpr"
+  | .vaArg .. => "VAArgExpr"
   | .unsupported k _ _ => k
 
 /-- Sub-expressions, including the expression itself. -/
@@ -370,6 +377,7 @@ def Expr.subexprs : Expr → List Expr
   | e@(.compoundLit i _ _) => e :: i.subexprs
   | e@(.typeTrait _ _ (some s) _ _) => e :: s.subexprs
   | e@(.constExpr _ (some s) _ _) => e :: s.subexprs
+  | e@(.vaArg ap _ _) => e :: ap.subexprs
   | e => [e]
 
 /-! ### A size measure, for STATED termination
@@ -475,7 +483,7 @@ tactic's failure as the fact's absence. -/
 
 /-- The expressions a block-scope declaration contains. -/
 def Decl.exprs : Decl → List Expr
-  | .var _ _ _ _ (some i) _ _ => i.subexprs
+  | .var _ _ _ _ (some i) _ _ _ => i.subexprs
   | _ => []
 
 /-- Statements nested inside a statement, including itself. -/

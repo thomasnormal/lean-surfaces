@@ -1,0 +1,102 @@
+{
+  "schema_version": "sv-0.2",
+  "language": "systemverilog",
+  "frontend": {
+    "name": "pyslang",
+    "family": "pyslang-11"
+  },
+  "mode": "symbolic",
+  "top": "restrict_e",
+  "source_files": [
+    {
+      "path": "Examples/system-verilog/sem2/sva_kind_clock_e/sva_kind_clock_e.sv",
+      "sha256": "461f86537dc0d6e5e794d441fba13676eb9642531c4ceb3e080868dfb439353f"
+    }
+  ],
+  "packages": [],
+  "design": {
+    "kind": "Design",
+    "modules": [
+      {
+        "kind": "Module",
+        "span": {
+          "line": 1,
+          "col": 1,
+          "end_line": 3,
+          "end_col": 10
+        },
+        "name": "restrict_e",
+        "imports": [],
+        "params": [],
+        "types": [],
+        "ports": [
+          {
+            "kind": "Port",
+            "span": {
+              "line": 1,
+              "col": 31,
+              "end_line": 1,
+              "end_col": 34
+            },
+            "name": "clk",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 1,
+              "col": 48,
+              "end_line": 1,
+              "end_col": 49
+            },
+            "name": "a",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            }
+          }
+        ],
+        "decls": [],
+        "processes": [],
+        "generates": [],
+        "others": [
+          {
+            "kind": "Unsupported",
+            "span": {
+              "line": 2,
+              "col": 5,
+              "end_line": 2,
+              "end_col": 5
+            },
+            "sv_kind": "SlangError:ExpectedDeclarator",
+            "text": "sva_kind_clock_e.sv:2: expected a declaration name"
+          }
+        ],
+        "properties": [
+          {
+            "kind": "SvaProperty",
+            "span": {
+              "line": 2,
+              "col": 7,
+              "end_line": 2,
+              "end_col": 44
+            },
+            "name": "",
+            "property_kind": "restrict",
+            "clock": "clk",
+            "text": "restrict property (@(posedge clk) a);"
+          }
+        ]
+      }
+    ],
+    "others": []
+  },
+  "lean_blocks": []
+}

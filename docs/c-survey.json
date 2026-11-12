@@ -10,8 +10,8 @@
   "gcc.c-torture/execute": {
    "not-parsed": 267,
    "oracle-tests-compiler": 1,
-   "passed": 719,
-   "refused-libc": 31,
+   "passed": 720,
+   "refused-libc": 30,
    "refused-ub": 63,
    "refused-unsupported": 779,
    "timeout": 58
@@ -28,8 +28,8 @@
  "counts": {
   "not-parsed": 294,
   "oracle-tests-compiler": 1,
-  "passed": 879,
-  "refused-libc": 36,
+  "passed": 880,
+  "refused-libc": 35,
   "refused-ub": 72,
   "refused-unsupported": 872,
   "timeout": 60
@@ -1789,14 +1789,6 @@
   },
   {
    "files": [
-    "pr93249.c"
-   ],
-   "present": 1,
-   "sole": 1,
-   "wall": "libc-call: __builtin_strncpy"
-  },
-  {
-   "files": [
     "970217-1.c"
    ],
    "present": 1,
@@ -1853,19 +1845,19 @@
   },
   {
    "files": [
+    "00179.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "libc-call: strcat"
+  },
+  {
+   "files": [
     "20050218-1.c"
    ],
    "present": 1,
    "sole": 1,
    "wall": "libc-call: strncmp"
-  },
-  {
-   "files": [
-    "00179.c"
-   ],
-   "present": 1,
-   "sole": 1,
-   "wall": "libc-call: strncpy"
   },
   {
    "files": [
@@ -4213,8 +4205,8 @@
   }
  ],
  "manifest_hash": "eb2ea162993fd287a86d680d539ca5a9bba4f09b045a6ad663aaf88cdc3f445d",
- "measured_at_utc": "2026-11-12T18:58:23Z",
- "measured_commit": "f97e994a0",
+ "measured_at_utc": "2026-11-12T20:05:19Z",
+ "measured_commit": "6b384fcf45c57734441bcfee64fb4e834b158f30",
  "pin": {
   "corpora": [
    "C1",
@@ -6252,8 +6244,8 @@
   },
   {
    "corpus": "c-testsuite/single-exec",
-   "detail": "strncpy",
-   "dynamic_wall": "libc-call: strncpy",
+   "detail": "strcat",
+   "dynamic_wall": "libc-call: strcat",
    "manifest_status": "parsed",
    "name": "00179.c",
    "sha256": "9d2a00c8420a356625a16e53a81d51ae5b00380039c8224e266d9a154509ee89",
@@ -28286,8 +28278,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "__builtin_strncpy",
-   "dynamic_wall": "libc-call: __builtin_strncpy",
+   "detail": "",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "pr93249.c",
    "sha256": "3cc26ac7719ebad6c8fc701c8ac03e73fc2784fe81be00dcf4b199c19e394bb5",
@@ -28296,7 +28288,7 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",

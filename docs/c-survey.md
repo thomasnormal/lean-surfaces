@@ -2,10 +2,10 @@
 
 Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manifest.
 
-- verdicts: 594/2214 MATCH (passed 594, failed 0, oracle 0)
+- verdicts: 595/2214 MATCH (passed 595, failed 0, oracle 0)
 - manifest SHA-256: `1de1a60c299d5bb51dae7ca001b0a008010cad0b25670cde2090c08bfc1a84ce`
-- measured commit: `d1813f66e`
-- measured at: `2026-11-12T03:27:59Z`
+- measured commit: `d7159d66a`
+- measured at: `2026-11-12T03:38:00Z`
 
 ## Verdict counts
 
@@ -13,10 +13,10 @@ Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manife
 | --- | ---: |
 | `not-ingested` | 25 |
 | `not-parsed` | 350 |
-| `passed` | 594 |
+| `passed` | 595 |
 | `refused-libc` | 99 |
 | `refused-ub` | 31 |
-| `refused-unsupported` | 1071 |
+| `refused-unsupported` | 1070 |
 | `timeout` | 44 |
 
 ## Counts by corpus
@@ -32,10 +32,10 @@ Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manife
 | `c-testsuite/single-exec` | `timeout` | 2 |
 | `gcc.c-torture/execute` | `not-ingested` | 19 |
 | `gcc.c-torture/execute` | `not-parsed` | 321 |
-| `gcc.c-torture/execute` | `passed` | 497 |
+| `gcc.c-torture/execute` | `passed` | 498 |
 | `gcc.c-torture/execute` | `refused-libc` | 95 |
 | `gcc.c-torture/execute` | `refused-ub` | 28 |
-| `gcc.c-torture/execute` | `refused-unsupported` | 916 |
+| `gcc.c-torture/execute` | `refused-unsupported` | 915 |
 | `gcc.c-torture/execute` | `timeout` | 42 |
 | `gcc.c23-run` | `not-ingested` | 1 |
 | `gcc.c23-run` | `not-parsed` | 28 |
@@ -57,7 +57,6 @@ Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manife
 | `unsupported:StmtExpr` | 1 | 10 | 00213.c, 00214.c, 20000703-1.c, 20000917-1.c, 20001203-2.c |
 | `unsupported:AddrLabelExpr` | 1 | 8 | 20040302-1.c, 20041214-1.c, 20071210-1.c, 920501-4.c, 920501-5.c |
 | `unsupported:EmptyDecl` | 1 | 6 | 20050106-1.c, 20230630-2.c, 20230630-4.c, builtin-bitops-1.c, pr34154.c |
-| `unsupported:CXXBoolLiteralExpr` | 1 | 4 | 20010604-1.c, 20210505-1.c, gcc/testsuite/gcc.dg/c23-bool-1.c, gcc/testsuite/gcc.dg/c23-bool-2.c |
 | `unsupported:ChooseExpr` | 1 | 1 | pr19449.c |
 | `string-literal` | 0 | 262 | 00025.c, 00026.c, 00056.c, 00058.c, 00112.c |
 | `cast:IntegralToFloating` | 0 | 81 | 00113.c, 00119.c, 00123.c, 00174.c, 00175.c |

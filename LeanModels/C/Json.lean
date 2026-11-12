@@ -177,6 +177,8 @@ partial def parseExpr (j : Json) : Except String Expr := do
                           | .str s => s
                           | .num n => toString n
                           | _ => v.compress) (← ty) span
+    | "CXXBoolLiteralExpr" =>
+        return .boolLit (← getBool j "value") (← ty) span
     | "DeclRefExpr" =>
         let id ← getOptStr j "decl_id"
         return .declRef (id.map DeclarationId.mk) (← getStr j "name")

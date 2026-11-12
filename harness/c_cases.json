@@ -60,6 +60,12 @@
     "return_value": 0
   },
   {
+    "id": "bool-literal",
+    "source": "int main(void) { return (true && !false) ? 0 : 1; }",
+    "expect": "match",
+    "return_value": 0
+  },
+  {
     "id": "compound-signed-char",
     "source": "int main(void) { signed char s = 127; s += 1; return s; }",
     "expect": "match",

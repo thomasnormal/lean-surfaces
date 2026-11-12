@@ -12,10 +12,10 @@
   "gcc.c-torture/execute": {
    "not-ingested": 19,
    "not-parsed": 321,
-   "passed": 497,
+   "passed": 498,
    "refused-libc": 95,
    "refused-ub": 28,
-   "refused-unsupported": 916,
+   "refused-unsupported": 915,
    "timeout": 42
   },
   "gcc.c23-run": {
@@ -30,15 +30,15 @@
  "counts": {
   "not-ingested": 25,
   "not-parsed": 350,
-  "passed": 594,
+  "passed": 595,
   "refused-libc": 99,
   "refused-ub": 31,
-  "refused-unsupported": 1071,
+  "refused-unsupported": 1070,
   "timeout": 44
  },
  "manifest_hash": "1de1a60c299d5bb51dae7ca001b0a008010cad0b25670cde2090c08bfc1a84ce",
- "measured_at_utc": "2026-11-12T03:27:59Z",
- "measured_commit": "d1813f66e",
+ "measured_at_utc": "2026-11-12T03:38:00Z",
+ "measured_commit": "d7159d66a",
  "pin": null,
  "rows": [
   {
@@ -3570,14 +3570,12 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "out of tier: CXXBoolLiteralExpr",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
    "manifest_status": "parsed",
    "name": "20010604-1.c",
    "sha256": "051d4878aad4cea2ce84edb1f9b1f25e5c5c2c569d3e60cbb1259123fd33462a",
-   "static_walls": [
-    "unsupported:CXXBoolLiteralExpr"
-   ],
-   "verdict": "refused-unsupported"
+   "static_walls": [],
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -7346,14 +7344,13 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "out of tier: CXXBoolLiteralExpr",
+   "detail": "unbound declaration 'id64' (name 'buf')",
    "manifest_status": "parsed",
    "name": "20210505-1.c",
    "sha256": "f89abf070a7dae85ad9026f5113b7fa91e4f6f3c9eb2f03a9514de8910222d57",
    "static_walls": [
     "libc-call",
-    "type-layout",
-    "unsupported:CXXBoolLiteralExpr"
+    "type-layout"
    ],
    "verdict": "refused-unsupported"
   },
@@ -12962,7 +12959,6 @@
     "libc-call",
     "string-literal",
     "type-layout",
-    "unsupported:CXXBoolLiteralExpr",
     "unsupported:GenericSelectionExpr"
    ],
    "verdict": "refused-unsupported"
@@ -12974,7 +12970,6 @@
    "name": "gcc/testsuite/gcc.dg/c23-bool-2.c",
    "sha256": "9f8f47594b81fe933a736f7db31bb474a6065ef44056ccf51d91bcddc28f884b",
    "static_walls": [
-    "unsupported:CXXBoolLiteralExpr",
     "unsupported:GenericSelectionExpr",
     "unsupported:StaticAssertDecl"
    ],
@@ -25714,17 +25709,6 @@
    "present": 6,
    "sole": 1,
    "wall": "unsupported:EmptyDecl"
-  },
-  {
-   "files": [
-    "20010604-1.c",
-    "20210505-1.c",
-    "gcc/testsuite/gcc.dg/c23-bool-1.c",
-    "gcc/testsuite/gcc.dg/c23-bool-2.c"
-   ],
-   "present": 4,
-   "sole": 1,
-   "wall": "unsupported:CXXBoolLiteralExpr"
   },
   {
    "files": [

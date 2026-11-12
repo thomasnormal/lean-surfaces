@@ -927,6 +927,8 @@ def evalExpr (ctx : Ctx) : Expr → EvalM CVal
       match v.toInt? with
       | some n => pure (.int t n)
       | none => refuseUnsupported s!"integer literal spelling '{v}'"
+  | .boolLit b _ _ =>
+      pure (.int IntTy.bool_ (if b then 1 else 0))
   | .charLit v ty _ => do
       let t ← intTyOf (ctx.layout.normalizeTy ty)
       match v.toInt? with
@@ -1631,6 +1633,7 @@ private theorem memInvariant_core (ctx : Ctx) : ∀ (n : Nat) (e : Expr), e.size
       have hnode := Expr.nodeIsPure_of_isPure hp
       cases e with
       | intLit _ _ _ => exact ⟨by open_eval; mem_inv, by open_lvalue; mem_inv⟩
+      | boolLit _ _ _ => exact ⟨by open_eval; mem_inv, by open_lvalue; mem_inv⟩
       | charLit _ _ _ => exact ⟨by open_eval; mem_inv, by open_lvalue; mem_inv⟩
       | strLit _ _ _ => exact ⟨by open_eval; mem_inv, by open_lvalue; mem_inv⟩
       | floatLit _ _ _ => exact ⟨by open_eval; mem_inv, by open_lvalue; mem_inv⟩

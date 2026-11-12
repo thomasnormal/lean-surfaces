@@ -121,6 +121,8 @@ inductive Expr where
   | charLit (value : String) (ty : CType) (span : CSpan)
   | strLit (value : String) (ty : CType) (span : CSpan)
   | floatLit (value : String) (ty : CType) (span : CSpan)
+  /-- C23's `true`/`false` literals, retained from clang's semantic node. -/
+  | boolLit (value : Bool) (ty : CType) (span : CSpan)
   /-- A name, with the kind of declaration it resolved to. -/
   | declRef (id : Option DeclarationId) (name : String) (declKind : String)
       (ty : CType) (span : CSpan)
@@ -281,6 +283,7 @@ Version-neutral: it reads a field the `c-0.1` envelope already carries
 consumer refuses rather than inventing one. -/
 def Expr.ty : Expr → CType
   | .intLit _ t _ | .charLit _ t _ | .strLit _ t _ | .floatLit _ t _ => t
+  | .boolLit _ t _ => t
   | .declRef _ _ _ t _ => t
   | .member _ _ _ t _ | .index _ _ t _ | .call _ _ t _ => t
   | .binop _ _ _ t _ | .compoundAssign _ _ _ _ _ t _ => t
@@ -298,6 +301,7 @@ def Expr.kindName : Expr → String
   | .charLit .. => "CharacterLiteral"
   | .strLit .. => "StringLiteral"
   | .floatLit .. => "FloatingLiteral"
+  | .boolLit .. => "CXXBoolLiteralExpr"
   | .declRef .. => "DeclRefExpr"
   | .member .. => "MemberExpr"
   | .index .. => "ArraySubscriptExpr"

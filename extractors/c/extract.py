@@ -68,6 +68,7 @@ STMTS = {"CompoundStmt", "DeclStmt", "IfStmt", "ForStmt", "WhileStmt", "DoStmt",
          "ReturnStmt", "BreakStmt", "ContinueStmt", "GotoStmt", "LabelStmt",
          "NullStmt", "SwitchStmt", "CaseStmt", "DefaultStmt"}
 EXPRS = {"IntegerLiteral", "CharacterLiteral", "StringLiteral", "FloatingLiteral",
+         "CXXBoolLiteralExpr",
          "DeclRefExpr", "MemberExpr", "ArraySubscriptExpr", "CallExpr",
          "BinaryOperator", "CompoundAssignOperator", "UnaryOperator",
          "ConditionalOperator", "ParenExpr", "ImplicitCastExpr", "CStyleCastExpr",
@@ -489,6 +490,11 @@ class Extractor:
         return {"value": n.get("value"), "type": qual(n)}
 
     def e_FloatingLiteral(self, n):
+        return {"value": n.get("value"), "type": qual(n)}
+
+    def e_CXXBoolLiteralExpr(self, n):
+        # Clang supplies the parser's semantic boolean value; retain it as a
+        # boolean field rather than reparsing the source spelling.
         return {"value": n.get("value"), "type": qual(n)}
 
     def e_DeclRefExpr(self, n):

@@ -73280,5 +73280,14 @@
     "stimulus": [{"x": "0"}, {"x": "1"}, {"x": "x"}, {"x": "z"}],
     "measured": "2026-11-12: a bound generate parameter W=4 selects the source branch `assign y=!x`; E matches Icarus Verilog 13.0 and Xcelium 24.03-s004."
   }
+  ,{
+    "name": "profile_mixed_e_boundary",
+    "example": "sem2/profile_mixed_e",
+    "top": "profile_mixed_e",
+    "signals": ["rst", "d", "q", "y"],
+    "stimulus": [{"rst": "0", "d": "0", "clk": "0"}, {"rst": "1", "d": "1", "clk": "0"}, {"rst": "1", "d": "1", "clk": "1"}, {"rst": "1", "d": "0", "clk": "0"}, {"rst": "1", "d": "0", "clk": "1"}],
+    "refusal": "Clock:async-reset",
+    "measured": "2026-11-12: the source-shaped async-reset edge plus continuous output satisfies ffResetProfileB and ffMixedProfileB but remains outside ordinary E; the runner names Clock:async-reset while Icarus Verilog 13.0 and Xcelium 24.03-s004 provide the source trace."
+  }
   ]
 }

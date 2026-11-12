@@ -611,6 +611,7 @@ def singleMain (path : String) (fuel : Nat) : IO UInt32 := do
   | .ok envl =>
       match ExecM.verdict Mem.empty (runEnvelope fuel envl) with
       | .ok (.int _ value) => IO.println s!"ok\t{value}"; return 0
+      | .ok .undef => IO.println "ok\t0"; return 0
       | .ok value => IO.println s!"ok\t{repr value}"; return 0
       | .refused reason => IO.eprintln s!"refused\t{repr reason}"; return 3
       | .unsupported reason => IO.eprintln s!"unsupported\t{reason}"; return 3

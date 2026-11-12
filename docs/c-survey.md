@@ -2,10 +2,10 @@
 
 Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manifest.
 
-- verdicts: 689/2214 MATCH (passed 689, failed 0, oracle 0)
+- verdicts: 693/2214 MATCH (passed 693, failed 0, oracle 0)
 - manifest SHA-256: `1de1a60c299d5bb51dae7ca001b0a008010cad0b25670cde2090c08bfc1a84ce`
-- measured commit: `bf32c696f`
-- measured at: `2026-11-12T08:08:25Z`
+- measured commit: `5dd59349e`
+- measured at: `2026-11-12T08:25:13Z`
 
 ## Verdict counts
 
@@ -13,8 +13,8 @@ Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manife
 | --- | ---: |
 | `not-ingested` | 25 |
 | `not-parsed` | 350 |
-| `passed` | 689 |
-| `refused-libc` | 103 |
+| `passed` | 693 |
+| `refused-libc` | 99 |
 | `refused-ub` | 36 |
 | `refused-unsupported` | 964 |
 | `timeout` | 47 |
@@ -32,8 +32,8 @@ Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manife
 | `c-testsuite/single-exec` | `timeout` | 2 |
 | `gcc.c-torture/execute` | `not-ingested` | 19 |
 | `gcc.c-torture/execute` | `not-parsed` | 321 |
-| `gcc.c-torture/execute` | `passed` | 578 |
-| `gcc.c-torture/execute` | `refused-libc` | 94 |
+| `gcc.c-torture/execute` | `passed` | 582 |
+| `gcc.c-torture/execute` | `refused-libc` | 90 |
 | `gcc.c-torture/execute` | `refused-ub` | 33 |
 | `gcc.c-torture/execute` | `refused-unsupported` | 828 |
 | `gcc.c-torture/execute` | `timeout` | 45 |
@@ -124,7 +124,6 @@ The run's first refusal, normalized by construct; `sole` counts rows whose first
 | `unsupported:break, continue or goto escaped a function body` | 5 | 5 | 00010.c, 20030909-1.c, 20040704-1.c, pr119291.c, pr17078-1.c |
 | `unsupported:operator '-' on two pointers` | 5 | 5 | 00037.c, 20021015-1.c, 950710-1.c, 980701-1.c, pr36038.c |
 | `cast:FloatingCast` | 4 | 4 | 20020413-1.c, 920618-1.c, ieee/pr67218.c, pr36343.c |
-| `libc-call: __builtin_add_overflow` | 4 | 4 | pr108789.c, pr85095.c, pr90311.c, pr93494.c |
 | `libc-call: __builtin_prefetch` | 4 | 4 | builtin-prefetch-1.c, builtin-prefetch-2.c, builtin-prefetch-4.c, builtin-prefetch-5.c |
 | `libc-call: foo` | 4 | 4 | 20010925-1.c, 20011114-1.c, 20030117-1.c, nestfunc-4.c |
 | `unsupported:extern object 'b' has no definition in the translation unit` | 4 | 4 | alias-2.c, alias-3.c, alias-4.c, gcc/testsuite/gcc.dg/c23-bool-2.c |

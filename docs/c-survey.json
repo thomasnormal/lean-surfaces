@@ -12,8 +12,8 @@
   "gcc.c-torture/execute": {
    "not-ingested": 19,
    "not-parsed": 321,
-   "passed": 578,
-   "refused-libc": 94,
+   "passed": 582,
+   "refused-libc": 90,
    "refused-ub": 33,
    "refused-unsupported": 828,
    "timeout": 45
@@ -31,8 +31,8 @@
  "counts": {
   "not-ingested": 25,
   "not-parsed": 350,
-  "passed": 689,
-  "refused-libc": 103,
+  "passed": 693,
+  "refused-libc": 99,
   "refused-ub": 36,
   "refused-unsupported": 964,
   "timeout": 47
@@ -1340,17 +1340,6 @@
    "present": 4,
    "sole": 4,
    "wall": "cast:FloatingCast"
-  },
-  {
-   "files": [
-    "pr108789.c",
-    "pr85095.c",
-    "pr90311.c",
-    "pr93494.c"
-   ],
-   "present": 4,
-   "sole": 4,
-   "wall": "libc-call: __builtin_add_overflow"
   },
   {
    "files": [
@@ -4309,8 +4298,8 @@
   }
  ],
  "manifest_hash": "1de1a60c299d5bb51dae7ca001b0a008010cad0b25670cde2090c08bfc1a84ce",
- "measured_at_utc": "2026-11-12T08:08:25Z",
- "measured_commit": "bf32c696f",
+ "measured_at_utc": "2026-11-12T08:25:13Z",
+ "measured_commit": "5dd59349e",
  "pin": null,
  "rows": [
   {
@@ -21439,15 +21428,15 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "__builtin_add_overflow",
-   "dynamic_wall": "libc-call: __builtin_add_overflow",
+   "detail": "",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "pr108789.c",
    "sha256": "5e7e94668d51a5ee051d4a9028ca44db6a5946ff1a1a9652d99069d8c2da076b",
    "static_walls": [
     "libc-call"
    ],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -27713,15 +27702,15 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "__builtin_add_overflow",
-   "dynamic_wall": "libc-call: __builtin_add_overflow",
+   "detail": "",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "pr85095.c",
    "sha256": "0c8660d7423f40481f1b632e9addf2f407c2dba3e4d06e096769f5a4981856e0",
    "static_walls": [
     "libc-call"
    ],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -28087,15 +28076,15 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "__builtin_add_overflow",
-   "dynamic_wall": "libc-call: __builtin_add_overflow",
+   "detail": "",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "pr90311.c",
    "sha256": "da43b07aec6b737a26fe80cdb7f9d0aeb480202cb78627797956eee29632e4aa",
    "static_walls": [
     "libc-call"
    ],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -28295,15 +28284,15 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "__builtin_add_overflow",
-   "dynamic_wall": "libc-call: __builtin_add_overflow",
+   "detail": "",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "pr93494.c",
    "sha256": "4ff01fb8f7e622b24c1931dcf0dbedc554b3554f93778304e74ece81a29e85c7",
    "static_walls": [
     "libc-call"
    ],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",

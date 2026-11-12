@@ -1,0 +1,2641 @@
+{
+ "files": 37,
+ "rows": [
+  {
+   "functions": [
+    {
+     "calls": 2,
+     "conservative_pure_shape": false,
+     "increments": 0,
+     "name": "main",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "f",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "g",
+     "writes": 0
+    }
+   ],
+   "name": "00121.c"
+  },
+  {
+   "functions": [
+    {
+     "calls": 0,
+     "conservative_pure_shape": false,
+     "increments": 0,
+     "name": "foo1",
+     "writes": 1
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": false,
+     "increments": 0,
+     "name": "foo2",
+     "writes": 1
+    },
+    {
+     "calls": 4,
+     "conservative_pure_shape": false,
+     "increments": 0,
+     "name": "main",
+     "writes": 0
+    }
+   ],
+   "name": "20001228-1.c"
+  },
+  {
+   "functions": [
+    {
+     "calls": 4,
+     "conservative_pure_shape": false,
+     "increments": 1,
+     "name": "foo",
+     "writes": 3
+    },
+    {
+     "calls": 2,
+     "conservative_pure_shape": false,
+     "increments": 0,
+     "name": "main",
+     "writes": 0
+    }
+   ],
+   "name": "20050218-1.c"
+  },
+  {
+   "functions": [
+    {
+     "calls": 0,
+     "conservative_pure_shape": false,
+     "increments": 1,
+     "name": "foo1",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": false,
+     "increments": 1,
+     "name": "foo2",
+     "writes": 0
+    },
+    {
+     "calls": 4,
+     "conservative_pure_shape": false,
+     "increments": 0,
+     "name": "main",
+     "writes": 0
+    }
+   ],
+   "name": "20051021-1.c"
+  },
+  {
+   "functions": [
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "f",
+     "writes": 0
+    },
+    {
+     "calls": 3,
+     "conservative_pure_shape": false,
+     "increments": 0,
+     "name": "main",
+     "writes": 0
+    }
+   ],
+   "name": "20060102-1.c"
+  },
+  {
+   "functions": [
+    {
+     "calls": 0,
+     "conservative_pure_shape": false,
+     "increments": 3,
+     "name": "foo",
+     "writes": 1
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": false,
+     "increments": 3,
+     "name": "bar",
+     "writes": 1
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": false,
+     "increments": 3,
+     "name": "baz",
+     "writes": 1
+    },
+    {
+     "calls": 6,
+     "conservative_pure_shape": false,
+     "increments": 0,
+     "name": "main",
+     "writes": 4
+    }
+   ],
+   "name": "20060929-1.c"
+  },
+  {
+   "functions": [
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "f",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "f1",
+     "writes": 0
+    },
+    {
+     "calls": 3,
+     "conservative_pure_shape": false,
+     "increments": 2,
+     "name": "main",
+     "writes": 2
+    }
+   ],
+   "name": "20230510-1.c"
+  },
+  {
+   "functions": [
+    {
+     "calls": 0,
+     "conservative_pure_shape": false,
+     "increments": 0,
+     "name": "foo",
+     "writes": 1
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": false,
+     "increments": 0,
+     "name": "foo_v",
+     "writes": 1
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": false,
+     "increments": 0,
+     "name": "bar",
+     "writes": 1
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": false,
+     "increments": 0,
+     "name": "bar_v",
+     "writes": 1
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": false,
+     "increments": 0,
+     "name": "baz",
+     "writes": 1
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": false,
+     "increments": 0,
+     "name": "baz_v",
+     "writes": 1
+    },
+    {
+     "calls": 9,
+     "conservative_pure_shape": false,
+     "increments": 1,
+     "name": "main",
+     "writes": 0
+    }
+   ],
+   "name": "20230802-1.c"
+  },
+  {
+   "functions": [],
+   "name": "920501-6.c"
+  },
+  {
+   "functions": [
+    {
+     "calls": 0,
+     "conservative_pure_shape": false,
+     "increments": 0,
+     "name": "test_endianness",
+     "writes": 1
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": false,
+     "increments": 0,
+     "name": "test_endianness_vol",
+     "writes": 1
+    },
+    {
+     "calls": 4,
+     "conservative_pure_shape": false,
+     "increments": 0,
+     "name": "main",
+     "writes": 0
+    }
+   ],
+   "name": "930930-2.c"
+  },
+  {
+   "functions": [
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "f",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "g",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "h",
+     "writes": 0
+    },
+    {
+     "calls": 5,
+     "conservative_pure_shape": false,
+     "increments": 0,
+     "name": "main",
+     "writes": 0
+    }
+   ],
+   "name": "991202-3.c"
+  },
+  {
+   "functions": [
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "h0",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "i0",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "k0",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "h1",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "i1",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "k1",
+     "writes": 0
+    },
+    {
+     "calls": 9,
+     "conservative_pure_shape": false,
+     "increments": 2,
+     "name": "main",
+     "writes": 0
+    }
+   ],
+   "name": "bitops-1.c"
+  },
+  {
+   "functions": [
+    {
+     "calls": 1,
+     "conservative_pure_shape": false,
+     "increments": 0,
+     "name": "g",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": false,
+     "increments": 0,
+     "name": "f",
+     "writes": 9
+    },
+    {
+     "calls": 24,
+     "conservative_pure_shape": false,
+     "increments": 0,
+     "name": "main",
+     "writes": 0
+    }
+   ],
+   "name": "bswap-1.c"
+  },
+  {
+   "functions": [
+    {
+     "calls": 1,
+     "conservative_pure_shape": false,
+     "increments": 0,
+     "name": "f",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "g",
+     "writes": 0
+    },
+    {
+     "calls": 3,
+     "conservative_pure_shape": false,
+     "increments": 1,
+     "name": "main",
+     "writes": 0
+    }
+   ],
+   "name": "bswap-3.c"
+  },
+  {
+   "functions": [
+    {
+     "calls": 0,
+     "conservative_pure_shape": false,
+     "increments": 1,
+     "name": "my_ffsl",
+     "writes": 1
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": false,
+     "increments": 1,
+     "name": "my_ctzl",
+     "writes": 1
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": false,
+     "increments": 1,
+     "name": "my_clzl",
+     "writes": 1
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": false,
+     "increments": 1,
+     "name": "my_clrsbl",
+     "writes": 1
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": false,
+     "increments": 2,
+     "name": "my_popcountl",
+     "writes": 1
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": false,
+     "increments": 2,
+     "name": "my_parityl",
+     "writes": 1
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": false,
+     "increments": 1,
+     "name": "my_ffsll",
+     "writes": 1
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": false,
+     "increments": 1,
+     "name": "my_ctzll",
+     "writes": 1
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": false,
+     "increments": 1,
+     "name": "my_clzll",
+     "writes": 1
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": false,
+     "increments": 1,
+     "name": "my_clrsbll",
+     "writes": 1
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": false,
+     "increments": 2,
+     "name": "my_popcountll",
+     "writes": 1
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": false,
+     "increments": 2,
+     "name": "my_parityll",
+     "writes": 1
+    },
+    {
+     "calls": 505,
+     "conservative_pure_shape": false,
+     "increments": 3,
+     "name": "main",
+     "writes": 3
+    }
+   ],
+   "name": "builtin-bitops-1.c"
+  },
+  {
+   "functions": [
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "g1",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "g2",
+     "writes": 0
+    },
+    {
+     "calls": 4,
+     "conservative_pure_shape": false,
+     "increments": 0,
+     "name": "f",
+     "writes": 0
+    },
+    {
+     "calls": 6,
+     "conservative_pure_shape": false,
+     "increments": 0,
+     "name": "main",
+     "writes": 0
+    }
+   ],
+   "name": "cvt-1.c"
+  },
+  {
+   "functions": [
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "f",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "r",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "std_eqn",
+     "writes": 0
+    },
+    {
+     "calls": 5,
+     "conservative_pure_shape": false,
+     "increments": 1,
+     "name": "main",
+     "writes": 1
+    }
+   ],
+   "name": "divconst-2.c"
+  },
+  {
+   "functions": [
+    {
+     "calls": 4,
+     "conservative_pure_shape": false,
+     "increments": 0,
+     "name": "foo",
+     "writes": 0
+    },
+    {
+     "calls": 5,
+     "conservative_pure_shape": false,
+     "increments": 0,
+     "name": "main",
+     "writes": 0
+    }
+   ],
+   "name": "ieee/pr109386.c"
+  },
+  {
+   "functions": [
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "min_lt_",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "min_lt_volatile",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "max_lt_",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "max_lt_volatile",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "min_gt_",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "min_gt_volatile",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "max_gt_",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "max_gt_volatile",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "min_le_",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "min_le_volatile",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "max_le_",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "max_le_volatile",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "min_ge_",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "min_ge_volatile",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "max_ge_",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "max_ge_volatile",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "min_ne_",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "min_ne_volatile",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "max_ne_",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "max_ne_volatile",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "min_eq_",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "min_eq_volatile",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "max_eq_",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "max_eq_volatile",
+     "writes": 0
+    },
+    {
+     "calls": 36,
+     "conservative_pure_shape": false,
+     "increments": 2,
+     "name": "main",
+     "writes": 0
+    }
+   ],
+   "name": "minmaxcmp-1.c"
+  },
+  {
+   "functions": [
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "lt_lt_ne_",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "lt_lt_ne_volatile",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "lt_lt_eq_",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "lt_lt_eq_volatile",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "lt_lt_xor_",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "lt_lt_xor_volatile",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "lt_le_ne_",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "lt_le_ne_volatile",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "lt_le_eq_",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "lt_le_eq_volatile",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "lt_le_xor_",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "lt_le_xor_volatile",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "lt_gt_ne_",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "lt_gt_ne_volatile",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "lt_gt_eq_",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "lt_gt_eq_volatile",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "lt_gt_xor_",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "lt_gt_xor_volatile",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "lt_ge_ne_",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "lt_ge_ne_volatile",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "lt_ge_eq_",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "lt_ge_eq_volatile",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "lt_ge_xor_",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "lt_ge_xor_volatile",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "lt_eq_ne_",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "lt_eq_ne_volatile",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "lt_eq_eq_",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "lt_eq_eq_volatile",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "lt_eq_xor_",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "lt_eq_xor_volatile",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "lt_ne_ne_",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "lt_ne_ne_volatile",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "lt_ne_eq_",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "lt_ne_eq_volatile",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "lt_ne_xor_",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "lt_ne_xor_volatile",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "le_lt_ne_",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "le_lt_ne_volatile",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "le_lt_eq_",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "le_lt_eq_volatile",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "le_lt_xor_",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "le_lt_xor_volatile",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "le_le_ne_",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "le_le_ne_volatile",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "le_le_eq_",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "le_le_eq_volatile",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "le_le_xor_",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "le_le_xor_volatile",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "le_gt_ne_",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "le_gt_ne_volatile",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "le_gt_eq_",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "le_gt_eq_volatile",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "le_gt_xor_",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "le_gt_xor_volatile",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "le_ge_ne_",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "le_ge_ne_volatile",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "le_ge_eq_",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "le_ge_eq_volatile",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "le_ge_xor_",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "le_ge_xor_volatile",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "le_eq_ne_",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "le_eq_ne_volatile",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "le_eq_eq_",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "le_eq_eq_volatile",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "le_eq_xor_",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "le_eq_xor_volatile",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "le_ne_ne_",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "le_ne_ne_volatile",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "le_ne_eq_",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "le_ne_eq_volatile",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "le_ne_xor_",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "le_ne_xor_volatile",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "gt_lt_ne_",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "gt_lt_ne_volatile",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "gt_lt_eq_",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "gt_lt_eq_volatile",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "gt_lt_xor_",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "gt_lt_xor_volatile",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "gt_le_ne_",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "gt_le_ne_volatile",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "gt_le_eq_",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "gt_le_eq_volatile",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "gt_le_xor_",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "gt_le_xor_volatile",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "gt_gt_ne_",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "gt_gt_ne_volatile",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "gt_gt_eq_",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "gt_gt_eq_volatile",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "gt_gt_xor_",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "gt_gt_xor_volatile",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "gt_ge_ne_",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "gt_ge_ne_volatile",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "gt_ge_eq_",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "gt_ge_eq_volatile",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "gt_ge_xor_",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "gt_ge_xor_volatile",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "gt_eq_ne_",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "gt_eq_ne_volatile",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "gt_eq_eq_",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "gt_eq_eq_volatile",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "gt_eq_xor_",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "gt_eq_xor_volatile",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "gt_ne_ne_",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "gt_ne_ne_volatile",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "gt_ne_eq_",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "gt_ne_eq_volatile",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "gt_ne_xor_",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "gt_ne_xor_volatile",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "ge_lt_ne_",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "ge_lt_ne_volatile",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "ge_lt_eq_",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "ge_lt_eq_volatile",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "ge_lt_xor_",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "ge_lt_xor_volatile",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "ge_le_ne_",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "ge_le_ne_volatile",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "ge_le_eq_",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "ge_le_eq_volatile",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "ge_le_xor_",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "ge_le_xor_volatile",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "ge_gt_ne_",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "ge_gt_ne_volatile",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "ge_gt_eq_",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "ge_gt_eq_volatile",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "ge_gt_xor_",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "ge_gt_xor_volatile",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "ge_ge_ne_",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "ge_ge_ne_volatile",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "ge_ge_eq_",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "ge_ge_eq_volatile",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "ge_ge_xor_",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "ge_ge_xor_volatile",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "ge_eq_ne_",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "ge_eq_ne_volatile",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "ge_eq_eq_",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "ge_eq_eq_volatile",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "ge_eq_xor_",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "ge_eq_xor_volatile",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "ge_ne_ne_",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "ge_ne_ne_volatile",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "ge_ne_eq_",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "ge_ne_eq_volatile",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "ge_ne_xor_",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "ge_ne_xor_volatile",
+     "writes": 0
+    },
+    {
+     "calls": 216,
+     "conservative_pure_shape": false,
+     "increments": 2,
+     "name": "main",
+     "writes": 0
+    }
+   ],
+   "name": "pr107881-1.c"
+  },
+  {
+   "functions": [
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "eqeq_0",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "eqeq_0_v",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "eqeq_1",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "eqeq_1_v",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "eqeq_2",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "eqeq_2_v",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "eqne_0",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "eqne_0_v",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "eqne_1",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "eqne_1_v",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "eqne_2",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "eqne_2_v",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "neeq_0",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "neeq_0_v",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "neeq_1",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "neeq_1_v",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "neeq_2",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "neeq_2_v",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "nene_0",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "nene_0_v",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "nene_1",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "nene_1_v",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "nene_2",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "nene_2_v",
+     "writes": 0
+    },
+    {
+     "calls": 36,
+     "conservative_pure_shape": false,
+     "increments": 1,
+     "name": "main",
+     "writes": 0
+    }
+   ],
+   "name": "pr110666-1.c"
+  },
+  {
+   "functions": [
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "foo",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "func_0_",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "func_0_volatile",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "func_1_",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "func_1_volatile",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "func_5_",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "func_5_volatile",
+     "writes": 0
+    },
+    {
+     "calls": 9,
+     "conservative_pure_shape": false,
+     "increments": 1,
+     "name": "main",
+     "writes": 0
+    }
+   ],
+   "name": "pr111431-1.c"
+  },
+  {
+   "functions": [
+    {
+     "calls": 2,
+     "conservative_pure_shape": false,
+     "increments": 1,
+     "name": "f",
+     "writes": 0
+    },
+    {
+     "calls": 1,
+     "conservative_pure_shape": false,
+     "increments": 1,
+     "name": "y",
+     "writes": 1
+    },
+    {
+     "calls": 7,
+     "conservative_pure_shape": false,
+     "increments": 0,
+     "name": "main",
+     "writes": 0
+    }
+   ],
+   "name": "pr17377.c"
+  },
+  {
+   "functions": [
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "next_g",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "curr_p",
+     "writes": 0
+    },
+    {
+     "calls": 1,
+     "conservative_pure_shape": false,
+     "increments": 0,
+     "name": "inc_g",
+     "writes": 1
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "curr_g",
+     "writes": 0
+    },
+    {
+     "calls": 2,
+     "conservative_pure_shape": false,
+     "increments": 0,
+     "name": "ring_empty",
+     "writes": 0
+    },
+    {
+     "calls": 2,
+     "conservative_pure_shape": false,
+     "increments": 0,
+     "name": "frob",
+     "writes": 2
+    },
+    {
+     "calls": 3,
+     "conservative_pure_shape": false,
+     "increments": 1,
+     "name": "get_n",
+     "writes": 1
+    },
+    {
+     "calls": 4,
+     "conservative_pure_shape": false,
+     "increments": 0,
+     "name": "main",
+     "writes": 1
+    }
+   ],
+   "name": "pr20100-1.c"
+  },
+  {
+   "functions": [
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "foo",
+     "writes": 0
+    },
+    {
+     "calls": 2,
+     "conservative_pure_shape": false,
+     "increments": 0,
+     "name": "main",
+     "writes": 0
+    }
+   ],
+   "name": "pr20621-1.c"
+  },
+  {
+   "functions": [
+    {
+     "calls": 2,
+     "conservative_pure_shape": false,
+     "increments": 0,
+     "name": "lisp_atan2",
+     "writes": 0
+    },
+    {
+     "calls": 2,
+     "conservative_pure_shape": false,
+     "increments": 0,
+     "name": "main",
+     "writes": 0
+    }
+   ],
+   "name": "pr33142.c"
+  },
+  {
+   "functions": [
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "foo",
+     "writes": 0
+    },
+    {
+     "calls": 2,
+     "conservative_pure_shape": false,
+     "increments": 0,
+     "name": "main",
+     "writes": 1
+    }
+   ],
+   "name": "pr42721.c"
+  },
+  {
+   "functions": [
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "foo",
+     "writes": 0
+    },
+    {
+     "calls": 1,
+     "conservative_pure_shape": false,
+     "increments": 0,
+     "name": "bar",
+     "writes": 2
+    },
+    {
+     "calls": 2,
+     "conservative_pure_shape": false,
+     "increments": 0,
+     "name": "main",
+     "writes": 0
+    }
+   ],
+   "name": "pr44858.c"
+  },
+  {
+   "functions": [
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "foo",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "bar",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "baz",
+     "writes": 0
+    },
+    {
+     "calls": 5,
+     "conservative_pure_shape": false,
+     "increments": 0,
+     "name": "main",
+     "writes": 0
+    }
+   ],
+   "name": "pr55137.c"
+  },
+  {
+   "functions": [
+    {
+     "calls": 1,
+     "conservative_pure_shape": false,
+     "increments": 1,
+     "name": "main",
+     "writes": 4
+    }
+   ],
+   "name": "pr57875.c"
+  },
+  {
+   "functions": [
+    {
+     "calls": 0,
+     "conservative_pure_shape": false,
+     "increments": 0,
+     "name": "foo",
+     "writes": 1
+    },
+    {
+     "calls": 2,
+     "conservative_pure_shape": false,
+     "increments": 0,
+     "name": "main",
+     "writes": 1
+    }
+   ],
+   "name": "pr58943.c"
+  },
+  {
+   "functions": [
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "foo",
+     "writes": 0
+    },
+    {
+     "calls": 2,
+     "conservative_pure_shape": false,
+     "increments": 0,
+     "name": "bar",
+     "writes": 0
+    },
+    {
+     "calls": 4,
+     "conservative_pure_shape": false,
+     "increments": 0,
+     "name": "main",
+     "writes": 0
+    }
+   ],
+   "name": "pr65215-2.c"
+  },
+  {
+   "functions": [
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "foo",
+     "writes": 0
+    },
+    {
+     "calls": 1,
+     "conservative_pure_shape": false,
+     "increments": 0,
+     "name": "bar",
+     "writes": 1
+    },
+    {
+     "calls": 2,
+     "conservative_pure_shape": false,
+     "increments": 0,
+     "name": "main",
+     "writes": 0
+    }
+   ],
+   "name": "pr68648.c"
+  },
+  {
+   "functions": [
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "foo",
+     "writes": 0
+    },
+    {
+     "calls": 7,
+     "conservative_pure_shape": false,
+     "increments": 0,
+     "name": "bar",
+     "writes": 4
+    },
+    {
+     "calls": 2,
+     "conservative_pure_shape": false,
+     "increments": 0,
+     "name": "main",
+     "writes": 3
+    }
+   ],
+   "name": "pr82524.c"
+  },
+  {
+   "functions": [
+    {
+     "calls": 1,
+     "conservative_pure_shape": false,
+     "increments": 0,
+     "name": "foo",
+     "writes": 2
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": false,
+     "increments": 0,
+     "name": "bar",
+     "writes": 2
+    },
+    {
+     "calls": 1,
+     "conservative_pure_shape": false,
+     "increments": 0,
+     "name": "baz",
+     "writes": 2
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": false,
+     "increments": 0,
+     "name": "qux",
+     "writes": 3
+    },
+    {
+     "calls": 8,
+     "conservative_pure_shape": false,
+     "increments": 0,
+     "name": "main",
+     "writes": 0
+    }
+   ],
+   "name": "pr91635.c"
+  },
+  {
+   "functions": [
+    {
+     "calls": 3,
+     "conservative_pure_shape": false,
+     "increments": 0,
+     "name": "foo",
+     "writes": 1
+    },
+    {
+     "calls": 3,
+     "conservative_pure_shape": false,
+     "increments": 0,
+     "name": "bar",
+     "writes": 0
+    },
+    {
+     "calls": 3,
+     "conservative_pure_shape": false,
+     "increments": 0,
+     "name": "main",
+     "writes": 0
+    }
+   ],
+   "name": "pr93213.c"
+  },
+  {
+   "functions": [
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "gt_lt_lt_",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "gt_lt_lt_volatile",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "gt_lt_le_",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "gt_lt_le_volatile",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "gt_lt_gt_",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "gt_lt_gt_volatile",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "gt_lt_ge_",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "gt_lt_ge_volatile",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "ge_le_lt_",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "ge_le_lt_volatile",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "ge_le_le_",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "ge_le_le_volatile",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "ge_le_gt_",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "ge_le_gt_volatile",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "ge_le_ge_",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "ge_le_ge_volatile",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "lt_gt_lt_",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "lt_gt_lt_volatile",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "lt_gt_le_",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "lt_gt_le_volatile",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "lt_gt_gt_",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "lt_gt_gt_volatile",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "lt_gt_ge_",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "lt_gt_ge_volatile",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "le_ge_lt_",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "le_ge_lt_volatile",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "le_ge_le_",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "le_ge_le_volatile",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "le_ge_gt_",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "le_ge_gt_volatile",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "le_ge_ge_",
+     "writes": 0
+    },
+    {
+     "calls": 0,
+     "conservative_pure_shape": true,
+     "increments": 0,
+     "name": "le_ge_ge_volatile",
+     "writes": 0
+    },
+    {
+     "calls": 48,
+     "conservative_pure_shape": false,
+     "increments": 2,
+     "name": "main",
+     "writes": 0
+    }
+   ],
+   "name": "subcmp-1.c"
+  }
+ ],
+ "schema": "c-effect-summary-price-0.1",
+ "wall": "unsequenced-effects"
+}

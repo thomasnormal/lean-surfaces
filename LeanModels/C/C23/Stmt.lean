@@ -746,6 +746,18 @@ def callFn : Nat → Program → LeanModels.C.FunctionDefn → List CVal → Exe
                 liftEval (writeMem (fun m => m.storeBytes dp bs))
                 pure (.ptr dp)
           | _ => refuseUnsupported "memcpy: wrong argument count"
+        let runFfs : List CVal → ExecM CVal := fun vs =>
+          match vs with
+          | [value] => do
+              let (ty, n) ← asInt value
+              let m := ty.modulus
+              let residue := (n % m + m) % m
+              let rec first (bits : Nat) (index : Nat) : Nat :=
+                match bits with
+                | 0 => 0
+                | b + 1 => if b % 2 == 1 then index + 1 else first (b / 2) (index + 1)
+              pure (.int IntTy.int_ (first residue.toNat 0))
+          | _ => refuseUnsupported "__builtin_ffs: wrong argument count"
         let runArithOverflow (op : String) : List CVal → ExecM CVal := fun vs =>
           match vs with
           | [a, b, dst] => do
@@ -785,6 +797,7 @@ def callFn : Nat → Program → LeanModels.C.FunctionDefn → List CVal → Exe
                 | none =>
                     if nm == "memset" || nm == "__builtin_memset" then runMemset vs
                     else if nm == "memcpy" || nm == "__builtin_memcpy" then runMemcpy vs
+                    else if nm == "__builtin_ffs" then runFfs vs
                     else if nm == "__builtin_mul_overflow" then runArithOverflow "mul" vs
                     else if nm == "__builtin_add_overflow" then runArithOverflow "add" vs
                     else throw (.libc nm)
@@ -803,6 +816,7 @@ def callFn : Nat → Program → LeanModels.C.FunctionDefn → List CVal → Exe
             | none =>
               if nm == "memset" || nm == "__builtin_memset" then runMemset vs
               else if nm == "memcpy" || nm == "__builtin_memcpy" then runMemcpy vs
+              else if nm == "__builtin_ffs" then runFfs vs
               else if nm == "__builtin_mul_overflow" then runArithOverflow "mul" vs
               else if nm == "__builtin_add_overflow" then runArithOverflow "add" vs
               else throw (.libc nm)

@@ -12,11 +12,11 @@
   "gcc.c-torture/execute": {
    "not-ingested": 19,
    "not-parsed": 321,
-   "passed": 582,
-   "refused-libc": 90,
+   "passed": 583,
+   "refused-libc": 88,
    "refused-ub": 33,
    "refused-unsupported": 828,
-   "timeout": 45
+   "timeout": 46
   },
   "gcc.c23-run": {
    "not-ingested": 1,
@@ -31,11 +31,11 @@
  "counts": {
   "not-ingested": 25,
   "not-parsed": 350,
-  "passed": 693,
-  "refused-libc": 99,
+  "passed": 694,
+  "refused-libc": 97,
   "refused-ub": 36,
   "refused-unsupported": 964,
-  "timeout": 47
+  "timeout": 48
  },
  "dynamic_wall_ranking": [
   {
@@ -598,6 +598,7 @@
     "pr45034.c",
     "pr48571-1.c",
     "pr49886.c",
+    "pr61725.c",
     "pr65401.c",
     "pr65418-1.c",
     "pr66556.c",
@@ -612,8 +613,8 @@
     "ssad-run.c",
     "usad-run.c"
    ],
-   "present": 47,
-   "sole": 47,
+   "present": 48,
+   "sole": 48,
    "wall": "timeout"
   },
   {
@@ -1441,6 +1442,16 @@
   },
   {
    "files": [
+    "gcc/testsuite/gcc.dg/c23-nullptr-5.c",
+    "pr77767.c",
+    "pr97325.c"
+   ],
+   "present": 3,
+   "sole": 3,
+   "wall": "libc-call: __builtin_abort"
+  },
+  {
+   "files": [
     "00214.c",
     "20020418-1.c",
     "pr115277.c"
@@ -1448,16 +1459,6 @@
    "present": 3,
    "sole": 3,
    "wall": "libc-call: __builtin_expect"
-  },
-  {
-   "files": [
-    "ffs-1.c",
-    "pr61725.c",
-    "pr97325.c"
-   ],
-   "present": 3,
-   "sole": 3,
-   "wall": "libc-call: __builtin_ffs"
   },
   {
    "files": [
@@ -1628,15 +1629,6 @@
    "present": 3,
    "sole": 3,
    "wall": "unsupported:unbound declaration 'id27' (name 'x')"
-  },
-  {
-   "files": [
-    "gcc/testsuite/gcc.dg/c23-nullptr-5.c",
-    "pr77767.c"
-   ],
-   "present": 2,
-   "sole": 2,
-   "wall": "libc-call: __builtin_abort"
   },
   {
    "files": [
@@ -4298,8 +4290,8 @@
   }
  ],
  "manifest_hash": "1de1a60c299d5bb51dae7ca001b0a008010cad0b25670cde2090c08bfc1a84ce",
- "measured_at_utc": "2026-11-12T08:25:13Z",
- "measured_commit": "5dd59349e",
+ "measured_at_utc": "2026-11-12T08:45:28Z",
+ "measured_commit": "e8e8f7a5d",
  "pin": null,
  "rows": [
   {
@@ -18263,15 +18255,15 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "__builtin_ffs",
-   "dynamic_wall": "libc-call: __builtin_ffs",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "ffs-1.c",
    "sha256": "2cd39f8954aa815c393bc284e03f0d0338be751bda8ce762bb3fbb52a1e17a11",
    "static_walls": [
     "libc-call"
    ],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -26011,15 +26003,15 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "__builtin_ffs",
-   "dynamic_wall": "libc-call: __builtin_ffs",
+   "detail": "",
+   "dynamic_wall": "timeout",
    "manifest_status": "parsed",
    "name": "pr61725.c",
    "sha256": "3c1576945873a0034645e2b836219a69ae8b16a3f223e0077b2290e7a6539f45",
    "static_walls": [
     "libc-call"
    ],
-   "verdict": "refused-libc"
+   "verdict": "timeout"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -28522,8 +28514,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "__builtin_ffs",
-   "dynamic_wall": "libc-call: __builtin_ffs",
+   "detail": "__builtin_abort",
+   "dynamic_wall": "libc-call: __builtin_abort",
    "manifest_status": "parsed",
    "name": "pr97325.c",
    "sha256": "74fff5b0fb483bde47106bccecd0869788a8e70e70abdba953d50de51d9ab4fc",

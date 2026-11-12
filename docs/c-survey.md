@@ -2,10 +2,10 @@
 
 Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manifest.
 
-- verdicts: 693/2214 MATCH (passed 693, failed 0, oracle 0)
+- verdicts: 694/2214 MATCH (passed 694, failed 0, oracle 0)
 - manifest SHA-256: `1de1a60c299d5bb51dae7ca001b0a008010cad0b25670cde2090c08bfc1a84ce`
-- measured commit: `5dd59349e`
-- measured at: `2026-11-12T08:25:13Z`
+- measured commit: `e8e8f7a5d`
+- measured at: `2026-11-12T08:45:28Z`
 
 ## Verdict counts
 
@@ -13,11 +13,11 @@ Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manife
 | --- | ---: |
 | `not-ingested` | 25 |
 | `not-parsed` | 350 |
-| `passed` | 693 |
-| `refused-libc` | 99 |
+| `passed` | 694 |
+| `refused-libc` | 97 |
 | `refused-ub` | 36 |
 | `refused-unsupported` | 964 |
-| `timeout` | 47 |
+| `timeout` | 48 |
 
 ## Counts by corpus
 
@@ -32,11 +32,11 @@ Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manife
 | `c-testsuite/single-exec` | `timeout` | 2 |
 | `gcc.c-torture/execute` | `not-ingested` | 19 |
 | `gcc.c-torture/execute` | `not-parsed` | 321 |
-| `gcc.c-torture/execute` | `passed` | 582 |
-| `gcc.c-torture/execute` | `refused-libc` | 90 |
+| `gcc.c-torture/execute` | `passed` | 583 |
+| `gcc.c-torture/execute` | `refused-libc` | 88 |
 | `gcc.c-torture/execute` | `refused-ub` | 33 |
 | `gcc.c-torture/execute` | `refused-unsupported` | 828 |
-| `gcc.c-torture/execute` | `timeout` | 45 |
+| `gcc.c-torture/execute` | `timeout` | 46 |
 | `gcc.c23-run` | `not-ingested` | 1 |
 | `gcc.c23-run` | `not-parsed` | 28 |
 | `gcc.c23-run` | `passed` | 1 |
@@ -92,7 +92,7 @@ The run's first refusal, normalized by construct; `sole` counts rows whose first
 | `frontend` | 350 | 350 | 00209.c, 20000112-1.c, 20000227-1.c, 20000314-3.c, 20000412-3.c |
 | `unsupported:no definition for 'main'` | 97 | 97 | 20040705-1.c, 20040705-2.c, 20040709-3.c, builtins/20010124-1.c, builtins/abs-1.c |
 | `unsupported:string literal with escape or non-ASCII spelling` | 56 | 56 | 00056.c, 00125.c, 00131.c, 00132.c, 00154.c |
-| `timeout` | 47 | 47 | 00041.c, 00128.c, 20020108-1.c, 20030916-1.c, 20040313-1.c |
+| `timeout` | 48 | 48 | 00041.c, 00128.c, 20020108-1.c, 20030916-1.c, 20040313-1.c |
 | `unsupported:fewer arguments than parameters` | 41 | 41 | 00200.c, 20000412-2.c, 20000412-4.c, 20001124-1.c, 20020206-2.c |
 | `unsupported:extern object 'inside_main' has no definition in the translation unit` | 38 | 38 | builtins/20010124-1-lib.c, builtins/complex-1-lib.c, builtins/fputs-lib.c, builtins/lib/abs.c, builtins/lib/bfill.c |
 | `unsupported:string literal (inch 4` | 38 | 38 | 00115.c, 00204.c, 00208.c, 00217.c, 20000801-4.c |
@@ -133,8 +133,8 @@ The run's first refusal, normalized by construct; `sole` counts rows whose first
 | `unsupported:no layout for declared type 'union U'` | 4 | 4 | bitfld-6.c, bitfld-7.c, pr86492.c, pr88739.c |
 | `unsupported:not an integer type: 'int *'` | 4 | 4 | 00072.c, 00073.c, 20000819-1.c, 990513-1.c |
 | `cast:FloatingToIntegral` | 3 | 3 | 20031003-1.c, pr38048-2.c, pr66233.c |
+| `libc-call: __builtin_abort` | 3 | 3 | gcc/testsuite/gcc.dg/c23-nullptr-5.c, pr77767.c, pr97325.c |
 | `libc-call: __builtin_expect` | 3 | 3 | 00214.c, 20020418-1.c, pr115277.c |
-| `libc-call: __builtin_ffs` | 3 | 3 | ffs-1.c, pr61725.c, pr97325.c |
 | `libc-call: __builtin_memcmp` | 3 | 3 | pr57130.c, pr59229.c, pr77718.c |
 | `libc-call: __builtin_sprintf` | 3 | 3 | 20021120-3.c, pr78586.c, pr79327.c |
 | `libc-call: __builtin_strcmp` | 3 | 3 | 921006-1.c, 930725-1.c, pr60062.c |
@@ -152,7 +152,6 @@ The run's first refusal, normalized by construct; `sole` counts rows whose first
 | `unsupported:unbound declaration 'id180' (name 'stdout')` | 3 | 3 | 00189.c, fprintf-1.c, fprintf-chk-1.c |
 | `unsupported:unbound declaration 'id25' (name 's')` | 3 | 3 | pr40404.c, pr48973-1.c, pr48973-2.c |
 | `unsupported:unbound declaration 'id27' (name 'x')` | 3 | 3 | 20030209-1.c, 960405-1.c, 991030-1.c |
-| `libc-call: __builtin_abort` | 2 | 2 | gcc/testsuite/gcc.dg/c23-nullptr-5.c, pr77767.c |
 | `libc-call: __builtin_strcpy` | 2 | 2 | 20021011-1.c, 921117-1.c |
 | `libc-call: __builtin_strlen` | 2 | 2 | pr110914.c, pr116799.c |
 | `libc-call: bar` | 2 | 2 | 20000722-1.c, 20000801-2.c |

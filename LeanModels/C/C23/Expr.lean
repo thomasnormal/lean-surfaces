@@ -990,6 +990,10 @@ def evalExpr (ctx : Ctx) : Expr → EvalM CVal
         -- A qualifier or typedef change: the VALUE is untouched. 217 sites,
         -- and they are why type equality must be resolution, not spelling.
         evalExpr ctx sub
+      else if ck == "ToVoid" then
+        do
+        let _ ← evalExpr ctx sub
+        pure .undef
       else if ck == "BitCast" then
         -- §6.3.2.3p1 — `void*` ↔ `T*`. Provenance carried, not recomputed:
         -- 52 sites, all void-pointer conversions, ZERO type punning.

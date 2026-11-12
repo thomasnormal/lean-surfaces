@@ -44,6 +44,36 @@ def callee_name(node):
     return cur.get("name") if isinstance(cur, dict) else None
 
 
+def portable_detail(detail):
+    """Drop machine-specific cache prefixes from frontend diagnostics."""
+    for marker in ("/src/", "/tests/single-exec/", "/gcc/testsuite/"):
+        pos = detail.rfind(marker)
+        if pos >= 0:
+            return detail[pos + 1:]
+    return detail
+
+
+def portable_manifest(value):
+    """Copy a manifest while making cache paths logical rather than absolute."""
+    if isinstance(value, dict):
+        out = {}
+        for key, child in value.items():
+            if key == "cache":
+                continue
+            if key == "envelope" and isinstance(child, str):
+                marker = "/env/"
+                pos = child.rfind(marker)
+                out[key] = child[pos + len(marker):] if pos >= 0 else Path(child).name
+            elif key == "why" and isinstance(child, str):
+                out[key] = portable_detail(child)
+            else:
+                out[key] = portable_manifest(child)
+        return out
+    if isinstance(value, list):
+        return [portable_manifest(child) for child in value]
+    return value
+
+
 def effectful(node):
     if not isinstance(node, dict):
         return False
@@ -96,10 +126,11 @@ def static_walls(env):
 
 def load_manifest(path):
     data = json.loads(Path(path).read_text())
-    # `cache` is an execution location, not part of the frozen manifest's
-    # identity.  Hash the pin and test records only so an outside cache under
-    # /tmp (or a different machine) produces the same survey provenance.
-    identity = {k: v for k, v in data.items() if k != "cache"}
+    # Cache paths are execution locations, not part of the frozen manifest's
+    # identity. Hash only logical pins, source hashes and relative envelope
+    # names so an outside cache (or a different machine) produces the same
+    # survey provenance.
+    identity = portable_manifest(data)
     raw = json.dumps(identity, sort_keys=True, separators=(",", ":")).encode()
     return data, hashlib.sha256(raw).hexdigest()
 
@@ -112,6 +143,7 @@ def build(manifest_path, log_path, commit=None, measured_at=None):
     for name in sorted(by_name):
         rec = by_name[name]
         token, detail = rows_by_name.get(name, ("runner-error", "missing log row"))
+        detail = portable_detail(detail)
         env_path = rec.get("envelope")
         env = None
         if rec.get("status") == "parsed" and env_path:
@@ -226,6 +258,18 @@ def selftest():
                                      "present": 1, "files": ["x.c"]}]})
     if "assignment-call" not in page or "sole" not in page:
         print("c_survey --self-test: render failed", file=sys.stderr)
+        return 1
+    m1 = {"cache": "/tmp/a", "tests": [{
+        "envelope": "/tmp/a/env/x.json", "why": "/tmp/a/src/x.c:1:1: bad"
+    }]}
+    m2 = {"cache": "/scratch/b", "tests": [{
+        "envelope": "/scratch/b/env/x.json", "why": "/scratch/b/src/x.c:1:1: bad"
+    }]}
+    if portable_manifest(m1) != portable_manifest(m2):
+        print("c_survey --self-test: manifest hash retained a cache path", file=sys.stderr)
+        return 1
+    if portable_detail(m1["tests"][0]["why"]) != "src/x.c:1:1: bad":
+        print("c_survey --self-test: diagnostic path was not normalized", file=sys.stderr)
         return 1
     print("c_survey --self-test: ok")
     return 0

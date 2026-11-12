@@ -15,6 +15,10 @@
      "files": 1
     },
     {
+     "detail": "no layout for declared type 's'",
+     "files": 1
+    },
+    {
      "detail": "no layout for declared type 'struct S'",
      "files": 1
     },
@@ -60,11 +64,11 @@
     }
    ],
    "files": 220,
-   "observed_any_no_layout": 17,
-   "observed_decl_no_layout": 16,
+   "observed_any_no_layout": 19,
+   "observed_decl_no_layout": 17,
    "observed_decl_without_static_candidate": 4,
-   "static_and_observed_decl": 12,
-   "static_candidate_without_observed_decl": 111,
+   "static_and_observed_decl": 13,
+   "static_candidate_without_observed_decl": 110,
    "static_present": 123,
    "static_sole": 41
   },
@@ -72,11 +76,11 @@
    "decl_messages": [
     {
      "detail": "no layout for declared type 'double'",
-     "files": 25
+     "files": 26
     },
     {
      "detail": "no layout for declared type 'struct S'",
-     "files": 17
+     "files": 21
     },
     {
      "detail": "no layout for declared type 'V'",
@@ -88,15 +92,27 @@
     },
     {
      "detail": "no layout for declared type 'va_list'",
-     "files": 6
+     "files": 7
     },
     {
      "detail": "no layout for declared type 'struct s'",
-     "files": 5
+     "files": 6
     },
     {
      "detail": "no layout for declared type '_Complex double'",
+     "files": 5
+    },
+    {
+     "detail": "no layout for declared type 'union U'",
      "files": 4
+    },
+    {
+     "detail": "no layout for declared type 'const double'",
+     "files": 4
+    },
+    {
+     "detail": "no layout for declared type 'struct x'",
+     "files": 3
     },
     {
      "detail": "no layout for declared type 'A'",
@@ -107,11 +123,11 @@
      "files": 3
     },
     {
-     "detail": "no layout for declared type 'T'",
+     "detail": "no layout for declared type 'struct S[2]'",
      "files": 3
     },
     {
-     "detail": "no layout for declared type 'size_t'",
+     "detail": "no layout for declared type '_Complex float'",
      "files": 3
     },
     {
@@ -123,11 +139,27 @@
      "files": 2
     },
     {
+     "detail": "no layout for declared type 'bitmap_iterator'",
+     "files": 2
+    },
+    {
+     "detail": "no layout for declared type 'int *volatile'",
+     "files": 2
+    },
+    {
      "detail": "no layout for declared type 'struct packed_ushort'",
      "files": 2
     },
     {
-     "detail": "no layout for declared type 'U'",
+     "detail": "no layout for declared type 'jmp_buf'",
+     "files": 2
+    },
+    {
+     "detail": "no layout for declared type 'T'",
+     "files": 2
+    },
+    {
+     "detail": "no layout for declared type 'struct c'",
      "files": 2
     },
     {
@@ -135,7 +167,7 @@
      "files": 2
     },
     {
-     "detail": "no layout for declared type '_Complex float'",
+     "detail": "no layout for declared type 'const float'",
      "files": 2
     },
     {
@@ -155,24 +187,12 @@
      "files": 2
     },
     {
-     "detail": "no layout for declared type 'S'",
-     "files": 2
-    },
-    {
      "detail": "no layout for declared type 'struct S1'",
-     "files": 2
-    },
-    {
-     "detail": "no layout for declared type 'union U'",
      "files": 2
     },
     {
      "detail": "no layout for declared type 'struct1'",
      "files": 2
-    },
-    {
-     "detail": "no layout for declared type 'struct x'",
-     "files": 1
     },
     {
      "detail": "no layout for declared type 'union u'",
@@ -195,11 +215,19 @@
      "files": 1
     },
     {
+     "detail": "no layout for declared type 'DB_TXNLIST'",
+     "files": 1
+    },
+    {
      "detail": "no layout for declared type '_Complex double[1]'",
      "files": 1
     },
     {
      "detail": "no layout for declared type 'float[3]'",
+     "files": 1
+    },
+    {
+     "detail": "no layout for declared type 'volatile enum X'",
      "files": 1
     },
     {
@@ -219,7 +247,19 @@
      "files": 1
     },
     {
+     "detail": "no layout for declared type 'client_t'",
+     "files": 1
+    },
+    {
+     "detail": "no layout for declared type 'const gs_imager_state'",
+     "files": 1
+    },
+    {
      "detail": "no layout for declared type 'gfc_array_i4'",
+     "files": 1
+    },
+    {
+     "detail": "no layout for declared type 'unit_flags'",
      "files": 1
     },
     {
@@ -227,7 +267,15 @@
      "files": 1
     },
     {
+     "detail": "no layout for declared type 'struct event'",
+     "files": 1
+    },
+    {
      "detail": "no layout for declared type 'uint32_t'",
+     "files": 1
+    },
+    {
+     "detail": "no layout for declared type 'U'",
      "files": 1
     },
     {
@@ -236,6 +284,10 @@
     },
     {
      "detail": "no layout for declared type 'union U1'",
+     "files": 1
+    },
+    {
+     "detail": "no layout for declared type 'int[len][len]'",
      "files": 1
     },
     {
@@ -311,6 +363,10 @@
      "files": 1
     },
     {
+     "detail": "no layout for declared type 'union bf_or_uint32'",
+     "files": 1
+    },
+    {
      "detail": "no layout for declared type 'struct complex'",
      "files": 1
     },
@@ -319,11 +375,35 @@
      "files": 1
     },
     {
+     "detail": "no layout for declared type 'token'",
+     "files": 1
+    },
+    {
      "detail": "no layout for declared type 'enum e'",
      "files": 1
     },
     {
+     "detail": "no layout for declared type 'double (*)(float)'",
+     "files": 1
+    },
+    {
+     "detail": "no layout for declared type '_Complex long double'",
+     "files": 1
+    },
+    {
+     "detail": "no layout for declared type 'const struct Df[8]'",
+     "files": 1
+    },
+    {
      "detail": "no layout for declared type 'float[8]'",
+     "files": 1
+    },
+    {
+     "detail": "no layout for declared type 'const struct try[6]'",
+     "files": 1
+    },
+    {
+     "detail": "no layout for declared type 'const struct try[14]'",
      "files": 1
     },
     {
@@ -335,11 +415,11 @@
      "files": 1
     },
     {
-     "detail": "no layout for declared type 'float[4]'",
+     "detail": "no layout for declared type 'float[16]'",
      "files": 1
     },
     {
-     "detail": "no layout for declared type 'struct c'",
+     "detail": "no layout for declared type 'const struct a'",
      "files": 1
     },
     {
@@ -375,7 +455,15 @@
      "files": 1
     },
     {
+     "detail": "no layout for declared type 'char *volatile'",
+     "files": 1
+    },
+    {
      "detail": "no layout for declared type 'struct E'",
+     "files": 1
+    },
+    {
+     "detail": "no layout for declared type 'i386_operand_type'",
      "files": 1
     },
     {
@@ -391,7 +479,19 @@
      "files": 1
     },
     {
-     "detail": "no layout for declared type 'unsigned __int128'",
+     "detail": "no layout for declared type 'const char *const[1]'",
+     "files": 1
+    },
+    {
+     "detail": "no layout for declared type 'S'",
+     "files": 1
+    },
+    {
+     "detail": "no layout for declared type 'int ***volatile'",
+     "files": 1
+    },
+    {
+     "detail": "no layout for declared type 'struct S[6]'",
      "files": 1
     },
     {
@@ -423,11 +523,23 @@
      "files": 1
     },
     {
-     "detail": "no layout for declared type '__m128i'",
+     "detail": "no layout for declared type 'union Y'",
      "files": 1
     },
     {
      "detail": "no layout for declared type 'creal_T[16]'",
+     "files": 1
+    },
+    {
+     "detail": "no layout for declared type '__attribute__((__vector_size__(8 * sizeof(short)))) short'",
+     "files": 1
+    },
+    {
+     "detail": "no layout for declared type '__attribute__((__vector_size__(16 * sizeof(char)))) char'",
+     "files": 1
+    },
+    {
+     "detail": "no layout for declared type '__attribute__((__vector_size__(4 * sizeof(float)))) float'",
      "files": 1
     },
     {
@@ -447,6 +559,14 @@
      "files": 1
     },
     {
+     "detail": "no layout for declared type 'const char *const'",
+     "files": 1
+    },
+    {
+     "detail": "no layout for declared type 'struct tty_driver'",
+     "files": 1
+    },
+    {
      "detail": "no layout for declared type 'X'",
      "files": 1
     },
@@ -459,6 +579,10 @@
      "files": 1
     },
     {
+     "detail": "no layout for declared type 'big'",
+     "files": 1
+    },
+    {
      "detail": "no layout for declared type 'struct g'",
      "files": 1
     },
@@ -468,16 +592,20 @@
     }
    ],
    "files": 1918,
-   "observed_any_no_layout": 208,
-   "observed_decl_no_layout": 187,
+   "observed_any_no_layout": 256,
+   "observed_decl_no_layout": 235,
    "observed_decl_without_static_candidate": 23,
-   "static_and_observed_decl": 164,
-   "static_candidate_without_observed_decl": 745,
+   "static_and_observed_decl": 212,
+   "static_candidate_without_observed_decl": 697,
    "static_present": 909,
    "static_sole": 308
   },
   "gcc.c23-run": {
    "decl_messages": [
+    {
+     "detail": "no layout for declared type 'enum bar'",
+     "files": 3
+    },
     {
      "detail": "no layout for declared type 'int (*)[++i]'",
      "files": 1
@@ -491,7 +619,7 @@
      "files": 1
     },
     {
-     "detail": "no layout for declared type 'enum bar'",
+     "detail": "no layout for declared type 'struct product_iSfd_'",
      "files": 1
     },
     {
@@ -504,11 +632,11 @@
     }
    ],
    "files": 76,
-   "observed_any_no_layout": 7,
-   "observed_decl_no_layout": 6,
+   "observed_any_no_layout": 10,
+   "observed_decl_no_layout": 9,
    "observed_decl_without_static_candidate": 1,
-   "static_and_observed_decl": 5,
-   "static_candidate_without_observed_decl": 24,
+   "static_and_observed_decl": 8,
+   "static_candidate_without_observed_decl": 21,
    "static_present": 29,
    "static_sole": 4
   }
@@ -516,17 +644,643 @@
  "corpus": "C1-C3 (gcc torture, c-testsuite, gcc c23-run)",
  "interpretation": "type-layout is a candidate wall, not a dynamic verdict: the static heuristic over-approximates the files that reach a missing layout and misses some declaration types. Price a tier from observed no-layout refusals, retaining the static ranking for discovery.",
  "schema": "c-type-layout-price-0.1",
- "survey_commit": "81310e3bd",
- "survey_measured_at_utc": "2026-11-12T03:12:00Z",
+ "struct_S_dependencies": {
+  "files": 22,
+  "interpretation": "field records come directly from the approved Clang envelope; an empty list means the envelope has no named S record, not that a layout was guessed.",
+  "rows": [
+   {
+    "fields": [
+     {
+      "c_kind": null,
+      "kind": "FieldDecl",
+      "name": "fptr",
+      "type": "int (*)(void)"
+     }
+    ],
+    "name": "00087.c"
+   },
+   {
+    "fields": [
+     {
+      "c_kind": "ModeAttr",
+      "kind": "Unsupported",
+      "name": null,
+      "type": null
+     },
+     {
+      "c_kind": "ModeAttr",
+      "kind": "Unsupported",
+      "name": null,
+      "type": null
+     }
+    ],
+    "name": "20050107-1.c"
+   },
+   {
+    "fields": [
+     {
+      "c_kind": null,
+      "kind": "FieldDecl",
+      "name": "c",
+      "type": "char"
+     },
+     {
+      "c_kind": null,
+      "kind": "FieldDecl",
+      "name": "arr",
+      "type": "char[4]"
+     },
+     {
+      "c_kind": null,
+      "kind": "FieldDecl",
+      "name": "f",
+      "type": "float"
+     }
+    ],
+    "name": "20081103-1.c"
+   },
+   {
+    "fields": [
+     {
+      "c_kind": null,
+      "kind": "FieldDecl",
+      "name": "for_alignment",
+      "type": "double"
+     },
+     {
+      "c_kind": null,
+      "kind": "RecordDecl",
+      "name": null,
+      "type": null
+     },
+     {
+      "c_kind": null,
+      "kind": "FieldDecl",
+      "name": "a",
+      "type": "struct (unnamed struct at src/20100708-1.c:7:3)[16]"
+     }
+    ],
+    "name": "20100708-1.c"
+   },
+   {
+    "fields": [
+     {
+      "c_kind": "AlignedAttr",
+      "kind": "Unsupported",
+      "name": null,
+      "type": null
+     },
+     {
+      "c_kind": null,
+      "kind": "FieldDecl",
+      "name": "c1",
+      "type": "char"
+     },
+     {
+      "c_kind": null,
+      "kind": "FieldDecl",
+      "name": "c2",
+      "type": "char"
+     },
+     {
+      "c_kind": null,
+      "kind": "FieldDecl",
+      "name": "c3",
+      "type": "char"
+     },
+     {
+      "c_kind": null,
+      "kind": "FieldDecl",
+      "name": "c4",
+      "type": "char"
+     }
+    ],
+    "name": "20171008-1.c"
+   },
+   {
+    "fields": [
+     {
+      "c_kind": null,
+      "kind": "FieldDecl",
+      "name": "i",
+      "type": "short"
+     },
+     {
+      "c_kind": null,
+      "kind": "FieldDecl",
+      "name": "c1",
+      "type": "char"
+     },
+     {
+      "c_kind": null,
+      "kind": "FieldDecl",
+      "name": "c2",
+      "type": "char"
+     },
+     {
+      "c_kind": null,
+      "kind": "FieldDecl",
+      "name": "c3",
+      "type": "char"
+     },
+     {
+      "c_kind": null,
+      "kind": "FieldDecl",
+      "name": "c4",
+      "type": "char"
+     }
+    ],
+    "name": "20230630-1.c"
+   },
+   {
+    "fields": [
+     {
+      "c_kind": null,
+      "kind": "FieldDecl",
+      "name": "i",
+      "type": "short"
+     },
+     {
+      "c_kind": null,
+      "kind": "FieldDecl",
+      "name": "c1",
+      "type": "char"
+     },
+     {
+      "c_kind": null,
+      "kind": "FieldDecl",
+      "name": "c2",
+      "type": "char"
+     },
+     {
+      "c_kind": null,
+      "kind": "FieldDecl",
+      "name": "c3",
+      "type": "char"
+     },
+     {
+      "c_kind": null,
+      "kind": "FieldDecl",
+      "name": "c4",
+      "type": "char"
+     }
+    ],
+    "name": "20230630-2.c"
+   },
+   {
+    "fields": [
+     {
+      "c_kind": null,
+      "kind": "FieldDecl",
+      "name": "i",
+      "type": "int"
+     },
+     {
+      "c_kind": null,
+      "kind": "FieldDecl",
+      "name": "c1",
+      "type": "char"
+     },
+     {
+      "c_kind": null,
+      "kind": "FieldDecl",
+      "name": "c2",
+      "type": "char"
+     },
+     {
+      "c_kind": null,
+      "kind": "FieldDecl",
+      "name": "c3",
+      "type": "char"
+     },
+     {
+      "c_kind": null,
+      "kind": "FieldDecl",
+      "name": "c4",
+      "type": "char"
+     },
+     {
+      "c_kind": null,
+      "kind": "FieldDecl",
+      "name": "c5",
+      "type": "char"
+     },
+     {
+      "c_kind": null,
+      "kind": "FieldDecl",
+      "name": "c6",
+      "type": "char"
+     },
+     {
+      "c_kind": null,
+      "kind": "FieldDecl",
+      "name": "c7",
+      "type": "char"
+     },
+     {
+      "c_kind": null,
+      "kind": "FieldDecl",
+      "name": "c8",
+      "type": "char"
+     }
+    ],
+    "name": "20230630-3.c"
+   },
+   {
+    "fields": [
+     {
+      "c_kind": null,
+      "kind": "FieldDecl",
+      "name": "i",
+      "type": "int"
+     },
+     {
+      "c_kind": null,
+      "kind": "FieldDecl",
+      "name": "c1",
+      "type": "char"
+     },
+     {
+      "c_kind": null,
+      "kind": "FieldDecl",
+      "name": "c2",
+      "type": "char"
+     },
+     {
+      "c_kind": null,
+      "kind": "FieldDecl",
+      "name": "c3",
+      "type": "char"
+     },
+     {
+      "c_kind": null,
+      "kind": "FieldDecl",
+      "name": "c4",
+      "type": "char"
+     },
+     {
+      "c_kind": null,
+      "kind": "FieldDecl",
+      "name": "c5",
+      "type": "char"
+     },
+     {
+      "c_kind": null,
+      "kind": "FieldDecl",
+      "name": "c6",
+      "type": "char"
+     },
+     {
+      "c_kind": null,
+      "kind": "FieldDecl",
+      "name": "c7",
+      "type": "char"
+     },
+     {
+      "c_kind": null,
+      "kind": "FieldDecl",
+      "name": "c8",
+      "type": "char"
+     }
+    ],
+    "name": "20230630-4.c"
+   },
+   {
+    "fields": [
+     {
+      "c_kind": null,
+      "kind": "FieldDecl",
+      "name": "buffer",
+      "type": "uint8_t[64]"
+     },
+     {
+      "c_kind": null,
+      "kind": "FieldDecl",
+      "name": "n",
+      "type": "uint16_t"
+     },
+     {
+      "c_kind": null,
+      "kind": "FieldDecl",
+      "name": "f2",
+      "type": "fn2"
+     },
+     {
+      "c_kind": null,
+      "kind": "FieldDecl",
+      "name": "a",
+      "type": "void *"
+     },
+     {
+      "c_kind": null,
+      "kind": "FieldDecl",
+      "name": "f1",
+      "type": "fn1"
+     }
+    ],
+    "name": "pr101188.c"
+   },
+   {
+    "fields": [
+     {
+      "c_kind": null,
+      "kind": "FieldDecl",
+      "name": "a",
+      "type": "unsigned int"
+     },
+     {
+      "c_kind": null,
+      "kind": "FieldDecl",
+      "name": "b",
+      "type": "unsigned int"
+     },
+     {
+      "c_kind": null,
+      "kind": "FieldDecl",
+      "name": "c",
+      "type": "unsigned int"
+     },
+     {
+      "c_kind": null,
+      "kind": "FieldDecl",
+      "name": "d",
+      "type": "struct U"
+     },
+     {
+      "c_kind": null,
+      "kind": "FieldDecl",
+      "name": "e",
+      "type": "unsigned int"
+     },
+     {
+      "c_kind": null,
+      "kind": "FieldDecl",
+      "name": "f",
+      "type": "struct V"
+     },
+     {
+      "c_kind": null,
+      "kind": "FieldDecl",
+      "name": "g",
+      "type": "unsigned int"
+     },
+     {
+      "c_kind": null,
+      "kind": "FieldDecl",
+      "name": "h",
+      "type": "unsigned int"
+     }
+    ],
+    "name": "pr108498-2.c"
+   },
+   {
+    "fields": [
+     {
+      "c_kind": null,
+      "kind": "FieldDecl",
+      "name": "a",
+      "type": "double"
+     },
+     {
+      "c_kind": null,
+      "kind": "FieldDecl",
+      "name": "b",
+      "type": "double"
+     },
+     {
+      "c_kind": null,
+      "kind": "FieldDecl",
+      "name": "c",
+      "type": "double *"
+     },
+     {
+      "c_kind": null,
+      "kind": "FieldDecl",
+      "name": "d",
+      "type": "unsigned long"
+     }
+    ],
+    "name": "pr47538.c"
+   },
+   {
+    "fields": [
+     {
+      "c_kind": null,
+      "kind": "FieldDecl",
+      "name": "f",
+      "type": "int"
+     }
+    ],
+    "name": "pr49123.c"
+   },
+   {
+    "fields": [
+     {
+      "c_kind": "PackedAttr",
+      "kind": "Unsupported",
+      "name": null,
+      "type": null
+     },
+     {
+      "c_kind": null,
+      "kind": "FieldDecl",
+      "name": "g",
+      "type": "int"
+     },
+     {
+      "c_kind": null,
+      "kind": "FieldDecl",
+      "name": "h",
+      "type": "int"
+     }
+    ],
+    "name": "pr52979-1.c"
+   },
+   {
+    "fields": [
+     {
+      "c_kind": "PackedAttr",
+      "kind": "Unsupported",
+      "name": null,
+      "type": null
+     },
+     {
+      "c_kind": null,
+      "kind": "FieldDecl",
+      "name": "g",
+      "type": "int"
+     },
+     {
+      "c_kind": null,
+      "kind": "FieldDecl",
+      "name": "h",
+      "type": "int"
+     }
+    ],
+    "name": "pr52979-2.c"
+   },
+   {
+    "fields": [
+     {
+      "c_kind": null,
+      "kind": "FieldDecl",
+      "name": "f0",
+      "type": "int"
+     },
+     {
+      "c_kind": null,
+      "kind": "FieldDecl",
+      "name": null,
+      "type": "int"
+     },
+     {
+      "c_kind": null,
+      "kind": "FieldDecl",
+      "name": "f1",
+      "type": "int"
+     }
+    ],
+    "name": "pr58984.c"
+   },
+   {
+    "fields": [
+     {
+      "c_kind": null,
+      "kind": "FieldDecl",
+      "name": "l1",
+      "type": "unsigned long long"
+     },
+     {
+      "c_kind": null,
+      "kind": "FieldDecl",
+      "name": "l2",
+      "type": "unsigned long long"
+     },
+     {
+      "c_kind": null,
+      "kind": "FieldDecl",
+      "name": "l3",
+      "type": "unsigned long long"
+     }
+    ],
+    "name": "pr65215-3.c"
+   },
+   {
+    "fields": [
+     {
+      "c_kind": null,
+      "kind": "FieldDecl",
+      "name": "l1",
+      "type": "unsigned long long"
+     }
+    ],
+    "name": "pr65215-4.c"
+   },
+   {
+    "fields": [
+     {
+      "c_kind": null,
+      "kind": "FieldDecl",
+      "name": "f",
+      "type": "int"
+     },
+     {
+      "c_kind": null,
+      "kind": "FieldDecl",
+      "name": "g",
+      "type": "int"
+     }
+    ],
+    "name": "pr70127.c"
+   },
+   {
+    "fields": [
+     {
+      "c_kind": "MaxFieldAlignmentAttr",
+      "kind": "Unsupported",
+      "name": null,
+      "type": null
+     },
+     {
+      "c_kind": null,
+      "kind": "FieldDecl",
+      "name": "b",
+      "type": "int32_t"
+     },
+     {
+      "c_kind": null,
+      "kind": "FieldDecl",
+      "name": "c",
+      "type": "int32_t"
+     },
+     {
+      "c_kind": null,
+      "kind": "FieldDecl",
+      "name": "d",
+      "type": "int32_t"
+     },
+     {
+      "c_kind": null,
+      "kind": "FieldDecl",
+      "name": "e",
+      "type": "int32_t"
+     },
+     {
+      "c_kind": null,
+      "kind": "FieldDecl",
+      "name": "f",
+      "type": "int32_t"
+     }
+    ],
+    "name": "pr79737-1.c"
+   },
+   {
+    "fields": [
+     {
+      "c_kind": null,
+      "kind": "FieldDecl",
+      "name": "i",
+      "type": "unsigned int"
+     }
+    ],
+    "name": "pr89195.c"
+   },
+   {
+    "fields": [
+     {
+      "c_kind": null,
+      "kind": "FieldDecl",
+      "name": "b",
+      "type": "int"
+     },
+     {
+      "c_kind": null,
+      "kind": "FieldDecl",
+      "name": "c",
+      "type": "int"
+     },
+     {
+      "c_kind": null,
+      "kind": "FieldDecl",
+      "name": "d",
+      "type": "int"
+     }
+    ],
+    "name": "pr97764.c"
+   }
+  ]
+ },
+ "survey_commit": "04e05fa491c9104d03fdbdf1edc98eb20bd220f4",
+ "survey_measured_at_utc": "2026-11-12T12:48:42Z",
  "survey_schema": "c-survey-0.1",
  "top_decl_messages": [
   {
    "detail": "no layout for declared type 'double'",
-   "files": 26
+   "files": 27
   },
   {
    "detail": "no layout for declared type 'struct S'",
-   "files": 18
+   "files": 22
   },
   {
    "detail": "no layout for declared type 'float'",
@@ -538,14 +1292,22 @@
   },
   {
    "detail": "no layout for declared type 'struct s'",
-   "files": 6
+   "files": 7
   },
   {
    "detail": "no layout for declared type 'va_list'",
-   "files": 6
+   "files": 7
   },
   {
    "detail": "no layout for declared type '_Complex double'",
+   "files": 5
+  },
+  {
+   "detail": "no layout for declared type 'union U'",
+   "files": 4
+  },
+  {
+   "detail": "no layout for declared type 'const double'",
    "files": 4
   },
   {
@@ -553,7 +1315,7 @@
    "files": 3
   },
   {
-   "detail": "no layout for declared type 'S'",
+   "detail": "no layout for declared type 'struct x'",
    "files": 3
   },
   {
@@ -565,15 +1327,23 @@
    "files": 3
   },
   {
-   "detail": "no layout for declared type 'T'",
+   "detail": "no layout for declared type 'struct S[2]'",
    "files": 3
   },
   {
-   "detail": "no layout for declared type 'size_t'",
+   "detail": "no layout for declared type '_Complex float'",
+   "files": 3
+  },
+  {
+   "detail": "no layout for declared type 'enum bar'",
    "files": 3
   },
   {
    "detail": "no layout for declared type 'enum E'",
+   "files": 2
+  },
+  {
+   "detail": "no layout for declared type 'S'",
    "files": 2
   },
   {
@@ -585,11 +1355,27 @@
    "files": 2
   },
   {
+   "detail": "no layout for declared type 'bitmap_iterator'",
+   "files": 2
+  },
+  {
+   "detail": "no layout for declared type 'int *volatile'",
+   "files": 2
+  },
+  {
    "detail": "no layout for declared type 'struct packed_ushort'",
    "files": 2
   },
   {
-   "detail": "no layout for declared type 'U'",
+   "detail": "no layout for declared type 'jmp_buf'",
+   "files": 2
+  },
+  {
+   "detail": "no layout for declared type 'T'",
+   "files": 2
+  },
+  {
+   "detail": "no layout for declared type 'struct c'",
    "files": 2
   },
   {
@@ -597,7 +1383,7 @@
    "files": 2
   },
   {
-   "detail": "no layout for declared type '_Complex float'",
+   "detail": "no layout for declared type 'const float'",
    "files": 2
   },
   {
@@ -621,12 +1407,12 @@
    "files": 2
   },
   {
-   "detail": "no layout for declared type 'union U'",
+   "detail": "no layout for declared type 'struct1'",
    "files": 2
   },
   {
-   "detail": "no layout for declared type 'struct1'",
-   "files": 2
+   "detail": "no layout for declared type 's'",
+   "files": 1
   },
   {
    "detail": "no layout for declared type 'int32_t'",
@@ -657,10 +1443,6 @@
    "files": 1
   },
   {
-   "detail": "no layout for declared type 'struct x'",
-   "files": 1
-  },
-  {
    "detail": "no layout for declared type 'union u'",
    "files": 1
   },
@@ -681,11 +1463,19 @@
    "files": 1
   },
   {
+   "detail": "no layout for declared type 'DB_TXNLIST'",
+   "files": 1
+  },
+  {
    "detail": "no layout for declared type '_Complex double[1]'",
    "files": 1
   },
   {
    "detail": "no layout for declared type 'float[3]'",
+   "files": 1
+  },
+  {
+   "detail": "no layout for declared type 'volatile enum X'",
    "files": 1
   },
   {
@@ -705,7 +1495,19 @@
    "files": 1
   },
   {
+   "detail": "no layout for declared type 'client_t'",
+   "files": 1
+  },
+  {
+   "detail": "no layout for declared type 'const gs_imager_state'",
+   "files": 1
+  },
+  {
    "detail": "no layout for declared type 'gfc_array_i4'",
+   "files": 1
+  },
+  {
+   "detail": "no layout for declared type 'unit_flags'",
    "files": 1
   },
   {
@@ -713,7 +1515,15 @@
    "files": 1
   },
   {
+   "detail": "no layout for declared type 'struct event'",
+   "files": 1
+  },
+  {
    "detail": "no layout for declared type 'uint32_t'",
+   "files": 1
+  },
+  {
+   "detail": "no layout for declared type 'U'",
    "files": 1
   },
   {
@@ -722,6 +1532,10 @@
   },
   {
    "detail": "no layout for declared type 'union U1'",
+   "files": 1
+  },
+  {
+   "detail": "no layout for declared type 'int[len][len]'",
    "files": 1
   },
   {
@@ -793,6 +1607,10 @@
    "files": 1
   },
   {
+   "detail": "no layout for declared type 'union bf_or_uint32'",
+   "files": 1
+  },
+  {
    "detail": "no layout for declared type 'struct complex'",
    "files": 1
   },
@@ -801,11 +1619,35 @@
    "files": 1
   },
   {
+   "detail": "no layout for declared type 'token'",
+   "files": 1
+  },
+  {
    "detail": "no layout for declared type 'enum e'",
    "files": 1
   },
   {
+   "detail": "no layout for declared type 'double (*)(float)'",
+   "files": 1
+  },
+  {
+   "detail": "no layout for declared type '_Complex long double'",
+   "files": 1
+  },
+  {
+   "detail": "no layout for declared type 'const struct Df[8]'",
+   "files": 1
+  },
+  {
    "detail": "no layout for declared type 'float[8]'",
+   "files": 1
+  },
+  {
+   "detail": "no layout for declared type 'const struct try[6]'",
+   "files": 1
+  },
+  {
+   "detail": "no layout for declared type 'const struct try[14]'",
    "files": 1
   },
   {
@@ -817,11 +1659,11 @@
    "files": 1
   },
   {
-   "detail": "no layout for declared type 'float[4]'",
+   "detail": "no layout for declared type 'float[16]'",
    "files": 1
   },
   {
-   "detail": "no layout for declared type 'struct c'",
+   "detail": "no layout for declared type 'const struct a'",
    "files": 1
   },
   {
@@ -857,7 +1699,15 @@
    "files": 1
   },
   {
+   "detail": "no layout for declared type 'char *volatile'",
+   "files": 1
+  },
+  {
    "detail": "no layout for declared type 'struct E'",
+   "files": 1
+  },
+  {
+   "detail": "no layout for declared type 'i386_operand_type'",
    "files": 1
   },
   {
@@ -873,7 +1723,15 @@
    "files": 1
   },
   {
-   "detail": "no layout for declared type 'unsigned __int128'",
+   "detail": "no layout for declared type 'const char *const[1]'",
+   "files": 1
+  },
+  {
+   "detail": "no layout for declared type 'int ***volatile'",
+   "files": 1
+  },
+  {
+   "detail": "no layout for declared type 'struct S[6]'",
    "files": 1
   },
   {
@@ -905,11 +1763,23 @@
    "files": 1
   },
   {
-   "detail": "no layout for declared type '__m128i'",
+   "detail": "no layout for declared type 'union Y'",
    "files": 1
   },
   {
    "detail": "no layout for declared type 'creal_T[16]'",
+   "files": 1
+  },
+  {
+   "detail": "no layout for declared type '__attribute__((__vector_size__(8 * sizeof(short)))) short'",
+   "files": 1
+  },
+  {
+   "detail": "no layout for declared type '__attribute__((__vector_size__(16 * sizeof(char)))) char'",
+   "files": 1
+  },
+  {
+   "detail": "no layout for declared type '__attribute__((__vector_size__(4 * sizeof(float)))) float'",
    "files": 1
   },
   {
@@ -929,6 +1799,14 @@
    "files": 1
   },
   {
+   "detail": "no layout for declared type 'const char *const'",
+   "files": 1
+  },
+  {
+   "detail": "no layout for declared type 'struct tty_driver'",
+   "files": 1
+  },
+  {
    "detail": "no layout for declared type 'X'",
    "files": 1
   },
@@ -938,6 +1816,10 @@
   },
   {
    "detail": "no layout for declared type 'A0'",
+   "files": 1
+  },
+  {
+   "detail": "no layout for declared type 'big'",
    "files": 1
   },
   {
@@ -961,7 +1843,7 @@
    "files": 1
   },
   {
-   "detail": "no layout for declared type 'enum bar'",
+   "detail": "no layout for declared type 'struct product_iSfd_'",
    "files": 1
   },
   {
@@ -970,11 +1852,11 @@
   }
  ],
  "totals": {
-  "observed_any_no_layout": 232,
-  "observed_decl_no_layout": 209,
+  "observed_any_no_layout": 285,
+  "observed_decl_no_layout": 261,
   "observed_decl_without_static_candidate": 28,
-  "static_and_observed_decl": 181,
-  "static_candidate_without_observed_decl": 880,
+  "static_and_observed_decl": 233,
+  "static_candidate_without_observed_decl": 828,
   "static_present": 1061,
   "static_sole": 353
  }

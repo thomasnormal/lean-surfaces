@@ -8,6 +8,7 @@ layout tier is sized from observed refusals rather than from spellings alone.
 """
 import argparse
 import json
+import re
 from collections import Counter
 from pathlib import Path
 
@@ -27,7 +28,44 @@ def is_any_layout(row):
             "no layout" in row.get("detail", ""))
 
 
-def price(data):
+def envelope_dependencies(data, manifest_path):
+    if not manifest_path:
+        return {}
+    manifest = json.loads(Path(manifest_path).read_text())
+    by_name = {item["name"]: item for item in manifest.get("tests", [])}
+    out = {}
+    for row in data.get("rows", []):
+        if "no layout for declared type 'struct S'" not in row.get("detail", ""):
+            continue
+        item = by_name.get(row.get("name"), {})
+        env_path = item.get("envelope")
+        if not env_path or not Path(env_path).is_file():
+            continue
+        env = json.loads(Path(env_path).read_text())
+        records = []
+        def walk(value):
+            if isinstance(value, dict):
+                if value.get("kind") == "RecordDecl" and value.get("name") == "S":
+                    records.append(value)
+                for child in value.values():
+                    walk(child)
+            elif isinstance(value, list):
+                for child in value:
+                    walk(child)
+        walk(env)
+        fields = []
+        for record in records:
+            for field in record.get("fields", []):
+                typ = field.get("type")
+                if isinstance(typ, str):
+                    typ = re.sub(r"[^ ]*/src/", "src/", typ)
+                fields.append({"name": field.get("name"), "type": typ,
+                               "kind": field.get("kind"), "c_kind": field.get("c_kind")})
+        out.setdefault(row["name"], fields)
+    return out
+
+
+def price(data, manifest_path=None):
     rows = data.get("rows", [])
     corpora = sorted({row.get("corpus", "") for row in rows})
     by_corpus = {}
@@ -55,7 +93,7 @@ def price(data):
                 for detail, count in messages.most_common()
             ],
         }
-    return {
+    report = {
         "schema": "c-type-layout-price-0.1",
         "survey_schema": data.get("schema"),
         "survey_commit": data.get("measured_commit"),
@@ -87,6 +125,18 @@ def price(data):
             "no-layout refusals, retaining the static ranking for discovery."
         ),
     }
+    dependencies = envelope_dependencies(data, manifest_path)
+    report["struct_S_dependencies"] = {
+        "files": len(dependencies),
+        "rows": [{"name": name, "fields": fields}
+                 for name, fields in sorted(dependencies.items())],
+        "interpretation": (
+            "field records come directly from the approved Clang envelope; an "
+            "empty list means the envelope has no named S record, not that a "
+            "layout was guessed."
+        ),
+    }
+    return report
 
 
 def render(report):
@@ -118,6 +168,16 @@ def render(report):
               "| detail | files |", "| --- | ---: |"]
     for item in report["top_decl_messages"][:20]:
         lines.append("| `%s` | %d |" % (item["detail"], item["files"]))
+    deps = report.get("struct_S_dependencies", {})
+    if deps.get("rows"):
+        lines += ["", "## `struct S` parser-envelope dependencies", "",
+                  "| file | fields from Clang envelope |", "| --- | --- |"]
+        for item in deps["rows"]:
+            fields = ", ".join(
+                "%s:%s" % (field.get("name") or "<anonymous>", field.get("type") or field.get("c_kind") or "?")
+                for field in item["fields"])
+            lines.append("| `%s` | %s |" % (item["name"], fields or "<none>"))
+        lines += ["", deps.get("interpretation", ""), ""]
     lines += ["", report["interpretation"], ""]
     return "\n".join(lines)
 
@@ -148,12 +208,14 @@ def main():
     ap.add_argument("--input", default=str(DEFAULT_INPUT))
     ap.add_argument("--json", default=str(DEFAULT_JSON))
     ap.add_argument("--page", default=str(DEFAULT_PAGE))
+    ap.add_argument("--manifest", default=None,
+                    help="external manifest used to inspect parser envelopes")
     ap.add_argument("--self-test", action="store_true")
     args = ap.parse_args()
     if args.self_test:
         self_test()
         return 0
-    report = price(json.loads(Path(args.input).read_text()))
+    report = price(json.loads(Path(args.input).read_text()), args.manifest)
     Path(args.json).write_text(json.dumps(report, indent=1, sort_keys=True) + "\n")
     Path(args.page).write_text(render(report))
     print("c_type_layout_price: wrote %s and %s" % (args.json, args.page))

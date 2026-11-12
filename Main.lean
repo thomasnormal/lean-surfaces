@@ -639,7 +639,6 @@ def runBatchMode (jobsPath : String) (defaultFuel : Nat) (obs : Bool)
             -- no explicit recursion base this is the same fresh-world run as
             -- `callFunctionClock`; an explicit base selects an entry context.
             let fuel := job.fuel.getD defaultFuel
-            let thawed := RVal.thawArgs job.args
             -- THE INTERPRETER. `callInMono` had `callIn`'s type by construction
             -- (`Monadic/Eval.lean` §4), which is what let the two be compared
             -- row for row; the gate passed and the dual mode is gone.
@@ -648,8 +647,10 @@ def runBatchMode (jobsPath : String) (defaultFuel : Nat) (obs : Bool)
             -- the theorem that `ofHalt raw` IS what this line used to compute
             -- -- so the class is bought without running the interpreter twice
             -- and without the two answers being able to drift.
-            let w0 := { { initWorld m with clock := job.clock.getD [] } with
+            let wBase := { { initWorld m with clock := job.clock.getD [] } with
               callDepth := job.recursionBase.getD 0 }
+            let (heap0, thawed) := RVal.thawArgsH wBase.heap job.args
+            let w0 := { wBase with heap := heap0 }
             if trunk then
               -- `--proof-interpreter`: the trunk `callIn`, with the same
               -- explicit entry context and thawed arguments as the runner.
@@ -849,7 +850,9 @@ def main (argv : List String) : IO UInt32 := do
           -- The single-call surface runs the same interpreter as the batteries:
           -- `callFunction` was `Run.toPublic ∘ callIn ∘ thaw` over a fresh world,
           -- and this is that with the rebuilt entry point.
+          let wBase := initWorld envl.module
+          let (heap0, thawed) := RVal.thawArgsH wBase.heap cli.args
           IO.println (resJson (Run.toPublic cli.fuel
-            (Monadic.callInMono envl.module cli.fuel (initWorld envl.module)
-              cli.fname (RVal.thawArgs cli.args))))
+            (Monadic.callInMono envl.module cli.fuel { wBase with heap := heap0 }
+              cli.fname thawed)))
           return 0

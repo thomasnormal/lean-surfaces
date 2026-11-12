@@ -12168,9 +12168,10 @@ def proofCellGeneratorUnsafe (m : Module) (fname : String) : Bool :=
           !(initialized && !reboundAfter && f.body.toList.any (proofCellDrainStmt g.name))
 
 def callFunction (m : Module) (fname : String) (args : Array Val) (fuel : Nat) : Res Val :=
+  let w0 := initWorld m
+  let (h0, rargs) := RVal.thawArgsH w0.heap args
   Run.toPublic fuel
-    (callIn m fuel (initWorld m) fname
-      (RVal.thawArgs args))
+    (callIn m fuel { w0 with heap := h0 } fname rargs)
 
 /-- The narrower theorem-runner projection for generator-cell shapes that the
 monadic runner executes with live cells. -/
@@ -12187,9 +12188,9 @@ for `"clock"`-carrying rows. `callFunction m f args fuel` IS
 `clock := []` is the field's default). -/
 def callFunctionClock (m : Module) (fname : String) (args : Array Val)
     (clock : List Int) (fuel : Nat) : Res Val :=
+  let w0 := { initWorld m with clock := clock }
+  let (h0, rargs) := RVal.thawArgsH w0.heap args
   Run.toPublic fuel
-    (callIn m fuel
-      { initWorld m with clock := clock }
-      fname (RVal.thawArgs args))
+    (callIn m fuel { w0 with heap := h0 } fname rargs)
 
 end LeanModels.Python

@@ -2575,20 +2575,22 @@ theorem callFunction_mono {m : Module} {fname : String} {args : Array Val}
     (hr : r ≠ .timeout) :
     ∀ fuel' ≥ fuel, callFunction m fname args fuel' = r := by
   intro fuel' hf
-  unfold callFunction at h ⊢
-  let w0 : World := initWorld m
-  change Run.toPublic fuel (callIn m fuel w0 fname (RVal.thawArgs args)) = r at h
-  change Run.toPublic fuel' (callIn m fuel' w0 fname (RVal.thawArgs args)) = r
+  simp only [callFunction] at h ⊢
+  let h0 := (RVal.thawArgsH (initWorld m).heap args).fst
+  let rargs := (RVal.thawArgsH (initWorld m).heap args).snd
+  let w0 : World := { initWorld m with heap := h0 }
+  have h' : Run.toPublic fuel (callIn m fuel w0 fname rargs) = r := by
+    exact h
   rcases (fuelMono fuel).2.2.2.2.2.2.2.1 m w0 fname
-      (RVal.thawArgs args) fuel' hf with hto | heq
+      rargs fuel' hf with hto | heq
   · -- The inner run timed out at `fuel`: then the public result was
     -- `.timeout`, contradicting `hr`.
-    rw [hto] at h
-    exact absurd h.symm (by simpa using hr)
+    rw [hto] at h'
+    exact absurd h'.symm (by simpa using hr)
   · rw [← heq]
     have hle := Run.toPublic_mono
-      (x := callIn m fuel w0 fname (RVal.thawArgs args)) hf
-    rw [h] at hle
+      (x := callIn m fuel w0 fname rargs) hf
+    rw [h'] at hle
     exact (Res.le_eq hle hr).symm
 
 /-! ## Conditional world invariance (the heap-free fragment)

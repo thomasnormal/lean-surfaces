@@ -1140,6 +1140,15 @@ forms remain loud because CPython's Argument Clinic diagnostics distinguish
 missing positional arguments from invalid keyword names. The proof interpreter
 shares the check and refuses only the recorded keyword cases.
 
+## 2026-11-12-p2-library-boundary — heap-threaded public list mutation
+
+The first pinned-library baseline found a decided wrong answer in CPython's
+`bisect.insort_left`/`insort_right`: CPython mutates the caller's list, while
+the public call boundary previously thawed `Val.list` to an immediate snapshot
+and raised `AttributeError`. The wrapper now uses the existing heap-threaded
+`RVal.thawArgsH` path in both interpreters, and `list_boundary_mutation.py`
+pins the returned list and mutation against CPython 3.9.25 in both modes.
+
 ## 2026-11-10-pyfoundation-7 — remaining builtin and method recursion sites
 
 `len` now checks its C-call recursion boundary after evaluating arguments;

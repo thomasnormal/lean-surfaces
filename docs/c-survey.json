@@ -2,18 +2,18 @@
  "by_corpus": {
   "c-testsuite/single-exec": {
    "passed": 157,
-   "refused-libc": 4,
+   "refused-libc": 3,
    "refused-ub": 8,
-   "refused-unsupported": 49,
+   "refused-unsupported": 50,
    "timeout": 2
   },
   "gcc.c-torture/execute": {
    "not-parsed": 267,
    "oracle-tests-compiler": 1,
-   "passed": 705,
-   "refused-libc": 39,
+   "passed": 706,
+   "refused-libc": 37,
    "refused-ub": 60,
-   "refused-unsupported": 795,
+   "refused-unsupported": 796,
    "timeout": 51
   },
   "gcc.c23-run": {
@@ -28,10 +28,10 @@
  "counts": {
   "not-parsed": 294,
   "oracle-tests-compiler": 1,
-  "passed": 864,
-  "refused-libc": 45,
+  "passed": 865,
+  "refused-libc": 42,
   "refused-ub": 69,
-  "refused-unsupported": 888,
+  "refused-unsupported": 890,
   "timeout": 53
  },
  "dynamic_wall_ranking": [
@@ -709,6 +709,40 @@
   },
   {
    "files": [
+    "20230802-1.c",
+    "alias-access-path-2.c",
+    "bitops-1.c",
+    "bswap-3.c",
+    "minmaxcmp-1.c",
+    "pr104814.c",
+    "pr107881-1.c",
+    "pr110252-1.c",
+    "pr110666-1.c",
+    "pr111431-1.c",
+    "pr113787.c",
+    "pr114396.c",
+    "pr115277.c",
+    "pr117498.c",
+    "pr123978.c",
+    "pr124358.c",
+    "pr126405-2.c",
+    "pr126405.c",
+    "pr67714.c",
+    "pr68532.c",
+    "pr78559.c",
+    "pr79286.c",
+    "pr90348.c",
+    "pr91137.c",
+    "pr94734.c",
+    "pr97421-1.c",
+    "subcmp-1.c"
+   ],
+   "present": 27,
+   "sole": 27,
+   "wall": "unsupported:declaration outside a block"
+  },
+  {
+   "files": [
     "00178.c",
     "20000731-1.c",
     "20011217-1.c",
@@ -740,39 +774,6 @@
    "present": 27,
    "sole": 27,
    "wall": "unsupported:no layout for declared type 'double'"
-  },
-  {
-   "files": [
-    "20230802-1.c",
-    "alias-access-path-2.c",
-    "bitops-1.c",
-    "bswap-3.c",
-    "minmaxcmp-1.c",
-    "pr104814.c",
-    "pr107881-1.c",
-    "pr110252-1.c",
-    "pr110666-1.c",
-    "pr111431-1.c",
-    "pr113787.c",
-    "pr114396.c",
-    "pr117498.c",
-    "pr123978.c",
-    "pr124358.c",
-    "pr126405-2.c",
-    "pr126405.c",
-    "pr67714.c",
-    "pr68532.c",
-    "pr78559.c",
-    "pr79286.c",
-    "pr90348.c",
-    "pr91137.c",
-    "pr94734.c",
-    "pr97421-1.c",
-    "subcmp-1.c"
-   ],
-   "present": 26,
-   "sole": 26,
-   "wall": "unsupported:declaration outside a block"
   },
   {
    "files": [
@@ -856,6 +857,26 @@
   },
   {
    "files": [
+    "00214.c",
+    "20000622-1.c",
+    "20010329-1.c",
+    "20021010-2.c",
+    "20041112-1.c",
+    "20050125-1.c",
+    "960116-1.c",
+    "builtin-prefetch-6.c",
+    "loop-2e.c",
+    "pr103255.c",
+    "pr17133.c",
+    "pr39233.c",
+    "pr86231.c"
+   ],
+   "present": 13,
+   "sole": 13,
+   "wall": "cast:IntegralToPointer"
+  },
+  {
+   "files": [
     "20011121-1.c",
     "941014-1.c",
     "980526-2.c",
@@ -873,25 +894,6 @@
    "present": 13,
    "sole": 13,
    "wall": "cast:PointerToIntegral"
-  },
-  {
-   "files": [
-    "20000622-1.c",
-    "20010329-1.c",
-    "20021010-2.c",
-    "20041112-1.c",
-    "20050125-1.c",
-    "960116-1.c",
-    "builtin-prefetch-6.c",
-    "loop-2e.c",
-    "pr103255.c",
-    "pr17133.c",
-    "pr39233.c",
-    "pr86231.c"
-   ],
-   "present": 12,
-   "sole": 12,
-   "wall": "cast:IntegralToPointer"
   },
   {
    "files": [
@@ -1205,16 +1207,6 @@
    "present": 3,
    "sole": 3,
    "wall": "libc-call: __builtin_abort"
-  },
-  {
-   "files": [
-    "00214.c",
-    "20020418-1.c",
-    "pr115277.c"
-   ],
-   "present": 3,
-   "sole": 3,
-   "wall": "libc-call: __builtin_expect"
   },
   {
    "files": [
@@ -4242,8 +4234,8 @@
   }
  ],
  "manifest_hash": "eb2ea162993fd287a86d680d539ca5a9bba4f09b045a6ad663aaf88cdc3f445d",
- "measured_at_utc": "2026-11-12T18:31:49Z",
- "measured_commit": "f48b99cfa",
+ "measured_at_utc": "2026-11-12T18:34:35Z",
+ "measured_commit": "HEAD",
  "pin": {
   "corpora": [
    "C1",
@@ -6775,8 +6767,8 @@
   },
   {
    "corpus": "c-testsuite/single-exec",
-   "detail": "__builtin_expect",
-   "dynamic_wall": "libc-call: __builtin_expect",
+   "detail": "castKind 'IntegralToPointer'",
+   "dynamic_wall": "cast:IntegralToPointer",
    "manifest_status": "parsed",
    "name": "00214.c",
    "sha256": "5164bc3a4482815ba765ec253765a69bf59bc074e4313fdf607e4554daf798bb",
@@ -6787,7 +6779,7 @@
     "type-layout",
     "unsupported:StmtExpr"
    ],
-   "verdict": "refused-libc"
+   "verdict": "refused-unsupported"
   },
   {
    "corpus": "c-testsuite/single-exec",
@@ -8803,8 +8795,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "__builtin_expect",
-   "dynamic_wall": "libc-call: __builtin_expect",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "20020418-1.c",
    "sha256": "89bb69824e93c2c64631ee83dc0ff752059f2d395a2938381f40595a651e215a",
@@ -8812,7 +8804,7 @@
     "libc-call",
     "type-layout"
    ],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -21951,8 +21943,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "__builtin_expect",
-   "dynamic_wall": "libc-call: __builtin_expect",
+   "detail": "declaration outside a block",
+   "dynamic_wall": "unsupported:declaration outside a block",
    "manifest_status": "parsed",
    "name": "pr115277.c",
    "sha256": "c674fdafda83fbd0d82d8d99185261aba5536ddbd42c98cb329ce512cfe394c2",
@@ -21960,7 +21952,7 @@
     "libc-call",
     "type-layout"
    ],
-   "verdict": "refused-libc"
+   "verdict": "refused-unsupported"
   },
   {
    "corpus": "gcc.c-torture/execute",

@@ -2,10 +2,10 @@
 
 Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manifest.
 
-- verdicts: 864/2214 MATCH (passed 864, failed 0, oracle 0)
+- verdicts: 865/2214 MATCH (passed 865, failed 0, oracle 0)
 - manifest SHA-256: `eb2ea162993fd287a86d680d539ca5a9bba4f09b045a6ad663aaf88cdc3f445d`
-- measured commit: `f48b99cfa`
-- measured at: `2026-11-12T18:31:49Z`
+- measured commit: `HEAD`
+- measured at: `2026-11-12T18:34:35Z`
 
 ## Verdict counts
 
@@ -13,10 +13,10 @@ Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manife
 | --- | ---: |
 | `not-parsed` | 294 |
 | `oracle-tests-compiler` | 1 |
-| `passed` | 864 |
-| `refused-libc` | 45 |
+| `passed` | 865 |
+| `refused-libc` | 42 |
 | `refused-ub` | 69 |
-| `refused-unsupported` | 888 |
+| `refused-unsupported` | 890 |
 | `timeout` | 53 |
 
 ## Counts by corpus
@@ -24,16 +24,16 @@ Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manife
 | corpus | verdict | files |
 | --- | --- | ---: |
 | `c-testsuite/single-exec` | `passed` | 157 |
-| `c-testsuite/single-exec` | `refused-libc` | 4 |
+| `c-testsuite/single-exec` | `refused-libc` | 3 |
 | `c-testsuite/single-exec` | `refused-ub` | 8 |
-| `c-testsuite/single-exec` | `refused-unsupported` | 49 |
+| `c-testsuite/single-exec` | `refused-unsupported` | 50 |
 | `c-testsuite/single-exec` | `timeout` | 2 |
 | `gcc.c-torture/execute` | `not-parsed` | 267 |
 | `gcc.c-torture/execute` | `oracle-tests-compiler` | 1 |
-| `gcc.c-torture/execute` | `passed` | 705 |
-| `gcc.c-torture/execute` | `refused-libc` | 39 |
+| `gcc.c-torture/execute` | `passed` | 706 |
+| `gcc.c-torture/execute` | `refused-libc` | 37 |
 | `gcc.c-torture/execute` | `refused-ub` | 60 |
-| `gcc.c-torture/execute` | `refused-unsupported` | 795 |
+| `gcc.c-torture/execute` | `refused-unsupported` | 796 |
 | `gcc.c-torture/execute` | `timeout` | 51 |
 | `gcc.c23-run` | `not-parsed` | 27 |
 | `gcc.c23-run` | `passed` | 2 |
@@ -92,13 +92,13 @@ The run's first refusal, normalized by construct; `sole` counts rows whose first
 | `unsupported:extern object 'inside_main' has no definition in the translation unit` | 40 | 40 | builtins/20010124-1-lib.c, builtins/complex-1-lib.c, builtins/fputs-lib.c, builtins/lib/abs.c, builtins/lib/bfill.c |
 | `unsupported:more arguments than parameters` | 37 | 37 | 20000519-1.c, 20071213-1.c, 920726-1.c, 931004-10.c, 931004-12.c |
 | `unsequenced-effects` | 28 | 28 | 00121.c, 20001228-1.c, 20051021-1.c, 20060102-1.c, 20060929-1.c |
+| `unsupported:declaration outside a block` | 27 | 27 | 20230802-1.c, alias-access-path-2.c, bitops-1.c, bswap-3.c, minmaxcmp-1.c |
 | `unsupported:no layout for declared type 'double'` | 27 | 27 | 00178.c, 20000731-1.c, 20011217-1.c, 20040831-1.c, 20190901-1.c |
-| `unsupported:declaration outside a block` | 26 | 26 | 20230802-1.c, alias-access-path-2.c, bitops-1.c, bswap-3.c, minmaxcmp-1.c |
 | `unsupported:pointer bit-cast across incompatible effective types` | 23 | 23 | 00103.c, 20001017-2.c, 20050316-1.c, 20050607-1.c, 20060412-1.c |
 | `unsupported:no layout for declared type 'struct S'` | 22 | 22 | 00087.c, 20050107-1.c, 20081103-1.c, 20100708-1.c, 20171008-1.c |
 | `unsupported:no layout for parameter type 'double'` | 14 | 14 | 20020720-1.c, 920501-8.c, 941021-1.c, 980205.c, 980605-1.c |
+| `cast:IntegralToPointer` | 13 | 13 | 00214.c, 20000622-1.c, 20010329-1.c, 20021010-2.c, 20041112-1.c |
 | `cast:PointerToIntegral` | 13 | 13 | 20011121-1.c, 941014-1.c, 980526-2.c, alloca-1.c, loop-2c.c |
-| `cast:IntegralToPointer` | 12 | 12 | 20000622-1.c, 20010329-1.c, 20021010-2.c, 20041112-1.c, 20050125-1.c |
 | `unsupported:case label nested in a control statement` | 12 | 12 | 00051.c, 00143.c, 00182.c, 20011109-1.c, 20080719-1.c |
 | `unsupported:no layout for declared type 'V'` | 9 | 9 | pr105613.c, pr110817-1.c, pr110817-2.c, pr110817-3.c, pr71626-1.c |
 | `unsupported:no layout for declared type 'float'` | 9 | 9 | 00113.c, 00174.c, 20050121-1.c, ieee/920518-1.c, ieee/980619-1.c |
@@ -123,7 +123,6 @@ The run's first refusal, normalized by construct; `sole` counts rows whose first
 | `unsupported:no layout for declared type 'union U'` | 4 | 4 | bitfld-6.c, bitfld-7.c, pr86492.c, pr88739.c |
 | `unsupported:string literal with escape or non-ASCII spelling` | 4 | 4 | 20010325-1.c, printf-1.c, wchar_t-1.c, widechar-3.c |
 | `libc-call: __builtin_abort` | 3 | 3 | gcc/testsuite/gcc.dg/c23-nullptr-5.c, pr77767.c, pr97325.c |
-| `libc-call: __builtin_expect` | 3 | 3 | 00214.c, 20020418-1.c, pr115277.c |
 | `unsupported:ExprWithCleanups` | 3 | 3 | 20041124-1.c, 950628-1.c, pr30185.c |
 | `unsupported:function-to-pointer decay (inch 5)` | 3 | 3 | 20041212-1.c, 20101011-1.c, pr42231.c |
 | `unsupported:no layout for declared type 'A'` | 3 | 3 | 20010118-1.c, restrict-1.c, strct-pack-2.c |

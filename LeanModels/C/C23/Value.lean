@@ -167,6 +167,10 @@ inductive UB where
   that `INT_MIN / -1` is not representable. A DISTINCT constructor
   because the two arms retire the same way but diagnose differently. -/
   | divideOverflow            -- `INT_MIN / -1`: the quotient is unrepresentable
+  /-- **`J.2(16)`**, §6.3.1.4: the integral part of a finite floating
+  value cannot be represented by the destination integer type, or the
+  source is infinite or NaN. -/
+  | floatingToIntegralOutOfRange (ty : IntTy)
   /-- **`J.2(48)`**, §6.5.8p3: shifted by an amount ≥ the width of the
   promoted left operand. -/
   | shiftCountTooLarge (count : Int) (bits : Nat)

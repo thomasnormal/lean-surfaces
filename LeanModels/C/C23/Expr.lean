@@ -1,4 +1,5 @@
 import LeanModels.C.C23.Memory
+import LeanModels.SoftFloat.Transfer
 
 /-!
 # §6.5 Expressions — the evaluator — M2 inch 3
@@ -581,6 +582,28 @@ def float64Binop (op : String) (a b : Float.Model) : EvalM CVal :=
   | ">=" => pure (ofBool (Float.Model.le b a))
   | _ => refuseUnsupported s!"binary operator '{op}' on binary64"
 
+/-! C23 §6.3.1.4: conversion from a floating type to an integer type
+discards the fractional part toward zero. An infinite/NaN source, or an
+integral part outside the destination range, is undefined (`J.2(16)`).
+The exact source value comes from the parser-backed IEEE representation;
+there is no host floating-point conversion here. -/
+
+def float32ToInt (f : Float32.Model) (t : IntTy) : EvalM CVal :=
+  match LeanModels.SoftFloat.valQ (Float32.Model.unpack f) with
+  | some q =>
+      let n := q.truncate
+      if t.inRange n then pure (.int t n)
+      else refuseValue (.floatingToIntegralOutOfRange t)
+  | none => refuseValue (.floatingToIntegralOutOfRange t)
+
+def float64ToInt (f : Float.Model) (t : IntTy) : EvalM CVal :=
+  match LeanModels.SoftFloat.valQ (Float.Model.unpack f) with
+  | some q =>
+      let n := q.truncate
+      if t.inRange n then pure (.int t n)
+      else refuseValue (.floatingToIntegralOutOfRange t)
+  | none => refuseValue (.floatingToIntegralOutOfRange t)
+
 /-! ### Projecting a value
 
 Named, because every refusal must be. -/
@@ -990,6 +1013,14 @@ def evalExpr (ctx : Ctx) : Expr → EvalM CVal
           pure (.float64 (Float.Model.ofInt n))
         else
           refuseUnsupported "long double integer-to-floating conversion"
+      else if ck == "FloatingToIntegral" then
+        do
+        let v ← evalExpr ctx sub
+        let t ← intTyOf (ctx.layout.normalizeTy ty)
+        match v with
+        | .float32 f => float32ToInt f t
+        | .float64 f => float64ToInt f t
+        | _ => refuseUnsupported "non-floating value in floating-to-integral conversion"
       else refuseUnsupported s!"castKind '{ck}'"
 
   -- ===== §6.5.14 / §6.5.15 — THE DRAIN AMENDMENT =====
@@ -1665,6 +1696,11 @@ theorem ite' {p : Prop} [Decidable p] {x y : EvalM α}
     MemInvariant (if p then x else y) := by
   split <;> assumption
 
+theorem bif' {p : Bool} {x y : EvalM α}
+    (hx : MemInvariant x) (hy : MemInvariant y) :
+    MemInvariant (if p then x else y) := by
+  cases p <;> assumption
+
 /-- The composition rule, and the refusal branch is where the layer order
 becomes visible: the head's out-memory is `m` by `hx` applied **to the
 refusal result**, which is exactly the quantifier `MemInvariant` carries. -/
@@ -1758,6 +1794,22 @@ theorem float64Binop' (op : String) (a b : Float.Model) :
     | exact refuseValue' _
     | exact refuseUnsupported' _
 
+theorem float32ToInt' (f : Float32.Model) (t : IntTy) :
+    MemInvariant (float32ToInt f t) := by
+  first | simp only [float32ToInt] | rw [float32ToInt.eq_def]
+  repeat (any_goals split)
+  all_goals first
+    | exact pure' _
+    | exact refuseValue' _
+
+theorem float64ToInt' (f : Float.Model) (t : IntTy) :
+    MemInvariant (float64ToInt f t) := by
+  first | simp only [float64ToInt] | rw [float64ToInt.eq_def]
+  repeat (any_goals split)
+  all_goals first
+    | exact pure' _
+    | exact refuseValue' _
+
 theorem floatLiteralValue' (bitsHex : Option String) (bitWidth : Option Nat) :
     MemInvariant (floatLiteralValue bitsHex bitWidth) := by
   simp only [floatLiteralValue]
@@ -1836,7 +1888,11 @@ macro "mem_inv" : tactic => `(tactic|
     | (with_reducible apply MemInvariant.asInt')
     | (with_reducible apply MemInvariant.loadAt')
     | (with_reducible apply MemInvariant.intBinop')
+    | (with_reducible apply MemInvariant.float32ToInt')
+    | (with_reducible apply MemInvariant.float64ToInt')
     | (with_reducible apply MemInvariant.evalArith')
+    | (with_reducible apply MemInvariant.ite')
+    | (with_reducible apply MemInvariant.bif')
     | (with_reducible apply MemInvariant.bind)
     | (with_reducible apply MemInvariant.map')
     | (simp only [letFun])
@@ -1928,11 +1984,13 @@ private theorem memInvariant_core (ctx : Ctx) : ∀ (n : Nat) (e : Expr), e.size
       | implicitCast _ s _ _ =>
           obtain ⟨i1, i2⟩ := ih s (by simp only [Expr.size_implicitCast] at he; omega)
             (Expr.isPure_implicitCast hp)
-          exact ⟨by open_eval; mem_inv, by open_lvalue; mem_inv⟩
+          exact ⟨by open_eval; apply MemInvariant.ite' <;> mem_inv,
+            by open_lvalue; mem_inv⟩
       | cast _ s _ _ =>
           obtain ⟨i1, i2⟩ := ih s (by simp only [Expr.size_cast] at he; omega)
             (Expr.isPure_cast hp)
-          exact ⟨by open_eval; mem_inv, by open_lvalue; mem_inv⟩
+          exact ⟨by open_eval; apply MemInvariant.ite' <;> mem_inv,
+            by open_lvalue; mem_inv⟩
       | member b f a fieldTy _ =>
           obtain ⟨i1, i2⟩ := ih b (by simp only [Expr.size_member] at he; omega)
             (Expr.isPure_member hp)

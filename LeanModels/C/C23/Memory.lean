@@ -799,6 +799,7 @@ def j2 : Refusal → Option String
       | .signedOverflow .. => "J.2(35)"
       | .divideByZero _ => "J.2(41)"
       | .divideOverflow => "J.2(35)"
+      | .floatingToIntegralOutOfRange _ => "J.2(16)"
       | .shiftCountTooLarge .. | .shiftCountNegative _ => "J.2(48)"
       | .shiftNegativeOperand _ | .shiftOverflow .. => "J.2(49)")
   | .libc _ => none

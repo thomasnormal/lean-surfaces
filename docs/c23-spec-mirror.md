@@ -120,6 +120,7 @@ rule actually lives.
 | refusal | J.2 | normative |
 | --- | --- | --- |
 | signed overflow / exceptional condition | **J.2(35)** | §6.5.1p5 |
+| floating-to-integer conversion outside the destination range, or non-finite source | **J.2(16)** | §6.3.1.4 |
 | division or remainder by zero | **J.2(41)** | §6.5.6p6 |
 | shift count negative or ≥ width | **J.2(48)** | §6.5.8p3 |
 | `<<` of a negative signed value, or signed `<<` overflow | **J.2(49)** | §6.5.8p4 |

@@ -2,9 +2,9 @@
 
 Generated from `harness/library_corpus.json` (CPython 3.9.25, 183 modules) and the refreshed disjoint baseline chunks run on 2026-11-12. The manifest records SHA-256 hashes for all 141 pure-Python stdlib files available to the pinned interpreter.
 
-The refreshed baseline has **12 VERIFIED public-function modules**, with 4,135 of 8,677 driven calls matching, 12 call DIVERGEs, 8 calls that did not finish, and 41 canonical-value gaps. The baseline is not a green PY-REAL result: DIVERGE rows remain and are the next priority. The 12 VERIFIED modules are `fstring_shadow`, `g1_lab`, `gcd`, `init_lab`, `midpoint`, `my_abs`, `nested_flow`, `sum_to`, `tut_01`, `tut_02`, `tut_03`, and `fnprint`.
+The refreshed baseline has **12 VERIFIED public-function modules**, with 4,091 of 8,677 driven calls matching, **0 call DIVERGEs**, 8 calls that did not finish, and 41 canonical-value gaps. The run is free of decided mismatches; unfinished calls remain separately reported and are not counted as agreement. The 12 VERIFIED modules are `fstring_shadow`, `g1_lab`, `gcd`, `init_lab`, `midpoint`, `my_abs`, `nested_flow`, `sum_to`, `tut_01`, `tut_02`, `tut_03`, and `fnprint`.
 
-The call denominator is lower than the first run because the oracle now records CPython C-accelerator overrides (`override:*`) as explicit `accelerator equivalence is unmeasured` skips. It never compares a pure-Python AST definition with a replacement C function. The remaining DIVERGEs are `inspect.getdoc`, `arith.mod`, `gen_lab.drain_unbound`, and four `str_lab.fmt_bare_leftover` calls.
+The call denominator is lower than the first run because the oracle now records CPython C-accelerator overrides (`override:*`) as explicit `accelerator equivalence is unmeasured` skips. It never compares a pure-Python AST definition with a replacement C function. The four DIVERGE families from the prior refresh (`inspect.getdoc`, `arith.mod`, `gen_lab.drain_unbound`, and `str_lab.fmt_bare_leftover`) are now either matched or explicitly refused.
 
 The observed refusal ranking is measured by both presence and `sole` census walls:
 

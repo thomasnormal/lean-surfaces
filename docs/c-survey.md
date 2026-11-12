@@ -2,10 +2,10 @@
 
 Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manifest.
 
-- verdicts: 865/2214 MATCH (passed 865, failed 0, oracle 0)
+- verdicts: 867/2214 MATCH (passed 867, failed 0, oracle 0)
 - manifest SHA-256: `eb2ea162993fd287a86d680d539ca5a9bba4f09b045a6ad663aaf88cdc3f445d`
-- measured commit: `73dbc6a19`
-- measured at: `2026-11-12T18:34:55Z`
+- measured commit: `HEAD`
+- measured at: `2026-11-12T18:37:35Z`
 
 ## Verdict counts
 
@@ -13,10 +13,10 @@ Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manife
 | --- | ---: |
 | `not-parsed` | 294 |
 | `oracle-tests-compiler` | 1 |
-| `passed` | 865 |
-| `refused-libc` | 42 |
-| `refused-ub` | 69 |
-| `refused-unsupported` | 890 |
+| `passed` | 867 |
+| `refused-libc` | 38 |
+| `refused-ub` | 70 |
+| `refused-unsupported` | 891 |
 | `timeout` | 53 |
 
 ## Counts by corpus
@@ -30,10 +30,10 @@ Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manife
 | `c-testsuite/single-exec` | `timeout` | 2 |
 | `gcc.c-torture/execute` | `not-parsed` | 267 |
 | `gcc.c-torture/execute` | `oracle-tests-compiler` | 1 |
-| `gcc.c-torture/execute` | `passed` | 706 |
-| `gcc.c-torture/execute` | `refused-libc` | 37 |
-| `gcc.c-torture/execute` | `refused-ub` | 60 |
-| `gcc.c-torture/execute` | `refused-unsupported` | 796 |
+| `gcc.c-torture/execute` | `passed` | 708 |
+| `gcc.c-torture/execute` | `refused-libc` | 33 |
+| `gcc.c-torture/execute` | `refused-ub` | 61 |
+| `gcc.c-torture/execute` | `refused-unsupported` | 797 |
 | `gcc.c-torture/execute` | `timeout` | 51 |
 | `gcc.c23-run` | `not-parsed` | 27 |
 | `gcc.c23-run` | `passed` | 2 |
@@ -87,7 +87,7 @@ The run's first refusal, normalized by construct; `sole` counts rows whose first
 | --- | ---: | ---: | --- |
 | `frontend` | 294 | 294 | 20000227-1.c, 20000412-3.c, 20000717-3.c, 20000822-1.c, 20001009-2.c |
 | `unsupported:no definition for 'main'` | 102 | 102 | 20040705-1.c, 20040705-2.c, 20040709-3.c, builtins/20010124-1.c, builtins/abs-1.c |
-| `undefined-behavior` | 69 | 69 | 00032.c, 00115.c, 00141.c, 00144.c, 00200.c |
+| `undefined-behavior` | 70 | 70 | 00032.c, 00115.c, 00141.c, 00144.c, 00200.c |
 | `timeout` | 53 | 53 | 00041.c, 00128.c, 20000412-2.c, 20020108-1.c, 20030916-1.c |
 | `unsupported:extern object 'inside_main' has no definition in the translation unit` | 40 | 40 | builtins/20010124-1-lib.c, builtins/complex-1-lib.c, builtins/fputs-lib.c, builtins/lib/abs.c, builtins/lib/bfill.c |
 | `unsupported:more arguments than parameters` | 37 | 37 | 20000519-1.c, 20071213-1.c, 920726-1.c, 931004-10.c, 931004-12.c |
@@ -117,7 +117,6 @@ The run's first refusal, normalized by construct; `sole` counts rows whose first
 | `unsupported:indirect call through a non-FunctionDecl reference` | 5 | 5 | 00089.c, 20010122-1.c, pr28289.c, pr34768-1.c, pr34768-2.c |
 | `unsupported:no layout for declared type '_Complex double'` | 5 | 5 | 20030910-1.c, 960512-1.c, complex-1.c, complex-2.c, ieee/cdivchkd.c |
 | `cast:FloatingCast` | 4 | 4 | 20020413-1.c, 920618-1.c, ieee/pr67218.c, pr36343.c |
-| `libc-call: __builtin_prefetch` | 4 | 4 | builtin-prefetch-1.c, builtin-prefetch-2.c, builtin-prefetch-4.c, builtin-prefetch-5.c |
 | `unsupported:extern object 'b' has no definition in the translation unit` | 4 | 4 | alias-2.c, alias-3.c, alias-4.c, gcc/testsuite/gcc.dg/c23-bool-2.c |
 | `unsupported:no layout for declared type 'const double'` | 4 | 4 | cbrt.c, ieee/hugeval.c, ieee/unsafe-fp-assoc-1.c, ieee/unsafe-fp-assoc.c |
 | `unsupported:no layout for declared type 'union U'` | 4 | 4 | bitfld-6.c, bitfld-7.c, pr86492.c, pr88739.c |
@@ -488,6 +487,7 @@ The run's first refusal, normalized by construct; `sole` counts rows whose first
 | `unsupported:unbound declaration 'id84' (name 'a')` | 1 | 1 | 20041113-1.c |
 | `unsupported:unbound declaration 'id95' (name 'tmp')` | 1 | 1 | 991118-1.c |
 | `unsupported:unknown enum declaration 'id17' (name 'X')` | 1 | 1 | 00120.c |
+| `unsupported:unknown enum declaration 'id27' (name 'read')` | 1 | 1 | builtin-prefetch-1.c |
 | `unsupported:unknown enum declaration 'id29' (name 'BAR')` | 1 | 1 | enum-2.c |
 | `unsupported:unknown enum declaration 'id41' (name 'N')` | 1 | 1 | 20011219-1.c |
 | `unsupported:unknown enum declaration 'id513' (name 'a')` | 1 | 1 | 00198.c |

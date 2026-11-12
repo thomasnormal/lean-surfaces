@@ -10,10 +10,10 @@
   "gcc.c-torture/execute": {
    "not-parsed": 267,
    "oracle-tests-compiler": 1,
-   "passed": 706,
-   "refused-libc": 37,
-   "refused-ub": 60,
-   "refused-unsupported": 796,
+   "passed": 708,
+   "refused-libc": 33,
+   "refused-ub": 61,
+   "refused-unsupported": 797,
    "timeout": 51
   },
   "gcc.c23-run": {
@@ -28,10 +28,10 @@
  "counts": {
   "not-parsed": 294,
   "oracle-tests-compiler": 1,
-  "passed": 865,
-  "refused-libc": 42,
-  "refused-ub": 69,
-  "refused-unsupported": 890,
+  "passed": 867,
+  "refused-libc": 38,
+  "refused-ub": 70,
+  "refused-unsupported": 891,
   "timeout": 53
  },
  "dynamic_wall_ranking": [
@@ -488,6 +488,7 @@
     "960321-1.c",
     "960327-1.c",
     "990524-1.c",
+    "builtin-prefetch-2.c",
     "builtins/memmove.c",
     "gcc/testsuite/gcc.dg/c23-complit-1.c",
     "loop-15.c",
@@ -517,8 +518,8 @@
     "strlen-2.c",
     "strlen-6.c"
    ],
-   "present": 69,
-   "sole": 69,
+   "present": 70,
+   "sole": 70,
    "wall": "undefined-behavior"
   },
   {
@@ -1142,17 +1143,6 @@
    "present": 4,
    "sole": 4,
    "wall": "cast:FloatingCast"
-  },
-  {
-   "files": [
-    "builtin-prefetch-1.c",
-    "builtin-prefetch-2.c",
-    "builtin-prefetch-4.c",
-    "builtin-prefetch-5.c"
-   ],
-   "present": 4,
-   "sole": 4,
-   "wall": "libc-call: __builtin_prefetch"
   },
   {
    "files": [
@@ -4202,6 +4192,14 @@
   },
   {
    "files": [
+    "builtin-prefetch-1.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "unsupported:unknown enum declaration 'id27' (name 'read')"
+  },
+  {
+   "files": [
     "enum-2.c"
    ],
    "present": 1,
@@ -4234,8 +4232,8 @@
   }
  ],
  "manifest_hash": "eb2ea162993fd287a86d680d539ca5a9bba4f09b045a6ad663aaf88cdc3f445d",
- "measured_at_utc": "2026-11-12T18:34:55Z",
- "measured_commit": "73dbc6a19",
+ "measured_at_utc": "2026-11-12T18:37:35Z",
+ "measured_commit": "HEAD",
  "pin": {
   "corpora": [
    "C1",
@@ -16140,8 +16138,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "__builtin_prefetch",
-   "dynamic_wall": "libc-call: __builtin_prefetch",
+   "detail": "unknown enum declaration 'id27' (name 'read')",
+   "dynamic_wall": "unsupported:unknown enum declaration 'id27' (name 'read')",
    "manifest_status": "parsed",
    "name": "builtin-prefetch-1.c",
    "sha256": "f5a50f44cb76761dbfc1c7b112b044ab2eb449ee71f97d622534b9220426c9f0",
@@ -16149,12 +16147,12 @@
     "libc-call",
     "type-layout"
    ],
-   "verdict": "refused-libc"
+   "verdict": "refused-unsupported"
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "__builtin_prefetch",
-   "dynamic_wall": "libc-call: __builtin_prefetch",
+   "detail": "LeanModels.C.C23.MemFault.indetAutomatic 22 16",
+   "dynamic_wall": "undefined-behavior",
    "manifest_status": "parsed",
    "name": "builtin-prefetch-2.c",
    "sha256": "f0297aea28dc0548f7da366678740dec5faeedc3dd2b0197c79a8653212d56c4",
@@ -16162,7 +16160,7 @@
     "libc-call",
     "type-layout"
    ],
-   "verdict": "refused-libc"
+   "verdict": "refused-ub"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -16179,8 +16177,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "__builtin_prefetch",
-   "dynamic_wall": "libc-call: __builtin_prefetch",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "builtin-prefetch-4.c",
    "sha256": "8006b36cd1d1c0a4dea621c63774f59fadce07b338ab1d55b9dc4d77f54fe8ae",
@@ -16188,12 +16186,12 @@
     "libc-call",
     "type-layout"
    ],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "__builtin_prefetch",
-   "dynamic_wall": "libc-call: __builtin_prefetch",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "builtin-prefetch-5.c",
    "sha256": "f7c357a38112c18c48b92d0265dc413497b071779b8e4702255cfcaeb7c0132c",
@@ -16201,7 +16199,7 @@
     "libc-call",
     "type-layout"
    ],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",

@@ -63,7 +63,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.abspath(os.path.join(HERE, "..", ".."))
 
 DECLS = {"FunctionDecl", "VarDecl", "ParmVarDecl", "FieldDecl", "RecordDecl",
-         "TypedefDecl", "EnumDecl", "EnumConstantDecl"}
+         "TypedefDecl", "EnumDecl", "EnumConstantDecl", "EmptyDecl"}
 STMTS = {"CompoundStmt", "DeclStmt", "IfStmt", "ForStmt", "WhileStmt", "DoStmt",
          "ReturnStmt", "BreakStmt", "ContinueStmt", "GotoStmt", "LabelStmt",
          "NullStmt", "SwitchStmt", "CaseStmt", "DefaultStmt"}
@@ -397,6 +397,9 @@ class Extractor:
         if (v or {}).get("value") is not None:
             out["value"] = v["value"]
         return out
+
+    def e_EmptyDecl(self, n):
+        return {}
 
     # ---- the structured type tree (typedefs only) ---------------------
     def type_node(self, t):

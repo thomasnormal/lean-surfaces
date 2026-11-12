@@ -556,6 +556,7 @@ def declare : Nat → Ctx → List Decl → ExecM Ctx
                 -- §6.7.11 — scalar or aggregate, one entry point.
                 initObject fuel ctx' (Ptr.toObject o) ty e
                 declare fuel ctx' ds
+    | .empty _ => declare fuel ctx ds
     | _ => refuseUnsupported "non-object declaration in a block"
 
 end

@@ -274,6 +274,7 @@ partial def parseDecl (j : Json) : Except String Decl := do
         let id ← getOptStr j "decl_id"
         return .enumConst (id.map DeclarationId.mk) (← getStr j "name")
           (← getOptStr j "value") span
+    | "EmptyDecl" => return .empty span
     | "Unsupported" =>
         return .unsupported (← getStr j "c_kind") (← getStr j "text") span
     | other => throw s!"unknown declaration kind {other.quote}"

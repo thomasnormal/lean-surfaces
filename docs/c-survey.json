@@ -37,8 +37,8 @@
   "timeout": 44
  },
  "manifest_hash": "1de1a60c299d5bb51dae7ca001b0a008010cad0b25670cde2090c08bfc1a84ce",
- "measured_at_utc": "2026-11-12T04:05:00Z",
- "measured_commit": "d508b5aa1",
+ "measured_at_utc": "2026-11-12T04:15:00Z",
+ "measured_commit": "33fe23e53",
  "pin": null,
  "rows": [
   {
@@ -5729,9 +5729,7 @@
    "manifest_status": "parsed",
    "name": "20050106-1.c",
    "sha256": "6d67845c7a786163b8e714d28ffec6b14e023527abf56e7b203099153ae801b2",
-   "static_walls": [
-    "unsupported:EmptyDecl"
-   ],
+   "static_walls": [],
    "verdict": "passed"
   },
   {
@@ -7408,8 +7406,7 @@
    "sha256": "3fee99e4e5c5b5ba4cd56c80287630d2a3b6f9e3eea2751f37cf6880393dc43f",
    "static_walls": [
     "libc-call",
-    "type-layout",
-    "unsupported:EmptyDecl"
+    "type-layout"
    ],
    "verdict": "refused-unsupported"
   },
@@ -7433,8 +7430,7 @@
    "sha256": "75b86123dbfa571b0c34576552ccbccb0a9e3a1166f7e90ef8400f7961749868",
    "static_walls": [
     "libc-call",
-    "type-layout",
-    "unsupported:EmptyDecl"
+    "type-layout"
    ],
    "verdict": "refused-unsupported"
   },
@@ -10817,8 +10813,7 @@
    "static_walls": [
     "libc-call",
     "type-layout",
-    "unsequenced-effects",
-    "unsupported:EmptyDecl"
+    "unsequenced-effects"
    ],
    "verdict": "refused-unsupported"
   },
@@ -17416,8 +17411,7 @@
    "name": "pr34154.c",
    "sha256": "edae4e9e3f74389c5fac0193e76bc3795b8aba369c7eea72ac658db62babae11",
    "static_walls": [
-    "unsupported:CaseStmt",
-    "unsupported:EmptyDecl"
+    "unsupported:CaseStmt"
    ],
    "verdict": "refused-unsupported"
   },
@@ -17691,8 +17685,7 @@
    "sha256": "27ba2d916cdcf7c9e18241c4ae25c95506737584eaf20f6361584192476a75d2",
    "static_walls": [
     "libc-call",
-    "type-layout",
-    "unsupported:EmptyDecl"
+    "type-layout"
    ],
    "verdict": "timeout"
   },
@@ -25700,16 +25693,11 @@
   },
   {
    "files": [
-    "20050106-1.c",
-    "20230630-2.c",
-    "20230630-4.c",
-    "builtin-bitops-1.c",
-    "pr34154.c",
-    "pr37573.c"
+    "pr34154.c"
    ],
-   "present": 6,
+   "present": 1,
    "sole": 1,
-   "wall": "unsupported:EmptyDecl"
+   "wall": "unsupported:CaseStmt"
   },
   {
    "files": [
@@ -26451,14 +26439,6 @@
    "present": 1,
    "sole": 0,
    "wall": "unsupported:CXXNullPtrLiteralExpr"
-  },
-  {
-   "files": [
-    "pr34154.c"
-   ],
-   "present": 1,
-   "sole": 0,
-   "wall": "unsupported:CaseStmt"
   },
   {
    "files": [

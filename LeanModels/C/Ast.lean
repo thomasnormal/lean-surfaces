@@ -195,6 +195,8 @@ inductive Decl where
   supplied from `Program.enums`, which nothing builds from an envelope, so
   this is schema-widening (`docs/backlog/c.md` 2026-08-24-c-21). -/
   | enumConst (id : Option DeclarationId) (name : String) (value : Option String) (span : CSpan)
+  /-- §6.7.2 — an empty declaration (`;`) has no runtime effect. -/
+  | empty (span : CSpan)
   | unsupported (cKind : String) (text : String) (span : CSpan)
 deriving Repr, Inhabited
 

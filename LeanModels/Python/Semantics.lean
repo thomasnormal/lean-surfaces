@@ -2534,6 +2534,11 @@ def strFormatH (h : Heap) (fmt : String) (rhs : RVal) : Res RVal :=
       | some (.dict ..) => do
           let s ← strFormatMappingWalk h a fmt.length fmt.toList ""
           return .str s
+      | some (.list _) =>
+          if !fmt.toList.any (· == '%') then
+            .ok (.str fmt)
+          else
+            strFormat fmt rhs
       | _ => strFormat fmt rhs
   | _ => strFormat fmt rhs
 

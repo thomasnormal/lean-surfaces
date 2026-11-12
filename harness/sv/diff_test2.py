@@ -426,7 +426,8 @@ def main():
                     default="auto")
     ap.add_argument("--backend", choices=["run2", "e0"], default="run2",
                     help="Lean semantics backend (run2 or E-core-0 array executor)")
-    ap.add_argument("--case", default=None)
+    ap.add_argument("--case", action="append", default=None,
+                    help="restrict to one or more case names (repeat the option)")
     ap.add_argument("--workdir", default=None)
     ap.add_argument("--keep", action="store_true")
     ap.add_argument("--verbose", action="store_true")
@@ -444,7 +445,8 @@ def main():
         spec = json.load(f)
     cases = spec["cases"]
     if args.case is not None:
-        cases = [c for c in cases if c["name"] == args.case]
+        wanted = set(args.case)
+        cases = [c for c in cases if c["name"] in wanted]
         if not cases:
             print("no case named %r" % args.case)
             return 2

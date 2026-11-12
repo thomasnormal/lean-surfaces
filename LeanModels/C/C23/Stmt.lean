@@ -978,7 +978,18 @@ def callFn : Nat → Program → LeanModels.C.FunctionDefn → List CVal → Exe
 def callByName (fuel : Nat) (prog : Program) (name : String) (args : List CVal) :
     ExecM CVal :=
   match prog.find? name with
-  | some f => callFn fuel prog f args
+  | some f =>
+      -- C23 §5.1.2.2.1 permits the hosted two-parameter form of `main`.
+      -- The runner starts the program with the executable name as argv[0],
+      -- so argc is one.  The argv object itself is not modelled yet; passing
+      -- a null pointer keeps any dereference loud through the existing
+      -- provenance checks.  This exception is only for the entrypoint: an
+      -- ordinary function with omitted arguments remains a refusal.
+      let startupArgs :=
+        if name == "main" && args.isEmpty && f.params.length == 2 then
+          [.int IntTy.int_ 1, .ptr Ptr.null]
+        else args
+      callFn fuel prog f startupArgs
   | none => refuseUnsupported s!"no definition for '{name}'"
 
 /-! ## `fuelMono` — still an obligation, and now with a known technique

@@ -31,10 +31,15 @@
 # new file whose code names it, or more mentions than the committed baseline. A failing or missing ratchet stops the
 # chain with its own exit status before anything is built; its message says what to do.
 #
-# WHAT `--dependents` PRINTS.  One per line, in `--list` order, exactly the chain modules that transitively import the
-# module of any given `LeanModels/Sv/*.lean` path, and nothing else. Only the ANSWER is limited to the chain: the walk reads
-# every `.lean` under LeanModels and Examples, because a path can run through a non-Comb module, another tier or `sem2/`. A
-# module is not its own dependent. A path outside LeanModels/Sv, or a leaf nothing imports, prints nothing and exits 0. A
+# WHAT `--dependents` PRINTS.  One per line, in source-tree order, exactly the
+# modules that transitively import the module of any given
+# `LeanModels/Sv/*.lean` path.  The old implementation filtered this answer to
+# the comb-chain list, so an importer such as `Hier2Gen` was printed by the
+# graph walk and then silently discarded before triad's landing build.  The
+# answer now includes every `LeanModels/Sv` module and every reachable
+# `Examples/system-verilog` module; triad feeds that complete list to its one
+# scoped `lake build`.  A module is not its own dependent. A path outside
+# `LeanModels/Sv`, or a leaf nothing imports, prints nothing and exits 0. A
 # deleted file still has importers, so a path need not exist. Runs no Lean.
 #
 # SLOT DISCIPLINE.  With `LEANSLOT` set (the path of a slot wrapper such as the scratchpad's `leanslot.sh`: it takes a
@@ -68,6 +73,11 @@ example_files() {
 
 example_modules() {
   example_files | sed -e 's/\.lean$//' -e 's#/#.#g' -e 's/system-verilog/«system-verilog»/'
+}
+
+all_sv_modules() {
+  find LeanModels/Sv -type f -name '*.lean' -print 2>/dev/null |
+    sed -e 's/\.lean$//' -e 's#/#.#g' | sort -u
 }
 
 # Fill the global arrays LIB and EX (bash 3.2 has no mapfile).
@@ -235,9 +245,13 @@ dependents() {
   printf '%s\n' "$deps" | sed 's/^Examples\.system-verilog\./Examples.«system-verilog»./' > "$pats"
   collect
   have_chain || { rm -f "$pats"; return 2; }
-  printf '%s\n' "${LIB[@]}" "${EX[@]}" | grep -xF -f "$pats"
+  # Do not narrow this to `LIB`: the landing gate must build every importer,
+  # including hierarchy, parameter and kernel modules that are not comb-chain
+  # roots.  `triad.sh` consumes these names as scoped lake targets.
+  all_sv_modules > "$pats.all"
+  cat "$pats.all" <(printf '%s\n' "${EX[@]}") | grep -xF -f "$pats"
   rc=$?
-  rm -f "$pats"
+  rm -f "$pats" "$pats.all"
   [ "$rc" -le 1 ] || return 2      # 1 is grep's "no match": dependents exist, and none of them is in the chain
   return 0
 }
@@ -359,18 +373,18 @@ STUB
   dep() { out="$(cd / && PATH="$tmp:$PATH" env -u LEANSLOT bash "$tree/tools/check_sv_chain.sh" --dependents "$@" 2>/dev/null)"; rc=$?; out="$(printf '%s' "$out" | tr '\n' ' ')"; }
   local ex='Examples.«system-verilog».ex'
   : > "$STUB_LOG"; dep LeanModels/Sv/Obs.lean
-  check "--dependents walks through a non-Comb module, and to the Examples" "$out" "LeanModels.Sv.CombBar LeanModels.Sv.PinAxioms $ex.proof $ex.top $ex.via Examples.«system-verilog».sem2.s"
+  check "--dependents walks through every Sv module and the Examples" "$out" "LeanModels.Sv.CombBar LeanModels.Sv.Foo LeanModels.Sv.Leaf LeanModels.Sv.PinAxioms LeanModels.Sv.Solo LeanModels.Sv.Tests $ex.proof $ex.top $ex.via Examples.«system-verilog».sem2.s"
   check "  ...exits 0" "$rc" 0
   check "  ...and runs no lake" "$(grep -c '^lake' "$STUB_LOG")" 0
   dep LeanModels/Sv/CombBar.lean
   check "--dependents: a module is not its own dependent" "$out" "LeanModels.Sv.PinAxioms $ex.proof $ex.top $ex.via Examples.«system-verilog».sem2.s"
   dep LeanModels/Sv/CombBar.lean LeanModels/Sv/Obs.lean
-  check "--dependents: a seed importing another seed IS one" "$out" "LeanModels.Sv.CombBar LeanModels.Sv.PinAxioms $ex.proof $ex.top $ex.via Examples.«system-verilog».sem2.s"
+  check "--dependents: a seed importing another seed IS one" "$out" "LeanModels.Sv.CombBar LeanModels.Sv.Foo LeanModels.Sv.Leaf LeanModels.Sv.PinAxioms LeanModels.Sv.Solo LeanModels.Sv.Tests $ex.proof $ex.top $ex.via Examples.«system-verilog».sem2.s"
   dep LeanModels/Sv/Leaf.lean
   check "--dependents: a leaf nothing imports prints nothing" "$out" ""
   check "  ...and exits 0" "$rc" 0
   dep LeanModels/Sv/Solo.lean
-  check "--dependents: dependents outside the chain are not printed" "$out" ""
+  check "--dependents: non-comb dependents are printed for the landing build" "$out" "LeanModels.Sv.Tests"
   check "  ...and exit 0" "$rc" 0
   dep LeanModels/Python/Surface.lean docs/a.md Examples/system-verilog/ex/proof.lean LeanModels/Sv/notes.md
   check "--dependents: non-Sv paths print nothing" "$out" ""
@@ -448,7 +462,8 @@ def drift := 1'
   # THE INCIDENT, on the real tree: `PStmt` lives in Param.lean, and CombProc is what its new constructor broke.
   out="$(bash "$self" --dependents LeanModels/Sv/Param.lean)"; rc=$?
   check "the real tree: Param.lean reaches CombProc" "$(printf '%s\n' "$out" | grep -cx 'LeanModels.Sv.CombProc')" 1
-  check "  ...and every name it prints is one \`--list\` prints" "$(printf '%s\n' "$out" | grep -vxF -f <(bash "$self" --list | sed 's/^    //') | grep -c .)" 0
+  check "the real tree: Param.lean reaches Hier2Gen" "$(printf '%s\n' "$out" | grep -cx 'LeanModels.Sv.Hier2Gen')" 1
+  check "  ...and every name is a source-tree module or Example" "$(printf '%s\n' "$out" | grep -vxF -f <(all_sv_modules; example_modules) | grep -c .)" 0
 
   # The E closure gate is text-only and must reject both a forbidden authority
   # edge and growth outside the committed executor ratchet.

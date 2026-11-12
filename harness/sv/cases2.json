@@ -73129,9 +73129,9 @@
       "name": "int32_negative_shift_e",
       "example": "sem2/int32_negative_shift_e",
       "top": "int32_negative_shift_e",
-      "signals": ["left_zero", "right_arith"],
+      "signals": ["left_zero", "logical_right", "arithmetic_right", "logical_param", "arithmetic_param"],
       "stimulus": [{}],
-      "measured": "2026-11-12: IEEE 1800-2023 §11.4.10 negative shift count is represented by the finite zero result; logical right shift of -8 preserves its unsigned 32-bit bits. E matches both pinned simulators."
+      "measured": "2026-11-12: IEEE 1800-2023 §11.4.10 negative shift count is represented by the finite zero result; logical >> of negative 32-bit ints shifts the bit pattern and >>> sign-fills. E matches Icarus Verilog 13.0 and Xcelium 24.03-s004 at default and N=16 parameter points."
     },
 
     {

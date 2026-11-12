@@ -3482,12 +3482,16 @@ theorem worldInv (m : Module) (hm : m.heapFree = true) (fuel : Nat) :
         simp only [Expr.heapFree] at hfree
         simp only [evalExpr]
         refine .bind (ihE st recv hfree) fun st₁ r h₁ => ?_
-        cases r <;>
-          first
-          | exact .unsupported
-          | exact .exn
-          | exact .liftResF h₁ _
-          | exact fun s₂ v₂ he => (attrReadResult_ok he) ▸ h₁
+        cases r with
+        | ref a => exact fun s₂ v₂ he => (attrReadResult_ok he) ▸ h₁
+        | ntuple tn fields xs => exact .liftResF h₁ _
+        | callable name => exact .unsupported
+        | _ =>
+          by_cases h : attr == "__doc__"
+          · simp [h]
+            exact .unsupported
+          · simp [h]
+            exact .exn
       | unsupported pyKind text _ => simp only [evalExpr]; exact .unsupported
     -- evalExprs
     · intro st es hfree

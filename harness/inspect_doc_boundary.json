@@ -1,0 +1,85 @@
+{
+  "schema_version": "0.1",
+  "language": "python",
+  "frontend": {
+    "name": "cpython-ast",
+    "version": "3.9.25"
+  },
+  "source_file": "harness/inspect_doc_boundary.py",
+  "source_sha256": "5d7123e38aed343e3c5771508b3f69522cad69ea5ea953a41ac17d2cb9f8913d",
+  "module": {
+    "kind": "Module",
+    "body": [
+      {
+        "kind": "Expr",
+        "span": {
+          "lineno": 1,
+          "col_offset": 0,
+          "end_lineno": 1,
+          "end_col_offset": 64
+        },
+        "value": {
+          "kind": "Constant",
+          "span": {
+            "lineno": 1,
+            "col_offset": 0,
+            "end_lineno": 1,
+            "end_col_offset": 64
+          },
+          "value": {
+            "type": "str",
+            "value": "Builtin scalar documentation is a runner/library boundary."
+          }
+        }
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 2,
+          "col_offset": 0,
+          "end_lineno": 3,
+          "end_col_offset": 22
+        },
+        "name": "probe",
+        "args": [],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 3,
+              "col_offset": 4,
+              "end_lineno": 3,
+              "end_col_offset": 22
+            },
+            "value": {
+              "kind": "Attribute",
+              "span": {
+                "lineno": 3,
+                "col_offset": 11,
+                "end_lineno": 3,
+                "end_col_offset": 22
+              },
+              "value": {
+                "kind": "Constant",
+                "span": {
+                  "lineno": 3,
+                  "col_offset": 11,
+                  "end_lineno": 3,
+                  "end_col_offset": 14
+                },
+                "value": {
+                  "type": "str",
+                  "value": "x"
+                }
+              },
+              "attr": "__doc__"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "lean_blocks": []
+}

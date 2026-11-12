@@ -10484,7 +10484,10 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
       | .callable name =>
         .unsupported "attribute access on a callable value is outside the closed-function tier"
       | r =>
-        .exn st .attributeError
+        if attr == "__doc__" then
+          .unsupported "scalar __doc__ lookup depends on CPython's builtin type documentation, outside the closed-function tier"
+        else
+          .exn st .attributeError
     | .ifExp t b o _ =>
         -- CPython: the test first, then EXACTLY ONE branch (lazy)
         evalExpr m fuel st t ⤳ fun st tv =>

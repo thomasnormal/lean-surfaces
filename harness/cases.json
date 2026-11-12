@@ -1771,5 +1771,6 @@
   {"file": "harness/list_boundary_mutation.py", "function": "left", "args": [[{"t": "list", "v": [1, 3, 5]}]], "expect": "match", "note": "Boundary-passed list mutation is visible after heap-threaded thaw."}
 ,
   {"file": "harness/abc_internal_attr.py", "function": "probe", "args": [[]], "expect": "unsupported", "note": "Internal _abc_ attribute access is a loud closed-function boundary; CPython 3.9.25 raises AttributeError."},
-  {"file": "harness/main_import_boundary.py", "function": "probe", "args": [[]], "expect": "unsupported", "note": "from __main__ import ... depends on the runner live module; CPython 3.9.25 supplies it, so the closed-function model refuses rather than fabricating a module."}
+  {"file": "harness/main_import_boundary.py", "function": "probe", "args": [[]], "expect": "unsupported", "note": "from __main__ import ... depends on the runner live module; CPython 3.9.25 supplies it, so the closed-function model refuses rather than fabricating a module."},
+  {"file": "harness/inspect_doc_boundary.py", "function": "probe", "args": [[]], "expect": "unsupported", "note": "CPython supplies builtin scalar __doc__ text; the closed-function model refuses this documentation table rather than fabricating it."}
 ]

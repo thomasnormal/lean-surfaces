@@ -1435,7 +1435,10 @@ def evalOpen (K : Kont) (m : Module) : Expr → SemF RVal
       | .ntuple tn fields xs => ntupleAttrM m tn fields xs attr
       | .callable _ => refuse "attribute access on a callable value is outside the closed-function tier"
       | r =>
-          raisePy .attributeError
+          if attr == "__doc__" then
+            refuse "scalar __doc__ lookup depends on CPython's builtin type documentation, outside the closed-function tier"
+          else
+            raisePy .attributeError
   | .ifExp t b o _ => do
       -- CPython: the test first, then EXACTLY ONE branch (lazy).
       let tv ← evalOpen K m t

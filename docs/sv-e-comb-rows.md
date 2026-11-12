@@ -100,6 +100,11 @@ The net-copy alias row, `acg_alias_wire`, is refused by E as
 `AlwaysComb:alias-read`; this preserves the same source-shaped refusal at the
 wire boundary and adds no E verdict or migration-count change.
 
+The hierarchical alias row, `acg_alias_hier`, is refused by E as
+`AlwaysComb:alias-read` after flattening the source-shaped instance path.  It
+matches the legacy refusal boundary and adds no E verdict or migration-count
+change.
+
 The receipts were produced with:
 
 ```text

@@ -1772,7 +1772,7 @@ private theorem memInvariant_core (ctx : Ctx) : ∀ (n : Nat) (e : Expr), e.size
       | choose _ _ _ _ _ => exact ⟨by open_eval; mem_inv, by open_lvalue; mem_inv⟩
       | charLit _ _ _ => exact ⟨by open_eval; mem_inv, by open_lvalue; mem_inv⟩
       | strLit _ _ _ _ => exact ⟨by open_eval; mem_inv, by open_lvalue; mem_inv⟩
-      | floatLit _ _ _ => exact ⟨by open_eval; mem_inv, by open_lvalue; mem_inv⟩
+      | floatLit _ _ _ _ _ => exact ⟨by open_eval; mem_inv, by open_lvalue; mem_inv⟩
       | declRef _ _ _ _ => exact ⟨by open_eval; mem_inv, by open_lvalue; mem_inv⟩
       | typeTrait _ _ _ _ _ => exact ⟨by open_eval; mem_inv, by open_lvalue; mem_inv⟩
       | constExpr value sub ty span =>

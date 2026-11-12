@@ -59,6 +59,7 @@ PINNED_FRONTEND_VERSION = (
 )
 CLANG_ENV = "LEAN_C_CLANG"
 STRING_BYTES_PLUGIN_ENV = "LEAN_C_STRING_BYTES_PLUGIN"
+FLOATING_BITS_PLUGIN_ENV = "LEAN_C_FLOATING_BITS_PLUGIN"
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.abspath(os.path.join(HERE, "..", ".."))
@@ -186,6 +187,49 @@ def string_byte_records(path):
     return by_offset
 
 
+def floating_bit_records(path):
+    """Observe Clang's rounded FloatingLiteral bits through its AST API.
+
+    The optional probe is joined by the source offset already present in the
+    JSON AST.  The extractor never interprets a C spelling or recomputes a
+    floating value; it only validates and carries the frontend observation.
+    """
+    plugin = os.environ.get(FLOATING_BITS_PLUGIN_ENV)
+    if not plugin:
+        return None
+    if not os.path.isfile(plugin):
+        die("%s does not name a plugin file" % FLOATING_BITS_PLUGIN_ENV)
+    command = ([clang_executable()] + PROFILE_FLAGS + ["-fsyntax-only",
+               "-Xclang", "-load", "-Xclang", plugin,
+               "-Xclang", "-plugin", "-Xclang", "lean-c-floating-bits",
+               path])
+    out = subprocess.run(command, capture_output=True)
+    if out.returncode:
+        die("floating bits probe rejected %s: %s" %
+            (path, out.stderr.decode(errors="replace")[:2000]))
+    try:
+        records = json.loads(out.stdout.decode("utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError) as error:
+        die("floating bits probe returned invalid JSON: %s" % error)
+    if not isinstance(records, list):
+        die("floating bits probe returned a non-array")
+    by_offset = {}
+    for record in records:
+        if not isinstance(record, dict) or record.get("kind") != "FloatingLiteral":
+            die("floating bits probe returned an invalid record")
+        offset, length, width = (record.get(name) for name in
+                                 ("offset", "token_length", "bit_width"))
+        bits, typ = record.get("bits_hex"), record.get("type")
+        if (type(offset) is not int or offset < 0 or type(length) is not int or
+                length <= 0 or type(width) is not int or width <= 0 or
+                type(bits) is not str or not bits or
+                any(char not in "0123456789abcdefABCDEF" for char in bits) or
+                type(typ) is not str or not typ):
+            die("floating bits probe returned an invalid record")
+        by_offset.setdefault(offset, []).append(record)
+    return by_offset
+
+
 def check_profile():
     """The envelope ASSERTS a profile; refuse to assert one this host fails."""
     probe_py = os.path.join(ROOT, "harness", "c_profile_probe.py")
@@ -271,10 +315,11 @@ def nonempty(node):
 
 
 class Extractor:
-    def __init__(self, target, source_text, string_bytes=None):
+    def __init__(self, target, source_text, string_bytes=None, floating_bits=None):
         self.loc = Loc(target)
         self.text = source_text
         self.string_bytes = string_bytes
+        self.floating_bits = floating_bits
         self.lines = source_text.splitlines()
         self.labels = {}
         self.unsupported = 0
@@ -562,7 +607,23 @@ class Extractor:
         return out
 
     def e_FloatingLiteral(self, n):
-        return {"value": n.get("value"), "type": qual(n)}
+        out = {"value": n.get("value"), "type": qual(n)}
+        if self.floating_bits is not None:
+            begin = (n.get("range") or {}).get("begin") or {}
+            offset = begin.get("offset")
+            if offset is None:
+                # Macro-expanded literals carry the source-file identity in
+                # Clang's expansionLoc; spellingLoc points into a builtin or
+                # header buffer and cannot join to this envelope.
+                offset = (begin.get("expansionLoc") or {}).get("offset")
+            if offset is None:
+                return out
+            if offset not in self.floating_bits:
+                die("floating bits probe did not observe FloatingLiteral at offset %r" % offset)
+            record = self.floating_bits[offset].pop(0)
+            out["float_bits_hex"] = record["bits_hex"]
+            out["float_bit_width"] = record["bit_width"]
+        return out
 
     def e_CXXBoolLiteralExpr(self, n):
         # Clang supplies the parser's semantic boolean value; retain it as a
@@ -735,7 +796,8 @@ def extract(path, source_name=None, standard="c23"):
     tu = canonicalize_ids(clang_json(path))
     target = os.path.basename(path)
     string_bytes = string_byte_records(path)
-    ex = Extractor(target, src.decode(), string_bytes)
+    floating_bits = floating_bit_records(path)
+    ex = Extractor(target, src.decode(), string_bytes, floating_bits)
     ex.collect_labels(tu)
 
     # Top-level decls attributed to the censused file, in document order.

@@ -48,6 +48,10 @@ def source_digest(path):
     if plugin and Path(plugin).is_file():
         h.update(b"string-bytes-plugin\0")
         h.update(Path(plugin).read_bytes())
+    plugin = os.environ.get("LEAN_C_FLOATING_BITS_PLUGIN")
+    if plugin and Path(plugin).is_file():
+        h.update(b"floating-bits-plugin\0")
+        h.update(Path(plugin).read_bytes())
     return h.hexdigest()
 
 

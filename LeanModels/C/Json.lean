@@ -185,10 +185,12 @@ partial def parseExpr (j : Json) : Except String Expr := do
         return .strLit value decoded typ span
     | "FloatingLiteral" =>
         let v ← getField j "value"
+        let bitsHex ← getOptStr j "float_bits_hex"
+        let bitWidth ← getOptNat j "float_bit_width"
         return .floatLit (match v with
                           | .str s => s
                           | .num n => toString n
-                          | _ => v.compress) (← ty) span
+                          | _ => v.compress) bitsHex bitWidth (← ty) span
     | "CXXBoolLiteralExpr" =>
         return .boolLit (← getBool j "value") (← ty) span
     | "ChooseExpr" =>

@@ -1,0 +1,736 @@
+{
+ "all_records_joined": true,
+ "bit_widths_present": {
+  "32": 10,
+  "64": 32,
+  "80": 10
+ },
+ "candidate_rows": 39,
+ "interpretation": "The 39 files are the survey's sole dynamic floating-literal wall. Every FloatingLiteral observed in their approved Clang envelopes joined to a parser-native rounded bit pattern. This prices the frontend/value boundary only; no floating semantics or flip is claimed.",
+ "rows": [
+  {
+   "all_records_joined": true,
+   "bit_widths": [
+    64
+   ],
+   "corpus": "gcc.c-torture/execute",
+   "floating_literals": 2,
+   "name": "20020720-1.c",
+   "sha256": "fa967332a209a596d6a8ef38a38d9ac2348073fb0087d597294abeb9010b9584",
+   "static_walls": [
+    "libc-call",
+    "type-layout"
+   ],
+   "types": [
+    "double"
+   ]
+  },
+  {
+   "all_records_joined": true,
+   "bit_widths": [
+    80
+   ],
+   "corpus": "gcc.c-torture/execute",
+   "floating_literals": 2,
+   "name": "20030914-1.c",
+   "sha256": "e1144646acfaeec16469f32204884f69f82ad0cc575d06c40efb0a8baf6f2954",
+   "static_walls": [
+    "cast:IntegralToFloating",
+    "type-layout"
+   ],
+   "types": [
+    "long double"
+   ]
+  },
+  {
+   "all_records_joined": true,
+   "bit_widths": [
+    64,
+    80
+   ],
+   "corpus": "gcc.c-torture/execute",
+   "floating_literals": 4,
+   "name": "20080502-1.c",
+   "sha256": "62937a986b39ec2488385c15c0c5aa46a97f396f8390fcb18f39fd9722255012",
+   "static_walls": [
+    "cast:FloatingCast",
+    "libc-call",
+    "type-layout"
+   ],
+   "types": [
+    "double",
+    "long double"
+   ]
+  },
+  {
+   "all_records_joined": true,
+   "bit_widths": [
+    32
+   ],
+   "corpus": "gcc.c-torture/execute",
+   "floating_literals": 1,
+   "name": "20080529-1.c",
+   "sha256": "7ea372bac1906fde771ed43ef5baf5c63dfc77ea941f6da4d0d9611fae4d7029",
+   "static_walls": [
+    "type-layout"
+   ],
+   "types": [
+    "float"
+   ]
+  },
+  {
+   "all_records_joined": true,
+   "bit_widths": [
+    64
+   ],
+   "corpus": "gcc.c-torture/execute",
+   "floating_literals": 1,
+   "name": "920501-8.c",
+   "sha256": "cb8282773b7c14ebe4c0d9bc436fc102145e62f43f2358affa849f01cd6ac1e6",
+   "static_walls": [
+    "libc-call",
+    "string-literal",
+    "type-layout",
+    "unsupported:VAArgExpr"
+   ],
+   "types": [
+    "double"
+   ]
+  },
+  {
+   "all_records_joined": true,
+   "bit_widths": [
+    64
+   ],
+   "corpus": "gcc.c-torture/execute",
+   "floating_literals": 2,
+   "name": "941021-1.c",
+   "sha256": "02edbb4e717f3304408d76c8d1a181af0965167073e4d94b16a4dc5d3a19a136",
+   "static_walls": [
+    "type-layout"
+   ],
+   "types": [
+    "double"
+   ]
+  },
+  {
+   "all_records_joined": true,
+   "bit_widths": [
+    64
+   ],
+   "corpus": "gcc.c-torture/execute",
+   "floating_literals": 4,
+   "name": "980205.c",
+   "sha256": "12b700b76e4f3efe5726e041f39d370f71140cea0a6da7e7a84581af34845ce3",
+   "static_walls": [
+    "libc-call",
+    "type-layout",
+    "unsupported:VAArgExpr"
+   ],
+   "types": [
+    "double"
+   ]
+  },
+  {
+   "all_records_joined": true,
+   "bit_widths": [
+    64
+   ],
+   "corpus": "gcc.c-torture/execute",
+   "floating_literals": 2,
+   "name": "980605-1.c",
+   "sha256": "4fce18a15b8674a4eb025d68f5c154bbfc61a066445526ef60ba52cfc22abfaf",
+   "static_walls": [
+    "cast:FloatingToIntegral",
+    "cast:IntegralToFloating",
+    "libc-call",
+    "string-literal",
+    "type-layout"
+   ],
+   "types": [
+    "double"
+   ]
+  },
+  {
+   "all_records_joined": true,
+   "bit_widths": [
+    64
+   ],
+   "corpus": "gcc.c-torture/execute",
+   "floating_literals": 6,
+   "name": "990127-2.c",
+   "sha256": "d0291b07a00ebc50e3ff23c7730f992cca9d2f455266e45039bdf2dad4c34d78",
+   "static_walls": [
+    "type-layout"
+   ],
+   "types": [
+    "double"
+   ]
+  },
+  {
+   "all_records_joined": true,
+   "bit_widths": [
+    64
+   ],
+   "corpus": "gcc.c-torture/execute",
+   "floating_literals": 2,
+   "name": "990826-0.c",
+   "sha256": "7e70b4b33d21827679805af7083a70624d91a6a4be7b59bf43ccd7644f162166",
+   "static_walls": [
+    "libc-call",
+    "type-layout"
+   ],
+   "types": [
+    "double"
+   ]
+  },
+  {
+   "all_records_joined": true,
+   "bit_widths": [
+    32
+   ],
+   "corpus": "gcc.c23-run",
+   "floating_literals": 2,
+   "name": "gcc/testsuite/gcc.dg/c23-digit-separators-1.c",
+   "sha256": "2a239522208f52dfafccaf00ed74039388d6a7862520ca138d1a21344379daf4",
+   "static_walls": [
+    "type-layout",
+    "unsupported:StaticAssertDecl"
+   ],
+   "types": [
+    "float"
+   ]
+  },
+  {
+   "all_records_joined": true,
+   "bit_widths": [
+    32,
+    64,
+    80
+   ],
+   "corpus": "gcc.c23-run",
+   "floating_literals": 6,
+   "name": "gcc/testsuite/gcc.dg/c23-float-1.c",
+   "sha256": "27237d7c0c4b61169e369447d4066e8ad31cbf446d4e3d28d1ac53b0c5f10891",
+   "static_walls": [
+    "type-layout"
+   ],
+   "types": [
+    "double",
+    "float",
+    "long double"
+   ]
+  },
+  {
+   "all_records_joined": true,
+   "bit_widths": [
+    32,
+    64
+   ],
+   "corpus": "gcc.c23-run",
+   "floating_literals": 58,
+   "name": "gcc/testsuite/gcc.dg/torture/c23-stdarg-split-1a.c",
+   "sha256": "36cf43bac920b9b79e39c85bc42bc6471157f6c6c1bdb69dc8fb729adbaef9cc",
+   "static_walls": [
+    "cast:FloatingCast",
+    "cast:IntegralToFloating",
+    "libc-call",
+    "type-layout"
+   ],
+   "types": [
+    "double",
+    "float"
+   ]
+  },
+  {
+   "all_records_joined": true,
+   "bit_widths": [
+    80
+   ],
+   "corpus": "gcc.c-torture/execute",
+   "floating_literals": 5,
+   "name": "ieee/20010226-1.c",
+   "sha256": "109d76578275c4524ad4679f912c2fae36f55f4ef2c08ec41a585711d9909498",
+   "static_walls": [
+    "cast:FloatingToIntegral",
+    "type-layout"
+   ],
+   "types": [
+    "long double"
+   ]
+  },
+  {
+   "all_records_joined": true,
+   "bit_widths": [
+    64
+   ],
+   "corpus": "gcc.c-torture/execute",
+   "floating_literals": 1,
+   "name": "ieee/920810-1.c",
+   "sha256": "e0b670c899b3364a884f07ef9f25c4f91da6ec0026cf5112ffd3f1d691fcfa6c",
+   "static_walls": [
+    "cast:IntegralToFloating",
+    "libc-call",
+    "string-literal",
+    "type-layout"
+   ],
+   "types": [
+    "double"
+   ]
+  },
+  {
+   "all_records_joined": true,
+   "bit_widths": [
+    64
+   ],
+   "corpus": "gcc.c-torture/execute",
+   "floating_literals": 2,
+   "name": "ieee/compare-fp-2.c",
+   "sha256": "bd72beeee5dfdf2087d9b595ae2e1f192cdb1591a9357b166d79156c47ef2756",
+   "static_walls": [
+    "cast:FloatingToIntegral",
+    "type-layout"
+   ],
+   "types": [
+    "double"
+   ]
+  },
+  {
+   "all_records_joined": true,
+   "bit_widths": [
+    64
+   ],
+   "corpus": "gcc.c-torture/execute",
+   "floating_literals": 1,
+   "name": "ieee/fp-cmp-7.c",
+   "sha256": "4c5e4fd4f70ee0a7ad465f6b3c9bf2e55dbd156ad9fdc60aea0ba7ddfb6541e4",
+   "static_walls": [
+    "libc-call",
+    "type-layout"
+   ],
+   "types": [
+    "double"
+   ]
+  },
+  {
+   "all_records_joined": true,
+   "bit_widths": [
+    32,
+    64,
+    80
+   ],
+   "corpus": "gcc.c-torture/execute",
+   "floating_literals": 3,
+   "name": "ieee/inf-2.c",
+   "sha256": "fce93a1f743b41bdd5824363cf12ab818ccb5c9593a02ee6617f2785a5d91d9a",
+   "static_walls": [
+    "libc-call",
+    "type-layout"
+   ],
+   "types": [
+    "double",
+    "float",
+    "long double"
+   ]
+  },
+  {
+   "all_records_joined": true,
+   "bit_widths": [
+    32,
+    64,
+    80
+   ],
+   "corpus": "gcc.c-torture/execute",
+   "floating_literals": 3,
+   "name": "ieee/inf-3.c",
+   "sha256": "894876215030f8f5b2443f3d50ec5f172021158caae2b4c5a4afffa1ff3c0e39",
+   "static_walls": [
+    "libc-call",
+    "type-layout"
+   ],
+   "types": [
+    "double",
+    "float",
+    "long double"
+   ]
+  },
+  {
+   "all_records_joined": true,
+   "bit_widths": [
+    32,
+    64
+   ],
+   "corpus": "gcc.c-torture/execute",
+   "floating_literals": 24,
+   "name": "ieee/mzero4.c",
+   "sha256": "958e396fe53dfb62bc287fa22e8a48134321a00c4ec0915dc5ef28e5c6597dc4",
+   "static_walls": [
+    "libc-call",
+    "type-layout"
+   ],
+   "types": [
+    "double",
+    "float"
+   ]
+  },
+  {
+   "all_records_joined": true,
+   "bit_widths": [
+    64
+   ],
+   "corpus": "gcc.c-torture/execute",
+   "floating_literals": 4,
+   "name": "ieee/mzero6.c",
+   "sha256": "45b8dcb2138a1adb7dd09143de4f340feb9df5d3dea08d5b0f74e3be295c5ab7",
+   "static_walls": [
+    "libc-call",
+    "type-layout"
+   ],
+   "types": [
+    "double"
+   ]
+  },
+  {
+   "all_records_joined": true,
+   "bit_widths": [
+    64
+   ],
+   "corpus": "gcc.c-torture/execute",
+   "floating_literals": 2,
+   "name": "ieee/pr108540-1.c",
+   "sha256": "c3a36f26713ef8442f46e4536dba02335743f21093a375da5cac2c1fa8f5c0c0",
+   "static_walls": [
+    "cast:IntegralToFloating",
+    "libc-call",
+    "string-literal",
+    "type-layout"
+   ],
+   "types": [
+    "double"
+   ]
+  },
+  {
+   "all_records_joined": true,
+   "bit_widths": [
+    64
+   ],
+   "corpus": "gcc.c-torture/execute",
+   "floating_literals": 8,
+   "name": "ieee/pr108540-2.c",
+   "sha256": "63cfae9c4ba2854693e84b520b2f3f96b8e3196c5e96ed2cf7eeac36805bad1c",
+   "static_walls": [
+    "libc-call",
+    "type-layout"
+   ],
+   "types": [
+    "double"
+   ]
+  },
+  {
+   "all_records_joined": true,
+   "bit_widths": [
+    64
+   ],
+   "corpus": "gcc.c-torture/execute",
+   "floating_literals": 6,
+   "name": "ieee/pr109008.c",
+   "sha256": "727ae59f67a8660f37ea16709cf059a5fc1f72f8a3350d4de1a50b95733f74ed",
+   "static_walls": [
+    "libc-call",
+    "type-layout"
+   ],
+   "types": [
+    "double"
+   ]
+  },
+  {
+   "all_records_joined": true,
+   "bit_widths": [
+    32
+   ],
+   "corpus": "gcc.c-torture/execute",
+   "floating_literals": 1,
+   "name": "ieee/pr119002.c",
+   "sha256": "c400cfaef8076dbb1897ec7572ea228033c053134cf5ec0448429fb3d6ebaeb6",
+   "static_walls": [
+    "libc-call",
+    "string-literal",
+    "type-layout"
+   ],
+   "types": [
+    "float"
+   ]
+  },
+  {
+   "all_records_joined": true,
+   "bit_widths": [
+    80
+   ],
+   "corpus": "gcc.c-torture/execute",
+   "floating_literals": 1,
+   "name": "ieee/pr36332.c",
+   "sha256": "6cfdda7cae996f0d52c37f60e10368c0cb90983be70d6903fa4725b296ba71a7",
+   "static_walls": [
+    "libc-call",
+    "type-layout"
+   ],
+   "types": [
+    "long double"
+   ]
+  },
+  {
+   "all_records_joined": true,
+   "bit_widths": [
+    32,
+    64
+   ],
+   "corpus": "gcc.c-torture/execute",
+   "floating_literals": 144,
+   "name": "pr39501.c",
+   "sha256": "12ef655565b9df299b5e2a23cea6b5a8e248ac30c37e502aeab9f0c70e0ff112",
+   "static_walls": [
+    "type-layout"
+   ],
+   "types": [
+    "double",
+    "float"
+   ]
+  },
+  {
+   "all_records_joined": true,
+   "bit_widths": [
+    64,
+    80
+   ],
+   "corpus": "gcc.c-torture/execute",
+   "floating_literals": 31,
+   "name": "pr44942.c",
+   "sha256": "a593433333b8ef20fa39c196c472aca96eb4f332d3e0da4dcbafdaee61fdc75a",
+   "static_walls": [
+    "libc-call",
+    "type-layout",
+    "unsupported:VAArgExpr"
+   ],
+   "types": [
+    "double",
+    "long double"
+   ]
+  },
+  {
+   "all_records_joined": true,
+   "bit_widths": [
+    64
+   ],
+   "corpus": "gcc.c-torture/execute",
+   "floating_literals": 2,
+   "name": "pr64979.c",
+   "sha256": "ebc80502935f4fca2dd98ae330c1da1e7e06d88ac8fa25d9f0a108ecc601e066",
+   "static_walls": [
+    "libc-call",
+    "type-layout",
+    "unsupported:VAArgExpr"
+   ],
+   "types": [
+    "double"
+   ]
+  },
+  {
+   "all_records_joined": true,
+   "bit_widths": [
+    32
+   ],
+   "corpus": "gcc.c-torture/execute",
+   "floating_literals": 2,
+   "name": "pr67929_1.c",
+   "sha256": "7564232499a44eab571882bed7b328ea5d95920939bc2231bb6f510621c242cd",
+   "static_walls": [
+    "cast:FloatingToIntegral",
+    "libc-call",
+    "type-layout"
+   ],
+   "types": [
+    "float"
+   ]
+  },
+  {
+   "all_records_joined": true,
+   "bit_widths": [
+    64
+   ],
+   "corpus": "gcc.c-torture/execute",
+   "floating_literals": 12,
+   "name": "stdarg-4.c",
+   "sha256": "df92949fcdfbb1dec3c0d7fdad72e494a01ab6d678bd237196fa300234673e54",
+   "static_walls": [
+    "cast:FloatingToIntegral",
+    "libc-call",
+    "type-layout",
+    "unsupported:VAArgExpr"
+   ],
+   "types": [
+    "double"
+   ]
+  },
+  {
+   "all_records_joined": true,
+   "bit_widths": [
+    64
+   ],
+   "corpus": "gcc.c-torture/execute",
+   "floating_literals": 15,
+   "name": "va-arg-12.c",
+   "sha256": "3ac1c4f014534ca3b3c10d0fc66df11b7d2fe0e97fff567fd00560029e470662",
+   "static_walls": [
+    "libc-call",
+    "type-layout",
+    "unsupported:VAArgExpr"
+   ],
+   "types": [
+    "double"
+   ]
+  },
+  {
+   "all_records_joined": true,
+   "bit_widths": [
+    64
+   ],
+   "corpus": "gcc.c-torture/execute",
+   "floating_literals": 9,
+   "name": "va-arg-15.c",
+   "sha256": "bc9aefd3656145f3f3e0110bab4fe674903e26cdb8c23b474e6f185e5d705a3d",
+   "static_walls": [
+    "cast:IntegralToFloating",
+    "libc-call",
+    "string-literal",
+    "type-layout",
+    "unsupported:VAArgExpr"
+   ],
+   "types": [
+    "double"
+   ]
+  },
+  {
+   "all_records_joined": true,
+   "bit_widths": [
+    64
+   ],
+   "corpus": "gcc.c-torture/execute",
+   "floating_literals": 22,
+   "name": "va-arg-16.c",
+   "sha256": "214db61e9e8a8749953ce90aa8d439142f6e51cca19d298af7cf268eb448b00a",
+   "static_walls": [
+    "libc-call",
+    "type-layout",
+    "unsupported:VAArgExpr"
+   ],
+   "types": [
+    "double"
+   ]
+  },
+  {
+   "all_records_joined": true,
+   "bit_widths": [
+    64
+   ],
+   "corpus": "gcc.c-torture/execute",
+   "floating_literals": 18,
+   "name": "va-arg-17.c",
+   "sha256": "e3bd464100e2fc2a2657d338e921a84ff7e2626e1b04ca51fde765b56fd3f046",
+   "static_walls": [
+    "libc-call",
+    "string-literal",
+    "type-layout",
+    "unsupported:VAArgExpr"
+   ],
+   "types": [
+    "double"
+   ]
+  },
+  {
+   "all_records_joined": true,
+   "bit_widths": [
+    64
+   ],
+   "corpus": "gcc.c-torture/execute",
+   "floating_literals": 9,
+   "name": "va-arg-18.c",
+   "sha256": "5164ef08accb5ddac18b0d27f4406fded13ae687a456aaeb76df3ba8f8cde462",
+   "static_walls": [
+    "libc-call",
+    "type-layout",
+    "unsupported:VAArgExpr"
+   ],
+   "types": [
+    "double"
+   ]
+  },
+  {
+   "all_records_joined": true,
+   "bit_widths": [
+    64,
+    80
+   ],
+   "corpus": "gcc.c-torture/execute",
+   "floating_literals": 16,
+   "name": "va-arg-5.c",
+   "sha256": "c4f21f1570c49976849ab2d5cb5fe9a49ae430ff19d27a3dd9069c0c6df8f2dd",
+   "static_walls": [
+    "libc-call",
+    "type-layout",
+    "unsupported:VAArgExpr"
+   ],
+   "types": [
+    "double",
+    "long double"
+   ]
+  },
+  {
+   "all_records_joined": true,
+   "bit_widths": [
+    64,
+    80
+   ],
+   "corpus": "gcc.c-torture/execute",
+   "floating_literals": 4,
+   "name": "va-arg-6.c",
+   "sha256": "b0eb9fc5a52d4e43b24c9eb561410f72dbfc27027a2afdfa4c6ac55c80173401",
+   "static_walls": [
+    "libc-call",
+    "type-layout",
+    "unsupported:VAArgExpr"
+   ],
+   "types": [
+    "double",
+    "long double"
+   ]
+  },
+  {
+   "all_records_joined": true,
+   "bit_widths": [
+    64
+   ],
+   "corpus": "gcc.c-torture/execute",
+   "floating_literals": 9,
+   "name": "va-arg-7.c",
+   "sha256": "d566662a26a3f877293048b058ac53e7ed8ccdb93717ded2a73ed96a836d4226",
+   "static_walls": [
+    "libc-call",
+    "type-layout",
+    "unsupported:VAArgExpr"
+   ],
+   "types": [
+    "double"
+   ]
+  }
+ ],
+ "schema": "c-floating-price-0.1",
+ "survey_commit": "391e289b317a58006fe9ee46308c84b0f3ccf6a8",
+ "survey_measured_at_utc": "2026-11-12T16:12:00Z",
+ "survey_schema": "c-survey-0.1",
+ "types_present": {
+  "double": 32,
+  "float": 10,
+  "long double": 10
+ },
+ "wall": "unsupported:floating literal (floats are a named decision)"
+}

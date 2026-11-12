@@ -120,7 +120,8 @@ inductive Expr where
   | intLit (value : String) (ty : CType) (span : CSpan)
   | charLit (value : String) (ty : CType) (span : CSpan)
   | strLit (value : String) (decodedBytes : Option (List Nat)) (ty : CType) (span : CSpan)
-  | floatLit (value : String) (ty : CType) (span : CSpan)
+  | floatLit (value : String) (bitsHex : Option String) (bitWidth : Option Nat)
+      (ty : CType) (span : CSpan)
   /-- C23's `true`/`false` literals, retained from clang's semantic node. -/
   | boolLit (value : Bool) (ty : CType) (span : CSpan)
   /-- GNU `__builtin_choose_expr`: condition and both parser branches. -/
@@ -288,7 +289,7 @@ Version-neutral: it reads a field the `c-0.1` envelope already carries
 `unsupported` leaf has no type, and `""` resolves to nothing, so a
 consumer refuses rather than inventing one. -/
 def Expr.ty : Expr → CType
-  | .intLit _ t _ | .charLit _ t _ | .floatLit _ t _ => t
+  | .intLit _ t _ | .charLit _ t _ | .floatLit _ _ _ t _ => t
   | .strLit _ _ t _ => t
   | .boolLit _ t _ => t
   | .choose _ _ _ t _ => t

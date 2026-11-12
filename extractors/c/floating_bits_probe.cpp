@@ -29,9 +29,14 @@ public:
   llvm::json::Array records;
   const clang::SourceManager *sources = nullptr;
   bool VisitFloatingLiteral(clang::FloatingLiteral *literal) {
-    const auto loc = literal->getBeginLoc();
+    const auto loc = sources->getExpansionLoc(literal->getBeginLoc());
+    // Offsets are joined to the source file's JSON AST.  Header literals and
+    // macro-only locations have no such identity and must not collide with a
+    // source-file offset from another buffer.
+    if (!sources->isWrittenInMainFile(loc)) return true;
+    const auto expansion_end = sources->getExpansionLoc(literal->getEndLoc());
     const auto end = clang::Lexer::getLocForEndOfToken(
-        literal->getEndLoc(), 0, *sources, clang::LangOptions());
+        expansion_end, 0, *sources, clang::LangOptions());
     const auto begin = sources->getFileOffset(loc);
     const auto finish = end.isValid() ? sources->getFileOffset(end) : begin;
     const auto bits = literal->getValue().bitcastToAPInt();

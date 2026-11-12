@@ -73202,5 +73202,14 @@
     "refusal": "Clock:edge",
     "measured": "2026-11-12: Icarus Verilog 13.0 and Xcelium 24.03-s004 execute the looped four-cell shift; ordinary E refuses at Clock:edge before the loop target, with no clocked or memory semantics claimed."
   }
+  ,{
+    "name": "array_select_e_boundary",
+    "example": "sem2/array_select_e",
+    "top": "array_select_e",
+    "signals": ["i", "y"],
+    "stimulus": [{"i": "00"}],
+    "refusal": "ContinuousAssignSymbol:InvalidExpression",
+    "measured": "2026-11-12: Slang rejects the undeclared `missing[i]` source with ContinuousAssignSymbol:InvalidExpression; no simulator oracle is claimed because the approved frontend rejects the design before simulation."
+  }
   ]
 }

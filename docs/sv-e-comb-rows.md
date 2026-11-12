@@ -66,6 +66,13 @@ and is recorded as a loud refusal with that exact message. Its source-shaped
 legacy receipt matches Icarus Verilog 13.0 and Xcelium 24.03-s004 for all 6
 cycles; no E verdict is claimed and the row does not change the frozen count.
 
+The bit-sensitivity row, `acg_xproc_bits`, runs in E for all 7 cycles.  Its
+Xcelium 24.03-s004 trace agrees with E; Icarus Verilog 13.0 is the declared
+`iverilog-comb-bit-split-sensitivity` disagreement described in
+`docs/sv-oracle-disagreements.md`.  It is therefore recorded as a declared
+simulator disagreement rather than an E-MATCH, and does not change the frozen
+count.
+
 The receipts were produced with:
 
 ```text

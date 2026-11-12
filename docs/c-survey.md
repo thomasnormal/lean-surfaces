@@ -4,8 +4,8 @@ Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manife
 
 - verdicts: 670/2214 MATCH (passed 670, failed 0, oracle 0)
 - manifest SHA-256: `1de1a60c299d5bb51dae7ca001b0a008010cad0b25670cde2090c08bfc1a84ce`
-- measured commit: `a7e78540a`
-- measured at: `2026-11-12T07:30:00Z`
+- measured commit: `1918610c7`
+- measured at: `2026-11-12T07:45:00Z`
 
 ## Verdict counts
 
@@ -90,7 +90,6 @@ The run's first refusal, normalized by construct; `sole` counts rows whose first
 | wall | sole | present | example files |
 | --- | ---: | ---: | --- |
 | `frontend` | 350 | 350 | 00209.c, 20000112-1.c, 20000227-1.c, 20000314-3.c, 20000412-3.c |
-| `libc-call` | 132 | 132 | 00025.c, 00040.c, 00176.c, 00179.c, 00180.c |
 | `unsupported:no definition for 'main'` | 97 | 97 | 20040705-1.c, 20040705-2.c, 20040709-3.c, builtins/20010124-1.c, builtins/abs-1.c |
 | `unsupported:string literal with escape or non-ASCII spelling` | 56 | 56 | 00056.c, 00125.c, 00131.c, 00132.c, 00154.c |
 | `timeout` | 46 | 46 | 00041.c, 00128.c, 20020108-1.c, 20030916-1.c, 20040313-1.c |
@@ -110,23 +109,41 @@ The run's first refusal, normalized by construct; `sole` counts rows whose first
 | `cast:IntegralToPointer` | 11 | 11 | 20000622-1.c, 20010329-1.c, 20021010-2.c, 20041112-1.c, 960116-1.c |
 | `cast:PointerToIntegral` | 11 | 11 | 20011121-1.c, 941014-1.c, 980526-2.c, loop-2c.c, pr22098-1.c |
 | `unsupported:case label nested in a control statement` | 10 | 10 | 00051.c, 00143.c, 20011109-1.c, 20080719-1.c, 920506-1.c |
+| `libc-call: __builtin_memcpy` | 9 | 9 | 20000703-1.c, 20030408-1.c, 20060930-2.c, 20141107-1.c, pr40668.c |
+| `libc-call: __builtin_memset` | 9 | 9 | 20030606-1.c, 20030717-1.c, 20041218-1.c, 20081218-1.c, memset-4.c |
 | `unsupported:no layout for declared type 'V'` | 9 | 9 | pr105613.c, pr110817-1.c, pr110817-2.c, pr110817-3.c, pr71626-1.c |
 | `unsupported:no layout for declared type 'float'` | 9 | 9 | 00113.c, 00174.c, 20050121-1.c, ieee/920518-1.c, ieee/980619-1.c |
+| `libc-call: memset` | 8 | 8 | 20001203-2.c, 20040823-1.c, 20050826-1.c, 20071219-1.c, 990513-1.c |
+| `libc-call: __builtin_mul_overflow` | 7 | 7 | pr64006.c, pr68381.c, pr71554.c, pr84169.c, pr89434.c |
+| `libc-call: malloc` | 7 | 7 | 20020406-1.c, 960521-1.c, 990628-1.c, pr41395-1.c, pr41463.c |
 | `unsupported:no layout for declared type 'struct s'` | 7 | 7 | 00043.c, 20040625-1.c, 930126-1.c, 961223-1.c, pr110165-1.c |
 | `unsupported:no layout for declared type 'va_list'` | 7 | 7 | printf-chk-1.c, stdarg-1.c, va-arg-14.c, vfprintf-1.c, vfprintf-chk-1.c |
 | `cast:ToVoid` | 6 | 6 | 00212.c, 00213.c, gcc/testsuite/gcc.dg/c23-float-2.c, gcc/testsuite/gcc.dg/c23-float-3.c, gcc/testsuite/gcc.dg/c23-float-4.c |
 | `unsupported:AddrLabelExpr` | 6 | 6 | 20040302-1.c, 20071210-1.c, 920501-4.c, 920501-5.c, 990208-1.c |
 | `unsupported:integer-to-floating conversion (floats` | 6 | 6 | 20020321-1.c, 920710-1.c, 930622-2.c, gofast.c, ieee/compare-fp-3.c |
+| `libc-call: __builtin_alloca` | 5 | 5 | 20021113-1.c, 20070824-1.c, alloca-1.c, built-in-setjmp.c, frame-address.c |
+| `libc-call: __builtin_malloc` | 5 | 5 | 20071018-1.c, 20071120-1.c, pr36765.c, pr43008.c, pr84339.c |
+| `libc-call: strcpy` | 5 | 5 | 00179.c, 00180.c, 20120207-1.c, 980707-1.c, string-opt-17.c |
 | `unsupported:StmtExpr` | 5 | 5 | 20000917-1.c, 20020206-1.c, 20020320-1.c, 930406-1.c, 950906-1.c |
 | `unsupported:break, continue or goto escaped a function body` | 5 | 5 | 00010.c, 20030909-1.c, 20040704-1.c, pr119291.c, pr17078-1.c |
 | `unsupported:operator '-' on two pointers` | 5 | 5 | 00037.c, 20021015-1.c, 950710-1.c, 980701-1.c, pr36038.c |
 | `cast:FloatingCast` | 4 | 4 | 20020413-1.c, 920618-1.c, ieee/pr67218.c, pr36343.c |
+| `libc-call: __builtin_add_overflow` | 4 | 4 | pr108789.c, pr85095.c, pr90311.c, pr93494.c |
+| `libc-call: __builtin_prefetch` | 4 | 4 | builtin-prefetch-1.c, builtin-prefetch-2.c, builtin-prefetch-4.c, builtin-prefetch-5.c |
+| `libc-call: foo` | 4 | 4 | 20010925-1.c, 20011114-1.c, 20030117-1.c, nestfunc-4.c |
 | `unsupported:extern object 'b' has no definition in the translation unit` | 4 | 4 | alias-2.c, alias-3.c, alias-4.c, gcc/testsuite/gcc.dg/c23-bool-2.c |
 | `unsupported:indirect call through a non-FunctionDecl reference` | 4 | 4 | 00089.c, 20010122-1.c, pr34768-1.c, pr34768-2.c |
 | `unsupported:no layout for declared type '_Complex double'` | 4 | 4 | 20030910-1.c, 960512-1.c, complex-1.c, complex-2.c |
 | `unsupported:no layout for declared type 'const double'` | 4 | 4 | cbrt.c, ieee/hugeval.c, ieee/unsafe-fp-assoc-1.c, ieee/unsafe-fp-assoc.c |
 | `unsupported:no layout for declared type 'union U'` | 4 | 4 | bitfld-6.c, bitfld-7.c, pr86492.c, pr88739.c |
 | `cast:FloatingToIntegral` | 3 | 3 | 20031003-1.c, pr38048-2.c, pr66233.c |
+| `libc-call: __builtin_expect` | 3 | 3 | 00214.c, 20020418-1.c, pr115277.c |
+| `libc-call: __builtin_ffs` | 3 | 3 | ffs-1.c, pr61725.c, pr97325.c |
+| `libc-call: __builtin_sprintf` | 3 | 3 | 20021120-3.c, pr78586.c, pr79327.c |
+| `libc-call: __builtin_strcmp` | 3 | 3 | 921006-1.c, 930725-1.c, pr60062.c |
+| `libc-call: exit (an argument is not a literal 0 — which exit was reached is unknown)` | 3 | 3 | 970214-1.c, 970214-2.c, 970217-1.c |
+| `libc-call: printf` | 3 | 3 | 00176.c, 00194.c, printf-1.c |
+| `libc-call: strlen` | 3 | 3 | 00025.c, 20050218-1.c, strlen-5.c |
 | `unsupported:ExprWithCleanups` | 3 | 3 | 20041124-1.c, 950628-1.c, pr30185.c |
 | `unsupported:function-to-pointer decay (inch 5)` | 3 | 3 | 20041212-1.c, 20101011-1.c, pr42231.c |
 | `unsupported:no layout for declared type 'A'` | 3 | 3 | 20010118-1.c, restrict-1.c, strct-pack-2.c |
@@ -139,6 +156,14 @@ The run's first refusal, normalized by construct; `sole` counts rows whose first
 | `unsupported:unbound declaration 'id180' (name 'stdout')` | 3 | 3 | 00189.c, fprintf-1.c, fprintf-chk-1.c |
 | `unsupported:unbound declaration 'id25' (name 's')` | 3 | 3 | pr40404.c, pr48973-1.c, pr48973-2.c |
 | `unsupported:unbound declaration 'id27' (name 'x')` | 3 | 3 | 20030209-1.c, 960405-1.c, 991030-1.c |
+| `libc-call: __builtin_abort` | 2 | 2 | gcc/testsuite/gcc.dg/c23-nullptr-5.c, pr77767.c |
+| `libc-call: __builtin_strcpy` | 2 | 2 | 20021011-1.c, 921117-1.c |
+| `libc-call: __builtin_strlen` | 2 | 2 | pr110914.c, pr116799.c |
+| `libc-call: bar` | 2 | 2 | 20000722-1.c, 20000801-2.c |
+| `libc-call: f` | 2 | 2 | 20030203-1.c, 980505-1.c |
+| `libc-call: f1` | 2 | 2 | 20020227-1.c, 20020529-1.c |
+| `libc-call: memcpy` | 2 | 2 | 20011024-1.c, string-opt-18.c |
+| `libc-call: open` | 2 | 2 | loop-2f.c, loop-2g.c |
 | `unsupported:extern object 'abs_called' has no definition in the translation unit` | 2 | 2 | builtins/abs-1-lib.c, builtins/uabs-1-lib.c |
 | `unsupported:extern object 'x' has no definition in the translation unit` | 2 | 2 | 00094.c, 00110.c |
 | `unsupported:goto skips a block declaration` | 2 | 2 | 00129.c, gcc/testsuite/gcc.dg/c23-labels-1.c |
@@ -176,6 +201,34 @@ The run's first refusal, normalized by construct; `sole` counts rows whose first
 | `cast:FloatingComplexCast` | 1 | 1 | 20070614-1.c |
 | `cast:FloatingRealToComplex` | 1 | 1 | complex-4.c |
 | `cast:IntegralRealToComplex` | 1 | 1 | pr104604.c |
+| `libc-call: __builtin_abs` | 1 | 1 | pr34130.c |
+| `libc-call: __builtin_bswap16` | 1 | 1 | pr97386-1.c |
+| `libc-call: __builtin_bswap32` | 1 | 1 | pr90025.c |
+| `libc-call: __builtin_constant_p` | 1 | 1 | builtin-constant.c |
+| `libc-call: __builtin_memcmp` | 1 | 1 | pr57130.c |
+| `libc-call: __builtin_snprintf` | 1 | 1 | pr78622.c |
+| `libc-call: __builtin_strncpy` | 1 | 1 | pr93249.c |
+| `libc-call: __sync_add_and_fetch_8` | 1 | 1 | pr122000.c |
+| `libc-call: abs` | 1 | 1 | 20041126-1.c |
+| `libc-call: ap` | 1 | 1 | loop-5.c |
+| `libc-call: b` | 1 | 1 | 20010403-1.c |
+| `libc-call: bug` | 1 | 1 | 20000412-6.c |
+| `libc-call: calloc` | 1 | 1 | 00040.c |
+| `libc-call: checkit` | 1 | 1 | 20000402-1.c |
+| `libc-call: f3` | 1 | 1 | 981019-1.c |
+| `libc-call: fcntl_lock` | 1 | 1 | 20030307-1.c |
+| `libc-call: fopen` | 1 | 1 | 00187.c |
+| `libc-call: func` | 1 | 1 | 980618-1.c |
+| `libc-call: llabs` | 1 | 1 | 20021127-1.c |
+| `libc-call: logadd` | 1 | 1 | 20010224-1.c |
+| `libc-call: main_test` | 1 | 1 | builtins/lib/main.c |
+| `libc-call: s` | 1 | 1 | multi-ix.c |
+| `libc-call: sprintf` | 1 | 1 | 20030626-2.c |
+| `libc-call: strchr` | 1 | 1 | 20000910-2.c |
+| `libc-call: strcmp` | 1 | 1 | 20030715-1.c |
+| `libc-call: sub` | 1 | 1 | 990128-1.c |
+| `libc-call: temp` | 1 | 1 | 20030718-1.c |
+| `libc-call: yylex` | 1 | 1 | 20000818-1.c |
 | `unsupported:AlignedAttr` | 1 | 1 | pr108064.c |
 | `unsupported:ConstantExpr` | 1 | 1 | 20050929-1.c |
 | `unsupported:DesignatedInitUpdateExpr` | 1 | 1 | gcc/testsuite/gcc.dg/c23-empty-init-warn-17.c |

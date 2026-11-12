@@ -397,145 +397,6 @@
   },
   {
    "files": [
-    "00025.c",
-    "00040.c",
-    "00176.c",
-    "00179.c",
-    "00180.c",
-    "00187.c",
-    "00194.c",
-    "00214.c",
-    "20000402-1.c",
-    "20000412-6.c",
-    "20000703-1.c",
-    "20000722-1.c",
-    "20000801-2.c",
-    "20000818-1.c",
-    "20000910-2.c",
-    "20001203-2.c",
-    "20010224-1.c",
-    "20010403-1.c",
-    "20010925-1.c",
-    "20011024-1.c",
-    "20011114-1.c",
-    "20020227-1.c",
-    "20020406-1.c",
-    "20020418-1.c",
-    "20020529-1.c",
-    "20021011-1.c",
-    "20021113-1.c",
-    "20021120-3.c",
-    "20021127-1.c",
-    "20030117-1.c",
-    "20030203-1.c",
-    "20030307-1.c",
-    "20030408-1.c",
-    "20030606-1.c",
-    "20030626-2.c",
-    "20030715-1.c",
-    "20030717-1.c",
-    "20030718-1.c",
-    "20040823-1.c",
-    "20041126-1.c",
-    "20041218-1.c",
-    "20050218-1.c",
-    "20050826-1.c",
-    "20060930-2.c",
-    "20070824-1.c",
-    "20071018-1.c",
-    "20071120-1.c",
-    "20071219-1.c",
-    "20081218-1.c",
-    "20120207-1.c",
-    "20141107-1.c",
-    "921006-1.c",
-    "921117-1.c",
-    "930725-1.c",
-    "960521-1.c",
-    "970214-1.c",
-    "970214-2.c",
-    "970217-1.c",
-    "980505-1.c",
-    "980618-1.c",
-    "980707-1.c",
-    "981019-1.c",
-    "990128-1.c",
-    "990513-1.c",
-    "990628-1.c",
-    "alloca-1.c",
-    "built-in-setjmp.c",
-    "builtin-constant.c",
-    "builtin-prefetch-1.c",
-    "builtin-prefetch-2.c",
-    "builtin-prefetch-4.c",
-    "builtin-prefetch-5.c",
-    "builtins/lib/main.c",
-    "ffs-1.c",
-    "frame-address.c",
-    "gcc/testsuite/gcc.dg/c23-empty-init-5.c",
-    "gcc/testsuite/gcc.dg/c23-nullptr-5.c",
-    "loop-2f.c",
-    "loop-2g.c",
-    "loop-5.c",
-    "memset-4.c",
-    "multi-ix.c",
-    "nestfunc-4.c",
-    "pr108789.c",
-    "pr110914.c",
-    "pr115277.c",
-    "pr116799.c",
-    "pr119428.c",
-    "pr122000.c",
-    "pr123978.c",
-    "pr33870.c",
-    "pr34130.c",
-    "pr35472.c",
-    "pr36765.c",
-    "pr40668.c",
-    "pr41395-1.c",
-    "pr41463.c",
-    "pr42614.c",
-    "pr43008.c",
-    "pr43236.c",
-    "pr53688.c",
-    "pr57130.c",
-    "pr59229.c",
-    "pr60062.c",
-    "pr61725.c",
-    "pr63843.c",
-    "pr64006.c",
-    "pr68381.c",
-    "pr71554.c",
-    "pr77718.c",
-    "pr77767.c",
-    "pr78586.c",
-    "pr78622.c",
-    "pr79327.c",
-    "pr84169.c",
-    "pr84339.c",
-    "pr85095.c",
-    "pr89434.c",
-    "pr90025.c",
-    "pr90311.c",
-    "pr91450-1.c",
-    "pr91450-2.c",
-    "pr93249.c",
-    "pr93494.c",
-    "pr97325.c",
-    "pr97386-1.c",
-    "pr98853-1.c",
-    "printf-1.c",
-    "split-path-1.c",
-    "string-opt-17.c",
-    "string-opt-18.c",
-    "strlen-5.c"
-   ],
-   "present": 132,
-   "sole": 132,
-   "wall": "libc-call"
-  },
-  {
-   "files": [
     "20040705-1.c",
     "20040705-2.c",
     "20040709-3.c",
@@ -1280,6 +1141,38 @@
   },
   {
    "files": [
+    "20000703-1.c",
+    "20030408-1.c",
+    "20060930-2.c",
+    "20141107-1.c",
+    "pr40668.c",
+    "pr53688.c",
+    "pr59229.c",
+    "pr63843.c",
+    "pr98853-1.c"
+   ],
+   "present": 9,
+   "sole": 9,
+   "wall": "libc-call: __builtin_memcpy"
+  },
+  {
+   "files": [
+    "20030606-1.c",
+    "20030717-1.c",
+    "20041218-1.c",
+    "20081218-1.c",
+    "memset-4.c",
+    "pr119428.c",
+    "pr123978.c",
+    "pr33870.c",
+    "pr77718.c"
+   ],
+   "present": 9,
+   "sole": 9,
+   "wall": "libc-call: __builtin_memset"
+  },
+  {
+   "files": [
     "pr105613.c",
     "pr110817-1.c",
     "pr110817-2.c",
@@ -1309,6 +1202,49 @@
    "present": 9,
    "sole": 9,
    "wall": "unsupported:no layout for declared type 'float'"
+  },
+  {
+   "files": [
+    "20001203-2.c",
+    "20040823-1.c",
+    "20050826-1.c",
+    "20071219-1.c",
+    "990513-1.c",
+    "gcc/testsuite/gcc.dg/c23-empty-init-5.c",
+    "pr35472.c",
+    "pr43236.c"
+   ],
+   "present": 8,
+   "sole": 8,
+   "wall": "libc-call: memset"
+  },
+  {
+   "files": [
+    "pr64006.c",
+    "pr68381.c",
+    "pr71554.c",
+    "pr84169.c",
+    "pr89434.c",
+    "pr91450-1.c",
+    "pr91450-2.c"
+   ],
+   "present": 7,
+   "sole": 7,
+   "wall": "libc-call: __builtin_mul_overflow"
+  },
+  {
+   "files": [
+    "20020406-1.c",
+    "960521-1.c",
+    "990628-1.c",
+    "pr41395-1.c",
+    "pr41463.c",
+    "pr42614.c",
+    "split-path-1.c"
+   ],
+   "present": 7,
+   "sole": 7,
+   "wall": "libc-call: malloc"
   },
   {
    "files": [
@@ -1379,6 +1315,42 @@
   },
   {
    "files": [
+    "20021113-1.c",
+    "20070824-1.c",
+    "alloca-1.c",
+    "built-in-setjmp.c",
+    "frame-address.c"
+   ],
+   "present": 5,
+   "sole": 5,
+   "wall": "libc-call: __builtin_alloca"
+  },
+  {
+   "files": [
+    "20071018-1.c",
+    "20071120-1.c",
+    "pr36765.c",
+    "pr43008.c",
+    "pr84339.c"
+   ],
+   "present": 5,
+   "sole": 5,
+   "wall": "libc-call: __builtin_malloc"
+  },
+  {
+   "files": [
+    "00179.c",
+    "00180.c",
+    "20120207-1.c",
+    "980707-1.c",
+    "string-opt-17.c"
+   ],
+   "present": 5,
+   "sole": 5,
+   "wall": "libc-call: strcpy"
+  },
+  {
+   "files": [
     "20000917-1.c",
     "20020206-1.c",
     "20020320-1.c",
@@ -1423,6 +1395,39 @@
    "present": 4,
    "sole": 4,
    "wall": "cast:FloatingCast"
+  },
+  {
+   "files": [
+    "pr108789.c",
+    "pr85095.c",
+    "pr90311.c",
+    "pr93494.c"
+   ],
+   "present": 4,
+   "sole": 4,
+   "wall": "libc-call: __builtin_add_overflow"
+  },
+  {
+   "files": [
+    "builtin-prefetch-1.c",
+    "builtin-prefetch-2.c",
+    "builtin-prefetch-4.c",
+    "builtin-prefetch-5.c"
+   ],
+   "present": 4,
+   "sole": 4,
+   "wall": "libc-call: __builtin_prefetch"
+  },
+  {
+   "files": [
+    "20010925-1.c",
+    "20011114-1.c",
+    "20030117-1.c",
+    "nestfunc-4.c"
+   ],
+   "present": 4,
+   "sole": 4,
+   "wall": "libc-call: foo"
   },
   {
    "files": [
@@ -1488,6 +1493,76 @@
    "present": 3,
    "sole": 3,
    "wall": "cast:FloatingToIntegral"
+  },
+  {
+   "files": [
+    "00214.c",
+    "20020418-1.c",
+    "pr115277.c"
+   ],
+   "present": 3,
+   "sole": 3,
+   "wall": "libc-call: __builtin_expect"
+  },
+  {
+   "files": [
+    "ffs-1.c",
+    "pr61725.c",
+    "pr97325.c"
+   ],
+   "present": 3,
+   "sole": 3,
+   "wall": "libc-call: __builtin_ffs"
+  },
+  {
+   "files": [
+    "20021120-3.c",
+    "pr78586.c",
+    "pr79327.c"
+   ],
+   "present": 3,
+   "sole": 3,
+   "wall": "libc-call: __builtin_sprintf"
+  },
+  {
+   "files": [
+    "921006-1.c",
+    "930725-1.c",
+    "pr60062.c"
+   ],
+   "present": 3,
+   "sole": 3,
+   "wall": "libc-call: __builtin_strcmp"
+  },
+  {
+   "files": [
+    "970214-1.c",
+    "970214-2.c",
+    "970217-1.c"
+   ],
+   "present": 3,
+   "sole": 3,
+   "wall": "libc-call: exit (an argument is not a literal 0 \u2014 which exit was reached is unknown)"
+  },
+  {
+   "files": [
+    "00176.c",
+    "00194.c",
+    "printf-1.c"
+   ],
+   "present": 3,
+   "sole": 3,
+   "wall": "libc-call: printf"
+  },
+  {
+   "files": [
+    "00025.c",
+    "20050218-1.c",
+    "strlen-5.c"
+   ],
+   "present": 3,
+   "sole": 3,
+   "wall": "libc-call: strlen"
   },
   {
    "files": [
@@ -1608,6 +1683,78 @@
    "present": 3,
    "sole": 3,
    "wall": "unsupported:unbound declaration 'id27' (name 'x')"
+  },
+  {
+   "files": [
+    "gcc/testsuite/gcc.dg/c23-nullptr-5.c",
+    "pr77767.c"
+   ],
+   "present": 2,
+   "sole": 2,
+   "wall": "libc-call: __builtin_abort"
+  },
+  {
+   "files": [
+    "20021011-1.c",
+    "921117-1.c"
+   ],
+   "present": 2,
+   "sole": 2,
+   "wall": "libc-call: __builtin_strcpy"
+  },
+  {
+   "files": [
+    "pr110914.c",
+    "pr116799.c"
+   ],
+   "present": 2,
+   "sole": 2,
+   "wall": "libc-call: __builtin_strlen"
+  },
+  {
+   "files": [
+    "20000722-1.c",
+    "20000801-2.c"
+   ],
+   "present": 2,
+   "sole": 2,
+   "wall": "libc-call: bar"
+  },
+  {
+   "files": [
+    "20030203-1.c",
+    "980505-1.c"
+   ],
+   "present": 2,
+   "sole": 2,
+   "wall": "libc-call: f"
+  },
+  {
+   "files": [
+    "20020227-1.c",
+    "20020529-1.c"
+   ],
+   "present": 2,
+   "sole": 2,
+   "wall": "libc-call: f1"
+  },
+  {
+   "files": [
+    "20011024-1.c",
+    "string-opt-18.c"
+   ],
+   "present": 2,
+   "sole": 2,
+   "wall": "libc-call: memcpy"
+  },
+  {
+   "files": [
+    "loop-2f.c",
+    "loop-2g.c"
+   ],
+   "present": 2,
+   "sole": 2,
+   "wall": "libc-call: open"
   },
   {
    "files": [
@@ -1938,6 +2085,230 @@
    "present": 1,
    "sole": 1,
    "wall": "cast:IntegralRealToComplex"
+  },
+  {
+   "files": [
+    "pr34130.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "libc-call: __builtin_abs"
+  },
+  {
+   "files": [
+    "pr97386-1.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "libc-call: __builtin_bswap16"
+  },
+  {
+   "files": [
+    "pr90025.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "libc-call: __builtin_bswap32"
+  },
+  {
+   "files": [
+    "builtin-constant.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "libc-call: __builtin_constant_p"
+  },
+  {
+   "files": [
+    "pr57130.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "libc-call: __builtin_memcmp"
+  },
+  {
+   "files": [
+    "pr78622.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "libc-call: __builtin_snprintf"
+  },
+  {
+   "files": [
+    "pr93249.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "libc-call: __builtin_strncpy"
+  },
+  {
+   "files": [
+    "pr122000.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "libc-call: __sync_add_and_fetch_8"
+  },
+  {
+   "files": [
+    "20041126-1.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "libc-call: abs"
+  },
+  {
+   "files": [
+    "loop-5.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "libc-call: ap"
+  },
+  {
+   "files": [
+    "20010403-1.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "libc-call: b"
+  },
+  {
+   "files": [
+    "20000412-6.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "libc-call: bug"
+  },
+  {
+   "files": [
+    "00040.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "libc-call: calloc"
+  },
+  {
+   "files": [
+    "20000402-1.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "libc-call: checkit"
+  },
+  {
+   "files": [
+    "981019-1.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "libc-call: f3"
+  },
+  {
+   "files": [
+    "20030307-1.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "libc-call: fcntl_lock"
+  },
+  {
+   "files": [
+    "00187.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "libc-call: fopen"
+  },
+  {
+   "files": [
+    "980618-1.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "libc-call: func"
+  },
+  {
+   "files": [
+    "20021127-1.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "libc-call: llabs"
+  },
+  {
+   "files": [
+    "20010224-1.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "libc-call: logadd"
+  },
+  {
+   "files": [
+    "builtins/lib/main.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "libc-call: main_test"
+  },
+  {
+   "files": [
+    "multi-ix.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "libc-call: s"
+  },
+  {
+   "files": [
+    "20030626-2.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "libc-call: sprintf"
+  },
+  {
+   "files": [
+    "20000910-2.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "libc-call: strchr"
+  },
+  {
+   "files": [
+    "20030715-1.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "libc-call: strcmp"
+  },
+  {
+   "files": [
+    "990128-1.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "libc-call: sub"
+  },
+  {
+   "files": [
+    "20030718-1.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "libc-call: temp"
+  },
+  {
+   "files": [
+    "20000818-1.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "libc-call: yylex"
   },
   {
    "files": [
@@ -3957,8 +4328,8 @@
   }
  ],
  "manifest_hash": "1de1a60c299d5bb51dae7ca001b0a008010cad0b25670cde2090c08bfc1a84ce",
- "measured_at_utc": "2026-11-12T07:30:00Z",
- "measured_commit": "a7e78540a",
+ "measured_at_utc": "2026-11-12T07:45:00Z",
+ "measured_commit": "1918610c7",
  "pin": null,
  "rows": [
   {
@@ -4215,8 +4586,8 @@
   },
   {
    "corpus": "c-testsuite/single-exec",
-   "detail": "id19",
-   "dynamic_wall": "libc-call",
+   "detail": "strlen",
+   "dynamic_wall": "libc-call: strlen",
    "manifest_status": "parsed",
    "name": "00025.c",
    "sha256": "9096fd094a7596a53ed720f728053226642c64e06babad4b49cf588b4f80ab96",
@@ -4376,8 +4747,8 @@
   },
   {
    "corpus": "c-testsuite/single-exec",
-   "detail": "id186",
-   "dynamic_wall": "libc-call",
+   "detail": "calloc",
+   "dynamic_wall": "libc-call: calloc",
    "manifest_status": "parsed",
    "name": "00040.c",
    "sha256": "cfa5225b5d1ffd079082937dfe73c3178eb75f7ac60fec50c43d9a159ac4d509",
@@ -5947,8 +6318,8 @@
   },
   {
    "corpus": "c-testsuite/single-exec",
-   "detail": "id237",
-   "dynamic_wall": "libc-call",
+   "detail": "printf",
+   "dynamic_wall": "libc-call: printf",
    "manifest_status": "parsed",
    "name": "00176.c",
    "sha256": "ab95d157702eda14220fdd3faeca45ea7beb6628b5f9e8717076771a67125281",
@@ -5989,8 +6360,8 @@
   },
   {
    "corpus": "c-testsuite/single-exec",
-   "detail": "id597",
-   "dynamic_wall": "libc-call",
+   "detail": "strcpy",
+   "dynamic_wall": "libc-call: strcpy",
    "manifest_status": "parsed",
    "name": "00179.c",
    "sha256": "9d2a00c8420a356625a16e53a81d51ae5b00380039c8224e266d9a154509ee89",
@@ -6003,8 +6374,8 @@
   },
   {
    "corpus": "c-testsuite/single-exec",
-   "detail": "id597",
-   "dynamic_wall": "libc-call",
+   "detail": "strcpy",
+   "dynamic_wall": "libc-call: strcpy",
    "manifest_status": "parsed",
    "name": "00180.c",
    "sha256": "88c60602178ed9f825bc74c372cab81b366d58d44d9af13a82831097d18c133b",
@@ -6101,8 +6472,8 @@
   },
   {
    "corpus": "c-testsuite/single-exec",
-   "detail": "id202",
-   "dynamic_wall": "libc-call",
+   "detail": "fopen",
+   "dynamic_wall": "libc-call: fopen",
    "manifest_status": "parsed",
    "name": "00187.c",
    "sha256": "78fe8f7f6f79a04a3fb9c07942726cd25b0898bbf9abc06d341733b641fea93b",
@@ -6199,8 +6570,8 @@
   },
   {
    "corpus": "c-testsuite/single-exec",
-   "detail": "id237",
-   "dynamic_wall": "libc-call",
+   "detail": "printf",
+   "dynamic_wall": "libc-call: printf",
    "manifest_status": "parsed",
    "name": "00194.c",
    "sha256": "164f79be0581a1b748b21cf5f6bb6a827af39d3276c0ec075a2c4250e342f467",
@@ -6480,8 +6851,8 @@
   },
   {
    "corpus": "c-testsuite/single-exec",
-   "detail": "id48",
-   "dynamic_wall": "libc-call",
+   "detail": "__builtin_expect",
+   "dynamic_wall": "libc-call: __builtin_expect",
    "manifest_status": "parsed",
    "name": "00214.c",
    "sha256": "5164bc3a4482815ba765ec253765a69bf59bc074e4313fdf607e4554daf798bb",
@@ -6722,8 +7093,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id525",
-   "dynamic_wall": "libc-call",
+   "detail": "checkit",
+   "dynamic_wall": "libc-call: checkit",
    "manifest_status": "parsed",
    "name": "20000402-1.c",
    "sha256": "c6d950d6df34c51315ef9ef1bb7a7b5d97515027eaae8d40cbe2b7276daada27",
@@ -6798,8 +7169,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id27",
-   "dynamic_wall": "libc-call",
+   "detail": "bug",
+   "dynamic_wall": "libc-call: bug",
    "manifest_status": "parsed",
    "name": "20000412-6.c",
    "sha256": "84d87ed9515d0cd75170f04abdb31e5740f39446a3e743656cde92d18580b88e",
@@ -6962,8 +7333,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id40",
-   "dynamic_wall": "libc-call",
+   "detail": "__builtin_memcpy",
+   "dynamic_wall": "libc-call: __builtin_memcpy",
    "manifest_status": "parsed",
    "name": "20000703-1.c",
    "sha256": "6e03635f6ee494d6150be8b259217d6ce090c847621f883aa79dc55fc796f41c",
@@ -7121,8 +7492,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id30",
-   "dynamic_wall": "libc-call",
+   "detail": "bar",
+   "dynamic_wall": "libc-call: bar",
    "manifest_status": "parsed",
    "name": "20000722-1.c",
    "sha256": "632e98370bcb56a1dd68ef5d8dd62893c17917389e24e908a3ca6d17c03f917e",
@@ -7177,8 +7548,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id27",
-   "dynamic_wall": "libc-call",
+   "detail": "bar",
+   "dynamic_wall": "libc-call: bar",
    "manifest_status": "parsed",
    "name": "20000801-2.c",
    "sha256": "c9a6d4624d1532eeab33fa70e1a4cb7ce601854092cf7f5bd1927415a6c360c6",
@@ -7234,8 +7605,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id34",
-   "dynamic_wall": "libc-call",
+   "detail": "yylex",
+   "dynamic_wall": "libc-call: yylex",
    "manifest_status": "parsed",
    "name": "20000818-1.c",
    "sha256": "fbd876bd8406fe0fd788518d614d0e7a2165df99da8ab2db3e95e03eea7820b3",
@@ -7278,8 +7649,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id542",
-   "dynamic_wall": "libc-call",
+   "detail": "strchr",
+   "dynamic_wall": "libc-call: strchr",
    "manifest_status": "parsed",
    "name": "20000910-2.c",
    "sha256": "630dda2d782bd72273a5ba7df4a52c6c5a20344d88f270467652ba6eafaf738c",
@@ -7527,8 +7898,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id68",
-   "dynamic_wall": "libc-call",
+   "detail": "memset",
+   "dynamic_wall": "libc-call: memset",
    "manifest_status": "parsed",
    "name": "20001203-2.c",
    "sha256": "7cadd06740113c17aa0f79396a0b832269f3ba374b55c64b5af654750b9efd78",
@@ -7715,8 +8086,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id25",
-   "dynamic_wall": "libc-call",
+   "detail": "logadd",
+   "dynamic_wall": "libc-call: logadd",
    "manifest_status": "parsed",
    "name": "20010224-1.c",
    "sha256": "5550548c308e4dff8b1524a50346835e5b1c5e506b211bd4707d4ff687ff039d",
@@ -7752,8 +8123,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id27",
-   "dynamic_wall": "libc-call",
+   "detail": "b",
+   "dynamic_wall": "libc-call: b",
    "manifest_status": "parsed",
    "name": "20010403-1.c",
    "sha256": "1baaefffd3c90b398c8aba511c1a13f238fd43b6a83474dc87bec54b2b06035d",
@@ -7944,8 +8315,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id39",
-   "dynamic_wall": "libc-call",
+   "detail": "foo",
+   "dynamic_wall": "libc-call: foo",
    "manifest_status": "parsed",
    "name": "20010925-1.c",
    "sha256": "01d55f1071c3e708492d5d9f6fddd4f479be4005528aebfa180cd0b1465f25f1",
@@ -7981,8 +8352,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id29",
-   "dynamic_wall": "libc-call",
+   "detail": "memcpy",
+   "dynamic_wall": "libc-call: memcpy",
    "manifest_status": "parsed",
    "name": "20011024-1.c",
    "sha256": "318630ae7d1dd6ab618fb7ff8ebfc135c6154cc1e7479fa430e7c8196a6291e7",
@@ -8031,8 +8402,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id36",
-   "dynamic_wall": "libc-call",
+   "detail": "foo",
+   "dynamic_wall": "libc-call: foo",
    "manifest_status": "parsed",
    "name": "20011114-1.c",
    "sha256": "4949cb14e65372b91231780fddd60173451c99f9bbcff2c44975f75467aefdbf",
@@ -8313,8 +8684,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id36",
-   "dynamic_wall": "libc-call",
+   "detail": "f1",
+   "dynamic_wall": "libc-call: f1",
    "manifest_status": "parsed",
    "name": "20020227-1.c",
    "sha256": "22863853a7e0bbad256eaa0e42f32684ff4fd585c1cc37d10d0a6b14c6db1388",
@@ -8430,8 +8801,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id25",
-   "dynamic_wall": "libc-call",
+   "detail": "malloc",
+   "dynamic_wall": "libc-call: malloc",
    "manifest_status": "parsed",
    "name": "20020406-1.c",
    "sha256": "34df7369b73cbc4f119553b58f5fa4fe373fa108f9c3d790a62e997f6a9b8816",
@@ -8482,8 +8853,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id30",
-   "dynamic_wall": "libc-call",
+   "detail": "__builtin_expect",
+   "dynamic_wall": "libc-call: __builtin_expect",
    "manifest_status": "parsed",
    "name": "20020418-1.c",
    "sha256": "89bb69824e93c2c64631ee83dc0ff752059f2d395a2938381f40595a651e215a",
@@ -8567,8 +8938,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id31",
-   "dynamic_wall": "libc-call",
+   "detail": "f1",
+   "dynamic_wall": "libc-call: f1",
    "manifest_status": "parsed",
    "name": "20020529-1.c",
    "sha256": "4f1736545a78454520641f373c2b81155a0afcc6ef6f8fc52df56d4f3b8cdc35",
@@ -8744,8 +9115,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id29",
-   "dynamic_wall": "libc-call",
+   "detail": "__builtin_strcpy",
+   "dynamic_wall": "libc-call: __builtin_strcpy",
    "manifest_status": "parsed",
    "name": "20021011-1.c",
    "sha256": "cc2e4b4355551ef32eeca6b9fa46e4351f475f3c686f5287974a3f38fb427301",
@@ -8792,8 +9163,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id43",
-   "dynamic_wall": "libc-call",
+   "detail": "__builtin_alloca",
+   "dynamic_wall": "libc-call: __builtin_alloca",
    "manifest_status": "parsed",
    "name": "20021113-1.c",
    "sha256": "32dd9b3148cb09953d724b4180308c24ae13375f5a62100554a63ff497280bd8",
@@ -8871,8 +9242,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id37",
-   "dynamic_wall": "libc-call",
+   "detail": "__builtin_sprintf",
+   "dynamic_wall": "libc-call: __builtin_sprintf",
    "manifest_status": "parsed",
    "name": "20021120-3.c",
    "sha256": "015a0910b2a6c7f94aad21ca1d54984e7760c78077dd53a38b876338d51fc086",
@@ -8885,8 +9256,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id24",
-   "dynamic_wall": "libc-call",
+   "detail": "llabs",
+   "dynamic_wall": "libc-call: llabs",
    "manifest_status": "parsed",
    "name": "20021127-1.c",
    "sha256": "0991da41210a9a22fee12f7747b1f3a068d9ebce28fcfa782ae6ef1e25c41cf0",
@@ -8945,8 +9316,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id27",
-   "dynamic_wall": "libc-call",
+   "detail": "foo",
+   "dynamic_wall": "libc-call: foo",
    "manifest_status": "parsed",
    "name": "20030117-1.c",
    "sha256": "ce13217dbb0231837d2b1271924434cc4b29b91419c47725dde3cb6a82b7e713",
@@ -8998,8 +9369,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id15",
-   "dynamic_wall": "libc-call",
+   "detail": "f",
+   "dynamic_wall": "libc-call: f",
    "manifest_status": "parsed",
    "name": "20030203-1.c",
    "sha256": "1a6fa6d9b011f623289578daf665f479ec2bad7ab20b9ae7e69773c6a7c59b7f",
@@ -9080,8 +9451,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id21",
-   "dynamic_wall": "libc-call",
+   "detail": "fcntl_lock",
+   "dynamic_wall": "libc-call: fcntl_lock",
    "manifest_status": "parsed",
    "name": "20030307-1.c",
    "sha256": "3fcadaeca12193620f8959979ae337d3b5ac29a77cb2990ed5d261842327afed",
@@ -9166,8 +9537,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id58",
-   "dynamic_wall": "libc-call",
+   "detail": "__builtin_memcpy",
+   "dynamic_wall": "libc-call: __builtin_memcpy",
    "manifest_status": "parsed",
    "name": "20030408-1.c",
    "sha256": "b730830bfaf0b0c5b6143bbf01fc554c7a6730872c605ea9e007b8d32427454d",
@@ -9189,8 +9560,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id57",
-   "dynamic_wall": "libc-call",
+   "detail": "__builtin_memset",
+   "dynamic_wall": "libc-call: __builtin_memset",
    "manifest_status": "parsed",
    "name": "20030606-1.c",
    "sha256": "341fec31cd56cc2cd043df3a94a0706e096fb9c6a189162ed4c324b2fd6c0124",
@@ -9228,8 +9599,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id22",
-   "dynamic_wall": "libc-call",
+   "detail": "sprintf",
+   "dynamic_wall": "libc-call: sprintf",
    "manifest_status": "parsed",
    "name": "20030626-2.c",
    "sha256": "a4a054bc1961d7e5e280cf838c02dc5084d5161e8a8a65da92457f753c358778",
@@ -9252,8 +9623,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id20",
-   "dynamic_wall": "libc-call",
+   "detail": "strcmp",
+   "dynamic_wall": "libc-call: strcmp",
    "manifest_status": "parsed",
    "name": "20030715-1.c",
    "sha256": "5237fc956973f647d62fdb0c09d77800107ac8ac95576a60aae21f519802610d",
@@ -9266,8 +9637,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id186",
-   "dynamic_wall": "libc-call",
+   "detail": "__builtin_memset",
+   "dynamic_wall": "libc-call: __builtin_memset",
    "manifest_status": "parsed",
    "name": "20030717-1.c",
    "sha256": "c104496dfac2cde6fbbf2ace57788e9df5fa6ea2ca791652a8caa9585d043281",
@@ -9279,8 +9650,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id15",
-   "dynamic_wall": "libc-call",
+   "detail": "temp",
+   "dynamic_wall": "libc-call: temp",
    "manifest_status": "parsed",
    "name": "20030718-1.c",
    "sha256": "0a56abdd3040391e6c4b3b93995188ebcabaaa30a8650d5fc7e3f7f339f05669",
@@ -9961,8 +10332,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id393",
-   "dynamic_wall": "libc-call",
+   "detail": "memset",
+   "dynamic_wall": "libc-call: memset",
    "manifest_status": "parsed",
    "name": "20040823-1.c",
    "sha256": "cce264d81c911a8eb4a391842234064d0ced758186d59bdbe081bc9d6cdc0ccc",
@@ -10070,8 +10441,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id20",
-   "dynamic_wall": "libc-call",
+   "detail": "abs",
+   "dynamic_wall": "libc-call: abs",
    "manifest_status": "parsed",
    "name": "20041126-1.c",
    "sha256": "63104591021a08ff1eba2b7b56e2b5890606a19a4dce8add5e3a365df73222ba",
@@ -10145,8 +10516,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id64",
-   "dynamic_wall": "libc-call",
+   "detail": "__builtin_memset",
+   "dynamic_wall": "libc-call: __builtin_memset",
    "manifest_status": "parsed",
    "name": "20041218-1.c",
    "sha256": "b5d1601f6799841f2bae31fac4e6e3f754cae2c1d23a4342665fd42f6668ffee",
@@ -10308,8 +10679,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id21",
-   "dynamic_wall": "libc-call",
+   "detail": "strlen",
+   "dynamic_wall": "libc-call: strlen",
    "manifest_status": "parsed",
    "name": "20050218-1.c",
    "sha256": "58cee76083f39fa4acffe227c321e93f5fed969a9bbd5acafdc1676d461c13af",
@@ -10455,8 +10826,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id29",
-   "dynamic_wall": "libc-call",
+   "detail": "memset",
+   "dynamic_wall": "libc-call: memset",
    "manifest_status": "parsed",
    "name": "20050826-1.c",
    "sha256": "12d49e96da44d258cf40619706a5605b3638de8421ba1e4e55faf5487cacc23d",
@@ -10686,8 +11057,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id38",
-   "dynamic_wall": "libc-call",
+   "detail": "__builtin_memcpy",
+   "dynamic_wall": "libc-call: __builtin_memcpy",
    "manifest_status": "parsed",
    "name": "20060930-2.c",
    "sha256": "b6b8418cefcd8d23907067f377a5168d454375ae3f4618e9df8c9bfcb9349604",
@@ -10844,8 +11215,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id57",
-   "dynamic_wall": "libc-call",
+   "detail": "__builtin_alloca",
+   "dynamic_wall": "libc-call: __builtin_alloca",
    "manifest_status": "parsed",
    "name": "20070824-1.c",
    "sha256": "37762fbd1a61a1de6e9a4fe878f1a033a39e97cf6d5aa575258b8082cc73e631",
@@ -10877,8 +11248,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id37",
-   "dynamic_wall": "libc-call",
+   "detail": "__builtin_malloc",
+   "dynamic_wall": "libc-call: __builtin_malloc",
    "manifest_status": "parsed",
    "name": "20071018-1.c",
    "sha256": "933684cc6ff82204898950889f50a29fd41eedc455fa74a2cfd02e4b86aa5cbe",
@@ -10930,8 +11301,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id198",
-   "dynamic_wall": "libc-call",
+   "detail": "__builtin_malloc",
+   "dynamic_wall": "libc-call: __builtin_malloc",
    "manifest_status": "parsed",
    "name": "20071120-1.c",
    "sha256": "2a7087931d9add1d20c6b5247ab16d5917b09f557bff70413c7e69f58b275121",
@@ -11016,8 +11387,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id27",
-   "dynamic_wall": "libc-call",
+   "detail": "memset",
+   "dynamic_wall": "libc-call: memset",
    "manifest_status": "parsed",
    "name": "20071219-1.c",
    "sha256": "812db2e2f763b4790dab920ea5f0750e8061de9d80132c34c414cc73c7e86e62",
@@ -11244,8 +11615,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id25",
-   "dynamic_wall": "libc-call",
+   "detail": "__builtin_memset",
+   "dynamic_wall": "libc-call: __builtin_memset",
    "manifest_status": "parsed",
    "name": "20081218-1.c",
    "sha256": "f8a063c3a29bbea7c8f108c12c7eece2f2e4bfa5fa11640ae94f1e68351146a0",
@@ -11557,8 +11928,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id20",
-   "dynamic_wall": "libc-call",
+   "detail": "strcpy",
+   "dynamic_wall": "libc-call: strcpy",
    "manifest_status": "parsed",
    "name": "20120207-1.c",
    "sha256": "54547af0299635162ae5fbd31c63f73a2cf8bf3841ed501a5b465e999883cb22",
@@ -11746,8 +12117,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id55",
-   "dynamic_wall": "libc-call",
+   "detail": "__builtin_memcpy",
+   "dynamic_wall": "libc-call: __builtin_memcpy",
    "manifest_status": "parsed",
    "name": "20141107-1.c",
    "sha256": "dd5f737716fbcc0aa3b23a2b3c00bc94de39cb17b03582a4e9f016c3a19e1f0d",
@@ -12565,8 +12936,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id34",
-   "dynamic_wall": "libc-call",
+   "detail": "__builtin_strcmp",
+   "dynamic_wall": "libc-call: __builtin_strcmp",
    "manifest_status": "parsed",
    "name": "921006-1.c",
    "sha256": "21d2c53547fd5d18d2019b248118063b6a5b16112fbe5a258ff5e0dd42d5849f",
@@ -12704,8 +13075,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id67",
-   "dynamic_wall": "libc-call",
+   "detail": "__builtin_strcpy",
+   "dynamic_wall": "libc-call: __builtin_strcpy",
    "manifest_status": "parsed",
    "name": "921117-1.c",
    "sha256": "0e2ba7511fba9c9146762719400a71a9feb7764ef706b852d54089ab9a3b8534",
@@ -13176,8 +13547,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id57",
-   "dynamic_wall": "libc-call",
+   "detail": "__builtin_strcmp",
+   "dynamic_wall": "libc-call: __builtin_strcmp",
    "manifest_status": "parsed",
    "name": "930725-1.c",
    "sha256": "2921be94d182e4af56d4452f63c551624e91c53e3bdf5ee8c9326f2e4217e012",
@@ -14202,8 +14573,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id174",
-   "dynamic_wall": "libc-call",
+   "detail": "malloc",
+   "dynamic_wall": "libc-call: malloc",
    "manifest_status": "parsed",
    "name": "960521-1.c",
    "sha256": "b1b10c823890d29e57f42f2519e6a466a98cb61f933973702312df3c5bdf9b31",
@@ -14382,7 +14753,7 @@
   {
    "corpus": "gcc.c-torture/execute",
    "detail": "exit (an argument is not a literal 0 \u2014 which exit was reached is unknown)",
-   "dynamic_wall": "libc-call",
+   "dynamic_wall": "libc-call: exit (an argument is not a literal 0 \u2014 which exit was reached is unknown)",
    "manifest_status": "parsed",
    "name": "970214-1.c",
    "sha256": "b187ebc071f72cc8146a68bf03b6125cdd4b466dc4f74c8d069a9105b74e9007",
@@ -14392,7 +14763,7 @@
   {
    "corpus": "gcc.c-torture/execute",
    "detail": "exit (an argument is not a literal 0 \u2014 which exit was reached is unknown)",
-   "dynamic_wall": "libc-call",
+   "dynamic_wall": "libc-call: exit (an argument is not a literal 0 \u2014 which exit was reached is unknown)",
    "manifest_status": "parsed",
    "name": "970214-2.c",
    "sha256": "a10fb6166dedc13c0573f70cac10815be56eb24da8e04c672d3d1950cf9e51df",
@@ -14402,7 +14773,7 @@
   {
    "corpus": "gcc.c-torture/execute",
    "detail": "exit (an argument is not a literal 0 \u2014 which exit was reached is unknown)",
-   "dynamic_wall": "libc-call",
+   "dynamic_wall": "libc-call: exit (an argument is not a literal 0 \u2014 which exit was reached is unknown)",
    "manifest_status": "parsed",
    "name": "970217-1.c",
    "sha256": "e9673ba3f83475198d3dffb393af8a4bb883b49415d5fc97ac0894ac42a9a866",
@@ -14461,8 +14832,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id27",
-   "dynamic_wall": "libc-call",
+   "detail": "f",
+   "dynamic_wall": "libc-call: f",
    "manifest_status": "parsed",
    "name": "980505-1.c",
    "sha256": "c8f7d41c2d33810af729d491e52884bc638937b3812ec7bc5d917522f52c2642",
@@ -14643,8 +15014,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id27",
-   "dynamic_wall": "libc-call",
+   "detail": "func",
+   "dynamic_wall": "libc-call: func",
    "manifest_status": "parsed",
    "name": "980618-1.c",
    "sha256": "310d0b4d6895d4ea0e0c5caf879e47200cf2ab85fde3aa911e70cb760d747d2b",
@@ -14665,8 +15036,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id439",
-   "dynamic_wall": "libc-call",
+   "detail": "strcpy",
+   "dynamic_wall": "libc-call: strcpy",
    "manifest_status": "parsed",
    "name": "980707-1.c",
    "sha256": "5521d0bf62e7210d9e0d74cc80322eb8ca1e7379fa643d747b70c956c5c5b9e5",
@@ -14727,8 +15098,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id22",
-   "dynamic_wall": "libc-call",
+   "detail": "f3",
+   "dynamic_wall": "libc-call: f3",
    "manifest_status": "parsed",
    "name": "981019-1.c",
    "sha256": "d566c1dbc652bb744c7656ee5b730b0cb80e6c05241296e990b0a53a001eca61",
@@ -14812,8 +15183,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id42",
-   "dynamic_wall": "libc-call",
+   "detail": "sub",
+   "dynamic_wall": "libc-call: sub",
    "manifest_status": "parsed",
    "name": "990128-1.c",
    "sha256": "987290a87734573162f495e1ed26dc9899561bca7032e5e1b78753af9bd3e133",
@@ -14917,8 +15288,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id56",
-   "dynamic_wall": "libc-call",
+   "detail": "memset",
+   "dynamic_wall": "libc-call: memset",
    "manifest_status": "parsed",
    "name": "990513-1.c",
    "sha256": "efc5173b45881fa5320d70c2b39564e0f17e1f1423de6f7e5a945bc5ec690fd6",
@@ -14999,8 +15370,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id174",
-   "dynamic_wall": "libc-call",
+   "detail": "malloc",
+   "dynamic_wall": "libc-call: malloc",
    "manifest_status": "parsed",
    "name": "990628-1.c",
    "sha256": "39709895c4fbd3bd9e052230d4599f77ea07a826b7d62cca169c57d215aabf4e",
@@ -15390,8 +15761,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id34",
-   "dynamic_wall": "libc-call",
+   "detail": "__builtin_alloca",
+   "dynamic_wall": "libc-call: __builtin_alloca",
    "manifest_status": "parsed",
    "name": "alloca-1.c",
    "sha256": "2af69a1caaac8c57db3ae9e61d97a7237d6830ab8972c2fb9cd9ae3da60ad9f1",
@@ -15732,8 +16103,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id69",
-   "dynamic_wall": "libc-call",
+   "detail": "__builtin_alloca",
+   "dynamic_wall": "libc-call: __builtin_alloca",
    "manifest_status": "parsed",
    "name": "built-in-setjmp.c",
    "sha256": "d2487c4a7733f29b51ab3db27fd7918589b4da586360772c994b53f88497497e",
@@ -15760,8 +16131,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id43",
-   "dynamic_wall": "libc-call",
+   "detail": "__builtin_constant_p",
+   "dynamic_wall": "libc-call: __builtin_constant_p",
    "manifest_status": "parsed",
    "name": "builtin-constant.c",
    "sha256": "e6b43c1d60a64a99c4e2f96400e385230af772d749c1e84624ceace1fb6bd325",
@@ -15774,8 +16145,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id37",
-   "dynamic_wall": "libc-call",
+   "detail": "__builtin_prefetch",
+   "dynamic_wall": "libc-call: __builtin_prefetch",
    "manifest_status": "parsed",
    "name": "builtin-prefetch-1.c",
    "sha256": "f5a50f44cb76761dbfc1c7b112b044ab2eb449ee71f97d622534b9220426c9f0",
@@ -15787,8 +16158,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id47",
-   "dynamic_wall": "libc-call",
+   "detail": "__builtin_prefetch",
+   "dynamic_wall": "libc-call: __builtin_prefetch",
    "manifest_status": "parsed",
    "name": "builtin-prefetch-2.c",
    "sha256": "f0297aea28dc0548f7da366678740dec5faeedc3dd2b0197c79a8653212d56c4",
@@ -15813,8 +16184,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id44",
-   "dynamic_wall": "libc-call",
+   "detail": "__builtin_prefetch",
+   "dynamic_wall": "libc-call: __builtin_prefetch",
    "manifest_status": "parsed",
    "name": "builtin-prefetch-4.c",
    "sha256": "8006b36cd1d1c0a4dea621c63774f59fadce07b338ab1d55b9dc4d77f54fe8ae",
@@ -15826,8 +16197,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id38",
-   "dynamic_wall": "libc-call",
+   "detail": "__builtin_prefetch",
+   "dynamic_wall": "libc-call: __builtin_prefetch",
    "manifest_status": "parsed",
    "name": "builtin-prefetch-5.c",
    "sha256": "f7c357a38112c18c48b92d0265dc413497b071779b8e4702255cfcaeb7c0132c",
@@ -16080,8 +16451,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id21",
-   "dynamic_wall": "libc-call",
+   "detail": "main_test",
+   "dynamic_wall": "libc-call: main_test",
    "manifest_status": "parsed",
    "name": "builtins/lib/main.c",
    "sha256": "7e3631a41074901122586041b2285122aeff156e12148af0fcbca053c13ee25e",
@@ -17922,8 +18293,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id36",
-   "dynamic_wall": "libc-call",
+   "detail": "__builtin_ffs",
+   "dynamic_wall": "libc-call: __builtin_ffs",
    "manifest_status": "parsed",
    "name": "ffs-1.c",
    "sha256": "2cd39f8954aa815c393bc284e03f0d0338be751bda8ce762bb3fbb52a1e17a11",
@@ -18013,8 +18384,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id127",
-   "dynamic_wall": "libc-call",
+   "detail": "__builtin_alloca",
+   "dynamic_wall": "libc-call: __builtin_alloca",
    "manifest_status": "parsed",
    "name": "frame-address.c",
    "sha256": "5dbc8c3ac2cc9a3ed71b68f0af8af7e50821db30d44ac34c0fa97aea20412ffd",
@@ -18193,8 +18564,8 @@
   },
   {
    "corpus": "gcc.c23-run",
-   "detail": "id27",
-   "dynamic_wall": "libc-call",
+   "detail": "memset",
+   "dynamic_wall": "libc-call: memset",
    "manifest_status": "parsed",
    "name": "gcc/testsuite/gcc.dg/c23-empty-init-5.c",
    "sha256": "d9dd88de8b98e54c7503bf6f0711f6292841b52fd0a011181273f3f670022b54",
@@ -18606,8 +18977,8 @@
   },
   {
    "corpus": "gcc.c23-run",
-   "detail": "id38",
-   "dynamic_wall": "libc-call",
+   "detail": "__builtin_abort",
+   "dynamic_wall": "libc-call: __builtin_abort",
    "manifest_status": "parsed",
    "name": "gcc/testsuite/gcc.dg/c23-nullptr-5.c",
    "sha256": "ae26e9452dfe14abd1e6549873adb0d681f3fff550df2b97b72a4ede9519a63f",
@@ -20129,8 +20500,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id262",
-   "dynamic_wall": "libc-call",
+   "detail": "open",
+   "dynamic_wall": "libc-call: open",
    "manifest_status": "parsed",
    "name": "loop-2f.c",
    "sha256": "a2d52eb6a92ce7d5dc7f225de6b18392b6153fff41c98fe76aa1380c4999788a",
@@ -20144,8 +20515,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id262",
-   "dynamic_wall": "libc-call",
+   "detail": "open",
+   "dynamic_wall": "libc-call: open",
    "manifest_status": "parsed",
    "name": "loop-2g.c",
    "sha256": "268c47639d02a1978808b460f8bb5545ba9476058ddacbe376f5bdcf0ef36221",
@@ -20209,8 +20580,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id27",
-   "dynamic_wall": "libc-call",
+   "detail": "ap",
+   "dynamic_wall": "libc-call: ap",
    "manifest_status": "parsed",
    "name": "loop-5.c",
    "sha256": "a7c1e08529850d2ef80347d40bf1c3c8bfc3f5089f5cbf8d70f4fd63218b7dcd",
@@ -20505,8 +20876,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id24",
-   "dynamic_wall": "libc-call",
+   "detail": "__builtin_memset",
+   "dynamic_wall": "libc-call: __builtin_memset",
    "manifest_status": "parsed",
    "name": "memset-4.c",
    "sha256": "a607f718ab3fb6d56f4190534a528d24b9f428f6b184d69922b10223909fcd0d",
@@ -20584,8 +20955,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id31",
-   "dynamic_wall": "libc-call",
+   "detail": "s",
+   "dynamic_wall": "libc-call: s",
    "manifest_status": "parsed",
    "name": "multi-ix.c",
    "sha256": "c419fe0b5c2f4ba23408553432f6a8fef6ea671ec815146fb8e08a11c9940fd1",
@@ -20648,8 +21019,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id30",
-   "dynamic_wall": "libc-call",
+   "detail": "foo",
+   "dynamic_wall": "libc-call: foo",
    "manifest_status": "parsed",
    "name": "nestfunc-4.c",
    "sha256": "bce30f3ec3a128641b864931775db4a71a148cfbd616b68bfd1c8d1116d38c1e",
@@ -21087,8 +21458,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id25",
-   "dynamic_wall": "libc-call",
+   "detail": "__builtin_add_overflow",
+   "dynamic_wall": "libc-call: __builtin_add_overflow",
    "manifest_status": "parsed",
    "name": "pr108789.c",
    "sha256": "5e7e94668d51a5ee051d4a9028ca44db6a5946ff1a1a9652d99069d8c2da076b",
@@ -21289,8 +21660,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id66",
-   "dynamic_wall": "libc-call",
+   "detail": "__builtin_strlen",
+   "dynamic_wall": "libc-call: __builtin_strlen",
    "manifest_status": "parsed",
    "name": "pr110914.c",
    "sha256": "f00c55da1029a7214d391a05e0983bfb4e0c43a3dcce34035423de0f78d515df",
@@ -21544,8 +21915,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id23",
-   "dynamic_wall": "libc-call",
+   "detail": "__builtin_expect",
+   "dynamic_wall": "libc-call: __builtin_expect",
    "manifest_status": "parsed",
    "name": "pr115277.c",
    "sha256": "c674fdafda83fbd0d82d8d99185261aba5536ddbd42c98cb329ce512cfe394c2",
@@ -21557,8 +21928,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id56",
-   "dynamic_wall": "libc-call",
+   "detail": "__builtin_strlen",
+   "dynamic_wall": "libc-call: __builtin_strlen",
    "manifest_status": "parsed",
    "name": "pr116799.c",
    "sha256": "4c8b152e9be0e30fabe1ce363fddcd56e98107b8df401c0668b76260c6e7182d",
@@ -21679,8 +22050,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id48",
-   "dynamic_wall": "libc-call",
+   "detail": "__builtin_memset",
+   "dynamic_wall": "libc-call: __builtin_memset",
    "manifest_status": "parsed",
    "name": "pr119428.c",
    "sha256": "c61ae0c7e78c2776c192ea5271c4735eb8ebb4c993cec54011edf1e7ac7e6c76",
@@ -21728,8 +22099,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id29",
-   "dynamic_wall": "libc-call",
+   "detail": "__sync_add_and_fetch_8",
+   "dynamic_wall": "libc-call: __sync_add_and_fetch_8",
    "manifest_status": "parsed",
    "name": "pr122000.c",
    "sha256": "7b2d3a0ae25c0e225dca35b2f36029752db2541460ec59c7be568c1cab070372",
@@ -21807,8 +22178,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id25",
-   "dynamic_wall": "libc-call",
+   "detail": "__builtin_memset",
+   "dynamic_wall": "libc-call: __builtin_memset",
    "manifest_status": "parsed",
    "name": "pr123978.c",
    "sha256": "1ed8a36af452bfd14d600d31c3ce62b3d9241009455c4399adece59506cb5e9f",
@@ -22890,8 +23261,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id144",
-   "dynamic_wall": "libc-call",
+   "detail": "__builtin_memset",
+   "dynamic_wall": "libc-call: __builtin_memset",
    "manifest_status": "parsed",
    "name": "pr33870.c",
    "sha256": "64a9b80786fb99086ef2e1f0a05000b05528e43ec0ca7846e6aac45beebb629b",
@@ -22953,8 +23324,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id31",
-   "dynamic_wall": "libc-call",
+   "detail": "__builtin_abs",
+   "dynamic_wall": "libc-call: __builtin_abs",
    "manifest_status": "parsed",
    "name": "pr34130.c",
    "sha256": "667ad238fc85895410f9211aa644f8570ac9d58b424f550488b2f4892d74ab4f",
@@ -23102,8 +23473,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id27",
-   "dynamic_wall": "libc-call",
+   "detail": "memset",
+   "dynamic_wall": "libc-call: memset",
    "manifest_status": "parsed",
    "name": "pr35472.c",
    "sha256": "fa2411b43c65fd0e7f3b1603e2c94ad77bac9700eaf5c1d8bea4a109da988718",
@@ -23229,8 +23600,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id24",
-   "dynamic_wall": "libc-call",
+   "detail": "__builtin_malloc",
+   "dynamic_wall": "libc-call: __builtin_malloc",
    "manifest_status": "parsed",
    "name": "pr36765.c",
    "sha256": "052031ec2e6ee0be696f449c5992d7cce5aa910d2933b6e8f7601517c6c5ce70",
@@ -23600,8 +23971,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id22",
-   "dynamic_wall": "libc-call",
+   "detail": "__builtin_memcpy",
+   "dynamic_wall": "libc-call: __builtin_memcpy",
    "manifest_status": "parsed",
    "name": "pr40668.c",
    "sha256": "e11fffe59899ff934501ad0ccad617f161291a70addcea34f1d4a104665230f7",
@@ -23644,8 +24015,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id70",
-   "dynamic_wall": "libc-call",
+   "detail": "malloc",
+   "dynamic_wall": "libc-call: malloc",
    "manifest_status": "parsed",
    "name": "pr41395-1.c",
    "sha256": "4cc37ccc4a9d458782da5950a2781604ea3d5850b329fa2b1c99332b5ccc97b4",
@@ -23670,8 +24041,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id419",
-   "dynamic_wall": "libc-call",
+   "detail": "malloc",
+   "dynamic_wall": "libc-call: malloc",
    "manifest_status": "parsed",
    "name": "pr41463.c",
    "sha256": "37330d24a694d1f8bc7698260e437de7f13116762cab6c3d05ca2bc6f11fb960",
@@ -23829,8 +24200,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id19",
-   "dynamic_wall": "libc-call",
+   "detail": "malloc",
+   "dynamic_wall": "libc-call: malloc",
    "manifest_status": "parsed",
    "name": "pr42614.c",
    "sha256": "41d8b6f6ad4a57c5c9f2a3a0fa9d542c7b8e694585d9474cfb7fd77bcb7580af",
@@ -23877,8 +24248,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id26",
-   "dynamic_wall": "libc-call",
+   "detail": "__builtin_malloc",
+   "dynamic_wall": "libc-call: __builtin_malloc",
    "manifest_status": "parsed",
    "name": "pr43008.c",
    "sha256": "0e5c8a2e78e0a0ea514a4fec51bedceb61a489347d96f9a29537ca8a0e52e4bb",
@@ -23902,8 +24273,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id27",
-   "dynamic_wall": "libc-call",
+   "detail": "memset",
+   "dynamic_wall": "libc-call: memset",
    "manifest_status": "parsed",
    "name": "pr43236.c",
    "sha256": "c3d866d0679f94f16edbb549c30e71caac8283759be12a9a4d4f3c93f1c3f521",
@@ -24768,8 +25139,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id25",
-   "dynamic_wall": "libc-call",
+   "detail": "__builtin_memcpy",
+   "dynamic_wall": "libc-call: __builtin_memcpy",
    "manifest_status": "parsed",
    "name": "pr53688.c",
    "sha256": "010877ad5b37612d649fdcfde302dbba2e51c30064dd4da2d93f2ba874ae80a1",
@@ -24963,8 +25334,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id45",
-   "dynamic_wall": "libc-call",
+   "detail": "__builtin_memcmp",
+   "dynamic_wall": "libc-call: __builtin_memcmp",
    "manifest_status": "parsed",
    "name": "pr57130.c",
    "sha256": "02486b8b9bdd58a0f840d1f8b727c325d16d92032a31cda078d222f833cc510c",
@@ -25411,8 +25782,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id99",
-   "dynamic_wall": "libc-call",
+   "detail": "__builtin_memcpy",
+   "dynamic_wall": "libc-call: __builtin_memcpy",
    "manifest_status": "parsed",
    "name": "pr59229.c",
    "sha256": "baa810f41ea53ccf4d1374734d2f1ec51b9b7dcecebe7483845bf763e4ce953d",
@@ -25524,8 +25895,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id25",
-   "dynamic_wall": "libc-call",
+   "detail": "__builtin_strcmp",
+   "dynamic_wall": "libc-call: __builtin_strcmp",
    "manifest_status": "parsed",
    "name": "pr60062.c",
    "sha256": "76562729f3ce8b46ec7c4028fa6ce382b197f683272c71a1bb68cd3028e86409",
@@ -25670,8 +26041,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id36",
-   "dynamic_wall": "libc-call",
+   "detail": "__builtin_ffs",
+   "dynamic_wall": "libc-call: __builtin_ffs",
    "manifest_status": "parsed",
    "name": "pr61725.c",
    "sha256": "3c1576945873a0034645e2b836219a69ae8b16a3f223e0077b2290e7a6539f45",
@@ -25742,8 +26113,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id44",
-   "dynamic_wall": "libc-call",
+   "detail": "__builtin_memcpy",
+   "dynamic_wall": "libc-call: __builtin_memcpy",
    "manifest_status": "parsed",
    "name": "pr63843.c",
    "sha256": "259f4c6e20d69368e25db2962d6c4158182640b300d857e65723eaec7f5a25b7",
@@ -25755,8 +26126,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id41",
-   "dynamic_wall": "libc-call",
+   "detail": "__builtin_mul_overflow",
+   "dynamic_wall": "libc-call: __builtin_mul_overflow",
    "manifest_status": "parsed",
    "name": "pr64006.c",
    "sha256": "d2866f767e54748e574c2f7ea5bbd1cfde70c530b3568d0fdcf825161d7e2d5b",
@@ -26277,8 +26648,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id25",
-   "dynamic_wall": "libc-call",
+   "detail": "__builtin_mul_overflow",
+   "dynamic_wall": "libc-call: __builtin_mul_overflow",
    "manifest_status": "parsed",
    "name": "pr68381.c",
    "sha256": "1598e758571b6af8f68f406332abd08552fb63c9abb28510ff36007ca82b885e",
@@ -26641,8 +27012,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id40",
-   "dynamic_wall": "libc-call",
+   "detail": "__builtin_mul_overflow",
+   "dynamic_wall": "libc-call: __builtin_mul_overflow",
    "manifest_status": "parsed",
    "name": "pr71554.c",
    "sha256": "6eb3eb818b8454186b4d6dd0cd9edbe51160881ca420507f9838c42ec87cb475",
@@ -26713,8 +27084,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id60",
-   "dynamic_wall": "libc-call",
+   "detail": "__builtin_memset",
+   "dynamic_wall": "libc-call: __builtin_memset",
    "manifest_status": "parsed",
    "name": "pr77718.c",
    "sha256": "382853d1420d8e80bda3d226a5614e1c3ee95c181daeae2816bea2a0634335d0",
@@ -26739,8 +27110,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id34",
-   "dynamic_wall": "libc-call",
+   "detail": "__builtin_abort",
+   "dynamic_wall": "libc-call: __builtin_abort",
    "manifest_status": "parsed",
    "name": "pr77767.c",
    "sha256": "bac099a33ceecc4194f62ffdb8adb74e3cf7f83bd0a8db40f89222d9fcf4d63a",
@@ -26824,8 +27195,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id26",
-   "dynamic_wall": "libc-call",
+   "detail": "__builtin_sprintf",
+   "dynamic_wall": "libc-call: __builtin_sprintf",
    "manifest_status": "parsed",
    "name": "pr78586.c",
    "sha256": "b381c8f7fbc30e3f92c3a3c29047466b0bf0a914c5bafaf6aa5c43593891c204",
@@ -26850,8 +27221,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id44",
-   "dynamic_wall": "libc-call",
+   "detail": "__builtin_snprintf",
+   "dynamic_wall": "libc-call: __builtin_snprintf",
    "manifest_status": "parsed",
    "name": "pr78622.c",
    "sha256": "2fbf1d51ec9a52a97fc707ec770611ecc252006620260510f0ada6eb0f2ed1d7",
@@ -26960,8 +27331,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id27",
-   "dynamic_wall": "libc-call",
+   "detail": "__builtin_sprintf",
+   "dynamic_wall": "libc-call: __builtin_sprintf",
    "manifest_status": "parsed",
    "name": "pr79327.c",
    "sha256": "462f173d138956bb675d6a98de5a649fabf8253d9dd5cc147b9cafdd9d8fe8f5",
@@ -27290,8 +27661,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id28",
-   "dynamic_wall": "libc-call",
+   "detail": "__builtin_mul_overflow",
+   "dynamic_wall": "libc-call: __builtin_mul_overflow",
    "manifest_status": "parsed",
    "name": "pr84169.c",
    "sha256": "0446c97e3f9728fec5703b18a571142da7920a1f7ae84aca6e14dc7432345f0b",
@@ -27302,8 +27673,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id59",
-   "dynamic_wall": "libc-call",
+   "detail": "__builtin_malloc",
+   "dynamic_wall": "libc-call: __builtin_malloc",
    "manifest_status": "parsed",
    "name": "pr84339.c",
    "sha256": "9a9dca877185622abd09a6b434e77b2b47df42ac718ab891f385159683c0df67",
@@ -27361,8 +27732,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id25",
-   "dynamic_wall": "libc-call",
+   "detail": "__builtin_add_overflow",
+   "dynamic_wall": "libc-call: __builtin_add_overflow",
    "manifest_status": "parsed",
    "name": "pr85095.c",
    "sha256": "0c8660d7423f40481f1b632e9addf2f407c2dba3e4d06e096769f5a4981856e0",
@@ -27684,8 +28055,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id26",
-   "dynamic_wall": "libc-call",
+   "detail": "__builtin_mul_overflow",
+   "dynamic_wall": "libc-call: __builtin_mul_overflow",
    "manifest_status": "parsed",
    "name": "pr89434.c",
    "sha256": "dc8c8967cba5a1a46e4e2594685d62671c8dbc4e96a4ac27c28b0456f656e5c2",
@@ -27721,8 +28092,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id103",
-   "dynamic_wall": "libc-call",
+   "detail": "__builtin_bswap32",
+   "dynamic_wall": "libc-call: __builtin_bswap32",
    "manifest_status": "parsed",
    "name": "pr90025.c",
    "sha256": "444126cb1994cbd436f7d00f7692773deab2d45530e9835445f3413fed46548e",
@@ -27735,8 +28106,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id26",
-   "dynamic_wall": "libc-call",
+   "detail": "__builtin_add_overflow",
+   "dynamic_wall": "libc-call: __builtin_add_overflow",
    "manifest_status": "parsed",
    "name": "pr90311.c",
    "sha256": "da43b07aec6b737a26fe80cdb7f9d0aeb480202cb78627797956eee29632e4aa",
@@ -27786,8 +28157,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id26",
-   "dynamic_wall": "libc-call",
+   "detail": "__builtin_mul_overflow",
+   "dynamic_wall": "libc-call: __builtin_mul_overflow",
    "manifest_status": "parsed",
    "name": "pr91450-1.c",
    "sha256": "c8d125c7ae7e4c6efbfb8551ef09de2fad81909ac2e94a0ec0666e9c86d3d3d5",
@@ -27798,8 +28169,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id25",
-   "dynamic_wall": "libc-call",
+   "detail": "__builtin_mul_overflow",
+   "dynamic_wall": "libc-call: __builtin_mul_overflow",
    "manifest_status": "parsed",
    "name": "pr91450-2.c",
    "sha256": "8e06e2daec44b2673d2cc9a42841bd5fa2271c77c603bf505108546161656eac",
@@ -27902,8 +28273,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id30",
-   "dynamic_wall": "libc-call",
+   "detail": "__builtin_strncpy",
+   "dynamic_wall": "libc-call: __builtin_strncpy",
    "manifest_status": "parsed",
    "name": "pr93249.c",
    "sha256": "3cc26ac7719ebad6c8fc701c8ac03e73fc2784fe81be00dcf4b199c19e394bb5",
@@ -27943,8 +28314,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id28",
-   "dynamic_wall": "libc-call",
+   "detail": "__builtin_add_overflow",
+   "dynamic_wall": "libc-call: __builtin_add_overflow",
    "manifest_status": "parsed",
    "name": "pr93494.c",
    "sha256": "4ff01fb8f7e622b24c1931dcf0dbedc554b3554f93778304e74ece81a29e85c7",
@@ -28181,8 +28552,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id26",
-   "dynamic_wall": "libc-call",
+   "detail": "__builtin_ffs",
+   "dynamic_wall": "libc-call: __builtin_ffs",
    "manifest_status": "parsed",
    "name": "pr97325.c",
    "sha256": "74fff5b0fb483bde47106bccecd0869788a8e70e70abdba953d50de51d9ab4fc",
@@ -28193,8 +28564,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id23",
-   "dynamic_wall": "libc-call",
+   "detail": "__builtin_bswap16",
+   "dynamic_wall": "libc-call: __builtin_bswap16",
    "manifest_status": "parsed",
    "name": "pr97386-1.c",
    "sha256": "4c6fb402eaf79988969157c5746912807a089d3da6ce4a3348bd05a90820b3c2",
@@ -28398,8 +28769,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id23",
-   "dynamic_wall": "libc-call",
+   "detail": "__builtin_memcpy",
+   "dynamic_wall": "libc-call: __builtin_memcpy",
    "manifest_status": "parsed",
    "name": "pr98853-1.c",
    "sha256": "a43645ed0862aa463206f73f2aa8a73e3c08c159a0b42ae1f6b87e42d28c161c",
@@ -28446,8 +28817,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id237",
-   "dynamic_wall": "libc-call",
+   "detail": "printf",
+   "dynamic_wall": "libc-call: printf",
    "manifest_status": "parsed",
    "name": "printf-1.c",
    "sha256": "1135335188e0afab823dc45243ce84fcd6cfe0676f7302172dce49674cc2513f",
@@ -28740,8 +29111,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id661",
-   "dynamic_wall": "libc-call",
+   "detail": "malloc",
+   "dynamic_wall": "libc-call: malloc",
    "manifest_status": "parsed",
    "name": "split-path-1.c",
    "sha256": "0053e25aabca452b2d795f7011c6ab90b8c5c7f37e6309efe639cb41f6b156c9",
@@ -28953,8 +29324,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id22",
-   "dynamic_wall": "libc-call",
+   "detail": "strcpy",
+   "dynamic_wall": "libc-call: strcpy",
    "manifest_status": "parsed",
    "name": "string-opt-17.c",
    "sha256": "f1f764b90fd97e4b42a2a2faf505f26fd6c7fa8c4f5740f6092a1a63e0767e5c",
@@ -28967,8 +29338,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id29",
-   "dynamic_wall": "libc-call",
+   "detail": "memcpy",
+   "dynamic_wall": "libc-call: memcpy",
    "manifest_status": "parsed",
    "name": "string-opt-18.c",
    "sha256": "0db5f8750dce95e307a431131f7da821500c48d19821beec17551f780f6bcb5d",
@@ -29049,8 +29420,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "id19",
-   "dynamic_wall": "libc-call",
+   "detail": "strlen",
+   "dynamic_wall": "libc-call: strlen",
    "manifest_status": "parsed",
    "name": "strlen-5.c",
    "sha256": "8721fdac48fc04356861299ca942b3a77499ae7f5ecdd7da80c325dc1cb848db",

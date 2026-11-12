@@ -72,7 +72,7 @@ def dynamic_wall(verdict, detail):
             return "unsupported:" + detail
         return "unsupported:" + detail.split(":", 1)[0]
     if verdict == "refused-libc":
-        return "libc-call"
+        return "libc-call: " + detail if detail else "libc-call"
     if verdict == "refused-ub":
         return "undefined-behavior"
     if verdict == "timeout":

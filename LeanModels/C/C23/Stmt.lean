@@ -724,7 +724,7 @@ def callFn : Nat → Program → LeanModels.C.FunctionDefn → List CVal → Exe
               if nm == "abort" || nm == "exit" then
                 throw (.libc nm)
               else match prog.findId? declaration with
-                | none => throw (.libc declaration.value)
+                | none => throw (.libc nm)
                 | some g => callFn fuel prog g vs
             | none => match prog.findId? declaration with
               | none => throw (.libc declaration.value)

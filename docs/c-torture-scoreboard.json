@@ -6,10 +6,10 @@
   "not-ingested": 0,
   "not-parsed": 30,
   "oracle-tests-compiler": 1,
-  "passed": 157,
+  "passed": 159,
   "refused-libc": 3,
   "refused-ub": 9,
-  "refused-unsupported": 96,
+  "refused-unsupported": 94,
   "runner-error": 0,
   "timeout": 4
  },
@@ -95,7 +95,6 @@
   "refused-unsupported: no layout for parameter type 'const struct b *restrict'": 1,
   "refused-unsupported: not an integer type: 'int *'": 1,
   "refused-unsupported: not an lvalue: PredefinedExpr": 1,
-  "refused-unsupported: operator '-' on two pointers": 2,
   "refused-unsupported: out of tier: AddrLabelExpr": 1,
   "refused-unsupported: out of tier: StmtExpr": 4,
   "refused-unsupported: pointer bit-cast across incompatible effective types": 1,
@@ -125,12 +124,12 @@
   "refused-unsupported: unsequenced side effects in binary operands": 1,
   "timeout": 4
  },
- "measured_at_utc": "2026-11-12T13:15:59Z",
- "measured_commit": "e4001e8aa137d650c915dc032ea10e5483359f33",
+ "measured_at_utc": "2026-11-12T14:51:30Z",
+ "measured_commit": "e057292e3891b49b7560761b671d5fca877b678e",
  "note": "Written by harness/c_torture_score.py --emit, from a `lake exe c-torture-run` log.  The pin is docs/c-torture-pin.json.  This file is the tier's \u00a79.0 number as a second artifact: correcting the instrument corrects the next run, and the published figure is corrected where it was published.",
  "oracle_tests_compiler_tests": [
   "20021127-1.c"
  ],
- "scored": 157,
+ "scored": 159,
  "total": 300
 }

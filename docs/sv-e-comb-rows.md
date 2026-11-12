@@ -162,3 +162,9 @@ The mixed clocked/comb probe `t2_case` is outside E-core-0: its source-shaped
 envelope contains an edge/timed process, so the E runner refuses before
 execution.  The legacy route independently refuses its `unique` case as
 `CaseCheck:unique`; no simulator result is claimed for this row.
+
+The pure combinational probe `t2_ci` runs from its source-shaped envelope and
+matches Xcelium 24.03-s004 for all 7 cycles.  It is marked Xcelium-only in the
+corpus because Icarus cannot parse this source form; no Icarus result is
+claimed.  This is an E-MATCH against the available pinned oracle and does not
+change the frozen migration count.

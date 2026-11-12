@@ -90,6 +90,12 @@
     "return_value": 0
   },
   {
+    "id": "local-anonymous-init",
+    "source": "int main(void) { struct { int x; } s = {0}; return s.x; }",
+    "expect": "match",
+    "return_value": 0
+  },
+  {
     "id": "compound-signed-char",
     "source": "int main(void) { signed char s = 127; s += 1; return s; }",
     "expect": "match",

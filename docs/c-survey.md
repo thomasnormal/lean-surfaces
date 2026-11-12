@@ -2,10 +2,10 @@
 
 Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manifest.
 
-- verdicts: 604/2214 MATCH (passed 604, failed 0, oracle 0)
+- verdicts: 605/2214 MATCH (passed 605, failed 0, oracle 0)
 - manifest SHA-256: `1de1a60c299d5bb51dae7ca001b0a008010cad0b25670cde2090c08bfc1a84ce`
-- measured commit: `461510783`
-- measured at: `2026-11-12T05:17:42Z`
+- measured commit: `3a62c53ee`
+- measured at: `2026-11-12T05:25:00Z`
 
 ## Verdict counts
 
@@ -13,10 +13,10 @@ Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manife
 | --- | ---: |
 | `not-ingested` | 25 |
 | `not-parsed` | 350 |
-| `passed` | 604 |
+| `passed` | 605 |
 | `refused-libc` | 99 |
 | `refused-ub` | 31 |
-| `refused-unsupported` | 1061 |
+| `refused-unsupported` | 1060 |
 | `timeout` | 44 |
 
 ## Counts by corpus
@@ -25,10 +25,10 @@ Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manife
 | --- | --- | ---: |
 | `c-testsuite/single-exec` | `not-ingested` | 5 |
 | `c-testsuite/single-exec` | `not-parsed` | 1 |
-| `c-testsuite/single-exec` | `passed` | 103 |
+| `c-testsuite/single-exec` | `passed` | 104 |
 | `c-testsuite/single-exec` | `refused-libc` | 2 |
 | `c-testsuite/single-exec` | `refused-ub` | 2 |
-| `c-testsuite/single-exec` | `refused-unsupported` | 105 |
+| `c-testsuite/single-exec` | `refused-unsupported` | 104 |
 | `c-testsuite/single-exec` | `timeout` | 2 |
 | `gcc.c-torture/execute` | `not-ingested` | 19 |
 | `gcc.c-torture/execute` | `not-parsed` | 321 |
@@ -299,7 +299,6 @@ The run's first refusal, normalized by construct; `sole` counts rows whose first
 | `unsupported:src/pr33631.c` | 1 | 1 | pr33631.c |
 | `unsupported:src/pr38051.c` | 1 | 1 | pr38051.c |
 | `unsupported:src/simd-4.c` | 1 | 1 | simd-4.c |
-| `unsupported:tests/single-exec/00118.c` | 1 | 1 | 00118.c |
 | `unsupported:unbound declaration 'id103' (name 'test')` | 1 | 1 | pr71083.c |
 | `unsupported:unbound declaration 'id126' (name 'f')` | 1 | 1 | gcc/testsuite/gcc.dg/c23-float-5.c |
 | `unsupported:unbound declaration 'id137' (name 'tmp')` | 1 | 1 | pr36034-2.c |

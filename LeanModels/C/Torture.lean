@@ -383,8 +383,10 @@ def layoutFor (envl : Envelope) : Layout :=
     elem := fun t => arrayOf (resolve tds 8 t)
     fieldOff := fun t f => fieldOffIn tds recs 16 t f
     members := fun t =>
-      (recordTag (resolve tds 8 (stripQuals 8 t))).bind fun tag =>
-        (recs.find? (·.1 == tag)).map (·.2)
+      let rt := resolve tds 8 (stripQuals 8 t)
+      let r := (recs.find? (·.1 == rt)).orElse (fun _ =>
+        (recordTag rt).bind (fun tag => recs.find? (·.1 == tag)))
+      r.map (·.2)
     -- The evaluator's own normalizer, built from THIS unit's typedefs. The
     -- table in `intTyOf?` cannot do this job: `ull` is `unsigned long` in one
     -- test and `unsigned long long` in another, so the answer is a property

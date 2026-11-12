@@ -2,10 +2,10 @@
 
 Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manifest.
 
-- verdicts: 796/2214 MATCH (passed 796, failed 0, oracle 0)
+- verdicts: 799/2214 MATCH (passed 799, failed 0, oracle 0)
 - manifest SHA-256: `1de1a60c299d5bb51dae7ca001b0a008010cad0b25670cde2090c08bfc1a84ce`
-- measured commit: `79615576a09ce7746b9fc47a1fdc8053774dada0`
-- measured at: `2026-11-12T12:18:49Z`
+- measured commit: `46407152521560bf23321ebe8f36d8ffba64b63b`
+- measured at: `2026-11-12T12:28:46Z`
 
 ## Verdict counts
 
@@ -14,8 +14,8 @@ Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manife
 | `not-ingested` | 25 |
 | `not-parsed` | 350 |
 | `oracle-tests-compiler` | 1 |
-| `passed` | 796 |
-| `refused-libc` | 51 |
+| `passed` | 799 |
+| `refused-libc` | 48 |
 | `refused-ub` | 40 |
 | `refused-unsupported` | 901 |
 | `timeout` | 50 |
@@ -26,16 +26,16 @@ Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manife
 | --- | --- | ---: |
 | `c-testsuite/single-exec` | `not-ingested` | 5 |
 | `c-testsuite/single-exec` | `not-parsed` | 1 |
-| `c-testsuite/single-exec` | `passed` | 150 |
-| `c-testsuite/single-exec` | `refused-libc` | 6 |
+| `c-testsuite/single-exec` | `passed` | 151 |
+| `c-testsuite/single-exec` | `refused-libc` | 5 |
 | `c-testsuite/single-exec` | `refused-ub` | 3 |
 | `c-testsuite/single-exec` | `refused-unsupported` | 53 |
 | `c-testsuite/single-exec` | `timeout` | 2 |
 | `gcc.c-torture/execute` | `not-ingested` | 19 |
 | `gcc.c-torture/execute` | `not-parsed` | 321 |
 | `gcc.c-torture/execute` | `oracle-tests-compiler` | 1 |
-| `gcc.c-torture/execute` | `passed` | 645 |
-| `gcc.c-torture/execute` | `refused-libc` | 44 |
+| `gcc.c-torture/execute` | `passed` | 647 |
+| `gcc.c-torture/execute` | `refused-libc` | 42 |
 | `gcc.c-torture/execute` | `refused-ub` | 36 |
 | `gcc.c-torture/execute` | `refused-unsupported` | 804 |
 | `gcc.c-torture/execute` | `timeout` | 48 |
@@ -133,7 +133,6 @@ The run's first refusal, normalized by construct; `sole` counts rows whose first
 | `unsupported:not an integer type: 'int *'` | 4 | 4 | 00072.c, 00073.c, 20000819-1.c, 990513-1.c |
 | `libc-call: __builtin_abort` | 3 | 3 | gcc/testsuite/gcc.dg/c23-nullptr-5.c, pr77767.c, pr97325.c |
 | `libc-call: __builtin_expect` | 3 | 3 | 00214.c, 20020418-1.c, pr115277.c |
-| `libc-call: sprintf` | 3 | 3 | 00186.c, 20030626-1.c, 20030626-2.c |
 | `unsupported:ExprWithCleanups` | 3 | 3 | 20041124-1.c, 950628-1.c, pr30185.c |
 | `unsupported:function-to-pointer decay (inch 5)` | 3 | 3 | 20041212-1.c, 20101011-1.c, pr42231.c |
 | `unsupported:no layout for declared type 'A'` | 3 | 3 | 20010118-1.c, restrict-1.c, strct-pack-2.c |
@@ -205,7 +204,6 @@ The run's first refusal, normalized by construct; `sole` counts rows whose first
 | `unsupported:AlignedAttr` | 1 | 1 | pr108064.c |
 | `unsupported:GCCAsmStmt` | 1 | 1 | pr81588.c |
 | `unsupported:GenericSelectionExpr` | 1 | 1 | gcc/testsuite/gcc.dg/c23-bool-1.c |
-| `unsupported:__builtin_sprintf` | 1 | 1 | pr79327.c |
 | `unsupported:block-scope storage class 'extern' is outside the tier` | 1 | 1 | scope-1.c |
 | `unsupported:call through an incompatible function-pointer cast` | 1 | 1 | call-trap-1.c |
 | `unsupported:cannot initialize aggregate 'int'` | 1 | 1 | gcc/testsuite/gcc.dg/c23-empty-init-1.c |
@@ -343,6 +341,7 @@ The run's first refusal, normalized by construct; `sole` counts rows whose first
 | `unsupported:sizeof: no layout for operand type 'struct S'` | 1 | 1 | 20120105-1.c |
 | `unsupported:sizeof: no layout for operand type 'struct VEC_char_base'` | 1 | 1 | pr41395-2.c |
 | `unsupported:sizeof: no layout for operand type 'struct bitfield'` | 1 | 1 | pr111613.c |
+| `unsupported:sprintf` | 1 | 1 | pr79327.c |
 | `unsupported:src/20000412-5.c` | 1 | 1 | 20000412-5.c |
 | `unsupported:src/20020225-2.c` | 1 | 1 | 20020225-2.c |
 | `unsupported:src/20040307-1.c` | 1 | 1 | 20040307-1.c |

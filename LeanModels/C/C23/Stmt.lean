@@ -748,24 +748,58 @@ def callFn : Nat → Program → LeanModels.C.FunctionDefn → List CVal → Exe
           | _ => refuseUnsupported "memcpy: wrong argument count"
         let runSprintf : List CVal → ExecM CVal := fun vs =>
           match vs with
-          | [dst, fmt, value] => do
+          | dst :: fmt :: args => do
               let dp ← asPtr dst
               let fp ← asPtr fmt
-              let (_, n) ← asInt value
               let m ← get
               let (_, fo, off) ← liftEval (m.resolve fp 0)
-              let pattern := fo.bytes.drop off
-              let ok := match pattern with
-                | [.conc 37, .conc 100, .conc 0] => true
-                | [.conc 37, .conc 108, .conc 117, .conc 0] => true
-                | _ => false
-              if !ok then refuseUnsupported "__builtin_sprintf: unsupported format"
-              else
-                let chars := (toString n).toList
-                let bytes := chars.map (fun c => CByte.conc (UInt8.ofNat c.toNat)) ++ [CByte.conc 0]
-                liftEval (writeMem (fun mem => mem.storeBytes dp bytes))
-                pure (.int IntTy.int_ (bytes.length - 1))
-          | _ => refuseUnsupported "__builtin_sprintf: wrong argument count"
+              let rec takeSprintfString : List CByte → Option (List CByte)
+                | [] => none
+                | .conc x :: rest =>
+                    if x == 0 then some []
+                    else (takeSprintfString rest).map (fun tail => CByte.conc x :: tail)
+                | _ => none
+              let pattern ← match takeSprintfString (fo.bytes.drop off) with
+                | some bytes => pure bytes
+                | none => refuseUnsupported "sprintf: non-concrete or unterminated format"
+              let rec formatSprintf : List CByte → List CVal → ExecM (List CByte)
+                | [], _ => pure []
+                | .conc 37 :: .conc 37 :: rest, as => do
+                    let tail ← formatSprintf rest as
+                    pure (CByte.conc 37 :: tail)
+                | .conc 37 :: .conc 100 :: rest, a :: as => do
+                    let (_, n) ← asInt a
+                    let tail ← formatSprintf rest as
+                    pure ((toString n).toList.map (fun c => CByte.conc (UInt8.ofNat c.toNat)) ++ tail)
+                | .conc 37 :: .conc 108 :: .conc 117 :: rest, a :: as => do
+                    let (_, n) ← asInt a
+                    let tail ← formatSprintf rest as
+                    pure ((toString n).toList.map (fun c => CByte.conc (UInt8.ofNat c.toNat)) ++ tail)
+                | .conc 37 :: .conc 48 :: .conc 50 :: .conc 100 :: rest, a :: as => do
+                    let (_, n) ← asInt a
+                    let rendered := if n >= 0 && n < 10 then "0" ++ toString n else toString n
+                    let tail ← formatSprintf rest as
+                    pure (rendered.toList.map (fun c => CByte.conc (UInt8.ofNat c.toNat)) ++ tail)
+                | .conc 37 :: .conc 115 :: rest, a :: as => do
+                    let sp ← asPtr a
+                    let current ← get
+                    let (_, string, stringOff) ← liftEval (current.resolve sp 0)
+                    let chars ← match takeSprintfString (string.bytes.drop stringOff) with
+                      | some bytes => pure bytes
+                      | none => refuseUnsupported "sprintf: non-concrete or unterminated string argument"
+                    let tail ← formatSprintf rest as
+                    pure (chars ++ tail)
+                | .conc 37 :: [], _ => refuseUnsupported "sprintf: trailing percent"
+                | .conc 37 :: .conc _ :: _, _ => refuseUnsupported "sprintf: unsupported format"
+                | .conc b :: rest, as => do
+                    let tail ← formatSprintf rest as
+                    pure (CByte.conc b :: tail)
+                | _, _ => refuseUnsupported "sprintf: non-concrete format byte"
+              let chars ← formatSprintf pattern args
+              let bytes := chars ++ [CByte.conc 0]
+              liftEval (writeMem (fun mem => mem.storeBytes dp bytes))
+              pure (.int IntTy.int_ chars.length)
+          | _ => refuseUnsupported "sprintf: missing destination or format argument"
         let runPrintf : List CVal → ExecM CVal := fun vs =>
           match vs with
           | fmt :: args => do
@@ -949,7 +983,7 @@ def callFn : Nat → Program → LeanModels.C.FunctionDefn → List CVal → Exe
             | some nm =>
               if nm == "__builtin_strcmp" || nm == "strcmp" then
                 runStrcmp vs
-              else if nm == "__builtin_sprintf" then
+              else if nm == "__builtin_sprintf" || nm == "sprintf" then
                 runSprintf vs
               else if nm == "__builtin_strcpy" then
                 runBuiltinStrcpy vs
@@ -985,7 +1019,7 @@ def callFn : Nat → Program → LeanModels.C.FunctionDefn → List CVal → Exe
             -- widening the slice and never pools with the other two.
             | none =>
               if nm == "__builtin_strcmp" || nm == "strcmp" then runStrcmp vs
-              else if nm == "__builtin_sprintf" then runSprintf vs
+              else if nm == "__builtin_sprintf" || nm == "sprintf" then runSprintf vs
               else if nm == "__builtin_strcpy" then runBuiltinStrcpy vs
               else if nm == "strlen" then runStrlen vs
               else if nm == "printf" || nm == "__builtin_printf" then runPrintf vs

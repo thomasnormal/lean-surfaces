@@ -2598,7 +2598,9 @@ def callInM (K : Kont) (m : Module) (fname : String) (args : Array RVal) : SemW 
   match findFunction m fname with
   | Option.none => raisePy (.nameError fname)
   | some f =>
-    if !f.argsOk then
+    if proofCellGeneratorUnsafe m fname then
+      refuse "generator-expression cell capture cannot be established for this function; outside the closed-function tier"
+    else if !f.argsOk then
       refuse s!"function '{fname}' uses unsupported parameter features (non-literal defaults/varargs/kwargs/decorators)"
     else if !f.localsOk then
       refuse s!"function '{fname}' calls a name it also assigns (CPython static-locals rule) — outside the v0 tier"

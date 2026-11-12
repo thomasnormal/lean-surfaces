@@ -1,8 +1,8 @@
 {
  "by_corpus": {
   "c-testsuite/single-exec": {
-   "passed": 158,
-   "refused-libc": 3,
+   "passed": 159,
+   "refused-libc": 2,
    "refused-ub": 8,
    "refused-unsupported": 49,
    "timeout": 2
@@ -11,9 +11,9 @@
    "not-parsed": 267,
    "oracle-tests-compiler": 1,
    "passed": 720,
-   "refused-libc": 30,
+   "refused-libc": 29,
    "refused-ub": 63,
-   "refused-unsupported": 779,
+   "refused-unsupported": 780,
    "timeout": 58
   },
   "gcc.c23-run": {
@@ -28,10 +28,10 @@
  "counts": {
   "not-parsed": 294,
   "oracle-tests-compiler": 1,
-  "passed": 880,
-  "refused-libc": 35,
+  "passed": 881,
+  "refused-libc": 33,
   "refused-ub": 72,
-  "refused-unsupported": 872,
+  "refused-unsupported": 873,
   "timeout": 60
  },
  "dynamic_wall_ranking": [
@@ -640,6 +640,50 @@
   },
   {
    "files": [
+    "00121.c",
+    "20001228-1.c",
+    "20050218-1.c",
+    "20051021-1.c",
+    "20060102-1.c",
+    "20060929-1.c",
+    "20230510-1.c",
+    "20230802-1.c",
+    "920501-6.c",
+    "930930-2.c",
+    "991202-3.c",
+    "bitops-1.c",
+    "bswap-1.c",
+    "bswap-3.c",
+    "builtin-bitops-1.c",
+    "cvt-1.c",
+    "divconst-2.c",
+    "ieee/pr109386.c",
+    "minmaxcmp-1.c",
+    "pr107881-1.c",
+    "pr110666-1.c",
+    "pr111431-1.c",
+    "pr17377.c",
+    "pr20100-1.c",
+    "pr20621-1.c",
+    "pr33142.c",
+    "pr42721.c",
+    "pr44858.c",
+    "pr55137.c",
+    "pr57875.c",
+    "pr58943.c",
+    "pr65215-2.c",
+    "pr68648.c",
+    "pr82524.c",
+    "pr91635.c",
+    "pr93213.c",
+    "subcmp-1.c"
+   ],
+   "present": 37,
+   "sole": 37,
+   "wall": "unsequenced-effects"
+  },
+  {
+   "files": [
     "20000519-1.c",
     "20071213-1.c",
     "920726-1.c",
@@ -681,49 +725,6 @@
    "present": 37,
    "sole": 37,
    "wall": "unsupported:more arguments than parameters"
-  },
-  {
-   "files": [
-    "00121.c",
-    "20001228-1.c",
-    "20051021-1.c",
-    "20060102-1.c",
-    "20060929-1.c",
-    "20230510-1.c",
-    "20230802-1.c",
-    "920501-6.c",
-    "930930-2.c",
-    "991202-3.c",
-    "bitops-1.c",
-    "bswap-1.c",
-    "bswap-3.c",
-    "builtin-bitops-1.c",
-    "cvt-1.c",
-    "divconst-2.c",
-    "ieee/pr109386.c",
-    "minmaxcmp-1.c",
-    "pr107881-1.c",
-    "pr110666-1.c",
-    "pr111431-1.c",
-    "pr17377.c",
-    "pr20100-1.c",
-    "pr20621-1.c",
-    "pr33142.c",
-    "pr42721.c",
-    "pr44858.c",
-    "pr55137.c",
-    "pr57875.c",
-    "pr58943.c",
-    "pr65215-2.c",
-    "pr68648.c",
-    "pr82524.c",
-    "pr91635.c",
-    "pr93213.c",
-    "subcmp-1.c"
-   ],
-   "present": 36,
-   "sole": 36,
-   "wall": "unsequenced-effects"
   },
   {
    "files": [
@@ -1842,22 +1843,6 @@
    "present": 1,
    "sole": 1,
    "wall": "libc-call: sin"
-  },
-  {
-   "files": [
-    "00179.c"
-   ],
-   "present": 1,
-   "sole": 1,
-   "wall": "libc-call: strcat"
-  },
-  {
-   "files": [
-    "20050218-1.c"
-   ],
-   "present": 1,
-   "sole": 1,
-   "wall": "libc-call: strncmp"
   },
   {
    "files": [
@@ -4205,8 +4190,8 @@
   }
  ],
  "manifest_hash": "eb2ea162993fd287a86d680d539ca5a9bba4f09b045a6ad663aaf88cdc3f445d",
- "measured_at_utc": "2026-11-12T20:05:19Z",
- "measured_commit": "6b384fcf45c57734441bcfee64fb4e834b158f30",
+ "measured_at_utc": "2026-11-12T20:18:32Z",
+ "measured_commit": "0129b59ff",
  "pin": {
   "corpora": [
    "C1",
@@ -6244,8 +6229,8 @@
   },
   {
    "corpus": "c-testsuite/single-exec",
-   "detail": "strcat",
-   "dynamic_wall": "libc-call: strcat",
+   "detail": "",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "00179.c",
    "sha256": "9d2a00c8420a356625a16e53a81d51ae5b00380039c8224e266d9a154509ee89",
@@ -6254,7 +6239,7 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "c-testsuite/single-exec",
@@ -10596,8 +10581,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "strncmp",
-   "dynamic_wall": "libc-call: strncmp",
+   "detail": "unsequenced side effects in compound assignment",
+   "dynamic_wall": "unsequenced-effects",
    "manifest_status": "parsed",
    "name": "20050218-1.c",
    "sha256": "58cee76083f39fa4acffe227c321e93f5fed969a9bbd5acafdc1676d461c13af",
@@ -10606,7 +10591,7 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-libc"
+   "verdict": "refused-unsupported"
   },
   {
    "corpus": "gcc.c-torture/execute",

@@ -2,10 +2,10 @@
 
 Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manifest.
 
-- verdicts: 880/2214 MATCH (passed 880, failed 0, oracle 0)
+- verdicts: 881/2214 MATCH (passed 881, failed 0, oracle 0)
 - manifest SHA-256: `eb2ea162993fd287a86d680d539ca5a9bba4f09b045a6ad663aaf88cdc3f445d`
-- measured commit: `6b384fcf45c57734441bcfee64fb4e834b158f30`
-- measured at: `2026-11-12T20:05:19Z`
+- measured commit: `0129b59ff`
+- measured at: `2026-11-12T20:18:32Z`
 
 ## Verdict counts
 
@@ -13,27 +13,27 @@ Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manife
 | --- | ---: |
 | `not-parsed` | 294 |
 | `oracle-tests-compiler` | 1 |
-| `passed` | 880 |
-| `refused-libc` | 35 |
+| `passed` | 881 |
+| `refused-libc` | 33 |
 | `refused-ub` | 72 |
-| `refused-unsupported` | 872 |
+| `refused-unsupported` | 873 |
 | `timeout` | 60 |
 
 ## Counts by corpus
 
 | corpus | verdict | files |
 | --- | --- | ---: |
-| `c-testsuite/single-exec` | `passed` | 158 |
-| `c-testsuite/single-exec` | `refused-libc` | 3 |
+| `c-testsuite/single-exec` | `passed` | 159 |
+| `c-testsuite/single-exec` | `refused-libc` | 2 |
 | `c-testsuite/single-exec` | `refused-ub` | 8 |
 | `c-testsuite/single-exec` | `refused-unsupported` | 49 |
 | `c-testsuite/single-exec` | `timeout` | 2 |
 | `gcc.c-torture/execute` | `not-parsed` | 267 |
 | `gcc.c-torture/execute` | `oracle-tests-compiler` | 1 |
 | `gcc.c-torture/execute` | `passed` | 720 |
-| `gcc.c-torture/execute` | `refused-libc` | 30 |
+| `gcc.c-torture/execute` | `refused-libc` | 29 |
 | `gcc.c-torture/execute` | `refused-ub` | 63 |
-| `gcc.c-torture/execute` | `refused-unsupported` | 779 |
+| `gcc.c-torture/execute` | `refused-unsupported` | 780 |
 | `gcc.c-torture/execute` | `timeout` | 58 |
 | `gcc.c23-run` | `not-parsed` | 27 |
 | `gcc.c23-run` | `passed` | 2 |
@@ -90,8 +90,8 @@ The run's first refusal, normalized by construct; `sole` counts rows whose first
 | `undefined-behavior` | 72 | 72 | 00032.c, 00115.c, 00141.c, 00144.c, 00200.c |
 | `timeout` | 60 | 60 | 00041.c, 00128.c, 20000412-2.c, 20020108-1.c, 20030916-1.c |
 | `unsupported:extern object 'inside_main' has no definition in the translation unit` | 40 | 40 | builtins/20010124-1-lib.c, builtins/complex-1-lib.c, builtins/fputs-lib.c, builtins/lib/abs.c, builtins/lib/bfill.c |
+| `unsequenced-effects` | 37 | 37 | 00121.c, 20001228-1.c, 20050218-1.c, 20051021-1.c, 20060102-1.c |
 | `unsupported:more arguments than parameters` | 37 | 37 | 20000519-1.c, 20071213-1.c, 920726-1.c, 931004-10.c, 931004-12.c |
-| `unsequenced-effects` | 36 | 36 | 00121.c, 20001228-1.c, 20051021-1.c, 20060102-1.c, 20060929-1.c |
 | `unsupported:no layout for declared type 'double'` | 27 | 27 | 00178.c, 20000731-1.c, 20011217-1.c, 20040831-1.c, 20190901-1.c |
 | `unsupported:pointer bit-cast across incompatible effective types` | 23 | 23 | 00103.c, 20001017-2.c, 20050316-1.c, 20050607-1.c, 20060412-1.c |
 | `unsupported:no layout for declared type 'struct S'` | 22 | 22 | 00087.c, 20050107-1.c, 20081103-1.c, 20100708-1.c, 20171008-1.c |
@@ -195,8 +195,6 @@ The run's first refusal, normalized by construct; `sole` counts rows whose first
 | `libc-call: main_test` | 1 | 1 | builtins/lib/main.c |
 | `libc-call: mempcpy` | 1 | 1 | string-opt-18.c |
 | `libc-call: sin` | 1 | 1 | ieee/mzero4.c |
-| `libc-call: strcat` | 1 | 1 | 00179.c |
-| `libc-call: strncmp` | 1 | 1 | 20050218-1.c |
 | `unsupported:AlignedAttr` | 1 | 1 | pr108064.c |
 | `unsupported:GCCAsmStmt` | 1 | 1 | pr81588.c |
 | `unsupported:IndirectGotoStmt` | 1 | 1 | 920501-3.c |

@@ -73079,6 +73079,16 @@
       "stimulus": [],
       "refusal": "instantiate2: decl",
       "measured": "2026-11-12: ordinary E refuses the unpacked memory declaration before the implicit-event body; the source-shaped memory receipt remains on the existing canonical memory boundary."
+    },
+
+    {
+      "name": "loader_accept_areset_e_boundary",
+      "example": "sem2/loader_accept_areset",
+      "top": "loader_accept_areset",
+      "signals": ["q"],
+      "stimulus": [{"clk": "0", "rst": "1", "en": "0", "d": "0"}],
+      "refusal": "Clock:async-reset",
+      "measured": "2026-11-12: async-reset always_ff is retained by the parser and semantic loader but remains a loud E-core-0 clock boundary; no edge semantics is approximated."
     }
 
   ]

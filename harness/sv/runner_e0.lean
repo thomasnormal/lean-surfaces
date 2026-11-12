@@ -162,8 +162,10 @@ def main (argv : List String) : IO UInt32 := do
         match p with
         | .unsupported k msg =>
             if sourceE then pure () else .error s!"{k}: {msg}"
-        | .alwaysFF _ _ | .alwaysPlain _ _ | .alwaysFFR _ _ _ _ =>
-            .error "E-core-0: edge/timed process is outside the comb fragment"
+        | .alwaysFF _ _ | .alwaysPlain _ _ =>
+            .error "Clock:edge: edge-triggered process is outside E-core-0"
+        | .alwaysFFR _ _ _ _ =>
+            .error "Clock:async-reset: asynchronous reset process is outside E-core-0"
         | _ => pure ()
       let entries ← (← stimulusArray case).toList.mapM (parseEntry d)
       let signals ← (← getArrF case "signals").toList.mapM (fun s => s.getStr?)

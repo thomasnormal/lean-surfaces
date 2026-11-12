@@ -638,72 +638,6 @@
   },
   {
    "files": [
-    "00072.c",
-    "00073.c",
-    "20000419-1.c",
-    "20000706-1.c",
-    "20000706-2.c",
-    "20000706-5.c",
-    "20000707-1.c",
-    "20000717-1.c",
-    "20000717-5.c",
-    "20000819-1.c",
-    "20001024-1.c",
-    "20020215-1.c",
-    "20020810-1.c",
-    "20020920-1.c",
-    "20021118-1.c",
-    "20030613-1.c",
-    "20030914-1.c",
-    "20030914-2.c",
-    "20040703-1.c",
-    "20040707-1.c",
-    "20050713-1.c",
-    "20050826-2.c",
-    "20071202-1.c",
-    "931004-1.c",
-    "931004-10.c",
-    "931004-11.c",
-    "931004-12.c",
-    "931004-13.c",
-    "931004-14.c",
-    "931004-2.c",
-    "931004-3.c",
-    "931004-4.c",
-    "931004-5.c",
-    "931004-6.c",
-    "931004-7.c",
-    "931004-8.c",
-    "931004-9.c",
-    "990525-1.c",
-    "alias-access-path-1.c",
-    "lto-tbaa-1.c",
-    "pr114207.c",
-    "pr122943.c",
-    "pr39120.c",
-    "pr41919.c",
-    "pr42154.c",
-    "pr51323.c",
-    "pr52129.c",
-    "pr57130.c",
-    "pr58365.c",
-    "pr63302.c",
-    "pr65170.c",
-    "pr67226.c",
-    "pr82388.c",
-    "pr82524.c",
-    "pr93213.c",
-    "pr93402.c",
-    "strct-stdarg-1.c",
-    "strct-varg-1.c",
-    "va-arg-23.c"
-   ],
-   "present": 59,
-   "sole": 59,
-   "wall": "unsupported:not an integer type"
-  },
-  {
-   "files": [
     "00056.c",
     "00125.c",
     "00131.c",
@@ -1277,6 +1211,28 @@
   },
   {
    "files": [
+    "931004-1.c",
+    "931004-10.c",
+    "931004-11.c",
+    "931004-12.c",
+    "931004-13.c",
+    "931004-14.c",
+    "931004-2.c",
+    "931004-3.c",
+    "931004-4.c",
+    "931004-5.c",
+    "931004-6.c",
+    "931004-7.c",
+    "931004-8.c",
+    "931004-9.c",
+    "strct-stdarg-1.c"
+   ],
+   "present": 15,
+   "sole": 15,
+   "wall": "unsupported:not an integer type: 'struct tiny'"
+  },
+  {
+   "files": [
     "20000622-1.c",
     "20010329-1.c",
     "20021010-2.c",
@@ -1362,6 +1318,21 @@
   },
   {
    "files": [
+    "20050713-1.c",
+    "pr114207.c",
+    "pr51323.c",
+    "pr52129.c",
+    "pr57130.c",
+    "pr58365.c",
+    "pr82524.c",
+    "pr93402.c"
+   ],
+   "present": 8,
+   "sole": 8,
+   "wall": "unsupported:not an integer type: 'struct S'"
+  },
+  {
+   "files": [
     "00043.c",
     "20040625-1.c",
     "930126-1.c",
@@ -1426,6 +1397,19 @@
    "present": 6,
    "sole": 6,
    "wall": "unsupported:integer-to-floating conversion (floats"
+  },
+  {
+   "files": [
+    "20020215-1.c",
+    "20021118-1.c",
+    "20030914-1.c",
+    "20030914-2.c",
+    "20040707-1.c",
+    "strct-varg-1.c"
+   ],
+   "present": 6,
+   "sole": 6,
+   "wall": "unsupported:not an integer type: 'struct s'"
   },
   {
    "files": [
@@ -1531,6 +1515,17 @@
   },
   {
    "files": [
+    "20000706-1.c",
+    "20000706-2.c",
+    "20000706-5.c",
+    "20000707-1.c"
+   ],
+   "present": 4,
+   "sole": 4,
+   "wall": "unsupported:not an integer type: 'struct baz'"
+  },
+  {
+   "files": [
     "20031003-1.c",
     "pr38048-2.c",
     "pr66233.c"
@@ -1618,6 +1613,16 @@
    "present": 3,
    "sole": 3,
    "wall": "unsupported:no layout for declared type 'struct foo'"
+  },
+  {
+   "files": [
+    "00072.c",
+    "00073.c",
+    "20000819-1.c"
+   ],
+   "present": 3,
+   "sole": 3,
+   "wall": "unsupported:not an integer type: 'int *'"
   },
   {
    "files": [
@@ -1848,6 +1853,51 @@
    "present": 2,
    "sole": 2,
    "wall": "unsupported:no layout for declared type 'v16di'"
+  },
+  {
+   "files": [
+    "pr122943.c",
+    "pr63302.c"
+   ],
+   "present": 2,
+   "sole": 2,
+   "wall": "unsupported:not an integer type: '__int128'"
+  },
+  {
+   "files": [
+    "pr42154.c",
+    "pr82388.c"
+   ],
+   "present": 2,
+   "sole": 2,
+   "wall": "unsupported:not an integer type: 'struct A'"
+  },
+  {
+   "files": [
+    "20001024-1.c",
+    "alias-access-path-1.c"
+   ],
+   "present": 2,
+   "sole": 2,
+   "wall": "unsupported:not an integer type: 'struct a'"
+  },
+  {
+   "files": [
+    "20000717-1.c",
+    "20000717-5.c"
+   ],
+   "present": 2,
+   "sole": 2,
+   "wall": "unsupported:not an integer type: 'struct trio'"
+  },
+  {
+   "files": [
+    "pr65170.c",
+    "pr93213.c"
+   ],
+   "present": 2,
+   "sole": 2,
+   "wall": "unsupported:not an integer type: 'unsigned __int128'"
   },
   {
    "files": [
@@ -2953,6 +3003,110 @@
   },
   {
    "files": [
+    "20020920-1.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "unsupported:not an integer type: 'struct B'"
+  },
+  {
+   "files": [
+    "20030613-1.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "unsupported:not an integer type: 'struct CS'"
+  },
+  {
+   "files": [
+    "20020810-1.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "unsupported:not an integer type: 'struct R'"
+  },
+  {
+   "files": [
+    "pr41919.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "unsupported:not an integer type: 'struct S1'"
+  },
+  {
+   "files": [
+    "20071202-1.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "unsupported:not an integer type: 'struct T'"
+  },
+  {
+   "files": [
+    "pr39120.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "unsupported:not an integer type: 'struct X'"
+  },
+  {
+   "files": [
+    "pr67226.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "unsupported:not an integer type: 'struct assembly_operand'"
+  },
+  {
+   "files": [
+    "lto-tbaa-1.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "unsupported:not an integer type: 'struct b'"
+  },
+  {
+   "files": [
+    "990525-1.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "unsupported:not an integer type: 'struct blah'"
+  },
+  {
+   "files": [
+    "20040703-1.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "unsupported:not an integer type: 'struct cpp_num'"
+  },
+  {
+   "files": [
+    "20000419-1.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "unsupported:not an integer type: 'struct foo'"
+  },
+  {
+   "files": [
+    "20050826-2.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "unsupported:not an integer type: 'struct rtattr'"
+  },
+  {
+   "files": [
+    "va-arg-23.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "unsupported:not an integer type: 'struct two'"
+  },
+  {
+   "files": [
     "20001011-1.c"
    ],
    "present": 1,
@@ -4009,8 +4163,8 @@
   }
  ],
  "manifest_hash": "1de1a60c299d5bb51dae7ca001b0a008010cad0b25670cde2090c08bfc1a84ce",
- "measured_at_utc": "2026-11-12T06:50:00Z",
- "measured_commit": "abc2d70d3",
+ "measured_at_utc": "2026-11-12T06:58:00Z",
+ "measured_commit": "d4d88b49c",
  "pin": null,
  "rows": [
   {
@@ -4782,7 +4936,7 @@
   {
    "corpus": "c-testsuite/single-exec",
    "detail": "not an integer type: 'int *'",
-   "dynamic_wall": "unsupported:not an integer type",
+   "dynamic_wall": "unsupported:not an integer type: 'int *'",
    "manifest_status": "parsed",
    "name": "00072.c",
    "sha256": "07366ff0f6aaa9665afc381e9fac90eea429bae99e52e5da526edecf4bc0144d",
@@ -4794,7 +4948,7 @@
   {
    "corpus": "c-testsuite/single-exec",
    "detail": "not an integer type: 'int *'",
-   "dynamic_wall": "unsupported:not an integer type",
+   "dynamic_wall": "unsupported:not an integer type: 'int *'",
    "manifest_status": "parsed",
    "name": "00073.c",
    "sha256": "c0195e8a7f37097075866fd07cd832c80e8d594f80da4aa5ee2394aae320af46",
@@ -6863,7 +7017,7 @@
   {
    "corpus": "gcc.c-torture/execute",
    "detail": "not an integer type: 'struct foo'",
-   "dynamic_wall": "unsupported:not an integer type",
+   "dynamic_wall": "unsupported:not an integer type: 'struct foo'",
    "manifest_status": "parsed",
    "name": "20000419-1.c",
    "sha256": "7e09598ac6a6150a09d5270d93227148a01b7e17d8548f5900e76523bcf97afb",
@@ -7030,7 +7184,7 @@
   {
    "corpus": "gcc.c-torture/execute",
    "detail": "not an integer type: 'struct baz'",
-   "dynamic_wall": "unsupported:not an integer type",
+   "dynamic_wall": "unsupported:not an integer type: 'struct baz'",
    "manifest_status": "parsed",
    "name": "20000706-1.c",
    "sha256": "c790772928209b9f4f6b4792aaf89f57af62d99ade086925f1641aafc659c242",
@@ -7042,7 +7196,7 @@
   {
    "corpus": "gcc.c-torture/execute",
    "detail": "not an integer type: 'struct baz'",
-   "dynamic_wall": "unsupported:not an integer type",
+   "dynamic_wall": "unsupported:not an integer type: 'struct baz'",
    "manifest_status": "parsed",
    "name": "20000706-2.c",
    "sha256": "7bbf2d1ef0badcb4dc8c63d4912e2fb2a07b81933721670ad5f3395025ebc9cd",
@@ -7074,7 +7228,7 @@
   {
    "corpus": "gcc.c-torture/execute",
    "detail": "not an integer type: 'struct baz'",
-   "dynamic_wall": "unsupported:not an integer type",
+   "dynamic_wall": "unsupported:not an integer type: 'struct baz'",
    "manifest_status": "parsed",
    "name": "20000706-5.c",
    "sha256": "74a67cb5c02e2157ae28f3b1649b6469cb45ea972fe243cbbba4db42de3f1e75",
@@ -7086,7 +7240,7 @@
   {
    "corpus": "gcc.c-torture/execute",
    "detail": "not an integer type: 'struct baz'",
-   "dynamic_wall": "unsupported:not an integer type",
+   "dynamic_wall": "unsupported:not an integer type: 'struct baz'",
    "manifest_status": "parsed",
    "name": "20000707-1.c",
    "sha256": "5b741fbbb22327c196a9b2bc5e8d7d6cd4323bf48d4bdadc6524c0ec519980e4",
@@ -7118,7 +7272,7 @@
   {
    "corpus": "gcc.c-torture/execute",
    "detail": "not an integer type: 'struct trio'",
-   "dynamic_wall": "unsupported:not an integer type",
+   "dynamic_wall": "unsupported:not an integer type: 'struct trio'",
    "manifest_status": "parsed",
    "name": "20000717-1.c",
    "sha256": "7b2241e3be0edf5809f907b1cc41271c335017195c08b23a7786b0f2c72e234a",
@@ -7162,7 +7316,7 @@
   {
    "corpus": "gcc.c-torture/execute",
    "detail": "not an integer type: 'struct trio'",
-   "dynamic_wall": "unsupported:not an integer type",
+   "dynamic_wall": "unsupported:not an integer type: 'struct trio'",
    "manifest_status": "parsed",
    "name": "20000717-5.c",
    "sha256": "bc690dda50bd61d1ad504921e862d5dc890931f15e3e1c4529e38b910c62b27c",
@@ -7297,7 +7451,7 @@
   {
    "corpus": "gcc.c-torture/execute",
    "detail": "not an integer type: 'int *'",
-   "dynamic_wall": "unsupported:not an integer type",
+   "dynamic_wall": "unsupported:not an integer type: 'int *'",
    "manifest_status": "parsed",
    "name": "20000819-1.c",
    "sha256": "111c68973feb0c699822694cde27f683151db7d97b5c0a97a3966e7a6f2005e0",
@@ -7437,7 +7591,7 @@
   {
    "corpus": "gcc.c-torture/execute",
    "detail": "not an integer type: 'struct a'",
-   "dynamic_wall": "unsupported:not an integer type",
+   "dynamic_wall": "unsupported:not an integer type: 'struct a'",
    "manifest_status": "parsed",
    "name": "20001024-1.c",
    "sha256": "90bd17e0644b562983a2778d2184e132ed1dc12247a8fdfd72c7d276aec59e8a",
@@ -8301,7 +8455,7 @@
   {
    "corpus": "gcc.c-torture/execute",
    "detail": "not an integer type: 'struct s'",
-   "dynamic_wall": "unsupported:not an integer type",
+   "dynamic_wall": "unsupported:not an integer type: 'struct s'",
    "manifest_status": "parsed",
    "name": "20020215-1.c",
    "sha256": "10d25a1a4f5ee4df4028681ecd54f1240bf78a8bbb873c74487e547d8281cf42",
@@ -8710,7 +8864,7 @@
   {
    "corpus": "gcc.c-torture/execute",
    "detail": "not an integer type: 'struct R'",
-   "dynamic_wall": "unsupported:not an integer type",
+   "dynamic_wall": "unsupported:not an integer type: 'struct R'",
    "manifest_status": "parsed",
    "name": "20020810-1.c",
    "sha256": "c66b83e023177a54b8a704fb0d2f7f309ab92550f940618a9137a41c38e4ad9b",
@@ -8762,7 +8916,7 @@
   {
    "corpus": "gcc.c-torture/execute",
    "detail": "not an integer type: 'struct B'",
-   "dynamic_wall": "unsupported:not an integer type",
+   "dynamic_wall": "unsupported:not an integer type: 'struct B'",
    "manifest_status": "parsed",
    "name": "20020920-1.c",
    "sha256": "8029be9d0b3e02fbc42b5ddbf899cd33177e365e4ba0ed8a999d435263c24cf9",
@@ -8857,7 +9011,7 @@
   {
    "corpus": "gcc.c-torture/execute",
    "detail": "not an integer type: 'struct s'",
-   "dynamic_wall": "unsupported:not an integer type",
+   "dynamic_wall": "unsupported:not an integer type: 'struct s'",
    "manifest_status": "parsed",
    "name": "20021118-1.c",
    "sha256": "6b77a42fa61ff0a7a04a205cf670dc678a8dd7e1bf12c3a515a99866c80e36c7",
@@ -9255,7 +9409,7 @@
   {
    "corpus": "gcc.c-torture/execute",
    "detail": "not an integer type: 'struct CS'",
-   "dynamic_wall": "unsupported:not an integer type",
+   "dynamic_wall": "unsupported:not an integer type: 'struct CS'",
    "manifest_status": "parsed",
    "name": "20030613-1.c",
    "sha256": "f56e737e0db6fa7a90e2905850977654f861bcadf7b3579760e28344ce64fe5e",
@@ -9430,7 +9584,7 @@
   {
    "corpus": "gcc.c-torture/execute",
    "detail": "not an integer type: 'struct s'",
-   "dynamic_wall": "unsupported:not an integer type",
+   "dynamic_wall": "unsupported:not an integer type: 'struct s'",
    "manifest_status": "parsed",
    "name": "20030914-1.c",
    "sha256": "e1144646acfaeec16469f32204884f69f82ad0cc575d06c40efb0a8baf6f2954",
@@ -9443,7 +9597,7 @@
   {
    "corpus": "gcc.c-torture/execute",
    "detail": "not an integer type: 'struct s'",
-   "dynamic_wall": "unsupported:not an integer type",
+   "dynamic_wall": "unsupported:not an integer type: 'struct s'",
    "manifest_status": "parsed",
    "name": "20030914-2.c",
    "sha256": "473805674122d9927a3fff7106b5622c6758502a1dac670f938626e9e132d44d",
@@ -9875,7 +10029,7 @@
   {
    "corpus": "gcc.c-torture/execute",
    "detail": "not an integer type: 'struct cpp_num'",
-   "dynamic_wall": "unsupported:not an integer type",
+   "dynamic_wall": "unsupported:not an integer type: 'struct cpp_num'",
    "manifest_status": "parsed",
    "name": "20040703-1.c",
    "sha256": "2851a1460730cd2e292bb4d1313cc6a37e04599ff05881724432dbab93db6b19",
@@ -9927,7 +10081,7 @@
   {
    "corpus": "gcc.c-torture/execute",
    "detail": "not an integer type: 'struct s'",
-   "dynamic_wall": "unsupported:not an integer type",
+   "dynamic_wall": "unsupported:not an integer type: 'struct s'",
    "manifest_status": "parsed",
    "name": "20040707-1.c",
    "sha256": "c7ac6a83a406bf58c441f503f96f29ed3a3c1585e01b4688d8726cf655d6410c",
@@ -10496,7 +10650,7 @@
   {
    "corpus": "gcc.c-torture/execute",
    "detail": "not an integer type: 'struct S'",
-   "dynamic_wall": "unsupported:not an integer type",
+   "dynamic_wall": "unsupported:not an integer type: 'struct S'",
    "manifest_status": "parsed",
    "name": "20050713-1.c",
    "sha256": "30b8e724bcc110baa43f526d1733e7eb07a4d03960d5ae424a0037099ee86fb4",
@@ -10522,7 +10676,7 @@
   {
    "corpus": "gcc.c-torture/execute",
    "detail": "not an integer type: 'struct rtattr'",
-   "dynamic_wall": "unsupported:not an integer type",
+   "dynamic_wall": "unsupported:not an integer type: 'struct rtattr'",
    "manifest_status": "parsed",
    "name": "20050826-2.c",
    "sha256": "af717ffb16a73117be5d6d0c313071e6d2e9cbc35bdec3c4d4c219ba11b803cb",
@@ -10996,7 +11150,7 @@
   {
    "corpus": "gcc.c-torture/execute",
    "detail": "not an integer type: 'struct T'",
-   "dynamic_wall": "unsupported:not an integer type",
+   "dynamic_wall": "unsupported:not an integer type: 'struct T'",
    "manifest_status": "parsed",
    "name": "20071202-1.c",
    "sha256": "23510bd0e124b4fc8ea9022ab9a636efb913359327030ea5002a6fa013b0e67c",
@@ -13317,7 +13471,7 @@
   {
    "corpus": "gcc.c-torture/execute",
    "detail": "not an integer type: 'struct tiny'",
-   "dynamic_wall": "unsupported:not an integer type",
+   "dynamic_wall": "unsupported:not an integer type: 'struct tiny'",
    "manifest_status": "parsed",
    "name": "931004-1.c",
    "sha256": "a76d5c10bb596e94422de57dfa082cdaa451906c6ff44ab787ccc07db3b77271",
@@ -13329,7 +13483,7 @@
   {
    "corpus": "gcc.c-torture/execute",
    "detail": "not an integer type: 'struct tiny'",
-   "dynamic_wall": "unsupported:not an integer type",
+   "dynamic_wall": "unsupported:not an integer type: 'struct tiny'",
    "manifest_status": "parsed",
    "name": "931004-10.c",
    "sha256": "e309602b58651c94a95591af48d56495187a0ecaef392cc9d6dbaf0c96c674df",
@@ -13343,7 +13497,7 @@
   {
    "corpus": "gcc.c-torture/execute",
    "detail": "not an integer type: 'struct tiny'",
-   "dynamic_wall": "unsupported:not an integer type",
+   "dynamic_wall": "unsupported:not an integer type: 'struct tiny'",
    "manifest_status": "parsed",
    "name": "931004-11.c",
    "sha256": "df6ffa1cfd3fd6874fdc70959e4bef38c7671e3bd8ec0fd115829e888f260630",
@@ -13355,7 +13509,7 @@
   {
    "corpus": "gcc.c-torture/execute",
    "detail": "not an integer type: 'struct tiny'",
-   "dynamic_wall": "unsupported:not an integer type",
+   "dynamic_wall": "unsupported:not an integer type: 'struct tiny'",
    "manifest_status": "parsed",
    "name": "931004-12.c",
    "sha256": "2e8eb60038e1cebb1439745893fcd9c285639180177dcc2b9de0f818c6814099",
@@ -13369,7 +13523,7 @@
   {
    "corpus": "gcc.c-torture/execute",
    "detail": "not an integer type: 'struct tiny'",
-   "dynamic_wall": "unsupported:not an integer type",
+   "dynamic_wall": "unsupported:not an integer type: 'struct tiny'",
    "manifest_status": "parsed",
    "name": "931004-13.c",
    "sha256": "00829d617e0b2d3d9a4360970e66e0608c8b6449ea09067ac887d7576314c32b",
@@ -13381,7 +13535,7 @@
   {
    "corpus": "gcc.c-torture/execute",
    "detail": "not an integer type: 'struct tiny'",
-   "dynamic_wall": "unsupported:not an integer type",
+   "dynamic_wall": "unsupported:not an integer type: 'struct tiny'",
    "manifest_status": "parsed",
    "name": "931004-14.c",
    "sha256": "690c04d80d7a571ca5e94777e2939f0e7c20004a7e328397b9f692b20e167673",
@@ -13395,7 +13549,7 @@
   {
    "corpus": "gcc.c-torture/execute",
    "detail": "not an integer type: 'struct tiny'",
-   "dynamic_wall": "unsupported:not an integer type",
+   "dynamic_wall": "unsupported:not an integer type: 'struct tiny'",
    "manifest_status": "parsed",
    "name": "931004-2.c",
    "sha256": "f00e81760f99222bac9d543f2868031bbc5cd7fc5a539eaf674c66e2a3cfad95",
@@ -13409,7 +13563,7 @@
   {
    "corpus": "gcc.c-torture/execute",
    "detail": "not an integer type: 'struct tiny'",
-   "dynamic_wall": "unsupported:not an integer type",
+   "dynamic_wall": "unsupported:not an integer type: 'struct tiny'",
    "manifest_status": "parsed",
    "name": "931004-3.c",
    "sha256": "37657e839e018abde4b5234b70496f25e4bd9827985e4dbd622353bb79ab6f1e",
@@ -13421,7 +13575,7 @@
   {
    "corpus": "gcc.c-torture/execute",
    "detail": "not an integer type: 'struct tiny'",
-   "dynamic_wall": "unsupported:not an integer type",
+   "dynamic_wall": "unsupported:not an integer type: 'struct tiny'",
    "manifest_status": "parsed",
    "name": "931004-4.c",
    "sha256": "bf6f0ae1dd87118dcfc921f5faff4ff122f041f9ec0ed04b8f7c2ff3496f8be3",
@@ -13435,7 +13589,7 @@
   {
    "corpus": "gcc.c-torture/execute",
    "detail": "not an integer type: 'struct tiny'",
-   "dynamic_wall": "unsupported:not an integer type",
+   "dynamic_wall": "unsupported:not an integer type: 'struct tiny'",
    "manifest_status": "parsed",
    "name": "931004-5.c",
    "sha256": "1458c37edf4c7aef47ed9c49772b7282a097e626be41aa744bd689fa98c6d744",
@@ -13447,7 +13601,7 @@
   {
    "corpus": "gcc.c-torture/execute",
    "detail": "not an integer type: 'struct tiny'",
-   "dynamic_wall": "unsupported:not an integer type",
+   "dynamic_wall": "unsupported:not an integer type: 'struct tiny'",
    "manifest_status": "parsed",
    "name": "931004-6.c",
    "sha256": "7299d2123bddad05c27e6147221863db907004007218f97ac78d36caa57e3973",
@@ -13461,7 +13615,7 @@
   {
    "corpus": "gcc.c-torture/execute",
    "detail": "not an integer type: 'struct tiny'",
-   "dynamic_wall": "unsupported:not an integer type",
+   "dynamic_wall": "unsupported:not an integer type: 'struct tiny'",
    "manifest_status": "parsed",
    "name": "931004-7.c",
    "sha256": "f49a0a8a66ff3b9af8b97fd04dcec4cda9419724da4838eec1a0ec0f2bdb28b8",
@@ -13473,7 +13627,7 @@
   {
    "corpus": "gcc.c-torture/execute",
    "detail": "not an integer type: 'struct tiny'",
-   "dynamic_wall": "unsupported:not an integer type",
+   "dynamic_wall": "unsupported:not an integer type: 'struct tiny'",
    "manifest_status": "parsed",
    "name": "931004-8.c",
    "sha256": "ee628a68257bb72e28c09060828905f40a21d55aba748cf7e7d45f05a2fc3bf9",
@@ -13487,7 +13641,7 @@
   {
    "corpus": "gcc.c-torture/execute",
    "detail": "not an integer type: 'struct tiny'",
-   "dynamic_wall": "unsupported:not an integer type",
+   "dynamic_wall": "unsupported:not an integer type: 'struct tiny'",
    "manifest_status": "parsed",
    "name": "931004-9.c",
    "sha256": "f5304d1385914dcd2e036c33a4822fbdfe3011de6838c29d397d4333f45ad792",
@@ -14996,7 +15150,7 @@
   {
    "corpus": "gcc.c-torture/execute",
    "detail": "not an integer type: 'struct blah'",
-   "dynamic_wall": "unsupported:not an integer type",
+   "dynamic_wall": "unsupported:not an integer type: 'struct blah'",
    "manifest_status": "parsed",
    "name": "990525-1.c",
    "sha256": "4b0ef55870f5c08086a4813e0c88f898fac099c5ae4991eb22b20b1ed535a543",
@@ -15374,7 +15528,7 @@
   {
    "corpus": "gcc.c-torture/execute",
    "detail": "not an integer type: 'struct a'",
-   "dynamic_wall": "unsupported:not an integer type",
+   "dynamic_wall": "unsupported:not an integer type: 'struct a'",
    "manifest_status": "parsed",
    "name": "alias-access-path-1.c",
    "sha256": "30518b3b7bbdfab8d0ba31faa94ca3b124f1fec9324b3696dab282e683719552",
@@ -20353,7 +20507,7 @@
   {
    "corpus": "gcc.c-torture/execute",
    "detail": "not an integer type: 'struct b'",
-   "dynamic_wall": "unsupported:not an integer type",
+   "dynamic_wall": "unsupported:not an integer type: 'struct b'",
    "manifest_status": "parsed",
    "name": "lto-tbaa-1.c",
    "sha256": "9e8dfcd6a42b4b75851495ff672e84442e0b59d8cd71d23fdac32c8883bb363c",
@@ -21537,7 +21691,7 @@
   {
    "corpus": "gcc.c-torture/execute",
    "detail": "not an integer type: 'struct S'",
-   "dynamic_wall": "unsupported:not an integer type",
+   "dynamic_wall": "unsupported:not an integer type: 'struct S'",
    "manifest_status": "parsed",
    "name": "pr114207.c",
    "sha256": "3d7769700f76f455717bbff3e5499abd4f15c37361d2d6ca15deaba10d1a3834",
@@ -21793,7 +21947,7 @@
   {
    "corpus": "gcc.c-torture/execute",
    "detail": "not an integer type: '__int128'",
-   "dynamic_wall": "unsupported:not an integer type",
+   "dynamic_wall": "unsupported:not an integer type: '__int128'",
    "manifest_status": "parsed",
    "name": "pr122943.c",
    "sha256": "8ea3ac0eeda989033311c68e415e42ab7171647ea61e65db1386326f40fe146d",
@@ -23509,7 +23663,7 @@
   {
    "corpus": "gcc.c-torture/execute",
    "detail": "not an integer type: 'struct X'",
-   "dynamic_wall": "unsupported:not an integer type",
+   "dynamic_wall": "unsupported:not an integer type: 'struct X'",
    "manifest_status": "parsed",
    "name": "pr39120.c",
    "sha256": "a491c1cac905a641e2d97ebae8205d7e0adb9d7d57c5a10730af37d8b259eb84",
@@ -23758,7 +23912,7 @@
   {
    "corpus": "gcc.c-torture/execute",
    "detail": "not an integer type: 'struct S1'",
-   "dynamic_wall": "unsupported:not an integer type",
+   "dynamic_wall": "unsupported:not an integer type: 'struct S1'",
    "manifest_status": "parsed",
    "name": "pr41919.c",
    "sha256": "ea0a3d7484fec5569847673835b5565b62325aab0a22ccdbe1dc59ad05395d80",
@@ -23802,7 +23956,7 @@
   {
    "corpus": "gcc.c-torture/execute",
    "detail": "not an integer type: 'struct A'",
-   "dynamic_wall": "unsupported:not an integer type",
+   "dynamic_wall": "unsupported:not an integer type: 'struct A'",
    "manifest_status": "parsed",
    "name": "pr42154.c",
    "sha256": "fe1f4baa7eba3f2470437b323334482aed2ba04c2b33d253b2ba2d548d801f30",
@@ -24619,7 +24773,7 @@
   {
    "corpus": "gcc.c-torture/execute",
    "detail": "not an integer type: 'struct S'",
-   "dynamic_wall": "unsupported:not an integer type",
+   "dynamic_wall": "unsupported:not an integer type: 'struct S'",
    "manifest_status": "parsed",
    "name": "pr51323.c",
    "sha256": "b676585f7240c33b87ca823304e4b8010cc85d639c658668ce43ee177ca24472",
@@ -24693,7 +24847,7 @@
   {
    "corpus": "gcc.c-torture/execute",
    "detail": "not an integer type: 'struct S'",
-   "dynamic_wall": "unsupported:not an integer type",
+   "dynamic_wall": "unsupported:not an integer type: 'struct S'",
    "manifest_status": "parsed",
    "name": "pr52129.c",
    "sha256": "33ee2a1dd6ad3db58056011a4d0af8517b20dcd1e16034faf94f2f5e82e5a5c9",
@@ -25016,7 +25170,7 @@
   {
    "corpus": "gcc.c-torture/execute",
    "detail": "not an integer type: 'struct S'",
-   "dynamic_wall": "unsupported:not an integer type",
+   "dynamic_wall": "unsupported:not an integer type: 'struct S'",
    "manifest_status": "parsed",
    "name": "pr57130.c",
    "sha256": "02486b8b9bdd58a0f840d1f8b727c325d16d92032a31cda078d222f833cc510c",
@@ -25237,7 +25391,7 @@
   {
    "corpus": "gcc.c-torture/execute",
    "detail": "not an integer type: 'struct S'",
-   "dynamic_wall": "unsupported:not an integer type",
+   "dynamic_wall": "unsupported:not an integer type: 'struct S'",
    "manifest_status": "parsed",
    "name": "pr58365.c",
    "sha256": "032d5d2147642b6aecaa28936e05f8bd1792035853183d1c16c8ffeb5d419da3",
@@ -25761,7 +25915,7 @@
   {
    "corpus": "gcc.c-torture/execute",
    "detail": "not an integer type: '__int128'",
-   "dynamic_wall": "unsupported:not an integer type",
+   "dynamic_wall": "unsupported:not an integer type: '__int128'",
    "manifest_status": "parsed",
    "name": "pr63302.c",
    "sha256": "eb8cf4285b292457a770b7170dc8470beaec2c813262d9de0fa19f843736049a",
@@ -25940,7 +26094,7 @@
   {
    "corpus": "gcc.c-torture/execute",
    "detail": "not an integer type: 'unsigned __int128'",
-   "dynamic_wall": "unsupported:not an integer type",
+   "dynamic_wall": "unsupported:not an integer type: 'unsigned __int128'",
    "manifest_status": "parsed",
    "name": "pr65170.c",
    "sha256": "e53b8ecef0f9ec1c676e3e7bf6b81d54567d73f6f4b8539c009f08000a0150d8",
@@ -26183,7 +26337,7 @@
   {
    "corpus": "gcc.c-torture/execute",
    "detail": "not an integer type: 'struct assembly_operand'",
-   "dynamic_wall": "unsupported:not an integer type",
+   "dynamic_wall": "unsupported:not an integer type: 'struct assembly_operand'",
    "manifest_status": "parsed",
    "name": "pr67226.c",
    "sha256": "73d22ae855f2a6f278cf1aaf29e39f6e41a6538795bdde5f5475b7f281278a73",
@@ -27247,7 +27401,7 @@
   {
    "corpus": "gcc.c-torture/execute",
    "detail": "not an integer type: 'struct A'",
-   "dynamic_wall": "unsupported:not an integer type",
+   "dynamic_wall": "unsupported:not an integer type: 'struct A'",
    "manifest_status": "parsed",
    "name": "pr82388.c",
    "sha256": "50c5ded382b87e6603a3bb43a597e18acaeb69b878be7d2e24bfbbc229e0bab1",
@@ -27259,7 +27413,7 @@
   {
    "corpus": "gcc.c-torture/execute",
    "detail": "not an integer type: 'struct S'",
-   "dynamic_wall": "unsupported:not an integer type",
+   "dynamic_wall": "unsupported:not an integer type: 'struct S'",
    "manifest_status": "parsed",
    "name": "pr82524.c",
    "sha256": "396b3905e87fb23ff60e00b001acafe160aa23d81beea6fd2a30a89838201409",
@@ -27942,7 +28096,7 @@
   {
    "corpus": "gcc.c-torture/execute",
    "detail": "not an integer type: 'unsigned __int128'",
-   "dynamic_wall": "unsupported:not an integer type",
+   "dynamic_wall": "unsupported:not an integer type: 'unsigned __int128'",
    "manifest_status": "parsed",
    "name": "pr93213.c",
    "sha256": "4217ebc7d4b628787de4cfce560f459f384c20fa55aaad1e1f6e1281febb478c",
@@ -27969,7 +28123,7 @@
   {
    "corpus": "gcc.c-torture/execute",
    "detail": "not an integer type: 'struct S'",
-   "dynamic_wall": "unsupported:not an integer type",
+   "dynamic_wall": "unsupported:not an integer type: 'struct S'",
    "manifest_status": "parsed",
    "name": "pr93402.c",
    "sha256": "b2218c5b53b1f68346a2f7331a7cb9fd687b236b1247aba3b9d95445bdfb01cd",
@@ -28978,7 +29132,7 @@
   {
    "corpus": "gcc.c-torture/execute",
    "detail": "not an integer type: 'struct tiny'",
-   "dynamic_wall": "unsupported:not an integer type",
+   "dynamic_wall": "unsupported:not an integer type: 'struct tiny'",
    "manifest_status": "parsed",
    "name": "strct-stdarg-1.c",
    "sha256": "ec51bc0af8c8f24d46dbac8bdd811e120c7e5fd3b81648a48c7163d4280a4d78",
@@ -28992,7 +29146,7 @@
   {
    "corpus": "gcc.c-torture/execute",
    "detail": "not an integer type: 'struct s'",
-   "dynamic_wall": "unsupported:not an integer type",
+   "dynamic_wall": "unsupported:not an integer type: 'struct s'",
    "manifest_status": "parsed",
    "name": "strct-varg-1.c",
    "sha256": "8b9d0f63a946ddf96a8693c67ea786314140c055e72b1cf2b36b9f30b121a2b1",
@@ -29543,7 +29697,7 @@
   {
    "corpus": "gcc.c-torture/execute",
    "detail": "not an integer type: 'struct two'",
-   "dynamic_wall": "unsupported:not an integer type",
+   "dynamic_wall": "unsupported:not an integer type: 'struct two'",
    "manifest_status": "parsed",
    "name": "va-arg-23.c",
    "sha256": "3a2323c7449a4fb47db61e20103522b204413ba862aafa78a145e23b74a171d6",

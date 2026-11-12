@@ -975,7 +975,7 @@ def signedOpRefusal? : SymBinOp → Option String
 say what signedness changes there. -/
 def leafRefusal : PExpr → String
   | .cast true (.ident n) =>
-      s!"a signed read of `{n}` in a position the tactics do not read through the unsigned twin (they read a signed signal as the same bits where it is an operand of a continuous assign; an index, a shift amount and an `always_comb` body are outside the fragment)"
+      s!"a signed read of `{n}` in a position the tactics do not read through the unsigned twin (they read a signed signal as the same bits where it is an operand of a continuous assign or the actual of a module's input port; an index, a shift amount and an `always_comb` body are outside the fragment)"
   | .signedResize .. =>
       "sign extension (a signed operand narrower than its context is extended with its sign bit, which the fragment does not model; it has zero extension)"
   | _ => "expression construct outside the v1 fragment (constant, cast, width conversion or system call)"
@@ -983,7 +983,7 @@ def leafRefusal : PExpr → String
 /-- The refusal of a select whose base is not an identifier. -/
 def selBaseRefusal (kind : String) : PExpr → String
   | .cast true (.ident n) =>
-      s!"a select of the signed signal `{n}` in a position the tactics do not read through the unsigned twin (they read a select of a signed signal, an unsigned value, IEEE 1800-2023 §11.8.1, where it is an operand of a continuous assign; a shift operand, an index and an `always_comb` body are outside the fragment)"
+      s!"a select of the signed signal `{n}` in a position the tactics do not read through the unsigned twin (they read a select of a signed signal, an unsigned value, IEEE 1800-2023 §11.8.1, where it is an operand of a continuous assign, the actual of a module's input port or the left operand of a shift; an index, a shift amount and an `always_comb` body are outside the fragment)"
   | _ => s!"{kind} select of a non-identifier base"
 
 /-- A read of one access. -/

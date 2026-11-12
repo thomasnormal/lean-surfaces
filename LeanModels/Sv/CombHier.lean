@@ -1,4 +1,5 @@
 import LeanModels.Sv.CombEqThm
+import LeanModels.Sv.CombSigned
 
 /-!
 # The hierarchy summary: a design with module-level instances, read through its flat twin
@@ -10,7 +11,8 @@ tactics summarize a FLAT design. This file builds the flat design the hierarchic
 template level, with nothing unrolled: the **flat twin** `hierTwin d lib`, whose summary is the hierarchy summary
 (`summaryH`):
 
-* the parent's own processes and declarations, unchanged;
+* the parent's own declarations, unchanged, and its processes, each its unsigned twin (`PProcess.unsign`: a design with
+  signed reads is read as `PDesign.unsign` reads a flat one, `parent_proc_eqU`);
 * per module-level instance `i` of a child `c` (source order), with prefix `p = i.name ++ "."`:
   - every parameter of `c` as a localparam `p ++ P` of the parent: the override expression of the instance (a
     constant expression of the parent's scope), or `c`'s default renamed under the prefix — the child parameter
@@ -18,7 +20,9 @@ template level, with nothing unrolled: the **flat twin** `hierTwin d lib`, whose
   - every localparam of `c`, renamed;
   - every declaration of `c`, renamed, its port flags cleared (`Decl.hoist`);
   - one continuous assignment per port, in `c`'s port order: `p ++ a = actual` for an input, `target = p ++ y` for an
-    output (`connProcs`);
+    output (`connProcs`); the actual is its unsigned twin (`PExpr.unsign`), so a signed read in a connection, a select
+    of a signed signal included (an unsigned value, IEEE 1800-2023 §11.8.1), is read as in a continuous assign
+    (`conn_in_eq`);
   - every process of `c`, renamed (`instBodyProc`).
 
 `instantiateHD2_twin` proves that the hierarchical instantiation IS the twin's flat instantiation, at every parameter
@@ -627,6 +631,24 @@ theorem rhs_selfWidth (C : Ctx σ EP elP DWP DGP EWP nsP) (hdw : ∀ n, (DWP n).
   rw [h3] at hw hex
   rw [(skT_shapeC C hdw v rs h1 h2 hacc hcn tw hw).1, Sk.width_of_exactW σ dw _ tw hex hw]
 
+/-- `rhs_selfWidth` for a right-hand side whose unsigned twin is the site's (`PExpr.unsign`): the expression as written
+has the twin's self-determined width. -/
+theorem rhs_selfWidthU (C : Ctx σ EP elP DWP DGP EWP nsP) (hdw : ∀ n, (DWP n).isSome = true → DWP n = some (dw n))
+    {ds : List DeclT} {v : PExpr} {rs : List Acc} (h : rhsRds? ds v.unsign = .ok rs) (hf : fragOk v.unsign = true)
+    (hacc : ∀ a ∈ rs, AccOK σ DWP DGP EWP nsP a) (hcn : ConstOK σ nsP v.unsign) {tw : Nat}
+    (hw : (skRhs v.unsign rs).WidthOkC σ dw tw) (hex : (skRhs v.unsign rs).exactW = true) :
+    selfWidth2 EP elP v = some tw := by
+  have hnf : ∀ b, v.unsign ≠ .fill b := by intro b hb; rw [hb] at hex; simp [skRhs, Sk.exactW] at hex
+  have key : ∀ x : PExpr, (∀ b, x ≠ .fill b) →
+      rhsRds? ds x = rdsOfW? ds x ∧ fragOk x = fragW x ∧ skRhs x rs = skT x rs := by
+    intro x hx
+    cases x <;> first | exact ⟨rfl, rfl, rfl⟩ | exact absurd rfl (hx _)
+  obtain ⟨k1, k2, k3⟩ := key _ hnf
+  rw [k1] at h
+  rw [k2] at hf
+  rw [k3] at hw hex
+  rw [(skT_shapeCU C hdw v rs h hf hacc hcn tw hw).1, Sk.width_of_exactW σ dw _ tw hex hw]
+
 /-- **A process of the parent**: instantiated in the parent's own environment (the hierarchical instantiation) or
 in the twin's, it is the expression its site determines. -/
 theorem parent_proc_eq (CP : Ctx σ EP elP DWP DGP EWP nsP) (CF : Ctx σ EF elF DWF DGF EWF nsF)
@@ -640,26 +662,42 @@ theorem parent_proc_eq (CP : Ctx σ EP elP DWP DGP EWP nsP) (CF : Ctx σ EF elF 
     instProcess2 EP elP p = instProcess2 EF elF p := by
   rw [proc_shapeC CP hdwP hs hsoP hcnP hf hw, proc_shapeC CF hdwF hs hsoF hcnF hf hw]
 
-/-- **An input port connection** (`connProcs`): the assignment of the port from its actual is the twin's
-`p ++ a = actual`, instantiated. -/
+/-- **A process of the parent, read through its unsigned twin** (`twinOf`): instantiated in the parent's own environment
+as written, or in the twin's as its unsigned twin, it is the expression the twin's site determines (`proc_shapeCU`). -/
+theorem parent_proc_eqU (CP : Ctx σ EP elP DWP DGP EWP nsP) (CF : Ctx σ EF elF DWF DGF EWF nsF)
+    (hdwP : ∀ n, (DWP n).isSome = true → DWP n = some (dw n))
+    (hdwF : ∀ n, (DWF n).isSome = true → DWF n = some (dw n))
+    {ds : List DeclT} {pos : Nat} {p : PProcess} {st : TSite} (hs : siteOf? ds pos p.unsign = .ok st)
+    (hsoP : ∀ a ∈ st.tgt :: st.rds, AccOK σ DWP DGP EWP nsP a)
+    (hsoF : ∀ a ∈ st.tgt :: st.rds, AccOK σ DWF DGF EWF nsF a)
+    (hcnP : st.ConstOK σ nsP) (hcnF : st.ConstOK σ nsF) (hf : fragOk (rhsOf p.unsign) = true)
+    (hw : (skRhs (rhsOf p.unsign) st.rds).WidthOkC σ dw (st.tgt.win σ dw).2.2) :
+    instProcess2 EP elP p = instProcess2 EF elF p.unsign := by
+  rw [proc_shapeCU CP hdwP hs hsoP hcnP hf hw, proc_shapeC CF hdwF hs hsoF hcnF hf hw]
+
+/-- **An input port connection** (`connProcs`): the assignment of the port from its actual `e` is the twin's
+`p ++ a = e.unsign` (`connPP`), instantiated: the hierarchical instantiation lowers the actual as written, the twin its
+unsigned twin, and under the twin's width obligation (the actual exactly as wide as the port) the two are the expression
+the twin's site determines (`rhs_shapeCU`, `proc_shapeC`). -/
 theorem conn_in_eq (CP : Ctx σ EP elP DWP DGP EWP nsP) (CF : Ctx σ EF elF DWF DGF EWF nsF)
     (hdwP : ∀ n, (DWP n).isSome = true → DWP n = some (dw n))
     (hdwF : ∀ n, (DWF n).isSome = true → DWF n = some (dw n))
     {pfx : String} {conns : List PConn} {dc : Decl} {p : String} {e : PExpr} {net : Bool}
     (hfind : conns.find? (·.port == dc.name) = some (.input p (some e) net)) (hin : dc.isInput = true)
-    {ds : List DeclT} {pos : Nat} {st : TSite} (hs : siteOf? ds pos (.assign (pfx ++ dc.name) e) = .ok st)
+    {ds : List DeclT} {pos : Nat} {st : TSite}
+    (hs : siteOf? ds pos (.assign (pfx ++ dc.name) e.unsign) = .ok st)
     (hsoP : ∀ a ∈ st.rds, AccOK σ DWP DGP EWP nsP a) (hsoF : ∀ a ∈ st.tgt :: st.rds, AccOK σ DWF DGF EWF nsF a)
-    (hcnP : st.ConstOK σ nsP) (hcnF : st.ConstOK σ nsF) (hf : fragOk e = true)
-    (hw : (skRhs e st.rds).WidthOkC σ dw dc.width) (hex : (skRhs e st.rds).exactW = true)
+    (hcnP : st.ConstOK σ nsP) (hcnF : st.ConstOK σ nsF) (hf : fragOk e.unsign = true)
+    (hw : (skRhs e.unsign st.rds).WidthOkC σ dw dc.width) (hex : (skRhs e.unsign st.rds).exactW = true)
     (hdn : dw (pfx ++ dc.name) = dc.width) :
-    connProcs EP elP pfx conns dc = [instProcess2 EF elF (.assign (pfx ++ dc.name) e)] := by
+    connProcs EP elP pfx conns dc = [instProcess2 EF elF (.assign (pfx ++ dc.name) e.unsign)] := by
   rcases siteOf?_cases hs with ⟨t, v, rds, hp, hrds, rfl⟩ | ⟨l, v, tg, rds, hp, -, -, -⟩
   · simp only [PProcess.assign.injEq] at hp
     obtain ⟨rfl, rfl⟩ := hp
-    have hcnP' : ConstOK σ nsP e := hcnP
-    have hsw := rhs_selfWidth CP hdwP hrds hf hsoP hcnP' hw hex
-    have hfit := rhs_shapeC CP hdwP hrds hf hsoP hcnP' hw
-    have hwF : (skRhs (rhsOf (PProcess.assign (pfx ++ dc.name) e)) rds).WidthOkC σ dw
+    have hcnP' : ConstOK σ nsP e.unsign := hcnP
+    have hsw := rhs_selfWidthU CP hdwP hrds hf hsoP hcnP' hw hex
+    have hfit := rhs_shapeCU CP hdwP hrds hf hsoP hcnP' hw
+    have hwF : (skRhs (rhsOf (PProcess.assign (pfx ++ dc.name) e.unsign)) rds).WidthOkC σ dw
         ((Acc.whole (pfx ++ dc.name)).win σ dw).2.2 := by
       simpa [rhsOf, Acc.win, hdn] using hw
     rw [proc_shapeC CF hdwF hs hsoF hcnF hf hwF]
@@ -767,13 +805,18 @@ def childParamLps (i : PInst) (c : PDesign) : Except String (List PLocalParam) :
         | none => .error s!"instance `{i.name}`: parameter `{p.name}` of module `{c.name}` has no override and no default"
 
 /-- The continuous assignment of one port connection (`connProcs` at the template level): `p ++ a = actual` for an
-input, `target = p ++ y` for an output. v1 reads every port connected. -/
+input, `target = p ++ y` for an output. v1 reads every port connected. The input's actual is its unsigned twin
+(`PExpr.unsign`, `CombView.lean`): a select of a signed signal is an unsigned value (IEEE 1800-2023 §11.8.1) and
+`instExpr2` lowers it through the base's element width, which the cast marker does not change, and a whole signed signal
+is read as the same bits where it is not widened; `conn_in_eq` proves the connection the hierarchical instantiation builds
+from the actual as written equal to the twin's, under the twin's width obligation (the actual exactly as wide as its
+port). -/
 def connPP (i : PInst) (pd : PDecl) : Except String PProcess :=
   match i.conns.find? (·.port == pd.name) with
   | none => .error s!"instance `{i.name}`: port `{pd.name}` has no connection"
   | some (.unsupported _ k t) => .error s!"instance `{i.name}`: port `{pd.name}`: {t} ({k})"
   | some (.input _ (some e) _) =>
-      if pd.isInput && !pd.isOutput then .ok (.assign (hpfx i ++ pd.name) e)
+      if pd.isInput && !pd.isOutput then .ok (.assign (hpfx i ++ pd.name) e.unsign)
       else .error s!"instance `{i.name}`: port `{pd.name}` is connected as an input but is not one"
   | some (.input _ none _) =>
       .error s!"instance `{i.name}`: input port `{pd.name}` is left open (an open input reads `x` or `z`; v1 of the hierarchy summary reads every port connected)"
@@ -843,10 +886,11 @@ def instPart (i : PInst) (c : PDesign) : Except String (List PLocalParam × List
   pure (plps ++ c.localParams.map (PLocalParam.hren (hpfx i)), c.decls.map (PDecl.hren (hpfx i)),
     conns ++ c.processes.map (PProcess.hren (hpfx i)))
 
-/-- The twin assembled from the parts of its instances. -/
+/-- The twin assembled from the parts of its instances. The parent's own processes are their unsigned twins
+(`PProcess.unsign`, as `PDesign.unsign` reads a flat design with signed reads; `parent_proc_eqU`). -/
 def twinOf (d : PDesign) (parts : List (List PLocalParam × List PDecl × List PProcess)) : PDesign :=
   { d with localParams := d.localParams ++ parts.flatMap (·.1), decls := d.decls ++ parts.flatMap (·.2.1),
-           processes := d.processes ++ parts.flatMap (·.2.2), generates := [] }
+           processes := d.processes.map PProcess.unsign ++ parts.flatMap (·.2.2), generates := [] }
 
 /-- **The flat twin** of a design with module-level instances (module docstring), with the instances and their
 children. -/
@@ -1045,7 +1089,8 @@ theorem childCheck_ok {i : PInst} {c : PDesign} (h : childCheck i c = .ok ()) :
 
 theorem connPP_ok {i : PInst} {pd : PDecl} {p : PProcess} (h : connPP i pd = .ok p) :
     (pd.isInput = true ∧ pd.isOutput = false ∧ ∃ q e net,
-        i.conns.find? (·.port == pd.name) = some (.input q (some e) net) ∧ p = .assign (hpfx i ++ pd.name) e) ∨
+        i.conns.find? (·.port == pd.name) = some (.input q (some e) net) ∧
+          p = .assign (hpfx i ++ pd.name) e.unsign) ∨
     (pd.isOutput = true ∧ pd.isInput = false ∧ ∃ q t,
         i.conns.find? (·.port == pd.name) = some (.output q (some t)) ∧
         p = .assignL t (.ident (hpfx i ++ pd.name))) := by
@@ -1338,6 +1383,15 @@ theorem rel2_and_map {α β γ : Type} {R : α → β → Prop} {f : α → γ} 
   | [], _ :: _, h, _ => h.elim
   | _ :: _, [], h, _ => h.elim
 
+theorem rel2_of_map {α β γ : Type} {f : α → γ} {g : β → γ} :
+    ∀ {l : List α} {r : List β}, r.map g = l.map f → Rel2 (fun a b => g b = f a) l r
+  | [], [], _ => trivial
+  | _ :: _, _ :: _, h => by
+      simp only [List.map_cons, List.cons.injEq] at h
+      exact ⟨h.1, rel2_of_map h.2⟩
+  | [], _ :: _, h => by simp at h
+  | _ :: _, [], h => by simp at h
+
 theorem rel2_map_eq {α β γ : Type} {R : α → β → Prop} {f : α → γ} {g : β → γ} :
     ∀ {l : List α} {r : List β}, Rel2 R l r → (∀ a ∈ l, ∀ b ∈ r, R a b → f a = g b) → l.map f = r.map g
   | [], [], _, _ => rfl
@@ -1565,20 +1619,20 @@ theorem inst_step {d : PDesign} {lib : List PDesign} {sF : Summary} {dsP : List 
     rcases connPP_ok hcp with ⟨hin, -, q, e, net, hfd, hpe⟩ | ⟨hout, -, q, t, hfd, hpe⟩
     · rw [hpe] at hsF hcs
       obtain ⟨hrdin, hcnin, hex⟩ := hcs
-      have hs' : siteOf? sF.decls pos (.assign (hpfx i ++ (dt.toDecl fun n => σF (hpfx i ++ n)).name) e) =
+      have hs' : siteOf? sF.decls pos (.assign (hpfx i ++ (dt.toDecl fun n => σF (hpfx i ++ n)).name) e.unsign) =
           .ok st := by simpa [DeclT.toDecl, hn] using hsF
       have htgt : st.tgt = .whole (hpfx i ++ (dt.toDecl fun n => σF (hpfx i ++ n)).name) := by
         rcases siteOf?_cases hs' with ⟨t', v, rds, hp, -, hst'⟩ | ⟨l, v, tg, rds, hp, -, -, -⟩
         · simp only [PProcess.assign.injEq] at hp
           rw [hst', ← hp.1]
         · simp at hp
-      have hw : (skRhs e st.rds).WidthOkC σF (sF.dw σF) (dt.toDecl fun n => σF (hpfx i ++ n)).width := by
+      have hw : (skRhs e.unsign st.rds).WidthOkC σF (sF.dw σF) (dt.toDecl fun n => σF (hpfx i ++ n)).width := by
         have := TF.wid st hSt
         rw [hpe, htgt] at this
         simpa [rhsOf, Acc.win, hdwn dt hdtm, DeclT.toDecl] using this
       have hfd' : i.conns.find? (·.port == (dt.toDecl fun n => σF (hpfx i ++ n)).name) =
           some (.input q (some e) net) := by simpa [DeclT.toDecl, hn] using hfd
-      have hfr : fragOk e = true := by have := TF.frag st hSt; rwa [hpe] at this
+      have hfr : fragOk e.unsign = true := by have := TF.frag st hSt; rwa [hpe] at this
       rw [conn_in_eq CP CF hdwP hdwF hfd' (by simpa [DeclT.toDecl, hi] using hin) hs'
         (fun a ha => accOK_parent hPF (TF.acc st hSt a (List.mem_cons_of_mem _ ha)) (hrdin a ha))
         (TF.acc st hSt) ⟨hcnin, (TF.cn st hSt).2⟩ (TF.cn st hSt) hfr hw hex hdn, hpe]
@@ -1828,9 +1882,11 @@ theorem instantiateHD2_twin {d : PDesign} {lib : List PDesign} {args : List Int}
   have hdwF : ∀ n, (sF.DW (sF.val args) n).isSome = true →
       sF.DW (sF.val args) n = some (sF.dw (sF.val args) n) := fun n h => dw_some n h
   -- the twin's sites: the parent's, then the instances'
-  rw [show (twinOf d parts).processes = d.processes ++ parts.flatMap (·.2.2) from rfl] at hprocF
+  rw [show (twinOf d parts).processes = d.processes.map PProcess.unsign ++ parts.flatMap (·.2.2) from rfl] at hprocF
   obtain ⟨SP, SR, hSPR, hSP, hSR⟩ := List.map_eq_append_iff.mp hprocF
-  have hlSP : SP.length = d.processes.length := by rw [← hSP, List.length_map]
+  have hlSP : SP.length = d.processes.length := by
+    have := congrArg List.length hSP
+    simpa using this
   rw [hSPR, List.take_left' hlSP] at hck2
   rw [hSPR, List.drop_left' hlSP] at hck3
   -- the twin's processes
@@ -1948,20 +2004,23 @@ theorem instantiateHD2_twin {d : PDesign} {lib : List PDesign} {args : List Int}
         (dsP.map fun dt => (dt.name, dt.elemW (sF.val args)))) =
         SP.map fun st => instProcess2 (envF.withDecls (sF.decls.map (DeclT.toDecl (sF.val args))))
           (sF.decls.map fun dt => (dt.name, dt.elemW (sF.val args))) st.proc := by
-      rw [← hSP, List.map_map]
-      apply List.map_congr_left
-      intro st hst
+      apply rel2_map_eq (rel2_of_map hSP)
+      intro p _ st hst hpst
       have hstF : st ∈ sF.statics := by rw [hSPR]; exact List.mem_append_left _ hst
       obtain ⟨pos, hsF⟩ := TF.site st hstF
       obtain ⟨hpa, hpc⟩ := hck2 st hst
-      exact parent_proc_eq CP CF hdwP hdwF hsF
+      have hfr := TF.frag st hstF
+      have hwr := TF.wid st hstF
+      rw [hpst] at hsF hfr hwr ⊢
+      exact parent_proc_eqU CP CF hdwP hdwF hsF
         (fun a ha => accOK_parent hPF (TF.acc st hstF a ha) (hpa a ha)) (TF.acc st hstF)
-        ⟨hpc, (TF.cn st hstF).2⟩ (TF.cn st hstF) (TF.frag st hstF) (TF.wid st hstF)
+        ⟨hpc, (TF.cn st hstF).2⟩ (TF.cn st hstF) hfr hwr
     have hproc' : (twinOf d parts).processes.map (instProcess2 (envF.withDecls (sF.decls.map (DeclT.toDecl (sF.val args))))
         (sF.decls.map fun dt => (dt.name, dt.elemW (sF.val args)))) =
         (SP ++ SR).map fun st => instProcess2 (envF.withDecls (sF.decls.map (DeclT.toDecl (sF.val args))))
           (sF.decls.map fun dt => (dt.name, dt.elemW (sF.val args))) st.proc := by
-      rw [show (twinOf d parts).processes = d.processes ++ parts.flatMap (·.2.2) from rfl, ← hprocF, hSPR,
+      rw [show (twinOf d parts).processes = d.processes.map PProcess.unsign ++ parts.flatMap (·.2.2) from rfl,
+        ← hprocF, hSPR,
         List.map_map]
       rfl
     simp only [PDesign.assembleH, PDesign.assemble2]

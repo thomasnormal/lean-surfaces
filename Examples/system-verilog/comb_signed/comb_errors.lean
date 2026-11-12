@@ -56,7 +56,7 @@ load_design_sv2 sg_cmp_lit_param from "Examples/system-verilog/comb_signed/neg/s
 load_design_sv2 sg_cmp_neg from "Examples/system-verilog/comb_signed/neg/sg_cmp_neg.sv.json"
 
 /--
-error: sv_structure: outside the supported fragment — site `plain#0`: a select of the signed signal `a` in a position the tactics do not read through the unsigned twin (they read a select of a signed signal, an unsigned value, IEEE 1800-2023 §11.8.1, where it is an operand of a continuous assign; a shift operand, an index and an `always_comb` body are outside the fragment)
+error: sv_structure: outside the supported fragment — site `plain#0`: a select of the signed signal `a` in a position the tactics do not read through the unsigned twin (they read a select of a signed signal, an unsigned value, IEEE 1800-2023 §11.8.1, where it is an operand of a continuous assign, the actual of a module's input port or the left operand of a shift; an index, a shift amount and an `always_comb` body are outside the fragment)
 -/
 #guard_msgs (whitespace := lax) in
 example (W : Nat) (hW : 1 ≤ W) (hR : (W : Int) < 2147483648) :

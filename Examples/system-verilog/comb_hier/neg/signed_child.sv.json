@@ -1,0 +1,293 @@
+{
+  "schema_version": "sv-0.2",
+  "language": "systemverilog",
+  "frontend": {
+    "name": "pyslang",
+    "family": "pyslang-11"
+  },
+  "mode": "symbolic",
+  "top": "signed_child",
+  "source_files": [
+    {
+      "path": "Examples/system-verilog/comb_hier/neg/signed_child.sv",
+      "sha256": "7fbda3b052493894679a62366211f7d2d46d189712d8acefd2578f9f7f7d5798"
+    }
+  ],
+  "packages": [],
+  "design": {
+    "kind": "Design",
+    "modules": [
+      {
+        "kind": "Module",
+        "span": {
+          "line": 10,
+          "col": 1,
+          "end_line": 15,
+          "end_col": 10
+        },
+        "name": "signed_child",
+        "imports": [],
+        "params": [],
+        "types": [],
+        "ports": [
+          {
+            "kind": "Port",
+            "span": {
+              "line": 11,
+              "col": 30,
+              "end_line": 11,
+              "end_col": 31
+            },
+            "name": "x",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 11,
+                      "col": 25,
+                      "end_line": 11,
+                      "end_col": 26
+                    },
+                    "value": 7,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 11,
+                      "col": 27,
+                      "end_line": 11,
+                      "end_col": 28
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 8
+            },
+            "signed": true
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 12,
+              "col": 18,
+              "end_line": 12,
+              "end_col": 19
+            },
+            "name": "y",
+            "dir": "out",
+            "width": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            }
+          }
+        ],
+        "decls": [],
+        "processes": [],
+        "generates": [
+          {
+            "kind": "Instance",
+            "span": {
+              "line": 14,
+              "col": 23,
+              "end_line": 14,
+              "end_col": 41
+            },
+            "name": "leaf",
+            "module": "signed_child_leaf",
+            "path": [],
+            "params": [],
+            "ports": [
+              {
+                "kind": "PortConn",
+                "span": {
+                  "line": 14,
+                  "col": 31,
+                  "end_line": 14,
+                  "end_col": 32
+                },
+                "port": "a",
+                "dir": "in",
+                "expr": {
+                  "kind": "Ident",
+                  "span": {
+                    "line": 14,
+                    "col": 31,
+                    "end_line": 14,
+                    "end_col": 32
+                  },
+                  "width": 8,
+                  "name": "x",
+                  "signed": true
+                }
+              },
+              {
+                "kind": "PortConn",
+                "span": {
+                  "line": 14,
+                  "col": 38,
+                  "end_line": 14,
+                  "end_col": 39
+                },
+                "port": "y",
+                "dir": "out",
+                "target": {
+                  "kind": "Ident",
+                  "span": {
+                    "line": 14,
+                    "col": 38,
+                    "end_line": 14,
+                    "end_col": 39
+                  },
+                  "width": 1,
+                  "name": "y"
+                }
+              }
+            ]
+          }
+        ],
+        "others": []
+      },
+      {
+        "kind": "Module",
+        "span": {
+          "line": 3,
+          "col": 1,
+          "end_line": 8,
+          "end_col": 10
+        },
+        "name": "signed_child_leaf",
+        "imports": [],
+        "params": [],
+        "types": [],
+        "ports": [
+          {
+            "kind": "Port",
+            "span": {
+              "line": 4,
+              "col": 30,
+              "end_line": 4,
+              "end_col": 31
+            },
+            "name": "a",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 4,
+                      "col": 25,
+                      "end_line": 4,
+                      "end_col": 26
+                    },
+                    "value": 7,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 4,
+                      "col": 27,
+                      "end_line": 4,
+                      "end_col": 28
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 8
+            },
+            "signed": true
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 5,
+              "col": 18,
+              "end_line": 5,
+              "end_col": 19
+            },
+            "name": "y",
+            "dir": "out",
+            "width": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            }
+          }
+        ],
+        "decls": [],
+        "processes": [
+          {
+            "kind": "Assign",
+            "span": {
+              "line": 7,
+              "col": 12,
+              "end_line": 7,
+              "end_col": 20
+            },
+            "target": {
+              "kind": "Ident",
+              "span": {
+                "line": 7,
+                "col": 12,
+                "end_line": 7,
+                "end_col": 13
+              },
+              "width": 1,
+              "name": "y"
+            },
+            "value": {
+              "kind": "BitSel",
+              "span": {
+                "line": 7,
+                "col": 16,
+                "end_line": 7,
+                "end_col": 20
+              },
+              "width": 1,
+              "value": {
+                "kind": "Ident",
+                "span": {
+                  "line": 7,
+                  "col": 16,
+                  "end_line": 7,
+                  "end_col": 17
+                },
+                "width": 8,
+                "name": "a",
+                "signed": true
+              },
+              "index": {
+                "kind": "Int",
+                "span": {
+                  "line": 7,
+                  "col": 18,
+                  "end_line": 7,
+                  "end_col": 19
+                },
+                "value": 7,
+                "resolved_width": 32
+              }
+            }
+          }
+        ],
+        "generates": [],
+        "others": []
+      }
+    ],
+    "others": []
+  },
+  "lean_blocks": []
+}

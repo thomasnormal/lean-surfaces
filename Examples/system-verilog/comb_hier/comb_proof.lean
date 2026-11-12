@@ -15,6 +15,11 @@ leaf `lo`'s `y`, `eq_y_1`/`eq_y_2` for the two halves of the output).
 * `wire_out_correct`: the halves with `wire` ports, the parent's output tiled by the instances' output ports: `y = ~a`.
 * `hier_param_correct`: the halves selected by `W/2` itself (`hier_param.sv`, the clean-room repro verbatim), the
   windows' bounds read with the quotient atom `W/2`: `y = a`.
+* `sel_signed_correct`, `part_signed_correct`: a bit select `x[0]` and a part select `x[3:0]` of a signed input as the
+  actual of a child's input port (the clean-room repros `sel_signed.sv`, `part_signed.sv`; refused until the twin read a
+  connection's actual through its unsigned twin): `y = x[0]`. A select is an unsigned value (IEEE 1800-2023 §11.8.1).
+* `signed_mix_correct`: a whole signed input and a part select of it as actuals, and the parent's own `assign z = x & w`
+  over the signed input: `y = x ^ {x[7:4], x[7:4]}`, `z = x & w`.
 -/
 
 open LeanModels.Sv LeanModels.Sv.CombView LeanModels.Sv.CombEq
@@ -189,5 +194,96 @@ theorem hier_param_correct (K : Nat) (hK : 1 ≤ K) (hR : (2 * K : Int) < 214748
 /-- info: 'Examples.«system-verilog».comb_hier.comb_proof.hier_param_correct' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms hier_param_correct
+
+/-- **A bit select of a signed input, through a port**: `y = x[0]` in every settled state. -/
+theorem sel_signed_correct :
+    sel_signed.sem ⊨₂ spec2 fun _ tr => ∀ (c : Nat) (st : SvState), tr[c]? = some st →
+      ∀ (u : BitVec 8), SvState.lookup st "x" = some (LVec.ofBitVec u) →
+        SvState.lookup st "y" = some (LVec.ofBitVec (BitVec.ofBool (u.getLsbD 0))) := by
+  obtain ⟨hc, ha⟩ : CombDesign sel_signed.sem ∧ Acyclic sel_signed.sem := by
+    sv_structure (rank := rippleRank (fun p => if p = 1 then 2 else if p = 2 then 1 else 0) (fun _ _ _ => 0))
+  refine Models2.of_comb_pointwise hc (fun st heqs hsh => ?_)
+  intro u hA
+  sv_equations
+  · rw [lookup_bv (W := 1) (fun k hk => by obtain rfl : k = 0 := (by omega); exact known_y_1) (by omega)]
+    congr 2
+    apply BitVec.eq_of_getLsbD_eq
+    intro i hi
+    obtain rfl : i = 0 := by omega
+    rw [XF.getLsbD_bv hi, eq_y_1, eq_leaf_y_1, eq_leaf_a_1, SvState.boolAt_ofBitVec hA (by omega)]
+    simp
+  all_goals (refine inKnown_ofBitVec hA ?_; omega)
+
+/-- info: 'Examples.«system-verilog».comb_hier.comb_proof.sel_signed_correct' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms sel_signed_correct
+
+/-- **A part select of a signed input, through a port**: the child reads bit 0 of `x[3:0]`, so `y = x[0]`. -/
+theorem part_signed_correct :
+    part_signed.sem ⊨₂ spec2 fun _ tr => ∀ (c : Nat) (st : SvState), tr[c]? = some st →
+      ∀ (u : BitVec 8), SvState.lookup st "x" = some (LVec.ofBitVec u) →
+        SvState.lookup st "y" = some (LVec.ofBitVec (BitVec.ofBool (u.getLsbD 0))) := by
+  obtain ⟨hc, ha⟩ : CombDesign part_signed.sem ∧ Acyclic part_signed.sem := by
+    sv_structure (rank := rippleRank (fun p => if p = 1 then 2 else if p = 2 then 1 else 0) (fun _ _ _ => 0))
+  refine Models2.of_comb_pointwise hc (fun st heqs hsh => ?_)
+  intro u hA
+  sv_equations
+  · rw [lookup_bv (W := 1) (fun k hk => by obtain rfl : k = 0 := (by omega); exact known_y_1) (by omega)]
+    congr 2
+    apply BitVec.eq_of_getLsbD_eq
+    intro i hi
+    obtain rfl : i = 0 := by omega
+    rw [XF.getLsbD_bv hi, eq_y_1, eq_leaf_y_1, eq_leaf_a_1 0 (by decide), SvState.boolAt_ofBitVec hA (by omega)]
+    simp
+  all_goals (refine inKnown_ofBitVec hA ?_; omega)
+
+/-- info: 'Examples.«system-verilog».comb_hier.comb_proof.part_signed_correct' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms part_signed_correct
+
+/-- **Signed reads in a parent with an instance**: through the ports `y = x ^ {x[7:4], x[7:4]}`, and the parent's own
+assign `z = x & w`. -/
+theorem signed_mix_correct :
+    signed_mix.sem ⊨₂ spec2 fun _ tr => ∀ (c : Nat) (st : SvState), tr[c]? = some st →
+      ∀ (u v : BitVec 8), SvState.lookup st "x" = some (LVec.ofBitVec u) →
+        SvState.lookup st "w" = some (LVec.ofBitVec v) →
+        SvState.lookup st "y" = some (LVec.ofBitVec (u ^^^ (u.extractLsb' 4 4 ++ u.extractLsb' 4 4))) ∧
+        SvState.lookup st "z" = some (LVec.ofBitVec (u &&& v)) := by
+  obtain ⟨hc, ha⟩ : CombDesign signed_mix.sem ∧ Acyclic signed_mix.sem := by
+    sv_structure (rank := rippleRank (fun p => if p = 3 then 2 else if p = 4 then 1 else 0) (fun _ _ _ => 0))
+  refine Models2.of_comb_pointwise hc (fun st heqs hsh => ?_)
+  intro u v hA hB
+  sv_equations
+  · have e8 : Int.natAbs 7 + 1 = 8 := rfl
+    have e4 : Int.natAbs 3 + 1 = 4 := rfl
+    have e4' : Int.toNat 4 = 4 := rfl
+    simp only [e8, e4, e4'] at *
+    refine ⟨?_, ?_⟩
+    · rw [lookup_bv known_y_1 (by omega)]
+      congr 2
+      apply BitVec.eq_of_getLsbD_eq
+      intro i hi
+      rw [XF.getLsbD_bv hi, eq_y_1 i hi, eq_leaf_y_1 i hi, eq_leaf_a_1 i hi, SvState.boolAt_ofBitVec hA hi,
+        BitVec.getLsbD_xor, BitVec.getLsbD_append]
+      by_cases h4 : i < 4
+      · simp only [h4, ↓reduceIte]
+        rw [eq_leaf_b_1 i h4, SvState.boolAt_ofBitVec hA (by omega)]
+        simp [h4]
+      · simp only [h4, ↓reduceIte]
+        rw [eq_leaf_b_1 (i - 4) (by omega), SvState.boolAt_ofBitVec hA (by omega)]
+        simp [show i - 4 < 4 by omega]
+    · rw [lookup_bv known_z_1 (by omega)]
+      congr 2
+      apply BitVec.eq_of_getLsbD_eq
+      intro i hi
+      rw [XF.getLsbD_bv hi, eq_z_1 i hi, SvState.boolAt_ofBitVec hA hi, SvState.boolAt_ofBitVec hB hi,
+        BitVec.getLsbD_and]
+  all_goals first
+    | (refine inKnown_ofBitVec hA ?_; omega)
+    | (refine inKnown_ofBitVec hB ?_; omega)
+
+/-- info: 'Examples.«system-verilog».comb_hier.comb_proof.signed_mix_correct' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms signed_mix_correct
 
 end Examples.«system-verilog».comb_hier.comb_proof

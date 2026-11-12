@@ -20,7 +20,7 @@ def main():
             "rows": [
                 {"module": "one", "file": "one.py", "provenance": "test",
                  "observed_wall": "import", "census_walls": ["import"],
-                 "nfunctions": 2, "ncalls": 3},
+                 "nfunctions": 2, "ncalls": 3, "nmatched": 3, "verdict": "REFUSED"},
                 {"module": "two", "file": "two.py", "provenance": "test",
                  "observed_wall": "class-creation", "census_walls": ["class-creation"],
                  "nfunctions": 1, "ncalls": 1},
@@ -33,6 +33,8 @@ def main():
         assert result["rows"] == 2
         assert [item["wall"] for item in result["ranking"]] == ["class-creation", "import"]
         assert result["ranking"][0]["sole"] == 1
+        by_wall = {item["wall"]: item for item in result["ranking"]}
+        assert by_wall["import"]["potential_verified_rows"] == 1
         filtered = Path(directory) / "filtered.json"
         subprocess.run([sys.executable, str(SCRIPT), "--provenance", "test",
                         "--json", str(filtered), str(path)],

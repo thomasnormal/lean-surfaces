@@ -9,15 +9,15 @@ The call denominator is lower than the first run because the oracle now records 
 The observed refusal ranking is measured by both presence and `sole` census walls. It was generated from the complete survey JSON with
 `python3 harness/library_rank.py --provenance census:library --json /tmp/library-rank-current.json /tmp/library-current.json`.
 The price columns are the measured surface in the rows that fired each wall, not a prediction that every row will flip:
-modules, public functions, and driven calls.
+modules, public functions, driven calls, matched calls, and rows that would become `VERIFIED` if that wall alone were removed.
 
-| Wall | Present | Sole | Modules | Public functions | Driven calls |
-|---|---:|---:|---:|---:|---:|
-| `import` | 30 | 7 | 30 | 97 | 560 |
-| `accelerator-unmeasured` | 1 | 1 | 1 | 0 | 0 |
-| `node:DictComp` | 1 | 1 | 1 | 3 | 24 |
-| `class-creation` | 62 | 0 | 62 | 383 | 2,015 |
-| `definition-order` | 34 | 0 | 34 | 284 | 1,288 |
+| Wall | Present | Sole | Modules | Public functions | Driven calls | Matched calls | Potential VERIFIED |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| `import` | 30 | 7 | 30 | 97 | 560 | 142 | 1 |
+| `accelerator-unmeasured` | 1 | 1 | 1 | 0 | 0 | 0 | 0 |
+| `node:DictComp` | 1 | 1 | 1 | 3 | 24 | 16 | 0 |
+| `class-creation` | 62 | 0 | 62 | 383 | 2,015 | 183 | 1 |
+| `definition-order` | 34 | 0 | 34 | 284 | 1,288 | 162 | 0 |
 
 The remaining observed messages are one accelerator-domain wall, one heap `+` wall, one unsupported `try/except` wall, one missing `frozenset` builtin, and one list `.extend` wall. They remain recorded per module in the JSON result and are not silently omitted from the ranking.
 

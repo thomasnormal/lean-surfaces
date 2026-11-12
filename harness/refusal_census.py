@@ -1141,6 +1141,16 @@ WHITELIST_CLASS.update({
     'sorted_recursion::sorted_rev_bad_type': 'builtin.sorted',
     'sorted_recursion::sorted_effect': 'builtin.sorted',
     'sorted_recursion::sorted_bad_keyword_noniterable': 'builtin.sorted',
+    'abc_internal_attr::probe': 'attribute.internal-boundary',
+    'inspect_doc_boundary::probe': 'render.builtin-documentation',
+    'main_import_boundary::probe': 'import.main-boundary',
+    'opaque_import_lab::opaque_attribute': 'import.opaque-observation',
+    'opaque_import_lab::opaque_call': 'import.opaque-observation',
+    'opaque_import_lab::opaque_truth': 'import.opaque-observation',
+    'opaque_import_lab::opaque_print': 'import.opaque-observation',
+    'opaque_import_lab::opaque_argument': 'import.opaque-observation',
+    'opaque_import_lab::unallowlisted_import': 'import.allowlist',
+    'str_recursion::invalid': 'builtin.str-arity',
 })
 
 # The two-model window is CLOSED. `MONO_OPENED` listed rows the trunk refused
@@ -1182,6 +1192,8 @@ SCRIPT_CLASS.update({
     'namedtuple_import_order': 'script.definition-order',
     'star_script': 'starred.display',
     'yield_global_target': 'yield.assignment',
+    'decimal_accelerator': 'accelerator.domain',
+    'dictcomp_boundary': 'node.DictComp',
 })
 
 # ---------------------------------------------------------------------------

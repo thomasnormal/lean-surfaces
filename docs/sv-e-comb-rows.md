@@ -181,3 +181,7 @@ cycles.  It is an E-MATCH and does not change the frozen migration count.
 The one-hot procedural decoder, `onehot_dec`, runs from its source-shaped
 envelope and matches Icarus Verilog 13.0 and Xcelium 24.03-s004 for all 12
 cycles.  It is an E-MATCH and does not change the frozen migration count.
+
+The four-state if-selection row, `wpg_if_x`, runs from its source-shaped
+envelope and matches Icarus Verilog 13.0 and Xcelium 24.03-s004 for all 21
+cycles.  It is an E-MATCH and does not change the frozen migration count.

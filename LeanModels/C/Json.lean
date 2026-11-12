@@ -137,7 +137,7 @@ partial def parseTypeNode (j : Json) : Except String TypeNode := do
   let kind ← getStr j "kind"
   withCtx kind do
     let inner : Except String TypeNode := match getOptNode j "inner" with
-      | none => .error "missing 'inner'"
+      | none => .ok (.unsupported kind "missing inner")
       | some v => parseTypeNode v
     match kind with
     | "BuiltinType" => return .builtin (← getStr j "name")
@@ -290,7 +290,7 @@ partial def parseDecl (j : Json) : Except String Decl := do
     | "EmptyDecl" => return .empty span
     | "Unsupported" =>
         return .unsupported (← getStr j "c_kind") (← getStr j "text") span
-    | other => throw s!"unknown declaration kind {other.quote}"
+    | other => return .unsupported other "unmodeled declaration" span
 
 partial def parseStmt (j : Json) : Except String Stmt := do
   let kind ← getStr j "kind"

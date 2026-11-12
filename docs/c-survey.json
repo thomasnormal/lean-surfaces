@@ -1,22 +1,20 @@
 {
  "by_corpus": {
   "c-testsuite/single-exec": {
-   "not-ingested": 2,
    "not-parsed": 1,
    "passed": 151,
    "refused-libc": 5,
    "refused-ub": 3,
-   "refused-unsupported": 56,
+   "refused-unsupported": 58,
    "timeout": 2
   },
   "gcc.c-torture/execute": {
-   "not-ingested": 12,
    "not-parsed": 321,
    "oracle-tests-compiler": 1,
    "passed": 647,
    "refused-libc": 42,
    "refused-ub": 36,
-   "refused-unsupported": 811,
+   "refused-unsupported": 823,
    "timeout": 48
   },
   "gcc.c23-run": {
@@ -29,13 +27,12 @@
  },
  "corpus": "C1-C3 (gcc torture, c-testsuite, gcc c23-run)",
  "counts": {
-  "not-ingested": 14,
   "not-parsed": 350,
   "oracle-tests-compiler": 1,
   "passed": 799,
   "refused-libc": 48,
   "refused-ub": 40,
-  "refused-unsupported": 912,
+  "refused-unsupported": 926,
   "timeout": 50
  },
  "dynamic_wall_ranking": [
@@ -915,6 +912,7 @@
   {
    "files": [
     "00087.c",
+    "20050107-1.c",
     "20081103-1.c",
     "20100708-1.c",
     "20171008-1.c",
@@ -936,8 +934,8 @@
     "pr89195.c",
     "pr97764.c"
    ],
-   "present": 21,
-   "sole": 21,
+   "present": 22,
+   "sole": 22,
    "wall": "unsupported:no layout for declared type 'struct S'"
   },
   {
@@ -966,27 +964,6 @@
    "present": 20,
    "sole": 20,
    "wall": "unsupported:pointer bit-cast across incompatible effective types"
-  },
-  {
-   "files": [
-    "00078.c",
-    "00198.c",
-    "20011008-3.c",
-    "20050107-1.c",
-    "20050119-1.c",
-    "20050119-2.c",
-    "20071030-1.c",
-    "20090113-2.c",
-    "20090113-3.c",
-    "20090527-1.c",
-    "930408-1.c",
-    "builtin-types-compatible-p.c",
-    "enum-1.c",
-    "struct-cpy-1.c"
-   ],
-   "present": 14,
-   "sole": 14,
-   "wall": "ingestion"
   },
   {
    "files": [
@@ -1417,6 +1394,16 @@
   },
   {
    "files": [
+    "20050119-1.c",
+    "20050119-2.c",
+    "pr71700.c"
+   ],
+   "present": 3,
+   "sole": 3,
+   "wall": "unsupported:no layout for declared type 'struct S[2]'"
+  },
+  {
+   "files": [
     "00140.c",
     "bf-pack-1.c",
     "gcc/testsuite/gcc.dg/c23-tag-alias-7.c"
@@ -1566,6 +1553,15 @@
    "present": 2,
    "sole": 2,
    "wall": "unsupported:no layout for declared type 'T'"
+  },
+  {
+   "files": [
+    "20090113-2.c",
+    "20090113-3.c"
+   ],
+   "present": 2,
+   "sole": 2,
+   "wall": "unsupported:no layout for declared type 'bitmap_iterator'"
   },
   {
    "files": [
@@ -2006,6 +2002,14 @@
   },
   {
    "files": [
+    "builtin-types-compatible-p.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "unsupported:TypeTraitExpr"
+  },
+  {
+   "files": [
     "scope-1.c"
    ],
    "present": 1,
@@ -2107,6 +2111,14 @@
    "present": 1,
    "sole": 1,
    "wall": "unsupported:no layout for declared type 'A0'"
+  },
+  {
+   "files": [
+    "20011008-3.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "unsupported:no layout for declared type 'DB_TXNLIST'"
   },
   {
    "files": [
@@ -2307,6 +2319,14 @@
    "present": 1,
    "sole": 1,
    "wall": "unsupported:no layout for declared type 'char[argc]'"
+  },
+  {
+   "files": [
+    "20071030-1.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "unsupported:no layout for declared type 'client_t'"
   },
   {
    "files": [
@@ -2662,14 +2682,6 @@
   },
   {
    "files": [
-    "pr71700.c"
-   ],
-   "present": 1,
-   "sole": 1,
-   "wall": "unsupported:no layout for declared type 'struct S[2]'"
-  },
-  {
-   "files": [
     "pr58570.c"
    ],
    "present": 1,
@@ -2774,6 +2786,14 @@
   },
   {
    "files": [
+    "struct-cpy-1.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "unsupported:no layout for declared type 'struct tty_driver'"
+  },
+  {
+   "files": [
     "921113-1.c"
    ],
    "present": 1,
@@ -2819,6 +2839,14 @@
    "present": 1,
    "sole": 1,
    "wall": "unsupported:no layout for declared type 'three_char_t'"
+  },
+  {
+   "files": [
+    "enum-1.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "unsupported:no layout for declared type 'token'"
   },
   {
    "files": [
@@ -2883,6 +2911,14 @@
    "present": 1,
    "sole": 1,
    "wall": "unsupported:no layout for declared type 'union u'"
+  },
+  {
+   "files": [
+    "20090527-1.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "unsupported:no layout for declared type 'unit_flags'"
   },
   {
    "files": [
@@ -3003,6 +3039,14 @@
    "present": 1,
    "sole": 1,
    "wall": "unsupported:no layout for parameter type 'int *restrict'"
+  },
+  {
+   "files": [
+    "00078.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "unsupported:non-object declaration in a block"
   },
   {
    "files": [
@@ -3862,6 +3906,14 @@
   },
   {
    "files": [
+    "930408-1.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "unsupported:unbound declaration 'id36' (name 's')"
+  },
+  {
+   "files": [
     "bitfld-3.c"
    ],
    "present": 1,
@@ -4086,6 +4138,14 @@
   },
   {
    "files": [
+    "00198.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "unsupported:unknown enum declaration 'id513' (name 'a')"
+  },
+  {
+   "files": [
     "gcc/testsuite/gcc.dg/c23-parm-omit-3.c"
    ],
    "present": 1,
@@ -4094,8 +4154,8 @@
   }
  ],
  "manifest_hash": "1de1a60c299d5bb51dae7ca001b0a008010cad0b25670cde2090c08bfc1a84ce",
- "measured_at_utc": "2026-11-12T12:41:00Z",
- "measured_commit": "9c69ae1c1491d8dbfa56a7de7c31404dad353c55",
+ "measured_at_utc": "2026-11-12T12:48:42Z",
+ "measured_commit": "04e05fa491c9104d03fdbdf1edc98eb20bd220f4",
  "pin": null,
  "rows": [
   {
@@ -4932,15 +4992,15 @@
   },
   {
    "corpus": "c-testsuite/single-exec",
-   "detail": "envelope: FunctionDecl: CompoundStmt: DeclStmt: FunctionDecl: unknown declaration kind \"FunctionDecl\"",
-   "dynamic_wall": "ingestion",
+   "detail": "non-object declaration in a block",
+   "dynamic_wall": "unsupported:non-object declaration in a block",
    "manifest_status": "parsed",
    "name": "00078.c",
    "sha256": "3162a49b4037e51775cefc0b94eb005327573853b112fbb2b640d9b17b7797db",
    "static_walls": [
     "type-layout"
    ],
-   "verdict": "not-ingested"
+   "verdict": "refused-unsupported"
   },
   {
    "corpus": "c-testsuite/single-exec",
@@ -6392,8 +6452,8 @@
   },
   {
    "corpus": "c-testsuite/single-exec",
-   "detail": "envelope: FunctionDecl: CompoundStmt: DeclStmt: TypedefDecl: ElaboratedType: missing 'inner'",
-   "dynamic_wall": "ingestion",
+   "detail": "unknown enum declaration 'id513' (name 'a')",
+   "dynamic_wall": "unsupported:unknown enum declaration 'id513' (name 'a')",
    "manifest_status": "parsed",
    "name": "00198.c",
    "sha256": "d63ae893ae0fc3214d7afeaaccb22b668395f98bcbcb613f9e55f13405d13d2c",
@@ -6402,7 +6462,7 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "not-ingested"
+   "verdict": "refused-unsupported"
   },
   {
    "corpus": "c-testsuite/single-exec",
@@ -8094,15 +8154,15 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "envelope: TypedefDecl: ElaboratedType: missing 'inner'",
-   "dynamic_wall": "ingestion",
+   "detail": "no layout for declared type 'DB_TXNLIST'",
+   "dynamic_wall": "unsupported:no layout for declared type 'DB_TXNLIST'",
    "manifest_status": "parsed",
    "name": "20011008-3.c",
    "sha256": "9d02813ffe75d0e68f1ceda255e57a77991269745f1e39c940111be2200b85c5",
    "static_walls": [
     "type-layout"
    ],
-   "verdict": "not-ingested"
+   "verdict": "refused-unsupported"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -10326,8 +10386,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "envelope: TypedefDecl: ElaboratedType: missing 'inner'",
-   "dynamic_wall": "ingestion",
+   "detail": "no layout for declared type 'struct S'",
+   "dynamic_wall": "unsupported:no layout for declared type 'struct S'",
    "manifest_status": "parsed",
    "name": "20050107-1.c",
    "sha256": "6d87852f44567f8935cbc519f7b170652fcbfac249dc09c202bf3794c16038b1",
@@ -10335,7 +10395,7 @@
     "type-layout",
     "unsupported:ModeAttr"
    ],
-   "verdict": "not-ingested"
+   "verdict": "refused-unsupported"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -10349,8 +10409,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "envelope: TypedefDecl: ElaboratedType: missing 'inner'",
-   "dynamic_wall": "ingestion",
+   "detail": "no layout for declared type 'struct S[2]'",
+   "dynamic_wall": "unsupported:no layout for declared type 'struct S[2]'",
    "manifest_status": "parsed",
    "name": "20050119-1.c",
    "sha256": "4c279df792eb5a96540858429ae3686b5d3008cc34075e6d0434a9c014147350",
@@ -10358,12 +10418,12 @@
     "type-layout",
     "unsupported:ModeAttr"
    ],
-   "verdict": "not-ingested"
+   "verdict": "refused-unsupported"
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "envelope: TypedefDecl: ElaboratedType: missing 'inner'",
-   "dynamic_wall": "ingestion",
+   "detail": "no layout for declared type 'struct S[2]'",
+   "dynamic_wall": "unsupported:no layout for declared type 'struct S[2]'",
    "manifest_status": "parsed",
    "name": "20050119-2.c",
    "sha256": "75fbb2275508bec55ac52616771ac22dbdfd8afa679a5472a9e95b5519d3810b",
@@ -10371,7 +10431,7 @@
     "type-layout",
     "unsupported:ModeAttr"
    ],
-   "verdict": "not-ingested"
+   "verdict": "refused-unsupported"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -11039,8 +11099,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "envelope: TypedefDecl: ElaboratedType: missing 'inner'",
-   "dynamic_wall": "ingestion",
+   "detail": "no layout for declared type 'client_t'",
+   "dynamic_wall": "unsupported:no layout for declared type 'client_t'",
    "manifest_status": "parsed",
    "name": "20071030-1.c",
    "sha256": "a149547a4bb6485847d48252da6eaf6d3b2e8185b74b062ac88bd6bcc23d79c2",
@@ -11050,7 +11110,7 @@
     "libc-call",
     "type-layout"
    ],
-   "verdict": "not-ingested"
+   "verdict": "refused-unsupported"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -11406,27 +11466,27 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "envelope: TypedefDecl: PointerType: missing 'inner'",
-   "dynamic_wall": "ingestion",
+   "detail": "no layout for declared type 'bitmap_iterator'",
+   "dynamic_wall": "unsupported:no layout for declared type 'bitmap_iterator'",
    "manifest_status": "parsed",
    "name": "20090113-2.c",
    "sha256": "ac2570db7dbaa57914a5c0fad053b6141161f7a50fe713fd9dfab06244b66781",
    "static_walls": [
     "type-layout"
    ],
-   "verdict": "not-ingested"
+   "verdict": "refused-unsupported"
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "envelope: TypedefDecl: PointerType: missing 'inner'",
-   "dynamic_wall": "ingestion",
+   "detail": "no layout for declared type 'bitmap_iterator'",
+   "dynamic_wall": "unsupported:no layout for declared type 'bitmap_iterator'",
    "manifest_status": "parsed",
    "name": "20090113-3.c",
    "sha256": "44b601da210e46804e3329598c2d3d2dfe6160b1ab32b8d3fda60c3928d35f6c",
    "static_walls": [
     "type-layout"
    ],
-   "verdict": "not-ingested"
+   "verdict": "refused-unsupported"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -11452,15 +11512,15 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "envelope: TypedefDecl: ElaboratedType: missing 'inner'",
-   "dynamic_wall": "ingestion",
+   "detail": "no layout for declared type 'unit_flags'",
+   "dynamic_wall": "unsupported:no layout for declared type 'unit_flags'",
    "manifest_status": "parsed",
    "name": "20090527-1.c",
    "sha256": "f63fd94d342df801f9bec7a19e900c5766d043eef8ebded778b654075f499969",
    "static_walls": [
     "type-layout"
    ],
-   "verdict": "not-ingested"
+   "verdict": "refused-unsupported"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -13050,15 +13110,15 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "envelope: TypedefDecl: ElaboratedType: missing 'inner'",
-   "dynamic_wall": "ingestion",
+   "detail": "unbound declaration 'id36' (name 's')",
+   "dynamic_wall": "unsupported:unbound declaration 'id36' (name 's')",
    "manifest_status": "parsed",
    "name": "930408-1.c",
    "sha256": "a5b688398261a7e62c1a5e74bfe0e72cc77dc64b7d7d4b5cd4dba667b360af50",
    "static_walls": [
     "type-layout"
    ],
-   "verdict": "not-ingested"
+   "verdict": "refused-unsupported"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -15990,8 +16050,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "envelope: TypedefDecl: ElaboratedType: missing 'inner'",
-   "dynamic_wall": "ingestion",
+   "detail": "out of tier: TypeTraitExpr",
+   "dynamic_wall": "unsupported:TypeTraitExpr",
    "manifest_status": "parsed",
    "name": "builtin-types-compatible-p.c",
    "sha256": "ebc2224af44ed651ecc7f1722256deb1519260bd5789e7e042ead0ecad27fef7",
@@ -15999,7 +16059,7 @@
     "type-layout",
     "unsupported:TypeTraitExpr"
    ],
-   "verdict": "not-ingested"
+   "verdict": "refused-unsupported"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -18017,13 +18077,13 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "envelope: TypedefDecl: ElaboratedType: missing 'inner'",
-   "dynamic_wall": "ingestion",
+   "detail": "no layout for declared type 'token'",
+   "dynamic_wall": "unsupported:no layout for declared type 'token'",
    "manifest_status": "parsed",
    "name": "enum-1.c",
    "sha256": "e89e9f7e3f9ab5129e43cf13e82568c05dca736cb33231b806045292efb57b86",
    "static_walls": [],
-   "verdict": "not-ingested"
+   "verdict": "refused-unsupported"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -29252,8 +29312,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "envelope: FunctionDecl: CompoundStmt: DeclStmt: FunctionDecl: unknown declaration kind \"FunctionDecl\"",
-   "dynamic_wall": "ingestion",
+   "detail": "no layout for declared type 'struct tty_driver'",
+   "dynamic_wall": "unsupported:no layout for declared type 'struct tty_driver'",
    "manifest_status": "parsed",
    "name": "struct-cpy-1.c",
    "sha256": "ad4e5c5064447a67ceee351e34d4b5ce41d5eb632d53df6f0e6f413646e6a2e1",
@@ -29261,7 +29321,7 @@
     "type-layout",
     "unsupported:AlignedAttr"
    ],
-   "verdict": "not-ingested"
+   "verdict": "refused-unsupported"
   },
   {
    "corpus": "gcc.c-torture/execute",

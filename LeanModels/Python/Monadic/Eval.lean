@@ -373,6 +373,14 @@ def iterValues (K : Kont) (m : Module) (fname : String) (guardGen : Bool) :
       | Option.none => refuse danglingMsg
   | v => raisePy (.typeError s!"'{v.typeName}' object is not iterable")
 
+/-! The immediate range iterator is the same value worker for every draining
+consumer. This equation closes the trunk/runner split at the range boundary;
+heap-backed cursors remain stateful and use `stepIter`. -/
+theorem iterValues_rangeVals (K : Kont) (m : Module) (fname : String)
+    (guardGen : Bool) (lo hi step : RangeBound) :
+    iterValues K m fname guardGen (.rangeV lo hi step) =
+      liftRes (rangeVals lo.toInt hi.toInt step.toInt) := rfl
+
 /-- The sentinel spelling of `iter` first requires a callable.  The tier has
 no `callable_iterator`, but it can still answer the faithful error for a
 receiver whose heap kind is known to be non-callable.  Genuine closures stay

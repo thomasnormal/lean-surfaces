@@ -1759,5 +1759,8 @@
   {"file": "harness/richcompare_bool.py", "function": "nested_equality", "args": [[]], "expect": "match", "note": "Container equality delegates element probes to RichCompareBool."},
   {"file": "harness/hashkey_probe.py", "function": "bool_int_collision", "args": [[]], "expect": "match", "note": "Hash-key lookup applies CPython bool/int equality and insertion order."},
   {"file": "harness/hashkey_probe.py", "function": "tuple_collision", "args": [[]], "expect": "match", "note": "Tuple hash/equality probes use the same finite key normal form."},
-  {"file": "harness/hashkey_probe.py", "function": "unhashable_probe", "args": [[]], "expect": "match", "note": "An unhashable list probe raises the CPython TypeError after lookup admission."}
+  {"file": "harness/hashkey_probe.py", "function": "unhashable_probe", "args": [[]], "expect": "match", "note": "An unhashable list probe raises the CPython TypeError after lookup admission."},
+  {"file": "harness/iteration_probe.py", "function": "range_sum", "args": [[]], "expect": "match", "note": "Range iteration uses the shared immediate range worker."},
+  {"file": "harness/iteration_probe.py", "function": "tuple_sum", "args": [[]], "expect": "match", "note": "Tuple iteration preserves order through the shared value iterator."},
+  {"file": "harness/iteration_probe.py", "function": "live_list_growth", "args": [[]], "expect": "match", "note": "The heap list cursor observes growth as CPython listiterator does."}
 ]

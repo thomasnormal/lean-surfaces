@@ -27,4 +27,15 @@ theorem sva_caseEqual_xread_right {a b b' : LVec}
   cases h
   rfl
 
+theorem sva_signalAt_xread {state state' : SvState} {name : String}
+    {source concrete : LVec}
+    (hsource : SvState.lookup state name = some source)
+    (hconcrete : SvState.lookup state' name = some concrete)
+    (hknown : source.bits.toList.all Logic.isKnown = true)
+    (hread : XRead source concrete) :
+    signalAt [state] 0 name = signalAt [state'] 0 name := by
+  have heq := xRead_eq_of_known hknown hread
+  cases heq
+  simp [signalAt, hsource, hconcrete]
+
 end LeanModels.Sv.Kernel

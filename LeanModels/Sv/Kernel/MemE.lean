@@ -243,6 +243,7 @@ def memEReadsArray : PExpr → Bool
   | .binary _ a b | .bitSel a b | .repl a b => memEReadsArray a || memEReadsArray b
   | .partSel a b c | .ternary a b c => memEReadsArray a || memEReadsArray b || memEReadsArray c
   | .concat xs => memEReadsArrayList xs
+  | .functionCall .. => false
   | .lit _ | .fill _ | .ident _ | .paramRef .. | .genvarRef _ | .enumRef .. | .int _
   | .unsupported .. => false
 
@@ -324,6 +325,7 @@ def memEReadExprs : PExpr → List PExpr
   | .partSel a b c | .ternary a b c =>
       memEReadExprs a ++ memEReadExprs b ++ memEReadExprs c
   | .concat xs => memEReadExprsList xs
+  | .functionCall .. => []
   | .lit _ | .fill _ | .paramRef .. | .genvarRef _ | .enumRef .. | .int _
   | .unsupported .. => []
 

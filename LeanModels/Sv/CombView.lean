@@ -615,6 +615,7 @@ def _root_.LeanModels.Sv.PExpr.consts : PExpr → List String × List Aff
   | .resize _ a => a.consts
   | .repl c _ => ((repAff c).names, [repAff c])
   | .concat ps => (ps.flatMap repNames, ps.flatMap repCount)
+  | .functionCall .. => ([], [])
   | _ => ([], [])
 
 theorem consts_eq : ∀ v : PExpr, v.consts = (v.cnames, v.rcounts)
@@ -627,6 +628,7 @@ theorem consts_eq : ∀ v : PExpr, v.consts = (v.cnames, v.rcounts)
   | .resize _ a => by simp only [PExpr.consts, PExpr.cnames, PExpr.rcounts, consts_eq a]
   | .repl c _ => by simp only [PExpr.consts, PExpr.cnames, PExpr.rcounts]
   | .concat ps => by simp only [PExpr.consts, PExpr.cnames, PExpr.rcounts]
+  | .functionCall .. => by simp [PExpr.consts, PExpr.cnames, PExpr.rcounts]
   | .lit _ | .fill _ | .ident _ | .bitSel .. | .partSel .. | .arrayElem .. | .arrayPart .. | .paramRef .. | .genvarRef _
   | .enumRef .. | .int _ | .sysCall .. | .cast .. | .signedResize .. | .squash2 .. | .unsupported .. => by
       simp [PExpr.consts, PExpr.cnames, PExpr.rcounts]
@@ -1332,6 +1334,7 @@ def noConst : PExpr → Bool
   | .ternary c t e => noConst c && noConst t && noConst e
   | .resize _ a => noConst a
   | .repl .. => false
+  | .functionCall .. => false
   | .concat ps => ps.all fun p => match p with | .repl .. => false | _ => true
   | _ => true
 
@@ -1370,6 +1373,7 @@ theorem noConst_spec : ∀ v : PExpr, noConst v = true → v.cnames = [] ∧ v.r
         cases p <;> first | exact ⟨rfl, rfl⟩ | (simp at this; done)
       exact ⟨flatMap_nil_of_all repNames ps fun p hp => (key p hp).1,
         flatMap_nil_of_all repCount ps fun p hp => (key p hp).2⟩
+  | .functionCall .., h => by simp [noConst] at h
   | .lit _, _ | .fill _, _ | .ident _, _ | .bitSel .., _ | .partSel .., _ | .arrayElem .., _ | .arrayPart .., _
   | .paramRef .., _ | .genvarRef _, _ | .enumRef .., _ | .int _, _ | .sysCall .., _ | .cast .., _
   | .signedResize .., _ | .squash2 .., _ | .unsupported .., _ => by

@@ -73161,6 +73161,16 @@
       }
     ],
     "refusal": "EmptyMemberSymbol:EmptyMember"
+  },
+  {
+    "name": "array_index_e",
+    "example": "sem2/array_index_e",
+    "top": "array_index_e",
+    "params": {"N": 4},
+    "signals": ["i", "y"],
+    "stimulus": [{"i": "00"}, {"i": "01"}, {"i": "10"}, {"i": "11"}, {"i": "x0"}],
+    "refusal": "UnpackedDecl:memory",
+    "measured": "2026-11-12: Icarus Verilog 13.0 and Xcelium 24.03-s004 both read xxxxxxxx for i=00,01,10,11,x0; the source-shaped ArraySel is retained, while ordinary E refuses the unpacked memory declaration rather than flattening it."
   }
   ]
 }

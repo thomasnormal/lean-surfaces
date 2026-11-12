@@ -429,6 +429,9 @@ structure Ctx where
   enumIds : List (DeclarationId × Int) := []
   layout : Layout := Layout.unknown
   call : CallHandler := noCalls
+  /-- Statement-layer aggregate initialization for compound literals. -/
+  compoundInit : Nat → Env → IdEnv → Layout → Ptr → CType → Expr → EvalM Unit :=
+    fun _ _ _ _ _ _ _ => refuseUnsupported "compound literal initializer callback unavailable"
 
 /-! ## §6.5.14p3 — scalar truth
 
@@ -771,7 +774,15 @@ def evalLValue (ctx : Ctx) : Expr → EvalM Ptr
   | .unop op sub _ _ _ =>
       if op == "*" then (do let v ← evalExpr ctx sub; asPtr v)
       else refuseUnsupported s!"unary '{op}' is not an lvalue"
-  | .compoundLit .. => refuseUnsupported "compound literal (inch 4: it needs an object)"
+  | .compoundLit init ty _ => do
+      match ctx.layout.size ty with
+      | none => refuseUnsupported s!"no layout for compound literal type '{ty}'"
+      | some sz => do
+          let m ← get
+          let (m', o) := m.alloc .automatic sz (some ty)
+          set m'
+          ctx.compoundInit 64 ctx.env ctx.idEnv ctx.layout (Ptr.toObject o) ty init
+          pure (Ptr.toObject o)
   | e => refuseUnsupported s!"not an lvalue: {e.kindName}"
   termination_by e => 2 * e.size + 1
   decreasing_by all_goals (simp_wf <;> omega)
@@ -779,6 +790,15 @@ def evalLValue (ctx : Ctx) : Expr → EvalM Ptr
 /-- §6.5 — an expression in VALUE position. -/
 def evalExpr (ctx : Ctx) : Expr → EvalM CVal
   | .paren sub _ _ => evalExpr ctx sub
+  | .compoundLit init ty _ => do
+      match ctx.layout.size ty with
+      | none => refuseUnsupported s!"no layout for compound literal type '{ty}'"
+      | some sz => do
+          let m ← get
+          let (m', o) := m.alloc .automatic sz (some ty)
+          set m'
+          ctx.compoundInit 64 ctx.env ctx.idEnv ctx.layout (Ptr.toObject o) ty init
+          pure (CVal.ptr (Ptr.toObject o))
 
   -- ===== §6.3 — the conversion lattice, all eight castKinds =====
   | .implicitCast ck sub ty _
@@ -1030,7 +1050,6 @@ def evalExpr (ctx : Ctx) : Expr → EvalM CVal
   | .initList .. => refuseUnsupported "initializer list (inch 4)"
   | .arrayInitList .. => refuseUnsupported "initializer list in value position"
   | .implicitValueInit .. => refuseUnsupported "implicit value initialization in value position"
-  | .compoundLit .. => refuseUnsupported "compound literal (inch 4)"
   | .unsupported k _ _ => refuseUnsupported s!"out of tier: {k}"
   termination_by e => 2 * e.size + 1
   decreasing_by

@@ -298,6 +298,12 @@ def initMembers : Nat → Ctx → Ptr → CType → List (String × CType) → L
 
 end
 
+/-! Install the statement-layer initializer callback used by compound
+literals in the expression evaluator. -/
+def Ctx.withCompoundInit (ctx : Ctx) : Ctx :=
+  { ctx with compoundInit := fun fuel env ids layout p ty e =>
+      initObject fuel { ctx with env := env, idEnv := ids, layout := layout } p ty e }
+
 /-! ## §6.8.7.1 — `goto`, and why a label search is enough
 
 Measured: the corpus's **7 `goto`s reach exactly 3 labels**
@@ -741,9 +747,9 @@ def callFn : Nat → Program → LeanModels.C.FunctionDefn → List CVal → Exe
         -- and the parameters are bound ON TOP of them, so a parameter that
         -- shadows a global wins by being consed later.
         let ctx0 : Ctx :=
-          { env := prog.globals, idEnv := prog.globalIds, enums := prog.enums,
-            enumIds := prog.enumIds, layout := prog.layout,
-            call := handler }
+          ({ env := prog.globals, idEnv := prog.globalIds, enums := prog.enums,
+             enumIds := prog.enumIds, layout := prog.layout,
+             call := handler } : Ctx).withCompoundInit
         let ctx ← bindParams prog.layout ctx0 f.params args
         let flow ← execStmt fuel ctx body
         let m₁ ← get

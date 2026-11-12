@@ -461,7 +461,7 @@ def setupGlobalsWithIds (fuel : Nat) (lay : Layout) :
             | some "extern", _ => setupGlobalsWithIds fuel lay ds acc ids'
             | _, none => setupGlobalsWithIds fuel lay ds acc ids'
             | _, some e => do
-                initObject fuel { env := acc, idEnv := ids', layout := lay }
+                initObject fuel ({ env := acc, idEnv := ids', layout := lay } : Ctx).withCompoundInit
                   (Ptr.toObject o) ty e
                 setupGlobalsWithIds fuel lay ds acc ids'
         | none =>
@@ -484,7 +484,7 @@ def setupGlobalsWithIds (fuel : Nat) (lay : Layout) :
                   let m ← get
                   let (m', o) := m.alloc .static_ sz (some ty)
                   set m'
-                  initObject fuel { env := acc, idEnv := ids, layout := lay }
+                  initObject fuel ({ env := acc, idEnv := ids, layout := lay } : Ctx).withCompoundInit
                     (Ptr.toObject o) ty e
                   setupGlobalsWithIds fuel lay ds ((nm, o) :: acc)
                     (match declaration with
@@ -523,7 +523,7 @@ def setupStaticsWithIds (fuel : Nat) (lay : Layout) :
             match init with
             | none => setupStaticsWithIds fuel lay ds acc ids'
             | some e => do
-                initObject fuel { env := acc, idEnv := ids', layout := lay }
+                initObject fuel ({ env := acc, idEnv := ids', layout := lay } : Ctx).withCompoundInit
                   (Ptr.toObject o) ty e
                 setupStaticsWithIds fuel lay ds acc ids'
     | .var none _ _ _ _ _ _ => setupStaticsWithIds fuel lay ds acc ids

@@ -3,19 +3,19 @@
   "c-testsuite/single-exec": {
    "not-ingested": 5,
    "not-parsed": 1,
-   "passed": 109,
+   "passed": 110,
    "refused-libc": 8,
    "refused-ub": 2,
-   "refused-unsupported": 93,
+   "refused-unsupported": 92,
    "timeout": 2
   },
   "gcc.c-torture/execute": {
    "not-ingested": 19,
    "not-parsed": 321,
-   "passed": 513,
+   "passed": 514,
    "refused-libc": 120,
    "refused-ub": 30,
-   "refused-unsupported": 871,
+   "refused-unsupported": 870,
    "timeout": 44
   },
   "gcc.c23-run": {
@@ -31,10 +31,10 @@
  "counts": {
   "not-ingested": 25,
   "not-parsed": 350,
-  "passed": 623,
+  "passed": 625,
   "refused-libc": 130,
   "refused-ub": 33,
-  "refused-unsupported": 1007,
+  "refused-unsupported": 1005,
   "timeout": 46
  },
  "dynamic_wall_ranking": [
@@ -638,6 +638,72 @@
   },
   {
    "files": [
+    "00072.c",
+    "00073.c",
+    "20000419-1.c",
+    "20000706-1.c",
+    "20000706-2.c",
+    "20000706-5.c",
+    "20000707-1.c",
+    "20000717-1.c",
+    "20000717-5.c",
+    "20000819-1.c",
+    "20001024-1.c",
+    "20020215-1.c",
+    "20020810-1.c",
+    "20020920-1.c",
+    "20021118-1.c",
+    "20030613-1.c",
+    "20030914-1.c",
+    "20030914-2.c",
+    "20040703-1.c",
+    "20040707-1.c",
+    "20050713-1.c",
+    "20050826-2.c",
+    "20071202-1.c",
+    "931004-1.c",
+    "931004-10.c",
+    "931004-11.c",
+    "931004-12.c",
+    "931004-13.c",
+    "931004-14.c",
+    "931004-2.c",
+    "931004-3.c",
+    "931004-4.c",
+    "931004-5.c",
+    "931004-6.c",
+    "931004-7.c",
+    "931004-8.c",
+    "931004-9.c",
+    "990525-1.c",
+    "alias-access-path-1.c",
+    "lto-tbaa-1.c",
+    "pr114207.c",
+    "pr122943.c",
+    "pr39120.c",
+    "pr41919.c",
+    "pr42154.c",
+    "pr51323.c",
+    "pr52129.c",
+    "pr57130.c",
+    "pr58365.c",
+    "pr63302.c",
+    "pr65170.c",
+    "pr67226.c",
+    "pr82388.c",
+    "pr82524.c",
+    "pr93213.c",
+    "pr93402.c",
+    "strct-stdarg-1.c",
+    "strct-varg-1.c",
+    "va-arg-23.c"
+   ],
+   "present": 59,
+   "sole": 59,
+   "wall": "unsupported:not an integer type"
+  },
+  {
+   "files": [
     "00056.c",
     "00125.c",
     "00131.c",
@@ -698,68 +764,6 @@
    "present": 56,
    "sole": 56,
    "wall": "unsupported:string literal with escape or non-ASCII spelling"
-  },
-  {
-   "files": [
-    "00072.c",
-    "00073.c",
-    "20000419-1.c",
-    "20000706-1.c",
-    "20000706-2.c",
-    "20000706-5.c",
-    "20000707-1.c",
-    "20000717-1.c",
-    "20000717-5.c",
-    "20000819-1.c",
-    "20001024-1.c",
-    "20020810-1.c",
-    "20020920-1.c",
-    "20021118-1.c",
-    "20030613-1.c",
-    "20030914-1.c",
-    "20030914-2.c",
-    "20040703-1.c",
-    "20040707-1.c",
-    "20050713-1.c",
-    "20050826-2.c",
-    "931004-1.c",
-    "931004-10.c",
-    "931004-11.c",
-    "931004-12.c",
-    "931004-13.c",
-    "931004-14.c",
-    "931004-2.c",
-    "931004-3.c",
-    "931004-4.c",
-    "931004-5.c",
-    "931004-6.c",
-    "931004-7.c",
-    "931004-8.c",
-    "931004-9.c",
-    "990525-1.c",
-    "alias-access-path-1.c",
-    "lto-tbaa-1.c",
-    "pr122943.c",
-    "pr39120.c",
-    "pr41919.c",
-    "pr42154.c",
-    "pr51323.c",
-    "pr52129.c",
-    "pr57130.c",
-    "pr58365.c",
-    "pr63302.c",
-    "pr65170.c",
-    "pr67226.c",
-    "pr82388.c",
-    "pr93213.c",
-    "pr93402.c",
-    "strct-stdarg-1.c",
-    "strct-varg-1.c",
-    "va-arg-23.c"
-   ],
-   "present": 55,
-   "sole": 55,
-   "wall": "unsupported:not an integer type"
   },
   {
    "files": [
@@ -1323,23 +1327,6 @@
    "present": 10,
    "sole": 10,
    "wall": "unsupported:case label nested in a control statement"
-  },
-  {
-   "files": [
-    "00149.c",
-    "00150.c",
-    "20010123-1.c",
-    "20020215-1.c",
-    "20050929-1.c",
-    "20071029-1.c",
-    "20071202-1.c",
-    "pr109040.c",
-    "pr114207.c",
-    "pr82524.c"
-   ],
-   "present": 10,
-   "sole": 10,
-   "wall": "unsupported:compound literal (inch 4"
   },
   {
    "files": [
@@ -2022,6 +2009,14 @@
   },
   {
    "files": [
+    "20050929-1.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "unsupported:ConstantExpr"
+  },
+  {
+   "files": [
     "gcc/testsuite/gcc.dg/c23-empty-init-warn-17.c"
    ],
    "present": 1,
@@ -2107,6 +2102,30 @@
    "present": 1,
    "sole": 1,
    "wall": "unsupported:function instrumentation is outside the tier"
+  },
+  {
+   "files": [
+    "00150.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "unsupported:initializer list (inch 4)"
+  },
+  {
+   "files": [
+    "20071029-1.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "unsupported:no layout for compound literal type 'T'"
+  },
+  {
+   "files": [
+    "pr109040.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "unsupported:no layout for compound literal type 'V'"
   },
   {
    "files": [
@@ -3990,8 +4009,8 @@
   }
  ],
  "manifest_hash": "1de1a60c299d5bb51dae7ca001b0a008010cad0b25670cde2090c08bfc1a84ce",
- "measured_at_utc": "2026-11-12T06:30:00Z",
- "measured_commit": "7e2319546",
+ "measured_at_utc": "2026-11-12T06:50:00Z",
+ "measured_commit": "abc2d70d3",
  "pin": null,
  "rows": [
   {
@@ -5617,20 +5636,20 @@
   },
   {
    "corpus": "c-testsuite/single-exec",
-   "detail": "compound literal (inch 4: it needs an object)",
-   "dynamic_wall": "unsupported:compound literal (inch 4",
+   "detail": "",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "00149.c",
    "sha256": "05eaed6d6147343b96cc9701f6cdb806896bda54005597f9a35fb184676c648e",
    "static_walls": [
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "c-testsuite/single-exec",
-   "detail": "compound literal (inch 4: it needs an object)",
-   "dynamic_wall": "unsupported:compound literal (inch 4",
+   "detail": "initializer list (inch 4)",
+   "dynamic_wall": "unsupported:initializer list (inch 4)",
    "manifest_status": "parsed",
    "name": "00150.c",
    "sha256": "43965a3537ff957841cbec8350e3378cbc4690e7358d504845e82e341bb179bb",
@@ -7681,8 +7700,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "compound literal (inch 4: it needs an object)",
-   "dynamic_wall": "unsupported:compound literal (inch 4",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "20010123-1.c",
    "sha256": "72d732b93922b32a9256bec9906b92c97f3a1292d9c924586131382db014a694",
@@ -7690,7 +7709,7 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -8281,8 +8300,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "compound literal (inch 4: it needs an object)",
-   "dynamic_wall": "unsupported:compound literal (inch 4",
+   "detail": "not an integer type: 'struct s'",
+   "dynamic_wall": "unsupported:not an integer type",
    "manifest_status": "parsed",
    "name": "20020215-1.c",
    "sha256": "10d25a1a4f5ee4df4028681ecd54f1240bf78a8bbb873c74487e547d8281cf42",
@@ -10514,8 +10533,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "compound literal (inch 4: it needs an object)",
-   "dynamic_wall": "unsupported:compound literal (inch 4",
+   "detail": "out of tier: ConstantExpr",
+   "dynamic_wall": "unsupported:ConstantExpr",
    "manifest_status": "parsed",
    "name": "20050929-1.c",
    "sha256": "7f3bb1dae22731ecb25b35dab9b67b1c7a10647d01fb09d53fa33a4a828f8a0c",
@@ -10923,8 +10942,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "compound literal (inch 4: it needs an object)",
-   "dynamic_wall": "unsupported:compound literal (inch 4",
+   "detail": "no layout for compound literal type 'T'",
+   "dynamic_wall": "unsupported:no layout for compound literal type 'T'",
    "manifest_status": "parsed",
    "name": "20071029-1.c",
    "sha256": "6df42c05c4f4dfb53a0d5601f798a9924743f08eb5c4083e1d56a3be01a75ab7",
@@ -10976,8 +10995,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "compound literal (inch 4: it needs an object)",
-   "dynamic_wall": "unsupported:compound literal (inch 4",
+   "detail": "not an integer type: 'struct T'",
+   "dynamic_wall": "unsupported:not an integer type",
    "manifest_status": "parsed",
    "name": "20071202-1.c",
    "sha256": "23510bd0e124b4fc8ea9022ab9a636efb913359327030ea5002a6fa013b0e67c",
@@ -21132,8 +21151,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "compound literal (inch 4: it needs an object)",
-   "dynamic_wall": "unsupported:compound literal (inch 4",
+   "detail": "no layout for compound literal type 'V'",
+   "dynamic_wall": "unsupported:no layout for compound literal type 'V'",
    "manifest_status": "parsed",
    "name": "pr109040.c",
    "sha256": "a64af2abb4056c41624955b9407b4fa7cdca2b0942f8aab24a274ccdca02e058",
@@ -21517,8 +21536,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "compound literal (inch 4: it needs an object)",
-   "dynamic_wall": "unsupported:compound literal (inch 4",
+   "detail": "not an integer type: 'struct S'",
+   "dynamic_wall": "unsupported:not an integer type",
    "manifest_status": "parsed",
    "name": "pr114207.c",
    "sha256": "3d7769700f76f455717bbff3e5499abd4f15c37361d2d6ca15deaba10d1a3834",
@@ -27239,8 +27258,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "compound literal (inch 4: it needs an object)",
-   "dynamic_wall": "unsupported:compound literal (inch 4",
+   "detail": "not an integer type: 'struct S'",
+   "dynamic_wall": "unsupported:not an integer type",
    "manifest_status": "parsed",
    "name": "pr82524.c",
    "sha256": "396b3905e87fb23ff60e00b001acafe160aa23d81beea6fd2a30a89838201409",

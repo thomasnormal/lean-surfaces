@@ -2,10 +2,10 @@
 
 Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manifest.
 
-- verdicts: 799/2214 MATCH (passed 799, failed 0, oracle 0)
+- verdicts: 801/2214 MATCH (passed 801, failed 0, oracle 0)
 - manifest SHA-256: `3250f77d0b3c9cbacd18a3a2bf49763fb98a2d1b8c29552a642ed84d2ef943b4`
-- measured commit: `3d6b5770cdb705e6fddc406c5bb03926c1138a80`
-- measured at: `2026-11-12T13:31:05Z`
+- measured commit: `4f5888422df0429255aad718d70e1a40062e82f2`
+- measured at: `2026-11-12T13:54:07Z`
 
 ## Verdict counts
 
@@ -13,8 +13,8 @@ Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manife
 | --- | ---: |
 | `not-parsed` | 350 |
 | `oracle-tests-compiler` | 1 |
-| `passed` | 799 |
-| `refused-libc` | 48 |
+| `passed` | 801 |
+| `refused-libc` | 46 |
 | `refused-ub` | 40 |
 | `refused-unsupported` | 926 |
 | `timeout` | 50 |
@@ -31,8 +31,8 @@ Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manife
 | `c-testsuite/single-exec` | `timeout` | 2 |
 | `gcc.c-torture/execute` | `not-parsed` | 321 |
 | `gcc.c-torture/execute` | `oracle-tests-compiler` | 1 |
-| `gcc.c-torture/execute` | `passed` | 647 |
-| `gcc.c-torture/execute` | `refused-libc` | 42 |
+| `gcc.c-torture/execute` | `passed` | 649 |
+| `gcc.c-torture/execute` | `refused-libc` | 40 |
 | `gcc.c-torture/execute` | `refused-ub` | 36 |
 | `gcc.c-torture/execute` | `refused-unsupported` | 823 |
 | `gcc.c-torture/execute` | `timeout` | 48 |
@@ -185,8 +185,6 @@ The run's first refusal, normalized by construct; `sole` counts rows whose first
 | `cast:FloatingRealToComplex` | 1 | 1 | complex-4.c |
 | `cast:IntegralRealToComplex` | 1 | 1 | pr104604.c |
 | `libc-call: __builtin_abs` | 1 | 1 | pr34130.c |
-| `libc-call: __builtin_bswap16` | 1 | 1 | pr97386-1.c |
-| `libc-call: __builtin_bswap32` | 1 | 1 | pr90025.c |
 | `libc-call: __builtin_constant_p` | 1 | 1 | builtin-constant.c |
 | `libc-call: __builtin_frame_address` | 1 | 1 | frame-address.c |
 | `libc-call: __builtin_snprintf` | 1 | 1 | pr78622.c |

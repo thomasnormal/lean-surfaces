@@ -11,8 +11,8 @@
   "gcc.c-torture/execute": {
    "not-parsed": 321,
    "oracle-tests-compiler": 1,
-   "passed": 647,
-   "refused-libc": 42,
+   "passed": 649,
+   "refused-libc": 40,
    "refused-ub": 36,
    "refused-unsupported": 823,
    "timeout": 48
@@ -29,8 +29,8 @@
  "counts": {
   "not-parsed": 350,
   "oracle-tests-compiler": 1,
-  "passed": 799,
-  "refused-libc": 48,
+  "passed": 801,
+  "refused-libc": 46,
   "refused-ub": 40,
   "refused-unsupported": 926,
   "timeout": 50
@@ -1855,22 +1855,6 @@
    "present": 1,
    "sole": 1,
    "wall": "libc-call: __builtin_abs"
-  },
-  {
-   "files": [
-    "pr97386-1.c"
-   ],
-   "present": 1,
-   "sole": 1,
-   "wall": "libc-call: __builtin_bswap16"
-  },
-  {
-   "files": [
-    "pr90025.c"
-   ],
-   "present": 1,
-   "sole": 1,
-   "wall": "libc-call: __builtin_bswap32"
   },
   {
    "files": [
@@ -4154,8 +4138,8 @@
   }
  ],
  "manifest_hash": "3250f77d0b3c9cbacd18a3a2bf49763fb98a2d1b8c29552a642ed84d2ef943b4",
- "measured_at_utc": "2026-11-12T13:31:05Z",
- "measured_commit": "3d6b5770cdb705e6fddc406c5bb03926c1138a80",
+ "measured_at_utc": "2026-11-12T13:54:07Z",
+ "measured_commit": "4f5888422df0429255aad718d70e1a40062e82f2",
  "pin": {
   "corpora": [
    "C1",
@@ -27924,8 +27908,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "__builtin_bswap32",
-   "dynamic_wall": "libc-call: __builtin_bswap32",
+   "detail": "",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "pr90025.c",
    "sha256": "444126cb1994cbd436f7d00f7692773deab2d45530e9835445f3413fed46548e",
@@ -27934,7 +27918,7 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -28396,15 +28380,15 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "__builtin_bswap16",
-   "dynamic_wall": "libc-call: __builtin_bswap16",
+   "detail": "",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "pr97386-1.c",
    "sha256": "4c6fb402eaf79988969157c5746912807a089d3da6ce4a3348bd05a90820b3c2",
    "static_walls": [
     "libc-call"
    ],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",

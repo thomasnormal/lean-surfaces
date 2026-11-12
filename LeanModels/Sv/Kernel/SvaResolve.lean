@@ -87,4 +87,12 @@ theorem sva_countOnes_xread {trace trace' : List SvState} {index : Nat}
   cases heq
   simp [SvaValue.eval, exprAt, hsource, hconcrete]
 
+theorem sva_binary_eval_congr {trace trace' : List SvState} {index : Nat}
+    {op : BinOp} {left right left' right' : SvaValue}
+    (hleft : SvaValue.eval trace index left = SvaValue.eval trace' index left')
+    (hright : SvaValue.eval trace index right = SvaValue.eval trace' index right') :
+    SvaValue.eval trace index (.binary op left right) =
+      SvaValue.eval trace' index (.binary op left' right') := by
+  simp only [SvaValue.eval, hleft, hright]
+
 end LeanModels.Sv.Kernel

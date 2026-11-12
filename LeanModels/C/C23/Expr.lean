@@ -1112,16 +1112,26 @@ def evalExpr (ctx : Ctx) : Expr → EvalM CVal
         -- the update, and the update itself can overflow (`J.2(35)`).
         let p ← evalLValue ctx sub
         let old ← loadAt p (ctx.layout.normalizeTy sub.ty) (ctx.layout.size (ctx.layout.normalizeTy sub.ty))
-        let (storageT, n) ← asInt old
-        let t := promoteIntTy storageT
-        match (if op == "++" then addOp t n 1 else subOp t n 1) with
-        | .ub u => refuseValue u
-        | .ok (.int _ nv) => do
-            let storedT ← intTyOf (ctx.layout.normalizeTy sub.ty)
-            let stored := convert storedT nv
-            storeAt p (ctx.layout.normalizeTy sub.ty) stored
-            pure (if post then old else stored)
-        | .ok _ => refuseUnsupported "increment of a non-integer value"
+        match old with
+        | .ptr _ =>
+            -- C23 §6.5.3.5p2 defines pointer increment/decrement in terms
+            -- of compound assignment. Reuse the provenance-checked pointer
+            -- arithmetic rule, so one-past and object bounds stay exact.
+            let nv ← evalArith ctx (if op == "++" then "+" else "-") old
+              (.int IntTy.int_ 1) (ctx.layout.normalizeTy sub.ty)
+            storeAt p (ctx.layout.normalizeTy sub.ty) nv
+            pure (if post then old else nv)
+        | _ =>
+            let (storageT, n) ← asInt old
+            let t := promoteIntTy storageT
+            match (if op == "++" then addOp t n 1 else subOp t n 1) with
+            | .ub u => refuseValue u
+            | .ok (.int _ nv) => do
+                let storedT ← intTyOf (ctx.layout.normalizeTy sub.ty)
+                let stored := convert storedT nv
+                storeAt p (ctx.layout.normalizeTy sub.ty) stored
+                pure (if post then old else stored)
+            | .ok _ => refuseUnsupported "increment of a non-integer value"
       else refuseUnsupported s!"unary operator '{op}'"
 
   -- §6.5.17.3 — compound assignment: `a op= b` is `a = a op b` with the

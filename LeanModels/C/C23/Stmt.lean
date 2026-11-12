@@ -948,6 +948,34 @@ def callFn : Nat → Program → LeanModels.C.FunctionDefn → List CVal → Exe
                 | b + 1 => if b % 2 == 1 then index + 1 else first (b / 2) (index + 1)
               pure (.int IntTy.int_ (first residue.toNat 0))
           | _ => refuseUnsupported "__builtin_ffs: wrong argument count"
+        -- GCC/Clang's fixed-width byte-swap builtins are value operations,
+        -- not library calls.  Their signatures are parser-resolved in the
+        -- admitted slice: unsigned short and unsigned int respectively.
+        let runBswap16 : List CVal → ExecM CVal := fun vs =>
+          match vs with
+          | [value] => do
+              let (t, n) ← asInt value
+              if t != IntTy.ushort then
+                refuseUnsupported "__builtin_bswap16: argument is not unsigned short"
+              else
+                let lo := n % 256
+                let hi := n / 256
+                pure (.int IntTy.ushort (lo * 256 + hi))
+          | _ => refuseUnsupported "__builtin_bswap16: wrong argument count"
+        let runBswap32 : List CVal → ExecM CVal := fun vs =>
+          match vs with
+          | [value] => do
+              let (t, n) ← asInt value
+              if t != IntTy.uint then
+                refuseUnsupported "__builtin_bswap32: argument is not unsigned int"
+              else
+                let b0 := n % 256
+                let b1 := (n / 256) % 256
+                let b2 := (n / 65536) % 256
+                let b3 := (n / 16777216) % 256
+                pure (.int IntTy.uint
+                  (b0 * 16777216 + b1 * 65536 + b2 * 256 + b3))
+          | _ => refuseUnsupported "__builtin_bswap32: wrong argument count"
         let runArithOverflow (op : String) : List CVal → ExecM CVal := fun vs =>
           match vs with
           | [a, b, dst] => do
@@ -989,6 +1017,10 @@ def callFn : Nat → Program → LeanModels.C.FunctionDefn → List CVal → Exe
                 runBuiltinStrcpy vs
               else if nm == "strlen" then
                 runStrlen vs
+              else if nm == "__builtin_bswap16" then
+                runBswap16 vs
+              else if nm == "__builtin_bswap32" then
+                runBswap32 vs
               else if nm == "printf" || nm == "__builtin_printf" then
                 runPrintf vs
               else if nm == "abort" || nm == "exit" then
@@ -1028,6 +1060,8 @@ def callFn : Nat → Program → LeanModels.C.FunctionDefn → List CVal → Exe
               else if nm == "__builtin_strcmp" then runStrcmp vs
               else if nm == "__builtin_memcmp" then runMemcmp vs
               else if nm == "__builtin_strlen" then runStrlen vs
+              else if nm == "__builtin_bswap16" then runBswap16 vs
+              else if nm == "__builtin_bswap32" then runBswap32 vs
               else if nm == "__builtin_alloca" then runAlloca vs
               else if nm == "__builtin_ffs" then runFfs vs
               else if nm == "__builtin_mul_overflow" then runArithOverflow "mul" vs

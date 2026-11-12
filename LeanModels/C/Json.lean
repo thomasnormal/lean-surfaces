@@ -250,7 +250,8 @@ partial def parseDecl (j : Json) : Except String Decl := do
           (← getOptStr j "storage")
           (← match getOptNode j "init" with
               | none => pure none
-              | some v => some <$> parseExpr v) span
+              | some v => some <$> parseExpr v)
+          ((← getOptStr j "record_decl_id").map DeclarationId.mk) span
     -- `name` is OPTIONAL (§6.7.6.3): absent and `null` are one absence.
     | "ParmVarDecl" =>
         let id ← getOptStr j "decl_id"

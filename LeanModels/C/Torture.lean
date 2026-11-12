@@ -418,7 +418,7 @@ def setupGlobalsWithIds (fuel : Nat) (lay : Layout) :
   | [], acc, ids => pure (acc, ids)
   | d :: ds, acc, ids =>
     match d with
-    | .var declaration nm ty storage init _ =>
+    | .var declaration nm ty storage init _recordId _ =>
         match acc.lookup? nm with
         | some o =>
             let ids' := match declaration with

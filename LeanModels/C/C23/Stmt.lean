@@ -540,7 +540,7 @@ def declare : Nat → Ctx → List Decl → ExecM Ctx
   | _, ctx, [] => pure ctx
   | fuel + 1, ctx, d :: ds =>
     match d with
-    | .var id name ty storage init _ => do
+    | .var id name ty storage init _recordId _ => do
         match storage with
         | some "auto" | some "register" | none => pure ()
         | some s => refuseUnsupported s!"block-scope storage class '{s}' is outside the tier"

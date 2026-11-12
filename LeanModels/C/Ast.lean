@@ -163,7 +163,8 @@ deriving Repr, Inhabited
 everything but a function definition. -/
 inductive Decl where
   | var (id : Option DeclarationId) (name : String) (ty : CType)
-      (storage : Option String) (init : Option Expr) (span : CSpan)
+      (storage : Option String) (init : Option Expr)
+      (recordId : Option DeclarationId) (span : CSpan)
   /-- A parameter. `name` is **optional**, because C's is: §6.7.6.3 lets a
   prototype declare a parameter with no identifier (`int f(int);`), and
   clang reports one with no `name`.
@@ -451,7 +452,7 @@ tactic's failure as the fact's absence. -/
 
 /-- The expressions a block-scope declaration contains. -/
 def Decl.exprs : Decl → List Expr
-  | .var _ _ _ _ (some i) _ => i.subexprs
+  | .var _ _ _ _ (some i) _ _ => i.subexprs
   | _ => []
 
 /-- Statements nested inside a statement, including itself. -/

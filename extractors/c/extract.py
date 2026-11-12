@@ -369,7 +369,7 @@ class Extractor:
                 members.extend(self.node(c) for c in extras)
             else:
                 members.append(self.node(child))
-        return {"name": n.get("name"), "fields": members}
+        return {"decl_id": n.get("id"), "name": n.get("name"), "fields": members}
 
     def e_TypedefDecl(self, n):
         under = next((c for c in kids(n) if c.get("kind") in TYPES), None)
@@ -422,7 +422,16 @@ class Extractor:
         return {"body": self.seq(kids(n))}
 
     def e_DeclStmt(self, n):
-        return {"decls": self.seq(kids(n))}
+        decls = self.seq(kids(n))
+        # Clang emits a local RecordDecl immediately before the VarDecl that
+        # uses it. Retain that parser identity on the variable; consumers can
+        # key layout by the declaration ID without parsing qualType strings.
+        for i, decl in enumerate(decls):
+            if decl.get("kind") == "VarDecl" and i > 0:
+                prev = decls[i - 1]
+                if prev.get("kind") == "RecordDecl" and prev.get("decl_id"):
+                    decl["record_decl_id"] = prev["decl_id"]
+        return {"decls": decls}
 
     def e_IfStmt(self, n):
         c = nonempty(n)

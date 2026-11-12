@@ -9,7 +9,7 @@
   "top": "extractor_options_e",
   "source_files": [
     {
-      "path": "/scratch/thomas-ahle/wt/ls-sv/Examples/system-verilog/sem2/extractor_options_e/extractor_options_e.sv",
+      "path": "Examples/system-verilog/sem2/extractor_options_e/extractor_options_e.sv",
       "sha256": "e9456e288c449ab36a051d28aa9ec43cb1567463f7f412b63a39716a34c14a2b"
     }
   ],

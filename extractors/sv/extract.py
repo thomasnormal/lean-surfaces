@@ -26703,10 +26703,13 @@ def _sva_pexpr(node):
                 continue
             if item_kind == "CastExpression":
                 rhs = _sva_unwrap(item.get("right"))
-                raw = (rhs.get("value", {}).get("text", "")
-                       if isinstance(rhs, dict) else "")
-                if raw in ("0", "1"):
-                    items.append({"kind": "Fill", "bit": raw})
+                literal = _sva_vector_literal(rhs)
+                if literal is not None:
+                    items.append(literal)
+                    continue
+                integer = _sva_integer(rhs)
+                if integer is not None:
+                    items.append({"kind": "Int", "value": integer})
                     continue
             if item_kind == "MultipleConcatenationExpression":
                 literal = _sva_repeated_vector_literal(item)

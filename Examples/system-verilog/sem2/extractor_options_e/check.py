@@ -8,7 +8,7 @@ def run(a):
  if p.returncode: raise RuntimeError(p.stderr)
  return p.stdout
 def main():
- src=str(HERE/'extractor_options_e.sv')
+ src='Examples/system-verilog/sem2/extractor_options_e/extractor_options_e.sv'
  en=HERE/'enabled.json'; dis=HERE/'disabled.json'
  run(['python3','extractors/sv/extract.py','--top','extractor_options_e','-D','ENABLED','-o',str(en),src])
  run(['python3','extractors/sv/extract.py','--top','extractor_options_e','-o',str(dis),src])

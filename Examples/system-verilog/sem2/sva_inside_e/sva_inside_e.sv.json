@@ -1,0 +1,144 @@
+{
+  "schema_version": "sv-0.2",
+  "language": "systemverilog",
+  "frontend": {
+    "name": "pyslang",
+    "family": "pyslang-11"
+  },
+  "mode": "symbolic",
+  "top": "sva_inside_e",
+  "source_files": [
+    {
+      "path": "Examples/system-verilog/sem2/sva_inside_e/sva_inside_e.sv",
+      "sha256": "4b4a36a795a08cfc62d26d73814060cc08c664c8efb173c020eb852848964316"
+    }
+  ],
+  "packages": [],
+  "design": {
+    "kind": "Design",
+    "modules": [
+      {
+        "kind": "Module",
+        "span": {
+          "line": 1,
+          "col": 1,
+          "end_line": 3,
+          "end_col": 10
+        },
+        "name": "sva_inside_e",
+        "imports": [],
+        "params": [],
+        "types": [],
+        "ports": [
+          {
+            "kind": "Port",
+            "span": {
+              "line": 1,
+              "col": 33,
+              "end_line": 1,
+              "end_col": 36
+            },
+            "name": "clk",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 1,
+              "col": 56,
+              "end_line": 1,
+              "end_col": 57
+            },
+            "name": "a",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 1,
+                      "col": 51,
+                      "end_line": 1,
+                      "end_col": 52
+                    },
+                    "value": 3,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 1,
+                      "col": 53,
+                      "end_line": 1,
+                      "end_col": 54
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 4
+            }
+          }
+        ],
+        "decls": [],
+        "processes": [],
+        "generates": [],
+        "others": [],
+        "properties": [
+          {
+            "kind": "SvaProperty",
+            "span": {
+              "line": 2,
+              "col": 3,
+              "end_line": 2,
+              "end_col": 59
+            },
+            "name": "ap",
+            "property_kind": "assert",
+            "clock": "clk",
+            "text": "ap: assert property (@(posedge clk) a inside {4'b0001});",
+            "ast": {
+              "kind": "SvaCheck",
+              "property_kind": "assert",
+              "edge": "posedge",
+              "clock": "clk",
+              "property": {
+                "kind": "SvaAlways",
+                "body": {
+                  "kind": "SvaAtom",
+                  "test": {
+                    "kind": "SvaExpr",
+                    "expr": {
+                      "kind": "Binary",
+                      "op": "===",
+                      "left": {
+                        "kind": "Ident",
+                        "name": "a"
+                      },
+                      "right": {
+                        "kind": "Literal",
+                        "span": null,
+                        "width": 4,
+                        "bits": "0001"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    ],
+    "others": []
+  },
+  "lean_blocks": []
+}

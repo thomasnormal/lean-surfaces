@@ -73069,6 +73069,16 @@
       "signals": ["left_zero", "right_arith"],
       "stimulus": [{}],
       "measured": "2026-11-12: IEEE 1800-2023 §11.4.10 negative shift count is represented by the finite zero result; logical right shift of -8 preserves its unsigned 32-bit bits. E matches both pinned simulators."
+    },
+
+    {
+      "name": "always_star_memory_read_e_boundary",
+      "example": "sem2/always_star_memory_read_e",
+      "top": "always_star_memory_read_e",
+      "signals": ["q"],
+      "stimulus": [],
+      "refusal": "instantiate2: decl",
+      "measured": "2026-11-12: ordinary E refuses the unpacked memory declaration before the implicit-event body; the source-shaped memory receipt remains on the existing canonical memory boundary."
     }
 
   ]

@@ -73,6 +73,7 @@ import os
 import re
 import subprocess
 import sys
+import sysconfig
 import tempfile
 import threading
 import time
@@ -141,6 +142,32 @@ IN_REPO_GROUPS = (
     ("repo-scripts", "harness/scripts/*.py"),
     ("cpython-lib-test", "vendor/cpython-3.9-lib-test/*.py"),
 )
+
+
+def pinned_stdlib_root():
+    """Return the stdlib root of the pinned frontend/oracle interpreter."""
+    return os.path.realpath(sysconfig.get_paths()["stdlib"])
+
+
+def pinned_stdlib_file(module):
+    """Resolve a dotted stdlib module without importing it."""
+    rel = module.replace(".", os.sep)
+    direct = os.path.join(pinned_stdlib_root(), rel + ".py")
+    package = os.path.join(pinned_stdlib_root(), rel, "__init__.py")
+    if os.path.isfile(direct):
+        return direct
+    if os.path.isfile(package):
+        return package
+    return None
+
+
+def sha256_file(path):
+    import hashlib
+    digest = hashlib.sha256()
+    with open(path, "rb") as stream:
+        for chunk in iter(lambda: stream.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
 
 
 def _module_ast(path):
@@ -246,17 +273,23 @@ def build_manifest(out_path):
     rows = []
     for rec in census["library"]:
         seed = ceiling.get(rec["module"])
-        rows.append({
+        source_file = rec["file"]
+        if not os.path.isfile(source_file):
+            source_file = pinned_stdlib_file(rec["module"]) or source_file
+        item = {
             "module": rec["module"],
-            "file": rec["file"],
+            "file": source_file,
             "provenance": "census:library",
-            "source": "docs/class-tier-census.json (CPython %s)" % census["cpython"],
+            "source": "pinned CPython 3.9.25 stdlib (re-pinned from docs/class-tier-census.json)",
             "census_walls": rec["walls"],
             "census_class_walled": rec["class_walled"],
             "census_classes": rec["nclasses"],
             "expected_wall": expected_wall(rec["walls"], rec["class_walled"]),
             "c_reaching": (None if seed is None else bool(seed["full_c"])),
-        })
+        }
+        if os.path.isfile(source_file):
+            item["sha256"] = sha256_file(source_file)
+        rows.append(item)
     for group, pattern in IN_REPO_GROUPS:
         for path in sorted(glob.glob(os.path.join(REPO_ROOT, pattern))):
             rel = os.path.relpath(path, REPO_ROOT)
@@ -280,7 +313,7 @@ def build_manifest(out_path):
     manifest = {
         "metric": ("library mode: import this module, then verify its public "
                    "functions behave identically to CPython's (owner, 2026-08-15)"),
-        "cpython": census["cpython"],
+        "cpython": "3.9.25",
         "generated_by": "harness/library_survey.py --build-manifest",
         "modules": rows,
     }
@@ -568,6 +601,8 @@ def survey(opts):
     for rec in modules:
         row = dict(rec)
         path = rec["file"] if os.path.isabs(rec["file"]) else os.path.join(REPO_ROOT, rec["file"])
+        if not os.path.isfile(path) and rec.get("provenance") == "census:library":
+            path = pinned_stdlib_file(rec["module"]) or path
         row["path"] = path
         if not os.path.exists(path):
             row["verdict"] = "MISSING"
@@ -591,6 +626,7 @@ def survey(opts):
     # --- BODY verdicts -----------------------------------------------------
     scratch = tempfile.mkdtemp(prefix="libmode-")
     live = []
+    call_candidates = []
     for row in rows:
         if "envelope" not in row:
             continue
@@ -605,48 +641,54 @@ def survey(opts):
             row["verdict"] = "REFUSED"
             row["detail"] = model.get("msg", "")
             row["observed_wall"] = wall_of(model.get("msg", ""))
-            continue
-        if model["status"] == "timeout":
+        elif model["status"] == "timeout":
             row["verdict"] = "TIMEOUT"
             row["observed_wall"] = "timeout"
             row["detail"] = "fuel %d exhausted on the module body" % opts.fuel
-            continue
-        if model["status"] == "runner-error":
+        elif model["status"] == "runner-error":
             row["verdict"] = "RUNNER"
             row["detail"] = model.get("msg", "")
-            continue
-        # The model RAN the body. Before comparing, the import-semantics gate.
-        try:
-            gate = reads_name_dunder(_module_ast(row["path"]))
-        except (SyntaxError, UnicodeDecodeError, OSError) as e:
-            gate, row["gate_error"] = None, str(e)
-        if gate is not None:
-            row["verdict"] = "REFUSED"
-            row["observed_wall"] = "import-semantics:__name__"
-            row["detail"] = ("the model ran the body as a PROGRAM (`__name__` = '__main__', "
-                             "Script.lean scriptNameBinding) but this module reads `__name__` "
-                             "at import time (line %d) — no import mode exists to compare"
-                             % gate)
-            continue
-        live.append(row)
-
-    for row in live:
-        oracle = run_oracle(opts.cpython, row["module"], row["path"], True,
-                            opts.max_calls, opts.oracle_timeout, scratch)
-        row["oracle"] = oracle
-        model = body_rows[row["envelope"]]
-        verdict, detail = compare_body(model, oracle.get("body", oracle))
-        row["body_verdict"] = verdict
-        if verdict != "MATCH":
-            row["verdict"] = verdict
-            row["detail"] = detail
         else:
-            row["detail"] = detail
+            # The model ran the body. Before comparing, the import-semantics gate.
+            try:
+                gate = reads_name_dunder(_module_ast(row["path"]))
+            except (SyntaxError, UnicodeDecodeError, OSError) as e:
+                gate, row["gate_error"] = None, str(e)
+            if gate is not None:
+                row["verdict"] = "REFUSED"
+                row["observed_wall"] = "import-semantics:__name__"
+                row["detail"] = ("the model ran the body as a PROGRAM (`__name__` = '__main__', "
+                                 "Script.lean scriptNameBinding) but this module reads `__name__` "
+                                 "at import time (line %d) — no import mode exists to compare"
+                                 % gate)
+            else:
+                live.append(row)
+
+        # CALLS are deliberately independent of BODY agreement. A module may
+        # refuse at an import wall while its closed-function surface is still
+        # callable; dropping those calls would turn a real library result into
+        # a body-only refusal. The oracle import is still the source of the
+        # public-function list and deterministic battery.
+        if model["status"] != "runner-error":
+            oracle = run_oracle(opts.cpython, row["module"], row["path"], True,
+                                opts.max_calls, opts.oracle_timeout, scratch)
+            row["oracle"] = oracle
+            if model["status"] == "ok" and row in live:
+                model_body = body_rows[row["envelope"]]
+                verdict, detail = compare_body(model_body, oracle.get("body", oracle))
+                row["body_verdict"] = verdict
+                if verdict != "MATCH":
+                    row["verdict"] = verdict
+                    row["detail"] = detail
+                else:
+                    row["detail"] = detail
+            if oracle.get("status") != "oracle-error" and oracle.get("functions"):
+                call_candidates.append(row)
 
     # --- CALL phase --------------------------------------------------------
     jobs, index = [], []
-    for row in live:
-        if row.get("body_verdict") != "MATCH":
+    for row in call_candidates:
+        if "oracle" not in row:
             continue
         for fn in row["oracle"].get("functions", []):
             for i, call in enumerate(fn.get("calls", [])):
@@ -690,8 +732,8 @@ def survey(opts):
         })
 
     # --- module verdicts ---------------------------------------------------
-    for row in live:
-        if row.get("body_verdict") != "MATCH":
+    for row in call_candidates:
+        if "oracle" not in row:
             continue
         calls = row.get("calls", [])
         matched = [c for c in calls if c["verdict"] == "MATCH"]
@@ -703,6 +745,9 @@ def survey(opts):
         skipped = [f for f in row["oracle"].get("functions", []) if f.get("skipped")]
         row["nfunctions"] = len(row["oracle"].get("functions", []))
         row["nskipped"] = len(skipped)
+        row["call_verdict"] = ("DIVERGE" if diverged else
+                                "INCOMPLETE" if unrun else
+                                "MATCH")
         if diverged:
             row["verdict"] = "DIVERGE"
             row["detail"] = "%d of %d calls DIVERGE: %s" % (
@@ -722,10 +767,18 @@ def survey(opts):
             row["detail"] = ("body matched; no drivable public function (%d public, %d skipped)"
                              % (row["nfunctions"], row["nskipped"]))
         elif len(matched) == len(calls):
-            row["verdict"] = "VERIFIED"
-            row["detail"] = "body + %d/%d calls over %d public function(s)%s" % (
-                len(matched), len(calls), row["nfunctions"] - row["nskipped"],
-                "; %d function(s) skipped" % row["nskipped"] if row["nskipped"] else "")
+            if row.get("body_verdict") == "MATCH":
+                row["verdict"] = "VERIFIED"
+            else:
+                row["call_detail"] = ("closed surface: %d/%d calls agree despite body verdict %s"
+                                       % (len(matched), len(calls), row.get("verdict", "REFUSED")))
+            if row.get("body_verdict") == "MATCH":
+                row["detail"] = "body + %d/%d calls over %d public function(s)%s" % (
+                    len(matched), len(calls), row["nfunctions"] - row["nskipped"],
+                    "; %d function(s) skipped" % row["nskipped"] if row["nskipped"] else "")
+            else:
+                row["detail"] = ("closed surface: %d/%d calls agree; body verdict %s"
+                                  % (len(matched), len(calls), row.get("verdict", "REFUSED")))
         else:
             row["verdict"] = "PARTIAL"
             row["detail"] = "body matched; %d/%d calls agree" % (len(matched), len(calls))

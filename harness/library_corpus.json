@@ -1,5 +1,5 @@
 {
- "cpython": "3.9.19",
+ "cpython": "3.9.25",
  "generated_by": "harness/library_survey.py --build-manifest",
  "metric": "library mode: import this module, then verify its public functions behave identically to CPython's (owner, 2026-08-15)",
  "modules": [
@@ -9,10 +9,11 @@
    "census_classes": 1,
    "census_walls": [],
    "expected_wall": "none",
-   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/__future__.py",
+   "file": "/usr/lib64/python3.9/__future__.py",
    "module": "__future__",
    "provenance": "census:library",
-   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+   "sha256": "5373c92a824f872aa3aedadce8fe8f858c27f1abbe9a3faa0dc34f0af1984332",
+   "source": "pinned CPython 3.9.25 stdlib (re-pinned from docs/class-tier-census.json)"
   },
   {
    "c_reaching": true,
@@ -25,10 +26,11 @@
     "node:With"
    ],
    "expected_wall": "import",
-   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/_bootsubprocess.py",
+   "file": "/usr/lib64/python3.9/_bootsubprocess.py",
    "module": "_bootsubprocess",
    "provenance": "census:library",
-   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+   "sha256": "dd8afc4a86131491a4f05078b307aae5eef19d6a26e7d9ffbfe2ebabbd6b5b6a",
+   "source": "pinned CPython 3.9.25 stdlib (re-pinned from docs/class-tier-census.json)"
   },
   {
    "c_reaching": true,
@@ -46,10 +48,11 @@
     "node:Lambda"
    ],
    "expected_wall": "class-creation",
-   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/_collections_abc.py",
+   "file": "/usr/lib64/python3.9/_collections_abc.py",
    "module": "_collections_abc",
    "provenance": "census:library",
-   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+   "sha256": "8a90b2cd9e24d56e2820a1276b41b47ea8dd4a06ba1ed0e3aee39f639be474fc",
+   "source": "pinned CPython 3.9.25 stdlib (re-pinned from docs/class-tier-census.json)"
   },
   {
    "c_reaching": null,
@@ -57,10 +60,11 @@
    "census_classes": 0,
    "census_walls": [],
    "expected_wall": "none",
-   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/_compat_pickle.py",
+   "file": "/usr/lib64/python3.9/_compat_pickle.py",
    "module": "_compat_pickle",
    "provenance": "census:library",
-   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+   "sha256": "71248216fb1cc2b9a0a1faa305daa8c680d9c637141cb2db283e407684209cab",
+   "source": "pinned CPython 3.9.25 stdlib (re-pinned from docs/class-tier-census.json)"
   },
   {
    "c_reaching": true,
@@ -73,10 +77,11 @@
     "node:With"
    ],
    "expected_wall": "class-creation",
-   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/_compression.py",
+   "file": "/usr/lib64/python3.9/_compression.py",
    "module": "_compression",
    "provenance": "census:library",
-   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+   "sha256": "326755377c7b8d98cf71333d62e5b4cb1c4e06519d704961da025f5933dee08d",
+   "source": "pinned CPython 3.9.25 stdlib (re-pinned from docs/class-tier-census.json)"
   },
   {
    "c_reaching": true,
@@ -89,10 +94,11 @@
     "node:SetComp"
    ],
    "expected_wall": "class-creation",
-   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/_py_abc.py",
+   "file": "/usr/lib64/python3.9/_py_abc.py",
    "module": "_py_abc",
    "provenance": "census:library",
-   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+   "sha256": "f9c6fe3dd9b51bd7d93f867356e9d362600c924febfd903ee1c6e298860dca92",
+   "source": "pinned CPython 3.9.25 stdlib (re-pinned from docs/class-tier-census.json)"
   },
   {
    "c_reaching": true,
@@ -108,10 +114,11 @@
     "node:Starred"
    ],
    "expected_wall": "class-creation",
-   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/_pydecimal.py",
+   "file": "/usr/lib64/python3.9/_pydecimal.py",
    "module": "_pydecimal",
    "provenance": "census:library",
-   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+   "sha256": "4b704ec20dbcad5ae15c54146d0cf41f0bb8dfeb48f0db771f74d8c61c154f54",
+   "source": "pinned CPython 3.9.25 stdlib (re-pinned from docs/class-tier-census.json)"
   },
   {
    "c_reaching": true,
@@ -125,10 +132,11 @@
     "node:With"
    ],
    "expected_wall": "class-creation",
-   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/_sitebuiltins.py",
+   "file": "/usr/lib64/python3.9/_sitebuiltins.py",
    "module": "_sitebuiltins",
    "provenance": "census:library",
-   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+   "sha256": "e9d3761e39a049203c19f4c4cd9259f3636f10a2c0f58cea579f0400fa453294",
+   "source": "pinned CPython 3.9.25 stdlib (re-pinned from docs/class-tier-census.json)"
   },
   {
    "c_reaching": true,
@@ -142,10 +150,11 @@
     "node:With"
    ],
    "expected_wall": "class-creation",
-   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/_threading_local.py",
+   "file": "/usr/lib64/python3.9/_threading_local.py",
    "module": "_threading_local",
    "provenance": "census:library",
-   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+   "sha256": "e1bf3dae66d0bfa63c8bb8a1d10c611203c35c636f7f5191fd56105788ef29cb",
+   "source": "pinned CPython 3.9.25 stdlib (re-pinned from docs/class-tier-census.json)"
   },
   {
    "c_reaching": true,
@@ -158,10 +167,11 @@
     "node:With"
    ],
    "expected_wall": "class-creation",
-   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/_weakrefset.py",
+   "file": "/usr/lib64/python3.9/_weakrefset.py",
    "module": "_weakrefset",
    "provenance": "census:library",
-   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+   "sha256": "49fb432325ef836f89caa60e50b152eb6f32b700ed71fedcd4d56815723f77ba",
+   "source": "pinned CPython 3.9.25 stdlib (re-pinned from docs/class-tier-census.json)"
   },
   {
    "c_reaching": true,
@@ -172,10 +182,11 @@
     "import"
    ],
    "expected_wall": "class-creation",
-   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/abc.py",
+   "file": "/usr/lib64/python3.9/abc.py",
    "module": "abc",
    "provenance": "census:library",
-   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+   "sha256": "937d73a33adba6b015171e0e2670ec4ddfe155e36f9ab4bf711853d3b7df6419",
+   "source": "pinned CPython 3.9.25 stdlib (re-pinned from docs/class-tier-census.json)"
   },
   {
    "c_reaching": true,
@@ -191,10 +202,11 @@
     "node:With"
    ],
    "expected_wall": "class-creation",
-   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/argparse.py",
+   "file": "/usr/lib64/python3.9/argparse.py",
    "module": "argparse",
    "provenance": "census:library",
-   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+   "sha256": "1f549e2f7f896f884a9de998a05d7dadb930594262a43d59517b06ff3ee6fc51",
+   "source": "pinned CPython 3.9.25 stdlib (re-pinned from docs/class-tier-census.json)"
   },
   {
    "c_reaching": true,
@@ -214,10 +226,11 @@
     "node:With"
    ],
    "expected_wall": "class-creation",
-   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/ast.py",
+   "file": "/usr/lib64/python3.9/ast.py",
    "module": "ast",
    "provenance": "census:library",
-   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+   "sha256": "c7a744d71f4a90405eee1520b092f7ddc671a815194393479f170cc2868ae0e6",
+   "source": "pinned CPython 3.9.25 stdlib (re-pinned from docs/class-tier-census.json)"
   },
   {
    "c_reaching": true,
@@ -232,10 +245,11 @@
     "node:Starred"
    ],
    "expected_wall": "class-creation",
-   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/asyncore.py",
+   "file": "/usr/lib64/python3.9/asyncore.py",
    "module": "asyncore",
    "provenance": "census:library",
-   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+   "sha256": "3ae249fadbcd2b58e3af09240582136aeea53298b1dc7a6c9d610076e744b3c3",
+   "source": "pinned CPython 3.9.25 stdlib (re-pinned from docs/class-tier-census.json)"
   },
   {
    "c_reaching": true,
@@ -252,10 +266,11 @@
     "node:With"
    ],
    "expected_wall": "import",
-   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/base64.py",
+   "file": "/usr/lib64/python3.9/base64.py",
    "module": "base64",
    "provenance": "census:library",
-   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+   "sha256": "5dc75f0b8c5f4417d3af20be954f3b7cdbb82f4c88f1d532acf457aa42adc2c3",
+   "source": "pinned CPython 3.9.25 stdlib (re-pinned from docs/class-tier-census.json)"
   },
   {
    "c_reaching": true,
@@ -269,10 +284,11 @@
     "node:Starred"
    ],
    "expected_wall": "class-creation",
-   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/bdb.py",
+   "file": "/usr/lib64/python3.9/bdb.py",
    "module": "bdb",
    "provenance": "census:library",
-   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+   "sha256": "4a5a309ae67efd0a8b61cd86afc2b271f10d5930cffb9db4fe15c9391af58720",
+   "source": "pinned CPython 3.9.25 stdlib (re-pinned from docs/class-tier-census.json)"
   },
   {
    "c_reaching": true,
@@ -280,10 +296,11 @@
    "census_classes": 0,
    "census_walls": [],
    "expected_wall": "none",
-   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/bisect.py",
+   "file": "/usr/lib64/python3.9/bisect.py",
    "module": "bisect",
    "provenance": "census:library",
-   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+   "sha256": "6f213241b0d2c5cb8886c5615c6cc88f3a4ff200d7345b87a8f5bfa9d468a71b",
+   "source": "pinned CPython 3.9.25 stdlib (re-pinned from docs/class-tier-census.json)"
   },
   {
    "c_reaching": true,
@@ -296,10 +313,11 @@
     "node:With"
    ],
    "expected_wall": "class-creation",
-   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/bz2.py",
+   "file": "/usr/lib64/python3.9/bz2.py",
    "module": "bz2",
    "provenance": "census:library",
-   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+   "sha256": "76c634cd36f697149ac6a9baaf9d8f72005b701cfb90e4090c37236cc0e48264",
+   "source": "pinned CPython 3.9.25 stdlib (re-pinned from docs/class-tier-census.json)"
   },
   {
    "c_reaching": true,
@@ -312,10 +330,11 @@
     "node:With"
    ],
    "expected_wall": "class-creation",
-   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/calendar.py",
+   "file": "/usr/lib64/python3.9/calendar.py",
    "module": "calendar",
    "provenance": "census:library",
-   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+   "sha256": "3ef1adcb836f240e3ae9d00de4466735e6e92ec74620737bb51605a123510ec8",
+   "source": "pinned CPython 3.9.25 stdlib (re-pinned from docs/class-tier-census.json)"
   },
   {
    "c_reaching": null,
@@ -326,10 +345,11 @@
     "node:Constant:bytes"
    ],
    "expected_wall": "import",
-   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/chunk.py",
+   "file": "/usr/lib64/python3.9/chunk.py",
    "module": "chunk",
    "provenance": "census:library",
-   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+   "sha256": "34a5d2cde2e00a03acd84768ccd352ebdc3ac008a8f41ab1caee698e4a474ca0",
+   "source": "pinned CPython 3.9.25 stdlib (re-pinned from docs/class-tier-census.json)"
   },
   {
    "c_reaching": true,
@@ -342,10 +362,11 @@
     "node:Starred"
    ],
    "expected_wall": "class-creation",
-   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/cmd.py",
+   "file": "/usr/lib64/python3.9/cmd.py",
    "module": "cmd",
    "provenance": "census:library",
-   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+   "sha256": "1b18b978b7f2e2a587aa77f0bc7a6130718c4b680dd19cc749eb2ee7eb8b9590",
+   "source": "pinned CPython 3.9.25 stdlib (re-pinned from docs/class-tier-census.json)"
   },
   {
    "c_reaching": true,
@@ -356,10 +377,11 @@
     "import"
    ],
    "expected_wall": "class-creation",
-   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/code.py",
+   "file": "/usr/lib64/python3.9/code.py",
    "module": "code",
    "provenance": "census:library",
-   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+   "sha256": "266841655656d5b2370e80addcdb959f5173142d5e3778b489e734802447c5e8",
+   "source": "pinned CPython 3.9.25 stdlib (re-pinned from docs/class-tier-census.json)"
   },
   {
    "c_reaching": true,
@@ -373,10 +395,11 @@
     "node:DictComp"
    ],
    "expected_wall": "class-creation",
-   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/codecs.py",
+   "file": "/usr/lib64/python3.9/codecs.py",
    "module": "codecs",
    "provenance": "census:library",
-   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+   "sha256": "8c88dc3fa4a2b85759c8c5394dce9c0a5248e99ea85fc57f42d7372da0e69256",
+   "source": "pinned CPython 3.9.25 stdlib (re-pinned from docs/class-tier-census.json)"
   },
   {
    "c_reaching": true,
@@ -387,10 +410,11 @@
     "node:With"
    ],
    "expected_wall": "import",
-   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/codeop.py",
+   "file": "/usr/lib64/python3.9/codeop.py",
    "module": "codeop",
    "provenance": "census:library",
-   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+   "sha256": "da65a8d00a767249759a766faad19a3b1f473bfb815433fc8d1d4cacda95b849",
+   "source": "pinned CPython 3.9.25 stdlib (re-pinned from docs/class-tier-census.json)"
   },
   {
    "c_reaching": null,
@@ -404,10 +428,11 @@
     "node:Starred"
    ],
    "expected_wall": "class-creation",
-   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/collections/__init__.py",
+   "file": "/usr/lib64/python3.9/collections/__init__.py",
    "module": "collections",
    "provenance": "census:library",
-   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+   "sha256": "0521f8084998b03f29317872a35531adea4708b32b0ebd4cfdf8e178a93dba76",
+   "source": "pinned CPython 3.9.25 stdlib (re-pinned from docs/class-tier-census.json)"
   },
   {
    "c_reaching": null,
@@ -417,10 +442,11 @@
     "import"
    ],
    "expected_wall": "import",
-   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/collections/abc.py",
+   "file": "/usr/lib64/python3.9/collections/abc.py",
    "module": "collections.abc",
    "provenance": "census:library",
-   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+   "sha256": "9cb4208f99128a0489b6c8e6c61637617dd7d4250c59e065491957eda084dd10",
+   "source": "pinned CPython 3.9.25 stdlib (re-pinned from docs/class-tier-census.json)"
   },
   {
    "c_reaching": true,
@@ -435,10 +461,11 @@
     "node:With"
    ],
    "expected_wall": "class-creation",
-   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/contextlib.py",
+   "file": "/usr/lib64/python3.9/contextlib.py",
    "module": "contextlib",
    "provenance": "census:library",
-   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+   "sha256": "5855960050debd99cc1df152131b9535379d2101eecbca5d0735ad7e8c9a685d",
+   "source": "pinned CPython 3.9.25 stdlib (re-pinned from docs/class-tier-census.json)"
   },
   {
    "c_reaching": true,
@@ -448,10 +475,11 @@
     "import"
    ],
    "expected_wall": "import",
-   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/contextvars.py",
+   "file": "/usr/lib64/python3.9/contextvars.py",
    "module": "contextvars",
    "provenance": "census:library",
-   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+   "sha256": "5ed260be8d1f4fe92261b7810b4bb1e8539c42093d7493f677d076e1a87f459a",
+   "source": "pinned CPython 3.9.25 stdlib (re-pinned from docs/class-tier-census.json)"
   },
   {
    "c_reaching": true,
@@ -462,10 +490,11 @@
     "node:Starred"
    ],
    "expected_wall": "import",
-   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/copy.py",
+   "file": "/usr/lib64/python3.9/copy.py",
    "module": "copy",
    "provenance": "census:library",
-   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+   "sha256": "ecc9ca905b83b9550f478781c1999c928e229aed4bdc4bc41bfe15deac886a65",
+   "source": "pinned CPython 3.9.25 stdlib (re-pinned from docs/class-tier-census.json)"
   },
   {
    "c_reaching": null,
@@ -477,10 +506,11 @@
     "node:Starred"
    ],
    "expected_wall": "node:Delete",
-   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/copyreg.py",
+   "file": "/usr/lib64/python3.9/copyreg.py",
    "module": "copyreg",
    "provenance": "census:library",
-   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+   "sha256": "55c1fa8ee6e89eb8645441d5fc1e215c5ec95d8fce218107d3f9d9e25ca31a2d",
+   "source": "pinned CPython 3.9.25 stdlib (re-pinned from docs/class-tier-census.json)"
   },
   {
    "c_reaching": true,
@@ -495,10 +525,11 @@
     "node:Starred"
    ],
    "expected_wall": "class-creation",
-   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/dataclasses.py",
+   "file": "/usr/lib64/python3.9/dataclasses.py",
    "module": "dataclasses",
    "provenance": "census:library",
-   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+   "sha256": "85bc57441fb90ad19952d0037ebc4166ca4ce1469ff5a6ef11b1237cabae87f6",
+   "source": "pinned CPython 3.9.25 stdlib (re-pinned from docs/class-tier-census.json)"
   },
   {
    "c_reaching": true,
@@ -516,10 +547,11 @@
     "node:Starred"
    ],
    "expected_wall": "class-creation",
-   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/datetime.py",
+   "file": "/usr/lib64/python3.9/datetime.py",
    "module": "datetime",
    "provenance": "census:library",
-   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+   "sha256": "74c063b5f7c9e97049b0fc6a5027d222a584abf51fff6d25548abfee30004747",
+   "source": "pinned CPython 3.9.25 stdlib (re-pinned from docs/class-tier-census.json)"
   },
   {
    "c_reaching": true,
@@ -529,10 +561,11 @@
     "import"
    ],
    "expected_wall": "import",
-   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/decimal.py",
+   "file": "/usr/lib64/python3.9/decimal.py",
    "module": "decimal",
    "provenance": "census:library",
-   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+   "sha256": "000c00bad31d126b054c6ec7f3e02b27c0f9a4d579f987d3c4f879cee1bacb81",
+   "source": "pinned CPython 3.9.25 stdlib (re-pinned from docs/class-tier-census.json)"
   },
   {
    "c_reaching": true,
@@ -548,10 +581,11 @@
     "node:Starred"
    ],
    "expected_wall": "class-creation",
-   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/difflib.py",
+   "file": "/usr/lib64/python3.9/difflib.py",
    "module": "difflib",
    "provenance": "census:library",
-   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+   "sha256": "5ecbbaaa838dbb2fdafc41280a281eeb7deeae05d889c31ebbf0d18d4cf66c3d",
+   "source": "pinned CPython 3.9.25 stdlib (re-pinned from docs/class-tier-census.json)"
   },
   {
    "c_reaching": true,
@@ -564,10 +598,11 @@
     "node:With"
    ],
    "expected_wall": "class-creation",
-   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/dis.py",
+   "file": "/usr/lib64/python3.9/dis.py",
    "module": "dis",
    "provenance": "census:library",
-   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+   "sha256": "12f8cf82811f5dda498fa3c4852af458d1a4915ccf779b4badad08407b8e15e9",
+   "source": "pinned CPython 3.9.25 stdlib (re-pinned from docs/class-tier-census.json)"
   },
   {
    "c_reaching": true,
@@ -583,10 +618,11 @@
     "node:With"
    ],
    "expected_wall": "class-creation",
-   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/doctest.py",
+   "file": "/usr/lib64/python3.9/doctest.py",
    "module": "doctest",
    "provenance": "census:library",
-   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+   "sha256": "73c7a2d0005656e92f201d46b64bb48b7b20d91fd326574bc002db3df78747ee",
+   "source": "pinned CPython 3.9.25 stdlib (re-pinned from docs/class-tier-census.json)"
   },
   {
    "c_reaching": null,
@@ -597,10 +633,11 @@
     "node:Starred"
    ],
    "expected_wall": "import",
-   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/email/__init__.py",
+   "file": "/usr/lib64/python3.9/email/__init__.py",
    "module": "email",
    "provenance": "census:library",
-   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+   "sha256": "14eeb17ae40c6cc19b48a9bd5e2a0340ee3dd86a8d64bd1d5c4df8fcfa726c8a",
+   "source": "pinned CPython 3.9.25 stdlib (re-pinned from docs/class-tier-census.json)"
   },
   {
    "c_reaching": null,
@@ -613,10 +650,11 @@
     "node:Lambda"
    ],
    "expected_wall": "class-creation",
-   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/email/_encoded_words.py",
+   "file": "/usr/lib64/python3.9/email/_encoded_words.py",
    "module": "email._encoded_words",
    "provenance": "census:library",
-   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+   "sha256": "4178321600c0a19ca04cfe8542ce44487f339d15d89a473b58cea63c0b230217",
+   "source": "pinned CPython 3.9.25 stdlib (re-pinned from docs/class-tier-census.json)"
   },
   {
    "c_reaching": null,
@@ -628,10 +666,11 @@
     "node:Delete"
    ],
    "expected_wall": "class-creation",
-   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/email/_parseaddr.py",
+   "file": "/usr/lib64/python3.9/email/_parseaddr.py",
    "module": "email._parseaddr",
    "provenance": "census:library",
-   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+   "sha256": "7882ed6e24e319a89b6bbd66691ff11a55600806718aaa391fff26f7bf1f0d5e",
+   "source": "pinned CPython 3.9.25 stdlib (re-pinned from docs/class-tier-census.json)"
   },
   {
    "c_reaching": null,
@@ -643,10 +682,11 @@
     "node:GeneratorExp"
    ],
    "expected_wall": "class-creation",
-   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/email/_policybase.py",
+   "file": "/usr/lib64/python3.9/email/_policybase.py",
    "module": "email._policybase",
    "provenance": "census:library",
-   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+   "sha256": "3db4bf3be5bdba13ab9a78ce30784c330d6dbc657b4e9142210dc8b264cfd424",
+   "source": "pinned CPython 3.9.25 stdlib (re-pinned from docs/class-tier-census.json)"
   },
   {
    "c_reaching": null,
@@ -656,10 +696,11 @@
     "import"
    ],
    "expected_wall": "import",
-   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/email/base64mime.py",
+   "file": "/usr/lib64/python3.9/email/base64mime.py",
    "module": "email.base64mime",
    "provenance": "census:library",
-   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+   "sha256": "1a1bd2d536c77b735892ddf4c6cc6c741184d93c58c11e8f191b5ea29beb753a",
+   "source": "pinned CPython 3.9.25 stdlib (re-pinned from docs/class-tier-census.json)"
   },
   {
    "c_reaching": null,
@@ -669,10 +710,11 @@
     "import"
    ],
    "expected_wall": "import",
-   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/email/charset.py",
+   "file": "/usr/lib64/python3.9/email/charset.py",
    "module": "email.charset",
    "provenance": "census:library",
-   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+   "sha256": "115cc9aad570643b91897a19c71f7a27028bc11b4ee4374e11a32643c1b12d25",
+   "source": "pinned CPython 3.9.25 stdlib (re-pinned from docs/class-tier-census.json)"
   },
   {
    "c_reaching": null,
@@ -683,10 +725,11 @@
     "node:Constant:bytes"
    ],
    "expected_wall": "import",
-   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/email/encoders.py",
+   "file": "/usr/lib64/python3.9/email/encoders.py",
    "module": "email.encoders",
    "provenance": "census:library",
-   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+   "sha256": "1e05b3ee30c62c605077e7770b5b3249f5060d968b0fee8d5cf9cad9450b89cd",
+   "source": "pinned CPython 3.9.25 stdlib (re-pinned from docs/class-tier-census.json)"
   },
   {
    "c_reaching": null,
@@ -697,10 +740,11 @@
     "node:Starred"
    ],
    "expected_wall": "class-creation",
-   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/email/errors.py",
+   "file": "/usr/lib64/python3.9/email/errors.py",
    "module": "email.errors",
    "provenance": "census:library",
-   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+   "sha256": "78592d1189ac8e3ab4a77839512193a9fb6f614d98eaddadf9630ece654a57e9",
+   "source": "pinned CPython 3.9.25 stdlib (re-pinned from docs/class-tier-census.json)"
   },
   {
    "c_reaching": null,
@@ -712,10 +756,11 @@
     "node:Starred"
    ],
    "expected_wall": "class-creation",
-   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/email/feedparser.py",
+   "file": "/usr/lib64/python3.9/email/feedparser.py",
    "module": "email.feedparser",
    "provenance": "census:library",
-   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+   "sha256": "6f8faf3d77fbdc2096f8bbedfd58c3d58e7937a11f0d652b43a2b842a5597625",
+   "source": "pinned CPython 3.9.25 stdlib (re-pinned from docs/class-tier-census.json)"
   },
   {
    "c_reaching": null,
@@ -727,10 +772,11 @@
     "node:Delete"
    ],
    "expected_wall": "class-creation",
-   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/email/generator.py",
+   "file": "/usr/lib64/python3.9/email/generator.py",
    "module": "email.generator",
    "provenance": "census:library",
-   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+   "sha256": "de706af1044f8b6021263b02cc7325248eeec19614134b21fd2f916f3c56f19c",
+   "source": "pinned CPython 3.9.25 stdlib (re-pinned from docs/class-tier-census.json)"
   },
   {
    "c_reaching": null,
@@ -744,10 +790,11 @@
     "node:Starred"
    ],
    "expected_wall": "class-creation",
-   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/email/header.py",
+   "file": "/usr/lib64/python3.9/email/header.py",
    "module": "email.header",
    "provenance": "census:library",
-   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+   "sha256": "99921e2aa7ae5ae1433a0e3f92c732026677417c39923996c11931589ff8a361",
+   "source": "pinned CPython 3.9.25 stdlib (re-pinned from docs/class-tier-census.json)"
   },
   {
    "c_reaching": null,
@@ -762,10 +809,11 @@
     "node:Starred"
    ],
    "expected_wall": "class-creation",
-   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/email/message.py",
+   "file": "/usr/lib64/python3.9/email/message.py",
    "module": "email.message",
    "provenance": "census:library",
-   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+   "sha256": "e50bc4fc6acc0b17b48c2a23f59987ec588ebd8853b50d9ac3c160855d801546",
+   "source": "pinned CPython 3.9.25 stdlib (re-pinned from docs/class-tier-census.json)"
   },
   {
    "c_reaching": null,
@@ -777,10 +825,11 @@
     "node:Starred"
    ],
    "expected_wall": "class-creation",
-   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/email/parser.py",
+   "file": "/usr/lib64/python3.9/email/parser.py",
    "module": "email.parser",
    "provenance": "census:library",
-   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+   "sha256": "eab481ca55902fae679fa2f794c8a81f913723d5029a79d9eb806d4b0c6b6b49",
+   "source": "pinned CPython 3.9.25 stdlib (re-pinned from docs/class-tier-census.json)"
   },
   {
    "c_reaching": null,
@@ -791,10 +840,11 @@
     "node:Constant:bytes"
    ],
    "expected_wall": "import",
-   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/email/quoprimime.py",
+   "file": "/usr/lib64/python3.9/email/quoprimime.py",
    "module": "email.quoprimime",
    "provenance": "census:library",
-   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+   "sha256": "3b892900fd55b57d3be22f7bc9696feb905545adb81d37f4b77166753473a4b4",
+   "source": "pinned CPython 3.9.25 stdlib (re-pinned from docs/class-tier-census.json)"
   },
   {
    "c_reaching": null,
@@ -805,10 +855,11 @@
     "node:Starred"
    ],
    "expected_wall": "import",
-   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/email/utils.py",
+   "file": "/usr/lib64/python3.9/email/utils.py",
    "module": "email.utils",
    "provenance": "census:library",
-   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+   "sha256": "320c4ffd09b5a974fe9663053411841f6ae24202063b65c671b1577f5543432e",
+   "source": "pinned CPython 3.9.25 stdlib (re-pinned from docs/class-tier-census.json)"
   },
   {
    "c_reaching": null,
@@ -820,10 +871,11 @@
     "node:Starred"
    ],
    "expected_wall": "class-creation",
-   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/encodings/__init__.py",
+   "file": "/usr/lib64/python3.9/encodings/__init__.py",
    "module": "encodings",
    "provenance": "census:library",
-   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+   "sha256": "57ce0008389d686b1363abbf2ebb529435942eda457297b179f2eba7db4e8582",
+   "source": "pinned CPython 3.9.25 stdlib (re-pinned from docs/class-tier-census.json)"
   },
   {
    "c_reaching": null,
@@ -831,10 +883,11 @@
    "census_classes": 0,
    "census_walls": [],
    "expected_wall": "none",
-   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/encodings/aliases.py",
+   "file": "/usr/lib64/python3.9/encodings/aliases.py",
    "module": "encodings.aliases",
    "provenance": "census:library",
-   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+   "sha256": "6fdcc49ba23a0203ae6cf28e608f8e6297d7c4d77d52e651db3cb49b9564c6d2",
+   "source": "pinned CPython 3.9.25 stdlib (re-pinned from docs/class-tier-census.json)"
   },
   {
    "c_reaching": true,
@@ -855,10 +908,11 @@
     "node:UnaryOp:Invert"
    ],
    "expected_wall": "class-creation",
-   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/enum.py",
+   "file": "/usr/lib64/python3.9/enum.py",
    "module": "enum",
    "provenance": "census:library",
-   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+   "sha256": "1fbc8192d68b50b55169e391ef02ade61be803e61665ca65de1c43051d6b7b10",
+   "source": "pinned CPython 3.9.25 stdlib (re-pinned from docs/class-tier-census.json)"
   },
   {
    "c_reaching": true,
@@ -870,10 +924,11 @@
     "node:With"
    ],
    "expected_wall": "class-creation",
-   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/filecmp.py",
+   "file": "/usr/lib64/python3.9/filecmp.py",
    "module": "filecmp",
    "provenance": "census:library",
-   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+   "sha256": "f9d9e6d259499a5cff38d3cf76040cc34d9f44f886cafc9e16c5cf86c014a775",
+   "source": "pinned CPython 3.9.25 stdlib (re-pinned from docs/class-tier-census.json)"
   },
   {
    "c_reaching": true,
@@ -883,10 +938,11 @@
     "import"
    ],
    "expected_wall": "import",
-   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/fnmatch.py",
+   "file": "/usr/lib64/python3.9/fnmatch.py",
    "module": "fnmatch",
    "provenance": "census:library",
-   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+   "sha256": "10aac42dbd125cb1bf952c9528e43511671d5756616c0f75f6a8f527ac936fc7",
+   "source": "pinned CPython 3.9.25 stdlib (re-pinned from docs/class-tier-census.json)"
   },
   {
    "c_reaching": true,
@@ -900,10 +956,11 @@
     "node:Starred"
    ],
    "expected_wall": "class-creation",
-   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/fractions.py",
+   "file": "/usr/lib64/python3.9/fractions.py",
    "module": "fractions",
    "provenance": "census:library",
-   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+   "sha256": "92e95df7e7b3743c4bc836bbaaf2ec49d539fe9c44148c6e40fb9d9bd3bd0a07",
+   "source": "pinned CPython 3.9.25 stdlib (re-pinned from docs/class-tier-census.json)"
   },
   {
    "c_reaching": true,
@@ -922,10 +979,11 @@
     "node:With"
    ],
    "expected_wall": "class-creation",
-   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/functools.py",
+   "file": "/usr/lib64/python3.9/functools.py",
    "module": "functools",
    "provenance": "census:library",
-   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+   "sha256": "300563b2de2edbae9b64f8c10c0f267be4f8c97a1524b5e81e99c242e17929b5",
+   "source": "pinned CPython 3.9.25 stdlib (re-pinned from docs/class-tier-census.json)"
   },
   {
    "c_reaching": true,
@@ -936,10 +994,11 @@
     "node:JoinedStr:conversion_r"
    ],
    "expected_wall": "import",
-   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/genericpath.py",
+   "file": "/usr/lib64/python3.9/genericpath.py",
    "module": "genericpath",
    "provenance": "census:library",
-   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+   "sha256": "34497be8d2eb70df61e94cb2ee1938433145c977a56b36be37cc41a3a71d32c2",
+   "source": "pinned CPython 3.9.25 stdlib (re-pinned from docs/class-tier-census.json)"
   },
   {
    "c_reaching": true,
@@ -958,10 +1017,11 @@
     "node:With"
    ],
    "expected_wall": "class-creation",
-   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/gettext.py",
+   "file": "/usr/lib64/python3.9/gettext.py",
    "module": "gettext",
    "provenance": "census:library",
-   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+   "sha256": "46c4d4e2e72bcd572e64bfbce15975d8054a65af167664c6da193773c38dd1ae",
+   "source": "pinned CPython 3.9.25 stdlib (re-pinned from docs/class-tier-census.json)"
   },
   {
    "c_reaching": true,
@@ -973,10 +1033,11 @@
     "node:With"
    ],
    "expected_wall": "import",
-   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/glob.py",
+   "file": "/usr/lib64/python3.9/glob.py",
    "module": "glob",
    "provenance": "census:library",
-   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+   "sha256": "59b27cd35c7b7fb4c573a23f0bb8dcf16b286cd4b03a9138f32aa3e3f6b83a36",
+   "source": "pinned CPython 3.9.25 stdlib (re-pinned from docs/class-tier-census.json)"
   },
   {
    "c_reaching": true,
@@ -990,10 +1051,11 @@
     "node:Set"
    ],
    "expected_wall": "import",
-   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/hashlib.py",
+   "file": "/usr/lib64/python3.9/hashlib.py",
    "module": "hashlib",
    "provenance": "census:library",
-   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+   "sha256": "06ffeb6ec2df188658b1bfc980645c14f8ba6295a725b979a4e2b9a325d2615d",
+   "source": "pinned CPython 3.9.25 stdlib (re-pinned from docs/class-tier-census.json)"
   },
   {
    "c_reaching": true,
@@ -1004,10 +1066,11 @@
     "node:BinOp:RShift"
    ],
    "expected_wall": "import",
-   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/heapq.py",
+   "file": "/usr/lib64/python3.9/heapq.py",
    "module": "heapq",
    "provenance": "census:library",
-   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+   "sha256": "0351667ed3afd3310ebd353526824d6f6f34d641ef0a785552c6893b7f95fdf3",
+   "source": "pinned CPython 3.9.25 stdlib (re-pinned from docs/class-tier-census.json)"
   },
   {
    "c_reaching": true,
@@ -1021,10 +1084,11 @@
     "node:Lambda"
    ],
    "expected_wall": "class-creation",
-   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/hmac.py",
+   "file": "/usr/lib64/python3.9/hmac.py",
    "module": "hmac",
    "provenance": "census:library",
-   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+   "sha256": "a83b26f62e0e5ecf7408668f5a433213b095dd9ccb65d73694d6f227385cba53",
+   "source": "pinned CPython 3.9.25 stdlib (re-pinned from docs/class-tier-census.json)"
   },
   {
    "c_reaching": null,
@@ -1035,10 +1099,11 @@
     "node:Set"
    ],
    "expected_wall": "import",
-   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/html/__init__.py",
+   "file": "/usr/lib64/python3.9/html/__init__.py",
    "module": "html",
    "provenance": "census:library",
-   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+   "sha256": "8d69aeb50f77de6d84c51b9d01e08497983bafe9297cdd1620bf75aa1b1dba1c",
+   "source": "pinned CPython 3.9.25 stdlib (re-pinned from docs/class-tier-census.json)"
   },
   {
    "c_reaching": null,
@@ -1046,10 +1111,11 @@
    "census_classes": 0,
    "census_walls": [],
    "expected_wall": "none",
-   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/html/entities.py",
+   "file": "/usr/lib64/python3.9/html/entities.py",
    "module": "html.entities",
    "provenance": "census:library",
-   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+   "sha256": "282b7cdd567bbbf3d7d7ccd49fae1d3ebc7f7ab64058d781193620913773731b",
+   "source": "pinned CPython 3.9.25 stdlib (re-pinned from docs/class-tier-census.json)"
   },
   {
    "c_reaching": null,
@@ -1060,10 +1126,11 @@
     "node:JoinedStr:conversion_r"
    ],
    "expected_wall": "import",
-   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/importlib/__init__.py",
+   "file": "/usr/lib64/python3.9/importlib/__init__.py",
    "module": "importlib",
    "provenance": "census:library",
-   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+   "sha256": "45421c08a03062ba41e37e484cb0e4d8474be13c2a34806cb5b63c9edcb94a10",
+   "source": "pinned CPython 3.9.25 stdlib (re-pinned from docs/class-tier-census.json)"
   },
   {
    "c_reaching": null,
@@ -1079,10 +1146,11 @@
     "node:With"
    ],
    "expected_wall": "class-creation",
-   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/importlib/_bootstrap.py",
+   "file": "/usr/lib64/python3.9/importlib/_bootstrap.py",
    "module": "importlib._bootstrap",
    "provenance": "census:library",
-   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+   "sha256": "dccbc1da2f9e922b2faab3b1db5543f6898539b3603b406a88b03a287d76a62e",
+   "source": "pinned CPython 3.9.25 stdlib (re-pinned from docs/class-tier-census.json)"
   },
   {
    "c_reaching": null,
@@ -1103,10 +1171,11 @@
     "node:With"
    ],
    "expected_wall": "class-creation",
-   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/importlib/_bootstrap_external.py",
+   "file": "/usr/lib64/python3.9/importlib/_bootstrap_external.py",
    "module": "importlib._bootstrap_external",
    "provenance": "census:library",
-   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+   "sha256": "8373612b2866d0971f9167ced3a0254204fef058c975f2e30fbb3138797e21d4",
+   "source": "pinned CPython 3.9.25 stdlib (re-pinned from docs/class-tier-census.json)"
   },
   {
    "c_reaching": null,
@@ -1117,10 +1186,11 @@
     "import"
    ],
    "expected_wall": "class-creation",
-   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/importlib/abc.py",
+   "file": "/usr/lib64/python3.9/importlib/abc.py",
    "module": "importlib.abc",
    "provenance": "census:library",
-   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+   "sha256": "bb1ede7cadc644812085a65ce8de61cfd4984544d49d6893e80d8506cf29dc41",
+   "source": "pinned CPython 3.9.25 stdlib (re-pinned from docs/class-tier-census.json)"
   },
   {
    "c_reaching": null,
@@ -1130,10 +1200,11 @@
     "import"
    ],
    "expected_wall": "import",
-   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/importlib/machinery.py",
+   "file": "/usr/lib64/python3.9/importlib/machinery.py",
    "module": "importlib.machinery",
    "provenance": "census:library",
-   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+   "sha256": "d8675d9b5553ae4ce0a01005bc47a199b9167ef2c4217a4bbda8f457170aae8b",
+   "source": "pinned CPython 3.9.25 stdlib (re-pinned from docs/class-tier-census.json)"
   },
   {
    "c_reaching": null,
@@ -1149,10 +1220,11 @@
     "node:With"
    ],
    "expected_wall": "class-creation",
-   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/importlib/util.py",
+   "file": "/usr/lib64/python3.9/importlib/util.py",
    "module": "importlib.util",
    "provenance": "census:library",
-   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+   "sha256": "b6a71515fade6516217f7c7d78ab927fde6530a145543c39ce03d1577f668fb7",
+   "source": "pinned CPython 3.9.25 stdlib (re-pinned from docs/class-tier-census.json)"
   },
   {
    "c_reaching": true,
@@ -1168,10 +1240,11 @@
     "node:Starred"
    ],
    "expected_wall": "class-creation",
-   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/inspect.py",
+   "file": "/usr/lib64/python3.9/inspect.py",
    "module": "inspect",
    "provenance": "census:library",
-   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+   "sha256": "17e544a5878cd0faf92f38c99cb0a0fd849ee3480a2e76beab754915a742cfcc",
+   "source": "pinned CPython 3.9.25 stdlib (re-pinned from docs/class-tier-census.json)"
   },
   {
    "c_reaching": true,
@@ -1182,10 +1255,11 @@
     "import"
    ],
    "expected_wall": "class-creation",
-   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/io.py",
+   "file": "/usr/lib64/python3.9/io.py",
    "module": "io",
    "provenance": "census:library",
-   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+   "sha256": "01907eff5e1a17d37e967b4d6d1bd2230e03d30f56cc1a1384a14dd77be5ff60",
+   "source": "pinned CPython 3.9.25 stdlib (re-pinned from docs/class-tier-census.json)"
   },
   {
    "c_reaching": null,
@@ -1193,10 +1267,11 @@
    "census_classes": 0,
    "census_walls": [],
    "expected_wall": "none",
-   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/keyword.py",
+   "file": "/usr/lib64/python3.9/keyword.py",
    "module": "keyword",
    "provenance": "census:library",
-   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+   "sha256": "22997a4c432a03c3ec9b91d0c20be3d59648fd22c6f1251c6d071fd3f32b7308",
+   "source": "pinned CPython 3.9.25 stdlib (re-pinned from docs/class-tier-census.json)"
   },
   {
    "c_reaching": true,
@@ -1207,10 +1282,11 @@
     "node:With"
    ],
    "expected_wall": "import",
-   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/linecache.py",
+   "file": "/usr/lib64/python3.9/linecache.py",
    "module": "linecache",
    "provenance": "census:library",
-   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+   "sha256": "766a5ba5a7692a819f366df0e2e6fb3ba5fc9677aa77188a91c001bddf6e908b",
+   "source": "pinned CPython 3.9.25 stdlib (re-pinned from docs/class-tier-census.json)"
   },
   {
    "c_reaching": true,
@@ -1223,10 +1299,11 @@
     "node:Starred"
    ],
    "expected_wall": "import",
-   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/locale.py",
+   "file": "/usr/lib64/python3.9/locale.py",
    "module": "locale",
    "provenance": "census:library",
-   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+   "sha256": "4a5df24c0fe4ea0ce1ea3331365bd80a3060069109e615b66a4c9968fecd438f",
+   "source": "pinned CPython 3.9.25 stdlib (re-pinned from docs/class-tier-census.json)"
   },
   {
    "c_reaching": null,
@@ -1240,10 +1317,11 @@
     "node:Starred"
    ],
    "expected_wall": "class-creation",
-   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/logging/__init__.py",
+   "file": "/usr/lib64/python3.9/logging/__init__.py",
    "module": "logging",
    "provenance": "census:library",
-   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+   "sha256": "56401d56036a87062af2ff2cfa60ac31855a969931e79447b64d24174339654a",
+   "source": "pinned CPython 3.9.25 stdlib (re-pinned from docs/class-tier-census.json)"
   },
   {
    "c_reaching": true,
@@ -1255,10 +1333,11 @@
     "node:Constant:bytes"
    ],
    "expected_wall": "class-creation",
-   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/lzma.py",
+   "file": "/usr/lib64/python3.9/lzma.py",
    "module": "lzma",
    "provenance": "census:library",
-   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+   "sha256": "497227c971f4b6407c86fb31254a10edfe4c97c017e63a5eca026a8ba112a165",
+   "source": "pinned CPython 3.9.25 stdlib (re-pinned from docs/class-tier-census.json)"
   },
   {
    "c_reaching": true,
@@ -1271,10 +1350,11 @@
     "node:Starred"
    ],
    "expected_wall": "import",
-   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/ntpath.py",
+   "file": "/usr/lib64/python3.9/ntpath.py",
    "module": "ntpath",
    "provenance": "census:library",
-   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+   "sha256": "efe0644178a3e2d1d23592126d0c75b3a78149082018ea2b26742dc5929f638e",
+   "source": "pinned CPython 3.9.25 stdlib (re-pinned from docs/class-tier-census.json)"
   },
   {
    "c_reaching": true,
@@ -1287,10 +1367,11 @@
     "node:UnaryOp:UAdd"
    ],
    "expected_wall": "class-creation",
-   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/numbers.py",
+   "file": "/usr/lib64/python3.9/numbers.py",
    "module": "numbers",
    "provenance": "census:library",
-   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+   "sha256": "2873ef7bec8c8c213904581e84d228479a57c6abd8920dd39f766cd3a747550d",
+   "source": "pinned CPython 3.9.25 stdlib (re-pinned from docs/class-tier-census.json)"
   },
   {
    "c_reaching": true,
@@ -1298,10 +1379,11 @@
    "census_classes": 0,
    "census_walls": [],
    "expected_wall": "none",
-   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/opcode.py",
+   "file": "/usr/lib64/python3.9/opcode.py",
    "module": "opcode",
    "provenance": "census:library",
-   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+   "sha256": "51704446c56af48ba80718ec157f073f8032605e65c6a1988433621405945b76",
+   "source": "pinned CPython 3.9.25 stdlib (re-pinned from docs/class-tier-census.json)"
   },
   {
    "c_reaching": true,
@@ -1324,10 +1406,11 @@
     "node:UnaryOp:UAdd"
    ],
    "expected_wall": "class-creation",
-   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/operator.py",
+   "file": "/usr/lib64/python3.9/operator.py",
    "module": "operator",
    "provenance": "census:library",
-   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+   "sha256": "fd931e2bf493ddd239208b0c0a2249324602b48aabc984c85b7d8dcc4d99a17d",
+   "source": "pinned CPython 3.9.25 stdlib (re-pinned from docs/class-tier-census.json)"
   },
   {
    "c_reaching": true,
@@ -1342,10 +1425,11 @@
     "node:With"
    ],
    "expected_wall": "class-creation",
-   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/os.py",
+   "file": "/usr/lib64/python3.9/os.py",
    "module": "os",
    "provenance": "census:library",
-   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+   "sha256": "308a2b8820449cfdbaa625b7269e2631054bcc1d0bd8fef134e0d45acce67fe7",
+   "source": "pinned CPython 3.9.25 stdlib (re-pinned from docs/class-tier-census.json)"
   },
   {
    "c_reaching": true,
@@ -1360,10 +1444,11 @@
     "node:With"
    ],
    "expected_wall": "class-creation",
-   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/pathlib.py",
+   "file": "/usr/lib64/python3.9/pathlib.py",
    "module": "pathlib",
    "provenance": "census:library",
-   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+   "sha256": "61a9e9f0ca0620d0b9ac3501d53531dd62fdcec0d0cff776d8d1f15566e616a3",
+   "source": "pinned CPython 3.9.25 stdlib (re-pinned from docs/class-tier-census.json)"
   },
   {
    "c_reaching": true,
@@ -1378,10 +1463,11 @@
     "node:With"
    ],
    "expected_wall": "class-creation",
-   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/pdb.py",
+   "file": "/usr/lib64/python3.9/pdb.py",
    "module": "pdb",
    "provenance": "census:library",
-   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+   "sha256": "0b03fab0312a677258a05c3349201ab1570419c550c89628cf2583e6a145aba1",
+   "source": "pinned CPython 3.9.25 stdlib (re-pinned from docs/class-tier-census.json)"
   },
   {
    "c_reaching": true,
@@ -1399,10 +1485,11 @@
     "node:With"
    ],
    "expected_wall": "class-creation",
-   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/pickle.py",
+   "file": "/usr/lib64/python3.9/pickle.py",
    "module": "pickle",
    "provenance": "census:library",
-   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+   "sha256": "e7a24f839324b8efcaba7397f5576cdfd692f7562ccf57b4e464026489c700f0",
+   "source": "pinned CPython 3.9.25 stdlib (re-pinned from docs/class-tier-census.json)"
   },
   {
    "c_reaching": true,
@@ -1416,10 +1503,11 @@
     "node:With"
    ],
    "expected_wall": "import",
-   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/pkgutil.py",
+   "file": "/usr/lib64/python3.9/pkgutil.py",
    "module": "pkgutil",
    "provenance": "census:library",
-   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+   "sha256": "ea769cacc6393468d3c74c6671252e109598406937c50145d4bfb280462ff9fe",
+   "source": "pinned CPython 3.9.25 stdlib (re-pinned from docs/class-tier-census.json)"
   },
   {
    "c_reaching": true,
@@ -1434,10 +1522,11 @@
     "node:With"
    ],
    "expected_wall": "class-creation",
-   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/platform.py",
+   "file": "/usr/lib64/python3.9/platform.py",
    "module": "platform",
    "provenance": "census:library",
-   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+   "sha256": "86d97141b1338dfdc8c41b8002bbb2aeaa6192ff2031deba601d9c7251d77e1b",
+   "source": "pinned CPython 3.9.25 stdlib (re-pinned from docs/class-tier-census.json)"
   },
   {
    "c_reaching": true,
@@ -1450,10 +1539,11 @@
     "node:Starred"
    ],
    "expected_wall": "import",
-   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/posixpath.py",
+   "file": "/usr/lib64/python3.9/posixpath.py",
    "module": "posixpath",
    "provenance": "census:library",
-   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+   "sha256": "24a53ece4e08b504dc47e6ebad6d05864576d33e32fc05985bf0bf63fc9d75b9",
+   "source": "pinned CPython 3.9.25 stdlib (re-pinned from docs/class-tier-census.json)"
   },
   {
    "c_reaching": true,
@@ -1468,10 +1558,11 @@
     "node:Starred"
    ],
    "expected_wall": "class-creation",
-   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/pprint.py",
+   "file": "/usr/lib64/python3.9/pprint.py",
    "module": "pprint",
    "provenance": "census:library",
-   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+   "sha256": "aa61351ae437e77961421b023741aa2b4b2ff0dac5fe7fe81e0cc6ecad802ad3",
+   "source": "pinned CPython 3.9.25 stdlib (re-pinned from docs/class-tier-census.json)"
   },
   {
    "c_reaching": true,
@@ -1486,10 +1577,11 @@
     "node:With"
    ],
    "expected_wall": "class-creation",
-   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/profile.py",
+   "file": "/usr/lib64/python3.9/profile.py",
    "module": "profile",
    "provenance": "census:library",
-   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+   "sha256": "55b5a3bc14d8c4420501cd587e54d0a0828b2fa09059712ed599081c5e004cf7",
+   "source": "pinned CPython 3.9.25 stdlib (re-pinned from docs/class-tier-census.json)"
   },
   {
    "c_reaching": true,
@@ -1500,10 +1592,11 @@
     "import"
    ],
    "expected_wall": "class-creation",
-   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/py_compile.py",
+   "file": "/usr/lib64/python3.9/py_compile.py",
    "module": "py_compile",
    "provenance": "census:library",
-   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+   "sha256": "debf1cec38b6a6bf695f819cb8bbc53a4e1114dfbf15be61170e1a9767df6481",
+   "source": "pinned CPython 3.9.25 stdlib (re-pinned from docs/class-tier-census.json)"
   },
   {
    "c_reaching": true,
@@ -1523,10 +1616,11 @@
     "node:With"
    ],
    "expected_wall": "class-creation",
-   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/pydoc.py",
+   "file": "/usr/lib64/python3.9/pydoc.py",
    "module": "pydoc",
    "provenance": "census:library",
-   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+   "sha256": "167713af7c5ab76665ec4e0cff94b1416dc1edcfc1b6f19f5c02ff7a3720ce1e",
+   "source": "pinned CPython 3.9.25 stdlib (re-pinned from docs/class-tier-census.json)"
   },
   {
    "c_reaching": true,
@@ -1537,10 +1631,11 @@
     "node:Constant:bytes"
    ],
    "expected_wall": "import",
-   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/quopri.py",
+   "file": "/usr/lib64/python3.9/quopri.py",
    "module": "quopri",
    "provenance": "census:library",
-   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+   "sha256": "f9c0f54d09d4926b48e6e507b9c03c7108728d2382cac202727c26d99d0079eb",
+   "source": "pinned CPython 3.9.25 stdlib (re-pinned from docs/class-tier-census.json)"
   },
   {
    "c_reaching": true,
@@ -1559,10 +1654,11 @@
     "node:Starred"
    ],
    "expected_wall": "class-creation",
-   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/random.py",
+   "file": "/usr/lib64/python3.9/random.py",
    "module": "random",
    "provenance": "census:library",
-   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+   "sha256": "e9184015f70d4c0840ae24781fab340458ea8bb9e2619c04713eaf3a9402c65a",
+   "source": "pinned CPython 3.9.25 stdlib (re-pinned from docs/class-tier-census.json)"
   },
   {
    "c_reaching": true,
@@ -1576,10 +1672,11 @@
     "node:UnaryOp:Invert"
    ],
    "expected_wall": "class-creation",
-   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/re.py",
+   "file": "/usr/lib64/python3.9/re.py",
    "module": "re",
    "provenance": "census:library",
-   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+   "sha256": "4326ef93e3cf336c06523426187dce705c12f9fdc0a562a7cd00ab1739b14c2d",
+   "source": "pinned CPython 3.9.25 stdlib (re-pinned from docs/class-tier-census.json)"
   },
   {
    "c_reaching": true,
@@ -1589,10 +1686,11 @@
     "import"
    ],
    "expected_wall": "import",
-   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/reprlib.py",
+   "file": "/usr/lib64/python3.9/reprlib.py",
    "module": "reprlib",
    "provenance": "census:library",
-   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+   "sha256": "dc786fbc528e10bc6ea3c1fa84e4178e85c4f3c9b937a4b191546aec317e9cb9",
+   "source": "pinned CPython 3.9.25 stdlib (re-pinned from docs/class-tier-census.json)"
   },
   {
    "c_reaching": true,
@@ -1606,10 +1704,11 @@
     "node:UnaryOp:Invert"
    ],
    "expected_wall": "class-creation",
-   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/selectors.py",
+   "file": "/usr/lib64/python3.9/selectors.py",
    "module": "selectors",
    "provenance": "census:library",
-   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+   "sha256": "b16e673c110fd6a362414308ef73ffc3c15125c87361333b309791735931040d",
+   "source": "pinned CPython 3.9.25 stdlib (re-pinned from docs/class-tier-census.json)"
   },
   {
    "c_reaching": true,
@@ -1621,10 +1720,11 @@
     "node:With"
    ],
    "expected_wall": "class-creation",
-   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/shlex.py",
+   "file": "/usr/lib64/python3.9/shlex.py",
    "module": "shlex",
    "provenance": "census:library",
-   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+   "sha256": "42ab6060f316e121e374e6621d8c1c98b8db323903c3df289a810c45a8ae46a7",
+   "source": "pinned CPython 3.9.25 stdlib (re-pinned from docs/class-tier-census.json)"
   },
   {
    "c_reaching": true,
@@ -1640,10 +1740,11 @@
     "node:With"
    ],
    "expected_wall": "class-creation",
-   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/shutil.py",
+   "file": "/usr/lib64/python3.9/shutil.py",
    "module": "shutil",
    "provenance": "census:library",
-   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+   "sha256": "244e9b24b36625d0ad62ee3781103264df1d34a381973d73e34e5ce86498d0d1",
+   "source": "pinned CPython 3.9.25 stdlib (re-pinned from docs/class-tier-census.json)"
   },
   {
    "c_reaching": true,
@@ -1655,10 +1756,11 @@
     "node:SetComp"
    ],
    "expected_wall": "import",
-   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/signal.py",
+   "file": "/usr/lib64/python3.9/signal.py",
    "module": "signal",
    "provenance": "census:library",
-   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+   "sha256": "6ae9e49fe09b607bc161fc80067de9763aa48f523567a34992f00be06057f00a",
+   "source": "pinned CPython 3.9.25 stdlib (re-pinned from docs/class-tier-census.json)"
   },
   {
    "c_reaching": true,
@@ -1671,10 +1773,11 @@
     "node:With"
    ],
    "expected_wall": "import",
-   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/site.py",
+   "file": "/usr/lib64/python3.9/site.py",
    "module": "site",
    "provenance": "census:library",
-   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+   "sha256": "92ea89d0404d43fe84ca1b0dd87bc5d88d2c7f1f51713c2e0faf290f16eaa9d7",
+   "source": "pinned CPython 3.9.25 stdlib (re-pinned from docs/class-tier-census.json)"
   },
   {
    "c_reaching": true,
@@ -1689,10 +1792,11 @@
     "node:With"
    ],
    "expected_wall": "class-creation",
-   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/socket.py",
+   "file": "/usr/lib64/python3.9/socket.py",
    "module": "socket",
    "provenance": "census:library",
-   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+   "sha256": "b5da4dbf86b34acc7507ebb684c03fffd805c1b4d6c46b600ec3fef003e616e3",
+   "source": "pinned CPython 3.9.25 stdlib (re-pinned from docs/class-tier-census.json)"
   },
   {
    "c_reaching": true,
@@ -1708,10 +1812,11 @@
     "node:UnaryOp:Invert"
    ],
    "expected_wall": "import",
-   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/sre_compile.py",
+   "file": "/usr/lib64/python3.9/sre_compile.py",
    "module": "sre_compile",
    "provenance": "census:library",
-   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+   "sha256": "800f4c7df096e10336cd54f1aa6382721d6fcb974669463fe67f7a9189e52407",
+   "source": "pinned CPython 3.9.25 stdlib (re-pinned from docs/class-tier-census.json)"
   },
   {
    "c_reaching": true,
@@ -1726,10 +1831,11 @@
     "node:With"
    ],
    "expected_wall": "class-creation",
-   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/sre_constants.py",
+   "file": "/usr/lib64/python3.9/sre_constants.py",
    "module": "sre_constants",
    "provenance": "census:library",
-   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+   "sha256": "6d5f1ff40e42f4be9b98899b58684dffcdb9c0ef1b3b942c17a3fcafc0bbcdc1",
+   "source": "pinned CPython 3.9.25 stdlib (re-pinned from docs/class-tier-census.json)"
   },
   {
    "c_reaching": true,
@@ -1742,10 +1848,11 @@
     "node:Set"
    ],
    "expected_wall": "class-creation",
-   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/sre_parse.py",
+   "file": "/usr/lib64/python3.9/sre_parse.py",
    "module": "sre_parse",
    "provenance": "census:library",
-   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+   "sha256": "dad10892e970f3b9d0ad874d893edde31c0303e39ea5e2678935129e29128c2f",
+   "source": "pinned CPython 3.9.25 stdlib (re-pinned from docs/class-tier-census.json)"
   },
   {
    "c_reaching": true,
@@ -1763,10 +1870,11 @@
     "node:With"
    ],
    "expected_wall": "class-creation",
-   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/ssl.py",
+   "file": "/usr/lib64/python3.9/ssl.py",
    "module": "ssl",
    "provenance": "census:library",
-   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+   "sha256": "bd4302dd19477248ef0793c5f2e7bf95f11f573cde5cc407473f7f612c7942cb",
+   "source": "pinned CPython 3.9.25 stdlib (re-pinned from docs/class-tier-census.json)"
   },
   {
    "c_reaching": true,
@@ -1774,10 +1882,11 @@
    "census_classes": 0,
    "census_walls": [],
    "expected_wall": "none",
-   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/stat.py",
+   "file": "/usr/lib64/python3.9/stat.py",
    "module": "stat",
    "provenance": "census:library",
-   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+   "sha256": "052af0327eae6941b69b05c088b3e748f79995635f80ac4cc7125eb333eb4c77",
+   "source": "pinned CPython 3.9.25 stdlib (re-pinned from docs/class-tier-census.json)"
   },
   {
    "c_reaching": true,
@@ -1788,10 +1897,11 @@
     "import"
    ],
    "expected_wall": "class-creation",
-   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/string.py",
+   "file": "/usr/lib64/python3.9/string.py",
    "module": "string",
    "provenance": "census:library",
-   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+   "sha256": "bc57c407a8397ee2bea8683d0ce0a563a060c74c785ff36fc6555d66a9c7a566",
+   "source": "pinned CPython 3.9.25 stdlib (re-pinned from docs/class-tier-census.json)"
   },
   {
    "c_reaching": true,
@@ -1801,10 +1911,11 @@
     "import"
    ],
    "expected_wall": "import",
-   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/struct.py",
+   "file": "/usr/lib64/python3.9/struct.py",
    "module": "struct",
    "provenance": "census:library",
-   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+   "sha256": "9c231f9497caf513a22dee8f790b07f969b0e45854a0bdd6dd84b492e08c2856",
+   "source": "pinned CPython 3.9.25 stdlib (re-pinned from docs/class-tier-census.json)"
   },
   {
    "c_reaching": true,
@@ -1821,10 +1932,11 @@
     "node:With"
    ],
    "expected_wall": "class-creation",
-   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/subprocess.py",
+   "file": "/usr/lib64/python3.9/subprocess.py",
    "module": "subprocess",
    "provenance": "census:library",
-   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+   "sha256": "1d966866e1a2ea259d152b501be8ea69149eb00aca0ad32750488434c62018ef",
+   "source": "pinned CPython 3.9.25 stdlib (re-pinned from docs/class-tier-census.json)"
   },
   {
    "c_reaching": true,
@@ -1838,10 +1950,11 @@
     "node:With"
    ],
    "expected_wall": "import",
-   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/sysconfig.py",
+   "file": "/usr/lib64/python3.9/sysconfig.py",
    "module": "sysconfig",
    "provenance": "census:library",
-   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+   "sha256": "b685bc973ae0623765d2057442d7a42d96965a722ad189b20237a43e90e95a6e",
+   "source": "pinned CPython 3.9.25 stdlib (re-pinned from docs/class-tier-census.json)"
   },
   {
    "c_reaching": true,
@@ -1857,10 +1970,11 @@
     "node:With"
    ],
    "expected_wall": "class-creation",
-   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/tempfile.py",
+   "file": "/usr/lib64/python3.9/tempfile.py",
    "module": "tempfile",
    "provenance": "census:library",
-   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+   "sha256": "6f8317b2d048bbc85cdd54ac0e329c5ad33a57290ee4be39bf7f04db1daee68f",
+   "source": "pinned CPython 3.9.25 stdlib (re-pinned from docs/class-tier-census.json)"
   },
   {
    "c_reaching": true,
@@ -1872,10 +1986,11 @@
     "node:Delete"
    ],
    "expected_wall": "class-creation",
-   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/textwrap.py",
+   "file": "/usr/lib64/python3.9/textwrap.py",
    "module": "textwrap",
    "provenance": "census:library",
-   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+   "sha256": "1c77f6f23a57bc4494c9d81d1e8d2cfb9cda241bf6d71b7db0af963ba9ad0190",
+   "source": "pinned CPython 3.9.25 stdlib (re-pinned from docs/class-tier-census.json)"
   },
   {
    "c_reaching": true,
@@ -1890,10 +2005,11 @@
     "node:With"
    ],
    "expected_wall": "class-creation",
-   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/threading.py",
+   "file": "/usr/lib64/python3.9/threading.py",
    "module": "threading",
    "provenance": "census:library",
-   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+   "sha256": "fd5407ff42b18931d630a076a599d59aeb3cd8c0209053db51f161f51f7d59ea",
+   "source": "pinned CPython 3.9.25 stdlib (re-pinned from docs/class-tier-census.json)"
   },
   {
    "c_reaching": null,
@@ -1903,10 +2019,11 @@
     "node:DictComp"
    ],
    "expected_wall": "node:DictComp",
-   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/token.py",
+   "file": "/usr/lib64/python3.9/token.py",
    "module": "token",
    "provenance": "census:library",
-   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+   "sha256": "ab560a77c64094e898048757f3c62a72de40413a78f6c42f4988338a24afa6d8",
+   "source": "pinned CPython 3.9.25 stdlib (re-pinned from docs/class-tier-census.json)"
   },
   {
    "c_reaching": true,
@@ -1921,10 +2038,11 @@
     "node:With"
    ],
    "expected_wall": "class-creation",
-   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/tokenize.py",
+   "file": "/usr/lib64/python3.9/tokenize.py",
    "module": "tokenize",
    "provenance": "census:library",
-   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+   "sha256": "02905e529298418e6e6097b739960ce3055d4f7393ced7d18a10c6a3a08c6323",
+   "source": "pinned CPython 3.9.25 stdlib (re-pinned from docs/class-tier-census.json)"
   },
   {
    "c_reaching": true,
@@ -1937,10 +2055,11 @@
     "node:Starred"
    ],
    "expected_wall": "class-creation",
-   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/traceback.py",
+   "file": "/usr/lib64/python3.9/traceback.py",
    "module": "traceback",
    "provenance": "census:library",
-   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+   "sha256": "d3a9173e86a21f2b64003322e8ccd55f8fe093e5ccd47aee18131b25669fad34",
+   "source": "pinned CPython 3.9.25 stdlib (re-pinned from docs/class-tier-census.json)"
   },
   {
    "c_reaching": true,
@@ -1951,10 +2070,11 @@
     "node:UnaryOp:Invert"
    ],
    "expected_wall": "import",
-   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/tty.py",
+   "file": "/usr/lib64/python3.9/tty.py",
    "module": "tty",
    "provenance": "census:library",
-   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+   "sha256": "066a541e6d38ead952d63cc32afbac51a33acf354799f235c582eab17488105d",
+   "source": "pinned CPython 3.9.25 stdlib (re-pinned from docs/class-tier-census.json)"
   },
   {
    "c_reaching": true,
@@ -1969,10 +2089,11 @@
     "node:Starred"
    ],
    "expected_wall": "class-creation",
-   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/types.py",
+   "file": "/usr/lib64/python3.9/types.py",
    "module": "types",
    "provenance": "census:library",
-   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+   "sha256": "98c583498b0ff5c2b0b3949d4ed7fe567c58a3f54a0aa82ef03bd7b5862dab9e",
+   "source": "pinned CPython 3.9.25 stdlib (re-pinned from docs/class-tier-census.json)"
   },
   {
    "c_reaching": true,
@@ -1990,10 +2111,11 @@
     "node:Starred"
    ],
    "expected_wall": "class-creation",
-   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/typing.py",
+   "file": "/usr/lib64/python3.9/typing.py",
    "module": "typing",
    "provenance": "census:library",
-   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+   "sha256": "c50dd34c21da7cceaebbf87df169a9b714f3c749c3505dc99dce5b53408f34bf",
+   "source": "pinned CPython 3.9.25 stdlib (re-pinned from docs/class-tier-census.json)"
   },
   {
    "c_reaching": null,
@@ -2006,10 +2128,11 @@
     "node:Set"
    ],
    "expected_wall": "import",
-   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/unittest/__init__.py",
+   "file": "/usr/lib64/python3.9/unittest/__init__.py",
    "module": "unittest",
    "provenance": "census:library",
-   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+   "sha256": "07bdf1fff20e4121ba61cfb64ea3c404d54ac56b053475a3a105907f48685210",
+   "source": "pinned CPython 3.9.25 stdlib (re-pinned from docs/class-tier-census.json)"
   },
   {
    "c_reaching": null,
@@ -2022,10 +2145,11 @@
     "node:With"
    ],
    "expected_wall": "class-creation",
-   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/unittest/case.py",
+   "file": "/usr/lib64/python3.9/unittest/case.py",
    "module": "unittest.case",
    "provenance": "census:library",
-   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+   "sha256": "8056e6351eb3f987b70ac23cac7bbe9ed8b5cc3a0ba85b25c6cca32449325590",
+   "source": "pinned CPython 3.9.25 stdlib (re-pinned from docs/class-tier-census.json)"
   },
   {
    "c_reaching": null,
@@ -2036,10 +2160,11 @@
     "import"
    ],
    "expected_wall": "class-creation",
-   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/unittest/loader.py",
+   "file": "/usr/lib64/python3.9/unittest/loader.py",
    "module": "unittest.loader",
    "provenance": "census:library",
-   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+   "sha256": "4b8d7dbfe68bc38f50e6b3952fda338e1cf9de43f299ab910cfef31c219e0342",
+   "source": "pinned CPython 3.9.25 stdlib (re-pinned from docs/class-tier-census.json)"
   },
   {
    "c_reaching": null,
@@ -2050,10 +2175,11 @@
     "import"
    ],
    "expected_wall": "class-creation",
-   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/unittest/main.py",
+   "file": "/usr/lib64/python3.9/unittest/main.py",
    "module": "unittest.main",
    "provenance": "census:library",
-   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+   "sha256": "360d56268ce4d561681faccf0206dc2164830de7a6dcd135f655ae5fdbdc59cf",
+   "source": "pinned CPython 3.9.25 stdlib (re-pinned from docs/class-tier-census.json)"
   },
   {
    "c_reaching": null,
@@ -2065,10 +2191,11 @@
     "node:Starred"
    ],
    "expected_wall": "class-creation",
-   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/unittest/result.py",
+   "file": "/usr/lib64/python3.9/unittest/result.py",
    "module": "unittest.result",
    "provenance": "census:library",
-   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+   "sha256": "12db99e325d9f18f64fda5d8da751d72a8ed1b87ae94620e3b606f4be2dc8342",
+   "source": "pinned CPython 3.9.25 stdlib (re-pinned from docs/class-tier-census.json)"
   },
   {
    "c_reaching": null,
@@ -2080,10 +2207,11 @@
     "node:With"
    ],
    "expected_wall": "class-creation",
-   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/unittest/runner.py",
+   "file": "/usr/lib64/python3.9/unittest/runner.py",
    "module": "unittest.runner",
    "provenance": "census:library",
-   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+   "sha256": "7ab57b963cd64f210d5a074b15e8dae9b4d1699da980dd523362d3f88e966847",
+   "source": "pinned CPython 3.9.25 stdlib (re-pinned from docs/class-tier-census.json)"
   },
   {
    "c_reaching": null,
@@ -2096,10 +2224,11 @@
     "node:Starred"
    ],
    "expected_wall": "class-creation",
-   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/unittest/signals.py",
+   "file": "/usr/lib64/python3.9/unittest/signals.py",
    "module": "unittest.signals",
    "provenance": "census:library",
-   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+   "sha256": "f8286e818ca56e10e03745bc056cdfd31147678f9a1dc8cb6b0fe96ef9a4362a",
+   "source": "pinned CPython 3.9.25 stdlib (re-pinned from docs/class-tier-census.json)"
   },
   {
    "c_reaching": null,
@@ -2112,10 +2241,11 @@
     "node:Starred"
    ],
    "expected_wall": "class-creation",
-   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/unittest/suite.py",
+   "file": "/usr/lib64/python3.9/unittest/suite.py",
    "module": "unittest.suite",
    "provenance": "census:library",
-   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+   "sha256": "ed2da92bc9f97c53403ee2d3d12cc53b16a96e85d596ebc887b5a93458f3f6bc",
+   "source": "pinned CPython 3.9.25 stdlib (re-pinned from docs/class-tier-census.json)"
   },
   {
    "c_reaching": null,
@@ -2125,10 +2255,11 @@
     "import"
    ],
    "expected_wall": "import",
-   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/unittest/util.py",
+   "file": "/usr/lib64/python3.9/unittest/util.py",
    "module": "unittest.util",
    "provenance": "census:library",
-   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+   "sha256": "fdcc640c3505d16deab9c32eae7c3f5f67c3b5e81c563dc6698fa7fcf403854d",
+   "source": "pinned CPython 3.9.25 stdlib (re-pinned from docs/class-tier-census.json)"
   },
   {
    "c_reaching": null,
@@ -2136,10 +2267,11 @@
    "census_classes": 0,
    "census_walls": [],
    "expected_wall": "none",
-   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/urllib/__init__.py",
+   "file": "/usr/lib64/python3.9/urllib/__init__.py",
    "module": "urllib",
    "provenance": "census:library",
-   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "source": "pinned CPython 3.9.25 stdlib (re-pinned from docs/class-tier-census.json)"
   },
   {
    "c_reaching": null,
@@ -2156,10 +2288,11 @@
     "node:Starred"
    ],
    "expected_wall": "class-creation",
-   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/urllib/parse.py",
+   "file": "/usr/lib64/python3.9/urllib/parse.py",
    "module": "urllib.parse",
    "provenance": "census:library",
-   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+   "sha256": "512aca107a86844acf411a4d8d2fc9ae85c90bd800adbb9eb00641c2c97c389d",
+   "source": "pinned CPython 3.9.25 stdlib (re-pinned from docs/class-tier-census.json)"
   },
   {
    "c_reaching": true,
@@ -2170,10 +2303,11 @@
     "node:Constant:bytes"
    ],
    "expected_wall": "import",
-   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/uu.py",
+   "file": "/usr/lib64/python3.9/uu.py",
    "module": "uu",
    "provenance": "census:library",
-   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+   "sha256": "41466ee054c13fc43d79e015baa9a5b873be10d737c394398f38ea9add8fd258",
+   "source": "pinned CPython 3.9.25 stdlib (re-pinned from docs/class-tier-census.json)"
   },
   {
    "c_reaching": true,
@@ -2185,10 +2319,11 @@
     "node:Global"
    ],
    "expected_wall": "class-creation",
-   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/warnings.py",
+   "file": "/usr/lib64/python3.9/warnings.py",
    "module": "warnings",
    "provenance": "census:library",
-   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+   "sha256": "b8e7748e4c67eb65cea5d3b3bd888d245771c0ebe63117f747189a55a9b622db",
+   "source": "pinned CPython 3.9.25 stdlib (re-pinned from docs/class-tier-census.json)"
   },
   {
    "c_reaching": true,
@@ -2203,10 +2338,11 @@
     "node:With"
    ],
    "expected_wall": "class-creation",
-   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/weakref.py",
+   "file": "/usr/lib64/python3.9/weakref.py",
    "module": "weakref",
    "provenance": "census:library",
-   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+   "sha256": "dd8e03473ee5667c1a2caa43ede07797652bcb4035fabb60d60af10bb23a0886",
+   "source": "pinned CPython 3.9.25 stdlib (re-pinned from docs/class-tier-census.json)"
   },
   {
    "c_reaching": null,
@@ -2214,10 +2350,11 @@
    "census_classes": 0,
    "census_walls": [],
    "expected_wall": "none",
-   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/xml/__init__.py",
+   "file": "/usr/lib64/python3.9/xml/__init__.py",
    "module": "xml",
    "provenance": "census:library",
-   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+   "sha256": "34296f728e7fe68cccb97a9f6edbf3bf3a686f44044c744fe85f207a92ed4811",
+   "source": "pinned CPython 3.9.25 stdlib (re-pinned from docs/class-tier-census.json)"
   },
   {
    "c_reaching": null,
@@ -2225,10 +2362,11 @@
    "census_classes": 0,
    "census_walls": [],
    "expected_wall": "none",
-   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/xml/parsers/__init__.py",
+   "file": "/usr/lib64/python3.9/xml/parsers/__init__.py",
    "module": "xml.parsers",
    "provenance": "census:library",
-   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+   "sha256": "b88497adc30d5d5eda7789c25a2206ee9270c932d584d7ac42680325651da45c",
+   "source": "pinned CPython 3.9.25 stdlib (re-pinned from docs/class-tier-census.json)"
   },
   {
    "c_reaching": null,
@@ -2238,10 +2376,11 @@
     "import"
    ],
    "expected_wall": "import",
-   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/xml/parsers/expat.py",
+   "file": "/usr/lib64/python3.9/xml/parsers/expat.py",
    "module": "xml.parsers.expat",
    "provenance": "census:library",
-   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+   "sha256": "64e1947747c2874117a7458bba1f07c86620cc0ed9a4a4116d262878e4a2aa09",
+   "source": "pinned CPython 3.9.25 stdlib (re-pinned from docs/class-tier-census.json)"
   },
   {
    "c_reaching": true,
@@ -2267,10 +2406,11 @@
     "node:With"
    ],
    "expected_wall": "class-creation",
-   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/zipfile.py",
+   "file": "/usr/lib64/python3.9/zipfile.py",
    "module": "zipfile",
    "provenance": "census:library",
-   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+   "sha256": "7d41685d0f9fb9133e4addba44262625f131b22c6a7fef11e57a2bbec2f0e801",
+   "source": "pinned CPython 3.9.25 stdlib (re-pinned from docs/class-tier-census.json)"
   },
   {
    "c_reaching": true,
@@ -2288,10 +2428,11 @@
     "node:With"
    ],
    "expected_wall": "class-creation",
-   "file": "/opt/homebrew/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/python3.9/zipimport.py",
+   "file": "/usr/lib64/python3.9/zipimport.py",
    "module": "zipimport",
    "provenance": "census:library",
-   "source": "docs/class-tier-census.json (CPython 3.9.19)"
+   "sha256": "a78e8d428ac460a23f04d6fa189117492d94d3678829657510215e7e7c4a546f",
+   "source": "pinned CPython 3.9.25 stdlib (re-pinned from docs/class-tier-census.json)"
   },
   {
    "c_reaching": false,

@@ -228,3 +228,9 @@ is an E-MATCH and does not change the frozen migration count.
 The four-state logical-operator row, `wpg_logic`, runs from its source-shaped
 envelope and matches Icarus Verilog 13.0 and Xcelium 24.03-s004 for all 66
 cycles.  It is an E-MATCH and does not change the frozen migration count.
+
+The qualified-operator row, `xcelium_qualified_ops`, runs from its
+source-shaped envelope and matches Xcelium 24.03-s004 for all 4 cycles.  The
+corpus is Xcelium-only for this syntax, so no Icarus result is claimed.  This
+is an E-MATCH against the available pinned oracle and does not change the
+frozen migration count.

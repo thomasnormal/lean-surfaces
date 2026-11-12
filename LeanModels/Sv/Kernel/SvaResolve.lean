@@ -95,4 +95,12 @@ theorem sva_binary_eval_congr {trace trace' : List SvState} {index : Nat}
       SvaValue.eval trace' index (.binary op left' right') := by
   simp only [SvaValue.eval, hleft, hright]
 
+theorem sva_bool_evalLogic_congr {trace trace' : List SvState} {index : Nat}
+    {left right : SvaBool}
+    (h : SvaBool.evalLogic trace index left =
+      SvaBool.evalLogic trace' index right) :
+    SvaBool.evalChecked trace index left =
+      SvaBool.evalChecked trace' index right := by
+  simp [SvaBool.evalChecked, h]
+
 end LeanModels.Sv.Kernel

@@ -477,6 +477,7 @@ theorem PyTriple.exists_callsTo_arityOk {m : Module} {fname : String}
     (hargsOk : f.argsOk = true) (hlocalsOk : f.localsOk = true)
     (hgen : f.isGenerator = false)
     (harity : arityOk f.params args.size = true)
+    (hm : m.heapFree = true := by first | rfl | decide)
     (h : PyTriple m
         (fun st => st = ⟨{initWorld m with callDepth := 1}, markUnboundLocals f.body.toList (mkCallEnv f.params (RVal.thawArgs args))⟩)
         f.body.toList
@@ -494,7 +495,8 @@ theorem PyTriple.exists_callsTo_arityOk {m : Module} {fname : String}
       obtain ⟨v, rfl, hΦ⟩ := hr
       refine ⟨v, ⟨t + 1, ?_⟩, hΦ⟩
       unfold callFunction
-      rw [callIn]
+      simp only [publicThawArgs, hm, ↓reduceIte]
+      rw [callIn.eq_def]
       simp [hf, hargsOk, hlocalsOk, hgen, harity, hrt, hdepth, pythonTopCallDepth, pythonRecursionLimit, Run.leaveCallDepth, RVal.freezeB_thaw]
     | brk => exact hr.elim
     | cont => exact hr.elim
@@ -511,6 +513,7 @@ theorem PyTriple.exists_callsTo {m : Module} {fname : String}
     (hargsOk : f.argsOk = true) (hlocalsOk : f.localsOk = true)
     (hgen : f.isGenerator = false)
     (harity : args.size = f.params.size)
+    (hm : m.heapFree = true := by first | rfl | decide)
     (h : PyTriple m
         (fun st => st = ⟨{initWorld m with callDepth := 1}, markUnboundLocals f.body.toList (mkCallEnv f.params (RVal.thawArgs args))⟩)
         f.body.toList
@@ -518,7 +521,7 @@ theorem PyTriple.exists_callsTo {m : Module} {fname : String}
           ret := fun rv _ => ∃ v, rv = RVal.thaw v ∧ Φ v }) :
     ∃ v, CallsTo m fname args v ∧ Φ v :=
   PyTriple.exists_callsTo_arityOk hf hargsOk hlocalsOk hgen
-    (by rw [harity]; exact arityOk_full f.params) h
+    (by rw [harity]; exact arityOk_full f.params) hm h
 
 /-- The relational bridge, marshalled form: `exists_callsTo` with the
 existential ranging over a *spec type* `α` (`PyInt`, `PyBool`, …) rather
@@ -537,6 +540,7 @@ theorem PyTriple.exists_callsTo_toVal_arityOk {α : Type} [ToVal α]
     (hargsOk : f.argsOk = true) (hlocalsOk : f.localsOk = true)
     (hgen : f.isGenerator = false)
     (harity : arityOk f.params args.size = true)
+    (hm : m.heapFree = true := by first | rfl | decide)
     (h : PyTriple m
         (fun st => st = ⟨{initWorld m with callDepth := 1}, markUnboundLocals f.body.toList (mkCallEnv f.params (RVal.thawArgs args))⟩)
         f.body.toList
@@ -546,6 +550,7 @@ theorem PyTriple.exists_callsTo_toVal_arityOk {α : Type} [ToVal α]
   obtain ⟨v, hv, x, rfl, hΦ⟩ :=
     PyTriple.exists_callsTo_arityOk (Φ := fun v => ∃ x : α, v = ToVal.toVal x ∧ Φ x)
       hf hargsOk hlocalsOk hgen harity
+      (hm := hm)
       (h.consequence (fun _ hp => hp)
         { next := fun _ hfalse => hfalse.elim
           ret := fun rv st hrv =>
@@ -562,6 +567,7 @@ theorem PyTriple.exists_callsTo_toVal {α : Type} [ToVal α] {m : Module}
     (hargsOk : f.argsOk = true) (hlocalsOk : f.localsOk = true)
     (hgen : f.isGenerator = false)
     (harity : args.size = f.params.size)
+    (hm : m.heapFree = true := by first | rfl | decide)
     (h : PyTriple m
         (fun st => st = ⟨{initWorld m with callDepth := 1}, markUnboundLocals f.body.toList (mkCallEnv f.params (RVal.thawArgs args))⟩)
         f.body.toList
@@ -569,7 +575,7 @@ theorem PyTriple.exists_callsTo_toVal {α : Type} [ToVal α] {m : Module}
           ret := fun rv _ => ∃ x : α, rv = RVal.thaw (ToVal.toVal x) ∧ Φ x }) :
     ∃ x : α, CallsTo m fname args (ToVal.toVal x) ∧ Φ x :=
   PyTriple.exists_callsTo_toVal_arityOk hf hargsOk hlocalsOk hgen
-    (by rw [harity]; exact arityOk_full f.params) h
+    (by rw [harity]; exact arityOk_full f.params) hm h
 
 /-! ## The walker (meta level) -/
 

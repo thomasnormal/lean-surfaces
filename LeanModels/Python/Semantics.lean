@@ -10661,14 +10661,12 @@ def richCompareRecursionCheck (depth : Nat) (op : CmpOp) : Res Unit :=
 def richCompareRecursionCheckH (h : Heap) (depth : Nat) (op : CmpOp)
     (a b : RVal) : Res Unit := do
   let _ ← richCompareRecursionCheck depth op
-  -- Ref-free values cannot hide a nested container comparison, so the
-  -- direct `PyObject_RichCompare` unit above is the complete recursion cost.
-  -- Tuple/list ordering and heap-backed values still use the bounded walker;
-  -- its nested `PyObject_RichCompareBool(..., Py_EQ)` probes account for the
-  -- additional units on those paths.  This fast path also keeps scalar
-  -- comparisons from expanding an irrelevant heap walker in proofs.
-  if RVal.refFree a && RVal.refFree b then .ok ()
-  else heapEqRecursionCheck h depth a b
+  -- Immediate tuples/lists can still hide arbitrarily deep
+  -- `PyObject_RichCompareBool(..., Py_EQ)` probes even when they contain no
+  -- heap references. The bounded walker therefore accounts for the nested
+  -- units on every admitted comparison; scalar pairs take its depth-zero
+  -- fast path inside `heapEq`.
+  heapEqRecursionCheck h depth a b
 
 /-- Chained comparison `a < b < c …`: each operand is evaluated exactly once,
 left to right; short-circuits to `False` on the first failing link (the

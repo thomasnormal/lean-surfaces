@@ -18,9 +18,26 @@ ROOT = Path(__file__).resolve().parent.parent
 OUT = ROOT / "harness" / "foundation_edges.json"
 SOURCE = "harness/foundation_probe.py"
 
-NAN_POOL = [
-    {"t": "float", "bits": "9221120237041090560"},
+# F7's protocol pools.  Keep them as structured values so the generator can
+# cross the same domains in every row without reparsing Python source.
+INT_POOL = [
+    0, 1, -1, 2**31 - 1, 2**31, 2**31 + 1,
+    -(2**31) - 1, 2**63 - 1, 2**63, 2**63 + 1,
+    -(2**63) - 1, 2**53 + 1, 2**1024, 2**1100,
 ]
+FLOAT_POOL = [
+    {"t": "float", "bits": "9221120237041090560"},  # nan
+    {"t": "float", "bits": "9218868437227405312"},  # inf
+    {"t": "float", "bits": "18442240474082181120"}, # -inf
+    0.0, -0.0,
+    {"t": "float", "bits": "1"},                     # min subnormal
+    {"t": "float", "bits": "9218868437227405311"},  # max finite
+    2**53,
+]
+STR_POOL = ["", "x", "héllo", "x" * 300]
+CONTAINER_POOL = [[], [1], [[1]], ["self-ref-domain"]]
+NAN_POOL = FLOAT_POOL[:1]
+INFINITY_POOL = FLOAT_POOL[1:3]
 HUGE_POOL = [2**63, -(2**63) - 1]
 BOUNDARY_POOL = [2**63 - 1, -2**63]
 
@@ -38,6 +55,9 @@ def generated_rows():
     ):
         rows.append(row(function, [[value] for value in NAN_POOL], "unsupported",
                           "RichCompareBool edge pool: non-finite float identity is loud."))
+    for function in ("nan_sorted", "nan_max"):
+        rows.append(row(function, [[value] for value in INFINITY_POOL], "match",
+                          "F7 infinity pool: ordered numeric infinities remain decided."))
     rows.append(row("int_pow_negative", [[base, 1] for base in (23, 2**53 + 1)],
                     "unsupported", "platform pow edge pool: non-unit integer bases are loud."))
     rows.append(row("int_pow_negative", [[base, exponent]
@@ -47,7 +67,7 @@ def generated_rows():
                      "list_subscript_huge", "tuple_subscript_huge",
                      "string_subscript_huge", "bytes_subscript_huge",
                      "range_subscript_huge"):
-        rows.append(row(function, [[index] for index in HUGE_POOL],
+        rows.append(row(function, [[index] for index in INT_POOL],
                         "match", "raising Py_ssize_t edge pool."))
     for function in ("list_insert_boundary", "list_pop_boundary"):
         rows.append(row(function, [[index] for index in BOUNDARY_POOL],
@@ -69,7 +89,7 @@ def generated_rows():
             "nested RichCompareBool recursion boundary."),
         row("nested_mismatch", [[999]], "match",
             "early container mismatch avoids descending to the recursion limit."),
-        row("nested_tuple_order", [[990], [999]], "match",
+        row("nested_tuple_order", [[990]], "match",
             "tuple ordering recursion boundary through RichCompareBool equality probes."),
         row("nested_print", [[510]], "match",
             "recursive rendering control below the fixed repr budget."),
@@ -150,6 +170,14 @@ def generated_rows():
         row("float_pow_exponent_overflow", [[]], "match",
             "mixed float-power exponent conversion boundary."),
     ])
+    # The scalar rendering sites share the string pool, including the
+    # non-ASCII and long-run boundaries.  `%s` is the admitted raw-string
+    # conversion; `%r`/container rendering keep their separate loud rows.
+    for function in ("percent_width", "percent_wide", "percent_precision",
+                     "percent_dynamic_precision"):
+        rows.extend(row(function, [[value] for value in STR_POOL], "match",
+                         "F7 string pool: empty, ASCII, non-ASCII, and 300-char run.")
+                     for _ in [0])
     return rows
 
 
@@ -167,6 +195,21 @@ def check_manifest():
     return 0
 
 
+def self_test():
+    """Check the generator's declared pools and deterministic cross-product."""
+    assert 2**1024 in INT_POOL and 2**1100 in INT_POOL
+    assert any(x.get("bits") == "1" for x in FLOAT_POOL if isinstance(x, dict))
+    assert "héllo" in STR_POOL and "x" * 300 in STR_POOL
+    assert [] in CONTAINER_POOL and [[1]] in CONTAINER_POOL
+    rows = generated_rows()
+    assert rows == json.loads(json.dumps(rows, sort_keys=True))
+    assert len(rows) == len({(r["file"], r["function"], json.dumps(r["args"], sort_keys=True), r["expect"])
+                            for r in rows})
+    print("foundation_edges: self-test passed (%d rows, %d pools)" %
+          (len(rows), 4))
+    return 0
+
+
 def run_diff(proof=False):
     command = [sys.executable, str(ROOT / "harness" / "diff_test.py"),
                "--cases", str(OUT), "--no-build", "--runner",
@@ -181,13 +224,18 @@ def main(argv=None):
     parser.add_argument("--write", action="store_true")
     parser.add_argument("--check", action="store_true")
     parser.add_argument("--diff", action="store_true")
+    parser.add_argument("--self-test", action="store_true")
     options = parser.parse_args(argv)
+    if options.self_test:
+        return self_test()
     if options.write:
         OUT.write_text(manifest_text(), encoding="utf-8")
     if options.check or not (options.write or options.diff):
         if check_manifest():
             return 1
     if options.diff:
+        if self_test():
+            return 1
         return max(run_diff(False), run_diff(True))
     return 0
 

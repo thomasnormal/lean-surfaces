@@ -72885,6 +72885,16 @@
       "measured": "2026-11-09: a parameter-dependent unpacked array is retained in the memory E route; fixed cell identifiers become source-shaped cell operations and the trace matches Icarus."
     },
     {
+      "name": "unpacked_generate_array_e_boundary",
+      "example": "sem2/unpacked_generate_array",
+      "top": "unpacked_generate_array",
+      "params": {"W": 8, "S": 2},
+      "signals": ["x", "y"],
+      "stimulus": [{"x": "00001111"}, {"x": "10100101"}],
+      "refusal": "UnpackedDecl:memory",
+      "measured": "2026-11-12: the source-shaped parameter-dependent unpacked declaration is retained, while ordinary E refuses `stage` at its canonical memory admission boundary; the existing canonical-memory receipt remains separate."
+    },
+    {
       "name": "readmemh_rom_initial_refuse",
       "example": "sem2/readmemh_rom",
       "top": "readmemh_rom",

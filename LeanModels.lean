@@ -100,6 +100,7 @@ import LeanModels.Sv.Adequacy
 import LeanModels.Sv.Kernel
 import LeanModels.Sv.ObserveResolve
 import LeanModels.Sv.ContractResolve
+import LeanModels.Sv.CycleResolve
 import LeanModels.Sv.ObsLib
 import LeanModels.Sv.XorSum
 import LeanModels.Sv.XMono

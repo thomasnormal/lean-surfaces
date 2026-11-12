@@ -122,7 +122,7 @@ Counts are today's corpus and are informative, not normative.
 | `VarDecl` | 321 | `decl_id`, `name`, `type`, `storage`, `init`: expr \| null |
 | `ParmVarDecl` | 113 | `decl_id`, `name`, `type` |
 | `FieldDecl` | 62 | `name`, `type`, `bits`: nat \| null |
-| `RecordDecl` | 13 | `name` \| null (anonymous), `fields`: [`FieldDecl` \| `Unsupported`…] |
+| `RecordDecl` | 13 | `name` \| null (anonymous), `fields`: [`FieldDecl` \| `Unsupported`…]; optional parser-native `record_layout` observation (`tag_kind`, `size_bytes`, `alignment_bytes`, source span, and field bit offsets/widths) when the pinned layout probe is enabled |
 | `TypedefDecl` | 7 | `name`, `type` |
 | `EnumDecl` | 3 | `name` \| null, `constants`: [`EnumConstantDecl`…] |
 | `EnumConstantDecl` | 11 | `decl_id`, `name`, `value`: str (decimal). clang wraps the value in a `ConstantExpr`; it is FLATTENED here, because an enum constant's meaning is the folded integer. **All 11 in-corpus `ConstantExpr` nodes are exactly these**, so the emitted vocabulary is 44 kinds + this flattening |

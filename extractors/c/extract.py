@@ -60,6 +60,7 @@ PINNED_FRONTEND_VERSION = (
 CLANG_ENV = "LEAN_C_CLANG"
 STRING_BYTES_PLUGIN_ENV = "LEAN_C_STRING_BYTES_PLUGIN"
 FLOATING_BITS_PLUGIN_ENV = "LEAN_C_FLOATING_BITS_PLUGIN"
+RECORD_LAYOUT_PLUGIN_ENV = "LEAN_C_RECORD_LAYOUT_PLUGIN"
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.abspath(os.path.join(HERE, "..", ".."))
@@ -230,6 +231,51 @@ def floating_bit_records(path):
     return by_offset
 
 
+def record_layout_records(path):
+    """Observe complete record layouts through Clang's AST API.
+
+    Records are keyed by the parser-provided source offset.  The envelope
+    retains line/column spans, so this is the stable join key available in
+    the approved AST without decoding a type spelling or inventing an ID.
+    """
+    plugin = os.environ.get(RECORD_LAYOUT_PLUGIN_ENV)
+    if not plugin:
+        return None
+    if not os.path.isfile(plugin):
+        die("%s does not name a plugin file" % RECORD_LAYOUT_PLUGIN_ENV)
+    command = ([clang_executable()] + PROFILE_FLAGS + ["-fsyntax-only",
+               "-Xclang", "-load", "-Xclang", plugin,
+               "-Xclang", "-plugin", "-Xclang", "lean-c-record-layout",
+               path])
+    out = subprocess.run(command, capture_output=True)
+    if out.returncode:
+        die("record layout probe rejected %s: %s" %
+            (path, out.stderr.decode(errors="replace")[:2000]))
+    try:
+        records = json.loads(out.stdout.decode("utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError) as error:
+        die("record layout probe returned invalid JSON: %s" % error)
+    if not isinstance(records, list):
+        die("record layout probe returned a non-array")
+    by_offset = {}
+    for record in records:
+        if not isinstance(record, dict) or record.get("kind") != "RecordLayout":
+            die("record layout probe returned an invalid record")
+        offset = record.get("offset")
+        if (type(offset) is not int or offset < 0 or
+                type(record.get("token_length")) is not int or
+                record["token_length"] <= 0 or
+                record.get("tag_kind") not in ("struct", "union") or
+                type(record.get("size_bytes")) is not int or
+                record["size_bytes"] < 0 or
+                type(record.get("alignment_bytes")) is not int or
+                record["alignment_bytes"] < 0 or
+                not isinstance(record.get("fields"), list)):
+            die("record layout probe returned an invalid record")
+        by_offset.setdefault(offset, []).append(record)
+    return by_offset
+
+
 def check_profile():
     """The envelope ASSERTS a profile; refuse to assert one this host fails."""
     probe_py = os.path.join(ROOT, "harness", "c_profile_probe.py")
@@ -315,11 +361,13 @@ def nonempty(node):
 
 
 class Extractor:
-    def __init__(self, target, source_text, string_bytes=None, floating_bits=None):
+    def __init__(self, target, source_text, string_bytes=None, floating_bits=None,
+                 record_layouts=None):
         self.loc = Loc(target)
         self.text = source_text
         self.string_bytes = string_bytes
         self.floating_bits = floating_bits
+        self.record_layouts = record_layouts
         self.lines = source_text.splitlines()
         self.labels = {}
         self.unsupported = 0
@@ -456,7 +504,14 @@ class Extractor:
                 members.extend(self.node(c) for c in extras)
             else:
                 members.append(self.node(child))
-        return {"decl_id": n.get("id"), "name": n.get("name"), "fields": members}
+        out = {"decl_id": n.get("id"), "name": n.get("name"), "fields": members}
+        if self.record_layouts is not None:
+            offset = ((n.get("range") or {}).get("begin") or {}).get("offset")
+            if offset is not None:
+                matches = self.record_layouts.get(offset, [])
+                if matches:
+                    out["record_layout"] = matches.pop(0)
+        return out
 
     def e_TypedefDecl(self, n):
         under = next((c for c in kids(n) if c.get("kind") in TYPES), None)
@@ -797,7 +852,8 @@ def extract(path, source_name=None, standard="c23"):
     target = os.path.basename(path)
     string_bytes = string_byte_records(path)
     floating_bits = floating_bit_records(path)
-    ex = Extractor(target, src.decode(), string_bytes, floating_bits)
+    record_layouts = record_layout_records(path)
+    ex = Extractor(target, src.decode(), string_bytes, floating_bits, record_layouts)
     ex.collect_labels(tu)
 
     # Top-level decls attributed to the censused file, in document order.

@@ -51,3 +51,21 @@ python3 harness/c_floating_bits_determinism.py \
 The semantic tier remains loud for escaped and non-ASCII strings until these
 records are joined into the C envelope and their exact byte semantics are
 priced against the corpus.
+
+`record_layout_probe.cpp` observes Clang's `ASTRecordLayout` for complete
+structs and unions: size, alignment, source span, and each field's bit offset
+and bit-field width.  It joins records by the parser-provided source span; it
+does not interpret a type spelling or serialize an address.  Build and run the
+determinism check with the pinned frontend:
+
+```sh
+export LEAN_C_RECORD_LAYOUT_PLUGIN=/outside/the/repo/record_layout_probe.so
+"$LEAN_C_CLANGXX" --no-default-config -std=c++17 -fPIC -shared -fno-rtti \
+  -I"$LEAN_C_HEADERS/include" extractors/c/record_layout_probe.cpp \
+  -L"$LEAN_C_LIBS" -Wl,-rpath,"$LEAN_C_LIBS" -Wl,--no-undefined \
+  -l:libclang-cpp.so.21.1 -l:libLLVM.so.21.1 -o "$LEAN_C_RECORD_LAYOUT_PLUGIN"
+python3 harness/c_record_layout_determinism.py --self-test \
+  --clang "$LEAN_C_CLANG" --plugin "$LEAN_C_RECORD_LAYOUT_PLUGIN"
+python3 harness/c_record_layout_determinism.py \
+  --clang "$LEAN_C_CLANG" --plugin "$LEAN_C_RECORD_LAYOUT_PLUGIN" file.c
+```

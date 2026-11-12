@@ -32,6 +32,21 @@
     },
     {
       "eligible": true,
+      "file": "/usr/lib64/python3.9/email/__init__.py",
+      "module": "email",
+      "probe": {
+        "builtins_changed": [],
+        "eligible": true,
+        "exception": null,
+        "module": "email",
+        "status": "ok",
+        "stderr": "",
+        "stdout": ""
+      },
+      "sha256": "14eeb17ae40c6cc19b48a9bd5e2a0340ee3dd86a8d64bd1d5c4df8fcfa726c8a"
+    },
+    {
+      "eligible": true,
       "file": "/usr/lib64/python3.9/email/base64mime.py",
       "module": "email.base64mime",
       "probe": {
@@ -149,6 +164,66 @@
         "stdout": ""
       },
       "sha256": "c50dd34c21da7cceaebbf87df169a9b714f3c749c3505dc99dce5b53408f34bf"
+    },
+    {
+      "eligible": true,
+      "file": "/usr/lib64/python3.9/functools.py",
+      "module": "functools",
+      "probe": {
+        "builtins_changed": [],
+        "eligible": true,
+        "exception": null,
+        "module": "functools",
+        "status": "ok",
+        "stderr": "",
+        "stdout": ""
+      },
+      "sha256": "300563b2de2edbae9b64f8c10c0f267be4f8c97a1524b5e81e99c242e17929b5"
+    },
+    {
+      "eligible": true,
+      "file": "/usr/lib64/python3.9/email/quoprimime.py",
+      "module": "email.quoprimime",
+      "probe": {
+        "builtins_changed": [],
+        "eligible": true,
+        "exception": null,
+        "module": "email.quoprimime",
+        "status": "ok",
+        "stderr": "",
+        "stdout": ""
+      },
+      "sha256": "3b892900fd55b57d3be22f7bc9696feb905545adb81d37f4b77166753473a4b4"
+    },
+    {
+      "eligible": true,
+      "file": "/usr/lib64/python3.9/email/errors.py",
+      "module": "email.errors",
+      "probe": {
+        "builtins_changed": [],
+        "eligible": true,
+        "exception": null,
+        "module": "email.errors",
+        "status": "ok",
+        "stderr": "",
+        "stdout": ""
+      },
+      "sha256": "78592d1189ac8e3ab4a77839512193a9fb6f614d98eaddadf9630ece654a57e9"
+    },
+    {
+      "eligible": true,
+      "file": "/usr/lib64/python3.9/email/encoders.py",
+      "module": "email.encoders",
+      "probe": {
+        "builtins_changed": [],
+        "eligible": true,
+        "exception": null,
+        "module": "email.encoders",
+        "status": "ok",
+        "stderr": "",
+        "stdout": ""
+      },
+      "sha256": "1e05b3ee30c62c605077e7770b5b3249f5060d968b0fee8d5cf9cad9450b89cd"
     },
     {
       "annotation_probe": {

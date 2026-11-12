@@ -14,7 +14,7 @@ def main():
     table = json.loads((ROOT / "docs/python-opaque-imports.json").read_text())
     assert table["python"].startswith("Python 3.9.")
     rows = table["modules"]
-    assert len(rows) == 11 and all(row["eligible"] for row in rows)
+    assert len(rows) == 16 and all(row["eligible"] for row in rows)
     assert len({row["module"] for row in rows}) == len(rows)
     assert all(len(row["sha256"]) == 64 for row in rows)
     print("test_python_opaque_imports: table and self-test passed")

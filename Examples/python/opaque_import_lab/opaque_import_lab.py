@@ -6,6 +6,10 @@ def unused_from_import():
     from typing import Tuple
     return 2
 
+def unused_dotted_from_import():
+    from email.encoders import encode_7or8bit
+    return 4
+
 def opaque_attribute():
     import typing
     return typing.Tuple

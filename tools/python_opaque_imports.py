@@ -17,9 +17,10 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_MODULES = (
-    "collections.abc", "contextvars", "email.base64mime", "email.charset",
+    "collections.abc", "contextvars", "email", "email.base64mime", "email.charset",
     "importlib.machinery", "reprlib", "struct", "fnmatch", "unittest.util",
-    "typing", "rsa_inverse",
+    "typing", "functools", "email.quoprimime", "email.errors", "email.encoders",
+    "rsa_inverse",
 )
 
 

@@ -115,9 +115,9 @@ MODULE_SAFE_ANNOTATION_NAMES = (
 # frontend copy is only used to refuse definition-time annotation observations
 # that the envelope cannot represent.
 OPAQUE_IMPORT_MODULES = frozenset({
-    "collections.abc", "contextvars", "email.base64mime", "email.charset",
+    "collections.abc", "contextvars", "email", "email.base64mime", "email.charset",
     "importlib.machinery", "reprlib", "struct", "fnmatch", "unittest.util",
-    "typing",
+    "typing", "functools", "email.quoprimime", "email.errors", "email.encoders",
 })
 
 
@@ -2495,7 +2495,8 @@ def convert_stmt(node, enclosing=None, module_scope=False,
         # faithful.
         star = len(node.names) == 1 and node.names[0].name == "*"
         if (node.level == 0 and node.module is not None
-                and "." not in node.module
+                and ("." not in node.module
+                     or node.module in OPAQUE_IMPORT_MODULES)
                 and all(a.asname is None for a in node.names)
                 and (star or all(STEM_RE.match(a.name) is not None
                                  for a in node.names))):

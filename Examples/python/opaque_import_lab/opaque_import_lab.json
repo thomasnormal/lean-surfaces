@@ -6,7 +6,7 @@
     "version": "3.9.25"
   },
   "source_file": "Examples/python/opaque_import_lab/opaque_import_lab.py",
-  "source_sha256": "b239bd31c07dabe450bcb0b63fcb7171157b7f2e9600854d91a56e71707a555d",
+  "source_sha256": "62c14e24a7c2d791c438842a4b497f0887d295ababb34470a181dad4bebad2a2",
   "module": {
     "kind": "Module",
     "body": [
@@ -113,22 +113,25 @@
           "lineno": 9,
           "col_offset": 0,
           "end_lineno": 11,
-          "end_col_offset": 23
+          "end_col_offset": 12
         },
-        "name": "opaque_attribute",
+        "name": "unused_dotted_from_import",
         "args": [],
         "args_unsupported": null,
         "locals_unsupported": null,
         "body": [
           {
-            "kind": "Import",
+            "kind": "ImportFrom",
             "span": {
               "lineno": 10,
               "col_offset": 4,
               "end_lineno": 10,
-              "end_col_offset": 17
+              "end_col_offset": 45
             },
-            "module": "typing"
+            "module": "email.encoders",
+            "names": [
+              "encode_7or8bit"
+            ]
           },
           {
             "kind": "Return",
@@ -136,27 +139,20 @@
               "lineno": 11,
               "col_offset": 4,
               "end_lineno": 11,
-              "end_col_offset": 23
+              "end_col_offset": 12
             },
             "value": {
-              "kind": "Attribute",
+              "kind": "Constant",
               "span": {
                 "lineno": 11,
                 "col_offset": 11,
                 "end_lineno": 11,
-                "end_col_offset": 23
+                "end_col_offset": 12
               },
               "value": {
-                "kind": "Name",
-                "span": {
-                  "lineno": 11,
-                  "col_offset": 11,
-                  "end_lineno": 11,
-                  "end_col_offset": 17
-                },
-                "id": "typing"
-              },
-              "attr": "Tuple"
+                "type": "int",
+                "repr": "4"
+              }
             }
           }
         ]
@@ -167,9 +163,9 @@
           "lineno": 13,
           "col_offset": 0,
           "end_lineno": 15,
-          "end_col_offset": 25
+          "end_col_offset": 23
         },
-        "name": "opaque_call",
+        "name": "opaque_attribute",
         "args": [],
         "args_unsupported": null,
         "locals_unsupported": null,
@@ -190,39 +186,27 @@
               "lineno": 15,
               "col_offset": 4,
               "end_lineno": 15,
-              "end_col_offset": 25
+              "end_col_offset": 23
             },
             "value": {
-              "kind": "Call",
+              "kind": "Attribute",
               "span": {
                 "lineno": 15,
                 "col_offset": 11,
                 "end_lineno": 15,
-                "end_col_offset": 25
+                "end_col_offset": 23
               },
-              "func": {
-                "kind": "Attribute",
+              "value": {
+                "kind": "Name",
                 "span": {
                   "lineno": 15,
                   "col_offset": 11,
                   "end_lineno": 15,
-                  "end_col_offset": 23
+                  "end_col_offset": 17
                 },
-                "value": {
-                  "kind": "Name",
-                  "span": {
-                    "lineno": 15,
-                    "col_offset": 11,
-                    "end_lineno": 15,
-                    "end_col_offset": 17
-                  },
-                  "id": "typing"
-                },
-                "attr": "Tuple"
+                "id": "typing"
               },
-              "args": [],
-              "keywords": [],
-              "call_unsupported": null
+              "attr": "Tuple"
             }
           }
         ]
@@ -233,9 +217,9 @@
           "lineno": 17,
           "col_offset": 0,
           "end_lineno": 19,
-          "end_col_offset": 23
+          "end_col_offset": 25
         },
-        "name": "opaque_truth",
+        "name": "opaque_call",
         "args": [],
         "args_unsupported": null,
         "locals_unsupported": null,
@@ -256,7 +240,7 @@
               "lineno": 19,
               "col_offset": 4,
               "end_lineno": 19,
-              "end_col_offset": 23
+              "end_col_offset": 25
             },
             "value": {
               "kind": "Call",
@@ -264,30 +248,29 @@
                 "lineno": 19,
                 "col_offset": 11,
                 "end_lineno": 19,
-                "end_col_offset": 23
+                "end_col_offset": 25
               },
               "func": {
-                "kind": "Name",
+                "kind": "Attribute",
                 "span": {
                   "lineno": 19,
                   "col_offset": 11,
                   "end_lineno": 19,
-                  "end_col_offset": 15
+                  "end_col_offset": 23
                 },
-                "id": "bool"
-              },
-              "args": [
-                {
+                "value": {
                   "kind": "Name",
                   "span": {
                     "lineno": 19,
-                    "col_offset": 16,
+                    "col_offset": 11,
                     "end_lineno": 19,
-                    "end_col_offset": 22
+                    "end_col_offset": 17
                   },
                   "id": "typing"
-                }
-              ],
+                },
+                "attr": "Tuple"
+              },
+              "args": [],
               "keywords": [],
               "call_unsupported": null
             }
@@ -299,10 +282,10 @@
         "span": {
           "lineno": 21,
           "col_offset": 0,
-          "end_lineno": 24,
-          "end_col_offset": 12
+          "end_lineno": 23,
+          "end_col_offset": 23
         },
-        "name": "opaque_print",
+        "name": "opaque_truth",
         "args": [],
         "args_unsupported": null,
         "locals_unsupported": null,
@@ -318,27 +301,94 @@
             "module": "typing"
           },
           {
-            "kind": "Expr",
+            "kind": "Return",
             "span": {
               "lineno": 23,
               "col_offset": 4,
               "end_lineno": 23,
-              "end_col_offset": 17
+              "end_col_offset": 23
             },
             "value": {
               "kind": "Call",
               "span": {
                 "lineno": 23,
-                "col_offset": 4,
+                "col_offset": 11,
                 "end_lineno": 23,
-                "end_col_offset": 17
+                "end_col_offset": 23
               },
               "func": {
                 "kind": "Name",
                 "span": {
                   "lineno": 23,
-                  "col_offset": 4,
+                  "col_offset": 11,
                   "end_lineno": 23,
+                  "end_col_offset": 15
+                },
+                "id": "bool"
+              },
+              "args": [
+                {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 23,
+                    "col_offset": 16,
+                    "end_lineno": 23,
+                    "end_col_offset": 22
+                  },
+                  "id": "typing"
+                }
+              ],
+              "keywords": [],
+              "call_unsupported": null
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 25,
+          "col_offset": 0,
+          "end_lineno": 28,
+          "end_col_offset": 12
+        },
+        "name": "opaque_print",
+        "args": [],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Import",
+            "span": {
+              "lineno": 26,
+              "col_offset": 4,
+              "end_lineno": 26,
+              "end_col_offset": 17
+            },
+            "module": "typing"
+          },
+          {
+            "kind": "Expr",
+            "span": {
+              "lineno": 27,
+              "col_offset": 4,
+              "end_lineno": 27,
+              "end_col_offset": 17
+            },
+            "value": {
+              "kind": "Call",
+              "span": {
+                "lineno": 27,
+                "col_offset": 4,
+                "end_lineno": 27,
+                "end_col_offset": 17
+              },
+              "func": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 27,
+                  "col_offset": 4,
+                  "end_lineno": 27,
                   "end_col_offset": 9
                 },
                 "id": "print"
@@ -347,9 +397,9 @@
                 {
                   "kind": "Name",
                   "span": {
-                    "lineno": 23,
+                    "lineno": 27,
                     "col_offset": 10,
-                    "end_lineno": 23,
+                    "end_lineno": 27,
                     "end_col_offset": 16
                   },
                   "id": "typing"
@@ -362,17 +412,17 @@
           {
             "kind": "Return",
             "span": {
-              "lineno": 24,
+              "lineno": 28,
               "col_offset": 4,
-              "end_lineno": 24,
+              "end_lineno": 28,
               "end_col_offset": 12
             },
             "value": {
               "kind": "Constant",
               "span": {
-                "lineno": 24,
+                "lineno": 28,
                 "col_offset": 11,
-                "end_lineno": 24,
+                "end_lineno": 28,
                 "end_col_offset": 12
               },
               "value": {
@@ -386,9 +436,9 @@
       {
         "kind": "FunctionDef",
         "span": {
-          "lineno": 26,
+          "lineno": 30,
           "col_offset": 0,
-          "end_lineno": 28,
+          "end_lineno": 32,
           "end_col_offset": 22
         },
         "name": "opaque_argument",
@@ -399,9 +449,9 @@
           {
             "kind": "Import",
             "span": {
-              "lineno": 27,
+              "lineno": 31,
               "col_offset": 4,
-              "end_lineno": 27,
+              "end_lineno": 31,
               "end_col_offset": 17
             },
             "module": "typing"
@@ -409,25 +459,25 @@
           {
             "kind": "Return",
             "span": {
-              "lineno": 28,
+              "lineno": 32,
               "col_offset": 4,
-              "end_lineno": 28,
+              "end_lineno": 32,
               "end_col_offset": 22
             },
             "value": {
               "kind": "Call",
               "span": {
-                "lineno": 28,
+                "lineno": 32,
                 "col_offset": 11,
-                "end_lineno": 28,
+                "end_lineno": 32,
                 "end_col_offset": 22
               },
               "func": {
                 "kind": "Name",
                 "span": {
-                  "lineno": 28,
+                  "lineno": 32,
                   "col_offset": 11,
-                  "end_lineno": 28,
+                  "end_lineno": 32,
                   "end_col_offset": 14
                 },
                 "id": "len"
@@ -436,9 +486,9 @@
                 {
                   "kind": "Name",
                   "span": {
-                    "lineno": 28,
+                    "lineno": 32,
                     "col_offset": 15,
-                    "end_lineno": 28,
+                    "end_lineno": 32,
                     "end_col_offset": 21
                   },
                   "id": "typing"
@@ -453,9 +503,9 @@
       {
         "kind": "FunctionDef",
         "span": {
-          "lineno": 30,
+          "lineno": 34,
           "col_offset": 0,
-          "end_lineno": 32,
+          "end_lineno": 36,
           "end_col_offset": 12
         },
         "name": "unallowlisted_import",
@@ -466,9 +516,9 @@
           {
             "kind": "Unsupported",
             "span": {
-              "lineno": 31,
+              "lineno": 35,
               "col_offset": 4,
-              "end_lineno": 31,
+              "end_lineno": 35,
               "end_col_offset": 13
             },
             "py_kind": "Import",
@@ -477,17 +527,17 @@
           {
             "kind": "Return",
             "span": {
-              "lineno": 32,
+              "lineno": 36,
               "col_offset": 4,
-              "end_lineno": 32,
+              "end_lineno": 36,
               "end_col_offset": 12
             },
             "value": {
               "kind": "Constant",
               "span": {
-                "lineno": 32,
+                "lineno": 36,
                 "col_offset": 11,
-                "end_lineno": 32,
+                "end_lineno": 36,
                 "end_col_offset": 12
               },
               "value": {

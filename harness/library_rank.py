@@ -139,6 +139,41 @@ def load_rows(paths, provenance=None):
     return rows
 
 
+def function_totals(rows, ranking=None):
+    """Count function evidence across wall-bearing and wall-free modules.
+
+    A module that flips to VERIFIED has no observed wall and therefore no
+    ranking bucket.  Its public functions must remain in PY-REAL's denominator
+    and verified total; deriving those totals by summing wall buckets silently
+    dropped exactly the functions a wall flip had just admitted.
+    """
+    totals = {"public_functions": 0, "driven_functions": 0,
+              "verified_functions": 0, "matched_calls": 0}
+    for row in rows:
+        functions = row.get("oracle", {}).get("functions", [])
+        if not functions:
+            totals["public_functions"] += int(row.get("nfunctions") or 0)
+        calls_by_function = {}
+        for call in row.get("calls", []) or []:
+            calls_by_function.setdefault(call.get("function"), []).append(call)
+        for function in functions:
+            if function.get("skipped"):
+                continue
+            totals["public_functions"] += 1
+            calls = calls_by_function.get(function.get("name"), [])
+            if not calls:
+                continue
+            totals["driven_functions"] += 1
+            matched = [call for call in calls if call.get("verdict") == "MATCH"]
+            totals["matched_calls"] += len(matched)
+            if len(matched) == len(calls) and any(
+                    call.get("cpython", {}).get("status") == "ok" for call in calls):
+                totals["verified_functions"] += 1
+    potential = sum(item["potential_verified_functions"] for item in (ranking or []))
+    totals["potential_verified_functions"] = potential
+    return totals
+
+
 def self_test():
     rows = [
         {"module": "a", "observed_wall": "import", "census_walls": ["import"],
@@ -177,24 +212,18 @@ def main(argv=None):
         print("library_rank: %s" % exc, file=sys.stderr)
         return 2
     ranking = rank(rows)
-    function_totals = {
-        "public_functions": sum(item["public_functions"] for item in ranking),
-        "driven_functions": sum(item["driven_functions"] for item in ranking),
-        "verified_functions": sum(item["verified_functions"] for item in ranking),
-        "potential_verified_functions": sum(item["potential_verified_functions"] for item in ranking),
-        "matched_calls": sum(item["function_matched_calls"] for item in ranking),
-    }
+    totals = function_totals(rows, ranking)
     result = {"rows": len(rows), "ranking": ranking,
-              "function_totals": function_totals}
+              "function_totals": totals}
     if opts.json_out:
         with open(opts.json_out, "w", encoding="utf-8") as stream:
             json.dump(result, stream, indent=2, sort_keys=True)
             stream.write("\n")
     print("wall ranking: %d survey rows" % len(rows))
     print("function totals: public=%d driven=%d verified=%d potential_flips=%d matched_calls=%d" % (
-        function_totals["public_functions"], function_totals["driven_functions"],
-        function_totals["verified_functions"], function_totals["potential_verified_functions"],
-        function_totals["matched_calls"]))
+        totals["public_functions"], totals["driven_functions"],
+        totals["verified_functions"], totals["potential_verified_functions"],
+        totals["matched_calls"]))
     for item in result["ranking"]:
         print("  %-28s sole=%3d present=%3d modules=%3d functions=%4d calls=%5d matched=%5d potential_verified=%3d function_flips=%3d" % (
             item["wall"], item["sole"], item["present"], item["module_count"],

@@ -1784,5 +1784,6 @@
   {"file": "Examples/python/opaque_import_lab/opaque_import_lab.py", "function": "opaque_truth", "args": [[]], "expect": "unsupported", "note": "Truthiness of an opaque imported value refuses."},
   {"file": "Examples/python/opaque_import_lab/opaque_import_lab.py", "function": "opaque_print", "args": [[]], "expect": "unsupported", "note": "Printing an opaque imported value refuses."},
   {"file": "Examples/python/opaque_import_lab/opaque_import_lab.py", "function": "opaque_argument", "args": [[]], "expect": "unsupported", "note": "Passing an opaque value to a builtin that inspects it refuses."},
-  {"file": "Examples/python/opaque_import_lab/opaque_import_lab.py", "function": "unallowlisted_import", "args": [[]], "expect": "unsupported", "note": "An unallowlisted import remains loud."}
+  {"file": "Examples/python/opaque_import_lab/opaque_import_lab.py", "function": "unallowlisted_import", "args": [[]], "expect": "unsupported", "note": "An unallowlisted import remains loud."},
+  {"file": "Examples/python/opaque_import_lab/opaque_import_lab.py", "function": "unused_dotted_from_import", "args": [[]], "expect": "match", "note": "Measured dotted opaque from-import binds an unused submodule value."}
 ]

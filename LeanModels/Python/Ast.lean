@@ -679,9 +679,9 @@ def benignImportBindsStructured (module : String) (names : Array String)
 the binding abstraction, while every observation of the bound value refuses.
 The generated table records the file hashes and is the evidence authority. -/
 def opaqueImportModules : List String :=
-  ["collections.abc", "contextvars", "email.base64mime", "email.charset",
+  ["collections.abc", "contextvars", "email", "email.base64mime", "email.charset",
    "importlib.machinery", "reprlib", "struct", "fnmatch", "unittest.util",
-   "typing"]
+   "typing", "functools", "email.quoprimime", "email.errors", "email.encoders"]
 
 def opaqueImportAllowed (module : String) : Bool :=
   opaqueImportModules.contains module

@@ -1073,7 +1073,7 @@ def callFn : Nat → Program → LeanModels.C.FunctionDefn → List CVal → Exe
                     if nm == "memset" || nm == "__builtin_memset" then runMemset vs
                     else if nm == "memcpy" || nm == "__builtin_memcpy" then runMemcpy vs
                     else if nm == "__builtin_strcmp" then runStrcmp vs
-                    else if nm == "__builtin_memcmp" then runMemcmp vs
+                    else if nm == "__builtin_memcmp" || nm == "memcmp" then runMemcmp vs
                     else if nm == "__builtin_strlen" then runStrlen vs
                     else if nm == "__builtin_alloca" then runAlloca vs
                     else if nm == "__builtin_ffs" then runFfs vs
@@ -1101,7 +1101,7 @@ def callFn : Nat → Program → LeanModels.C.FunctionDefn → List CVal → Exe
               else if nm == "memset" || nm == "__builtin_memset" then runMemset vs
               else if nm == "memcpy" || nm == "__builtin_memcpy" then runMemcpy vs
               else if nm == "__builtin_strcmp" then runStrcmp vs
-              else if nm == "__builtin_memcmp" then runMemcmp vs
+              else if nm == "__builtin_memcmp" || nm == "memcmp" then runMemcmp vs
               else if nm == "__builtin_strlen" then runStrlen vs
               else if nm == "__builtin_bswap16" then runBswap16 vs
               else if nm == "__builtin_bswap32" then runBswap32 vs

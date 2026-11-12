@@ -75,8 +75,6 @@ def static_walls(env):
             name = callee_name(n.get("callee"))
             if name not in ("abort", "exit") and name not in definitions:
                 walls.add("libc-call")
-        elif kind == "UnaryOperator" and n.get("op") == "~":
-            walls.add("operator:~")
         elif kind in ("ImplicitCastExpr", "CStyleCastExpr"):
             cast = n.get("cast")
             if cast in ("IntegralToPointer", "PointerToIntegral", "FloatingCast",

@@ -37,8 +37,8 @@
   "timeout": 44
  },
  "manifest_hash": "953938cce1637cf91ba3dda661a9b9309cd83f0ebf7d7f17cc1a36704295f367",
- "measured_at_utc": "2026-11-12T01:15:00Z",
- "measured_commit": "3877f5cca",
+ "measured_at_utc": "2026-11-12T01:20:00Z",
+ "measured_commit": "003c716fd",
  "pin": null,
  "rows": [
   {
@@ -1061,9 +1061,7 @@
    "manifest_status": "parsed",
    "name": "00104.c",
    "sha256": "d9150e45905ebbb3ba02a3fc5dff3e0789fc83fdaa8fcfcfbb6d5cfd92bb9350",
-   "static_walls": [
-    "operator:~"
-   ],
+   "static_walls": [],
    "verdict": "refused-unsupported"
   },
   {
@@ -1292,9 +1290,7 @@
    "manifest_status": "parsed",
    "name": "00126.c",
    "sha256": "6eb2b340b8f67c2fa0bc6cc179a8fc8445592a1deab10bb9888d7613fc366bfa",
-   "static_walls": [
-    "operator:~"
-   ],
+   "static_walls": [],
    "verdict": "passed"
   },
   {
@@ -2373,7 +2369,6 @@
     "assignment-call",
     "cast:IntegralToPointer",
     "libc-call",
-    "operator:~",
     "string-literal",
     "type-layout",
     "unsupported:StmtExpr"
@@ -2501,9 +2496,7 @@
    "manifest_status": "parsed",
    "name": "20000205-1.c",
    "sha256": "51b7890a58802a8e311d7bc2963984358ffafef407f3cace9ca82c68cd6de502",
-   "static_walls": [
-    "operator:~"
-   ],
+   "static_walls": [],
    "verdict": "refused-libc"
   },
   {
@@ -2902,9 +2895,7 @@
    "manifest_status": "parsed",
    "name": "20000715-2.c",
    "sha256": "8bc7062d447df62ddccec55b1a295a8298fa57ff0ffdabf4a98a62cf2ab9ee14",
-   "static_walls": [
-    "operator:~"
-   ],
+   "static_walls": [],
    "verdict": "refused-libc"
   },
   {
@@ -3950,9 +3941,7 @@
    "manifest_status": "parsed",
    "name": "20020127-1.c",
    "sha256": "98b59a9520af112160f3e6d7f8ae89fe50f73c5751ba69a2fb10205b0d5571eb",
-   "static_walls": [
-    "operator:~"
-   ],
+   "static_walls": [],
    "verdict": "refused-libc"
   },
   {
@@ -4595,7 +4584,6 @@
    "sha256": "015a0910b2a6c7f94aad21ca1d54984e7760c78077dd53a38b876338d51fc086",
    "static_walls": [
     "libc-call",
-    "operator:~",
     "string-literal",
     "type-layout"
    ],
@@ -5399,9 +5387,7 @@
    "manifest_status": "parsed",
    "name": "20040409-3.c",
    "sha256": "ea51feab3c4e52e6070320975026d9ad04ffa583b940d429257f531be4dccfdf",
-   "static_walls": [
-    "operator:~"
-   ],
+   "static_walls": [],
    "verdict": "passed"
   },
   {
@@ -5410,9 +5396,7 @@
    "manifest_status": "parsed",
    "name": "20040409-3w.c",
    "sha256": "f9e7d5b4833c6dae714796204cb1899bdcb0781cf5560e22e8c3ea0e1d609293",
-   "static_walls": [
-    "operator:~"
-   ],
+   "static_walls": [],
    "verdict": "refused-ub"
   },
   {
@@ -5476,7 +5460,6 @@
    "sha256": "2851a1460730cd2e292bb4d1313cc6a37e04599ff05881724432dbab93db6b19",
    "static_walls": [
     "assignment-call",
-    "operator:~",
     "type-layout"
    ],
    "verdict": "refused-unsupported"
@@ -5640,7 +5623,6 @@
    "name": "20041011-1.c",
    "sha256": "b63f53b18e2f0adfe899cddee05a384b7c0af6f82a4699a42bb1af37dd741b47",
    "static_walls": [
-    "operator:~",
     "type-layout"
    ],
    "verdict": "refused-libc"
@@ -5921,7 +5903,6 @@
    "static_walls": [
     "cast:IntegralToPointer",
     "cast:PointerToIntegral",
-    "operator:~",
     "type-layout"
    ],
    "verdict": "refused-unsupported"
@@ -6410,9 +6391,7 @@
    "manifest_status": "parsed",
    "name": "20070623-1.c",
    "sha256": "1c1a5d0c0dcca7b33840e3b73d9e2ed5d54158311c030ea0e102109a5ae0d7ae",
-   "static_walls": [
-    "operator:~"
-   ],
+   "static_walls": [],
    "verdict": "refused-libc"
   },
   {
@@ -6705,7 +6684,6 @@
    "name": "20080519-1.c",
    "sha256": "ea531e6842a76abcf8fac16bc8de8d3a883e30819695caa8f7fcf5c7e6dfee94",
    "static_walls": [
-    "operator:~",
     "type-layout"
    ],
    "verdict": "passed"
@@ -7025,8 +7003,7 @@
    "name": "20110418-1.c",
    "sha256": "c4f60d357a8e31c2d78f5d0f9c6c2dc2f925181a67ed3e9169d838aeef389955",
    "static_walls": [
-    "libc-call",
-    "operator:~"
+    "libc-call"
    ],
    "verdict": "passed"
   },
@@ -7087,8 +7064,7 @@
    "name": "20120111-1.c",
    "sha256": "f32944da45cc50048f8036585688f0c7c36be510320e67a8c4a80e0c601d01a2",
    "static_walls": [
-    "assignment-call",
-    "operator:~"
+    "assignment-call"
    ],
    "verdict": "refused-unsupported"
   },
@@ -7198,8 +7174,7 @@
    "name": "20140212-1.c",
    "sha256": "207b91ef9f39b961d2be4cce9a0d1f5df5a945c7d06322b97a1017f8b822cddc",
    "static_walls": [
-    "assignment-call",
-    "operator:~"
+    "assignment-call"
    ],
    "verdict": "passed"
   },
@@ -7420,8 +7395,7 @@
    "name": "20190228-1.c",
    "sha256": "bc848ce532bba0a74f91510400197b4a73ae2df044241890bc84d046b7920ccc",
    "static_walls": [
-    "libc-call",
-    "operator:~"
+    "libc-call"
    ],
    "verdict": "passed"
   },
@@ -7564,7 +7538,6 @@
    "sha256": "21790d49552c3c162daea7d78c058aeebe56ab4b2f4abbe83a0455ee7b08a439",
    "static_walls": [
     "libc-call",
-    "operator:~",
     "unsequenced-effects"
    ],
    "verdict": "refused-unsupported"
@@ -7584,9 +7557,7 @@
    "manifest_status": "parsed",
    "name": "900409-1.c",
    "sha256": "aee2eb07577f9c75284dd3804c72798d6a3b678248946cfe451a260d2a32569e",
-   "static_walls": [
-    "operator:~"
-   ],
+   "static_walls": [],
    "verdict": "refused-libc"
   },
   {
@@ -8123,9 +8094,7 @@
    "manifest_status": "parsed",
    "name": "921104-1.c",
    "sha256": "e43448ceebdf958ea4d12e6892efe27fb9133c1e47dd9587a896c669447abc4c",
-   "static_walls": [
-    "operator:~"
-   ],
+   "static_walls": [],
    "verdict": "refused-libc"
   },
   {
@@ -8438,9 +8407,7 @@
    "manifest_status": "parsed",
    "name": "930529-1.c",
    "sha256": "77047a2cb413c71bb8245fa16912d0b20c3a535450008893d09d4f8f1ccdf87c",
-   "static_walls": [
-    "operator:~"
-   ],
+   "static_walls": [],
    "verdict": "refused-ub"
   },
   {
@@ -9103,9 +9070,7 @@
    "manifest_status": "parsed",
    "name": "950503-1.c",
    "sha256": "38936efc0271c2eece85c7f8542c591c1c7efd226435af6f29eaae84c3b4e8eb",
-   "static_walls": [
-    "operator:~"
-   ],
+   "static_walls": [],
    "verdict": "refused-libc"
   },
   {
@@ -9426,9 +9391,7 @@
    "manifest_status": "parsed",
    "name": "960317-1.c",
    "sha256": "a875d2fc3a8ba77ac02bed900140bc20ef431a88affc47929e7462f96b0cec66",
-   "static_walls": [
-    "operator:~"
-   ],
+   "static_walls": [],
    "verdict": "refused-ub"
   },
   {
@@ -9495,7 +9458,6 @@
    "name": "960416-1.c",
    "sha256": "c9dae0ea0d8217b8d0bd41370e54f1ae812d309abccdb0e1ee4bddf686521728",
    "static_walls": [
-    "operator:~",
     "type-layout"
    ],
    "verdict": "refused-unsupported"
@@ -9938,7 +9900,6 @@
    "name": "980612-1.c",
    "sha256": "aa6fce063bfb606248d80aa051d0e0bc2b3a82095be097f127a0b4db2b23b82e",
    "static_walls": [
-    "operator:~",
     "type-layout"
    ],
    "verdict": "refused-libc"
@@ -10175,7 +10136,6 @@
    "name": "990326-1.c",
    "sha256": "2f7244e7ade4cda9b5db57f8a07d3ccd9669f647062c96ee954df30d3780c7a4",
    "static_walls": [
-    "operator:~",
     "type-layout",
     "unsupported:AlignedAttr"
    ],
@@ -10680,9 +10640,7 @@
    "manifest_status": "parsed",
    "name": "arith-1.c",
    "sha256": "8877e7b682e657302d50e0a18b054f975c58d3d3d548354f24ca1eb0214369be",
-   "static_walls": [
-    "operator:~"
-   ],
+   "static_walls": [],
    "verdict": "refused-libc"
   },
   {
@@ -10739,7 +10697,6 @@
    "sha256": "51c01c565b099cfaf2867c9fa740d25991f51274a2c3e0380f0caa93fa10b0b8",
    "static_walls": [
     "libc-call",
-    "operator:~",
     "string-literal",
     "type-layout"
    ],
@@ -11188,7 +11145,6 @@
    "name": "builtins/complex-1-lib.c",
    "sha256": "9602645a0aaade70ac760dccc65159482e662d437b7f0163512aaa62fa4fb039",
    "static_walls": [
-    "operator:~",
     "type-layout"
    ],
    "verdict": "refused-unsupported"
@@ -12759,7 +12715,6 @@
    "static_walls": [
     "assignment-call",
     "libc-call",
-    "operator:~",
     "string-literal",
     "type-layout",
     "unsupported:ImaginaryLiteral"
@@ -13244,7 +13199,6 @@
    "sha256": "d9dd88de8b98e54c7503bf6f0711f6292841b52fd0a011181273f3f670022b54",
    "static_walls": [
     "libc-call",
-    "operator:~",
     "type-layout",
     "unsupported:DesignatedInitUpdateExpr",
     "unsupported:OffsetOfExpr"
@@ -14824,9 +14778,7 @@
    "manifest_status": "parsed",
    "name": "ifcvt-onecmpl-abs-1.c",
    "sha256": "6e369cadba49486cbe8a2e61289aa88012f1ebe6ad68711a119b8cd1f1922786",
-   "static_walls": [
-    "operator:~"
-   ],
+   "static_walls": [],
    "verdict": "passed"
   },
   {
@@ -15002,7 +14954,6 @@
    "static_walls": [
     "assignment-call",
     "cast:PointerToIntegral",
-    "operator:~",
     "type-layout"
    ],
    "verdict": "refused-unsupported"
@@ -15644,8 +15595,7 @@
    "name": "pr101335.c",
    "sha256": "8fba905c8245087e6053e4252743ede28cd9f43fc1052f4d00fc0cf3e15295a9",
    "static_walls": [
-    "libc-call",
-    "operator:~"
+    "libc-call"
    ],
    "verdict": "passed"
   },
@@ -15787,8 +15737,7 @@
    "name": "pr105613.c",
    "sha256": "ef1b6447bd087e0497e08c05f9a3511793f9509d1c076474e33eb1ad7cf067f5",
    "static_walls": [
-    "libc-call",
-    "operator:~"
+    "libc-call"
    ],
    "verdict": "refused-unsupported"
   },
@@ -15930,8 +15879,7 @@
    "name": "pr109040.c",
    "sha256": "a64af2abb4056c41624955b9407b4fa7cdca2b0942f8aab24a274ccdca02e058",
    "static_walls": [
-    "libc-call",
-    "operator:~"
+    "libc-call"
    ],
    "verdict": "refused-unsupported"
   },
@@ -16039,8 +15987,7 @@
    "name": "pr110252-3.c",
    "sha256": "626de6a01b209a80f364ddc544bfcc6fd4a6faf0ac48fe1615897e1297efbce2",
    "static_walls": [
-    "libc-call",
-    "operator:~"
+    "libc-call"
    ],
    "verdict": "passed"
   },
@@ -16051,8 +15998,7 @@
    "name": "pr110252-4.c",
    "sha256": "b380a9bea5c2d04feca648d19b624e0d4a2c69b005c4fce89d6f1c6e21ab1d2e",
    "static_walls": [
-    "libc-call",
-    "operator:~"
+    "libc-call"
    ],
    "verdict": "passed"
   },
@@ -16075,8 +16021,7 @@
    "name": "pr110817-1.c",
    "sha256": "9d921ab555c22fca9f4d94ccf579fecf2f237e6a793854b7ca5e4c50c92d05e9",
    "static_walls": [
-    "libc-call",
-    "operator:~"
+    "libc-call"
    ],
    "verdict": "refused-unsupported"
   },
@@ -16246,9 +16191,7 @@
    "manifest_status": "parsed",
    "name": "pr112581-1.c",
    "sha256": "db5e90fccdab610f90aca74504197121d502921f4870316afd4464fdedb9c6d1",
-   "static_walls": [
-    "operator:~"
-   ],
+   "static_walls": [],
    "verdict": "passed"
   },
   {
@@ -16421,8 +16364,7 @@
    "name": "pr118638.c",
    "sha256": "a717de8c9b3e63e3b97b9d748905bd0ccf92f15e3640b60debe31a1abead4f64",
    "static_walls": [
-    "libc-call",
-    "operator:~"
+    "libc-call"
    ],
    "verdict": "passed"
   },
@@ -16466,8 +16408,7 @@
    "name": "pr119291.c",
    "sha256": "7dbfd419cfb2d453bea955c97df92b82bdab1d3d95c92dd14719ca739b2bf33f",
    "static_walls": [
-    "libc-call",
-    "operator:~"
+    "libc-call"
    ],
    "verdict": "refused-unsupported"
   },
@@ -16479,7 +16420,6 @@
    "sha256": "c61ae0c7e78c2776c192ea5271c4735eb8ebb4c993cec54011edf1e7ac7e6c76",
    "static_walls": [
     "libc-call",
-    "operator:~",
     "type-layout"
    ],
    "verdict": "refused-libc"
@@ -16492,7 +16432,6 @@
    "sha256": "1aa8d360e44df6da762d8eef80684cb41c933c4c1139626c03ef57dabf690def",
    "static_walls": [
     "libc-call",
-    "operator:~",
     "string-literal",
     "type-layout"
    ],
@@ -16638,7 +16577,6 @@
    "sha256": "0b91ab76b23510d74969a65f5e11595d4136959c60a86495f2baed094478b5f7",
    "static_walls": [
     "libc-call",
-    "operator:~",
     "type-layout",
     "unsupported:SwitchStmt"
    ],
@@ -16665,7 +16603,6 @@
    "sha256": "764416eec91cefdb81ae9de44d37396c6f818f89b4c01c06d349816df4ca9228",
    "static_walls": [
     "libc-call",
-    "operator:~",
     "type-layout",
     "unsupported:SwitchStmt"
    ],
@@ -16748,8 +16685,7 @@
    "sha256": "7864047ce8750385f353c69a14214ae5a07eea4f242ec138c5d6a8fe76a532f8",
    "static_walls": [
     "cast:IntegralToPointer",
-    "cast:PointerToIntegral",
-    "operator:~"
+    "cast:PointerToIntegral"
    ],
    "verdict": "refused-unsupported"
   },
@@ -17088,7 +17024,6 @@
    "name": "pr23135.c",
    "sha256": "200dc2f4424d09fed60a4cc2fe0996e43f346d8aab930e31192e2947df834558",
    "static_walls": [
-    "operator:~",
     "type-layout"
    ],
    "verdict": "refused-unsupported"
@@ -17343,7 +17278,6 @@
    "name": "pr29006.c",
    "sha256": "10bc33ff13c7c26e57f8a9187be78280a5c4cade7df1e9476b5bc72664d34e90",
    "static_walls": [
-    "operator:~",
     "type-layout",
     "unsupported:PackedAttr"
    ],
@@ -17789,9 +17723,7 @@
    "manifest_status": "parsed",
    "name": "pr35390.c",
    "sha256": "f6f2b725a208c88e48f4df762164f9de9071d7a5398be5b23f4a83458083b87f",
-   "static_walls": [
-    "operator:~"
-   ],
+   "static_walls": [],
    "verdict": "passed"
   },
   {
@@ -18603,9 +18535,7 @@
    "manifest_status": "parsed",
    "name": "pr43629.c",
    "sha256": "ab6cdfc7375f4c9d3aadd87b94fd682e842d1c83d91edf84e7c9b288ba7cfce7",
-   "static_walls": [
-    "operator:~"
-   ],
+   "static_walls": [],
    "verdict": "refused-ub"
   },
   {
@@ -18940,9 +18870,7 @@
    "manifest_status": "parsed",
    "name": "pr48717.c",
    "sha256": "038cf4ac5beedd6fb223b147f5908c496c8d21080d4ef2d39006c7abe6017ed8",
-   "static_walls": [
-    "operator:~"
-   ],
+   "static_walls": [],
    "verdict": "passed"
   },
   {
@@ -19933,8 +19861,7 @@
    "name": "pr59101.c",
    "sha256": "f3e74fd714aa69cfb55133b9ada17634670a701f5488e08cf308a0c1b9fbeaa0",
    "static_walls": [
-    "libc-call",
-    "operator:~"
+    "libc-call"
    ],
    "verdict": "passed"
   },
@@ -20353,8 +20280,7 @@
    "name": "pr64957.c",
    "sha256": "209c1e8e9625746a75658e71766383dd212a3cb9cb11513029154bff7058800e",
    "static_walls": [
-    "libc-call",
-    "operator:~"
+    "libc-call"
    ],
    "verdict": "passed"
   },
@@ -20588,8 +20514,7 @@
    "name": "pr66757.c",
    "sha256": "698a7fc20809c08659d70693ba7123dc59ed75a420b003566b5d20665d429c54",
    "static_walls": [
-    "libc-call",
-    "operator:~"
+    "libc-call"
    ],
    "verdict": "passed"
   },
@@ -20736,8 +20661,7 @@
    "name": "pr68376-1.c",
    "sha256": "041431963290c31c50cc2797cca44d6bed80766ebdd237ce4c4b8649832f1626",
    "static_walls": [
-    "libc-call",
-    "operator:~"
+    "libc-call"
    ],
    "verdict": "passed"
   },
@@ -20747,9 +20671,7 @@
    "manifest_status": "parsed",
    "name": "pr68376-2.c",
    "sha256": "f6a4ad11a0e7b68075136815f3f7fdc95d52811aacfe4e23fde7c64f3de44582",
-   "static_walls": [
-    "operator:~"
-   ],
+   "static_walls": [],
    "verdict": "passed"
   },
   {
@@ -20840,9 +20762,7 @@
    "manifest_status": "parsed",
    "name": "pr68911.c",
    "sha256": "6f2e549dc1708cbc106c255778cc04ff1a8e75944e0ef005b2ec654e494f79f0",
-   "static_walls": [
-    "operator:~"
-   ],
+   "static_walls": [],
    "verdict": "passed"
   },
   {
@@ -20851,9 +20771,7 @@
    "manifest_status": "parsed",
    "name": "pr69097-1.c",
    "sha256": "778f956ec467f9b9eae0dfd741bbc51fac57494136cb28878aa78422565aeab7",
-   "static_walls": [
-    "operator:~"
-   ],
+   "static_walls": [],
    "verdict": "passed"
   },
   {
@@ -20873,9 +20791,7 @@
    "manifest_status": "parsed",
    "name": "pr69320-1.c",
    "sha256": "3f9aa7db3c39e73987a234303e12e2da96736c9e92b0c87d1776f2c406168e7b",
-   "static_walls": [
-    "operator:~"
-   ],
+   "static_walls": [],
    "verdict": "refused-libc"
   },
   {
@@ -20945,8 +20861,7 @@
    "name": "pr70005.c",
    "sha256": "259727df2c6dda05906c3386cb85c67f7439c17e090d10d91daeaa72b184e9cb",
    "static_walls": [
-    "libc-call",
-    "operator:~"
+    "libc-call"
    ],
    "verdict": "passed"
   },
@@ -21529,9 +21444,7 @@
    "manifest_status": "parsed",
    "name": "pr81503.c",
    "sha256": "1a41a3226daee3b21e7600656ed0de29d95a65df1b18369b312dec7720482fcb",
-   "static_walls": [
-    "operator:~"
-   ],
+   "static_walls": [],
    "verdict": "passed"
   },
   {
@@ -21575,8 +21488,7 @@
    "name": "pr81913.c",
    "sha256": "148d7eaa549818b5f2e27327b6265085a946365d726004bbf740265feb14ec91",
    "static_walls": [
-    "libc-call",
-    "operator:~"
+    "libc-call"
    ],
    "verdict": "passed"
   },
@@ -21588,7 +21500,6 @@
    "sha256": "768b845670f0615b09abbcb192cbe52095e2460677e95a4fb3593363c4dd6e3b",
    "static_walls": [
     "libc-call",
-    "operator:~",
     "type-layout"
    ],
    "verdict": "refused-unsupported"
@@ -21634,7 +21545,6 @@
    "static_walls": [
     "assignment-call",
     "libc-call",
-    "operator:~",
     "type-layout"
    ],
    "verdict": "refused-unsupported"
@@ -21689,7 +21599,6 @@
    "sha256": "d3086f67547883e6cd68a5972542b70d79d4dbe70b2ade47f6194e9b883a5b39",
    "static_walls": [
     "libc-call",
-    "operator:~",
     "type-layout"
    ],
    "verdict": "passed"
@@ -21840,9 +21749,7 @@
    "manifest_status": "parsed",
    "name": "pr85582-1.c",
    "sha256": "cd50c6c19fe72e63d61711e9c05a226d32f5fa9f69aba1706b12e4d6f01f284a",
-   "static_walls": [
-    "operator:~"
-   ],
+   "static_walls": [],
    "verdict": "passed"
   },
   {
@@ -22102,8 +22009,7 @@
    "name": "pr89826.c",
    "sha256": "d8fc03a8e01154030caa071919016f94aa9fa5f373fe17050918d7d1875fcf89",
    "static_walls": [
-    "libc-call",
-    "operator:~"
+    "libc-call"
    ],
    "verdict": "passed"
   },
@@ -22224,8 +22130,7 @@
    "name": "pr91635.c",
    "sha256": "d0694a2c845a3590b25d9f22fccd8455e09482d4531e403bca5c78a946193921",
    "static_walls": [
-    "libc-call",
-    "operator:~"
+    "libc-call"
    ],
    "verdict": "refused-unsupported"
   },
@@ -22656,8 +22561,7 @@
    "name": "pr97888-1.c",
    "sha256": "77b428e5d6455abd88ed092974bb80d6225a0655d383befb3a0d9f7f92cf3fad",
    "static_walls": [
-    "libc-call",
-    "operator:~"
+    "libc-call"
    ],
    "verdict": "passed"
   },
@@ -22986,9 +22890,7 @@
    "manifest_status": "parsed",
    "name": "shiftopt-1.c",
    "sha256": "fa73efd08a8c4ea955d7c53744fe1b8cb151e53751ec5af10a6a616f02d16ea3",
-   "static_walls": [
-    "operator:~"
-   ],
+   "static_walls": [],
    "verdict": "passed"
   },
   {
@@ -23010,7 +22912,6 @@
    "name": "simd-1.c",
    "sha256": "d778ab577ef0a86de223a08beb0da0607c7d84a411ae12a6ca728e13165a3b7a",
    "static_walls": [
-    "operator:~",
     "type-layout"
    ],
    "verdict": "refused-unsupported"
@@ -23022,7 +22923,6 @@
    "name": "simd-2.c",
    "sha256": "5deafac5ebbe1fb237179174450d74a8cfea8eb6ea9c09b5009ab84b0a22c04c",
    "static_walls": [
-    "operator:~",
     "type-layout"
    ],
    "verdict": "refused-unsupported"
@@ -23458,7 +23358,6 @@
    "name": "struct-ini-3.c",
    "sha256": "d8557c455129cdfad066850de06e40896c9c787b47ee6c8fe9d083b63853ccee",
    "static_walls": [
-    "operator:~",
     "type-layout"
    ],
    "verdict": "refused-unsupported"
@@ -25201,7 +25100,7 @@
     "zerolen-2.c"
    ],
    "present": 1059,
-   "sole": 283,
+   "sole": 292,
    "wall": "type-layout"
   },
   {
@@ -25942,90 +25841,8 @@
     "widechar-3.c"
    ],
    "present": 734,
-   "sole": 174,
+   "sole": 193,
    "wall": "libc-call"
-  },
-  {
-   "files": [
-    "00104.c",
-    "00126.c",
-    "00214.c",
-    "20000205-1.c",
-    "20000715-2.c",
-    "20020127-1.c",
-    "20021120-3.c",
-    "20040409-3.c",
-    "20040409-3w.c",
-    "20040703-1.c",
-    "20041011-1.c",
-    "20050215-1.c",
-    "20070623-1.c",
-    "20080519-1.c",
-    "20110418-1.c",
-    "20120111-1.c",
-    "20140212-1.c",
-    "20190228-1.c",
-    "20230802-1.c",
-    "900409-1.c",
-    "921104-1.c",
-    "930529-1.c",
-    "950503-1.c",
-    "960317-1.c",
-    "960416-1.c",
-    "980612-1.c",
-    "990326-1.c",
-    "arith-1.c",
-    "bcp-1.c",
-    "builtins/complex-1-lib.c",
-    "complex-6.c",
-    "gcc/testsuite/gcc.dg/c23-empty-init-5.c",
-    "ifcvt-onecmpl-abs-1.c",
-    "loop-2c.c",
-    "pr101335.c",
-    "pr105613.c",
-    "pr109040.c",
-    "pr110252-3.c",
-    "pr110252-4.c",
-    "pr110817-1.c",
-    "pr112581-1.c",
-    "pr118638.c",
-    "pr119291.c",
-    "pr119428.c",
-    "pr120630.c",
-    "pr126405-2.c",
-    "pr126405.c",
-    "pr17133.c",
-    "pr23135.c",
-    "pr29006.c",
-    "pr35390.c",
-    "pr43629.c",
-    "pr48717.c",
-    "pr59101.c",
-    "pr64957.c",
-    "pr66757.c",
-    "pr68376-1.c",
-    "pr68376-2.c",
-    "pr68911.c",
-    "pr69097-1.c",
-    "pr69320-1.c",
-    "pr70005.c",
-    "pr81503.c",
-    "pr81913.c",
-    "pr82192.c",
-    "pr82524.c",
-    "pr83383.c",
-    "pr85582-1.c",
-    "pr89826.c",
-    "pr91635.c",
-    "pr97888-1.c",
-    "shiftopt-1.c",
-    "simd-1.c",
-    "simd-2.c",
-    "struct-ini-3.c"
-   ],
-   "present": 75,
-   "sole": 26,
-   "wall": "operator:~"
   },
   {
    "files": [
@@ -26216,7 +26033,7 @@
     "usad-run.c"
    ],
    "present": 185,
-   "sole": 25,
+   "sole": 27,
    "wall": "assignment-call"
   },
   {

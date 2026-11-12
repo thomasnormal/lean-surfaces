@@ -4,8 +4,8 @@ Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manife
 
 - verdicts: 412/2214 scored (passed 412, failed 0)
 - manifest SHA-256: `953938cce1637cf91ba3dda661a9b9309cd83f0ebf7d7f17cc1a36704295f367`
-- measured commit: `3877f5cca`
-- measured at: `2026-11-12T01:15:00Z`
+- measured commit: `003c716fd`
+- measured at: `2026-11-12T01:20:00Z`
 
 ## Verdict counts
 
@@ -49,10 +49,9 @@ Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manife
 
 | wall | sole | present | example files |
 | --- | ---: | ---: | --- |
-| `type-layout` | 283 | 1059 | 00015.c, 00016.c, 00017.c, 00018.c, 00019.c |
-| `libc-call` | 174 | 734 | 00025.c, 00040.c, 00056.c, 00087.c, 00089.c |
-| `operator:~` | 26 | 75 | 00104.c, 00126.c, 00214.c, 20000205-1.c, 20000715-2.c |
-| `assignment-call` | 25 | 185 | 00011.c, 00031.c, 00040.c, 00140.c, 00187.c |
+| `type-layout` | 292 | 1059 | 00015.c, 00016.c, 00017.c, 00018.c, 00019.c |
+| `libc-call` | 193 | 734 | 00025.c, 00040.c, 00056.c, 00087.c, 00089.c |
+| `assignment-call` | 27 | 185 | 00011.c, 00031.c, 00040.c, 00140.c, 00187.c |
 | `unsupported:SwitchStmt` | 13 | 64 | 00051.c, 00143.c, 00158.c, 00182.c, 00193.c |
 | `unsequenced-effects` | 3 | 20 | 00121.c, 20001228-1.c, 20020406-1.c, 20060102-1.c, 20230802-1.c |
 | `cast:PointerToIntegral` | 2 | 27 | 00144.c, 20000622-1.c, 20011121-1.c, 20030811-1.c, 20050215-1.c |

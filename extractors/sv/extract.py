@@ -8497,8 +8497,7 @@ def _convert_integral_cast(sm, expr):
     if (_SYM is not None and source_reason is None and target_reason is None
             and target_width is not None and target_width > 0
             and expr.type.isIntegral and expr.type.isFourState
-            and not expr.type.isSigned and not expr.operand.type.isSigned
-            and re.match(r"^\s*\d+\s*'", str(getattr(expr, "syntax", "")))):
+            and not expr.type.isSigned and not expr.operand.type.isSigned):
         operand = _convert_expr(sm, expr.operand)
         if width_of(operand) != source_width or not _case_expression_ok(operand):
             return unsupported(sm, expr, "ConversionExpression:Explicit")

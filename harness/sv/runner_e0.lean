@@ -136,7 +136,7 @@ def main (argv : List String) : IO UInt32 := do
         let flatTop := lib.isEmpty || GenItem.listInstFree pd.generates
         let inst := if flatTop then
           if pd.functions.isEmpty then pd.instantiateG2 args (PDesign.surfaceFuel args)
-          else pd.instantiateFunctions2 args (PDesign.surfaceFuel args)
+          else pd.instantiateFunctionsG2 args (PDesign.surfaceFuel args)
         else pd.instantiateH lib args (PDesign.surfaceFuel args)
         let d ← match inst with
           | .ok d => pure d

@@ -808,6 +808,18 @@
       "measured": "2026-11-12: source-shaped automatic input-only functions are retained as Function and FunctionCall nodes; E evaluates the return expression with the actual bound to the formal, matching Icarus and Xcelium."
     },
     {
+      "name": "function_generated_large_case_e",
+      "example": "sem2/function_generated_large_case",
+      "top": "function_generated_large_case",
+      "signals": ["a", "y"],
+      "stimulus": [
+        {"a": "00000000000000000000000000000000000000000000000000000000000000000"},
+        {"a": "00000000000000000000000000000000000000000000000000000000000000001"},
+        {"a": "11111111111111111111111111111111111111111111111111111111111111111"}
+      ],
+      "measured": "2026-11-12: source-shaped automatic lookup5 with a 32-arm case and 13 generated part-select calls executes in E; Icarus rows agree, with Xcelium reported by its readiness gate."
+    },
+    {
       "name": "hierarchy_instance_e",
       "example": "sem2/hierarchy_instance",
       "top": "hierarchy_instance",

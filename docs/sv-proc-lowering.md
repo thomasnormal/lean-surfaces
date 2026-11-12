@@ -55,13 +55,15 @@ Sv AST is available.
 
 ## USERFN. User-function calls
 
-The established symbolic path inlines only the narrow pure automatic-function
+The established symbolic path admits only the narrow pure automatic-function
 shapes covered by the function-call tests: input-only formals, source-pure
 expressions, and the admitted straight-line, conditional, and case local-return
-forms. With `--retain-proc-rewrites`, a call to a source-declared function is
-kept as a `FunctionCall` envelope node with its name and converted actuals;
-`Ingest2` reports `CallExpression:user-function` because frozen `PExpr` has no
-call constructor. System calls and the default pure inliner are unchanged.
+forms. With `--retain-proc-rewrites`, a source declaration is retained as a
+`Function` envelope node and each call as a `FunctionCall` node with its name
+and converted actuals. The function-enabled E elaborator substitutes the
+formal bindings at that source-shaped boundary; the ordinary instantiation
+route still reports `CallExpression:user-function`. System calls and the
+default pure path remain unchanged.
 
 ## X1. Loop header forms
 

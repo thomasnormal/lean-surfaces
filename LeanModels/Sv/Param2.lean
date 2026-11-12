@@ -806,7 +806,7 @@ widening guard). -/
 /-! Substitute only the source-level function's input formals.  This is the
 elaboration rule for the admitted pure automatic function profile; it never
 parses source text or rewrites an unsupported body. -/
-partial def substFunction (bindings : List (String × PExpr)) : PExpr → PExpr
+def substFunction (bindings : List (String × PExpr)) : PExpr → PExpr
   | .ident n => bindings.lookup n |>.getD (.ident n)
   | .lit v => .lit v
   | .paramRef n p => .paramRef n p
@@ -1567,6 +1567,16 @@ def instProcess2 (env : IEnv) (elems : List (String × Nat)) : PProcess → Proc
       | .error e => .unsupported "AssignL" e
   | .unsupported k t => .unsupported k t
 
+/-! Source-shaped automatic functions use a separate instantiation entry
+point. The ordinary `instProcess2` equations stay untouched so the existing
+semantic and proof surfaces retain their definitional shape; this adapter
+expands the admitted expression only on continuous assignments. Procedural
+function statements remain loud until their statement evaluator is admitted. -/
+def instProcess2Functions (env : IEnv) (elems : List (String × Nat)) : PProcess → Process2
+  | .assign t v => instProcess2 env elems (.assign t (expandFunctionCalls env v))
+  | .assignL lhs v => instProcess2 env elems (.assignL lhs (expandFunctionCalls env v))
+  | p => instProcess2 env elems p
+
 /-! ## Source-preserving E instantiation
 
 `Process2` is deliberately frozen: it has no constructor for an implicit event
@@ -1735,6 +1745,52 @@ end
 
 /-! ## `instantiate2` -/
 
+/-! Generate expansion for the source-shaped automatic-function entry point.
+This mirrors `GenItem.expand2`, but leaves the established expansion and its
+proof lemmas unchanged. -/
+mutual
+def GenItem.expandFunctions2 (env : IEnv) (elems : List (String × Nat)) (iterFuel : Nat) :
+    GenItem → Res (List Process2)
+  | .process p => .ok [instProcess2Functions env elems p]
+  | .unsupported k t => .ok [.unsupported k t]
+  | .inst i => .ok [.unsupported "Instance"
+      s!"module instance '{i.name}' of '{i.module}': flat instantiation (hierarchical designs instantiate through `PDesign.instantiateH`, Hier2.lean)"]
+  | .genIf cond thenB elseB =>
+      match evalGenGuard env cond with
+      | .error e => .unsupported s!"generate if: {e}"
+      | .ok v => if v != 0 then expandFunctionsList2 env elems iterFuel thenB
+                 else expandFunctionsList2 env elems iterFuel elseB
+  | .genFor _label g initE bound step _rc body =>
+      match evalInt env initE, stepDelta g step with
+      | .ok i0, .ok δ => do
+          let vs ← genvarSeq env g bound δ iterFuel i0
+          expandFunctionsIters2 env elems iterFuel g vs body
+      | .error e, _ => .unsupported s!"generate for: {e}"
+      | _, .error e => .unsupported s!"generate for: {e}"
+  termination_by it => (sizeOf it, 0)
+  decreasing_by all_goals (simp_wf; omega)
+
+def expandFunctionsList2 (env : IEnv) (elems : List (String × Nat)) (iterFuel : Nat) :
+    List GenItem → Res (List Process2)
+  | [] => .ok []
+  | it :: rest => do
+      let ps ← it.expandFunctions2 env elems iterFuel
+      let qs ← expandFunctionsList2 env elems iterFuel rest
+      .ok (ps ++ qs)
+  termination_by l => (sizeOf l, 0)
+  decreasing_by all_goals (simp_wf; omega)
+
+def expandFunctionsIters2 (env : IEnv) (elems : List (String × Nat)) (iterFuel : Nat)
+    (g : String) : List Int → List GenItem → Res (List Process2)
+  | [], _ => .ok []
+  | v :: vs, body => do
+      let ps ← expandFunctionsList2 (env.bindVal g v) elems iterFuel body
+      let qs ← expandFunctionsIters2 env elems iterFuel g vs body
+      .ok (ps ++ qs)
+  termination_by vs body => (sizeOf body, vs.length + 1)
+  decreasing_by all_goals (simp_wf; omega)
+end
+
 /-- The symbolic packed dimensions of every declaration with an explicit
 dimension list — the source the `IEnv.dims` geometry table (`dimTable`) is
 evaluated from (proofs pin envelope dimensions against it by `rfl`). -/
@@ -1788,6 +1844,41 @@ def PDesign.instantiate2From (envI : IEnv) (d : PDesign) (args : List Int)
           decls := decls.toArray
           processes :=
             ((d.processes.map (instProcess2 envP elems)) ++ gens
+              ++ d.others.map fun (k, t) => Process2.unsupported k t).toArray }
+
+/-! Function-enabled semantic instantiation. The established `instantiate2`
+route remains the proof-facing canonical path; this source-shaped entry point
+uses the dedicated expression expansion route for admitted automatic,
+input-only functions. -/
+def PDesign.instantiateFunctions2 (d : PDesign) (args : List Int)
+    (iterFuel : Nat := 4096) : Res Design2 :=
+  if args.length != d.params.length then
+    .unsupported s!"parameter arity: got {args.length}, want {d.params.length}"
+  else do
+    let envP ← bindPackageParams { int32 := true } d.packageParams
+    let envP ← bindPackageEnums envP d.enums
+    let env0 ← bindParamsRes envP d.params args
+    let env1 ← bindLocals env0 d.localParams
+    let env2 ← bindEnums env1 d.enums
+    let pws ← (d.params.map (fun p => (p.name, p.type?))
+                ++ d.localParams.map (fun lp => (lp.name, lp.type?))).filterMapM
+      fun (n, ty?) =>
+        match ty? with
+        | none => pure none
+        | some ty =>
+            match ty.width env2 with
+            | .ok w => pure (some (n, w))
+            | .error e => Res.unsupported s!"parameter '{n}' type: {e}"
+    let env2 := { env2 with pwidths := pws }
+    let env2 := { env2 with dims := dimTable env2 d.decls, functions := d.functions }
+    let decls ← buildDecls env2 d.decls
+    let elems ← buildElems env2 d.decls
+    let envP := { env2 with widths := decls.map fun dc => (dc.name, dc.width) }
+    let gens ← expandFunctionsList2 envP elems iterFuel d.generates
+    .ok { name := d.name
+          decls := decls.toArray
+          processes :=
+            ((d.processes.map (instProcess2Functions envP elems)) ++ gens
               ++ d.others.map fun (k, t) => Process2.unsupported k t).toArray }
 
 /-- `instantiate2From` from the empty environment — THE semantic-tier

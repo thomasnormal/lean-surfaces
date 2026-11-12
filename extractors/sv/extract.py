@@ -34783,10 +34783,11 @@ def _sym_function_node(sm, subroutine):
                for f in formals):
             return unsupported(sm, subroutine, "SubroutineSymbol:formal",
                                "function formals must be input-only")
+        case_shape = _sym_case_function_shape(subroutine)
         returned = _literal_function_result(subroutine)
-        if returned is None:
+        if returned is None and case_shape is None:
             returned = _sym_local_return_expression(subroutine)
-        if returned is None:
+        if returned is None and case_shape is None:
             shape = _sym_conditional_function_shape(subroutine)
             if shape is not None:
                 return unsupported(sm, subroutine, "SubroutineSymbol:conditional",
@@ -34812,7 +34813,51 @@ def _sym_function_node(sm, subroutine):
                                              "width": fdtype.get("resolved", formal.type.bitWidth),
                                              "name": formal.name}))
         with _SymCallBinding(formal_bindings):
-            body = convert_expr(sm, returned)
+            if case_shape is None:
+                body = convert_expr(sm, returned)
+            else:
+                # Keep the declaration and each call source-shaped while
+                # representing the function-local case result as a nested
+                # case-equality expression.  This preserves §12.5's
+                # source-order first match without adding a second statement
+                # AST to the retained envelope.
+                case_expr, case_arms, case_default, _local, _check, default_to_x = case_shape
+                subject = convert_expr(sm, case_expr)
+                if subject is None:
+                    body = None
+                else:
+                    if default_to_x:
+                        value = {"kind": "Literal", "span": sym_span(sm, subroutine),
+                                "width": subroutine.returnType.bitWidth,
+                                "bits": "x" * subroutine.returnType.bitWidth}
+                    else:
+                        value = convert_expr(sm, case_default)
+                    if value is None:
+                        body = None
+                    else:
+                        for patterns, arm in reversed(case_arms):
+                            arm_value = convert_expr(sm, arm)
+                            condition = None
+                            for pattern in patterns:
+                                pattern_value = convert_expr(sm, pattern)
+                                if pattern_value is None:
+                                    condition = None
+                                    break
+                                hit = {"kind": "Binary", "span": node_span(sm, pattern),
+                                       "width": 1, "op": "===", "left": dict(subject),
+                                       "right": pattern_value}
+                                condition = hit if condition is None else {
+                                    "kind": "Binary", "span": node_span(sm, pattern),
+                                    "width": 1, "op": "||", "left": condition,
+                                    "right": hit}
+                            if arm_value is None or condition is None:
+                                value = None
+                                break
+                            value = {"kind": "Ternary", "span": sym_span(sm, subroutine),
+                                     "width": subroutine.returnType.bitWidth,
+                                     "cond": condition, "then": arm_value,
+                                     "else": value}
+                        body = value
         if body is None or body.get("kind") == "Unsupported":
             return unsupported(sm, subroutine, "SubroutineSymbol:body")
         return {"kind": "Function", "span": sym_span(sm, subroutine),

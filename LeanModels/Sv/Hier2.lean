@@ -888,6 +888,14 @@ def PDesign.instantiateG2 (d : PDesign) (args : List Int) (iterFuel : Nat := 409
   let m ← d.instantiate2 args iterFuel
   .ok (d.driverGuard m)
 
+/-- Flat-top driver-guarded route for the source-shaped automatic-function
+profile.  The ordinary `instantiateG2` stays unchanged for all designs that
+carry no admitted function declarations. -/
+def PDesign.instantiateFunctionsG2 (d : PDesign) (args : List Int)
+    (iterFuel : Nat := 4096) : Res Design2 := do
+  let m ← d.instantiateFunctions2 args iterFuel
+  .ok (d.driverGuard m)
+
 /-- **The total family of a flat envelope** (`name.sem` of a single-module
 `load_design_sv2`, 2026-10-28, WP2): `PDesign.instantiateG2` at the surface
 fuel, errors collapsed to the loud error design (the `instantiateD2`
@@ -900,12 +908,24 @@ def PDesign.instantiateGD2 (d : PDesign) (args : List Int) : Design2 :=
   | .timeout => .errorDesign d.name "generate expansion fuel exhausted"
   | .unsupported msg => .errorDesign d.name msg
 
+/-- Total source-shaped function family with the same one-driver guard as the
+ordinary semantic family. -/
+def PDesign.instantiateFunctionsGD2 (d : PDesign) (args : List Int) : Design2 :=
+  match d.instantiateFunctionsG2 args (PDesign.surfaceFuel args) with
+  | .ok m => m
+  | .timeout => .errorDesign d.name "generate expansion fuel exhausted"
+  | .unsupported msg => .errorDesign d.name msg
+
 /-- The semantic family with the source-preserving `always_comb` alias guard
     applied at this concrete parameter point.  The unguarded twin remains
     available for the structural comb proofs; the executable `name.sem`
     route uses this wrapper so an alias refusal is loud at every point. -/
 def PDesign.instantiateGDAlias2 (d : PDesign) (args : List Int) : Design2 :=
   (d.instantiateGD2 args).aliasGuard
+
+/-- Alias-guarded total family for the source-shaped automatic-function route. -/
+def PDesign.instantiateFunctionsGDAlias2 (d : PDesign) (args : List Int) : Design2 :=
+  (d.instantiateFunctionsGD2 args).aliasGuard
 
 /-! ## `instantiateH` -/
 

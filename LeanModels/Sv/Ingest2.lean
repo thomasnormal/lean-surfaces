@@ -1261,7 +1261,9 @@ elab "load_design_sv2 " name:ident " from " path:str : command => do
       -- top through `instantiateG2` (`name.sem`'s family), a hierarchical
       -- one through `instantiateH` (whose `topGuard` checks it).
       let flatTop := lib.isEmpty || GenItem.listInstFree pdD.generates
-      let instD := if flatTop then pdD.instantiateG2 argsD (PDesign.surfaceFuel argsD)
+      let instD := if flatTop then
+        if pdD.functions.isEmpty then pdD.instantiateG2 argsD (PDesign.surfaceFuel argsD)
+        else pdD.instantiateFunctionsG2 argsD (PDesign.surfaceFuel argsD)
         else pdD.instantiateH lib argsD (PDesign.surfaceFuel argsD)
       match instD with
       | .ok dD =>
@@ -1408,8 +1410,12 @@ elab "load_design_sv2 " name:ident " from " path:str : command => do
     let flatTop := lib.isEmpty || GenItem.listInstFree pd.generates
     let semBody :=
       if flatTop then
-        Lean.mkApp2 (Lean.mkConst ``LeanModels.Sv.PDesign.instantiateGDAlias2)
-          (Lean.mkConst pdName) argsList
+        if pd.functions.isEmpty then
+          Lean.mkApp2 (Lean.mkConst ``LeanModels.Sv.PDesign.instantiateGDAlias2)
+            (Lean.mkConst pdName) argsList
+        else
+          Lean.mkApp2 (Lean.mkConst ``LeanModels.Sv.PDesign.instantiateFunctionsGDAlias2)
+            (Lean.mkConst pdName) argsList
       else
         Lean.mkApp3 (Lean.mkConst ``LeanModels.Sv.PDesign.instantiateHDAlias2)
           (Lean.mkConst pdName) (Lean.mkConst libName) argsList

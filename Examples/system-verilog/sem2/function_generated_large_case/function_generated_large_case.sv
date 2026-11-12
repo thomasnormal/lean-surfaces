@@ -1,6 +1,6 @@
-// Refused construct: a generated part-select call to a 5-bit automatic function with a local temporary, a large unique case, a function-name default, and an explicit return.
-// Refused by: run2 process evaluator.
-// Exact message: unsupported expression 'CallExpression'
+// Clean-room receipt: a generated part-select call to a 5-bit automatic
+// function with a local temporary, a complete unique case, a function-name
+// default, and an explicit return.
 module function_generated_large_case(input logic [64:0] a, output logic [64:0] y);
   function automatic logic [4:0] lookup5(input logic [4:0] x);
     begin

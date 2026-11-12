@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Pure input-only function returns inline into the symbolic expression tree.
+// Pure input-only functions retained as source-shaped calls in the symbolic tree.
 module symbolic_inline_function (
   input logic [3:0] a,
   output logic [3:0] y,

@@ -492,6 +492,7 @@ def truthy (v : CVal) : EvalM Bool :=
   | .float32 f => pure (!Float32.Model.beq f (Float32.Model.ofBits 0))
   | .float64 f => pure (!Float.Model.beq f (Float.Model.ofBits 0))
   | .ptr p => pure (!p.isNull)
+  | .ptrInt _ => refuseUnsupported "pointer-integer value used in a Boolean context"
   | .aggregate _ _ => refuseUnsupported "aggregate used as truth value"
   | .undef => refuseUB (.indetAutomatic 0 0)
 
@@ -612,6 +613,7 @@ Named, because every refusal must be. -/
 def asPtr (v : CVal) : EvalM Ptr :=
   match v with
   | .ptr p => pure p
+  | .ptrInt _ => refuseUnsupported "pointer-integer value requires an unchanged cast back"
   | .int _ _ => refuseUnsupported "integer used as a pointer (no int↔ptr cast in tier)"
   | .float32 _ | .float64 _ => refuseUnsupported "floating value used as a pointer"
   | .aggregate _ _ => refuseUnsupported "aggregate used as a pointer"
@@ -622,6 +624,7 @@ def asInt (v : CVal) : EvalM (IntTy × Int) :=
   match v with
   | .int t n => pure (t, n)
   | .ptr _ => refuseUnsupported "pointer used as an integer (no ptr↔int cast in tier)"
+  | .ptrInt _ => refuseUnsupported "pointer-integer value used as an ordinary integer"
   | .float32 _ | .float64 _ => refuseUnsupported "floating value used as an integer"
   | .aggregate _ _ => refuseUnsupported "aggregate used as an integer"
   | .undef => refuseUB (.indetAutomatic 0 0)
@@ -632,6 +635,10 @@ the tier carries clang's `qualType` string rather than a type tree
 spellings on expression nodes, every one ending in `*` or `]`. -/
 def isPtrType (ty : CType) : Bool :=
   ty.endsWith "*" || LeanModels.C.isConstPointerToArray ty
+
+def isPtrIntType (ty : CType) : Bool :=
+  let t := ty.trimAscii
+  t == "uintptr_t" || t == "intptr_t"
 
 /-- The POINTEE spelling of a pointer type: `int *` → `int`, `const S *` →
 `const S`. `none` when the spelling is not a pointer at all.
@@ -657,6 +664,9 @@ def loadAt (p : Ptr) (ty : CType) (size : Option Nat) : EvalM CVal :=
   if isPtrType ty then do
     let q ← readMem (fun m => Mem.loadPtr m p)
     pure (.ptr q)
+  else if isPtrIntType ty then do
+    let q ← readMem (fun m => Mem.loadPtrInt m p)
+    pure (.ptrInt q)
   else do
     match intTyOf? ty with
     | some t => readMem (fun m => Mem.loadInt m p t)
@@ -671,6 +681,9 @@ def loadAt (p : Ptr) (ty : CType) (size : Option Nat) : EvalM CVal :=
 def storeAt (p : Ptr) (ty : CType) (v : CVal) : EvalM Unit :=
   match v with
   | .ptr q => writeMem (fun m => Mem.storePtr m p q)
+  | .ptrInt q =>
+      if isPtrIntType ty then writeMem (fun m => Mem.storePtrInt m p q)
+      else refuseUnsupported "pointer-integer value stored outside uintptr_t/intptr_t"
   | .int _ n => do
       let t ← intTyOf ty
       writeMem (fun m => Mem.storeInt m p t n)
@@ -810,6 +823,10 @@ def evalArith (ctx : Ctx) (op : String) (lv rv : CVal) (ty : CType)
       else if op == "<=" then do let c ← readMem (fun _ => Mem.ptrLt b a); pure (ofBool (!c))
       else if op == ">=" then do let c ← readMem (fun _ => Mem.ptrLt a b); pure (ofBool (!c))
       else refuseUnsupported s!"operator '{op}' on two pointers"
+  | .ptrInt a, .ptrInt b =>
+      if op == "==" then pure (ofBool (Mem.ptrEq a b))
+      else if op == "!=" then pure (ofBool (!Mem.ptrEq a b))
+      else refuseUnsupported "arithmetic or ordered comparison on pointer-integer values"
   | .int t a, .int _ b =>
       -- Shifts take the LEFT operand's type (§6.5.8p3); every other
       -- operator has already had both operands converted to a common type.
@@ -1025,6 +1042,19 @@ def evalExpr (ctx : Ctx) : Expr → EvalM CVal
         | .float32 f => float32ToInt f t
         | .float64 f => float64ToInt f t
         | _ => refuseUnsupported "non-floating value in floating-to-integral conversion"
+      else if ck == "PointerToIntegral" then
+        if isPtrIntType ty then do
+          let v ← evalExpr ctx sub
+          let p ← asPtr v
+          pure (.ptrInt p)
+        else refuseUnsupported "pointer-to-integer conversion outside uintptr_t/intptr_t"
+      else if ck == "IntegralToPointer" then
+        if isPtrType ty then do
+          let v ← evalExpr ctx sub
+          match v with
+          | .ptrInt p => pure (.ptr p)
+          | _ => refuseUnsupported "integer-to-pointer conversion is not an unchanged uintptr_t/intptr_t round-trip"
+        else refuseUnsupported "integer-to-pointer conversion outside pointer type"
       else refuseUnsupported s!"castKind '{ck}'"
 
   -- ===== §6.5.14 / §6.5.15 — THE DRAIN AMENDMENT =====
@@ -1773,12 +1803,14 @@ theorem loadAt' (p : Ptr) (ty : CType) (size : Option Nat) : MemInvariant (loadA
   unfold loadAt
   split
   · exact bind (readMem' _) fun _ => pure' _
-  · cases h : intTyOf? ty with
-    | some t => simp [h]; exact readMem' _
-    | none =>
-      cases hs : size with
-      | some n => simp [h, hs]; exact bind (readMem' _) fun _ => pure' _
-      | none => simp [h, hs]; exact refuseUnsupported' _
+  · split
+    · exact bind (readMem' _) fun _ => pure' _
+    · cases h : intTyOf? ty with
+      | some t => simp [h]; exact readMem' _
+      | none =>
+        cases hs : size with
+        | some n => simp [h, hs]; exact bind (readMem' _) fun _ => pure' _
+        | none => simp [h, hs]; exact refuseUnsupported' _
 
 theorem intBinop' (op : String) (t : IntTy) (a b : Int) :
     MemInvariant (intBinop op t a b) := by

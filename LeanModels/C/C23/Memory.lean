@@ -438,6 +438,22 @@ def loadPtr (m : Mem) (p : Ptr) : MRes Ptr := do
         .error (.memUB (indetFault c.dur o off))
       else .error (.memUB (.nonValueRepresentation o off))
 
+def storePtrInt (m : Mem) (p : Ptr) (q : Ptr) : MRes Mem :=
+  m.storeBytes p ((List.range 8).map (CByte.ptrIntByte q))
+
+def loadPtrInt (m : Mem) (p : Ptr) : MRes Ptr := do
+  let (o, c, off) ← m.resolve p 8
+  let bs := (c.bytes.drop off).take 8
+  let expected (q : Ptr) := (List.range 8).map (CByte.ptrIntByte q)
+  match bs.head? with
+  | some (.ptrIntByte q 0) =>
+      if bs == expected q then return q
+      else .error (.memUB (.nonValueRepresentation o off))
+  | _ =>
+      if bs.any (· == CByte.indet) then
+        .error (.memUB (indetFault c.dur o off))
+      else .error (.memUB (.nonValueRepresentation o off))
+
 /-! ## §6.3.2.1p3 / §6.5.3 / §6.5.4 — making and moving pointers
 
 Stated in census order: decay first, because it is 405 of the corpus's

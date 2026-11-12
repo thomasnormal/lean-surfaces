@@ -257,6 +257,7 @@ end Ptr
 inductive CByte where
   | conc (b : UInt8)
   | ptrByte (p : Ptr) (k : Nat)
+  | ptrIntByte (p : Ptr) (k : Nat)
   | indet
 deriving Repr, Inhabited, BEq
 
@@ -270,6 +271,7 @@ inductive CVal where
   | float32 (v : Float32.Model)
   | float64 (v : Float.Model)
   | ptr (p : Ptr)
+  | ptrInt (p : Ptr)
   | aggregate (ty : CType) (bytes : List CByte)
   | undef
 deriving Repr, Inhabited, BEq

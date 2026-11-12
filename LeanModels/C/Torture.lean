@@ -477,7 +477,10 @@ def layoutFor (envl : Envelope) : Layout :=
     -- table in `intTyOf?` cannot do this job: `ull` is `unsigned long` in one
     -- test and `unsigned long long` in another, so the answer is a property
     -- of the translation unit and not of the spelling.
-    normalizeTy := fun t => resolve tds 8 (stripQuals 8 t) }
+    normalizeTy := fun t =>
+      let q := stripQuals 8 t
+      if q == "uintptr_t" || q == "intptr_t" then q
+      else resolve tds 8 q }
 
 /-- Peel the conversions a value arrives wrapped in. -/
 def peelVal : Expr → Expr
@@ -703,7 +706,7 @@ def scoreEnvelope (fuel : Nat) (envl : Envelope)
         .failed
       else match value with
         | .int _ 0 | .undef => .passed
-        | .int _ _ | .float32 _ | .float64 _ | .ptr _ | .aggregate _ _ => .failed
+        | .int _ _ | .float32 _ | .float64 _ | .ptr _ | .ptrInt _ | .aggregate _ _ => .failed
   | .ok (.error (.libc "abort"), _) =>
       match oracleSym with
       | some sym =>

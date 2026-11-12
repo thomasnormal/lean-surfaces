@@ -4,24 +4,33 @@
   {
    "functions": [
     {
+     "call_targets": [
+      "f",
+      "g"
+     ],
      "calls": 2,
      "conservative_pure_shape": false,
      "increments": 0,
      "name": "main",
+     "variable_refs": [],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "f",
+     "variable_refs": [],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "g",
+     "variable_refs": [],
      "writes": 0
     }
    ],
@@ -30,24 +39,39 @@
   {
    "functions": [
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": false,
      "increments": 0,
      "name": "foo1",
+     "variable_refs": [
+      "u"
+     ],
      "writes": 1
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": false,
      "increments": 0,
      "name": "foo2",
+     "variable_refs": [
+      "u"
+     ],
      "writes": 1
     },
     {
+     "call_targets": [
+      "abort",
+      "exit",
+      "foo1",
+      "foo2"
+     ],
      "calls": 4,
      "conservative_pure_shape": false,
      "increments": 0,
      "name": "main",
+     "variable_refs": [],
      "writes": 0
     }
    ],
@@ -56,17 +80,31 @@
   {
    "functions": [
     {
+     "call_targets": [
+      "strlen",
+      "strncmp"
+     ],
      "calls": 4,
      "conservative_pure_shape": false,
      "increments": 1,
      "name": "foo",
+     "variable_refs": [
+      "a",
+      "i",
+      "j"
+     ],
      "writes": 3
     },
     {
+     "call_targets": [
+      "abort",
+      "foo"
+     ],
      "calls": 2,
      "conservative_pure_shape": false,
      "increments": 0,
      "name": "main",
+     "variable_refs": [],
      "writes": 0
     }
    ],
@@ -75,24 +113,40 @@
   {
    "functions": [
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": false,
      "increments": 1,
      "name": "foo1",
+     "variable_refs": [
+      "count"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": false,
      "increments": 1,
      "name": "foo2",
+     "variable_refs": [
+      "count"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [
+      "abort",
+      "foo1",
+      "foo2"
+     ],
      "calls": 4,
      "conservative_pure_shape": false,
      "increments": 0,
      "name": "main",
+     "variable_refs": [
+      "count"
+     ],
      "writes": 0
     }
    ],
@@ -101,17 +155,26 @@
   {
    "functions": [
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "f",
+     "variable_refs": [],
      "writes": 0
     },
     {
+     "call_targets": [
+      "abort",
+      "f"
+     ],
      "calls": 3,
      "conservative_pure_shape": false,
      "increments": 0,
      "name": "main",
+     "variable_refs": [
+      "one"
+     ],
      "writes": 0
     }
    ],
@@ -120,31 +183,48 @@
   {
    "functions": [
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": false,
      "increments": 3,
      "name": "foo",
+     "variable_refs": [],
      "writes": 1
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": false,
      "increments": 3,
      "name": "bar",
+     "variable_refs": [],
      "writes": 1
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": false,
      "increments": 3,
      "name": "baz",
+     "variable_refs": [],
      "writes": 1
     },
     {
+     "call_targets": [
+      "abort",
+      "bar",
+      "baz",
+      "foo"
+     ],
      "calls": 6,
      "conservative_pure_shape": false,
      "increments": 0,
      "name": "main",
+     "variable_refs": [
+      "i",
+      "j",
+      "p"
+     ],
      "writes": 4
     }
    ],
@@ -153,24 +233,40 @@
   {
    "functions": [
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "f",
+     "variable_refs": [
+      "t"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "f1",
+     "variable_refs": [],
      "writes": 0
     },
     {
+     "call_targets": [
+      "__builtin_abort",
+      "f",
+      "f1"
+     ],
      "calls": 3,
      "conservative_pure_shape": false,
      "increments": 2,
      "name": "main",
+     "variable_refs": [
+      "a",
+      "i",
+      "j"
+     ],
      "writes": 2
     }
    ],
@@ -179,52 +275,88 @@
   {
    "functions": [
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": false,
      "increments": 0,
      "name": "foo",
+     "variable_refs": [
+      "y"
+     ],
      "writes": 1
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": false,
      "increments": 0,
      "name": "foo_v",
+     "variable_refs": [
+      "y"
+     ],
      "writes": 1
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": false,
      "increments": 0,
      "name": "bar",
+     "variable_refs": [
+      "y"
+     ],
      "writes": 1
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": false,
      "increments": 0,
      "name": "bar_v",
+     "variable_refs": [
+      "y"
+     ],
      "writes": 1
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": false,
      "increments": 0,
      "name": "baz",
+     "variable_refs": [
+      "y"
+     ],
      "writes": 1
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": false,
      "increments": 0,
      "name": "baz_v",
+     "variable_refs": [
+      "y"
+     ],
      "writes": 1
     },
     {
+     "call_targets": [
+      "__builtin_abort",
+      "bar",
+      "bar_v",
+      "baz",
+      "baz_v",
+      "foo",
+      "foo_v"
+     ],
      "calls": 9,
      "conservative_pure_shape": false,
      "increments": 1,
      "name": "main",
+     "variable_refs": [
+      "t"
+     ],
      "writes": 0
     }
    ],
@@ -237,24 +369,39 @@
   {
    "functions": [
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": false,
      "increments": 0,
      "name": "test_endianness",
+     "variable_refs": [
+      "dw"
+     ],
      "writes": 1
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": false,
      "increments": 0,
      "name": "test_endianness_vol",
+     "variable_refs": [
+      "dw"
+     ],
      "writes": 1
     },
     {
+     "call_targets": [
+      "abort",
+      "exit",
+      "test_endianness",
+      "test_endianness_vol"
+     ],
      "calls": 4,
      "conservative_pure_shape": false,
      "increments": 0,
      "name": "main",
+     "variable_refs": [],
      "writes": 0
     }
    ],
@@ -263,31 +410,45 @@
   {
    "functions": [
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "f",
+     "variable_refs": [],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "g",
+     "variable_refs": [],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "h",
+     "variable_refs": [],
      "writes": 0
     },
     {
+     "call_targets": [
+      "abort",
+      "exit",
+      "f",
+      "g",
+      "h"
+     ],
      "calls": 5,
      "conservative_pure_shape": false,
      "increments": 0,
      "name": "main",
+     "variable_refs": [],
      "writes": 0
     }
    ],
@@ -296,52 +457,81 @@
   {
    "functions": [
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "h0",
+     "variable_refs": [],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "i0",
+     "variable_refs": [],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "k0",
+     "variable_refs": [],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "h1",
+     "variable_refs": [],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "i1",
+     "variable_refs": [],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "k1",
+     "variable_refs": [],
      "writes": 0
     },
     {
+     "call_targets": [
+      "__builtin_abort",
+      "h0",
+      "h1",
+      "i0",
+      "i1",
+      "k0",
+      "k1"
+     ],
      "calls": 9,
      "conservative_pure_shape": false,
      "increments": 2,
      "name": "main",
+     "variable_refs": [
+      "A",
+      "B",
+      "a",
+      "b",
+      "numvalues",
+      "values"
+     ],
      "writes": 0
     }
    ],
@@ -350,24 +540,41 @@
   {
    "functions": [
     {
+     "call_targets": [
+      "__builtin_bswap64"
+     ],
      "calls": 1,
      "conservative_pure_shape": false,
      "increments": 0,
      "name": "g",
+     "variable_refs": [],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": false,
      "increments": 0,
      "name": "f",
+     "variable_refs": [
+      "a",
+      "b"
+     ],
      "writes": 9
     },
     {
+     "call_targets": [
+      "__builtin_abort",
+      "f",
+      "g"
+     ],
      "calls": 24,
      "conservative_pure_shape": false,
      "increments": 0,
      "name": "main",
+     "variable_refs": [
+      "i"
+     ],
      "writes": 0
     }
    ],
@@ -376,24 +583,38 @@
   {
    "functions": [
     {
+     "call_targets": [
+      "__builtin_bswap32"
+     ],
      "calls": 1,
      "conservative_pure_shape": false,
      "increments": 0,
      "name": "f",
+     "variable_refs": [],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "g",
+     "variable_refs": [],
      "writes": 0
     },
     {
+     "call_targets": [
+      "__builtin_abort",
+      "f",
+      "g"
+     ],
      "calls": 3,
      "conservative_pure_shape": false,
      "increments": 1,
      "name": "main",
+     "variable_refs": [
+      "b"
+     ],
      "writes": 0
     }
    ],
@@ -402,94 +623,194 @@
   {
    "functions": [
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": false,
      "increments": 1,
      "name": "my_ffsl",
+     "variable_refs": [
+      "i"
+     ],
      "writes": 1
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": false,
      "increments": 1,
      "name": "my_ctzl",
+     "variable_refs": [
+      "i"
+     ],
      "writes": 1
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": false,
      "increments": 1,
      "name": "my_clzl",
+     "variable_refs": [
+      "i"
+     ],
      "writes": 1
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": false,
      "increments": 1,
      "name": "my_clrsbl",
+     "variable_refs": [
+      "i",
+      "leading"
+     ],
      "writes": 1
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": false,
      "increments": 2,
      "name": "my_popcountl",
+     "variable_refs": [
+      "count",
+      "i"
+     ],
      "writes": 1
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": false,
      "increments": 2,
      "name": "my_parityl",
+     "variable_refs": [
+      "count",
+      "i"
+     ],
      "writes": 1
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": false,
      "increments": 1,
      "name": "my_ffsll",
+     "variable_refs": [
+      "i"
+     ],
      "writes": 1
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": false,
      "increments": 1,
      "name": "my_ctzll",
+     "variable_refs": [
+      "i"
+     ],
      "writes": 1
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": false,
      "increments": 1,
      "name": "my_clzll",
+     "variable_refs": [
+      "i"
+     ],
      "writes": 1
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": false,
      "increments": 1,
      "name": "my_clrsbll",
+     "variable_refs": [
+      "i",
+      "leading"
+     ],
      "writes": 1
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": false,
      "increments": 2,
      "name": "my_popcountll",
+     "variable_refs": [
+      "count",
+      "i"
+     ],
      "writes": 1
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": false,
      "increments": 2,
      "name": "my_parityll",
+     "variable_refs": [
+      "count",
+      "i"
+     ],
      "writes": 1
     },
     {
+     "call_targets": [
+      "__builtin_clrsb",
+      "__builtin_clrsbl",
+      "__builtin_clrsbll",
+      "__builtin_clz",
+      "__builtin_clzl",
+      "__builtin_clzll",
+      "__builtin_ctz",
+      "__builtin_ctzl",
+      "__builtin_ctzll",
+      "__builtin_ffs",
+      "__builtin_ffsl",
+      "__builtin_ffsll",
+      "__builtin_parity",
+      "__builtin_parityl",
+      "__builtin_parityll",
+      "__builtin_popcount",
+      "__builtin_popcountl",
+      "__builtin_popcountll",
+      "abort",
+      "exit",
+      "my_clrsb",
+      "my_clrsbl",
+      "my_clrsbll",
+      "my_clz",
+      "my_clzl",
+      "my_clzll",
+      "my_ctz",
+      "my_ctzl",
+      "my_ctzll",
+      "my_ffs",
+      "my_ffsl",
+      "my_ffsll",
+      "my_parity",
+      "my_parityl",
+      "my_parityll",
+      "my_popcount",
+      "my_popcountl",
+      "my_popcountll"
+     ],
      "calls": 505,
      "conservative_pure_shape": false,
      "increments": 3,
      "name": "main",
+     "variable_refs": [
+      "i",
+      "ints",
+      "longlongs",
+      "longs"
+     ],
      "writes": 3
     }
    ],
@@ -498,31 +819,48 @@
   {
    "functions": [
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "g1",
+     "variable_refs": [],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "g2",
+     "variable_refs": [],
      "writes": 0
     },
     {
+     "call_targets": [
+      "abort",
+      "g1",
+      "g2"
+     ],
      "calls": 4,
      "conservative_pure_shape": false,
      "increments": 0,
      "name": "f",
+     "variable_refs": [],
      "writes": 0
     },
     {
+     "call_targets": [
+      "abort",
+      "exit",
+      "f",
+      "g2"
+     ],
      "calls": 6,
      "conservative_pure_shape": false,
      "increments": 0,
      "name": "main",
+     "variable_refs": [],
      "writes": 0
     }
    ],
@@ -531,31 +869,48 @@
   {
    "functions": [
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "f",
+     "variable_refs": [],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "r",
+     "variable_refs": [],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "std_eqn",
+     "variable_refs": [],
      "writes": 0
     },
     {
+     "call_targets": [
+      "abort",
+      "exit",
+      "f",
+      "r",
+      "std_eqn"
+     ],
      "calls": 5,
      "conservative_pure_shape": false,
      "increments": 1,
      "name": "main",
+     "variable_refs": [
+      "i",
+      "nums"
+     ],
      "writes": 1
     }
    ],
@@ -564,17 +919,33 @@
   {
    "functions": [
     {
+     "call_targets": [
+      "__builtin_fabsf",
+      "__builtin_isinf"
+     ],
      "calls": 4,
      "conservative_pure_shape": false,
      "increments": 0,
      "name": "foo",
+     "variable_refs": [
+      "u",
+      "v"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [
+      "__builtin_abort",
+      "__builtin_inff",
+      "__builtin_isinf",
+      "__builtin_nanf",
+      "foo"
+     ],
      "calls": 5,
      "conservative_pure_shape": false,
      "increments": 0,
      "name": "main",
+     "variable_refs": [],
      "writes": 0
     }
    ],
@@ -583,178 +954,305 @@
   {
    "functions": [
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "min_lt_",
+     "variable_refs": [
+      "x"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "min_lt_volatile",
+     "variable_refs": [
+      "x"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "max_lt_",
+     "variable_refs": [
+      "x"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "max_lt_volatile",
+     "variable_refs": [
+      "x"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "min_gt_",
+     "variable_refs": [
+      "x"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "min_gt_volatile",
+     "variable_refs": [
+      "x"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "max_gt_",
+     "variable_refs": [
+      "x"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "max_gt_volatile",
+     "variable_refs": [
+      "x"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "min_le_",
+     "variable_refs": [
+      "x"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "min_le_volatile",
+     "variable_refs": [
+      "x"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "max_le_",
+     "variable_refs": [
+      "x"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "max_le_volatile",
+     "variable_refs": [
+      "x"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "min_ge_",
+     "variable_refs": [
+      "x"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "min_ge_volatile",
+     "variable_refs": [
+      "x"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "max_ge_",
+     "variable_refs": [
+      "x"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "max_ge_volatile",
+     "variable_refs": [
+      "x"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "min_ne_",
+     "variable_refs": [
+      "x"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "min_ne_volatile",
+     "variable_refs": [
+      "x"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "max_ne_",
+     "variable_refs": [
+      "x"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "max_ne_volatile",
+     "variable_refs": [
+      "x"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "min_eq_",
+     "variable_refs": [
+      "x"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "min_eq_volatile",
+     "variable_refs": [
+      "x"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "max_eq_",
+     "variable_refs": [
+      "x"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "max_eq_volatile",
+     "variable_refs": [
+      "x"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [
+      "__builtin_abort",
+      "max_eq_",
+      "max_eq_volatile",
+      "max_ge_",
+      "max_ge_volatile",
+      "max_gt_",
+      "max_gt_volatile",
+      "max_le_",
+      "max_le_volatile",
+      "max_lt_",
+      "max_lt_volatile",
+      "max_ne_",
+      "max_ne_volatile",
+      "min_eq_",
+      "min_eq_volatile",
+      "min_ge_",
+      "min_ge_volatile",
+      "min_gt_",
+      "min_gt_volatile",
+      "min_le_",
+      "min_le_volatile",
+      "min_lt_",
+      "min_lt_volatile",
+      "min_ne_",
+      "min_ne_volatile"
+     ],
      "calls": 36,
      "conservative_pure_shape": false,
      "increments": 2,
      "name": "main",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     }
    ],
@@ -763,1018 +1261,1889 @@
   {
    "functions": [
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "lt_lt_ne_",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "lt_lt_ne_volatile",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "lt_lt_eq_",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "lt_lt_eq_volatile",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "lt_lt_xor_",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "lt_lt_xor_volatile",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "lt_le_ne_",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "lt_le_ne_volatile",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "lt_le_eq_",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "lt_le_eq_volatile",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "lt_le_xor_",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "lt_le_xor_volatile",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "lt_gt_ne_",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "lt_gt_ne_volatile",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "lt_gt_eq_",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "lt_gt_eq_volatile",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "lt_gt_xor_",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "lt_gt_xor_volatile",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "lt_ge_ne_",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "lt_ge_ne_volatile",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "lt_ge_eq_",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "lt_ge_eq_volatile",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "lt_ge_xor_",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "lt_ge_xor_volatile",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "lt_eq_ne_",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "lt_eq_ne_volatile",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "lt_eq_eq_",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "lt_eq_eq_volatile",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "lt_eq_xor_",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "lt_eq_xor_volatile",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "lt_ne_ne_",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "lt_ne_ne_volatile",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "lt_ne_eq_",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "lt_ne_eq_volatile",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "lt_ne_xor_",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "lt_ne_xor_volatile",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "le_lt_ne_",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "le_lt_ne_volatile",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "le_lt_eq_",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "le_lt_eq_volatile",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "le_lt_xor_",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "le_lt_xor_volatile",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "le_le_ne_",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "le_le_ne_volatile",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "le_le_eq_",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "le_le_eq_volatile",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "le_le_xor_",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "le_le_xor_volatile",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "le_gt_ne_",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "le_gt_ne_volatile",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "le_gt_eq_",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "le_gt_eq_volatile",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "le_gt_xor_",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "le_gt_xor_volatile",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "le_ge_ne_",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "le_ge_ne_volatile",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "le_ge_eq_",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "le_ge_eq_volatile",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "le_ge_xor_",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "le_ge_xor_volatile",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "le_eq_ne_",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "le_eq_ne_volatile",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "le_eq_eq_",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "le_eq_eq_volatile",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "le_eq_xor_",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "le_eq_xor_volatile",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "le_ne_ne_",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "le_ne_ne_volatile",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "le_ne_eq_",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "le_ne_eq_volatile",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "le_ne_xor_",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "le_ne_xor_volatile",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "gt_lt_ne_",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "gt_lt_ne_volatile",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "gt_lt_eq_",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "gt_lt_eq_volatile",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "gt_lt_xor_",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "gt_lt_xor_volatile",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "gt_le_ne_",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "gt_le_ne_volatile",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "gt_le_eq_",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "gt_le_eq_volatile",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "gt_le_xor_",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "gt_le_xor_volatile",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "gt_gt_ne_",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "gt_gt_ne_volatile",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "gt_gt_eq_",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "gt_gt_eq_volatile",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "gt_gt_xor_",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "gt_gt_xor_volatile",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "gt_ge_ne_",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "gt_ge_ne_volatile",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "gt_ge_eq_",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "gt_ge_eq_volatile",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "gt_ge_xor_",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "gt_ge_xor_volatile",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "gt_eq_ne_",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "gt_eq_ne_volatile",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "gt_eq_eq_",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "gt_eq_eq_volatile",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "gt_eq_xor_",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "gt_eq_xor_volatile",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "gt_ne_ne_",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "gt_ne_ne_volatile",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "gt_ne_eq_",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "gt_ne_eq_volatile",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "gt_ne_xor_",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "gt_ne_xor_volatile",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "ge_lt_ne_",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "ge_lt_ne_volatile",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "ge_lt_eq_",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "ge_lt_eq_volatile",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "ge_lt_xor_",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "ge_lt_xor_volatile",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "ge_le_ne_",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "ge_le_ne_volatile",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "ge_le_eq_",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "ge_le_eq_volatile",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "ge_le_xor_",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "ge_le_xor_volatile",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "ge_gt_ne_",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "ge_gt_ne_volatile",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "ge_gt_eq_",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "ge_gt_eq_volatile",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "ge_gt_xor_",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "ge_gt_xor_volatile",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "ge_ge_ne_",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "ge_ge_ne_volatile",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "ge_ge_eq_",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "ge_ge_eq_volatile",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "ge_ge_xor_",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "ge_ge_xor_volatile",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "ge_eq_ne_",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "ge_eq_ne_volatile",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "ge_eq_eq_",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "ge_eq_eq_volatile",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "ge_eq_xor_",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "ge_eq_xor_volatile",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "ge_ne_ne_",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "ge_ne_ne_volatile",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "ge_ne_eq_",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "ge_ne_eq_volatile",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "ge_ne_xor_",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "ge_ne_xor_volatile",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [
+      "__builtin_abort",
+      "ge_eq_eq_",
+      "ge_eq_eq_volatile",
+      "ge_eq_ne_",
+      "ge_eq_ne_volatile",
+      "ge_eq_xor_",
+      "ge_eq_xor_volatile",
+      "ge_ge_eq_",
+      "ge_ge_eq_volatile",
+      "ge_ge_ne_",
+      "ge_ge_ne_volatile",
+      "ge_ge_xor_",
+      "ge_ge_xor_volatile",
+      "ge_gt_eq_",
+      "ge_gt_eq_volatile",
+      "ge_gt_ne_",
+      "ge_gt_ne_volatile",
+      "ge_gt_xor_",
+      "ge_gt_xor_volatile",
+      "ge_le_eq_",
+      "ge_le_eq_volatile",
+      "ge_le_ne_",
+      "ge_le_ne_volatile",
+      "ge_le_xor_",
+      "ge_le_xor_volatile",
+      "ge_lt_eq_",
+      "ge_lt_eq_volatile",
+      "ge_lt_ne_",
+      "ge_lt_ne_volatile",
+      "ge_lt_xor_",
+      "ge_lt_xor_volatile",
+      "ge_ne_eq_",
+      "ge_ne_eq_volatile",
+      "ge_ne_ne_",
+      "ge_ne_ne_volatile",
+      "ge_ne_xor_",
+      "ge_ne_xor_volatile",
+      "gt_eq_eq_",
+      "gt_eq_eq_volatile",
+      "gt_eq_ne_",
+      "gt_eq_ne_volatile",
+      "gt_eq_xor_",
+      "gt_eq_xor_volatile",
+      "gt_ge_eq_",
+      "gt_ge_eq_volatile",
+      "gt_ge_ne_",
+      "gt_ge_ne_volatile",
+      "gt_ge_xor_",
+      "gt_ge_xor_volatile",
+      "gt_gt_eq_",
+      "gt_gt_eq_volatile",
+      "gt_gt_ne_",
+      "gt_gt_ne_volatile",
+      "gt_gt_xor_",
+      "gt_gt_xor_volatile",
+      "gt_le_eq_",
+      "gt_le_eq_volatile",
+      "gt_le_ne_",
+      "gt_le_ne_volatile",
+      "gt_le_xor_",
+      "gt_le_xor_volatile",
+      "gt_lt_eq_",
+      "gt_lt_eq_volatile",
+      "gt_lt_ne_",
+      "gt_lt_ne_volatile",
+      "gt_lt_xor_",
+      "gt_lt_xor_volatile",
+      "gt_ne_eq_",
+      "gt_ne_eq_volatile",
+      "gt_ne_ne_",
+      "gt_ne_ne_volatile",
+      "gt_ne_xor_",
+      "gt_ne_xor_volatile",
+      "le_eq_eq_",
+      "le_eq_eq_volatile",
+      "le_eq_ne_",
+      "le_eq_ne_volatile",
+      "le_eq_xor_",
+      "le_eq_xor_volatile",
+      "le_ge_eq_",
+      "le_ge_eq_volatile",
+      "le_ge_ne_",
+      "le_ge_ne_volatile",
+      "le_ge_xor_",
+      "le_ge_xor_volatile",
+      "le_gt_eq_",
+      "le_gt_eq_volatile",
+      "le_gt_ne_",
+      "le_gt_ne_volatile",
+      "le_gt_xor_",
+      "le_gt_xor_volatile",
+      "le_le_eq_",
+      "le_le_eq_volatile",
+      "le_le_ne_",
+      "le_le_ne_volatile",
+      "le_le_xor_",
+      "le_le_xor_volatile",
+      "le_lt_eq_",
+      "le_lt_eq_volatile",
+      "le_lt_ne_",
+      "le_lt_ne_volatile",
+      "le_lt_xor_",
+      "le_lt_xor_volatile",
+      "le_ne_eq_",
+      "le_ne_eq_volatile",
+      "le_ne_ne_",
+      "le_ne_ne_volatile",
+      "le_ne_xor_",
+      "le_ne_xor_volatile",
+      "lt_eq_eq_",
+      "lt_eq_eq_volatile",
+      "lt_eq_ne_",
+      "lt_eq_ne_volatile",
+      "lt_eq_xor_",
+      "lt_eq_xor_volatile",
+      "lt_ge_eq_",
+      "lt_ge_eq_volatile",
+      "lt_ge_ne_",
+      "lt_ge_ne_volatile",
+      "lt_ge_xor_",
+      "lt_ge_xor_volatile",
+      "lt_gt_eq_",
+      "lt_gt_eq_volatile",
+      "lt_gt_ne_",
+      "lt_gt_ne_volatile",
+      "lt_gt_xor_",
+      "lt_gt_xor_volatile",
+      "lt_le_eq_",
+      "lt_le_eq_volatile",
+      "lt_le_ne_",
+      "lt_le_ne_volatile",
+      "lt_le_xor_",
+      "lt_le_xor_volatile",
+      "lt_lt_eq_",
+      "lt_lt_eq_volatile",
+      "lt_lt_ne_",
+      "lt_lt_ne_volatile",
+      "lt_lt_xor_",
+      "lt_lt_xor_volatile",
+      "lt_ne_eq_",
+      "lt_ne_eq_volatile",
+      "lt_ne_ne_",
+      "lt_ne_ne_volatile",
+      "lt_ne_xor_",
+      "lt_ne_xor_volatile"
+     ],
      "calls": 216,
      "conservative_pure_shape": false,
      "increments": 2,
      "name": "main",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     }
    ],
@@ -1783,178 +3152,256 @@
   {
    "functions": [
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "eqeq_0",
+     "variable_refs": [],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "eqeq_0_v",
+     "variable_refs": [],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "eqeq_1",
+     "variable_refs": [],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "eqeq_1_v",
+     "variable_refs": [],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "eqeq_2",
+     "variable_refs": [],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "eqeq_2_v",
+     "variable_refs": [],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "eqne_0",
+     "variable_refs": [],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "eqne_0_v",
+     "variable_refs": [],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "eqne_1",
+     "variable_refs": [],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "eqne_1_v",
+     "variable_refs": [],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "eqne_2",
+     "variable_refs": [],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "eqne_2_v",
+     "variable_refs": [],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "neeq_0",
+     "variable_refs": [],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "neeq_0_v",
+     "variable_refs": [],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "neeq_1",
+     "variable_refs": [],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "neeq_1_v",
+     "variable_refs": [],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "neeq_2",
+     "variable_refs": [],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "neeq_2_v",
+     "variable_refs": [],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "nene_0",
+     "variable_refs": [],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "nene_0_v",
+     "variable_refs": [],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "nene_1",
+     "variable_refs": [],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "nene_1_v",
+     "variable_refs": [],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "nene_2",
+     "variable_refs": [],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "nene_2_v",
+     "variable_refs": [],
      "writes": 0
     },
     {
+     "call_targets": [
+      "__builtin_abort",
+      "eqeq_0",
+      "eqeq_0_v",
+      "eqeq_1",
+      "eqeq_1_v",
+      "eqeq_2",
+      "eqeq_2_v",
+      "eqne_0",
+      "eqne_0_v",
+      "eqne_1",
+      "eqne_1_v",
+      "eqne_2",
+      "eqne_2_v",
+      "neeq_0",
+      "neeq_0_v",
+      "neeq_1",
+      "neeq_1_v",
+      "neeq_2",
+      "neeq_2_v",
+      "nene_0",
+      "nene_0_v",
+      "nene_1",
+      "nene_1_v",
+      "nene_2",
+      "nene_2_v"
+     ],
      "calls": 36,
      "conservative_pure_shape": false,
      "increments": 1,
      "name": "main",
+     "variable_refs": [
+      "n"
+     ],
      "writes": 0
     }
    ],
@@ -1963,59 +3410,99 @@
   {
    "functions": [
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "foo",
+     "variable_refs": [
+      "b"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "func_0_",
+     "variable_refs": [
+      "b"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "func_0_volatile",
+     "variable_refs": [
+      "b"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "func_1_",
+     "variable_refs": [
+      "b"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "func_1_volatile",
+     "variable_refs": [
+      "b"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "func_5_",
+     "variable_refs": [
+      "b"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "func_5_volatile",
+     "variable_refs": [
+      "b"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [
+      "__builtin_abort",
+      "func_0_",
+      "func_0_volatile",
+      "func_1_",
+      "func_1_volatile",
+      "func_5_",
+      "func_5_volatile"
+     ],
      "calls": 9,
      "conservative_pure_shape": false,
      "increments": 1,
      "name": "main",
+     "variable_refs": [
+      "a"
+     ],
      "writes": 0
     }
    ],
@@ -2024,24 +3511,47 @@
   {
    "functions": [
     {
+     "call_targets": [
+      "__builtin_return_address",
+      "f"
+     ],
      "calls": 2,
      "conservative_pure_shape": false,
      "increments": 1,
      "name": "f",
+     "variable_refs": [
+      "calls"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [
+      "f"
+     ],
      "calls": 1,
      "conservative_pure_shape": false,
      "increments": 1,
      "name": "y",
+     "variable_refs": [
+      "x"
+     ],
      "writes": 1
     },
     {
+     "call_targets": [
+      "abort",
+      "exit",
+      "f",
+      "y"
+     ],
      "calls": 7,
      "conservative_pure_shape": false,
      "increments": 0,
      "name": "main",
+     "variable_refs": [
+      "calls",
+      "v"
+     ],
      "writes": 0
     }
    ],
@@ -2050,59 +3560,111 @@
   {
    "functions": [
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "next_g",
+     "variable_refs": [
+      "e",
+      "g"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "curr_p",
+     "variable_refs": [
+      "p"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [
+      "next_g"
+     ],
      "calls": 1,
      "conservative_pure_shape": false,
      "increments": 0,
      "name": "inc_g",
+     "variable_refs": [
+      "g"
+     ],
      "writes": 1
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "curr_g",
+     "variable_refs": [
+      "g"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [
+      "curr_g",
+      "curr_p"
+     ],
      "calls": 2,
      "conservative_pure_shape": false,
      "increments": 0,
      "name": "ring_empty",
+     "variable_refs": [],
      "writes": 0
     },
     {
+     "call_targets": [
+      "inc_g",
+      "ring_empty"
+     ],
      "calls": 2,
      "conservative_pure_shape": false,
      "increments": 0,
      "name": "frob",
+     "variable_refs": [
+      "g",
+      "p"
+     ],
      "writes": 2
     },
     {
+     "call_targets": [
+      "curr_g",
+      "inc_g",
+      "ring_empty"
+     ],
      "calls": 3,
      "conservative_pure_shape": false,
      "increments": 1,
      "name": "get_n",
+     "variable_refs": [
+      "n",
+      "org_g"
+     ],
      "writes": 1
     },
     {
+     "call_targets": [
+      "abort",
+      "exit",
+      "frob",
+      "get_n"
+     ],
      "calls": 4,
      "conservative_pure_shape": false,
      "increments": 0,
      "name": "main",
+     "variable_refs": [
+      "e",
+      "g",
+      "p"
+     ],
      "writes": 1
     }
    ],
@@ -2111,17 +3673,25 @@
   {
    "functions": [
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "foo",
+     "variable_refs": [],
      "writes": 0
     },
     {
+     "call_targets": [
+      "foo"
+     ],
      "calls": 2,
      "conservative_pure_shape": false,
      "increments": 0,
      "name": "main",
+     "variable_refs": [
+      "gb"
+     ],
      "writes": 0
     }
    ],
@@ -2130,17 +3700,29 @@
   {
    "functions": [
     {
+     "call_targets": [
+      "abs"
+     ],
      "calls": 2,
      "conservative_pure_shape": false,
      "increments": 0,
      "name": "lisp_atan2",
+     "variable_refs": [],
      "writes": 0
     },
     {
+     "call_targets": [
+      "abort",
+      "lisp_atan2"
+     ],
      "calls": 2,
      "conservative_pure_shape": false,
      "increments": 0,
      "name": "main",
+     "variable_refs": [
+      "dx",
+      "dy"
+     ],
      "writes": 0
     }
    ],
@@ -2149,17 +3731,28 @@
   {
    "functions": [
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "foo",
+     "variable_refs": [],
      "writes": 0
     },
     {
+     "call_targets": [
+      "abort",
+      "foo"
+     ],
      "calls": 2,
      "conservative_pure_shape": false,
      "increments": 0,
      "name": "main",
+     "variable_refs": [
+      "a",
+      "b",
+      "c"
+     ],
      "writes": 1
     }
    ],
@@ -2168,24 +3761,41 @@
   {
    "functions": [
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "foo",
+     "variable_refs": [],
      "writes": 0
     },
     {
+     "call_targets": [
+      "foo"
+     ],
      "calls": 1,
      "conservative_pure_shape": false,
      "increments": 0,
      "name": "bar",
+     "variable_refs": [
+      "a",
+      "b",
+      "c"
+     ],
      "writes": 2
     },
     {
+     "call_targets": [
+      "abort",
+      "bar"
+     ],
      "calls": 2,
      "conservative_pure_shape": false,
      "increments": 0,
      "name": "main",
+     "variable_refs": [
+      "b"
+     ],
      "writes": 0
     }
    ],
@@ -2194,31 +3804,44 @@
   {
    "functions": [
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "foo",
+     "variable_refs": [],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "bar",
+     "variable_refs": [],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "baz",
+     "variable_refs": [],
      "writes": 0
     },
     {
+     "call_targets": [
+      "abort",
+      "bar",
+      "baz",
+      "foo"
+     ],
      "calls": 5,
      "conservative_pure_shape": false,
      "increments": 0,
      "name": "main",
+     "variable_refs": [],
      "writes": 0
     }
    ],
@@ -2227,10 +3850,22 @@
   {
    "functions": [
     {
+     "call_targets": [
+      "abort"
+     ],
      "calls": 1,
      "conservative_pure_shape": false,
      "increments": 1,
      "name": "main",
+     "variable_refs": [
+      "a",
+      "b",
+      "c",
+      "d",
+      "e",
+      "f",
+      "i"
+     ],
      "writes": 4
     }
    ],
@@ -2239,17 +3874,28 @@
   {
    "functions": [
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": false,
      "increments": 0,
      "name": "foo",
+     "variable_refs": [
+      "x"
+     ],
      "writes": 1
     },
     {
+     "call_targets": [
+      "__builtin_abort",
+      "foo"
+     ],
      "calls": 2,
      "conservative_pure_shape": false,
      "increments": 0,
      "name": "main",
+     "variable_refs": [
+      "x"
+     ],
      "writes": 1
     }
    ],
@@ -2258,24 +3904,38 @@
   {
    "functions": [
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "foo",
+     "variable_refs": [],
      "writes": 0
     },
     {
+     "call_targets": [
+      "foo"
+     ],
      "calls": 2,
      "conservative_pure_shape": false,
      "increments": 0,
      "name": "bar",
+     "variable_refs": [],
      "writes": 0
     },
     {
+     "call_targets": [
+      "__builtin_abort",
+      "bar",
+      "foo"
+     ],
      "calls": 4,
      "conservative_pure_shape": false,
      "increments": 0,
      "name": "main",
+     "variable_refs": [
+      "l"
+     ],
      "writes": 0
     }
    ],
@@ -2284,24 +3944,37 @@
   {
    "functions": [
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "foo",
+     "variable_refs": [],
      "writes": 0
     },
     {
+     "call_targets": [
+      "foo"
+     ],
      "calls": 1,
      "conservative_pure_shape": false,
      "increments": 0,
      "name": "bar",
+     "variable_refs": [
+      "c"
+     ],
      "writes": 1
     },
     {
+     "call_targets": [
+      "__builtin_abort",
+      "bar"
+     ],
      "calls": 2,
      "conservative_pure_shape": false,
      "increments": 0,
      "name": "main",
+     "variable_refs": [],
      "writes": 0
     }
    ],
@@ -2310,24 +3983,43 @@
   {
    "functions": [
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "foo",
+     "variable_refs": [],
      "writes": 0
     },
     {
+     "call_targets": [
+      "foo"
+     ],
      "calls": 7,
      "conservative_pure_shape": false,
      "increments": 0,
      "name": "bar",
+     "variable_refs": [
+      "v",
+      "w",
+      "z"
+     ],
      "writes": 4
     },
     {
+     "call_targets": [
+      "__builtin_abort",
+      "bar"
+     ],
      "calls": 2,
      "conservative_pure_shape": false,
      "increments": 0,
      "name": "main",
+     "variable_refs": [
+      "a",
+      "b",
+      "c"
+     ],
      "writes": 3
     }
    ],
@@ -2336,38 +4028,67 @@
   {
    "functions": [
     {
+     "call_targets": [
+      "__builtin_add_overflow"
+     ],
      "calls": 1,
      "conservative_pure_shape": false,
      "increments": 0,
      "name": "foo",
+     "variable_refs": [
+      "b"
+     ],
      "writes": 2
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": false,
      "increments": 0,
      "name": "bar",
+     "variable_refs": [],
      "writes": 2
     },
     {
+     "call_targets": [
+      "__builtin_add_overflow"
+     ],
      "calls": 1,
      "conservative_pure_shape": false,
      "increments": 0,
      "name": "baz",
+     "variable_refs": [
+      "u",
+      "v"
+     ],
      "writes": 2
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": false,
      "increments": 0,
      "name": "qux",
+     "variable_refs": [
+      "c",
+      "w",
+      "x"
+     ],
      "writes": 3
     },
     {
+     "call_targets": [
+      "__builtin_abort",
+      "bar",
+      "baz",
+      "foo",
+      "qux"
+     ],
      "calls": 8,
      "conservative_pure_shape": false,
      "increments": 0,
      "name": "main",
+     "variable_refs": [],
      "writes": 0
     }
    ],
@@ -2376,24 +4097,49 @@
   {
    "functions": [
     {
+     "call_targets": [
+      "__builtin_memmove",
+      "__builtin_mul_overflow"
+     ],
      "calls": 3,
      "conservative_pure_shape": false,
      "increments": 0,
      "name": "foo",
+     "variable_refs": [
+      "u128_0"
+     ],
      "writes": 1
     },
     {
+     "call_targets": [
+      "__builtin_abort",
+      "__builtin_memcpy"
+     ],
      "calls": 3,
      "conservative_pure_shape": false,
      "increments": 0,
      "name": "bar",
+     "variable_refs": [
+      "a",
+      "b",
+      "c",
+      "p"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [
+      "__builtin_abort",
+      "bar",
+      "foo"
+     ],
      "calls": 3,
      "conservative_pure_shape": false,
      "increments": 0,
      "name": "main",
+     "variable_refs": [
+      "x"
+     ],
      "writes": 0
     }
    ],
@@ -2402,234 +4148,433 @@
   {
    "functions": [
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "gt_lt_lt_",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "gt_lt_lt_volatile",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "gt_lt_le_",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "gt_lt_le_volatile",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "gt_lt_gt_",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "gt_lt_gt_volatile",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "gt_lt_ge_",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "gt_lt_ge_volatile",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "ge_le_lt_",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "ge_le_lt_volatile",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "ge_le_le_",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "ge_le_le_volatile",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "ge_le_gt_",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "ge_le_gt_volatile",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "ge_le_ge_",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "ge_le_ge_volatile",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "lt_gt_lt_",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "lt_gt_lt_volatile",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "lt_gt_le_",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "lt_gt_le_volatile",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "lt_gt_gt_",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "lt_gt_gt_volatile",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "lt_gt_ge_",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "lt_gt_ge_volatile",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "le_ge_lt_",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "le_ge_lt_volatile",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "le_ge_le_",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "le_ge_le_volatile",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "le_ge_gt_",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "le_ge_gt_volatile",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "le_ge_ge_",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [],
      "calls": 0,
      "conservative_pure_shape": true,
      "increments": 0,
      "name": "le_ge_ge_volatile",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     },
     {
+     "call_targets": [
+      "__builtin_abort",
+      "ge_le_ge_",
+      "ge_le_ge_volatile",
+      "ge_le_gt_",
+      "ge_le_gt_volatile",
+      "ge_le_le_",
+      "ge_le_le_volatile",
+      "ge_le_lt_",
+      "ge_le_lt_volatile",
+      "gt_lt_ge_",
+      "gt_lt_ge_volatile",
+      "gt_lt_gt_",
+      "gt_lt_gt_volatile",
+      "gt_lt_le_",
+      "gt_lt_le_volatile",
+      "gt_lt_lt_",
+      "gt_lt_lt_volatile",
+      "le_ge_ge_",
+      "le_ge_ge_volatile",
+      "le_ge_gt_",
+      "le_ge_gt_volatile",
+      "le_ge_le_",
+      "le_ge_le_volatile",
+      "le_ge_lt_",
+      "le_ge_lt_volatile",
+      "lt_gt_ge_",
+      "lt_gt_ge_volatile",
+      "lt_gt_gt_",
+      "lt_gt_gt_volatile",
+      "lt_gt_le_",
+      "lt_gt_le_volatile",
+      "lt_gt_lt_",
+      "lt_gt_lt_volatile"
+     ],
      "calls": 48,
      "conservative_pure_shape": false,
      "increments": 2,
      "name": "main",
+     "variable_refs": [
+      "x",
+      "y"
+     ],
      "writes": 0
     }
    ],

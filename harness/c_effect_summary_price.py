@@ -19,7 +19,12 @@ def effect(fn):
                  for n in nodes)
     increments = sum(n.get("kind") == "UnaryOperator" and n.get("op") in ("++", "--")
                      for n in nodes)
+    targets=sorted({n.get("name") for n in nodes
+                    if n.get("kind")=="DeclRefExpr" and n.get("decl_kind")=="FunctionDecl" and n.get("name")})
+    globals=sorted({n.get("name") for n in nodes
+                    if n.get("kind")=="DeclRefExpr" and n.get("decl_kind")=="VarDecl" and n.get("name")})
     return {"calls": calls, "writes": writes, "increments": increments,
+            "call_targets": targets, "variable_refs": globals,
             "conservative_pure_shape": calls == 0 and writes == 0 and increments == 0}
 
 def main():
@@ -48,9 +53,10 @@ def main():
         out.append({"name":name,"functions":[{"name":x.get("name"),**effect(x)} for x in f]})
     report={"schema":"c-effect-summary-price-0.1","wall":"unsequenced-effects","files":len(out),"rows":out}
     Path(a.json).write_text(json.dumps(report,indent=1,sort_keys=True)+"\n")
-    lines=["# C unsequenced-effect summary price","", "Parser-envelope census only; no purity theorem is claimed.","", "| file | functions | conservative pure shapes |", "| --- | ---: | ---: |"]
+    lines=["# C unsequenced-effect summary price","", "Parser-envelope census only; no purity theorem is claimed.","", "| file | functions | conservative pure shapes | calls / variable refs |", "| --- | ---: | ---: | --- |"]
     for r in out:
-        lines.append("| `%s` | %d | %d |"%(r["name"],len(r["functions"]),sum(x["conservative_pure_shape"] for x in r["functions"])))
+        calls=sorted({t for f in r["functions"] for t in f["call_targets"]}); vars=sorted({t for f in r["functions"] for t in f["variable_refs"]})
+        lines.append("| `%s` | %d | %d | `%s` / `%s` |"%(r["name"],len(r["functions"]),sum(x["conservative_pure_shape"] for x in r["functions"]),','.join(calls) or 'none',','.join(vars) or 'none'))
     Path(a.page).write_text("\n".join(lines)+"\n")
     print("c_effect_summary_price: wrote",a.json,a.page)
 

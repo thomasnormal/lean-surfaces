@@ -1,0 +1,318 @@
+{
+  "schema_version": "sv-0.2",
+  "language": "systemverilog",
+  "frontend": {
+    "name": "pyslang",
+    "family": "pyslang-11"
+  },
+  "mode": "symbolic",
+  "top": "generated_cell",
+  "source_files": [
+    {
+      "path": "Examples/system-verilog/sem2/memory_cell_identifier_refuse/memory_cell_identifier_refuse.sv",
+      "sha256": "12926220f66399c1139dc3728ef73a584271eb43cf930e2e9f19b7f1129891f6"
+    }
+  ],
+  "packages": [],
+  "design": {
+    "kind": "Design",
+    "modules": [
+      {
+        "kind": "Module",
+        "span": {
+          "line": 1,
+          "col": 1,
+          "end_line": 8,
+          "end_col": 10
+        },
+        "name": "generated_cell",
+        "imports": [],
+        "params": [],
+        "types": [],
+        "ports": [
+          {
+            "kind": "Port",
+            "span": {
+              "line": 1,
+              "col": 35,
+              "end_line": 1,
+              "end_col": 38
+            },
+            "name": "clk",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 1,
+              "col": 58,
+              "end_line": 1,
+              "end_col": 59
+            },
+            "name": "d",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 1,
+                      "col": 53,
+                      "end_line": 1,
+                      "end_col": 54
+                    },
+                    "value": 7,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 1,
+                      "col": 55,
+                      "end_line": 1,
+                      "end_col": 56
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 8
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 1,
+              "col": 80,
+              "end_line": 1,
+              "end_col": 81
+            },
+            "name": "q",
+            "dir": "out",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 1,
+                      "col": 75,
+                      "end_line": 1,
+                      "end_col": 76
+                    },
+                    "value": 7,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 1,
+                      "col": 77,
+                      "end_line": 1,
+                      "end_col": 78
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 8
+            }
+          }
+        ],
+        "decls": [],
+        "processes": [],
+        "generates": [
+          {
+            "kind": "GenerateFor",
+            "span": {
+              "line": 3,
+              "col": 12,
+              "end_line": 7,
+              "end_col": 6
+            },
+            "label": "cells",
+            "genvar": "i",
+            "init": {
+              "kind": "Int",
+              "span": {
+                "line": 3,
+                "col": 21,
+                "end_line": 3,
+                "end_col": 22
+              },
+              "value": 0,
+              "resolved_width": 32
+            },
+            "bound": {
+              "kind": "Binary",
+              "span": {
+                "line": 3,
+                "col": 24,
+                "end_line": 3,
+                "end_col": 29
+              },
+              "width": 1,
+              "op": "s<",
+              "left": {
+                "kind": "GenvarRef",
+                "span": {
+                  "line": 3,
+                  "col": 24,
+                  "end_line": 3,
+                  "end_col": 25
+                },
+                "name": "i"
+              },
+              "right": {
+                "kind": "Int",
+                "span": {
+                  "line": 3,
+                  "col": 28,
+                  "end_line": 3,
+                  "end_col": 29
+                },
+                "value": 2,
+                "resolved_width": 32
+              }
+            },
+            "step": {
+              "kind": "Unary",
+              "span": {
+                "line": 3,
+                "col": 31,
+                "end_line": 3,
+                "end_col": 40
+              },
+              "width": null,
+              "op": "++",
+              "operand": {
+                "kind": "GenvarRef",
+                "span": {
+                  "line": 3,
+                  "col": 31,
+                  "end_line": 3,
+                  "end_col": 32
+                },
+                "name": "i"
+              }
+            },
+            "resolved_count": 2,
+            "body": [
+              {
+                "kind": "Unsupported",
+                "span": {
+                  "line": 4,
+                  "col": 21,
+                  "end_line": 4,
+                  "end_col": 21
+                },
+                "sv_kind": "EmptyMemberSymbol:EmptyMember",
+                "text": ""
+              },
+              {
+                "kind": "AlwaysPosedge",
+                "span": {
+                  "line": 5,
+                  "col": 5,
+                  "end_line": 5,
+                  "end_col": 31
+                },
+                "style": "always_ff",
+                "clock": "clk",
+                "body": {
+                  "kind": "Empty",
+                  "span": {
+                    "line": 5,
+                    "col": 30,
+                    "end_line": 5,
+                    "end_col": 31
+                  }
+                }
+              },
+              {
+                "kind": "Unsupported",
+                "span": {
+                  "line": 6,
+                  "col": 12,
+                  "end_line": 6,
+                  "end_col": 16
+                },
+                "sv_kind": "ContinuousAssignSymbol:InvalidExpression",
+                "text": "q ="
+              },
+              {
+                "kind": "Unsupported",
+                "span": {
+                  "line": 6,
+                  "col": 20,
+                  "end_line": 6,
+                  "end_col": 20
+                },
+                "sv_kind": "EmptyMemberSymbol:EmptyMember",
+                "text": ""
+              }
+            ]
+          }
+        ],
+        "others": [
+          {
+            "kind": "Unsupported",
+            "span": {
+              "line": 4,
+              "col": 17,
+              "end_line": 4,
+              "end_col": 17
+            },
+            "sv_kind": "SlangError:ExpectedDeclarator",
+            "text": "memory_cell_identifier_refuse.sv:4: expected a declaration name"
+          },
+          {
+            "kind": "Unsupported",
+            "span": {
+              "line": 5,
+              "col": 30,
+              "end_line": 5,
+              "end_col": 30
+            },
+            "sv_kind": "SlangError:ExpectedStatement",
+            "text": "memory_cell_identifier_refuse.sv:5: expected statement"
+          },
+          {
+            "kind": "Unsupported",
+            "span": {
+              "line": 5,
+              "col": 39,
+              "end_line": 5,
+              "end_col": 39
+            },
+            "sv_kind": "SlangError:ExpectedDeclarator",
+            "text": "memory_cell_identifier_refuse.sv:5: expected a declaration name"
+          },
+          {
+            "kind": "Unsupported",
+            "span": {
+              "line": 6,
+              "col": 16,
+              "end_line": 6,
+              "end_col": 16
+            },
+            "sv_kind": "SlangError:ExpectedExpression",
+            "text": "memory_cell_identifier_refuse.sv:6: expected expression"
+          }
+        ]
+      }
+    ],
+    "others": []
+  },
+  "lean_blocks": []
+}

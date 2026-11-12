@@ -73143,6 +73143,24 @@
       "refusal": "Clock:async-reset",
       "measured": "2026-11-12: async-reset always_ff is retained by the parser and semantic loader but remains a loud E-core-0 clock boundary; no edge semantics is approximated."
     }
-
+,
+  {
+    "name": "memory_cell_identifier_refuse",
+    "example": "sem2/memory_cell_identifier_refuse",
+    "top": "generated_cell",
+    "file": "memory_cell_identifier_refuse",
+    "signals": [
+      "clk",
+      "d",
+      "q"
+    ],
+    "stimulus": [
+      {
+        "clk": "0",
+        "d": "00000000"
+      }
+    ],
+    "refusal": "EmptyMemberSymbol:EmptyMember"
+  }
   ]
 }

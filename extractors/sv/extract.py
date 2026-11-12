@@ -20767,23 +20767,87 @@ def _target_shape_ok(t):
 
 
 def _concat_target_order_unsafe(t):
-    """Whether a concatenated blocking target depends on an unspecified
-    leaf-evaluation order. Dynamic selectors are refused, as are repeated
-    leaves that would alias; static disjoint leaves remain source shaped."""
+    """Whether a concatenated target contains an unresolved or overlapping leaf.
+
+    A repeated signal name is not by itself an alias: ``{q[7:4], q[3:0]}``
+    writes two disjoint windows of one packed vector and is a source-shaped
+    IEEE 1800-2023 concatenation target.  Dynamic selectors, aggregate leaves
+    and overlapping windows remain loud because this front end cannot prove
+    their write footprint without changing the node's meaning.  The legacy
+    non-symbolic self-check also retains one source-shaped compatibility case:
+    an unresolved child inside a nested mixed concatenation is skipped by this
+    guard, while an unresolved child directly in the root concatenation stays
+    loud.  The symbolic path uses `_symbolic_concat_target` and remains strict
+    for both forms.
+    """
     if not isinstance(t, dict) or t.get("kind") != "ConcatTarget":
         return False
-    parts = t.get("parts") or []
-    names = []
-    for part in parts:
-        if part.get("kind") == "SelectTarget":
-            if part.get("index", {}).get("kind") != "Literal":
+
+    def leaf_windows(node, nested=False):
+        kind = node.get("kind") if isinstance(node, dict) else None
+        if kind == "ConcatTarget":
+            parts = node.get("parts") or []
+            if not parts:
+                return None
+            result = []
+            for part in parts:
+                child = leaf_windows(part, True)
+                if child is None:
+                    # The legacy self-check vocabulary deliberately retains
+                    # a mixed nested aggregate (including a dynamic leaf),
+                    # while a dynamic leaf directly in the root target is
+                    # rejected.  Keep that source-shaped compatibility here;
+                    # symbolic mode uses the stricter helper below.
+                    if not nested:
+                        return None
+                    continue
+                result.extend(child)
+            return result
+        if kind == "Ident":
+            name = node.get("name")
+            width = node.get("width")
+            if not isinstance(name, str) or not isinstance(width, int) or width <= 0:
+                return None
+            return [(name, 0, width - 1)]
+        if kind in ("SelectTarget", "BitSel", "PartSel"):
+            value = node.get("value") or {}
+            name = value.get("name") if value.get("kind") == "Ident" else None
+            width = node.get("width")
+            if not isinstance(name, str) or not isinstance(width, int) or width <= 0:
+                return None
+            if kind == "SelectTarget":
+                index = node.get("index") or {}
+                if index.get("kind") != "Literal":
+                    return None
+                bits = index.get("bits")
+                if not isinstance(bits, str) or not bits or any(
+                        bit not in "01" for bit in bits):
+                    return None
+                low = int(bits, 2)
+            elif kind == "BitSel":
+                index = node.get("index") or {}
+                if index.get("kind") != "Int":
+                    return None
+                low = index.get("value")
+            else:
+                msb = node.get("msb") or {}
+                lsb = node.get("lsb") or {}
+                if msb.get("kind") != "Int" or lsb.get("kind") != "Int":
+                    return None
+                low = min(msb.get("value"), lsb.get("value"))
+            if not isinstance(low, int) or low < 0:
+                return None
+            return [(name, low, low + width - 1)]
+        return None
+
+    windows = leaf_windows(t)
+    if windows is None:
+        return True
+    for index, (name, low, high) in enumerate(windows):
+        for old_name, old_low, old_high in windows[:index]:
+            if name == old_name and not (high < old_low or old_high < low):
                 return True
-            name = part.get("value", {}).get("name")
-        else:
-            name = part.get("name")
-        if name:
-            names.append(name)
-    return len(names) != len(set(names))
+    return False
 
 
 def _sym_array_select_static(t):
@@ -24672,7 +24736,20 @@ def _convert_assignment_expr(sm, expr, span_node=None):
         if _sym_runtime_unpacked_lhs(expr.left):
             return unsupported(sm, span_node or expr,
                                "AssignmentExpression:target")
-        target, ok = select_target(sm, expr.left)
+        if type(expr.left).__name__ == "ConcatenationExpression":
+            parts = _symbolic_concat_target(sm, expr.left)
+            if parts is None:
+                return unsupported(sm, span_node or expr,
+                                   "AssignmentExpression:target")
+            target = {
+                "kind": "ConcatTarget",
+                "span": node_span(sm, expr.left),
+                "width": expr.left.type.bitWidth,
+                "parts": parts,
+            }
+            ok = True
+        else:
+            target, ok = select_target(sm, expr.left)
     if not ok:
         return unsupported(sm, span_node or expr, "AssignmentExpression:target")
     if _SYM is None and _concat_target_order_unsafe(target):
@@ -27550,11 +27627,12 @@ def _symbolic_concat_target(sm, lhs):
     """Lower a continuous-assignment concatenation to direct target leaves.
 
     The semantic tier already owns continuous comb settling and fixed
-    select windows.  This surface form only admits a statically sized,
-    duplicate-free concatenation of those leaves, and requires the RHS to
-    have no target-name alias so splitting it into windows preserves the
-    single sampled RHS rule.  Aggregate, dynamic and aliased forms remain
-    loud until their storage/driver contracts are explicit.
+    select windows.  This surface form only admits a statically sized
+    concatenation of those leaves.  Repeated signal names are allowed when
+    their constant windows are disjoint, as required for source-shaped packed
+    concatenation targets by IEEE 1800-2023 §10.6.  Exact duplicate or
+    overlapping leaves, aggregate/dynamic forms, and RHS aliases remain loud
+    until their storage/driver contracts are explicit.
     """
     if type(lhs).__name__ != "ConcatenationExpression":
         return None

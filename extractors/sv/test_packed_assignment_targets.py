@@ -178,6 +178,29 @@ class PackedAssignmentTargets(unittest.TestCase):
         self.assertEqual([part["name"] for part in target["parts"]],
                          ["first", "second"])
 
+    def test_nonblocking_concat_allows_disjoint_windows_of_one_signal(self):
+        design = extract_source(
+            "module top; logic [7:0] value, source; "
+            "initial {value[7:4], value[3:0]} <= source; endmodule")
+        statement, = [node for node in nodes(design)
+                      if node.get("kind") == "NonblockingAssign"]
+        target = statement["target"]
+        self.assertEqual(target["kind"], "ConcatTarget")
+        self.assertEqual([part["width"] for part in target["parts"]], [4, 4])
+        self.assertFalse(any(node.get("kind") == "Unsupported"
+                             and node.get("sv_kind") ==
+                             "AssignmentExpression:target"
+                             for node in nodes(design)))
+
+    def test_nonblocking_concat_rejects_overlapping_windows(self):
+        design = extract_source(
+            "module top; logic [7:0] value, source; "
+            "initial {value[7:4], value[5:0]} <= source; endmodule")
+        self.assertTrue(any(node.get("kind") == "Unsupported"
+                            and node.get("sv_kind") ==
+                            "AssignmentExpression:target"
+                            for node in nodes(design)))
+
     def test_whole_packed_struct_and_union_targets_use_vector_state(self):
         design = extract_source(
             "module top; typedef struct packed { logic [3:0] hi; logic [3:0] lo; } S; "

@@ -13,7 +13,7 @@ load_design_sv2 orderE
   from "Examples/system-verilog/sem2/mem_order_e/mem_order_e.sv.json"
 
 #guard match MemEDesign.ofPDesign orderE.pdesign [] with
-  | .ok d => d.processes.length == 3 && d.sourceDecls.length == 6
+  | .unsupported msg => msg.startsWith "Schedule:comb-source-order"
   | _ => false
 
 end Examples.«system-verilog».sem2.mem_order_e

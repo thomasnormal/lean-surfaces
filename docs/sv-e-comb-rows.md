@@ -78,6 +78,10 @@ source-shaped envelope and matches Icarus Verilog 13.0 and Xcelium 24.03-s004
 for all 8 cycles.  It is an E-MATCH and does not change the frozen migration
 count.
 
+The overlapping bit-copy alias row, `acg_alias_bits`, is refused by E as
+`AlwaysComb:alias-read`.  This preserves the source-shaped guard at the
+bit-level alias boundary; no E verdict or migration-count change is claimed.
+
 The E runner now applies the same source-shaped alias admission guard as the
 ordinary loader.  `acg_alias_assign` is therefore a loud
 `AlwaysComb:alias-read` refusal, matching the pinned legacy refusal and the

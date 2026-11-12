@@ -320,6 +320,30 @@ theorem keyEq_false_of_keyEq {k' k j : RVal} (h : keyEq k' k = true) (hj : keyEq
     have ht := keyEq_trans h hc
     simp [ht] at hj
 
+/-! The hash gate is a real part of the dict protocol: an unhashable probe
+cannot compare equal to any stored key.  This keeps the hash worker separate
+from the equality worker without inventing a table-level TypeError. -/
+theorem keyEq_false_of_unhashable_left {a b : RVal}
+    (h : hashableKey a = false) : keyEq a b = false := by
+  cases hk : keyEq a b with
+  | false => rfl
+  | true =>
+      have ha := hashableKey_of_keyEq hk
+      simp [h] at ha
+
+theorem dictFind_unhashable {es : List (RVal × RVal)} {k : RVal}
+    (h : hashableKey k = false) : dictFind es k = Option.none := by
+  induction es with
+  | nil => rfl
+  | cons entry rest ih =>
+      rcases entry with ⟨stored, value⟩
+      simp only [dictFind]
+      have hk : keyEq stored k = false := by
+        rw [keyEq_symm]
+        exact keyEq_false_of_unhashable_left h
+      rw [hk, ih]
+      rfl
+
 /-! ## §2 The `dictFind`/`dictStore` algebra -/
 
 @[simp] theorem dictFind_nil (k : RVal) : dictFind [] k = Option.none := rfl

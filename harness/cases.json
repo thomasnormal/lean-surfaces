@@ -1756,5 +1756,8 @@
   {"file": "harness/richcompare_bool.py", "function": "scalar_pair", "args": [[]], "expect": "match", "note": "RichCompareBool scalar equality agrees with hash-key equality on bool/int keys."},
   {"file": "harness/richcompare_bool.py", "function": "list_contains", "args": [[]], "expect": "match", "note": "RichCompareBool list membership probes bool/int values left-to-right."},
   {"file": "harness/richcompare_bool.py", "function": "dict_key_probe", "args": [[]], "expect": "match", "note": "Dict key lookup and membership use the hash-key equality worker."},
-  {"file": "harness/richcompare_bool.py", "function": "nested_equality", "args": [[]], "expect": "match", "note": "Container equality delegates element probes to RichCompareBool."}
+  {"file": "harness/richcompare_bool.py", "function": "nested_equality", "args": [[]], "expect": "match", "note": "Container equality delegates element probes to RichCompareBool."},
+  {"file": "harness/hashkey_probe.py", "function": "bool_int_collision", "args": [[]], "expect": "match", "note": "Hash-key lookup applies CPython bool/int equality and insertion order."},
+  {"file": "harness/hashkey_probe.py", "function": "tuple_collision", "args": [[]], "expect": "match", "note": "Tuple hash/equality probes use the same finite key normal form."},
+  {"file": "harness/hashkey_probe.py", "function": "unhashable_probe", "args": [[]], "expect": "match", "note": "An unhashable list probe raises the CPython TypeError after lookup admission."}
 ]

@@ -125,4 +125,10 @@ theorem sva_signal_checked_xread {state state' : SvState} {name : String}
   apply sva_bool_evalLogic_congr
   exact sva_signal_bool_xread hsource hconcrete hknown hread
 
+theorem sva_property_checked_congr {trace trace' : List SvState}
+    {property : SvaProp} (htrace : trace = trace') :
+    SvaProp.holds trace property = SvaProp.holds trace' property := by
+  cases htrace
+  rfl
+
 end LeanModels.Sv.Kernel

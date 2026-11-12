@@ -10,10 +10,10 @@
   "gcc.c-torture/execute": {
    "not-parsed": 267,
    "oracle-tests-compiler": 1,
-   "passed": 675,
+   "passed": 677,
    "refused-libc": 44,
-   "refused-ub": 56,
-   "refused-unsupported": 826,
+   "refused-ub": 57,
+   "refused-unsupported": 823,
    "timeout": 49
   },
   "gcc.c23-run": {
@@ -28,10 +28,10 @@
  "counts": {
   "not-parsed": 294,
   "oracle-tests-compiler": 1,
-  "passed": 832,
+  "passed": 834,
   "refused-libc": 51,
-  "refused-ub": 64,
-  "refused-unsupported": 921,
+  "refused-ub": 65,
+  "refused-unsupported": 918,
   "timeout": 51
  },
  "dynamic_wall_ranking": [
@@ -465,6 +465,7 @@
     "20020508-3.c",
     "20021219-1.c",
     "20030404-1.c",
+    "20031003-1.c",
     "20031204-1.c",
     "20040409-1w.c",
     "20040409-2w.c",
@@ -512,8 +513,8 @@
     "strlen-2.c",
     "strlen-6.c"
    ],
-   "present": 64,
-   "sole": 64,
+   "present": 65,
+   "sole": 65,
    "wall": "undefined-behavior"
   },
   {
@@ -997,6 +998,21 @@
   },
   {
    "files": [
+    "20030914-1.c",
+    "20080502-1.c",
+    "960513-1.c",
+    "gcc/testsuite/gcc.dg/c23-float-1.c",
+    "ieee/20010226-1.c",
+    "ieee/pr36332.c",
+    "pr44942.c",
+    "va-arg-6.c"
+   ],
+   "present": 8,
+   "sole": 8,
+   "wall": "unsupported:long double floating literal"
+  },
+  {
+   "files": [
     "20020406-1.c",
     "960521-1.c",
     "990628-1.c",
@@ -1008,34 +1024,6 @@
    "present": 7,
    "sole": 7,
    "wall": "libc-call: malloc"
-  },
-  {
-   "files": [
-    "20020321-1.c",
-    "920710-1.c",
-    "930622-2.c",
-    "conversion.c",
-    "gofast.c",
-    "ieee/compare-fp-3.c",
-    "va-arg-26.c"
-   ],
-   "present": 7,
-   "sole": 7,
-   "wall": "unsupported:integer-to-floating conversion (floats"
-  },
-  {
-   "files": [
-    "20030914-1.c",
-    "20080502-1.c",
-    "gcc/testsuite/gcc.dg/c23-float-1.c",
-    "ieee/20010226-1.c",
-    "ieee/pr36332.c",
-    "pr44942.c",
-    "va-arg-6.c"
-   ],
-   "present": 7,
-   "sole": 7,
-   "wall": "unsupported:long double floating literal"
   },
   {
    "files": [
@@ -1067,16 +1055,17 @@
   },
   {
    "files": [
-    "00175.c",
-    "20031003-1.c",
-    "20041113-1.c",
-    "960513-1.c",
-    "pr38048-2.c",
-    "pr66233.c"
+    "20020321-1.c",
+    "20080529-1.c",
+    "conversion.c",
+    "gofast.c",
+    "ieee/compare-fp-3.c",
+    "pr39501.c",
+    "pr67929_1.c"
    ],
-   "present": 6,
-   "sole": 6,
-   "wall": "cast:FloatingToIntegral"
+   "present": 7,
+   "sole": 7,
+   "wall": "unsupported:no layout for parameter type 'float'"
   },
   {
    "files": [
@@ -1181,6 +1170,18 @@
   },
   {
    "files": [
+    "00175.c",
+    "20010325-1.c",
+    "printf-1.c",
+    "wchar_t-1.c",
+    "widechar-3.c"
+   ],
+   "present": 5,
+   "sole": 5,
+   "wall": "unsupported:string literal with escape or non-ASCII spelling"
+  },
+  {
+   "files": [
     "20020413-1.c",
     "920618-1.c",
     "ieee/pr67218.c",
@@ -1233,17 +1234,6 @@
    "present": 4,
    "sole": 4,
    "wall": "unsupported:no layout for declared type 'union U'"
-  },
-  {
-   "files": [
-    "20010325-1.c",
-    "printf-1.c",
-    "wchar_t-1.c",
-    "widechar-3.c"
-   ],
-   "present": 4,
-   "sole": 4,
-   "wall": "unsupported:string literal with escape or non-ASCII spelling"
   },
   {
    "files": [
@@ -1367,16 +1357,6 @@
   },
   {
    "files": [
-    "20080529-1.c",
-    "pr39501.c",
-    "pr67929_1.c"
-   ],
-   "present": 3,
-   "sole": 3,
-   "wall": "unsupported:no layout for parameter type 'float'"
-  },
-  {
-   "files": [
     "20000223-1.c",
     "align-3.c",
     "zerolen-2.c"
@@ -1478,6 +1458,15 @@
    "present": 2,
    "sole": 2,
    "wall": "unsupported:extern object 'x' has no definition in the translation unit"
+  },
+  {
+   "files": [
+    "920710-1.c",
+    "va-arg-26.c"
+   ],
+   "present": 2,
+   "sole": 2,
+   "wall": "unsupported:floating literal lacks parser-native bits"
   },
   {
    "files": [
@@ -2050,6 +2039,14 @@
    "present": 1,
    "sole": 1,
    "wall": "unsupported:function instrumentation is outside the tier"
+  },
+  {
+   "files": [
+    "930622-2.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "unsupported:long double integer-to-floating conversion"
   },
   {
    "files": [
@@ -4205,6 +4202,14 @@
   },
   {
    "files": [
+    "20041113-1.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "unsupported:unbound declaration 'id84' (name 'a')"
+  },
+  {
+   "files": [
     "991118-1.c"
    ],
    "present": 1,
@@ -4252,9 +4257,9 @@
    "wall": "unsupported:unnamed pointer parameter (array-bound effects are not retained by clang)"
   }
  ],
- "manifest_hash": "eb2ea162993fd287a86d680d539ca5a9bba4f09b045a6ad663aaf88cdc3f445d",
- "measured_at_utc": "2026-11-12T17:27:51Z",
- "measured_commit": "b3de01119181e0e480486a57fb21832bebb3af00",
+ "manifest_hash": "7c37aac5bda12272a4bb8978a53d85ad68cbc61fa13d32218d7bbf84bfbcaed7",
+ "measured_at_utc": "2026-11-12T18:11:39Z",
+ "measured_commit": "506490cfb",
  "pin": {
   "corpora": [
    "C1",
@@ -6233,8 +6238,8 @@
   },
   {
    "corpus": "c-testsuite/single-exec",
-   "detail": "castKind 'FloatingToIntegral'",
-   "dynamic_wall": "cast:FloatingToIntegral",
+   "detail": "string literal with escape or non-ASCII spelling",
+   "dynamic_wall": "unsupported:string literal with escape or non-ASCII spelling",
    "manifest_status": "parsed",
    "name": "00175.c",
    "sha256": "9140671105335599b144512673237a8ce1faf1e251840708a8c1999c9601dcee",
@@ -8690,8 +8695,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "integer-to-floating conversion (floats: a named decision)",
-   "dynamic_wall": "unsupported:integer-to-floating conversion (floats",
+   "detail": "no layout for parameter type 'float'",
+   "dynamic_wall": "unsupported:no layout for parameter type 'float'",
    "manifest_status": "parsed",
    "name": "20020321-1.c",
    "sha256": "06a7d47f62e7ba826936f4624ab481b7457858ccfc335959525d0d2e41ba2fd0",
@@ -9776,8 +9781,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "castKind 'FloatingToIntegral'",
-   "dynamic_wall": "cast:FloatingToIntegral",
+   "detail": "LeanModels.C.C23.UB.floatingToIntegralOutOfRange { signed := true, bits := 32 }",
+   "dynamic_wall": "undefined-behavior",
    "manifest_status": "parsed",
    "name": "20031003-1.c",
    "sha256": "209f4e7a226a95031de13f682ae3cda1cab134fe247dac1974cdf54cfe871614",
@@ -9786,7 +9791,7 @@
     "cast:IntegralToFloating",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "refused-ub"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -10367,8 +10372,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "castKind 'FloatingToIntegral'",
-   "dynamic_wall": "cast:FloatingToIntegral",
+   "detail": "unbound declaration 'id84' (name 'a')",
+   "dynamic_wall": "unsupported:unbound declaration 'id84' (name 'a')",
    "manifest_status": "parsed",
    "name": "20041113-1.c",
    "sha256": "d40b2c94b2f3748b538b251eeffc3b1d944680e75e42eba841aea43d2cadfaf1",
@@ -12724,8 +12729,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "integer-to-floating conversion (floats: a named decision)",
-   "dynamic_wall": "unsupported:integer-to-floating conversion (floats",
+   "detail": "floating literal lacks parser-native bits",
+   "dynamic_wall": "unsupported:floating literal lacks parser-native bits",
    "manifest_status": "parsed",
    "name": "920710-1.c",
    "sha256": "c052de87f6132c04337028d7c0fdae2650f8407fabc058f07f14ec7ce53f9e9c",
@@ -13460,8 +13465,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "integer-to-floating conversion (floats: a named decision)",
-   "dynamic_wall": "unsupported:integer-to-floating conversion (floats",
+   "detail": "long double integer-to-floating conversion",
+   "dynamic_wall": "unsupported:long double integer-to-floating conversion",
    "manifest_status": "parsed",
    "name": "930622-2.c",
    "sha256": "c5a19a27d7bd2e12abdba67dc64fa11be958a5840ea597187e49fc873e4b63d8",
@@ -14563,8 +14568,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "castKind 'FloatingToIntegral'",
-   "dynamic_wall": "cast:FloatingToIntegral",
+   "detail": "long double floating literal",
+   "dynamic_wall": "unsupported:long double floating literal",
    "manifest_status": "parsed",
    "name": "960513-1.c",
    "sha256": "aec9013b5cb129ca5bc6843a31910d156e156d9dc508cf646679491e5f518e60",
@@ -18113,8 +18118,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "integer-to-floating conversion (floats: a named decision)",
-   "dynamic_wall": "unsupported:integer-to-floating conversion (floats",
+   "detail": "no layout for parameter type 'float'",
+   "dynamic_wall": "unsupported:no layout for parameter type 'float'",
    "manifest_status": "parsed",
    "name": "conversion.c",
    "sha256": "c71be59f131b7f95cd2ae58238422b205bc599446d9ed77fdfad68730bf2947b",
@@ -19310,8 +19315,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "integer-to-floating conversion (floats: a named decision)",
-   "dynamic_wall": "unsupported:integer-to-floating conversion (floats",
+   "detail": "no layout for parameter type 'float'",
+   "dynamic_wall": "unsupported:no layout for parameter type 'float'",
    "manifest_status": "parsed",
    "name": "gofast.c",
    "sha256": "c4d952febd2fc7563328cf549014014dc0690357242491b7a333162502fcda20",
@@ -19604,8 +19609,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "integer-to-floating conversion (floats: a named decision)",
-   "dynamic_wall": "unsupported:integer-to-floating conversion (floats",
+   "detail": "no layout for parameter type 'float'",
+   "dynamic_wall": "unsupported:no layout for parameter type 'float'",
    "manifest_status": "parsed",
    "name": "ieee/compare-fp-3.c",
    "sha256": "0365e0cd9e0720d086b9ac13416572c4f748b1da5687779adeecd127106f2bf1",
@@ -23751,8 +23756,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "castKind 'FloatingToIntegral'",
-   "dynamic_wall": "cast:FloatingToIntegral",
+   "detail": "",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "pr38048-2.c",
    "sha256": "1a322440174c812e8016ab7219c7ce6c805db317b4bfd66de61023bf50e3814d",
@@ -23760,7 +23765,7 @@
     "cast:FloatingToIntegral",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -26489,8 +26494,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "castKind 'FloatingToIntegral'",
-   "dynamic_wall": "cast:FloatingToIntegral",
+   "detail": "",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "pr66233.c",
    "sha256": "0764b4fa85aa77aa286e8e727e434331f5962f3553ec1d9f43532bd251ffe88b",
@@ -26500,7 +26505,7 @@
     "libc-call",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -29948,8 +29953,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "integer-to-floating conversion (floats: a named decision)",
-   "dynamic_wall": "unsupported:integer-to-floating conversion (floats",
+   "detail": "floating literal lacks parser-native bits",
+   "dynamic_wall": "unsupported:floating literal lacks parser-native bits",
    "manifest_status": "parsed",
    "name": "va-arg-26.c",
    "sha256": "f3c7769ca80bb973c5251a07be8f90f0ab6580d55ca477b9f366c3d158c78e45",

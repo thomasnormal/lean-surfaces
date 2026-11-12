@@ -2,10 +2,10 @@
 
 Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manifest.
 
-- verdicts: 832/2214 MATCH (passed 832, failed 0, oracle 0)
-- manifest SHA-256: `eb2ea162993fd287a86d680d539ca5a9bba4f09b045a6ad663aaf88cdc3f445d`
-- measured commit: `b3de01119181e0e480486a57fb21832bebb3af00`
-- measured at: `2026-11-12T17:27:51Z`
+- verdicts: 834/2214 MATCH (passed 834, failed 0, oracle 0)
+- manifest SHA-256: `7c37aac5bda12272a4bb8978a53d85ad68cbc61fa13d32218d7bbf84bfbcaed7`
+- measured commit: `506490cfb`
+- measured at: `2026-11-12T18:11:39Z`
 
 ## Verdict counts
 
@@ -13,10 +13,10 @@ Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manife
 | --- | ---: |
 | `not-parsed` | 294 |
 | `oracle-tests-compiler` | 1 |
-| `passed` | 832 |
+| `passed` | 834 |
 | `refused-libc` | 51 |
-| `refused-ub` | 64 |
-| `refused-unsupported` | 921 |
+| `refused-ub` | 65 |
+| `refused-unsupported` | 918 |
 | `timeout` | 51 |
 
 ## Counts by corpus
@@ -30,10 +30,10 @@ Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manife
 | `c-testsuite/single-exec` | `timeout` | 2 |
 | `gcc.c-torture/execute` | `not-parsed` | 267 |
 | `gcc.c-torture/execute` | `oracle-tests-compiler` | 1 |
-| `gcc.c-torture/execute` | `passed` | 675 |
+| `gcc.c-torture/execute` | `passed` | 677 |
 | `gcc.c-torture/execute` | `refused-libc` | 44 |
-| `gcc.c-torture/execute` | `refused-ub` | 56 |
-| `gcc.c-torture/execute` | `refused-unsupported` | 826 |
+| `gcc.c-torture/execute` | `refused-ub` | 57 |
+| `gcc.c-torture/execute` | `refused-unsupported` | 823 |
 | `gcc.c-torture/execute` | `timeout` | 49 |
 | `gcc.c23-run` | `not-parsed` | 27 |
 | `gcc.c23-run` | `passed` | 2 |
@@ -87,7 +87,7 @@ The run's first refusal, normalized by construct; `sole` counts rows whose first
 | --- | ---: | ---: | --- |
 | `frontend` | 294 | 294 | 20000227-1.c, 20000412-3.c, 20000717-3.c, 20000822-1.c, 20001009-2.c |
 | `unsupported:no definition for 'main'` | 102 | 102 | 20040705-1.c, 20040705-2.c, 20040709-3.c, builtins/20010124-1.c, builtins/abs-1.c |
-| `undefined-behavior` | 64 | 64 | 00115.c, 00141.c, 00144.c, 00200.c, 00204.c |
+| `undefined-behavior` | 65 | 65 | 00115.c, 00141.c, 00144.c, 00200.c, 00204.c |
 | `timeout` | 51 | 51 | 00041.c, 00128.c, 20000412-2.c, 20020108-1.c, 20030916-1.c |
 | `unsupported:extern object 'inside_main' has no definition in the translation unit` | 40 | 40 | builtins/20010124-1-lib.c, builtins/complex-1-lib.c, builtins/fputs-lib.c, builtins/lib/abs.c, builtins/lib/bfill.c |
 | `unsupported:pointer used as an integer (no ptr↔int cast in tier)` | 38 | 38 | 00032.c, 00173.c, 00182.c, 20000412-6.c, 20000801-1.c |
@@ -104,12 +104,11 @@ The run's first refusal, normalized by construct; `sole` counts rows whose first
 | `unsupported:no layout for declared type 'V'` | 9 | 9 | pr105613.c, pr110817-1.c, pr110817-2.c, pr110817-3.c, pr71626-1.c |
 | `unsupported:no layout for declared type 'float'` | 9 | 9 | 00113.c, 00174.c, 20050121-1.c, ieee/920518-1.c, ieee/980619-1.c |
 | `unsupported:AddrLabelExpr` | 8 | 8 | 20040302-1.c, 20071210-1.c, 920302-1.c, 920501-4.c, 920501-5.c |
+| `unsupported:long double floating literal` | 8 | 8 | 20030914-1.c, 20080502-1.c, 960513-1.c, gcc/testsuite/gcc.dg/c23-float-1.c, ieee/20010226-1.c |
 | `libc-call: malloc` | 7 | 7 | 20020406-1.c, 960521-1.c, 990628-1.c, pr41395-1.c, pr41463.c |
-| `unsupported:integer-to-floating conversion (floats` | 7 | 7 | 20020321-1.c, 920710-1.c, 930622-2.c, conversion.c, gofast.c |
-| `unsupported:long double floating literal` | 7 | 7 | 20030914-1.c, 20080502-1.c, gcc/testsuite/gcc.dg/c23-float-1.c, ieee/20010226-1.c, ieee/pr36332.c |
 | `unsupported:no layout for declared type 'struct s'` | 7 | 7 | 00043.c, 20040625-1.c, 930126-1.c, 961223-1.c, pr110165-1.c |
 | `unsupported:no layout for declared type 'va_list'` | 7 | 7 | printf-chk-1.c, stdarg-1.c, va-arg-14.c, vfprintf-1.c, vfprintf-chk-1.c |
-| `cast:FloatingToIntegral` | 6 | 6 | 00175.c, 20031003-1.c, 20041113-1.c, 960513-1.c, pr38048-2.c |
+| `unsupported:no layout for parameter type 'float'` | 7 | 7 | 20020321-1.c, 20080529-1.c, conversion.c, gofast.c, ieee/compare-fp-3.c |
 | `cast:ToVoid` | 6 | 6 | 00212.c, 00213.c, gcc/testsuite/gcc.dg/c23-float-2.c, gcc/testsuite/gcc.dg/c23-float-3.c, gcc/testsuite/gcc.dg/c23-float-4.c |
 | `libc-call: strcpy` | 6 | 6 | 00179.c, 00180.c, 20120207-1.c, 980707-1.c, built-in-setjmp.c |
 | `unsupported:DesignatedInitUpdateExpr` | 6 | 6 | gcc/testsuite/gcc.dg/c23-empty-init-5.c, gcc/testsuite/gcc.dg/c23-empty-init-warn-1.c, gcc/testsuite/gcc.dg/c23-empty-init-warn-17.c, gcc/testsuite/gcc.dg/c23-empty-init-warn-2.c, gcc/testsuite/gcc.dg/c23-empty-init-warn-4.c |
@@ -118,12 +117,12 @@ The run's first refusal, normalized by construct; `sole` counts rows whose first
 | `libc-call: __builtin_malloc` | 5 | 5 | 20071018-1.c, 20071120-1.c, pr36765.c, pr43008.c, pr84339.c |
 | `unsupported:indirect call through a non-FunctionDecl reference` | 5 | 5 | 00089.c, 20010122-1.c, pr28289.c, pr34768-1.c, pr34768-2.c |
 | `unsupported:no layout for declared type '_Complex double'` | 5 | 5 | 20030910-1.c, 960512-1.c, complex-1.c, complex-2.c, ieee/cdivchkd.c |
+| `unsupported:string literal with escape or non-ASCII spelling` | 5 | 5 | 00175.c, 20010325-1.c, printf-1.c, wchar_t-1.c, widechar-3.c |
 | `cast:FloatingCast` | 4 | 4 | 20020413-1.c, 920618-1.c, ieee/pr67218.c, pr36343.c |
 | `libc-call: __builtin_prefetch` | 4 | 4 | builtin-prefetch-1.c, builtin-prefetch-2.c, builtin-prefetch-4.c, builtin-prefetch-5.c |
 | `unsupported:extern object 'b' has no definition in the translation unit` | 4 | 4 | alias-2.c, alias-3.c, alias-4.c, gcc/testsuite/gcc.dg/c23-bool-2.c |
 | `unsupported:no layout for declared type 'const double'` | 4 | 4 | cbrt.c, ieee/hugeval.c, ieee/unsafe-fp-assoc-1.c, ieee/unsafe-fp-assoc.c |
 | `unsupported:no layout for declared type 'union U'` | 4 | 4 | bitfld-6.c, bitfld-7.c, pr86492.c, pr88739.c |
-| `unsupported:string literal with escape or non-ASCII spelling` | 4 | 4 | 20010325-1.c, printf-1.c, wchar_t-1.c, widechar-3.c |
 | `libc-call: __builtin_abort` | 3 | 3 | gcc/testsuite/gcc.dg/c23-nullptr-5.c, pr77767.c, pr97325.c |
 | `libc-call: __builtin_expect` | 3 | 3 | 00214.c, 20020418-1.c, pr115277.c |
 | `unsupported:ExprWithCleanups` | 3 | 3 | 20041124-1.c, 950628-1.c, pr30185.c |
@@ -136,7 +135,6 @@ The run's first refusal, normalized by construct; `sole` counts rows whose first
 | `unsupported:no layout for declared type 'struct S[2]'` | 3 | 3 | 20050119-1.c, 20050119-2.c, pr71700.c |
 | `unsupported:no layout for declared type 'struct foo'` | 3 | 3 | 00140.c, bf-pack-1.c, gcc/testsuite/gcc.dg/c23-tag-alias-7.c |
 | `unsupported:no layout for declared type 'struct x'` | 3 | 3 | 20000113-1.c, 20020227-1.c, bitfld-1.c |
-| `unsupported:no layout for parameter type 'float'` | 3 | 3 | 20080529-1.c, pr39501.c, pr67929_1.c |
 | `unsupported:type trait '__alignof'` | 3 | 3 | 20000223-1.c, align-3.c, zerolen-2.c |
 | `unsupported:unbound declaration 'id15' (name 'x')` | 3 | 3 | 00119.c, 00123.c, 20090623-1.c |
 | `unsupported:unbound declaration 'id180' (name 'stdout')` | 3 | 3 | 00189.c, fprintf-1.c, fprintf-chk-1.c |
@@ -148,6 +146,7 @@ The run's first refusal, normalized by construct; `sole` counts rows whose first
 | `libc-call: strchr` | 2 | 2 | 20000112-1.c, 20000910-2.c |
 | `unsupported:extern object 'abs_called' has no definition in the translation unit` | 2 | 2 | builtins/abs-1-lib.c, builtins/uabs-1-lib.c |
 | `unsupported:extern object 'x' has no definition in the translation unit` | 2 | 2 | 00094.c, 00110.c |
+| `unsupported:floating literal lacks parser-native bits` | 2 | 2 | 920710-1.c, va-arg-26.c |
 | `unsupported:goto skips a block declaration` | 2 | 2 | 00129.c, gcc/testsuite/gcc.dg/c23-labels-1.c |
 | `unsupported:initializer list (inch 4)` | 2 | 2 | 00150.c, 00216.c |
 | `unsupported:no layout for declared type 'Point'` | 2 | 2 | 20000808-1.c, 950607-2.c |
@@ -215,6 +214,7 @@ The run's first refusal, normalized by construct; `sole` counts rows whose first
 | `unsupported:extern object 'i' has no definition in the translation unit` | 1 | 1 | pure-1.c |
 | `unsupported:extern object 'p' has no definition in the translation unit` | 1 | 1 | gcc/testsuite/gcc.dg/c23-unreachable-1.c |
 | `unsupported:function instrumentation is outside the tier` | 1 | 1 | eeprof-1.c |
+| `unsupported:long double integer-to-floating conversion` | 1 | 1 | 930622-2.c |
 | `unsupported:no layout for compound literal type 'A'` | 1 | 1 | 20020206-2.c |
 | `unsupported:no layout for compound literal type 'T'` | 1 | 1 | 20071029-1.c |
 | `unsupported:no layout for compound literal type 'V'` | 1 | 1 | pr109040.c |
@@ -484,6 +484,7 @@ The run's first refusal, normalized by construct; `sole` counts rows whose first
 | `unsupported:unbound declaration 'id725' (name 'input')` | 1 | 1 | pr28982a.c |
 | `unsupported:unbound declaration 'id74' (name 'p')` | 1 | 1 | pr64242.c |
 | `unsupported:unbound declaration 'id751' (name 'input')` | 1 | 1 | pr28982b.c |
+| `unsupported:unbound declaration 'id84' (name 'a')` | 1 | 1 | 20041113-1.c |
 | `unsupported:unbound declaration 'id95' (name 'tmp')` | 1 | 1 | 991118-1.c |
 | `unsupported:unknown enum declaration 'id17' (name 'X')` | 1 | 1 | 00120.c |
 | `unsupported:unknown enum declaration 'id29' (name 'BAR')` | 1 | 1 | enum-2.c |

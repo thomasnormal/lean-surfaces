@@ -190,6 +190,9 @@ STUB
   # LANE-ADDED per the floor law (the corpora are per-tier), so CI gates the
   # TOOL -- including its refusal path -- while adoption stays each lane's.
   ( cd "$view" && selftest_report envelope_fresh.py python3 harness/envelope_fresh.py --self-test ) || rc=1
+  # The Python lane's 12 GiB swap-disabled gate must at least verify that its
+  # user systemd scope is available on this host before a measured module run.
+  ( cd "$view" && selftest_report lean_memory_gate.py python3 tools/lean_memory_gate.py --self-test ) || rc=1
   # The C lane's offline floor is shared CI infrastructure. Keep these exact
   # command forms here so the corpus pin, scorer, survey schema, and leanc
   # wrapper cannot silently lose their refusal-path coverage.

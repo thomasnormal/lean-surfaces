@@ -157,3 +157,8 @@ python3 harness/sv/diff_test2.py --backend e0 --sim both --no-xcheck --case <row
 The next Step 4 slice is the remaining ordinary `always_comb` rows ranked by
 their first missing E construct; self-read and latch behavior stay in the
 explicit boundary list until the corresponding E refinement is written.
+
+The mixed clocked/comb probe `t2_case` is outside E-core-0: its source-shaped
+envelope contains an edge/timed process, so the E runner refuses before
+execution.  The legacy route independently refuses its `unique` case as
+`CaseCheck:unique`; no simulator result is claimed for this row.

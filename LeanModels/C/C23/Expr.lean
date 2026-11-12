@@ -985,7 +985,7 @@ def evalExpr (ctx : Ctx) : Expr → EvalM CVal
                    | none => sub.map Expr.ty
         match key.bind ctx.layout.size with
         | some n => do let t ← intTyOf (ctx.layout.normalizeTy ty); pure (.int t (n : Int))
-        | none => refuseUnsupported "sizeof: no layout for the operand type"
+        | none => refuseUnsupported s!"sizeof: no layout for operand type '{key.getD ""}'"
 
   | .constExpr v (some sub) ty _ => do
       -- Clang's folded spelling drops the sign from a negative constant

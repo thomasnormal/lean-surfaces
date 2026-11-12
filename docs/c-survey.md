@@ -4,8 +4,8 @@ Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manife
 
 - verdicts: 605/2214 MATCH (passed 605, failed 0, oracle 0)
 - manifest SHA-256: `1de1a60c299d5bb51dae7ca001b0a008010cad0b25670cde2090c08bfc1a84ce`
-- measured commit: `5048a4d90`
-- measured at: `2026-11-12T05:35:00Z`
+- measured commit: `025a8a3d1`
+- measured at: `2026-11-12T05:45:00Z`
 
 ## Verdict counts
 
@@ -106,7 +106,6 @@ The run's first refusal, normalized by construct; `sole` counts rows whose first
 | `unsequenced-effects` | 25 | 25 | 00121.c, 20001228-1.c, 20051021-1.c, 20060102-1.c, 20060929-1.c |
 | `unsupported:declaration outside a block` | 24 | 24 | 20230802-1.c, bitops-1.c, bswap-3.c, minmaxcmp-1.c, pr104814.c |
 | `unsupported:pointer bit-cast across incompatible effective types` | 20 | 20 | 00103.c, 20001017-2.c, 20050316-1.c, 20050607-1.c, 20060412-1.c |
-| `unsupported:sizeof` | 19 | 19 | 00205.c, 20040411-1.c, 20051113-1.c, 20120105-1.c, 941014-2.c |
 | `unsupported:no layout for declared type 'struct S'` | 18 | 18 | 00087.c, 20081103-1.c, 20100708-1.c, 20171008-1.c, 20230630-1.c |
 | `unsupported:more arguments than parameters` | 13 | 13 | 20000519-1.c, 20071213-1.c, 991216-2.c, gcc/testsuite/gcc.dg/c23-stdarg-9.c, pr117432.c |
 | `cast:IntegralToPointer` | 11 | 11 | 20000622-1.c, 20010329-1.c, 20021010-2.c, 20041112-1.c, 960116-1.c |
@@ -160,6 +159,9 @@ The run's first refusal, normalized by construct; `sole` counts rows whose first
 | `unsupported:no layout for declared type 'struct1'` | 2 | 2 | pr86659-1.c, pr86659-2.c |
 | `unsupported:no layout for declared type 'union U'` | 2 | 2 | pr86492.c, pr88739.c |
 | `unsupported:no layout for declared type 'v16di'` | 2 | 2 | pr123625-2.c, pr126405-3.c |
+| `unsupported:sizeof: no layout for operand type 'double'` | 2 | 2 | 991228-1.c, ieee/unsafe-fp-assoc-1.c |
+| `unsupported:sizeof: no layout for operand type 'float'` | 2 | 2 | ieee/20000320-1.c, pr44468.c |
+| `unsupported:sizeof: no layout for operand type 'struct A'` | 2 | 2 | bitfld-2.c, strlen-7.c |
 | `unsupported:type trait '__alignof'` | 2 | 2 | align-3.c, zerolen-2.c |
 | `unsupported:unbound declaration 'id15' (name 'a')` | 2 | 2 | gcc/testsuite/gcc.dg/c23-imaginary-constants-1.c, gcc/testsuite/gcc.dg/c23-imaginary-constants-7.c |
 | `unsupported:unbound declaration 'id15' (name 'dnan')` | 2 | 2 | ieee/fp-cmp-6.c, ieee/fp-cmp-9.c |
@@ -281,6 +283,16 @@ The run's first refusal, normalized by construct; `sole` counts rows whose first
 | `unsupported:no layout for parameter type 'int **restrict'` | 1 | 1 | 20080506-2.c |
 | `unsupported:no layout for parameter type 'int *restrict'` | 1 | 1 | pr38212.c |
 | `unsupported:not an lvalue: PredefinedExpr` | 1 | 1 | 20001011-1.c |
+| `unsupported:sizeof: no layout for operand type 'PT[9]'` | 1 | 1 | 00205.c |
+| `unsupported:sizeof: no layout for operand type 'Union'` | 1 | 1 | 20051113-1.c |
+| `unsupported:sizeof: no layout for operand type '_Atomic(unsigned char)'` | 1 | 1 | gcc/testsuite/gcc.dg/atomic/c23-stdatomic-lockfree-char8_t.c |
+| `unsupported:sizeof: no layout for operand type 'c'` | 1 | 1 | 20040411-1.c |
+| `unsupported:sizeof: no layout for operand type 'const struct Df[8]'` | 1 | 1 | ieee/copysign1.c |
+| `unsupported:sizeof: no layout for operand type 'foo_t'` | 1 | 1 | 941014-2.c |
+| `unsupported:sizeof: no layout for operand type 'int (*volatile[6])(void)'` | 1 | 1 | bcp-1.c |
+| `unsupported:sizeof: no layout for operand type 'struct S'` | 1 | 1 | 20120105-1.c |
+| `unsupported:sizeof: no layout for operand type 'struct VEC_char_base'` | 1 | 1 | pr41395-2.c |
+| `unsupported:sizeof: no layout for operand type 'struct bitfield'` | 1 | 1 | pr111613.c |
 | `unsupported:src/20000412-5.c` | 1 | 1 | 20000412-5.c |
 | `unsupported:src/20001203-1.c` | 1 | 1 | 20001203-1.c |
 | `unsupported:src/20020225-2.c` | 1 | 1 | 20020225-2.c |
@@ -293,9 +305,12 @@ The run's first refusal, normalized by construct; `sole` counts rows whose first
 | `unsupported:src/930628-1.c` | 1 | 1 | 930628-1.c |
 | `unsupported:src/950607-1.c` | 1 | 1 | 950607-1.c |
 | `unsupported:src/980506-2.c` | 1 | 1 | 980506-2.c |
+| `unsupported:src/bf-layout-1.c` | 1 | 1 | bf-layout-1.c |
 | `unsupported:src/bf-sign-1.c` | 1 | 1 | bf-sign-1.c |
+| `unsupported:src/ffs-2.c` | 1 | 1 | ffs-2.c |
 | `unsupported:src/ieee/930529-1.c` | 1 | 1 | ieee/930529-1.c |
 | `unsupported:src/ieee/minuszero.c` | 1 | 1 | ieee/minuszero.c |
+| `unsupported:src/ieee/mul-subnormal-single-1.c` | 1 | 1 | ieee/mul-subnormal-single-1.c |
 | `unsupported:src/ieee/pr30704.c` | 1 | 1 | ieee/pr30704.c |
 | `unsupported:src/pr33631.c` | 1 | 1 | pr33631.c |
 | `unsupported:src/pr38051.c` | 1 | 1 | pr38051.c |

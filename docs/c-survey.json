@@ -1253,32 +1253,6 @@
   },
   {
    "files": [
-    "00205.c",
-    "20040411-1.c",
-    "20051113-1.c",
-    "20120105-1.c",
-    "941014-2.c",
-    "991228-1.c",
-    "bcp-1.c",
-    "bf-layout-1.c",
-    "bitfld-2.c",
-    "ffs-2.c",
-    "gcc/testsuite/gcc.dg/atomic/c23-stdatomic-lockfree-char8_t.c",
-    "ieee/20000320-1.c",
-    "ieee/copysign1.c",
-    "ieee/mul-subnormal-single-1.c",
-    "ieee/unsafe-fp-assoc-1.c",
-    "pr111613.c",
-    "pr41395-2.c",
-    "pr44468.c",
-    "strlen-7.c"
-   ],
-   "present": 19,
-   "sole": 19,
-   "wall": "unsupported:sizeof"
-  },
-  {
-   "files": [
     "00087.c",
     "20081103-1.c",
     "20100708-1.c",
@@ -1886,6 +1860,33 @@
    "present": 2,
    "sole": 2,
    "wall": "unsupported:no layout for declared type 'v16di'"
+  },
+  {
+   "files": [
+    "991228-1.c",
+    "ieee/unsafe-fp-assoc-1.c"
+   ],
+   "present": 2,
+   "sole": 2,
+   "wall": "unsupported:sizeof: no layout for operand type 'double'"
+  },
+  {
+   "files": [
+    "ieee/20000320-1.c",
+    "pr44468.c"
+   ],
+   "present": 2,
+   "sole": 2,
+   "wall": "unsupported:sizeof: no layout for operand type 'float'"
+  },
+  {
+   "files": [
+    "bitfld-2.c",
+    "strlen-7.c"
+   ],
+   "present": 2,
+   "sole": 2,
+   "wall": "unsupported:sizeof: no layout for operand type 'struct A'"
   },
   {
    "files": [
@@ -2872,6 +2873,86 @@
   },
   {
    "files": [
+    "00205.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "unsupported:sizeof: no layout for operand type 'PT[9]'"
+  },
+  {
+   "files": [
+    "20051113-1.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "unsupported:sizeof: no layout for operand type 'Union'"
+  },
+  {
+   "files": [
+    "gcc/testsuite/gcc.dg/atomic/c23-stdatomic-lockfree-char8_t.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "unsupported:sizeof: no layout for operand type '_Atomic(unsigned char)'"
+  },
+  {
+   "files": [
+    "20040411-1.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "unsupported:sizeof: no layout for operand type 'c'"
+  },
+  {
+   "files": [
+    "ieee/copysign1.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "unsupported:sizeof: no layout for operand type 'const struct Df[8]'"
+  },
+  {
+   "files": [
+    "941014-2.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "unsupported:sizeof: no layout for operand type 'foo_t'"
+  },
+  {
+   "files": [
+    "bcp-1.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "unsupported:sizeof: no layout for operand type 'int (*volatile[6])(void)'"
+  },
+  {
+   "files": [
+    "20120105-1.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "unsupported:sizeof: no layout for operand type 'struct S'"
+  },
+  {
+   "files": [
+    "pr41395-2.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "unsupported:sizeof: no layout for operand type 'struct VEC_char_base'"
+  },
+  {
+   "files": [
+    "pr111613.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "unsupported:sizeof: no layout for operand type 'struct bitfield'"
+  },
+  {
+   "files": [
     "20000412-5.c"
    ],
    "present": 1,
@@ -2968,11 +3049,27 @@
   },
   {
    "files": [
+    "bf-layout-1.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "unsupported:src/bf-layout-1.c"
+  },
+  {
+   "files": [
     "bf-sign-1.c"
    ],
    "present": 1,
    "sole": 1,
    "wall": "unsupported:src/bf-sign-1.c"
+  },
+  {
+   "files": [
+    "ffs-2.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "unsupported:src/ffs-2.c"
   },
   {
    "files": [
@@ -2989,6 +3086,14 @@
    "present": 1,
    "sole": 1,
    "wall": "unsupported:src/ieee/minuszero.c"
+  },
+  {
+   "files": [
+    "ieee/mul-subnormal-single-1.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "unsupported:src/ieee/mul-subnormal-single-1.c"
   },
   {
    "files": [
@@ -3840,8 +3945,8 @@
   }
  ],
  "manifest_hash": "1de1a60c299d5bb51dae7ca001b0a008010cad0b25670cde2090c08bfc1a84ce",
- "measured_at_utc": "2026-11-12T05:35:00Z",
- "measured_commit": "5048a4d90",
+ "measured_at_utc": "2026-11-12T05:45:00Z",
+ "measured_commit": "025a8a3d1",
  "pin": null,
  "rows": [
   {
@@ -6239,8 +6344,8 @@
   },
   {
    "corpus": "c-testsuite/single-exec",
-   "detail": "sizeof: no layout for the operand type",
-   "dynamic_wall": "unsupported:sizeof",
+   "detail": "sizeof: no layout for operand type 'PT[9]'",
+   "dynamic_wall": "unsupported:sizeof: no layout for operand type 'PT[9]'",
    "manifest_status": "parsed",
    "name": "00205.c",
    "sha256": "aeee57466f8c7361ba59eb4a0146c5e07bab844ed5dacc605611f9bbe32a0903",
@@ -9647,8 +9752,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "sizeof: no layout for the operand type",
-   "dynamic_wall": "unsupported:sizeof",
+   "detail": "sizeof: no layout for operand type 'c'",
+   "dynamic_wall": "unsupported:sizeof: no layout for operand type 'c'",
    "manifest_status": "parsed",
    "name": "20040411-1.c",
    "sha256": "33154d781272908eb8c8a87e8f9b98c4f61a102e0585ae584f2dcd5e84bad109",
@@ -10433,8 +10538,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "sizeof: no layout for the operand type",
-   "dynamic_wall": "unsupported:sizeof",
+   "detail": "sizeof: no layout for operand type 'Union'",
+   "dynamic_wall": "unsupported:sizeof: no layout for operand type 'Union'",
    "manifest_status": "parsed",
    "name": "20051113-1.c",
    "sha256": "70b9ac38f0e7d3612a075307054fb8b6efb73d49dc365dea8392fc6eeee8099a",
@@ -11416,8 +11521,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "sizeof: no layout for the operand type",
-   "dynamic_wall": "unsupported:sizeof",
+   "detail": "sizeof: no layout for operand type 'struct S'",
+   "dynamic_wall": "unsupported:sizeof: no layout for operand type 'struct S'",
    "manifest_status": "parsed",
    "name": "20120105-1.c",
    "sha256": "e3071a89402ef81e3195825973cbb558d876e54f9eb0649389d702a7a240a50f",
@@ -13485,8 +13590,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "sizeof: no layout for the operand type",
-   "dynamic_wall": "unsupported:sizeof",
+   "detail": "sizeof: no layout for operand type 'foo_t'",
+   "dynamic_wall": "unsupported:sizeof: no layout for operand type 'foo_t'",
    "manifest_status": "parsed",
    "name": "941014-2.c",
    "sha256": "188d52462aac626921914c0541fd63a4fb1a40601a4b891635a9d15cda08c109",
@@ -15141,8 +15246,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "sizeof: no layout for the operand type",
-   "dynamic_wall": "unsupported:sizeof",
+   "detail": "sizeof: no layout for operand type 'double'",
+   "dynamic_wall": "unsupported:sizeof: no layout for operand type 'double'",
    "manifest_status": "parsed",
    "name": "991228-1.c",
    "sha256": "ddb3f0d3698b8055a946ed2c464068448eb30893d5e6f5af6a6b89e269304b88",
@@ -15354,8 +15459,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "sizeof: no layout for the operand type",
-   "dynamic_wall": "unsupported:sizeof",
+   "detail": "sizeof: no layout for operand type 'int (*volatile[6])(void)'",
+   "dynamic_wall": "unsupported:sizeof: no layout for operand type 'int (*volatile[6])(void)'",
    "manifest_status": "parsed",
    "name": "bcp-1.c",
    "sha256": "51c01c565b099cfaf2867c9fa740d25991f51274a2c3e0380f0caa93fa10b0b8",
@@ -15368,8 +15473,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "sizeof: no layout for the operand type",
-   "dynamic_wall": "unsupported:sizeof",
+   "detail": "src/bf-layout-1.c:4:1)'",
+   "dynamic_wall": "unsupported:src/bf-layout-1.c",
    "manifest_status": "parsed",
    "name": "bf-layout-1.c",
    "sha256": "a51591d99d96db695bb8159167103858ef1f90efb66c49b0411f25a5dff49cfa",
@@ -15454,8 +15559,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "sizeof: no layout for the operand type",
-   "dynamic_wall": "unsupported:sizeof",
+   "detail": "sizeof: no layout for operand type 'struct A'",
+   "dynamic_wall": "unsupported:sizeof: no layout for operand type 'struct A'",
    "manifest_status": "parsed",
    "name": "bitfld-2.c",
    "sha256": "d140f7cb271b7706367e21f648cb132022651c4cf763c9dbaffc49777430e5f9",
@@ -17817,8 +17922,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "sizeof: no layout for the operand type",
-   "dynamic_wall": "unsupported:sizeof",
+   "detail": "src/ffs-2.c:1:1)[8]'",
+   "dynamic_wall": "unsupported:src/ffs-2.c",
    "manifest_status": "parsed",
    "name": "ffs-2.c",
    "sha256": "b3ae15c3c3639ce034a6574ff705032168309638f7eb8bde4e4db1e60c5c0d25",
@@ -17923,8 +18028,8 @@
   },
   {
    "corpus": "gcc.c23-run",
-   "detail": "sizeof: no layout for the operand type",
-   "dynamic_wall": "unsupported:sizeof",
+   "detail": "sizeof: no layout for operand type '_Atomic(unsigned char)'",
+   "dynamic_wall": "unsupported:sizeof: no layout for operand type '_Atomic(unsigned char)'",
    "manifest_status": "parsed",
    "name": "gcc/testsuite/gcc.dg/atomic/c23-stdatomic-lockfree-char8_t.c",
    "sha256": "2a2785631fb071b56504b90af33fda5989ece91f971176eaa23c75521b435bb1",
@@ -18814,8 +18919,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "sizeof: no layout for the operand type",
-   "dynamic_wall": "unsupported:sizeof",
+   "detail": "sizeof: no layout for operand type 'float'",
+   "dynamic_wall": "unsupported:sizeof: no layout for operand type 'float'",
    "manifest_status": "parsed",
    "name": "ieee/20000320-1.c",
    "sha256": "1962f7d153967ef122ea59be1d2df91c527e465e16c0863876f68d8d3b6f10cf",
@@ -19116,8 +19221,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "sizeof: no layout for the operand type",
-   "dynamic_wall": "unsupported:sizeof",
+   "detail": "sizeof: no layout for operand type 'const struct Df[8]'",
+   "dynamic_wall": "unsupported:sizeof: no layout for operand type 'const struct Df[8]'",
    "manifest_status": "parsed",
    "name": "ieee/copysign1.c",
    "sha256": "eaa559171205738e58dbe5e0bb0c390594e9193c8845b1b3d2d479d7746acae6",
@@ -19475,8 +19580,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "sizeof: no layout for the operand type",
-   "dynamic_wall": "unsupported:sizeof",
+   "detail": "src/ieee/mul-subnormal-single-1.c:67:1)[3]'",
+   "dynamic_wall": "unsupported:src/ieee/mul-subnormal-single-1.c",
    "manifest_status": "parsed",
    "name": "ieee/mul-subnormal-single-1.c",
    "sha256": "677177d59dfd024deb55f3b03de0b095df8e1b197dda3eab196c0353a030aab9",
@@ -19766,8 +19871,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "sizeof: no layout for the operand type",
-   "dynamic_wall": "unsupported:sizeof",
+   "detail": "sizeof: no layout for operand type 'double'",
+   "dynamic_wall": "unsupported:sizeof: no layout for operand type 'double'",
    "manifest_status": "parsed",
    "name": "ieee/unsafe-fp-assoc-1.c",
    "sha256": "34e1637d933dfffa381a748d759c1ed4851cc108711507dbb79dcc68232ef4e3",
@@ -21293,8 +21398,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "sizeof: no layout for the operand type",
-   "dynamic_wall": "unsupported:sizeof",
+   "detail": "sizeof: no layout for operand type 'struct bitfield'",
+   "dynamic_wall": "unsupported:sizeof: no layout for operand type 'struct bitfield'",
    "manifest_status": "parsed",
    "name": "pr111613.c",
    "sha256": "5da58fe5094271eee5c47f32e3c5970f50d7544f5a97eb3e162b3c97d3eb05db",
@@ -23540,8 +23645,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "sizeof: no layout for the operand type",
-   "dynamic_wall": "unsupported:sizeof",
+   "detail": "sizeof: no layout for operand type 'struct VEC_char_base'",
+   "dynamic_wall": "unsupported:sizeof: no layout for operand type 'struct VEC_char_base'",
    "manifest_status": "parsed",
    "name": "pr41395-2.c",
    "sha256": "70008d9ee8b68967030f14b4532af67033d145d89dfb1babb45beaaf859f36ca",
@@ -23909,8 +24014,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "sizeof: no layout for the operand type",
-   "dynamic_wall": "unsupported:sizeof",
+   "detail": "sizeof: no layout for operand type 'float'",
+   "dynamic_wall": "unsupported:sizeof: no layout for operand type 'float'",
    "manifest_status": "parsed",
    "name": "pr44468.c",
    "sha256": "454ced8916e33045ddb729461bde8e1ee9a62e4ae2cb4a35f30f9020430adc62",
@@ -28960,8 +29065,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "sizeof: no layout for the operand type",
-   "dynamic_wall": "unsupported:sizeof",
+   "detail": "sizeof: no layout for operand type 'struct A'",
+   "dynamic_wall": "unsupported:sizeof: no layout for operand type 'struct A'",
    "manifest_status": "parsed",
    "name": "strlen-7.c",
    "sha256": "7f080d078dab57dee813a8622097872e856658755c7e12b223546048b9a250d5",

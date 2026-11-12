@@ -66,6 +66,8 @@ def dynamic_wall(verdict, detail):
             return "unsequenced-effects"
         if detail.startswith("not an lvalue: "):
             return "unsupported:" + detail
+        if detail.startswith("sizeof: no layout for operand type "):
+            return "unsupported:" + detail
         return "unsupported:" + detail.split(":", 1)[0]
     if verdict == "refused-libc":
         return "libc-call"

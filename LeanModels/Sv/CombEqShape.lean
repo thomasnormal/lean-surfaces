@@ -2245,7 +2245,11 @@ theorem skT_shapeCU (C : Ctx σ E elems DW DG EW ns) {dw : String → Nat}
         rw [fitExpr2_of_rigid_eq (rigidExpr_reduce op a) (sw_reduce op a)]; exact key _⟩
   | .resize m e, rs, h, hf, hacc, hcn, tw, hw => by
       rw [unsign_resize] at h hf hcn hw ⊢
-      rcases rdsOfW?_resize h with ⟨v, hv, rfl⟩ | ⟨hn, a, hl, rfl⟩ | ⟨hop, hr⟩
+      rcases rdsOfW?_resize h with ⟨v, hv, rfl⟩ | ⟨hn, a, hl, rfl⟩ | ⟨hop, hr⟩ | ⟨n, hn, rfl⟩
+      rotate_left 3
+      · -- a parameter under the marker: outside the equation fragment (`fragW`)
+        have hpr : e.unsign = .paramRef n none := hn
+        simp [fragW, hpr, PExpr.isParamRd] at hf
       · obtain rfl := unsign_eq_lit hv
         rw [unsign_lit] at hw ⊢
         simp only [skT, Sk.WidthOkC, Sk.width, Part.wid] at hw ⊢
@@ -2266,7 +2270,9 @@ theorem skT_shapeCU (C : Ctx σ E elems DW DG EW ns) {dw : String → Nat}
         rw [fitExpr2_of_not_rigid tw rfl]; exact I1
       · -- a marker around an operation
         have hop' : e.isOpW = true := by rw [← unsign_isOpW]; exact hop
-        have hf' : fragW e.unsign = true := by simpa [fragW] using hf
+        have hf' : fragW e.unsign = true := by
+          simp only [fragW, Bool.and_eq_true] at hf
+          exact hf.1
         have hsk : skT (.resize m e.unsign) rs = .rsz e.ctxPropagates (skT e.unsign rs) := by
           rw [skT_resize_op m rs hr hop, unsign_ctxPropagates hop']
         rw [hsk] at hw ⊢

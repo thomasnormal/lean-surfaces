@@ -30,6 +30,22 @@ theorem lp_shifts_comb (N K : Nat) (hN : 1 ≤ N) (hR : (N : Int) < 536870912) (
   -- `Q`'s value is the arithmetic shift of the 32-bit value of `N <<< 2` (`canonInt 32 true`), an `int` here
   all_goals (intros; (try simp (disch := omega) only [canonInt32_of_bounds] at *); omega)
 
+/-- **The clean-room repro**: `BIAS = (1 << (E - 1)) - 1` read as a value in `y = x + BIAS` (its conversion marker, a
+signed `int` in the unsigned context of `x`, IEEE 1800-2023 §11.8.2): a combinational design for every `1 ≤ E ≤ 32` (at
+`E = 0` the instantiation refuses the negative amount; from `E = 33` on, `1 << (E - 1)` shifts every bit out, and the
+summary's value `2^(E-1) - 1` is not an `int`). -/
+theorem localparam_shift_comb (E : Nat) (hE : 1 ≤ E) (hE' : E ≤ 32) : CombDesign (localparam_shift.sem E) := by
+  sv_structure
+  all_goals (intros; omega)
+
+theorem localparam_shift_acyclic (E : Nat) (hE : 1 ≤ E) (hE' : E ≤ 32) : Acyclic (localparam_shift.sem E) := by
+  sv_structure (rank := rippleRank (fun _ => 0) (fun _ _ _ => 0))
+  all_goals (intros; omega)
+
+/-- info: 'Examples.«system-verilog».lp_shift.comb_proof.localparam_shift_comb' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms localparam_shift_comb
+
 /-- info: 'Examples.«system-verilog».lp_shift.comb_proof.lp_shifts_comb' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms lp_shifts_comb

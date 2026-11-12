@@ -642,7 +642,17 @@ unsafe def runSvEquationsCore (hintOnly : Bool) : TacticM Unit := do
       closeParamEnv "sv_equations" (← find `h1)
       closeHag "sv_equations" (← find `hag) s args
       closeDecide `hok "the structural check failed"
-      closeDecide `hfrag "a right-hand side is outside the fragment of `sv_equations` (an expression over accesses and known literals built from `& | ^`, `~ !`, the reductions, `&& ||`, `== !=` and `?:`, a concatenation of accesses and known literals, or a fill `'0`/`'1`)"
+      match s.lsites.findSome? fun ls => (LeanModels.Sv.CombEq.rhsOf ls.site.proc).paramRdName? with
+      | some n =>
+          -- a parameter read as a value is outside the equation fragment (`fragW`): say so, without the kernel's report
+          setGoals [← find `hfrag]
+          try
+            closeByDecide (← getMainGoal) "frag"
+            setGoals []
+          catch _ =>
+            throwError "sv_equations: a right-hand side reads the parameter or localparam `{n}` as a value (the conversion marker `Resize` of a signed `int` in an unsigned context, IEEE 1800-2023 §11.8.2): `sv_structure` reads it, the equations do not yet (the marker's lowering depends on the constant's own width, `selfWidth2`, which the summary does not carry)"
+      | none =>
+          closeDecide `hfrag "a right-hand side is outside the fragment of `sv_equations` (an expression over accesses and known literals built from `& | ^`, `~ !`, the reductions, `&& ||`, `== !=` and `?:`, a concatenation of accesses and known literals, or a fill `'0`/`'1`)"
       let mut out : Array MVarId := #[]
       -- a design with module instances: the twin's own goals of the bridge, and its one-driver obligation
       if let some (_, _, argsH, _, _, pnames, pl) := hier? then

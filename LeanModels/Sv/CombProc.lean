@@ -936,7 +936,19 @@ theorem inst_idxFreeW (C : Ctx σ E elems DW DG EW ns) {dw : String → Nat}
   | .repl c a, rs, h, hacc, ctx =>
       inst_repRd_idxFree C hdw (by simpa [rdsOfW?] using h) hacc ctx
   | .resize m e, rs, h, hacc, ctx => by
-      rcases rdsOfW?_resize h with ⟨v, rfl, rfl⟩ | ⟨hn, a, hl, rfl⟩ | ⟨hop, hr⟩
+      rcases rdsOfW?_resize h with ⟨v, rfl, rfl⟩ | ⟨hn, a, hl, rfl⟩ | ⟨hop, hr⟩ | ⟨n, rfl, rfl⟩
+      rotate_left 3
+      · -- a parameter under the marker: a literal, or the unbound parameter's loud node (no index either way)
+        have hK : ∀ c, (instExpr2 E elems c (.paramRef n none)).idxFree = true := fun c => by
+          simp only [instExpr2]
+          split
+          · simp [intLit2_eq, Expr2.idxFree]
+          · split
+            · split <;> simp [intLit2_eq, Expr2.idxFree]
+            · simp [Expr2.idxFree]
+        rcases ie_resize_param (env := E) (elems := elems) (n := n) ctx m with ⟨x, c, hx⟩ | ⟨c, hx⟩
+        · rw [hx]; simpa [Expr2.idxFree] using hK c
+        · rw [hx]; exact hK c
       · obtain ⟨x, c, hx⟩ := ie_resize_cases (env := E) (elems := elems) (e := .lit v)
           rfl rfl (fun _ _ _ => by simp [PExpr.negGenvarWidened]) ctx m
         rw [hx]

@@ -577,6 +577,8 @@ def _root_.LeanModels.Sv.PExpr.cnames : PExpr → List String
   | .resize _ a => a.cnames
   | .repl c _ => (repAff c).names
   | .concat ps => ps.flatMap repNames
+  -- a parameter or localparam read as a value (under its conversion marker, `rdsOfW?`)
+  | .paramRef n none => [n]
   | _ => []
 
 /-- The replication counts of a right-hand side: each must be non-negative where the site is instantiated (the model
@@ -616,6 +618,7 @@ def _root_.LeanModels.Sv.PExpr.consts : PExpr → List String × List Aff
   | .repl c _ => ((repAff c).names, [repAff c])
   | .concat ps => (ps.flatMap repNames, ps.flatMap repCount)
   | .functionCall .. => ([], [])
+  | .paramRef n none => ([n], [])
   | _ => ([], [])
 
 theorem consts_eq : ∀ v : PExpr, v.consts = (v.cnames, v.rcounts)
@@ -629,7 +632,8 @@ theorem consts_eq : ∀ v : PExpr, v.consts = (v.cnames, v.rcounts)
   | .repl c _ => by simp only [PExpr.consts, PExpr.cnames, PExpr.rcounts]
   | .concat ps => by simp only [PExpr.consts, PExpr.cnames, PExpr.rcounts]
   | .functionCall .. => by simp [PExpr.consts, PExpr.cnames, PExpr.rcounts]
-  | .lit _ | .fill _ | .ident _ | .bitSel .. | .partSel .. | .arrayElem .. | .arrayPart .. | .paramRef .. | .genvarRef _
+  | .paramRef _ none | .paramRef _ (some _) => rfl
+  | .lit _ | .fill _ | .ident _ | .bitSel .. | .partSel .. | .arrayElem .. | .arrayPart .. | .genvarRef _
   | .enumRef .. | .int _ | .sysCall .. | .cast .. | .signedResize .. | .squash2 .. | .unsupported .. => by
       simp [PExpr.consts, PExpr.cnames, PExpr.rcounts]
 
@@ -1348,6 +1352,7 @@ def noConst : PExpr → Bool
   | .repl .. => false
   | .functionCall .. => false
   | .concat ps => ps.all fun p => match p with | .repl .. => false | _ => true
+  | .paramRef _ none => false
   | _ => true
 
 theorem flatMap_nil_of_all {α β : Type} (f : α → List β) :
@@ -1386,8 +1391,10 @@ theorem noConst_spec : ∀ v : PExpr, noConst v = true → v.cnames = [] ∧ v.r
       exact ⟨flatMap_nil_of_all repNames ps fun p hp => (key p hp).1,
         flatMap_nil_of_all repCount ps fun p hp => (key p hp).2⟩
   | .functionCall .., h => by simp [noConst] at h
+  | .paramRef _ none, h => by simp [noConst] at h
+  | .paramRef _ (some _), _ => ⟨rfl, rfl⟩
   | .lit _, _ | .fill _, _ | .ident _, _ | .bitSel .., _ | .partSel .., _ | .arrayElem .., _ | .arrayPart .., _
-  | .paramRef .., _ | .genvarRef _, _ | .enumRef .., _ | .int _, _ | .sysCall .., _ | .cast .., _
+  | .genvarRef _, _ | .enumRef .., _ | .int _, _ | .sysCall .., _ | .cast .., _
   | .signedResize .., _ | .squash2 .., _ | .unsupported .., _ => by
       simp [PExpr.cnames, PExpr.rcounts]
 
@@ -1701,7 +1708,10 @@ def rdsOfW? (ds : List DeclT) : PExpr → Except String (List Acc)
       | .reduce .. => rdsOfW? ds e
       | .int _ => rdsOfW? ds e
       | .concat _ => rdsOfW? ds e
-      | _ => .error "width conversion of a nested conversion or a constant that is not an unsized integer (outside the v1 fragment: a conversion is read around one signal access, one sized literal, a concatenation, or an operation of the fragment)"
+      -- a parameter or localparam (an `int`) in an unsigned context: the marker of a signed simple operand
+      -- (§11.8.2), its 32-bit value converted to the context; it reads no signal
+      | .paramRef _ none => .ok []
+      | _ => .error "width conversion of a nested conversion or a constant that is not an unsized integer, a parameter or a localparam (outside the v1 fragment: a conversion is read around one signal access, one sized literal, a parameter or localparam, a concatenation, or an operation of the fragment)"
   | .int _ => .ok []
   | e => rdsLeaf? ds e
 

@@ -441,6 +441,19 @@ def fragG : PExpr → Bool
   | .resize _ a => fragG a
   | _ => true
 
+/-- A parameter or localparam read as a value (`.paramRef n none`). -/
+def _root_.LeanModels.Sv.PExpr.isParamRd : PExpr → Bool
+  | .paramRef _ none => true
+  | _ => false
+
+/-- (Refusal text only.) The first parameter or localparam read as a value under its conversion marker. -/
+def _root_.LeanModels.Sv.PExpr.paramRdName? : PExpr → Option String
+  | .resize _ (.paramRef n none) => some n
+  | .binary _ l r => l.paramRdName? <|> r.paramRdName?
+  | .unary _ a | .reduce _ a | .resize _ a => a.paramRdName?
+  | .ternary c t e => c.paramRdName? <|> t.paramRdName? <|> e.paramRdName?
+  | _ => none
+
 /-- The word-level reading of "a gate tree" (WP-B2 gate 3b): as `fragG`, but a concatenation (of literals and
 accesses: `partsRd?` has checked its parts) is accepted at the CONTEXT-determined positions of `rdsOfW?` (an operand of a
 word-level operator, an arm of `?:`, the operand of `~`, under a `Resize` marker). The self-determined positions (`&&`,
@@ -453,7 +466,9 @@ def fragW : PExpr → Bool
   | .ternary c t e => fragG c && fragW t && fragW e
   | .concat _ => true
   | .fill _ => false
-  | .resize _ a => fragW a
+  -- a parameter under the conversion marker is read by `sv_structure` (`rdsOfW?`) and not yet by the equations: its
+  -- lowering depends on the parameter's own width, which the summary does not know (`PExpr.isParamRd`)
+  | .resize _ a => fragW a && !a.isParamRd
   | _ => true
 
 theorem fragW_bin_ctx {op : SymBinOp} {l r : PExpr} (hs : selfOpW op = false)
@@ -2311,11 +2326,13 @@ theorem rdsOfW?_len {ds : List DeclT} :
       simp only [fragW] at hf
       simp [cnt, rdsOf?_len a rs (rdsOfW?_reduce h) hf]
   | .resize m e, rs, h, hf => by
-      rcases rdsOfW?_resize h with ⟨v, rfl, rfl⟩ | ⟨hn, a, hl, rfl⟩ | ⟨hop, hr⟩
+      rcases rdsOfW?_resize h with ⟨v, rfl, rfl⟩ | ⟨hn, a, hl, rfl⟩ | ⟨hop, hr⟩ | ⟨n, rfl, rfl⟩
       · simp [cnt]
       · cases e <;> first | exact absurd rfl (hn _) | (simp [leafRd?] at hl; done) | simp [cnt]
       · rw [cnt_resize_op m hop]
-        exact rdsOfW?_len e rs hr (by simpa [fragW] using hf)
+        simp only [fragW, Bool.and_eq_true] at hf
+        exact rdsOfW?_len e rs hr hf.1
+      · simp [cnt]
   | .int _, rs, h, _ => by simp [rdsOfW?] at h; subst h; simp [cnt]
   | .ident n, rs, h, _ => by
       simp [rdsOfW?, rdsLeaf?, leafRd?] at h; subst h; simp [cnt]
@@ -2405,11 +2422,13 @@ theorem skT_leavesW {ds : List DeclT} :
       simp only [fragW] at hf
       simp [skT, Sk.leaves, skT_leaves a rs (rdsOfW?_reduce h) hf]
   | .resize m e, rs, h, hf => by
-      rcases rdsOfW?_resize h with ⟨v, rfl, rfl⟩ | ⟨hn, a, hl, rfl⟩ | ⟨hop, hr⟩
+      rcases rdsOfW?_resize h with ⟨v, rfl, rfl⟩ | ⟨hn, a, hl, rfl⟩ | ⟨hop, hr⟩ | ⟨n, rfl, rfl⟩
       · simp [skT, Sk.leaves, partLeaves]
       · cases e <;> first | exact absurd rfl (hn _) | (simp [leafRd?] at hl; done) | simp [skT, Sk.leaves, partLeaves]
       · rw [skT_resize_op m rs hr hop]
-        simpa [Sk.leaves] using skT_leavesW e rs hr (by simpa [fragW] using hf)
+        simp only [fragW, Bool.and_eq_true] at hf
+        simpa [Sk.leaves] using skT_leavesW e rs hr hf.1
+      · simp [skT, Sk.leaves]
   | .int _, rs, h, _ => by simp [rdsOfW?] at h; subst h; simp [skT, Sk.leaves]
   | .ident n, rs, h, _ => by
       simp [rdsOfW?, rdsLeaf?, leafRd?] at h; subst h; simp [skT, Sk.leaves]

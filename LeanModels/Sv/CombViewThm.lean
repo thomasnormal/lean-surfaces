@@ -668,12 +668,19 @@ theorem resizeRd?_ok {ds : List DeclT} {e : PExpr} {rs : List Acc} (h : resizeRd
 theorem rdsOfW?_resize {ds : List DeclT} {m : Nat} {e : PExpr} {rs : List Acc}
     (h : rdsOfW? ds (.resize m e) = .ok rs) :
     (∃ v, e = .lit v ∧ rs = []) ∨ ((∀ v, e ≠ .lit v) ∧ ∃ a, leafRd? ds e = .ok a ∧ rs = [a]) ∨
-      (e.isOpW = true ∧ rdsOfW? ds e = .ok rs) := by
+      (e.isOpW = true ∧ rdsOfW? ds e = .ok rs) ∨ (∃ n, e = .paramRef n none ∧ rs = []) := by
   cases e with
   | lit v =>
       left
       simp [rdsOfW?] at h
       exact ⟨v, rfl, h⟩
+  | paramRef n p =>
+      cases p with
+      | none =>
+          right; right; right
+          simp [rdsOfW?] at h
+          exact ⟨n, rfl, h⟩
+      | some _ => simp [rdsOfW?] at h
   | ident n =>
       right; left
       exact ⟨(fun v h => by cases h), resizeRd?_ok (by simpa [rdsOfW?] using h)⟩
@@ -689,12 +696,12 @@ theorem rdsOfW?_resize {ds : List DeclT} {m : Nat} {e : PExpr} {rs : List Acc}
   | arrayPart n is mo a b =>
       right; left
       exact ⟨(fun v h => by cases h), resizeRd?_ok (by simpa [rdsOfW?] using h)⟩
-  | binary op l r => right; right; exact ⟨rfl, h⟩
-  | unary op a => right; right; exact ⟨rfl, h⟩
-  | ternary c t f => right; right; exact ⟨rfl, h⟩
-  | reduce op a => right; right; exact ⟨rfl, h⟩
-  | int v => right; right; exact ⟨rfl, h⟩
-  | concat ps => right; right; exact ⟨rfl, h⟩
+  | binary op l r => right; right; left; exact ⟨rfl, h⟩
+  | unary op a => right; right; left; exact ⟨rfl, h⟩
+  | ternary c t f => right; right; left; exact ⟨rfl, h⟩
+  | reduce op a => right; right; left; exact ⟨rfl, h⟩
+  | int v => right; right; left; exact ⟨rfl, h⟩
+  | concat ps => right; right; left; exact ⟨rfl, h⟩
   | _ => simp [rdsOfW?] at h
 
 theorem signedCast_of_rdsW {ds : List DeclT} {e : PExpr} {rs : List Acc} (h : rdsOfW? ds e = .ok rs) :
@@ -843,11 +850,12 @@ theorem scmpPairs_dims {ds : List DeclT} : ∀ {e : PExpr} {rs : List Acc}, rdsO
       · exact scmpPairs_dims he p hp
   | .resize m e, rs, h, p, hp => by
       simp only [PExpr.scmpPairs] at hp
-      rcases rdsOfW?_resize h with ⟨v, rfl, -⟩ | ⟨-, a, hl, -⟩ | ⟨-, hr⟩
+      rcases rdsOfW?_resize h with ⟨v, rfl, -⟩ | ⟨-, a, hl, -⟩ | ⟨-, hr⟩ | ⟨n, rfl, -⟩
       · simp [PExpr.scmpPairs] at hp
       · rw [scmpPairs_of_leaf hl] at hp
         simp at hp
       · exact scmpPairs_dims hr p hp
+      · simp [PExpr.scmpPairs] at hp
   | .lit _, _, _, p, hp
   | .ident _, _, _, p, hp
   | .paramRef .., _, _, p, hp
@@ -1038,10 +1046,11 @@ theorem unsign_of_rdsOfW {ds : List DeclT} :
         rw [unsign_of_repArgRd h']
   | .resize m e, rs, h => by
       show PExpr.resize m e.unsign = _
-      rcases rdsOfW?_resize h with ⟨v, rfl, -⟩ | ⟨-, a, ha, -⟩ | ⟨-, he⟩
+      rcases rdsOfW?_resize h with ⟨v, rfl, -⟩ | ⟨-, a, ha, -⟩ | ⟨-, he⟩ | ⟨n, rfl, -⟩
       · rfl
       · rw [unsign_of_leafRd ha]
       · rw [unsign_of_rdsOfW he]
+      · rfl
   | .ident _, _, _ | .arrayElem .., _, _ | .arrayPart .., _, _ => rfl
   | .bitSel .., _, h | .partSel .., _, h => unsign_of_rdsLeaf (by simpa [rdsOfW?] using h)
   | .paramRef .., _, h | .genvarRef _, _, h | .enumRef .., _, h | .fill _, _, h
@@ -1826,6 +1835,37 @@ theorem ie_resize_cases {e : PExpr} (hcp : e.ctxPropagates = false) (hcl : e.con
       · by_cases h : sw < cw
         · exact ⟨cw, some sw, by simp [instExpr2, hs, h, hcp, hng]⟩
         · exact ⟨cw, some sw, by simp [instExpr2, hs, h, hcl]⟩
+
+/-- **A parameter or localparam bound as an `int`** instantiates, at every context, to the literal of its value there
+(`intLit2`: at the context width, 32 bits without one). -/
+theorem ie_paramRef_intVal {n : String} {v : Int} (h : env.intVal? n = some v) (ctx : Option Nat) :
+    instExpr2 env elems ctx (.paramRef n none) = .lit (LVec.ofInt (ctx.getD 32) v) := by
+  cases hx : env.vals.lookup n with
+  | some x =>
+      have hxv : x = v := by simpa [IEnv.intVal?, hx] using h
+      subst hxv
+      exact instExpr2_paramRef_of ctx hx
+  | none =>
+      have hs : n ∉ env.stale := fun hs => by simp [IEnv.intVal?, hx, hs] at h
+      rcases IEnv.intVal?_cases h with hv | ⟨w, s, hn, rfl, rfl⟩
+      · rw [hx] at hv; cases hv
+      · simp [instExpr2, hx, hn, hs, intLit2_eq]
+
+/-- **A parameter under the conversion marker** (`Resize`, a signed simple operand in an unsigned context, IEEE 1800-2023
+§11.8.2) is, at every context, a `resize` of its instantiation at some width, or its instantiation at the context
+(`PExpr.constLeaf`: no wider than the context, it is the literal there). -/
+theorem ie_resize_param {n : String} (ctx : Option Nat) (m : Nat) :
+    (∃ x c, instExpr2 env elems ctx (.resize m (.paramRef n none)) =
+      .resize x (instExpr2 env elems c (.paramRef n none))) ∨
+    (∃ c, instExpr2 env elems ctx (.resize m (.paramRef n none)) = instExpr2 env elems c (.paramRef n none)) := by
+  cases ctx with
+  | none => exact Or.inl ⟨m, selfWidth2 env elems (.paramRef n none), by simp only [instExpr2, Option.getD_none]⟩
+  | some cw =>
+      rcases hs : selfWidth2 env elems (.paramRef n none) with _ | sw
+      · exact Or.inl ⟨cw, none, by simp [instExpr2, hs]⟩
+      · by_cases h : sw < cw
+        · exact Or.inl ⟨cw, some sw, by simp [instExpr2, hs, h, PExpr.ctxPropagates, PExpr.negGenvarWidened]⟩
+        · exact Or.inr ⟨some cw, by simp [instExpr2, hs, h, PExpr.constLeaf]⟩
 
 /-- The flags `instExpr2`'s `.resize` arm reads for an operation (or an unsized constant) under the marker. -/
 theorem op_flags {e : PExpr} (hop : e.isOpW = true) :
@@ -3422,7 +3462,7 @@ theorem inst_rdW (C : Ctx σ E elems DW DG EW ns) {ds : List DeclT} :
       exact inst_partsW C ps rs h hacc hcn
   | .repl c a, rs, h, hacc, hcn, hweq, ctx => rd_repl C h hacc hcn ctx
   | .resize m e, rs, h, hacc, hcn, hweq, ctx => by
-      rcases rdsOfW?_resize h with ⟨v, rfl, rfl⟩ | ⟨hn, a, hl, rfl⟩ | ⟨hop, hr⟩
+      rcases rdsOfW?_resize h with ⟨v, rfl, rfl⟩ | ⟨hn, a, hl, rfl⟩ | ⟨hop, hr⟩ | ⟨n, rfl, rfl⟩
       · obtain ⟨x, c, hx⟩ := ie_resize_cases (env := E) (elems := elems) (e := .lit v)
           rfl rfl (fun _ _ _ => by simp [PExpr.negGenvarWidened]) ctx m
         rw [hx]
@@ -3435,6 +3475,15 @@ theorem inst_rdW (C : Ctx σ E elems DW DG EW ns) {ds : List DeclT} :
         rcases ie_resize_op (env := E) (elems := elems) hop ctx m with ⟨x, c, hx⟩ | ⟨cw, hx⟩
         · rw [hx]; exact RdOK.resize x (ih c)
         · rw [hx]; exact ih _
+      · -- a parameter or localparam under the marker: a literal of its value, zero-extended or not (no read); the
+        -- agreement places it in the summary's constants (`ConstOK`: `PExpr.cnames` names it)
+        have hv : E.intVal? n = some (σ n) := C.agree n (hcn.1 n (by simp [PExpr.cnames]))
+        have hK : ∀ c, RdOK σ [] (instExpr2 E elems c (.paramRef n none)) := fun c => by
+          rw [ie_paramRef_intVal hv c]
+          simp [RdOK, Expr2.unsupportedFree, Expr2.reads, Expr2.idents]
+        rcases ie_resize_param (env := E) (elems := elems) (n := n) ctx m with ⟨x, c, hx⟩ | ⟨c, hx⟩
+        · rw [hx]; exact RdOK.resize x (hK c)
+        · rw [hx]; exact hK c
   | .int v, rs, h, _, _, _, ctx => by
       simp only [rdsOfW?, Except.ok.injEq] at h
       subst h

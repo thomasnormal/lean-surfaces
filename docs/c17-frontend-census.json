@@ -1,0 +1,5018 @@
+{
+ "c17_flip_set": [],
+ "c17_rejection_classes": [
+  {
+   "class": "type specifier missing, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+   "files": 74
+  },
+  {
+   "class": "use of undeclared identifier 'asm'",
+   "files": 49
+  },
+  {
+   "class": "function definition is not allowed here",
+   "files": 23
+  },
+  {
+   "class": "call to undeclared function 'asm'; ISO C99 and later do not support implicit function declarations [-Wimplicit-function-declaration]",
+   "files": 23
+  },
+  {
+   "class": "'chk.h' file not found",
+   "files": 16
+  },
+  {
+   "class": "fields must have a constant size",
+   "files": 8
+  },
+  {
+   "class": "parameter 'x' was not declared, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+   "files": 6
+  },
+  {
+   "class": "parameter 'b' was not declared, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+   "files": 4
+  },
+  {
+   "class": "'memcpy-ax.h' file not found",
+   "files": 4
+  },
+  {
+   "class": "call to undeclared function 'typeof'; ISO C99 and later do not support implicit function declarations [-Wimplicit-function-declaration]",
+   "files": 4
+  },
+  {
+   "class": "ISO C requires a named parameter before '...'",
+   "files": 4
+  },
+  {
+   "class": "use of unknown builtin '__builtin_exit' [-Wimplicit-function-declaration]",
+   "files": 3
+  },
+  {
+   "class": "parameter 'i' was not declared, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+   "files": 3
+  },
+  {
+   "class": "parameter 'a' was not declared, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+   "files": 3
+  },
+  {
+   "class": "'gcc_tmpnam.h' file not found",
+   "files": 3
+  },
+  {
+   "class": "expected ';' after top level declarator",
+   "files": 3
+  },
+  {
+   "class": "address of register variable requested",
+   "files": 3
+  },
+  {
+   "class": "call to undeclared library function 'exit' with type 'void (int) __attribute__((noreturn))'; ISO C99 and later do not support implicit function declarations [-Wimplicit-function-declaration]",
+   "files": 2
+  },
+  {
+   "class": "call to undeclared function 'alloca'; ISO C99 and later do not support implicit function declarations [-Wimplicit-function-declaration]",
+   "files": 2
+  },
+  {
+   "class": "call to undeclared library function 'abort' with type 'void (void) __attribute__((noreturn))'; ISO C99 and later do not support implicit function declarations [-Wimplicit-function-declaration]",
+   "files": 2
+  },
+  {
+   "class": "parameter 'y' was not declared, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+   "files": 2
+  },
+  {
+   "class": "parameter 'm' was not declared, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+   "files": 2
+  },
+  {
+   "class": "use of unknown builtin '__builtin_mul_overflow_p' [-Wimplicit-function-declaration]",
+   "files": 2
+  },
+  {
+   "class": "GNU decimal type extension not supported",
+   "files": 2
+  },
+  {
+   "class": "use of unknown builtin '__builtin_shuffle' [-Wimplicit-function-declaration]",
+   "files": 2
+  },
+  {
+   "class": "use of unknown builtin '__builtin_has_attribute' [-Wimplicit-function-declaration]",
+   "files": 2
+  },
+  {
+   "class": "expected expression",
+   "files": 2
+  },
+  {
+   "class": "\"FLT_SNAN undefined\"",
+   "files": 2
+  },
+  {
+   "class": "call to undeclared function 'f'; ISO C99 and later do not support implicit function declarations [-Wimplicit-function-declaration]",
+   "files": 1
+  },
+  {
+   "class": "call to undeclared function 'foo'; ISO C99 and later do not support implicit function declarations [-Wimplicit-function-declaration]",
+   "files": 1
+  },
+  {
+   "class": "chained comparison 'X < Y <= Z' does not behave the same as a mathematical expression [-Wparentheses]",
+   "files": 1
+  },
+  {
+   "class": "use of unknown builtin '__builtin_puts' [-Wimplicit-function-declaration]",
+   "files": 1
+  },
+  {
+   "class": "parameter 'got' was not declared, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+   "files": 1
+  },
+  {
+   "class": "parameter 'n' was not declared, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+   "files": 1
+  },
+  {
+   "class": "parameter 'com' was not declared, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+   "files": 1
+  },
+  {
+   "class": "array is too large (4611686018427387648 elements)",
+   "files": 1
+  },
+  {
+   "class": "use of unknown builtin '__builtin_imaxabs' [-Wimplicit-function-declaration]",
+   "files": 1
+  },
+  {
+   "class": "use of unknown builtin '__builtin_fprintf_unlocked' [-Wimplicit-function-declaration]",
+   "files": 1
+  },
+  {
+   "class": "use of unknown builtin '__builtin_fputs' [-Wimplicit-function-declaration]",
+   "files": 1
+  },
+  {
+   "class": "use of unknown builtin '__builtin_putchar' [-Wimplicit-function-declaration]",
+   "files": 1
+  },
+  {
+   "class": "use of unknown builtin '__builtin_uabs' [-Wimplicit-function-declaration]",
+   "files": 1
+  },
+  {
+   "class": "use of unknown builtin '__builtin_nansf16b' [-Wimplicit-function-declaration]",
+   "files": 1
+  },
+  {
+   "class": "invalid suffix 'f128' on floating constant",
+   "files": 1
+  },
+  {
+   "class": "use of unknown builtin '__builtin_nansf128x' [-Wimplicit-function-declaration]",
+   "files": 1
+  },
+  {
+   "class": "use of unknown builtin '__builtin_nansf32' [-Wimplicit-function-declaration]",
+   "files": 1
+  },
+  {
+   "class": "use of unknown builtin '__builtin_nansf32x' [-Wimplicit-function-declaration]",
+   "files": 1
+  },
+  {
+   "class": "use of unknown builtin '__builtin_nansf64' [-Wimplicit-function-declaration]",
+   "files": 1
+  },
+  {
+   "class": "use of unknown builtin '__builtin_nansf64x' [-Wimplicit-function-declaration]",
+   "files": 1
+  },
+  {
+   "class": "'../../gcc.dg/tree-ssa/pr105777.c' file not found",
+   "files": 1
+  },
+  {
+   "class": "address of vector element requested",
+   "files": 1
+  },
+  {
+   "class": "'../../gcc.dg/tree-ssa/pr109938.c' file not found",
+   "files": 1
+  },
+  {
+   "class": "'../../gcc.dg/tree-ssa/pr109986.c' file not found",
+   "files": 1
+  },
+  {
+   "class": "cannot decrement value of type 'W' (vector of 4 'short' values)",
+   "files": 1
+  },
+  {
+   "class": "initialization of flexible array member is not allowed",
+   "files": 1
+  },
+  {
+   "class": "'../../gcc.dg/tree-ssa/pr30314.c' file not found",
+   "files": 1
+  },
+  {
+   "class": "use of unknown builtin '__builtin_isinff' [-Wimplicit-function-declaration]",
+   "files": 1
+  },
+  {
+   "class": "use of unknown builtin '__builtin_apply' [-Wimplicit-function-declaration]",
+   "files": 1
+  },
+  {
+   "class": "illegal storage class on file-scoped variable",
+   "files": 1
+  },
+  {
+   "class": "'../../gcc.dg/pr98304-1.c' file not found",
+   "files": 1
+  },
+  {
+   "class": "use of unknown builtin '__builtin_va_arg_pack' [-Wimplicit-function-declaration]",
+   "files": 1
+  },
+  {
+   "class": "\"DBL_SNAN undefined\"",
+   "files": 1
+  },
+  {
+   "class": "\"LDBL_SNAN undefined\"",
+   "files": 1
+  },
+  {
+   "class": "use of undeclared identifier 'nullptr'",
+   "files": 1
+  },
+  {
+   "class": "expected function body after function declarator",
+   "files": 1
+  },
+  {
+   "class": "invalid suffix 'D32' on floating constant",
+   "files": 1
+  },
+  {
+   "class": "expected parameter declarator",
+   "files": 1
+  }
+ ],
+ "c23_first_diagnostic_classes": [
+  {
+   "class": "use of undeclared identifier 'asm'",
+   "files": 72
+  },
+  {
+   "class": "a type specifier is required for all declarations",
+   "files": 49
+  },
+  {
+   "class": "function definition is not allowed here",
+   "files": 23
+  },
+  {
+   "class": "unknown type name 'f'",
+   "files": 18
+  },
+  {
+   "class": "'chk.h' file not found",
+   "files": 16
+  },
+  {
+   "class": "unknown type name 'x'",
+   "files": 10
+  },
+  {
+   "class": "fields must have a constant size",
+   "files": 8
+  },
+  {
+   "class": "unknown type name 'g'",
+   "files": 4
+  },
+  {
+   "class": "'memcpy-ax.h' file not found",
+   "files": 4
+  },
+  {
+   "class": "use of undeclared identifier 'random'",
+   "files": 4
+  },
+  {
+   "class": "unknown type name 'foo'",
+   "files": 3
+  },
+  {
+   "class": "'gcc_tmpnam.h' file not found",
+   "files": 3
+  },
+  {
+   "class": "expected ';' after top level declarator",
+   "files": 3
+  },
+  {
+   "class": "address of register variable requested",
+   "files": 3
+  },
+  {
+   "class": "use of undeclared identifier 'alloca'",
+   "files": 2
+  },
+  {
+   "class": "unknown type name 'b'",
+   "files": 2
+  },
+  {
+   "class": "use of undeclared identifier '__builtin_mul_overflow_p'",
+   "files": 2
+  },
+  {
+   "class": "GNU decimal type extension not supported",
+   "files": 2
+  },
+  {
+   "class": "use of undeclared identifier '__builtin_shuffle'",
+   "files": 2
+  },
+  {
+   "class": "use of undeclared identifier '__builtin_has_attribute'",
+   "files": 2
+  },
+  {
+   "class": "expected expression",
+   "files": 2
+  },
+  {
+   "class": "\"FLT_SNAN undefined\"",
+   "files": 2
+  },
+  {
+   "class": "use of undeclared identifier 'f'",
+   "files": 1
+  },
+  {
+   "class": "use of undeclared identifier '__builtin_exit'; did you mean '__builtin_abort'?",
+   "files": 1
+  },
+  {
+   "class": "too many arguments to function call, expected 0, have 1",
+   "files": 1
+  },
+  {
+   "class": "use of undeclared identifier 'foo'; did you mean 'for'?",
+   "files": 1
+  },
+  {
+   "class": "call to undeclared library function 'abort' with type 'void (void) __attribute__((noreturn))'; ISO C99 and later do not support implicit function declarations [-Wimplicit-function-declaration]",
+   "files": 1
+  },
+  {
+   "class": "chained comparison 'X < Y <= Z' does not behave the same as a mathematical expression [-Wparentheses]",
+   "files": 1
+  },
+  {
+   "class": "use of undeclared identifier '__builtin_puts'",
+   "files": 1
+  },
+  {
+   "class": "unknown type name 'w'",
+   "files": 1
+  },
+  {
+   "class": "unknown type name 's'",
+   "files": 1
+  },
+  {
+   "class": "unknown type name 'd'",
+   "files": 1
+  },
+  {
+   "class": "call to undeclared library function 'exit' with type 'void (int) __attribute__((noreturn))'; ISO C99 and later do not support implicit function declarations [-Wimplicit-function-declaration]",
+   "files": 1
+  },
+  {
+   "class": "unknown type name 'sub3'",
+   "files": 1
+  },
+  {
+   "class": "unknown type name 's1'",
+   "files": 1
+  },
+  {
+   "class": "unknown type name 'orig'",
+   "files": 1
+  },
+  {
+   "class": "unknown type name 'sub1'",
+   "files": 1
+  },
+  {
+   "class": "unknown type name 'mr_TR'",
+   "files": 1
+  },
+  {
+   "class": "unknown type name 'cp'",
+   "files": 1
+  },
+  {
+   "class": "array is too large (4611686018427387648 elements)",
+   "files": 1
+  },
+  {
+   "class": "use of undeclared identifier '__builtin_imaxabs'",
+   "files": 1
+  },
+  {
+   "class": "use of undeclared identifier '__builtin_fprintf_unlocked'",
+   "files": 1
+  },
+  {
+   "class": "use of undeclared identifier '__builtin_fputs'",
+   "files": 1
+  },
+  {
+   "class": "use of undeclared identifier '__builtin_putchar'",
+   "files": 1
+  },
+  {
+   "class": "use of undeclared identifier '__builtin_uabs'",
+   "files": 1
+  },
+  {
+   "class": "unknown type name 'f1'",
+   "files": 1
+  },
+  {
+   "class": "use of undeclared identifier '__builtin_nansf16b'",
+   "files": 1
+  },
+  {
+   "class": "invalid suffix 'f128' on floating constant",
+   "files": 1
+  },
+  {
+   "class": "use of undeclared identifier '__builtin_nansf128x'",
+   "files": 1
+  },
+  {
+   "class": "use of undeclared identifier '__builtin_nansf32'",
+   "files": 1
+  },
+  {
+   "class": "use of undeclared identifier '__builtin_nansf32x'",
+   "files": 1
+  },
+  {
+   "class": "use of undeclared identifier '__builtin_nansf64'",
+   "files": 1
+  },
+  {
+   "class": "use of undeclared identifier '__builtin_nansf64x'",
+   "files": 1
+  },
+  {
+   "class": "unknown type name 'a'",
+   "files": 1
+  },
+  {
+   "class": "use of undeclared identifier '__builtin_exit'",
+   "files": 1
+  },
+  {
+   "class": "'../../gcc.dg/tree-ssa/pr105777.c' file not found",
+   "files": 1
+  },
+  {
+   "class": "address of vector element requested",
+   "files": 1
+  },
+  {
+   "class": "'../../gcc.dg/tree-ssa/pr109938.c' file not found",
+   "files": 1
+  },
+  {
+   "class": "'../../gcc.dg/tree-ssa/pr109986.c' file not found",
+   "files": 1
+  },
+  {
+   "class": "use of undeclared identifier '__builtin_exit'; did you mean '__builtin_trap'?",
+   "files": 1
+  },
+  {
+   "class": "cannot decrement value of type 'W' (vector of 4 'short' values)",
+   "files": 1
+  },
+  {
+   "class": "initialization of flexible array member is not allowed",
+   "files": 1
+  },
+  {
+   "class": "'../../gcc.dg/tree-ssa/pr30314.c' file not found",
+   "files": 1
+  },
+  {
+   "class": "use of undeclared identifier '__builtin_isinff'",
+   "files": 1
+  },
+  {
+   "class": "use of undeclared identifier '__builtin_apply'",
+   "files": 1
+  },
+  {
+   "class": "illegal storage class on file-scoped variable",
+   "files": 1
+  },
+  {
+   "class": "'../../gcc.dg/pr98304-1.c' file not found",
+   "files": 1
+  },
+  {
+   "class": "unknown type name 'feq'",
+   "files": 1
+  },
+  {
+   "class": "use of undeclared identifier '__builtin_va_arg_pack'",
+   "files": 1
+  },
+  {
+   "class": "'_Atomic' qualifier ignored; operations involving the enumeration type will be non-atomic [-Wunderlying-atomic-qualifier-ignored]",
+   "files": 1
+  },
+  {
+   "class": "\"DBL_SNAN undefined\"",
+   "files": 1
+  },
+  {
+   "class": "\"LDBL_SNAN undefined\"",
+   "files": 1
+  },
+  {
+   "class": "assigning to '_Atomic(bool)' from incompatible type 'nullptr_t'",
+   "files": 1
+  },
+  {
+   "class": "member reference base type 'typeof (*(1 ? &s ",
+   "files": 1
+  },
+  {
+   "class": "use of undeclared identifier '__builtin_clear_padding'",
+   "files": 1
+  },
+  {
+   "class": "variable has incomplete type 'typeof (*(1 ? &x ",
+   "files": 1
+  },
+  {
+   "class": "redeclaration of 'i' with a different type",
+   "files": 1
+  },
+  {
+   "class": "invalid suffix 'D32' on floating constant",
+   "files": 1
+  },
+  {
+   "class": "use of undeclared identifier 'DEC64X_MAX'",
+   "files": 1
+  }
+ ],
+ "frontend": {
+  "flags": [
+   "-D_FORTIFY_SOURCE=0"
+  ],
+  "name": "clang",
+  "version": "clang version 21.1.8 (https://github.com/conda-forge/clangdev-feedstock 334cf9a5e6c0331e9f261eaf01fc3568724fcce9)"
+ },
+ "rows": [
+  {
+   "c17": {
+    "class": "accepted",
+    "diagnostic": "",
+    "status": "accepted"
+   },
+   "c23": {
+    "class": "accepted_by_clang",
+    "diagnostic": "",
+    "status": "accepted_by_clang"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "20000227-1.c",
+   "sha256": "ebfa845107d04c2228e926cc7dee389ab269774e044f813c933be819f50b8d00"
+  },
+  {
+   "c17": {
+    "class": "call to undeclared function 'f'; ISO C99 and later do not support implicit function declarations [-Wimplicit-function-declaration]",
+    "diagnostic": "error: call to undeclared function 'f'; ISO C99 and later do not support implicit function declarations [-Wimplicit-function-declaration]",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "use of undeclared identifier 'f'",
+    "diagnostic": "error: use of undeclared identifier 'f'",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "20000412-3.c",
+   "sha256": "edbffb17b95f7571a685f18faa6a7a7465e96c16a54555bbe756be8d71a8c798"
+  },
+  {
+   "c17": {
+    "class": "type specifier missing, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "diagnostic": "error: type specifier missing, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "unknown type name 'foo'",
+    "diagnostic": "error: unknown type name 'foo'",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "20000717-3.c",
+   "sha256": "c619237247ba6f3d98a974d81372c326e149bee40f191a4b7d5dbe4763525545"
+  },
+  {
+   "c17": {
+    "class": "function definition is not allowed here",
+    "diagnostic": "error: function definition is not allowed here",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "function definition is not allowed here",
+    "diagnostic": "error: function definition is not allowed here",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "20000822-1.c",
+   "sha256": "b532f760520f824ef53089d9a518e2ea10519c6e075db4cf7635afd5b117e98c"
+  },
+  {
+   "c17": {
+    "class": "call to undeclared function 'asm'; ISO C99 and later do not support implicit function declarations [-Wimplicit-function-declaration]",
+    "diagnostic": "error: call to undeclared function 'asm'; ISO C99 and later do not support implicit function declarations [-Wimplicit-function-declaration]",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "use of undeclared identifier 'asm'",
+    "diagnostic": "error: use of undeclared identifier 'asm'",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "20001009-2.c",
+   "sha256": "6171a912c4846705d70a63a5b70f3b140a6d396e7cce8cf54e6c250a70fe0f0a"
+  },
+  {
+   "c17": {
+    "class": "use of unknown builtin '__builtin_exit' [-Wimplicit-function-declaration]",
+    "diagnostic": "error: use of unknown builtin '__builtin_exit' [-Wimplicit-function-declaration]",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "use of undeclared identifier '__builtin_exit'; did you mean '__builtin_abort'?",
+    "diagnostic": "error: use of undeclared identifier '__builtin_exit'; did you mean '__builtin_abort'?",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "20001111-1.c",
+   "sha256": "dbd0e52c97a8d5e0a7a59761d577080645619cc7c4f480c15a31e20604c34441"
+  },
+  {
+   "c17": {
+    "class": "function definition is not allowed here",
+    "diagnostic": "error: function definition is not allowed here",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "function definition is not allowed here",
+    "diagnostic": "error: function definition is not allowed here",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "20010209-1.c",
+   "sha256": "074bf806fb86c21a68309e68c74379237b55e0e70f8bd392353e0d00e0e40add"
+  },
+  {
+   "c17": {
+    "class": "function definition is not allowed here",
+    "diagnostic": "error: function definition is not allowed here",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "function definition is not allowed here",
+    "diagnostic": "error: function definition is not allowed here",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "20010605-1.c",
+   "sha256": "24eb43d6a6424e606d170655e938851a29a7e38019971797f491acf198980a8b"
+  },
+  {
+   "c17": {
+    "class": "call to undeclared library function 'exit' with type 'void (int) __attribute__((noreturn))'; ISO C99 and later do not support implicit function declarations [-Wimplicit-function-declaration]",
+    "diagnostic": "error: call to undeclared library function 'exit' with type 'void (int) __attribute__((noreturn))'; ISO C99 and later do not support implicit function declarations [-Wimplicit-function-declaration]",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "too many arguments to function call, expected 0, have 1",
+    "diagnostic": "error: too many arguments to function call, expected 0, have 1",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "20010605-2.c",
+   "sha256": "414e640fded55b7866c082c3a5edc86d51dee32c971e0e97feda5503a0dfd6fd"
+  },
+  {
+   "c17": {
+    "class": "call to undeclared function 'asm'; ISO C99 and later do not support implicit function declarations [-Wimplicit-function-declaration]",
+    "diagnostic": "error: call to undeclared function 'asm'; ISO C99 and later do not support implicit function declarations [-Wimplicit-function-declaration]",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "use of undeclared identifier 'asm'",
+    "diagnostic": "error: use of undeclared identifier 'asm'",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "20020107-1.c",
+   "sha256": "6966b6a4ae77468a5bb6ec1e3090511ee02aa5b82b0fad5eecc1269a0219d34d"
+  },
+  {
+   "c17": {
+    "class": "call to undeclared function 'alloca'; ISO C99 and later do not support implicit function declarations [-Wimplicit-function-declaration]",
+    "diagnostic": "error: call to undeclared function 'alloca'; ISO C99 and later do not support implicit function declarations [-Wimplicit-function-declaration]",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "use of undeclared identifier 'alloca'",
+    "diagnostic": "error: use of undeclared identifier 'alloca'",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "20020314-1.c",
+   "sha256": "9d74a9ae849fdbfb7115da82fa234016d02820255bfd1fc58b4ac29a7b0772cb"
+  },
+  {
+   "c17": {
+    "class": "fields must have a constant size",
+    "diagnostic": "error: fields must have a constant size: 'variable length array in structure' extension will never be supported",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "fields must have a constant size",
+    "diagnostic": "error: fields must have a constant size: 'variable length array in structure' extension will never be supported",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "20020412-1.c",
+   "sha256": "e3ba27c686930bd2109700edb3c66a7d8b0d643f08be3cb89ae809aac6985c82"
+  },
+  {
+   "c17": {
+    "class": "type specifier missing, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "diagnostic": "error: type specifier missing, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "a type specifier is required for all declarations",
+    "diagnostic": "error: a type specifier is required for all declarations",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "20020819-1.c",
+   "sha256": "29ff007f93702d3b37eaaae9963300bb8d9df62dcfdeb8e13981d1c5ae93d9fb"
+  },
+  {
+   "c17": {
+    "class": "call to undeclared function 'asm'; ISO C99 and later do not support implicit function declarations [-Wimplicit-function-declaration]",
+    "diagnostic": "error: call to undeclared function 'asm'; ISO C99 and later do not support implicit function declarations [-Wimplicit-function-declaration]",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "use of undeclared identifier 'asm'",
+    "diagnostic": "error: use of undeclared identifier 'asm'",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "20030222-1.c",
+   "sha256": "db6b748d5d075510237723f14bfafdcadf1d914ee3fad472145c6b520f0a97b5"
+  },
+  {
+   "c17": {
+    "class": "function definition is not allowed here",
+    "diagnostic": "error: function definition is not allowed here",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "function definition is not allowed here",
+    "diagnostic": "error: function definition is not allowed here",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "20030501-1.c",
+   "sha256": "ef20fce8426213d6db7242d01d48269a021fa3e9b0f59884531e7c3d32cf7d3a"
+  },
+  {
+   "c17": {
+    "class": "call to undeclared function 'foo'; ISO C99 and later do not support implicit function declarations [-Wimplicit-function-declaration]",
+    "diagnostic": "error: call to undeclared function 'foo'; ISO C99 and later do not support implicit function declarations [-Wimplicit-function-declaration]",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "use of undeclared identifier 'foo'; did you mean 'for'?",
+    "diagnostic": "error: use of undeclared identifier 'foo'; did you mean 'for'?",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "20031211-2.c",
+   "sha256": "75fb9a2f7523f12ca89cb41d179fb6bb4ac3f199fbcf599929dd3608ef708033"
+  },
+  {
+   "c17": {
+    "class": "call to undeclared library function 'abort' with type 'void (void) __attribute__((noreturn))'; ISO C99 and later do not support implicit function declarations [-Wimplicit-function-declaration]",
+    "diagnostic": "error: call to undeclared library function 'abort' with type 'void (void) __attribute__((noreturn))'; ISO C99 and later do not support implicit function declarations [-Wimplicit-function-declaration]",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "call to undeclared library function 'abort' with type 'void (void) __attribute__((noreturn))'; ISO C99 and later do not support implicit function declarations [-Wimplicit-function-declaration]",
+    "diagnostic": "error: call to undeclared library function 'abort' with type 'void (void) __attribute__((noreturn))'; ISO C99 and later do not support implicit function declarations [-Wimplicit-function-declaration]",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "20040223-1.c",
+   "sha256": "657f4c54fc33fdbad4c489ad64bd0ea089dc6f4f0a27523a75504ec6319f0e4d"
+  },
+  {
+   "c17": {
+    "class": "fields must have a constant size",
+    "diagnostic": "error: fields must have a constant size: 'variable length array in structure' extension will never be supported",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "fields must have a constant size",
+    "diagnostic": "error: fields must have a constant size: 'variable length array in structure' extension will never be supported",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "20040308-1.c",
+   "sha256": "883a9834b19af31a0abfe2993267430c91aff10bd6a825857297fdedcc508d81"
+  },
+  {
+   "c17": {
+    "class": "fields must have a constant size",
+    "diagnostic": "error: fields must have a constant size: 'variable length array in structure' extension will never be supported",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "fields must have a constant size",
+    "diagnostic": "error: fields must have a constant size: 'variable length array in structure' extension will never be supported",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "20040423-1.c",
+   "sha256": "5e8ac68ddf0eba3acc9dd1ea5f3bcc1ed66e2f947f1c42f94eee2c562703738c"
+  },
+  {
+   "c17": {
+    "class": "function definition is not allowed here",
+    "diagnostic": "error: function definition is not allowed here",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "function definition is not allowed here",
+    "diagnostic": "error: function definition is not allowed here",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "20040520-1.c",
+   "sha256": "a115ba3f50ac8addcdf338a582a1e1aa88c8f67b2bae821945fc18572653846f"
+  },
+  {
+   "c17": {
+    "class": "type specifier missing, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "diagnostic": "error: type specifier missing, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "a type specifier is required for all declarations",
+    "diagnostic": "error: a type specifier is required for all declarations",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "20041019-1.c",
+   "sha256": "586a95f2f9f92cba271e928dd2fe3f203f2522bcae06f2600b2c7a8bcba6880d"
+  },
+  {
+   "c17": {
+    "class": "fields must have a constant size",
+    "diagnostic": "error: fields must have a constant size: 'variable length array in structure' extension will never be supported",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "fields must have a constant size",
+    "diagnostic": "error: fields must have a constant size: 'variable length array in structure' extension will never be supported",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "20041218-2.c",
+   "sha256": "4bdf83943b8a243caccf7324ffb30302f599bec398b95cf92983a51a990c6dbd"
+  },
+  {
+   "c17": {
+    "class": "call to undeclared function 'asm'; ISO C99 and later do not support implicit function declarations [-Wimplicit-function-declaration]",
+    "diagnostic": "error: call to undeclared function 'asm'; ISO C99 and later do not support implicit function declarations [-Wimplicit-function-declaration]",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "use of undeclared identifier 'asm'",
+    "diagnostic": "error: use of undeclared identifier 'asm'",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "20050203-1.c",
+   "sha256": "fa792cba5a33a7a1d4be0f256fe150a7a92637c9acafc5e068c01301b8fd7d2a"
+  },
+  {
+   "c17": {
+    "class": "use of undeclared identifier 'asm'",
+    "diagnostic": "error: use of undeclared identifier 'asm'",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "use of undeclared identifier 'asm'",
+    "diagnostic": "error: use of undeclared identifier 'asm'",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "20061031-1.c",
+   "sha256": "2c260f535d8bbec06c07d40c73af2b70c137b37b4f4f6edffa00bc2b5623c7d5"
+  },
+  {
+   "c17": {
+    "class": "function definition is not allowed here",
+    "diagnostic": "error: function definition is not allowed here",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "function definition is not allowed here",
+    "diagnostic": "error: function definition is not allowed here",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "20061220-1.c",
+   "sha256": "2bde09609c3dc80d48f3fd66240d501dbdb54de6780007dfe31dd9e7512f743b"
+  },
+  {
+   "c17": {
+    "class": "fields must have a constant size",
+    "diagnostic": "error: fields must have a constant size: 'variable length array in structure' extension will never be supported",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "fields must have a constant size",
+    "diagnostic": "error: fields must have a constant size: 'variable length array in structure' extension will never be supported",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "20070919-1.c",
+   "sha256": "3a7888c44aadb10322fd4926464b368eccc9947a82378509e47036b6c7ab437b"
+  },
+  {
+   "c17": {
+    "class": "use of undeclared identifier 'asm'",
+    "diagnostic": "error: use of undeclared identifier 'asm'",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "use of undeclared identifier 'asm'",
+    "diagnostic": "error: use of undeclared identifier 'asm'",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "20071220-1.c",
+   "sha256": "7074b0c90e3a2c528a4a7d127fa5c7c56323f3d94308157923acd1e077eaddcc"
+  },
+  {
+   "c17": {
+    "class": "use of undeclared identifier 'asm'",
+    "diagnostic": "error: use of undeclared identifier 'asm'",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "use of undeclared identifier 'asm'",
+    "diagnostic": "error: use of undeclared identifier 'asm'",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "20071220-2.c",
+   "sha256": "25086658b227bf4ebb471c8ce0a949649888caefc6843ebb1124b375a0f8be0c"
+  },
+  {
+   "c17": {
+    "class": "call to undeclared function 'asm'; ISO C99 and later do not support implicit function declarations [-Wimplicit-function-declaration]",
+    "diagnostic": "error: call to undeclared function 'asm'; ISO C99 and later do not support implicit function declarations [-Wimplicit-function-declaration]",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "use of undeclared identifier 'asm'",
+    "diagnostic": "error: use of undeclared identifier 'asm'",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "20080122-1.c",
+   "sha256": "f35495b260ec062f946254d2b6353907ac6ff69c69a9185a6f8da46c11890b4e"
+  },
+  {
+   "c17": {
+    "class": "function definition is not allowed here",
+    "diagnostic": "error: function definition is not allowed here",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "function definition is not allowed here",
+    "diagnostic": "error: function definition is not allowed here",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "20090219-1.c",
+   "sha256": "12a3f071f2d81472787b706133cf560ecd15ea7549a910dceebd61a6192bf417"
+  },
+  {
+   "c17": {
+    "class": "type specifier missing, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "diagnostic": "error: type specifier missing, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "a type specifier is required for all declarations",
+    "diagnostic": "error: a type specifier is required for all declarations",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "20120427-1.c",
+   "sha256": "c91817ced776d52e0911d911b5b0e5c337b987831b1e157baeeb96fb0877e4d7"
+  },
+  {
+   "c17": {
+    "class": "type specifier missing, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "diagnostic": "error: type specifier missing, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "a type specifier is required for all declarations",
+    "diagnostic": "error: a type specifier is required for all declarations",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "20120427-2.c",
+   "sha256": "1dd2894aa29fddffea07eaafc3da5dd1fa85a8e93537332fa676eeefef8b6e14"
+  },
+  {
+   "c17": {
+    "class": "chained comparison 'X < Y <= Z' does not behave the same as a mathematical expression [-Wparentheses]",
+    "diagnostic": "error: chained comparison 'X < Y <= Z' does not behave the same as a mathematical expression [-Wparentheses]",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "chained comparison 'X < Y <= Z' does not behave the same as a mathematical expression [-Wparentheses]",
+    "diagnostic": "error: chained comparison 'X < Y <= Z' does not behave the same as a mathematical expression [-Wparentheses]",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "20180921-1.c",
+   "sha256": "10f81841bcff18b2aff10e317b4520a175cacf2244dcbfc110e2a678b5aa6839"
+  },
+  {
+   "c17": {
+    "class": "use of unknown builtin '__builtin_puts' [-Wimplicit-function-declaration]",
+    "diagnostic": "error: use of unknown builtin '__builtin_puts' [-Wimplicit-function-declaration]",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "use of undeclared identifier '__builtin_puts'",
+    "diagnostic": "error: use of undeclared identifier '__builtin_puts'",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "20241029-1.c",
+   "sha256": "741a7c0ecb88f178c77f75342aa7affe51a61274b3c587e8b5113c04795e02ec"
+  },
+  {
+   "c17": {
+    "class": "type specifier missing, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "diagnostic": "error: type specifier missing, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "a type specifier is required for all declarations",
+    "diagnostic": "error: a type specifier is required for all declarations",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "920409-1.c",
+   "sha256": "d6e00a180cbe57e237a564b114cfe38269d9a01575c00147af661e6a46e4295a"
+  },
+  {
+   "c17": {
+    "class": "type specifier missing, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "diagnostic": "error: type specifier missing, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "unknown type name 'w'",
+    "diagnostic": "error: unknown type name 'w'",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "920411-1.c",
+   "sha256": "bad868922994aa148bb0b1ebfcaa65eefd89d7c4491d3ccf1aeec686b79e4ee1"
+  },
+  {
+   "c17": {
+    "class": "type specifier missing, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "diagnostic": "error: type specifier missing, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "a type specifier is required for all declarations",
+    "diagnostic": "error: a type specifier is required for all declarations",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "920415-1.c",
+   "sha256": "1ff3990eb697e49dd27ced9cffbf004d690ad6fae06302fb9ac19f92ad97dd79"
+  },
+  {
+   "c17": {
+    "class": "type specifier missing, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "diagnostic": "error: type specifier missing, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "a type specifier is required for all declarations",
+    "diagnostic": "error: a type specifier is required for all declarations",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "920428-1.c",
+   "sha256": "ccb3eed513ba07c64de3cd31d88f9ea7964db943df941854d41476f0523b1491"
+  },
+  {
+   "c17": {
+    "class": "parameter 'i' was not declared, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "diagnostic": "error: parameter 'i' was not declared, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "unknown type name 's'",
+    "diagnostic": "error: unknown type name 's'",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "920428-2.c",
+   "sha256": "c0ddca64fe1f6fe4eab7b6fca86b9c2ea99059603a5f4b8c62daf93e028884c2"
+  },
+  {
+   "c17": {
+    "class": "type specifier missing, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "diagnostic": "error: type specifier missing, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "a type specifier is required for all declarations",
+    "diagnostic": "error: a type specifier is required for all declarations",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "920429-1.c",
+   "sha256": "e9d697e8305eae4af71ecba17c25cc9dafbf3bb67a4ab3e694d4bc9de38d9c4b"
+  },
+  {
+   "c17": {
+    "class": "type specifier missing, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "diagnostic": "error: type specifier missing, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "a type specifier is required for all declarations",
+    "diagnostic": "error: a type specifier is required for all declarations",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "920501-1.c",
+   "sha256": "df14915c8b0b4105ffb49478832aeedb1f998e166a7668cd636c3557ccfcab3e"
+  },
+  {
+   "c17": {
+    "class": "parameter 'a' was not declared, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "diagnostic": "error: parameter 'a' was not declared, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "unknown type name 'x'",
+    "diagnostic": "error: unknown type name 'x'",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "920501-7.c",
+   "sha256": "7876deb7c4099cb42525a80cda21a55f8cc48e6cfaf4e92b5aeee8c2e469e493"
+  },
+  {
+   "c17": {
+    "class": "type specifier missing, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "diagnostic": "error: type specifier missing, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "unknown type name 'x'",
+    "diagnostic": "error: unknown type name 'x'",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "920501-9.c",
+   "sha256": "5fd6e8a09c51c032811fb1a4154f56b99cf5dad6e660da2c0dcf315aab71bad8"
+  },
+  {
+   "c17": {
+    "class": "type specifier missing, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "diagnostic": "error: type specifier missing, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "a type specifier is required for all declarations",
+    "diagnostic": "error: a type specifier is required for all declarations",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "920520-1.c",
+   "sha256": "57edd057ffc934948b9cd24dbd0850e1aa508cf13ccaa4b63bb9ab15fa351c38"
+  },
+  {
+   "c17": {
+    "class": "parameter 'got' was not declared, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "diagnostic": "error: parameter 'got' was not declared, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "unknown type name 'f'",
+    "diagnostic": "error: unknown type name 'f'",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "920603-1.c",
+   "sha256": "5a1b1a405aeb0ba4826a9489bb776adf2a1e2382b30286e3cf0b4b2ce773262b"
+  },
+  {
+   "c17": {
+    "class": "function definition is not allowed here",
+    "diagnostic": "error: function definition is not allowed here",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "function definition is not allowed here",
+    "diagnostic": "error: function definition is not allowed here",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "920612-2.c",
+   "sha256": "ab7f6234ace1b05a0f6769b5a722b457a101fc87c3614ce133940dc3e205404d"
+  },
+  {
+   "c17": {
+    "class": "type specifier missing, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "diagnostic": "error: type specifier missing, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "a type specifier is required for all declarations",
+    "diagnostic": "error: a type specifier is required for all declarations",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "920721-2.c",
+   "sha256": "e2d009e9a43aa9bc0cd3090ccb1617e19ba19121b838002e76cf21be37d21e89"
+  },
+  {
+   "c17": {
+    "class": "type specifier missing, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "diagnostic": "error: type specifier missing, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "a type specifier is required for all declarations",
+    "diagnostic": "error: a type specifier is required for all declarations",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "920721-3.c",
+   "sha256": "4090d6114ca63cd91209a1eb533ab088a6d941785fb085f39b0770370c8da977"
+  },
+  {
+   "c17": {
+    "class": "function definition is not allowed here",
+    "diagnostic": "error: function definition is not allowed here",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "function definition is not allowed here",
+    "diagnostic": "error: function definition is not allowed here",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "920721-4.c",
+   "sha256": "28e3a6297ea77cde685cdf7cf1bb4148953e8e97d6acdab667f703693398f896"
+  },
+  {
+   "c17": {
+    "class": "type specifier missing, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "diagnostic": "error: type specifier missing, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "a type specifier is required for all declarations",
+    "diagnostic": "error: a type specifier is required for all declarations",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "920728-1.c",
+   "sha256": "52bbcf77bf1add905c831943db52325b2c2137a92a50066abf86e3a1bed1d99b"
+  },
+  {
+   "c17": {
+    "class": "type specifier missing, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "diagnostic": "error: type specifier missing, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "a type specifier is required for all declarations",
+    "diagnostic": "error: a type specifier is required for all declarations",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "920730-1.c",
+   "sha256": "d82be4a0834879358e891b074a4a9af418172f63554697b8fba1486b292ef5a3"
+  },
+  {
+   "c17": {
+    "class": "parameter 'x' was not declared, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "diagnostic": "error: parameter 'x' was not declared, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "unknown type name 'f'",
+    "diagnostic": "error: unknown type name 'f'",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "920731-1.c",
+   "sha256": "7fd3b95ff8a66d3ee9e8f5e6c0ff709f2454e6bff63e39a9c1006c481bfaf351"
+  },
+  {
+   "c17": {
+    "class": "type specifier missing, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "diagnostic": "error: type specifier missing, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "a type specifier is required for all declarations",
+    "diagnostic": "error: a type specifier is required for all declarations",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "920812-1.c",
+   "sha256": "1f536ce664c24e8641e625846e5737129c274b238fe2229340eca5994e9ba417"
+  },
+  {
+   "c17": {
+    "class": "type specifier missing, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "diagnostic": "error: type specifier missing, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "a type specifier is required for all declarations",
+    "diagnostic": "error: a type specifier is required for all declarations",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "920908-2.c",
+   "sha256": "f0d7f2abb64a8d95b5b51f8908e26faaaf95f196c403c9d08aab901ebcce71bc"
+  },
+  {
+   "c17": {
+    "class": "parameter 'a' was not declared, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "diagnostic": "error: parameter 'a' was not declared, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "unknown type name 'f'",
+    "diagnostic": "error: unknown type name 'f'",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "920909-1.c",
+   "sha256": "f173e59bb2077c6a745d00807ad84092e2809fc47d1e7ded13239d542f374c5b"
+  },
+  {
+   "c17": {
+    "class": "type specifier missing, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "diagnostic": "error: type specifier missing, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "unknown type name 'd'",
+    "diagnostic": "error: unknown type name 'd'",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "921013-1.c",
+   "sha256": "494267732feac58da2cc6aec1812eeb53e565fbc191328d0132f3d72369f80e9"
+  },
+  {
+   "c17": {
+    "class": "parameter 'n' was not declared, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "diagnostic": "error: parameter 'n' was not declared, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "unknown type name 'f'",
+    "diagnostic": "error: unknown type name 'f'",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "921017-1.c",
+   "sha256": "908450e7aa4c14d25ff1c34bd88daeac4a8f062baf2dd46c0fd7eaac3391be84"
+  },
+  {
+   "c17": {
+    "class": "call to undeclared library function 'exit' with type 'void (int) __attribute__((noreturn))'; ISO C99 and later do not support implicit function declarations [-Wimplicit-function-declaration]",
+    "diagnostic": "error: call to undeclared library function 'exit' with type 'void (int) __attribute__((noreturn))'; ISO C99 and later do not support implicit function declarations [-Wimplicit-function-declaration]",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "call to undeclared library function 'exit' with type 'void (int) __attribute__((noreturn))'; ISO C99 and later do not support implicit function declarations [-Wimplicit-function-declaration]",
+    "diagnostic": "error: call to undeclared library function 'exit' with type 'void (int) __attribute__((noreturn))'; ISO C99 and later do not support implicit function declarations [-Wimplicit-function-declaration]",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "921110-1.c",
+   "sha256": "b2528a467f5b6121459fce359282183f5e529cb0478da1c4b2263fd615664301"
+  },
+  {
+   "c17": {
+    "class": "type specifier missing, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "diagnostic": "error: type specifier missing, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "a type specifier is required for all declarations",
+    "diagnostic": "error: a type specifier is required for all declarations",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "921123-1.c",
+   "sha256": "e2bcd979c3d94bd23062e722ff9400cb81d221842f3b2e95d85662e1d8f523fe"
+  },
+  {
+   "c17": {
+    "class": "parameter 'x' was not declared, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "diagnostic": "error: parameter 'x' was not declared, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "unknown type name 'x'",
+    "diagnostic": "error: unknown type name 'x'",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "921124-1.c",
+   "sha256": "37f4967e703e98c0f20088c3d419cc9763ae060bdbfe187802023ecc60722f8d"
+  },
+  {
+   "c17": {
+    "class": "type specifier missing, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "diagnostic": "error: type specifier missing, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "a type specifier is required for all declarations",
+    "diagnostic": "error: a type specifier is required for all declarations",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "921202-1.c",
+   "sha256": "8d8c9b3b3e76ab53191f9324c806197cc69bbab401af84a3026cea1bf05ea729"
+  },
+  {
+   "c17": {
+    "class": "type specifier missing, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "diagnostic": "error: type specifier missing, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "a type specifier is required for all declarations",
+    "diagnostic": "error: a type specifier is required for all declarations",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "921207-1.c",
+   "sha256": "ec3df1cb7c5b191835e3cb6807b50e4aa6c73120dcc52951080b16269933de39"
+  },
+  {
+   "c17": {
+    "class": "type specifier missing, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "diagnostic": "error: type specifier missing, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "a type specifier is required for all declarations",
+    "diagnostic": "error: a type specifier is required for all declarations",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "921208-2.c",
+   "sha256": "03179974f370e0da1678f8a7a56150291aeb9f1443fa1344aaea59feea0eceec"
+  },
+  {
+   "c17": {
+    "class": "type specifier missing, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "diagnostic": "error: type specifier missing, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "a type specifier is required for all declarations",
+    "diagnostic": "error: a type specifier is required for all declarations",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "921215-1.c",
+   "sha256": "20bfe032a4e19a7ecfe0e61d88e27ed16c3c2930395843dad9687d8f11b3f294"
+  },
+  {
+   "c17": {
+    "class": "type specifier missing, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "diagnostic": "error: type specifier missing, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "a type specifier is required for all declarations",
+    "diagnostic": "error: a type specifier is required for all declarations",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "921218-1.c",
+   "sha256": "e390ca248a5a8399247d618f0178c6f427f14063f82816b8e66874f2dac803c0"
+  },
+  {
+   "c17": {
+    "class": "type specifier missing, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "diagnostic": "error: type specifier missing, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "a type specifier is required for all declarations",
+    "diagnostic": "error: a type specifier is required for all declarations",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "921218-2.c",
+   "sha256": "aae89cd3dad35d1d3b307a253a72250e66022bd913edcd6d01d4aadfe657679c"
+  },
+  {
+   "c17": {
+    "class": "type specifier missing, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "diagnostic": "error: type specifier missing, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "a type specifier is required for all declarations",
+    "diagnostic": "error: a type specifier is required for all declarations",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "930106-1.c",
+   "sha256": "3d4b38d0c9e91fc71edad141b47533fa3c10ff5f73154bce06ba8239cae0a440"
+  },
+  {
+   "c17": {
+    "class": "type specifier missing, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "diagnostic": "error: type specifier missing, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "a type specifier is required for all declarations",
+    "diagnostic": "error: a type specifier is required for all declarations",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "930111-1.c",
+   "sha256": "31ccb263a104d50f47731b1f780228d007aec9c669f0453e72851209bf0e171b"
+  },
+  {
+   "c17": {
+    "class": "type specifier missing, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "diagnostic": "error: type specifier missing, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "a type specifier is required for all declarations",
+    "diagnostic": "error: a type specifier is required for all declarations",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "930208-1.c",
+   "sha256": "f58abb5eada8237f72ce396058fd37fcbe8edfb3b021511089efc3b53e0b620d"
+  },
+  {
+   "c17": {
+    "class": "parameter 'b' was not declared, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "diagnostic": "error: parameter 'b' was not declared, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "unknown type name 'b'",
+    "diagnostic": "error: unknown type name 'b'",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "930429-2.c",
+   "sha256": "9ef30cff0c4ea13e194f851ead4e044302d3c79bc685ef3a72e50d74f202b3aa"
+  },
+  {
+   "c17": {
+    "class": "type specifier missing, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "diagnostic": "error: type specifier missing, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "unknown type name 'f'",
+    "diagnostic": "error: unknown type name 'f'",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "930513-1.c",
+   "sha256": "8f9d56a8caeb6a957f05c7c1fb8d57eacb41896c6b7e1073d9c920d22d31533b"
+  },
+  {
+   "c17": {
+    "class": "type specifier missing, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "diagnostic": "error: type specifier missing, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "unknown type name 'sub3'",
+    "diagnostic": "error: unknown type name 'sub3'",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "930513-2.c",
+   "sha256": "f8f889603ae34cdf2bdfbf1d355cd9db25c607d0f4106cceeae4bad525c9eb97"
+  },
+  {
+   "c17": {
+    "class": "type specifier missing, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "diagnostic": "error: type specifier missing, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "unknown type name 'f'",
+    "diagnostic": "error: unknown type name 'f'",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "930518-1.c",
+   "sha256": "da30c720d42dd20d3a187d1135bd3da3ba736910b46acce120091a25b33a954d"
+  },
+  {
+   "c17": {
+    "class": "type specifier missing, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "diagnostic": "error: type specifier missing, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "a type specifier is required for all declarations",
+    "diagnostic": "error: a type specifier is required for all declarations",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "930527-1.c",
+   "sha256": "e6533f5c024ad64ad47ccf34f497722b1eddd1ff60554902baeec47bbb35b550"
+  },
+  {
+   "c17": {
+    "class": "type specifier missing, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "diagnostic": "error: type specifier missing, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "unknown type name 'x'",
+    "diagnostic": "error: unknown type name 'x'",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "930603-1.c",
+   "sha256": "ff5f1ffe89e7d17fd9f0381c9a80e9d963d54591ef4b598fa76629548555720e"
+  },
+  {
+   "c17": {
+    "class": "type specifier missing, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "diagnostic": "error: type specifier missing, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "unknown type name 'b'",
+    "diagnostic": "error: unknown type name 'b'",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "930603-3.c",
+   "sha256": "52416da8c93ed1fbbaaed318d5279f23f740aab095f08b25a5b46c8353c32188"
+  },
+  {
+   "c17": {
+    "class": "type specifier missing, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "diagnostic": "error: type specifier missing, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "a type specifier is required for all declarations",
+    "diagnostic": "error: a type specifier is required for all declarations",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "930621-1.c",
+   "sha256": "b82137f614168c4bc57516588ee5249fe25f564e90afae29a464f8cc9bb80f6a"
+  },
+  {
+   "c17": {
+    "class": "type specifier missing, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "diagnostic": "error: type specifier missing, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "a type specifier is required for all declarations",
+    "diagnostic": "error: a type specifier is required for all declarations",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "930622-1.c",
+   "sha256": "86b75962cbd0c58390ac2318a3d4b4ee91b35a6b10e351b047c33c65071ea291"
+  },
+  {
+   "c17": {
+    "class": "type specifier missing, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "diagnostic": "error: type specifier missing, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "a type specifier is required for all declarations",
+    "diagnostic": "error: a type specifier is required for all declarations",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "930630-1.c",
+   "sha256": "c8aec48821f90968e27593cef69d450b42f160094eb45aa705caa2946aeba9f4"
+  },
+  {
+   "c17": {
+    "class": "type specifier missing, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "diagnostic": "error: type specifier missing, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "a type specifier is required for all declarations",
+    "diagnostic": "error: a type specifier is required for all declarations",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "930702-1.c",
+   "sha256": "afa2bdc4a5ba51e853a7d3db8a06acf37091c7ead797f4e9d51dab72b28d1d95"
+  },
+  {
+   "c17": {
+    "class": "type specifier missing, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "diagnostic": "error: type specifier missing, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "unknown type name 's1'",
+    "diagnostic": "error: unknown type name 's1'",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "930713-1.c",
+   "sha256": "2325d9f028ea92c93892a656e7c6c6837ef96c058a82f4a774dc1386b35212b9"
+  },
+  {
+   "c17": {
+    "class": "call to undeclared library function 'abort' with type 'void (void) __attribute__((noreturn))'; ISO C99 and later do not support implicit function declarations [-Wimplicit-function-declaration]",
+    "diagnostic": "error: call to undeclared library function 'abort' with type 'void (void) __attribute__((noreturn))'; ISO C99 and later do not support implicit function declarations [-Wimplicit-function-declaration]",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "unknown type name 'orig'",
+    "diagnostic": "error: unknown type name 'orig'",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "930718-1.c",
+   "sha256": "07f813dbfd1aac4af1872548772e3a78a594c3d9a211fe4eb1f7d5695ffdf436"
+  },
+  {
+   "c17": {
+    "class": "parameter 'com' was not declared, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "diagnostic": "error: parameter 'com' was not declared, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "unknown type name 'foo'",
+    "diagnostic": "error: unknown type name 'foo'",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "930719-1.c",
+   "sha256": "b50836aff8d3c3f081f46f3b2dcfb89bfcbc40200547d79919c0bc0377bc5cbf"
+  },
+  {
+   "c17": {
+    "class": "type specifier missing, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "diagnostic": "error: type specifier missing, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "a type specifier is required for all declarations",
+    "diagnostic": "error: a type specifier is required for all declarations",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "930818-1.c",
+   "sha256": "f9f2be3533b2da947f8f11732c38a2a9a496fca98ea11c4479a428ce2adaa6ff"
+  },
+  {
+   "c17": {
+    "class": "type specifier missing, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "diagnostic": "error: type specifier missing, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "unknown type name 'f'",
+    "diagnostic": "error: unknown type name 'f'",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "930916-1.c",
+   "sha256": "7906a21bb4f6789dc271243f7efe9f9738938f0295e0c67e303477e0025b6d2d"
+  },
+  {
+   "c17": {
+    "class": "type specifier missing, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "diagnostic": "error: type specifier missing, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "unknown type name 'f'",
+    "diagnostic": "error: unknown type name 'f'",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "930921-1.c",
+   "sha256": "b90f46e285ecffde908b32916dc3257aa401fd2e68792595650a8e822890788e"
+  },
+  {
+   "c17": {
+    "class": "type specifier missing, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "diagnostic": "error: type specifier missing, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "unknown type name 'sub1'",
+    "diagnostic": "error: unknown type name 'sub1'",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "930929-1.c",
+   "sha256": "c6878fdc207cee00907ece4a9eb4282e1333e4047b270d089dfb0cfd4a37a7c0"
+  },
+  {
+   "c17": {
+    "class": "type specifier missing, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "diagnostic": "error: type specifier missing, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "unknown type name 'mr_TR'",
+    "diagnostic": "error: unknown type name 'mr_TR'",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "930930-1.c",
+   "sha256": "1c95552694e1b2f2a567e3318fadd6cfab77456ed4f891c7a675ece870650b0e"
+  },
+  {
+   "c17": {
+    "class": "function definition is not allowed here",
+    "diagnostic": "error: function definition is not allowed here",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "function definition is not allowed here",
+    "diagnostic": "error: function definition is not allowed here",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "931002-1.c",
+   "sha256": "3ea01f673de9d5ab1e8a48e39a1efaae085e036c83eefc3aa7fc00a144c5d655"
+  },
+  {
+   "c17": {
+    "class": "type specifier missing, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "diagnostic": "error: type specifier missing, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "a type specifier is required for all declarations",
+    "diagnostic": "error: a type specifier is required for all declarations",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "931009-1.c",
+   "sha256": "2dd4626c02429ceef10a1acba20913c932dacf6089c626883b27bd0c4e35fef2"
+  },
+  {
+   "c17": {
+    "class": "type specifier missing, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "diagnostic": "error: type specifier missing, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "a type specifier is required for all declarations",
+    "diagnostic": "error: a type specifier is required for all declarations",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "931012-1.c",
+   "sha256": "b2f510f80eee911c19a83b5837512d1ac5938cfae161f0452ed2990670affb72"
+  },
+  {
+   "c17": {
+    "class": "type specifier missing, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "diagnostic": "error: type specifier missing, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "a type specifier is required for all declarations",
+    "diagnostic": "error: a type specifier is required for all declarations",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "931017-1.c",
+   "sha256": "3453b59e66c3d1d12cd99230d0ee55ea801440383c6643dd23fe51a0f5414fdd"
+  },
+  {
+   "c17": {
+    "class": "type specifier missing, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "diagnostic": "error: type specifier missing, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "a type specifier is required for all declarations",
+    "diagnostic": "error: a type specifier is required for all declarations",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "931018-1.c",
+   "sha256": "60ef99d442ccb2e41eb09ad17b9fa015e87fcf03dbde24a2e7e82c93209c6749"
+  },
+  {
+   "c17": {
+    "class": "type specifier missing, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "diagnostic": "error: type specifier missing, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "unknown type name 'x'",
+    "diagnostic": "error: unknown type name 'x'",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "931031-1.c",
+   "sha256": "f5c893ea3a5c0cccee4957d79a7b23e308e6ce9fd8adc35a5f6cd4ee97f0be75"
+  },
+  {
+   "c17": {
+    "class": "type specifier missing, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "diagnostic": "error: type specifier missing, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "unknown type name 'f'",
+    "diagnostic": "error: unknown type name 'f'",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "931102-1.c",
+   "sha256": "935fe69f20350a02ae4e7d748c88ff83692f28888cda2d81661edfab08f6a9fd"
+  },
+  {
+   "c17": {
+    "class": "type specifier missing, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "diagnostic": "error: type specifier missing, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "unknown type name 'f'",
+    "diagnostic": "error: unknown type name 'f'",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "931102-2.c",
+   "sha256": "38d886d5c67fc7617f831e57c02ed6188cb910ff142f01e0583d4793a32a6e87"
+  },
+  {
+   "c17": {
+    "class": "type specifier missing, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "diagnostic": "error: type specifier missing, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "a type specifier is required for all declarations",
+    "diagnostic": "error: a type specifier is required for all declarations",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "931208-1.c",
+   "sha256": "81b8d4ea1b1e20792c99263702e564d66dbc89752d2fdf097dd214545681a30b"
+  },
+  {
+   "c17": {
+    "class": "parameter 'x' was not declared, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "diagnostic": "error: parameter 'x' was not declared, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "unknown type name 'f'",
+    "diagnostic": "error: unknown type name 'f'",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "931228-1.c",
+   "sha256": "4d023538ad763776535149cfcc08cc7b7b667b0ad6c766143846dac5976bbf36"
+  },
+  {
+   "c17": {
+    "class": "type specifier missing, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "diagnostic": "error: type specifier missing, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "unknown type name 'cp'",
+    "diagnostic": "error: unknown type name 'cp'",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "940115-1.c",
+   "sha256": "b5df521b43931bbfa41ddde16dad625c927561dcbbc4dc3fdd9c40327f7c0090"
+  },
+  {
+   "c17": {
+    "class": "type specifier missing, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "diagnostic": "error: type specifier missing, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "unknown type name 'g'",
+    "diagnostic": "error: unknown type name 'g'",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "940122-1.c",
+   "sha256": "b34e67d24e1e3d3a18e4c5508048363b481fabe7ab24e7e619bcb721cd14f5a9"
+  },
+  {
+   "c17": {
+    "class": "type specifier missing, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "diagnostic": "error: type specifier missing, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "a type specifier is required for all declarations",
+    "diagnostic": "error: a type specifier is required for all declarations",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "941101-1.c",
+   "sha256": "4e56de457591138809e41347383f88b0bded21cc245c61539526321755812c92"
+  },
+  {
+   "c17": {
+    "class": "type specifier missing, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "diagnostic": "error: type specifier missing, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "a type specifier is required for all declarations",
+    "diagnostic": "error: a type specifier is required for all declarations",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "941110-1.c",
+   "sha256": "98e6ccd70453d61f84e43fd0521c8b064ad93b75a4647468dcab7ad7ef632266"
+  },
+  {
+   "c17": {
+    "class": "parameter 'y' was not declared, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "diagnostic": "error: parameter 'y' was not declared, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "unknown type name 'x'",
+    "diagnostic": "error: unknown type name 'x'",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "941202-1.c",
+   "sha256": "7c86d65fe3e59c44ae35dc491a412142bd8089815dba4f47313c46d10cad7f7f"
+  },
+  {
+   "c17": {
+    "class": "type specifier missing, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "diagnostic": "error: type specifier missing, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "a type specifier is required for all declarations",
+    "diagnostic": "error: a type specifier is required for all declarations",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "950322-1.c",
+   "sha256": "3ea883cc4edecfd2f5f44388111ae7b9942b06898baa842d7787d76a15774060"
+  },
+  {
+   "c17": {
+    "class": "type specifier missing, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "diagnostic": "error: type specifier missing, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "a type specifier is required for all declarations",
+    "diagnostic": "error: a type specifier is required for all declarations",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "950426-1.c",
+   "sha256": "47715d21ca94f9cf32bc4dea1d17c62ffb830873bbd50bfddfee5690e88fbefa"
+  },
+  {
+   "c17": {
+    "class": "parameter 'x' was not declared, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "diagnostic": "error: parameter 'x' was not declared, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "unknown type name 'x'",
+    "diagnostic": "error: unknown type name 'x'",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "950512-1.c",
+   "sha256": "572b028da664f380a9fb46f59cb9a3481c1b768014c444da0bdc9265010d8448"
+  },
+  {
+   "c17": {
+    "class": "type specifier missing, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "diagnostic": "error: type specifier missing, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "unknown type name 'f'",
+    "diagnostic": "error: unknown type name 'f'",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "950605-1.c",
+   "sha256": "46a1f15842bc892358f76b80d483c2d4660ce2cb29d59cb51584c5f3335561a8"
+  },
+  {
+   "c17": {
+    "class": "type specifier missing, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "diagnostic": "error: type specifier missing, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "a type specifier is required for all declarations",
+    "diagnostic": "error: a type specifier is required for all declarations",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "950621-1.c",
+   "sha256": "3612a049931ce2a3f2914d199d0e600d8a477f3f9918ad6604d4361d0e4381ff"
+  },
+  {
+   "c17": {
+    "class": "parameter 'x' was not declared, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "diagnostic": "error: parameter 'x' was not declared, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "unknown type name 'g'",
+    "diagnostic": "error: unknown type name 'g'",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "960218-1.c",
+   "sha256": "9340c1b4638a40d48203604aff022018d2018eba43b2efcc7683917fe8bab965"
+  },
+  {
+   "c17": {
+    "class": "call to undeclared function 'asm'; ISO C99 and later do not support implicit function declarations [-Wimplicit-function-declaration]",
+    "diagnostic": "error: call to undeclared function 'asm'; ISO C99 and later do not support implicit function declarations [-Wimplicit-function-declaration]",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "use of undeclared identifier 'asm'",
+    "diagnostic": "error: use of undeclared identifier 'asm'",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "960312-1.c",
+   "sha256": "f56a76e4aad741739b177093ed4b03a8b3627b7d6ce625d0232ccf6920e50f63"
+  },
+  {
+   "c17": {
+    "class": "type specifier missing, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "diagnostic": "error: type specifier missing, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "a type specifier is required for all declarations",
+    "diagnostic": "error: a type specifier is required for all declarations",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "960402-1.c",
+   "sha256": "81183b56fdebbd0ec484eb7f650e1390de41ecbb0f47fc63c5fce8e02de41e06"
+  },
+  {
+   "c17": {
+    "class": "type specifier missing, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "diagnostic": "error: type specifier missing, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "a type specifier is required for all declarations",
+    "diagnostic": "error: a type specifier is required for all declarations",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "960830-1.c",
+   "sha256": "289a2dc2395a9ff906a87f2e4ad00ad10dc67159a634a2700f076e29f52f69cc"
+  },
+  {
+   "c17": {
+    "class": "parameter 'x' was not declared, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "diagnostic": "error: parameter 'x' was not declared, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "unknown type name 'f'",
+    "diagnostic": "error: unknown type name 'f'",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "961112-1.c",
+   "sha256": "6fcc113b3a8933dc4683933e5f8c3097a2c0da9c355ae4779d6f428619409bd7"
+  },
+  {
+   "c17": {
+    "class": "type specifier missing, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "diagnostic": "error: type specifier missing, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "unknown type name 'foo'",
+    "diagnostic": "error: unknown type name 'foo'",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "990106-1.c",
+   "sha256": "08ca31d6e30ab0b48ea0fb2dd57d5c138a264301bdede09be271063df1e56864"
+  },
+  {
+   "c17": {
+    "class": "call to undeclared function 'asm'; ISO C99 and later do not support implicit function declarations [-Wimplicit-function-declaration]",
+    "diagnostic": "error: call to undeclared function 'asm'; ISO C99 and later do not support implicit function declarations [-Wimplicit-function-declaration]",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "use of undeclared identifier 'asm'",
+    "diagnostic": "error: use of undeclared identifier 'asm'",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "990130-1.c",
+   "sha256": "cf53119c5ce41ec00c6c4bd249afcbc1b030dce2687235f6aaeb38d85eee63d1"
+  },
+  {
+   "c17": {
+    "class": "array is too large (4611686018427387648 elements)",
+    "diagnostic": "error: array is too large (4611686018427387648 elements)",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "array is too large (4611686018427387648 elements)",
+    "diagnostic": "error: array is too large (4611686018427387648 elements)",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "991014-1.c",
+   "sha256": "3d984273ae4ce7de1aecf84972af15ddb2202a4197dfde878dfdfd454ee393f0"
+  },
+  {
+   "c17": {
+    "class": "fields must have a constant size",
+    "diagnostic": "error: fields must have a constant size: 'variable length array in structure' extension will never be supported",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "fields must have a constant size",
+    "diagnostic": "error: fields must have a constant size: 'variable length array in structure' extension will never be supported",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "align-nest.c",
+   "sha256": "d54d5d6a5e8bb26474d0d2776b3a56c2659a6729a13a08a330bf44b7402087f5"
+  },
+  {
+   "c17": {
+    "class": "call to undeclared function 'asm'; ISO C99 and later do not support implicit function declarations [-Wimplicit-function-declaration]",
+    "diagnostic": "error: call to undeclared function 'asm'; ISO C99 and later do not support implicit function declarations [-Wimplicit-function-declaration]",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "use of undeclared identifier 'asm'",
+    "diagnostic": "error: use of undeclared identifier 'asm'",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "bitfld-5.c",
+   "sha256": "bd2186dc773085e4d4873760c305aa72e406c13f605348ad256d6f4fe1d1a5dc"
+  },
+  {
+   "c17": {
+    "class": "use of unknown builtin '__builtin_imaxabs' [-Wimplicit-function-declaration]",
+    "diagnostic": "error: use of unknown builtin '__builtin_imaxabs' [-Wimplicit-function-declaration]",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "use of undeclared identifier '__builtin_imaxabs'",
+    "diagnostic": "error: use of undeclared identifier '__builtin_imaxabs'",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "builtins/abs-3.c",
+   "sha256": "be9fdbaa4a5823e5700dc1cbbe4e9ec01bd6eadba52eca74b7cc69a05cbd57f7"
+  },
+  {
+   "c17": {
+    "class": "use of unknown builtin '__builtin_fprintf_unlocked' [-Wimplicit-function-declaration]",
+    "diagnostic": "error: use of unknown builtin '__builtin_fprintf_unlocked' [-Wimplicit-function-declaration]",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "use of undeclared identifier '__builtin_fprintf_unlocked'",
+    "diagnostic": "error: use of undeclared identifier '__builtin_fprintf_unlocked'",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "builtins/fprintf.c",
+   "sha256": "bf74db5a2932d88424cc5494f52b37d0f790f95ea451232f28c503fe0990ed36"
+  },
+  {
+   "c17": {
+    "class": "use of unknown builtin '__builtin_fputs' [-Wimplicit-function-declaration]",
+    "diagnostic": "error: use of unknown builtin '__builtin_fputs' [-Wimplicit-function-declaration]",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "use of undeclared identifier '__builtin_fputs'",
+    "diagnostic": "error: use of undeclared identifier '__builtin_fputs'",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "builtins/fputs.c",
+   "sha256": "6ec129240086597db9586d835d4e934fecdb88fbd274b6d1328147000d24f4be"
+  },
+  {
+   "c17": {
+    "class": "'chk.h' file not found",
+    "diagnostic": "error: 'chk.h' file not found",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "'chk.h' file not found",
+    "diagnostic": "error: 'chk.h' file not found",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "builtins/memcpy-chk.c",
+   "sha256": "402035011c77308a0803d14f160fbf60f9b60ce0f39de34e3a25c6e59051c87b"
+  },
+  {
+   "c17": {
+    "class": "'chk.h' file not found",
+    "diagnostic": "error: 'chk.h' file not found",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "'chk.h' file not found",
+    "diagnostic": "error: 'chk.h' file not found",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "builtins/memmove-chk.c",
+   "sha256": "dcc28e7bb4e695b02ad61014cd8125900141d9bfab9007ba6a21aa820552d2ac"
+  },
+  {
+   "c17": {
+    "class": "'chk.h' file not found",
+    "diagnostic": "error: 'chk.h' file not found",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "'chk.h' file not found",
+    "diagnostic": "error: 'chk.h' file not found",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "builtins/mempcpy-chk.c",
+   "sha256": "99abd5f1ea5c7db5a28773f580faa71f9dbd32f9a7f67d31dd72132a281592f7"
+  },
+  {
+   "c17": {
+    "class": "'chk.h' file not found",
+    "diagnostic": "error: 'chk.h' file not found",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "'chk.h' file not found",
+    "diagnostic": "error: 'chk.h' file not found",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "builtins/memset-chk.c",
+   "sha256": "e47841ca80420adc71d035fc4451b03525ff3e481f317ee55d3948a7dedb3da1"
+  },
+  {
+   "c17": {
+    "class": "'chk.h' file not found",
+    "diagnostic": "error: 'chk.h' file not found",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "'chk.h' file not found",
+    "diagnostic": "error: 'chk.h' file not found",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "builtins/pr23484-chk.c",
+   "sha256": "a1c1cc17f7a8fbbec3708a7010659dd886d41141b4f7a0facbd4f4bb553cee64"
+  },
+  {
+   "c17": {
+    "class": "'chk.h' file not found",
+    "diagnostic": "error: 'chk.h' file not found",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "'chk.h' file not found",
+    "diagnostic": "error: 'chk.h' file not found",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "builtins/pr93262-chk.c",
+   "sha256": "33105c0058b46b1509165543fff70e4e729e7317f51cefbaac24b485cd69ccb0"
+  },
+  {
+   "c17": {
+    "class": "use of unknown builtin '__builtin_putchar' [-Wimplicit-function-declaration]",
+    "diagnostic": "error: use of unknown builtin '__builtin_putchar' [-Wimplicit-function-declaration]",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "use of undeclared identifier '__builtin_putchar'",
+    "diagnostic": "error: use of undeclared identifier '__builtin_putchar'",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "builtins/printf.c",
+   "sha256": "87d72c10503423a30263f3fa439edcd7b8716896cc39999cea91340d9984389f"
+  },
+  {
+   "c17": {
+    "class": "'chk.h' file not found",
+    "diagnostic": "error: 'chk.h' file not found",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "'chk.h' file not found",
+    "diagnostic": "error: 'chk.h' file not found",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "builtins/snprintf-chk.c",
+   "sha256": "e8d6424282d273780e7f359c69d3322b9cd72092f84c282aa682837f81832f40"
+  },
+  {
+   "c17": {
+    "class": "'chk.h' file not found",
+    "diagnostic": "error: 'chk.h' file not found",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "'chk.h' file not found",
+    "diagnostic": "error: 'chk.h' file not found",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "builtins/sprintf-chk.c",
+   "sha256": "284f0254441dbc67d3726fb8a2794293626e8315d99bad9708d8f6127a3280ef"
+  },
+  {
+   "c17": {
+    "class": "'chk.h' file not found",
+    "diagnostic": "error: 'chk.h' file not found",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "'chk.h' file not found",
+    "diagnostic": "error: 'chk.h' file not found",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "builtins/stpcpy-chk.c",
+   "sha256": "b212853da4126b8cea918d4a31b1e3a4ad0fe19a590c86caf5b88b5fbf336c01"
+  },
+  {
+   "c17": {
+    "class": "'chk.h' file not found",
+    "diagnostic": "error: 'chk.h' file not found",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "'chk.h' file not found",
+    "diagnostic": "error: 'chk.h' file not found",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "builtins/stpncpy-chk.c",
+   "sha256": "7795145fc939bec4d145902585032b9ec1a4259f21dd105d96faeb5e3db66dfb"
+  },
+  {
+   "c17": {
+    "class": "'chk.h' file not found",
+    "diagnostic": "error: 'chk.h' file not found",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "'chk.h' file not found",
+    "diagnostic": "error: 'chk.h' file not found",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "builtins/strcat-chk.c",
+   "sha256": "f8f43be2e3d5d044bf1723653b73fb95bda5dd93553357abeb5ba689309f1e91"
+  },
+  {
+   "c17": {
+    "class": "'chk.h' file not found",
+    "diagnostic": "error: 'chk.h' file not found",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "'chk.h' file not found",
+    "diagnostic": "error: 'chk.h' file not found",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "builtins/strcpy-chk.c",
+   "sha256": "07abe445e8dfec7f7763855e67cba269534212a03166e828bf748ae36ef7ea9b"
+  },
+  {
+   "c17": {
+    "class": "'chk.h' file not found",
+    "diagnostic": "error: 'chk.h' file not found",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "'chk.h' file not found",
+    "diagnostic": "error: 'chk.h' file not found",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "builtins/strncat-chk.c",
+   "sha256": "e207c2f6d575b09e05fc5a359c3a30bd2bdbfd8c18a409982d8513ac36eb0c17"
+  },
+  {
+   "c17": {
+    "class": "'chk.h' file not found",
+    "diagnostic": "error: 'chk.h' file not found",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "'chk.h' file not found",
+    "diagnostic": "error: 'chk.h' file not found",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "builtins/strncpy-chk.c",
+   "sha256": "02e76ccefc9c6687fc9fb7d7333c7c0e88657c634552540f7d9a13c1cbc49378"
+  },
+  {
+   "c17": {
+    "class": "use of unknown builtin '__builtin_uabs' [-Wimplicit-function-declaration]",
+    "diagnostic": "error: use of unknown builtin '__builtin_uabs' [-Wimplicit-function-declaration]",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "use of undeclared identifier '__builtin_uabs'",
+    "diagnostic": "error: use of undeclared identifier '__builtin_uabs'",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "builtins/uabs-3.c",
+   "sha256": "039ca3ba42de000b20788b42261cce5734ccc3c036f3499719d826a87ee9e21c"
+  },
+  {
+   "c17": {
+    "class": "'chk.h' file not found",
+    "diagnostic": "error: 'chk.h' file not found",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "'chk.h' file not found",
+    "diagnostic": "error: 'chk.h' file not found",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "builtins/vsnprintf-chk.c",
+   "sha256": "8b04db8ebf8e45ac730c4cb2bb4b74f91deb84ffe78afe199c746ed73ffb7a23"
+  },
+  {
+   "c17": {
+    "class": "'chk.h' file not found",
+    "diagnostic": "error: 'chk.h' file not found",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "'chk.h' file not found",
+    "diagnostic": "error: 'chk.h' file not found",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "builtins/vsprintf-chk.c",
+   "sha256": "10a7f3952b049ad312628c48189d7ccaa22f05296763454478920469872dfdd8"
+  },
+  {
+   "c17": {
+    "class": "type specifier missing, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "diagnostic": "error: type specifier missing, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "unknown type name 'x'",
+    "diagnostic": "error: unknown type name 'x'",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "cmpdi-1.c",
+   "sha256": "7d00625711dce46c6fd8925dc43e089296d83904272f1f6211adb04b20bd00fc"
+  },
+  {
+   "c17": {
+    "class": "type specifier missing, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "diagnostic": "error: type specifier missing, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "a type specifier is required for all declarations",
+    "diagnostic": "error: a type specifier is required for all declarations",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "cmpsf-1.c",
+   "sha256": "d0a7073e9f06820b2116c26a4401a3ae9ae5630d07ee6f334972a39826761b5a"
+  },
+  {
+   "c17": {
+    "class": "type specifier missing, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "diagnostic": "error: type specifier missing, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "a type specifier is required for all declarations",
+    "diagnostic": "error: a type specifier is required for all declarations",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "cmpsi-1.c",
+   "sha256": "8214842c8a480d0c95a269e30de4fde9823d7abc8298b7a1034b8cbd4bc67724"
+  },
+  {
+   "c17": {
+    "class": "type specifier missing, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "diagnostic": "error: type specifier missing, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "a type specifier is required for all declarations",
+    "diagnostic": "error: a type specifier is required for all declarations",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "cmpsi-2.c",
+   "sha256": "a4bec6cc018577312385c63adf52528c79e61bc1f1b47c6b285926afbf1add2d"
+  },
+  {
+   "c17": {
+    "class": "parameter 'a' was not declared, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "diagnostic": "error: parameter 'a' was not declared, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "unknown type name 'x'",
+    "diagnostic": "error: unknown type name 'x'",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "comp-goto-2.c",
+   "sha256": "c4d167ef0d171e1831ca6c9e009ab3d16e618fa7d0add19fbffdf55b0f5c983b"
+  },
+  {
+   "c17": {
+    "class": "type specifier missing, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "diagnostic": "error: type specifier missing, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "unknown type name 'f1'",
+    "diagnostic": "error: unknown type name 'f1'",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "dbra-1.c",
+   "sha256": "cfcf41bfddd187269f346ede3fcccb8b68706c577bf20a7da79cee0146af7e8e"
+  },
+  {
+   "c17": {
+    "class": "type specifier missing, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "diagnostic": "error: type specifier missing, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "a type specifier is required for all declarations",
+    "diagnostic": "error: a type specifier is required for all declarations",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "divmod-1.c",
+   "sha256": "e1d0ace8971daa8381600fbbab76290546f342f74535e97fbef2e727547e188a"
+  },
+  {
+   "c17": {
+    "class": "'gcc_tmpnam.h' file not found",
+    "diagnostic": "error: 'gcc_tmpnam.h' file not found",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "'gcc_tmpnam.h' file not found",
+    "diagnostic": "error: 'gcc_tmpnam.h' file not found",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "fprintf-2.c",
+   "sha256": "45550152d611a56847d3a86c00876569cb98f0a429375ee9d887804c0c0eb69d"
+  },
+  {
+   "c17": {
+    "class": "use of unknown builtin '__builtin_nansf16b' [-Wimplicit-function-declaration]",
+    "diagnostic": "error: use of unknown builtin '__builtin_nansf16b' [-Wimplicit-function-declaration]",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "use of undeclared identifier '__builtin_nansf16b'",
+    "diagnostic": "error: use of undeclared identifier '__builtin_nansf16b'",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "ieee/bfloat16-builtin-issignaling-1.c",
+   "sha256": "cbcb8320d608cdb7c773038f4e3edc6a174e035b115f3ec446cad4a7d779fba9"
+  },
+  {
+   "c17": {
+    "class": "use of undeclared identifier 'asm'",
+    "diagnostic": "error: use of undeclared identifier 'asm'",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "use of undeclared identifier 'asm'",
+    "diagnostic": "error: use of undeclared identifier 'asm'",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "ieee/builtin-issignaling-1.c",
+   "sha256": "bc5491b3346948b208db72d06fd8b6d549dc0d574efac9f0344b719dd2742bde"
+  },
+  {
+   "c17": {
+    "class": "invalid suffix 'f128' on floating constant",
+    "diagnostic": "error: invalid suffix 'f128' on floating constant",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "invalid suffix 'f128' on floating constant",
+    "diagnostic": "error: invalid suffix 'f128' on floating constant",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "ieee/float128-builtin-issignaling-1.c",
+   "sha256": "d8c06c74df56bd39d3a964c41e28150eb480f0f12cd9603c3f83a841c0821210"
+  },
+  {
+   "c17": {
+    "class": "use of unknown builtin '__builtin_nansf128x' [-Wimplicit-function-declaration]",
+    "diagnostic": "error: use of unknown builtin '__builtin_nansf128x' [-Wimplicit-function-declaration]",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "use of undeclared identifier '__builtin_nansf128x'",
+    "diagnostic": "error: use of undeclared identifier '__builtin_nansf128x'",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "ieee/float128x-builtin-issignaling-1.c",
+   "sha256": "94879b7d228321f81a40dec28ead46933db84d732cd2ad4f8d37321f7fc7fc28"
+  },
+  {
+   "c17": {
+    "class": "use of undeclared identifier 'asm'",
+    "diagnostic": "error: use of undeclared identifier 'asm'",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "use of undeclared identifier 'asm'",
+    "diagnostic": "error: use of undeclared identifier 'asm'",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "ieee/float16-builtin-issignaling-1.c",
+   "sha256": "383ba607502aa6affb23d3be29caf5c2370d9950ad9eaa64980d62c94eaa3852"
+  },
+  {
+   "c17": {
+    "class": "use of unknown builtin '__builtin_nansf32' [-Wimplicit-function-declaration]",
+    "diagnostic": "error: use of unknown builtin '__builtin_nansf32' [-Wimplicit-function-declaration]",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "use of undeclared identifier '__builtin_nansf32'",
+    "diagnostic": "error: use of undeclared identifier '__builtin_nansf32'",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "ieee/float32-builtin-issignaling-1.c",
+   "sha256": "61b619ff6f7c4d50050cd7a88f694f529f78f3375c9dfd1efd63e45f1ba6216f"
+  },
+  {
+   "c17": {
+    "class": "use of unknown builtin '__builtin_nansf32x' [-Wimplicit-function-declaration]",
+    "diagnostic": "error: use of unknown builtin '__builtin_nansf32x' [-Wimplicit-function-declaration]",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "use of undeclared identifier '__builtin_nansf32x'",
+    "diagnostic": "error: use of undeclared identifier '__builtin_nansf32x'",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "ieee/float32x-builtin-issignaling-1.c",
+   "sha256": "80bc32b11f5729af3509fd96a55f9e2716a7baa248d4bdc2f2c298a7b1091898"
+  },
+  {
+   "c17": {
+    "class": "use of unknown builtin '__builtin_nansf64' [-Wimplicit-function-declaration]",
+    "diagnostic": "error: use of unknown builtin '__builtin_nansf64' [-Wimplicit-function-declaration]",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "use of undeclared identifier '__builtin_nansf64'",
+    "diagnostic": "error: use of undeclared identifier '__builtin_nansf64'",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "ieee/float64-builtin-issignaling-1.c",
+   "sha256": "06ff64a9926f51826ad4720b10f370ae49a125efd00fb7f46bf5effa1f30e1ac"
+  },
+  {
+   "c17": {
+    "class": "use of unknown builtin '__builtin_nansf64x' [-Wimplicit-function-declaration]",
+    "diagnostic": "error: use of unknown builtin '__builtin_nansf64x' [-Wimplicit-function-declaration]",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "use of undeclared identifier '__builtin_nansf64x'",
+    "diagnostic": "error: use of undeclared identifier '__builtin_nansf64x'",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "ieee/float64x-builtin-issignaling-1.c",
+   "sha256": "f857ad0b777ebc411dde93d87b27506b1c9501ca34f0bdc553585095c14f2cd7"
+  },
+  {
+   "c17": {
+    "class": "use of undeclared identifier 'asm'",
+    "diagnostic": "error: use of undeclared identifier 'asm'",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "use of undeclared identifier 'asm'",
+    "diagnostic": "error: use of undeclared identifier 'asm'",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "ieee/pr50310.c",
+   "sha256": "9d073f4fd616604d9354953f2c5d7e988dfb66bec5fcd93b9f6248048ab4b276"
+  },
+  {
+   "c17": {
+    "class": "parameter 'm' was not declared, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "diagnostic": "error: parameter 'm' was not declared, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "unknown type name 'f'",
+    "diagnostic": "error: unknown type name 'f'",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "inst-check.c",
+   "sha256": "9f7a5d0295ab70ed83843e027628205bac8e48db0a6ec84f1e8d25588a811095"
+  },
+  {
+   "c17": {
+    "class": "parameter 'b' was not declared, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "diagnostic": "error: parameter 'b' was not declared, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "unknown type name 'a'",
+    "diagnostic": "error: unknown type name 'a'",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "int-compare.c",
+   "sha256": "48006c6fe65cb7eb7bc0a5ed89a7f470c3e71d644d7bca5a71bb95a5270345ab"
+  },
+  {
+   "c17": {
+    "class": "parameter 'b' was not declared, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "diagnostic": "error: parameter 'b' was not declared, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "unknown type name 'f'",
+    "diagnostic": "error: unknown type name 'f'",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "loop-2.c",
+   "sha256": "43ff19f22f06f81e2a409e8c29579d84c3c6ad36792523aa07bbae32d1039ffd"
+  },
+  {
+   "c17": {
+    "class": "parameter 'b' was not declared, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "diagnostic": "error: parameter 'b' was not declared, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "unknown type name 'f'",
+    "diagnostic": "error: unknown type name 'f'",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "loop-2d.c",
+   "sha256": "625cd058a32da8bedaf18c26965dad434479191947a65dbd1d771658a956262f"
+  },
+  {
+   "c17": {
+    "class": "parameter 'i' was not declared, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "diagnostic": "error: parameter 'i' was not declared, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "unknown type name 'g'",
+    "diagnostic": "error: unknown type name 'g'",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "loop-3.c",
+   "sha256": "bd95e4fb6070864b706d3b32478a99963ebb8685588ba90600695874bf33e02d"
+  },
+  {
+   "c17": {
+    "class": "parameter 'i' was not declared, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "diagnostic": "error: parameter 'i' was not declared, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "unknown type name 'g'",
+    "diagnostic": "error: unknown type name 'g'",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "loop-3b.c",
+   "sha256": "7ea7763d2a14f6f6dd0eeb856cd5e4b7600ee17520c56db939bb3e34844904b4"
+  },
+  {
+   "c17": {
+    "class": "parameter 'm' was not declared, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "diagnostic": "error: parameter 'm' was not declared, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "unknown type name 'f'",
+    "diagnostic": "error: unknown type name 'f'",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "loop-3c.c",
+   "sha256": "bb4125a12cf22a2f49b3ca67d3808da461b5acf6f2b77974f28e889d1d25c842"
+  },
+  {
+   "c17": {
+    "class": "call to undeclared function 'asm'; ISO C99 and later do not support implicit function declarations [-Wimplicit-function-declaration]",
+    "diagnostic": "error: call to undeclared function 'asm'; ISO C99 and later do not support implicit function declarations [-Wimplicit-function-declaration]",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "use of undeclared identifier 'asm'",
+    "diagnostic": "error: use of undeclared identifier 'asm'",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "memclr.c",
+   "sha256": "dfefdde60bf64ee131aa770288771ea011200f943b164ee50ad19045b506b21c"
+  },
+  {
+   "c17": {
+    "class": "'memcpy-ax.h' file not found",
+    "diagnostic": "error: 'memcpy-ax.h' file not found",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "'memcpy-ax.h' file not found",
+    "diagnostic": "error: 'memcpy-ax.h' file not found",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "memcpy-a1.c",
+   "sha256": "0f58919f2c150f37d66291b9272bf6e2edd02e0baf113ecb65a690225396c606"
+  },
+  {
+   "c17": {
+    "class": "'memcpy-ax.h' file not found",
+    "diagnostic": "error: 'memcpy-ax.h' file not found",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "'memcpy-ax.h' file not found",
+    "diagnostic": "error: 'memcpy-ax.h' file not found",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "memcpy-a2.c",
+   "sha256": "202f4738dabada24e9cf36e71418ea5a9f094f6cdcddce03287f5ece75f2175e"
+  },
+  {
+   "c17": {
+    "class": "'memcpy-ax.h' file not found",
+    "diagnostic": "error: 'memcpy-ax.h' file not found",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "'memcpy-ax.h' file not found",
+    "diagnostic": "error: 'memcpy-ax.h' file not found",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "memcpy-a4.c",
+   "sha256": "a1dfc6f3d09b35366288f52351fea5900ae2dfcf4dd8d9578ead8e3c28987702"
+  },
+  {
+   "c17": {
+    "class": "'memcpy-ax.h' file not found",
+    "diagnostic": "error: 'memcpy-ax.h' file not found",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "'memcpy-ax.h' file not found",
+    "diagnostic": "error: 'memcpy-ax.h' file not found",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "memcpy-a8.c",
+   "sha256": "8c02a02191b07c5891a50532cd527859d73358d469f1a6f8570065f07353f9c4"
+  },
+  {
+   "c17": {
+    "class": "call to undeclared function 'asm'; ISO C99 and later do not support implicit function declarations [-Wimplicit-function-declaration]",
+    "diagnostic": "error: call to undeclared function 'asm'; ISO C99 and later do not support implicit function declarations [-Wimplicit-function-declaration]",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "use of undeclared identifier 'asm'",
+    "diagnostic": "error: use of undeclared identifier 'asm'",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "misalign.c",
+   "sha256": "c46c9b4b152c9bcd1eef7b90a543c8967c9549bb7d15cc792d4f4787bc5e2400"
+  },
+  {
+   "c17": {
+    "class": "parameter 'y' was not declared, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "diagnostic": "error: parameter 'y' was not declared, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "unknown type name 'x'",
+    "diagnostic": "error: unknown type name 'x'",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "mod-1.c",
+   "sha256": "0ee6f20836f9e4c16e54ab760439db46da11590d231fb3629f05bd11d3b88ea4"
+  },
+  {
+   "c17": {
+    "class": "function definition is not allowed here",
+    "diagnostic": "error: function definition is not allowed here",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "function definition is not allowed here",
+    "diagnostic": "error: function definition is not allowed here",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "nest-align-1.c",
+   "sha256": "99a3c0dc6d77331614eb2c3d7720b09c5edd87444a18de4e29e1bf95dc1415c7"
+  },
+  {
+   "c17": {
+    "class": "function definition is not allowed here",
+    "diagnostic": "error: function definition is not allowed here",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "function definition is not allowed here",
+    "diagnostic": "error: function definition is not allowed here",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "nest-stdar-1.c",
+   "sha256": "e0d3ed0f10cba7cbbdada1e966e991a13ac72e905d3abd08b2f1d33948ac1456"
+  },
+  {
+   "c17": {
+    "class": "function definition is not allowed here",
+    "diagnostic": "error: function definition is not allowed here",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "function definition is not allowed here",
+    "diagnostic": "error: function definition is not allowed here",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "nestfunc-1.c",
+   "sha256": "67883bbf9ee372c6c60659e5ba28f1d218f8df07a70d00e43d22ca77a8158858"
+  },
+  {
+   "c17": {
+    "class": "function definition is not allowed here",
+    "diagnostic": "error: function definition is not allowed here",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "function definition is not allowed here",
+    "diagnostic": "error: function definition is not allowed here",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "nestfunc-2.c",
+   "sha256": "4378b96e756ef4d0f2cfeb8db9864311916f01361610a7ed522967cc8875bb6a"
+  },
+  {
+   "c17": {
+    "class": "function definition is not allowed here",
+    "diagnostic": "error: function definition is not allowed here",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "function definition is not allowed here",
+    "diagnostic": "error: function definition is not allowed here",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "nestfunc-3.c",
+   "sha256": "36e09b03bf4fb33aff71bf3b149530a02194a8f3955e5d7b210548e1aeb1c8e6"
+  },
+  {
+   "c17": {
+    "class": "function definition is not allowed here",
+    "diagnostic": "error: function definition is not allowed here",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "function definition is not allowed here",
+    "diagnostic": "error: function definition is not allowed here",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "nestfunc-5.c",
+   "sha256": "a265a5198feb2d7e9c379cb1864f674e8f30bf0ebe05cf1b0cfc1395f059a36b"
+  },
+  {
+   "c17": {
+    "class": "function definition is not allowed here",
+    "diagnostic": "error: function definition is not allowed here",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "function definition is not allowed here",
+    "diagnostic": "error: function definition is not allowed here",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "nestfunc-6.c",
+   "sha256": "de7c400d4e0050ae86a7b3818b1ba13ab8c9df88d0943de5855d365534f619ec"
+  },
+  {
+   "c17": {
+    "class": "function definition is not allowed here",
+    "diagnostic": "error: function definition is not allowed here",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "function definition is not allowed here",
+    "diagnostic": "error: function definition is not allowed here",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "nestfunc-7.c",
+   "sha256": "d0b668626de9fa3c999777ed0a74c7bcf7f767e85bcd8d3294e5efc4fd49be22"
+  },
+  {
+   "c17": {
+    "class": "use of unknown builtin '__builtin_exit' [-Wimplicit-function-declaration]",
+    "diagnostic": "error: use of unknown builtin '__builtin_exit' [-Wimplicit-function-declaration]",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "use of undeclared identifier '__builtin_exit'",
+    "diagnostic": "error: use of undeclared identifier '__builtin_exit'",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "pr103052.c",
+   "sha256": "a27e72a0d30107d9cd7c3d5002cf4d03cb082be4ebe1defcd0061999ef9e2f1c"
+  },
+  {
+   "c17": {
+    "class": "use of undeclared identifier 'asm'",
+    "diagnostic": "error: use of undeclared identifier 'asm'",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "use of undeclared identifier 'asm'",
+    "diagnostic": "error: use of undeclared identifier 'asm'",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "pr103376.c",
+   "sha256": "199699d0132094347e6e02857da57b6123d41f9ef1fcca046b4b73eeb7d4aea1"
+  },
+  {
+   "c17": {
+    "class": "function definition is not allowed here",
+    "diagnostic": "error: function definition is not allowed here",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "function definition is not allowed here",
+    "diagnostic": "error: function definition is not allowed here",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "pr103405.c",
+   "sha256": "1a3ac630f7827560249fcaa53e346d45ed7fbb649836a4cc15686f9ca7c11d61"
+  },
+  {
+   "c17": {
+    "class": "'../../gcc.dg/tree-ssa/pr105777.c' file not found",
+    "diagnostic": "error: '../../gcc.dg/tree-ssa/pr105777.c' file not found",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "'../../gcc.dg/tree-ssa/pr105777.c' file not found",
+    "diagnostic": "error: '../../gcc.dg/tree-ssa/pr105777.c' file not found",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "pr105777.c",
+   "sha256": "5bdf72e2be7dce010c9c8a11d77d6a884bd1b20c31d48f324ff359b90bb5d7f2"
+  },
+  {
+   "c17": {
+    "class": "use of unknown builtin '__builtin_mul_overflow_p' [-Wimplicit-function-declaration]",
+    "diagnostic": "error: use of unknown builtin '__builtin_mul_overflow_p' [-Wimplicit-function-declaration]",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "use of undeclared identifier '__builtin_mul_overflow_p'",
+    "diagnostic": "error: use of undeclared identifier '__builtin_mul_overflow_p'",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "pr105984.c",
+   "sha256": "7045416e06cd49df5d922b31027d12147502373dccce5d25a780020474281dcb"
+  },
+  {
+   "c17": {
+    "class": "address of vector element requested",
+    "diagnostic": "error: address of vector element requested",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "address of vector element requested",
+    "diagnostic": "error: address of vector element requested",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "pr108292.c",
+   "sha256": "b5e4f6a4c9f75156e1cdd4123f44da971bd279cd0c05fc4ce4807f20c7c23730"
+  },
+  {
+   "c17": {
+    "class": "use of undeclared identifier 'asm'",
+    "diagnostic": "error: use of undeclared identifier 'asm'",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "use of undeclared identifier 'asm'",
+    "diagnostic": "error: use of undeclared identifier 'asm'",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "pr108498-1.c",
+   "sha256": "a5fc9460bd99d64c72d1c331ef1a80a52d73abb66cadc6ef70ab4faa9f3a8f32"
+  },
+  {
+   "c17": {
+    "class": "'../../gcc.dg/tree-ssa/pr109938.c' file not found",
+    "diagnostic": "error: '../../gcc.dg/tree-ssa/pr109938.c' file not found",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "'../../gcc.dg/tree-ssa/pr109938.c' file not found",
+    "diagnostic": "error: '../../gcc.dg/tree-ssa/pr109938.c' file not found",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "pr109938.c",
+   "sha256": "d12185c51da565fd84a50c6ac36f8489c05d85217e0154775159ff8b421a2e90"
+  },
+  {
+   "c17": {
+    "class": "'../../gcc.dg/tree-ssa/pr109986.c' file not found",
+    "diagnostic": "error: '../../gcc.dg/tree-ssa/pr109986.c' file not found",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "'../../gcc.dg/tree-ssa/pr109986.c' file not found",
+    "diagnostic": "error: '../../gcc.dg/tree-ssa/pr109986.c' file not found",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "pr109986.c",
+   "sha256": "b3ac0b41d2054f766284f14b8e91a3bb3bd18bf246aa1a89e55e3de8f10e0832"
+  },
+  {
+   "c17": {
+    "class": "call to undeclared function 'asm'; ISO C99 and later do not support implicit function declarations [-Wimplicit-function-declaration]",
+    "diagnostic": "error: call to undeclared function 'asm'; ISO C99 and later do not support implicit function declarations [-Wimplicit-function-declaration]",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "use of undeclared identifier 'asm'",
+    "diagnostic": "error: use of undeclared identifier 'asm'",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "pr110252-2.c",
+   "sha256": "fd9dcb36b73f606950589a99880285088dfa2cac349c44bf92cff44fdceaa836"
+  },
+  {
+   "c17": {
+    "class": "use of undeclared identifier 'asm'",
+    "diagnostic": "error: use of undeclared identifier 'asm'",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "use of undeclared identifier 'asm'",
+    "diagnostic": "error: use of undeclared identifier 'asm'",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "pr114552.c",
+   "sha256": "d02058ac978a11c5f87863e365877c06ae65d1abe219c9618dc96cfc3d4215da"
+  },
+  {
+   "c17": {
+    "class": "use of unknown builtin '__builtin_exit' [-Wimplicit-function-declaration]",
+    "diagnostic": "error: use of unknown builtin '__builtin_exit' [-Wimplicit-function-declaration]",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "use of undeclared identifier '__builtin_exit'; did you mean '__builtin_trap'?",
+    "diagnostic": "error: use of undeclared identifier '__builtin_exit'; did you mean '__builtin_trap'?",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "pr115033.c",
+   "sha256": "74b9fdb37a0200d3bc693e5edfbfef811db197ed0e700e9079b472d6a9da1ee4"
+  },
+  {
+   "c17": {
+    "class": "use of undeclared identifier 'asm'",
+    "diagnostic": "error: use of undeclared identifier 'asm'",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "use of undeclared identifier 'asm'",
+    "diagnostic": "error: use of undeclared identifier 'asm'",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "pr121957.c",
+   "sha256": "ab466054abd1c89fedb4a9380fc6124dc39ad761d2bf755a262098a57b652d5d"
+  },
+  {
+   "c17": {
+    "class": "use of undeclared identifier 'asm'",
+    "diagnostic": "error: use of undeclared identifier 'asm'",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "use of undeclared identifier 'asm'",
+    "diagnostic": "error: use of undeclared identifier 'asm'",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "pr123625-3.c",
+   "sha256": "565093736caf8f3e86a1cdb4d0e3045767df59f3e40fda9fc804f092b3f1d93b"
+  },
+  {
+   "c17": {
+    "class": "cannot decrement value of type 'W' (vector of 4 'short' values)",
+    "diagnostic": "error: cannot decrement value of type 'W' (vector of 4 'short' values)",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "cannot decrement value of type 'W' (vector of 4 'short' values)",
+    "diagnostic": "error: cannot decrement value of type 'W' (vector of 4 'short' values)",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "pr123753.c",
+   "sha256": "6aaf3b1b7a1ccd45485738850b19cd1a57db7c45a38e43060127ea3159f6e693"
+  },
+  {
+   "c17": {
+    "class": "use of unknown builtin '__builtin_mul_overflow_p' [-Wimplicit-function-declaration]",
+    "diagnostic": "error: use of unknown builtin '__builtin_mul_overflow_p' [-Wimplicit-function-declaration]",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "use of undeclared identifier '__builtin_mul_overflow_p'",
+    "diagnostic": "error: use of undeclared identifier '__builtin_mul_overflow_p'",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "pr123864.c",
+   "sha256": "7a5499e1afefc89136bd1756451a723b1c47e8633cae3d31bc83d8a90bfa8cd6"
+  },
+  {
+   "c17": {
+    "class": "call to undeclared function 'alloca'; ISO C99 and later do not support implicit function declarations [-Wimplicit-function-declaration]",
+    "diagnostic": "error: call to undeclared function 'alloca'; ISO C99 and later do not support implicit function declarations [-Wimplicit-function-declaration]",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "use of undeclared identifier 'alloca'",
+    "diagnostic": "error: use of undeclared identifier 'alloca'",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "pr22061-1.c",
+   "sha256": "17023e3d4277776005825ba2d7e62687f843716ce66f5a0dd28d37708a8a5961"
+  },
+  {
+   "c17": {
+    "class": "function definition is not allowed here",
+    "diagnostic": "error: function definition is not allowed here",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "function definition is not allowed here",
+    "diagnostic": "error: function definition is not allowed here",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "pr22061-3.c",
+   "sha256": "381762a13f59559ad0cdd9c341010a83e2b9923a1e520627b64faa4989e072bf"
+  },
+  {
+   "c17": {
+    "class": "function definition is not allowed here",
+    "diagnostic": "error: function definition is not allowed here",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "function definition is not allowed here",
+    "diagnostic": "error: function definition is not allowed here",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "pr22061-4.c",
+   "sha256": "e8366e3541c00a8b9bd99723c50ef3aa49246bf0423f71f3f4f28a6129db89d5"
+  },
+  {
+   "c17": {
+    "class": "function definition is not allowed here",
+    "diagnostic": "error: function definition is not allowed here",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "function definition is not allowed here",
+    "diagnostic": "error: function definition is not allowed here",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "pr24135.c",
+   "sha256": "27672b21b01966d4a1759f20f756df6ee0f566a7e847962cd7f20364f97c5f4d"
+  },
+  {
+   "c17": {
+    "class": "initialization of flexible array member is not allowed",
+    "diagnostic": "error: initialization of flexible array member is not allowed",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "initialization of flexible array member is not allowed",
+    "diagnostic": "error: initialization of flexible array member is not allowed",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "pr28865.c",
+   "sha256": "ab1f11aedd377667e47af314418c4c79c6492b71b327c4181bb772c19c2cf6a4"
+  },
+  {
+   "c17": {
+    "class": "'../../gcc.dg/tree-ssa/pr30314.c' file not found",
+    "diagnostic": "error: '../../gcc.dg/tree-ssa/pr30314.c' file not found",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "'../../gcc.dg/tree-ssa/pr30314.c' file not found",
+    "diagnostic": "error: '../../gcc.dg/tree-ssa/pr30314.c' file not found",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "pr30314.c",
+   "sha256": "067897649784f6d96b597ab986dbb0cc026d69061717e4a230a775bc4003ab70"
+  },
+  {
+   "c17": {
+    "class": "use of undeclared identifier 'asm'",
+    "diagnostic": "error: use of undeclared identifier 'asm'",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "use of undeclared identifier 'asm'",
+    "diagnostic": "error: use of undeclared identifier 'asm'",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "pr38533.c",
+   "sha256": "83dc2df65e1e7f39566135e089320d4d14b083aa94f4200daac27f7cd64a12af"
+  },
+  {
+   "c17": {
+    "class": "use of unknown builtin '__builtin_isinff' [-Wimplicit-function-declaration]",
+    "diagnostic": "error: use of unknown builtin '__builtin_isinff' [-Wimplicit-function-declaration]",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "use of undeclared identifier '__builtin_isinff'",
+    "diagnostic": "error: use of undeclared identifier '__builtin_isinff'",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "pr39228.c",
+   "sha256": "db812d882eb3636213f482b4cfcfc660bf24b2340ae40e0074de70f1b4c13e76"
+  },
+  {
+   "c17": {
+    "class": "use of undeclared identifier 'asm'",
+    "diagnostic": "error: use of undeclared identifier 'asm'",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "use of undeclared identifier 'asm'",
+    "diagnostic": "error: use of undeclared identifier 'asm'",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "pr40022.c",
+   "sha256": "94f0ac85030ade83c138896797a082daa1ed67c9283691d5e55f7d2c02764f72"
+  },
+  {
+   "c17": {
+    "class": "use of undeclared identifier 'asm'",
+    "diagnostic": "error: use of undeclared identifier 'asm'",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "use of undeclared identifier 'asm'",
+    "diagnostic": "error: use of undeclared identifier 'asm'",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "pr40657.c",
+   "sha256": "a0abf3cd1580bf84cbc2d77f0772bd4ea1bc9bb3a7ae4a1790b5a2684e3fc64d"
+  },
+  {
+   "c17": {
+    "class": "use of undeclared identifier 'asm'",
+    "diagnostic": "error: use of undeclared identifier 'asm'",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "use of undeclared identifier 'asm'",
+    "diagnostic": "error: use of undeclared identifier 'asm'",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "pr41239.c",
+   "sha256": "1dfd507b1fd67c634b022372012b6dac0795c5c2c467cd535796b161dc2c9aae"
+  },
+  {
+   "c17": {
+    "class": "fields must have a constant size",
+    "diagnostic": "error: fields must have a constant size: 'variable length array in structure' extension will never be supported",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "fields must have a constant size",
+    "diagnostic": "error: fields must have a constant size: 'variable length array in structure' extension will never be supported",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "pr41935.c",
+   "sha256": "c44599de1ebebc023e84611d0202e97c6fdd92132176a1f706e4f918304c607d"
+  },
+  {
+   "c17": {
+    "class": "call to undeclared function 'asm'; ISO C99 and later do not support implicit function declarations [-Wimplicit-function-declaration]",
+    "diagnostic": "error: call to undeclared function 'asm'; ISO C99 and later do not support implicit function declarations [-Wimplicit-function-declaration]",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "use of undeclared identifier 'asm'",
+    "diagnostic": "error: use of undeclared identifier 'asm'",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "pr43385.c",
+   "sha256": "0f9e7bd32e02a07500c4cbf0742f64582daeb4fa44440b754bd4f31a266a1fba"
+  },
+  {
+   "c17": {
+    "class": "call to undeclared function 'asm'; ISO C99 and later do not support implicit function declarations [-Wimplicit-function-declaration]",
+    "diagnostic": "error: call to undeclared function 'asm'; ISO C99 and later do not support implicit function declarations [-Wimplicit-function-declaration]",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "use of undeclared identifier 'asm'",
+    "diagnostic": "error: use of undeclared identifier 'asm'",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "pr43560.c",
+   "sha256": "228ab691e515c7080097e1106ae92c6df4b434635010d9bf76219a3ff19d9d6b"
+  },
+  {
+   "c17": {
+    "class": "call to undeclared function 'asm'; ISO C99 and later do not support implicit function declarations [-Wimplicit-function-declaration]",
+    "diagnostic": "error: call to undeclared function 'asm'; ISO C99 and later do not support implicit function declarations [-Wimplicit-function-declaration]",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "use of undeclared identifier 'asm'",
+    "diagnostic": "error: use of undeclared identifier 'asm'",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "pr44852.c",
+   "sha256": "b46e474b2a5d18b5e49e981e8c07673bfb7733c83ff98abb5045b2a7afeca777"
+  },
+  {
+   "c17": {
+    "class": "use of undeclared identifier 'asm'",
+    "diagnostic": "error: use of undeclared identifier 'asm'",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "use of undeclared identifier 'asm'",
+    "diagnostic": "error: use of undeclared identifier 'asm'",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "pr45695.c",
+   "sha256": "97cae3a6b875691dbe35a325ebcd8aef6bdeb11b2f2c2cdc2797829c97d28e31"
+  },
+  {
+   "c17": {
+    "class": "use of undeclared identifier 'asm'",
+    "diagnostic": "error: use of undeclared identifier 'asm'",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "use of undeclared identifier 'asm'",
+    "diagnostic": "error: use of undeclared identifier 'asm'",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "pr46309.c",
+   "sha256": "efdfee561a9ae022a79c999bb4616b80864baeed05ba75701fed5950d7fd208d"
+  },
+  {
+   "c17": {
+    "class": "use of unknown builtin '__builtin_apply' [-Wimplicit-function-declaration]",
+    "diagnostic": "error: use of unknown builtin '__builtin_apply' [-Wimplicit-function-declaration]",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "use of undeclared identifier '__builtin_apply'",
+    "diagnostic": "error: use of undeclared identifier '__builtin_apply'",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "pr47237.c",
+   "sha256": "47ff0df11587f7443d78ae36eb756353bbdf62d330de2af86ac54c4d546478c4"
+  },
+  {
+   "c17": {
+    "class": "use of undeclared identifier 'asm'",
+    "diagnostic": "error: use of undeclared identifier 'asm'",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "use of undeclared identifier 'asm'",
+    "diagnostic": "error: use of undeclared identifier 'asm'",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "pr47925.c",
+   "sha256": "8449e16ccd260108d325586445d5edb555c4605e537a553dd96dfd485a4d8132"
+  },
+  {
+   "c17": {
+    "class": "call to undeclared function 'asm'; ISO C99 and later do not support implicit function declarations [-Wimplicit-function-declaration]",
+    "diagnostic": "error: call to undeclared function 'asm'; ISO C99 and later do not support implicit function declarations [-Wimplicit-function-declaration]",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "use of undeclared identifier 'asm'",
+    "diagnostic": "error: use of undeclared identifier 'asm'",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "pr49218.c",
+   "sha256": "3f80159895f89f16fc09db7f9e9b34312ce95b9a9e63d1a819686015169d02a4"
+  },
+  {
+   "c17": {
+    "class": "use of undeclared identifier 'asm'",
+    "diagnostic": "error: use of undeclared identifier 'asm'",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "use of undeclared identifier 'asm'",
+    "diagnostic": "error: use of undeclared identifier 'asm'",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "pr49279.c",
+   "sha256": "9eda8b5515f82c9efdb766cd10e4506cd40b182964eba735152742427d0918a5"
+  },
+  {
+   "c17": {
+    "class": "call to undeclared function 'asm'; ISO C99 and later do not support implicit function declarations [-Wimplicit-function-declaration]",
+    "diagnostic": "error: call to undeclared function 'asm'; ISO C99 and later do not support implicit function declarations [-Wimplicit-function-declaration]",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "use of undeclared identifier 'asm'",
+    "diagnostic": "error: use of undeclared identifier 'asm'",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "pr49390.c",
+   "sha256": "4ffe30087a58602c94e236df7f46dbd940ac5c736a3bbba4783a7af6122526eb"
+  },
+  {
+   "c17": {
+    "class": "illegal storage class on file-scoped variable",
+    "diagnostic": "error: illegal storage class on file-scoped variable",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "illegal storage class on file-scoped variable",
+    "diagnostic": "error: illegal storage class on file-scoped variable",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "pr51447.c",
+   "sha256": "5defc96b0d7221a3457c93e047c824623dd12c43199dc9a6c5e8e365563b9c9a"
+  },
+  {
+   "c17": {
+    "class": "call to undeclared function 'asm'; ISO C99 and later do not support implicit function declarations [-Wimplicit-function-declaration]",
+    "diagnostic": "error: call to undeclared function 'asm'; ISO C99 and later do not support implicit function declarations [-Wimplicit-function-declaration]",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "use of undeclared identifier 'asm'",
+    "diagnostic": "error: use of undeclared identifier 'asm'",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "pr51581-1.c",
+   "sha256": "a8ead3bd58a918fd727e5000bc42bf2c4d29322cc219077b41b955434d8d7a15"
+  },
+  {
+   "c17": {
+    "class": "call to undeclared function 'asm'; ISO C99 and later do not support implicit function declarations [-Wimplicit-function-declaration]",
+    "diagnostic": "error: call to undeclared function 'asm'; ISO C99 and later do not support implicit function declarations [-Wimplicit-function-declaration]",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "use of undeclared identifier 'asm'",
+    "diagnostic": "error: use of undeclared identifier 'asm'",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "pr51581-2.c",
+   "sha256": "3f2e64f065ea12387132139f45f0db5efe80cde693971d30b0597c2a8d5472b8"
+  },
+  {
+   "c17": {
+    "class": "use of undeclared identifier 'asm'",
+    "diagnostic": "error: use of undeclared identifier 'asm'",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "use of undeclared identifier 'asm'",
+    "diagnostic": "error: use of undeclared identifier 'asm'",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "pr51877.c",
+   "sha256": "ff4558827a1f24374fe48b6194e92900d0fd7a33aa8ed37228392120fc6c9c7d"
+  },
+  {
+   "c17": {
+    "class": "use of undeclared identifier 'asm'",
+    "diagnostic": "error: use of undeclared identifier 'asm'",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "use of undeclared identifier 'asm'",
+    "diagnostic": "error: use of undeclared identifier 'asm'",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "pr51933.c",
+   "sha256": "e9c8c8444ed3b0871b04046548507f364c296bff4ae0cf0f2bc73dfb1bdab6fe"
+  },
+  {
+   "c17": {
+    "class": "call to undeclared function 'asm'; ISO C99 and later do not support implicit function declarations [-Wimplicit-function-declaration]",
+    "diagnostic": "error: call to undeclared function 'asm'; ISO C99 and later do not support implicit function declarations [-Wimplicit-function-declaration]",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "use of undeclared identifier 'asm'",
+    "diagnostic": "error: use of undeclared identifier 'asm'",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "pr52286.c",
+   "sha256": "1ad65a74b36e083261ac8d1b7a7a53750912e6541915d97cff81fb119eaae172"
+  },
+  {
+   "c17": {
+    "class": "use of undeclared identifier 'asm'",
+    "diagnostic": "error: use of undeclared identifier 'asm'",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "use of undeclared identifier 'asm'",
+    "diagnostic": "error: use of undeclared identifier 'asm'",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "pr53645-2.c",
+   "sha256": "db2bcd9e9c908c961620ffe1571493af40e3caf5e38e828eaa4e282e89617667"
+  },
+  {
+   "c17": {
+    "class": "use of undeclared identifier 'asm'",
+    "diagnostic": "error: use of undeclared identifier 'asm'",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "use of undeclared identifier 'asm'",
+    "diagnostic": "error: use of undeclared identifier 'asm'",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "pr53645.c",
+   "sha256": "925eeae3d9110fc1ca7c6ba6b3c5a2f6469176d3536915281a65597ba16f7216"
+  },
+  {
+   "c17": {
+    "class": "type specifier missing, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "diagnostic": "error: type specifier missing, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "a type specifier is required for all declarations",
+    "diagnostic": "error: a type specifier is required for all declarations",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "pr55875.c",
+   "sha256": "25fc3228b293a6894a3aaa48ad7cf6f0cef3e8e4c5fd4d1aa53881cee9ef3aa6"
+  },
+  {
+   "c17": {
+    "class": "use of undeclared identifier 'asm'",
+    "diagnostic": "error: use of undeclared identifier 'asm'",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "use of undeclared identifier 'asm'",
+    "diagnostic": "error: use of undeclared identifier 'asm'",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "pr56205.c",
+   "sha256": "8ba26eb710dbed48e0610cf22ddc6ecde644d7ee7dc1df15ad4e07c2cee6214d"
+  },
+  {
+   "c17": {
+    "class": "use of undeclared identifier 'asm'",
+    "diagnostic": "error: use of undeclared identifier 'asm'",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "use of undeclared identifier 'asm'",
+    "diagnostic": "error: use of undeclared identifier 'asm'",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "pr56866.c",
+   "sha256": "83fcb0cdb4840df1bffc689735278830e88ee129461a4aa20f39845ca2838e19"
+  },
+  {
+   "c17": {
+    "class": "use of undeclared identifier 'asm'",
+    "diagnostic": "error: use of undeclared identifier 'asm'",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "use of undeclared identifier 'asm'",
+    "diagnostic": "error: use of undeclared identifier 'asm'",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "pr57344-1.c",
+   "sha256": "d2905e84556aec89bd10118f8ad332dcf97fcf0594db7b06f2efec1d97cd9bad"
+  },
+  {
+   "c17": {
+    "class": "use of undeclared identifier 'asm'",
+    "diagnostic": "error: use of undeclared identifier 'asm'",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "use of undeclared identifier 'asm'",
+    "diagnostic": "error: use of undeclared identifier 'asm'",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "pr57344-2.c",
+   "sha256": "b9225dbb481d0082089efc25f8d78dccb59ef46c3757299674731b5e6f3956d9"
+  },
+  {
+   "c17": {
+    "class": "use of undeclared identifier 'asm'",
+    "diagnostic": "error: use of undeclared identifier 'asm'",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "use of undeclared identifier 'asm'",
+    "diagnostic": "error: use of undeclared identifier 'asm'",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "pr57344-3.c",
+   "sha256": "704a3f4522b2dec58a74827a46328c1c80f2a446d098b2ca119ce9fd6d7c4c35"
+  },
+  {
+   "c17": {
+    "class": "use of undeclared identifier 'asm'",
+    "diagnostic": "error: use of undeclared identifier 'asm'",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "use of undeclared identifier 'asm'",
+    "diagnostic": "error: use of undeclared identifier 'asm'",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "pr57344-4.c",
+   "sha256": "5be4ef3fe53f12b281cc57f620c07c95a7c0b80c3d9215b5858e76cc866a8322"
+  },
+  {
+   "c17": {
+    "class": "call to undeclared function 'asm'; ISO C99 and later do not support implicit function declarations [-Wimplicit-function-declaration]",
+    "diagnostic": "error: call to undeclared function 'asm'; ISO C99 and later do not support implicit function declarations [-Wimplicit-function-declaration]",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "use of undeclared identifier 'asm'",
+    "diagnostic": "error: use of undeclared identifier 'asm'",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "pr58277-1.c",
+   "sha256": "9c3993ea5d38d997a2196b5e8bc4152c1caafb1eb6f578f935e519f76d2c5c68"
+  },
+  {
+   "c17": {
+    "class": "use of undeclared identifier 'asm'",
+    "diagnostic": "error: use of undeclared identifier 'asm'",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "use of undeclared identifier 'asm'",
+    "diagnostic": "error: use of undeclared identifier 'asm'",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "pr58419.c",
+   "sha256": "04c11361bf9f905eb1fa56b9b909b038594ea9fb0727c92b65ba7155ed291044"
+  },
+  {
+   "c17": {
+    "class": "use of undeclared identifier 'asm'",
+    "diagnostic": "error: use of undeclared identifier 'asm'",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "use of undeclared identifier 'asm'",
+    "diagnostic": "error: use of undeclared identifier 'asm'",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "pr63641.c",
+   "sha256": "7c16b6195fe8d128c34e012c8c9ddc0a67a553ee9a5385f6ede9998e65c108b2"
+  },
+  {
+   "c17": {
+    "class": "call to undeclared function 'asm'; ISO C99 and later do not support implicit function declarations [-Wimplicit-function-declaration]",
+    "diagnostic": "error: call to undeclared function 'asm'; ISO C99 and later do not support implicit function declarations [-Wimplicit-function-declaration]",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "use of undeclared identifier 'asm'",
+    "diagnostic": "error: use of undeclared identifier 'asm'",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "pr65053-1.c",
+   "sha256": "416cffd40b4b749caaf927a9f799209804933041834065b3ceeb8d5b91ba23ca"
+  },
+  {
+   "c17": {
+    "class": "use of undeclared identifier 'asm'",
+    "diagnostic": "error: use of undeclared identifier 'asm'",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "use of undeclared identifier 'asm'",
+    "diagnostic": "error: use of undeclared identifier 'asm'",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "pr65053-2.c",
+   "sha256": "2114ba7bb61e1b843de716d1701661ee5474009df678412b545bd99480f662de"
+  },
+  {
+   "c17": {
+    "class": "use of undeclared identifier 'asm'",
+    "diagnostic": "error: use of undeclared identifier 'asm'",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "use of undeclared identifier 'asm'",
+    "diagnostic": "error: use of undeclared identifier 'asm'",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "pr65648.c",
+   "sha256": "32ce7dce6a700e313491e70165cde0c24abac9ff488949b02fe254aaf98aea05"
+  },
+  {
+   "c17": {
+    "class": "use of undeclared identifier 'asm'",
+    "diagnostic": "error: use of undeclared identifier 'asm'",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "use of undeclared identifier 'asm'",
+    "diagnostic": "error: use of undeclared identifier 'asm'",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "pr65956.c",
+   "sha256": "4941a21659759d02b6615f8a97f33130cc9fb0bb05ea1d36ca39641f5f789112"
+  },
+  {
+   "c17": {
+    "class": "use of undeclared identifier 'asm'",
+    "diagnostic": "error: use of undeclared identifier 'asm'",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "use of undeclared identifier 'asm'",
+    "diagnostic": "error: use of undeclared identifier 'asm'",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "pr68328.c",
+   "sha256": "5a30585c2e4d4ac4568dd2e3a3d660a0f1427c902f3517f053267c45b68ec353"
+  },
+  {
+   "c17": {
+    "class": "use of undeclared identifier 'asm'",
+    "diagnostic": "error: use of undeclared identifier 'asm'",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "use of undeclared identifier 'asm'",
+    "diagnostic": "error: use of undeclared identifier 'asm'",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "pr69320-2.c",
+   "sha256": "b9315cebf27eff61c17e4baf6403b2a3d897c976dff0f1056d9966ba95039608"
+  },
+  {
+   "c17": {
+    "class": "call to undeclared function 'asm'; ISO C99 and later do not support implicit function declarations [-Wimplicit-function-declaration]",
+    "diagnostic": "error: call to undeclared function 'asm'; ISO C99 and later do not support implicit function declarations [-Wimplicit-function-declaration]",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "use of undeclared identifier 'asm'",
+    "diagnostic": "error: use of undeclared identifier 'asm'",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "pr69691.c",
+   "sha256": "20b17f88109e1dea94d518262b6fd003f3d8aa1fb472e2aa659dd2bacdcb1a05"
+  },
+  {
+   "c17": {
+    "class": "function definition is not allowed here",
+    "diagnostic": "error: function definition is not allowed here",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "function definition is not allowed here",
+    "diagnostic": "error: function definition is not allowed here",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "pr71494.c",
+   "sha256": "d8a034c18c5df17b9cd31850a3d95362d40142de8ece62fd48bc811944a73b37"
+  },
+  {
+   "c17": {
+    "class": "use of undeclared identifier 'asm'",
+    "diagnostic": "error: use of undeclared identifier 'asm'",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "use of undeclared identifier 'asm'",
+    "diagnostic": "error: use of undeclared identifier 'asm'",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "pr78438.c",
+   "sha256": "11044112ae165481a8c08080364db0cabd07db0e496e844cad5420fdbc7ecaaa"
+  },
+  {
+   "c17": {
+    "class": "use of undeclared identifier 'asm'",
+    "diagnostic": "error: use of undeclared identifier 'asm'",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "use of undeclared identifier 'asm'",
+    "diagnostic": "error: use of undeclared identifier 'asm'",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "pr78726.c",
+   "sha256": "5d84e06153a8c25f9f471b344915cdd12d433c8e99e1a8705ce1a58edda58c60"
+  },
+  {
+   "c17": {
+    "class": "use of undeclared identifier 'asm'",
+    "diagnostic": "error: use of undeclared identifier 'asm'",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "use of undeclared identifier 'asm'",
+    "diagnostic": "error: use of undeclared identifier 'asm'",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "pr79354.c",
+   "sha256": "6475f81c237d92bbdf59e5d690f7a82b35e9b78494b906984e42ea4dbbb9d489"
+  },
+  {
+   "c17": {
+    "class": "use of undeclared identifier 'asm'",
+    "diagnostic": "error: use of undeclared identifier 'asm'",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "use of undeclared identifier 'asm'",
+    "diagnostic": "error: use of undeclared identifier 'asm'",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "pr79737-2.c",
+   "sha256": "e96f01745d55614d7af585725f953bb2af4d397c337126bc0dee5a60dfe38f33"
+  },
+  {
+   "c17": {
+    "class": "use of undeclared identifier 'asm'",
+    "diagnostic": "error: use of undeclared identifier 'asm'",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "use of undeclared identifier 'asm'",
+    "diagnostic": "error: use of undeclared identifier 'asm'",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "pr80421.c",
+   "sha256": "14b76f7df54ab7aeb54f2a41586925615e7ea07b17ccbbafcb56d70a03d60447"
+  },
+  {
+   "c17": {
+    "class": "GNU decimal type extension not supported",
+    "diagnostic": "error: GNU decimal type extension not supported",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "GNU decimal type extension not supported",
+    "diagnostic": "error: GNU decimal type extension not supported",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "pr80692.c",
+   "sha256": "1bf37020e7b5154a181f116a0fba8422b8a2880d3882a2ade2b154a8833ebcd6"
+  },
+  {
+   "c17": {
+    "class": "fields must have a constant size",
+    "diagnostic": "error: fields must have a constant size: 'variable length array in structure' extension will never be supported",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "fields must have a constant size",
+    "diagnostic": "error: fields must have a constant size: 'variable length array in structure' extension will never be supported",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "pr82210.c",
+   "sha256": "eb4c0972344f92877788bacc00e6171a74834dfb51e0647fdc9e0c6afb1daec8"
+  },
+  {
+   "c17": {
+    "class": "use of undeclared identifier 'asm'",
+    "diagnostic": "error: use of undeclared identifier 'asm'",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "use of undeclared identifier 'asm'",
+    "diagnostic": "error: use of undeclared identifier 'asm'",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "pr82954.c",
+   "sha256": "9dec4bb718f6f192824d86d7a370f8f90ca7ca073e0fe1e38b409fcfd59db01d"
+  },
+  {
+   "c17": {
+    "class": "use of undeclared identifier 'asm'",
+    "diagnostic": "error: use of undeclared identifier 'asm'",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "use of undeclared identifier 'asm'",
+    "diagnostic": "error: use of undeclared identifier 'asm'",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "pr84478.c",
+   "sha256": "ce3524a3473505f134456b017b42b49c72d16903d8a6335e024cf8952613b0b2"
+  },
+  {
+   "c17": {
+    "class": "use of undeclared identifier 'asm'",
+    "diagnostic": "error: use of undeclared identifier 'asm'",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "use of undeclared identifier 'asm'",
+    "diagnostic": "error: use of undeclared identifier 'asm'",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "pr84524.c",
+   "sha256": "1d04eca2dbb1fc146d0a3e7d7cc6dfc4134c4ee60b7d2f91d2991504b7ca93c0"
+  },
+  {
+   "c17": {
+    "class": "use of undeclared identifier 'asm'",
+    "diagnostic": "error: use of undeclared identifier 'asm'",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "use of undeclared identifier 'asm'",
+    "diagnostic": "error: use of undeclared identifier 'asm'",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "pr85156.c",
+   "sha256": "d1c72983f5263d789f2b66f2c6f08c3a9967657514439b3c95924a135d400899"
+  },
+  {
+   "c17": {
+    "class": "use of unknown builtin '__builtin_shuffle' [-Wimplicit-function-declaration]",
+    "diagnostic": "error: use of unknown builtin '__builtin_shuffle' [-Wimplicit-function-declaration]",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "use of undeclared identifier '__builtin_shuffle'",
+    "diagnostic": "error: use of undeclared identifier '__builtin_shuffle'",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "pr85331.c",
+   "sha256": "35b9bec3b10824bb2b18389b075645c262c5a9d66099b8746fa4f1d8d3618309"
+  },
+  {
+   "c17": {
+    "class": "use of undeclared identifier 'asm'",
+    "diagnostic": "error: use of undeclared identifier 'asm'",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "use of undeclared identifier 'asm'",
+    "diagnostic": "error: use of undeclared identifier 'asm'",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "pr85756.c",
+   "sha256": "d8aa91df34326bd434879e1096f1b6ee8ab3df5f6aa7cdb16c2df7327f38be6f"
+  },
+  {
+   "c17": {
+    "class": "use of undeclared identifier 'asm'",
+    "diagnostic": "error: use of undeclared identifier 'asm'",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "use of undeclared identifier 'asm'",
+    "diagnostic": "error: use of undeclared identifier 'asm'",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "pr88904.c",
+   "sha256": "089ab554cb3504b7ed21cb4931c2b5d24a413018216c79cad16e0f4689095099"
+  },
+  {
+   "c17": {
+    "class": "use of undeclared identifier 'asm'",
+    "diagnostic": "error: use of undeclared identifier 'asm'",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "use of undeclared identifier 'asm'",
+    "diagnostic": "error: use of undeclared identifier 'asm'",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "pr93945.c",
+   "sha256": "90f50688376af141523da44999f944419374565eb8d035f84906c2d542b6271c"
+  },
+  {
+   "c17": {
+    "class": "use of undeclared identifier 'asm'",
+    "diagnostic": "error: use of undeclared identifier 'asm'",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "use of undeclared identifier 'asm'",
+    "diagnostic": "error: use of undeclared identifier 'asm'",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "pr94130.c",
+   "sha256": "8ead8818ab7a97454e618bdcc70d04bc471798b02b29bc9a561fbefb7086a942"
+  },
+  {
+   "c17": {
+    "class": "use of unknown builtin '__builtin_shuffle' [-Wimplicit-function-declaration]",
+    "diagnostic": "error: use of unknown builtin '__builtin_shuffle' [-Wimplicit-function-declaration]",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "use of undeclared identifier '__builtin_shuffle'",
+    "diagnostic": "error: use of undeclared identifier '__builtin_shuffle'",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "pr94591.c",
+   "sha256": "dc79b9eb8c0c858a9e1489d3252702134a65f879074b4be87916c46f326b2c65"
+  },
+  {
+   "c17": {
+    "class": "'../../gcc.dg/pr98304-1.c' file not found",
+    "diagnostic": "error: '../../gcc.dg/pr98304-1.c' file not found",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "'../../gcc.dg/pr98304-1.c' file not found",
+    "diagnostic": "error: '../../gcc.dg/pr98304-1.c' file not found",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "pr98304-2.c",
+   "sha256": "e54a73a8ea12a4069c0f2a2220749b41c6432679956e1c4572d098f5b04cf7c6"
+  },
+  {
+   "c17": {
+    "class": "'gcc_tmpnam.h' file not found",
+    "diagnostic": "error: 'gcc_tmpnam.h' file not found",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "'gcc_tmpnam.h' file not found",
+    "diagnostic": "error: 'gcc_tmpnam.h' file not found",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "printf-2.c",
+   "sha256": "a08d2df6f6afa4646816227ac4a25e69275cc35180ed3187a35e2d9795e7a5d0"
+  },
+  {
+   "c17": {
+    "class": "call to undeclared function 'asm'; ISO C99 and later do not support implicit function declarations [-Wimplicit-function-declaration]",
+    "diagnostic": "error: call to undeclared function 'asm'; ISO C99 and later do not support implicit function declarations [-Wimplicit-function-declaration]",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "use of undeclared identifier 'asm'",
+    "diagnostic": "error: use of undeclared identifier 'asm'",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "stkalign.c",
+   "sha256": "3104ccd0ca4de54b8d84ce62fd665928a513795ce1babf46d4277f4a22e1c970"
+  },
+  {
+   "c17": {
+    "class": "type specifier missing, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "diagnostic": "error: type specifier missing, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "unknown type name 'f'",
+    "diagnostic": "error: unknown type name 'f'",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "strct-pack-3.c",
+   "sha256": "c776484b621c110a801e4526e932232e8c2574de48d824993459f5e708ab086b"
+  },
+  {
+   "c17": {
+    "class": "type specifier missing, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "diagnostic": "error: type specifier missing, defaults to 'int'; ISO C99 and later do not support implicit int [-Wimplicit-int]",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "unknown type name 'feq'",
+    "diagnostic": "error: unknown type name 'feq'",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "tstdi-1.c",
+   "sha256": "db9e34b427de29c5ff96ba5e166410a8bfde4cb67e5ca87d9e9df63ab5fbfb77"
+  },
+  {
+   "c17": {
+    "class": "'gcc_tmpnam.h' file not found",
+    "diagnostic": "error: 'gcc_tmpnam.h' file not found",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "'gcc_tmpnam.h' file not found",
+    "diagnostic": "error: 'gcc_tmpnam.h' file not found",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "user-printf.c",
+   "sha256": "6bad5ae75399fc0627e177e9db1e02f6e7c83f10eb107a7919a173b0159a0215"
+  },
+  {
+   "c17": {
+    "class": "use of unknown builtin '__builtin_va_arg_pack' [-Wimplicit-function-declaration]",
+    "diagnostic": "error: use of unknown builtin '__builtin_va_arg_pack' [-Wimplicit-function-declaration]",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "use of undeclared identifier '__builtin_va_arg_pack'",
+    "diagnostic": "error: use of undeclared identifier '__builtin_va_arg_pack'",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c-torture/execute",
+   "name": "va-arg-pack-1.c",
+   "sha256": "89833d58fc9113ca04e2a8a163f08d42755507f542236a58ea0fbbd0119c2f41"
+  },
+  {
+   "c17": {
+    "class": "use of unknown builtin '__builtin_has_attribute' [-Wimplicit-function-declaration]",
+    "diagnostic": "error: use of unknown builtin '__builtin_has_attribute' [-Wimplicit-function-declaration]",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "use of undeclared identifier '__builtin_has_attribute'",
+    "diagnostic": "error: use of undeclared identifier '__builtin_has_attribute'",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c23-run",
+   "name": "gcc/testsuite/gcc.dg/c23-attr-reproducible-5.c",
+   "sha256": "b246b9dbf71dc2a135a48c473e1af89cb7dc1a421cfdc224999ff661c328b6af"
+  },
+  {
+   "c17": {
+    "class": "use of unknown builtin '__builtin_has_attribute' [-Wimplicit-function-declaration]",
+    "diagnostic": "error: use of unknown builtin '__builtin_has_attribute' [-Wimplicit-function-declaration]",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "use of undeclared identifier '__builtin_has_attribute'",
+    "diagnostic": "error: use of undeclared identifier '__builtin_has_attribute'",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c23-run",
+   "name": "gcc/testsuite/gcc.dg/c23-attr-unsequenced-5.c",
+   "sha256": "4118cbd6c63978eef04703f00d44b14378b1d98f5e8a7a3b7286cea6efb81603"
+  },
+  {
+   "c17": {
+    "class": "expected expression",
+    "diagnostic": "error: expected expression",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "expected expression",
+    "diagnostic": "error: expected expression",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c23-run",
+   "name": "gcc/testsuite/gcc.dg/c23-complit-2.c",
+   "sha256": "ecf9f4bf2203d9ec0d545a1acfc191525eb1237cc01634872696f47231b69260"
+  },
+  {
+   "c17": {
+    "class": "expected expression",
+    "diagnostic": "error: expected expression",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "expected expression",
+    "diagnostic": "error: expected expression",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c23-run",
+   "name": "gcc/testsuite/gcc.dg/c23-complit-4.c",
+   "sha256": "c9a0f4a6ad93711535f45d4baa3a6b9c253dafba395cedef26483d02b43e7518"
+  },
+  {
+   "c17": {
+    "class": "call to undeclared function 'typeof'; ISO C99 and later do not support implicit function declarations [-Wimplicit-function-declaration]",
+    "diagnostic": "error: call to undeclared function 'typeof'; ISO C99 and later do not support implicit function declarations [-Wimplicit-function-declaration]",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "'_Atomic' qualifier ignored; operations involving the enumeration type will be non-atomic [-Wunderlying-atomic-qualifier-ignored]",
+    "diagnostic": "error: '_Atomic' qualifier ignored; operations involving the enumeration type will be non-atomic [-Wunderlying-atomic-qualifier-ignored]",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c23-run",
+   "name": "gcc/testsuite/gcc.dg/c23-enum-6.c",
+   "sha256": "c7cecc44c026395c988b52c6d8b7de5e5d2b3993be59383ff69ebff84d4b4ef9"
+  },
+  {
+   "c17": {
+    "class": "\"FLT_SNAN undefined\"",
+    "diagnostic": "error: \"FLT_SNAN undefined\"",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "\"FLT_SNAN undefined\"",
+    "diagnostic": "error: \"FLT_SNAN undefined\"",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c23-run",
+   "name": "gcc/testsuite/gcc.dg/c23-float-6.c",
+   "sha256": "555a78b6886800ae4272eb095ff908b00ebaab23436f04e1ae6f19d1729450b6"
+  },
+  {
+   "c17": {
+    "class": "\"FLT_SNAN undefined\"",
+    "diagnostic": "error: \"FLT_SNAN undefined\"",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "\"FLT_SNAN undefined\"",
+    "diagnostic": "error: \"FLT_SNAN undefined\"",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c23-run",
+   "name": "gcc/testsuite/gcc.dg/c23-float-7a.c",
+   "sha256": "2bf20abda446003ce63be364e32285df600c21c3899bd3f0ec16bdc834eead81"
+  },
+  {
+   "c17": {
+    "class": "\"DBL_SNAN undefined\"",
+    "diagnostic": "error: \"DBL_SNAN undefined\"",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "\"DBL_SNAN undefined\"",
+    "diagnostic": "error: \"DBL_SNAN undefined\"",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c23-run",
+   "name": "gcc/testsuite/gcc.dg/c23-float-7b.c",
+   "sha256": "84268482a890d31224d13943cb07bffe4639b1ede8a7c85eb5264cbf694d281a"
+  },
+  {
+   "c17": {
+    "class": "\"LDBL_SNAN undefined\"",
+    "diagnostic": "error: \"LDBL_SNAN undefined\"",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "\"LDBL_SNAN undefined\"",
+    "diagnostic": "error: \"LDBL_SNAN undefined\"",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c23-run",
+   "name": "gcc/testsuite/gcc.dg/c23-float-7c.c",
+   "sha256": "e34fee3041de1cc1ce94e6389139ba038ad9f34a23e9a32513397105caa7dd17"
+  },
+  {
+   "c17": {
+    "class": "expected ';' after top level declarator",
+    "diagnostic": "error: expected ';' after top level declarator",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "expected ';' after top level declarator",
+    "diagnostic": "error: expected ';' after top level declarator",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c23-run",
+   "name": "gcc/testsuite/gcc.dg/c23-imaginary-constants-3.c",
+   "sha256": "c5c9a554d794c4e149a5a9a68d90f6a1361aad05959132c4e99e3af72e57bf41"
+  },
+  {
+   "c17": {
+    "class": "expected ';' after top level declarator",
+    "diagnostic": "error: expected ';' after top level declarator",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "expected ';' after top level declarator",
+    "diagnostic": "error: expected ';' after top level declarator",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c23-run",
+   "name": "gcc/testsuite/gcc.dg/c23-imaginary-constants-5.c",
+   "sha256": "3fe489e27872c44b33f519da733773b3ca86438ecc5e634cf38c5f085f8dc389"
+  },
+  {
+   "c17": {
+    "class": "expected ';' after top level declarator",
+    "diagnostic": "error: expected ';' after top level declarator",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "expected ';' after top level declarator",
+    "diagnostic": "error: expected ';' after top level declarator",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c23-run",
+   "name": "gcc/testsuite/gcc.dg/c23-imaginary-constants-9.c",
+   "sha256": "f770123a4e55319815cd7f4ce90269437ed8180c15139239578a84e9eb4abcaa"
+  },
+  {
+   "c17": {
+    "class": "use of undeclared identifier 'nullptr'",
+    "diagnostic": "error: use of undeclared identifier 'nullptr'",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "assigning to '_Atomic(bool)' from incompatible type 'nullptr_t'",
+    "diagnostic": "error: assigning to '_Atomic(bool)' from incompatible type 'nullptr_t'",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c23-run",
+   "name": "gcc/testsuite/gcc.dg/c23-nullptr-1.c",
+   "sha256": "54f44a40b66f789e629dbdd240ead75ac03154527529209b56044d5a1f85a94c"
+  },
+  {
+   "c17": {
+    "class": "address of register variable requested",
+    "diagnostic": "error: address of register variable requested",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "address of register variable requested",
+    "diagnostic": "error: address of register variable requested",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c23-run",
+   "name": "gcc/testsuite/gcc.dg/c23-register-array-2.c",
+   "sha256": "5dcaa995bb635dddcf16986fcca65b5ffac7da8f75daf0f539deb5555bfc40b1"
+  },
+  {
+   "c17": {
+    "class": "address of register variable requested",
+    "diagnostic": "error: address of register variable requested",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "address of register variable requested",
+    "diagnostic": "error: address of register variable requested",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c23-run",
+   "name": "gcc/testsuite/gcc.dg/c23-register-array-3.c",
+   "sha256": "5d4e01931e48085aee9193413e6b3348f4f60fe9e4078a4f3060588a78e48ebf"
+  },
+  {
+   "c17": {
+    "class": "address of register variable requested",
+    "diagnostic": "error: address of register variable requested",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "address of register variable requested",
+    "diagnostic": "error: address of register variable requested",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c23-run",
+   "name": "gcc/testsuite/gcc.dg/c23-register-array-4.c",
+   "sha256": "ebe50019a17a0141cd0a5f2ac7aa2a63480f41060c668b893eab7eaaa4342021"
+  },
+  {
+   "c17": {
+    "class": "ISO C requires a named parameter before '...'",
+    "diagnostic": "error: ISO C requires a named parameter before '...'",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "use of undeclared identifier 'random'",
+    "diagnostic": "error: use of undeclared identifier 'random'",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c23-run",
+   "name": "gcc/testsuite/gcc.dg/c23-stdarg-4.c",
+   "sha256": "33b60989f1b74a0470ef02d768a0beb7fd1d9f0d8c418ebeb57cad4da55d5509"
+  },
+  {
+   "c17": {
+    "class": "ISO C requires a named parameter before '...'",
+    "diagnostic": "error: ISO C requires a named parameter before '...'",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "use of undeclared identifier 'random'",
+    "diagnostic": "error: use of undeclared identifier 'random'",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c23-run",
+   "name": "gcc/testsuite/gcc.dg/c23-stdarg-6.c",
+   "sha256": "c7026e67e67b1aef948f213c2c71d44a3f64ed15be4bb8cddff80c26178d6b13"
+  },
+  {
+   "c17": {
+    "class": "ISO C requires a named parameter before '...'",
+    "diagnostic": "error: ISO C requires a named parameter before '...'",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "use of undeclared identifier 'random'",
+    "diagnostic": "error: use of undeclared identifier 'random'",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c23-run",
+   "name": "gcc/testsuite/gcc.dg/c23-stdarg-7.c",
+   "sha256": "ecee5b4e14023b21405ceccf54dee93283a120950635dcb6e1465cb039d6e6d1"
+  },
+  {
+   "c17": {
+    "class": "ISO C requires a named parameter before '...'",
+    "diagnostic": "error: ISO C requires a named parameter before '...'",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "use of undeclared identifier 'random'",
+    "diagnostic": "error: use of undeclared identifier 'random'",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c23-run",
+   "name": "gcc/testsuite/gcc.dg/c23-stdarg-8.c",
+   "sha256": "6763e1f0d2ba6e0a6ef4977f41f86926ad9331a0a9f8ee6562b2d59f558562d9"
+  },
+  {
+   "c17": {
+    "class": "call to undeclared function 'typeof'; ISO C99 and later do not support implicit function declarations [-Wimplicit-function-declaration]",
+    "diagnostic": "error: call to undeclared function 'typeof'; ISO C99 and later do not support implicit function declarations [-Wimplicit-function-declaration]",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "member reference base type 'typeof (*(1 ? &s ",
+    "diagnostic": "error: member reference base type 'typeof (*(1 ? &s : &t))' (aka 'void') is not a structure or union",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c23-run",
+   "name": "gcc/testsuite/gcc.dg/c23-tag-alias-6.c",
+   "sha256": "c480f1ed240983d8bf8ce19ca1525eab4a900b26e0055e270689f2aa8b26f17e"
+  },
+  {
+   "c17": {
+    "class": "call to undeclared function 'typeof'; ISO C99 and later do not support implicit function declarations [-Wimplicit-function-declaration]",
+    "diagnostic": "error: call to undeclared function 'typeof'; ISO C99 and later do not support implicit function declarations [-Wimplicit-function-declaration]",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "use of undeclared identifier '__builtin_clear_padding'",
+    "diagnostic": "error: use of undeclared identifier '__builtin_clear_padding'",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c23-run",
+   "name": "gcc/testsuite/gcc.dg/c23-tag-composite-10.c",
+   "sha256": "0e4b26d77590a272f3a7bae504943c47a4d89a049d203c0d65f2e4d5e2b01786"
+  },
+  {
+   "c17": {
+    "class": "call to undeclared function 'typeof'; ISO C99 and later do not support implicit function declarations [-Wimplicit-function-declaration]",
+    "diagnostic": "error: call to undeclared function 'typeof'; ISO C99 and later do not support implicit function declarations [-Wimplicit-function-declaration]",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "variable has incomplete type 'typeof (*(1 ? &x ",
+    "diagnostic": "error: variable has incomplete type 'typeof (*(1 ? &x : &y))' (aka 'void')",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c23-run",
+   "name": "gcc/testsuite/gcc.dg/c23-tag-composite-7.c",
+   "sha256": "4203d9ab82432f566a57c723ded14eb48d65f0a27bed844f46e639fd2f449bfe"
+  },
+  {
+   "c17": {
+    "class": "expected function body after function declarator",
+    "diagnostic": "error: expected function body after function declarator",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "redeclaration of 'i' with a different type",
+    "diagnostic": "error: redeclaration of 'i' with a different type: 'typeof ((_Atomic(int))ai)' (aka '_Atomic(int)') vs 'typeof (+ai)' (aka 'int')",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c23-run",
+   "name": "gcc/testsuite/gcc.dg/c23-typeof-1.c",
+   "sha256": "c31ad45531565289719faef44198b7b6b6fbdc9d382ac81061c1cc81b28b19b1"
+  },
+  {
+   "c17": {
+    "class": "invalid suffix 'D32' on floating constant",
+    "diagnostic": "error: invalid suffix 'D32' on floating constant",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "invalid suffix 'D32' on floating constant",
+    "diagnostic": "error: invalid suffix 'D32' on floating constant",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c23-run",
+   "name": "gcc/testsuite/gcc.dg/dfp/c23-constants-3.c",
+   "sha256": "c93f80dacbe81bbaecd3e8ad05988a4c8d051f0a14f0fae809ecfc7b569efbd9"
+  },
+  {
+   "c17": {
+    "class": "expected parameter declarator",
+    "diagnostic": "error: expected parameter declarator",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "use of undeclared identifier 'DEC64X_MAX'",
+    "diagnostic": "error: use of undeclared identifier 'DEC64X_MAX'",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c23-run",
+   "name": "gcc/testsuite/gcc.dg/dfp/c23-decimal64x-4.c",
+   "sha256": "d6660b6f2fc712d349ac53c9623e2e7ed5e4488ca00ee2e4b22b8e16847b417c"
+  },
+  {
+   "c17": {
+    "class": "GNU decimal type extension not supported",
+    "diagnostic": "error: GNU decimal type extension not supported",
+    "status": "rejected"
+   },
+   "c23": {
+    "class": "GNU decimal type extension not supported",
+    "diagnostic": "error: GNU decimal type extension not supported",
+    "status": "rejected"
+   },
+   "corpus": "gcc.c23-run",
+   "name": "gcc/testsuite/gcc.dg/dfp/c23-float-dfp-8.c",
+   "sha256": "6dafc4c7e2047023eb882586e53fd3726d0d2835ece0b181d28163b055556f53"
+  }
+ ],
+ "schema": "c-frontend-census-0.1",
+ "survey_commit": "17f5498bd",
+ "survey_measured_at_utc": "2026-11-12T22:23:16Z",
+ "survey_schema": "c-survey-0.1",
+ "totals": {
+  "c17_accepted": 0,
+  "c17_candidates": 293,
+  "c17_rejected": 293,
+  "c23_accepted_by_clang": 1,
+  "c23_rejected": 293,
+  "survey_frontend_rows": 294
+ }
+}

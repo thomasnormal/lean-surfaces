@@ -292,6 +292,15 @@ def evalMemEUnsizedXZ (ctx : Option Nat) (payload : String) : Except String LVec
   | .unsupported _ message => .error message
   | _ => .error "unsized x/z conversion did not produce a literal"
 
+partial def memEHasMemory : MemEDesign → PExpr → Bool
+  | d, .arrayElem n _ | d, .arrayPart n _ _ _ _ => d.memDecl? n |>.isSome
+  | d, .unary _ a | d, .resize _ a | d, .signedResize _ a | d, .squash2 _ a
+  | d, .sysCall _ a | d, .reduce _ a | d, .cast _ a => memEHasMemory d a
+  | d, .binary _ a b | d, .bitSel a b | d, .repl a b => memEHasMemory d a || memEHasMemory d b
+  | d, .partSel a b c | d, .ternary a b c => memEHasMemory d a || memEHasMemory d b || memEHasMemory d c
+  | d, .concat xs => xs.any (memEHasMemory d)
+  | _, _ => false
+
 def evalMemEExpr (d : MemEDesign) (s : MemEState) (ctx : Option Nat) : PExpr → Except String LVec
   | .arrayElem n [idx] => do
       match d.memDecl? n with
@@ -303,6 +312,10 @@ def evalMemEExpr (d : MemEDesign) (s : MemEState) (ctx : Option Nat) : PExpr →
           | none => .ok (LVec.xVec shape.elemWidth)
           | some i => .ok ((s.memory.read n i).getD (LVec.xVec shape.elemWidth))
   | .arrayElem n _ => .error s!"memory RHS '{n}' has rank outside the one-rank E profile"
+  | e@(.arrayPart n [] _ _ _) =>
+      if d.memDecl? n |>.isNone then
+        resToExcept (evalPure2 s.scalar (instExpr2 d.env d.elemWidths ctx e))
+      else .error "memory RHS part select is outside the one-rank E profile"
   | .arrayPart .. => .error "memory RHS part select is outside the one-rank E profile"
   | .fill bit =>
       match ctx with
@@ -311,7 +324,7 @@ def evalMemEExpr (d : MemEDesign) (s : MemEState) (ctx : Option Nat) : PExpr →
   | .unsupported "ConversionExpression:unsized-xz" payload =>
       evalMemEUnsizedXZ ctx payload
   | e =>
-      if memEReadsArray e then
+      if memEReadsArray e && memEHasMemory d e then
         .error "memory expression is not a direct cell read"
       else
         resToExcept (evalPure2 s.scalar (instExpr2 d.env d.elemWidths ctx e))

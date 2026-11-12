@@ -55,8 +55,7 @@ def check_envelopes():
 
 
 def check_loader_wall():
-    # The sized localparam is deliberately refused by load_design_sv2.  Keep
-    # this probe outside the compiled Examples glob: a refusal is the result.
+    # The sized localparam is admitted from its parser-shaped conversion node.
     source = str(HERE / "fdivp_sized_localparam.sv.json")
     text = f'''import LeanModels.Sv.Ingest2\nnamespace FDivpWall\nopen LeanModels.Sv\nload_design_sv2 fdivpSized from "{source}"\nend FDivpWall\n'''
     with tempfile.NamedTemporaryFile("w", suffix=".lean", dir=ROOT,
@@ -68,10 +67,9 @@ def check_loader_wall():
     finally:
         probe_path.unlink(missing_ok=True)
     diagnostic = out + err
-    expected = "localparam 'KOV': unsupported node 'ConversionExpression:width' in a constant context"
-    if code == 0 or expected not in diagnostic:
-        raise RuntimeError(f"sized localparam wall changed:\n{diagnostic}")
-    print("loader: sized localparam refuses with ConversionExpression:width")
+    if code != 0:
+        raise RuntimeError(f"sized localparam load failed:\n{diagnostic}")
+    print("loader: sized localparam loads through implicit width conversion")
 
 
 def source_rows(simulator):

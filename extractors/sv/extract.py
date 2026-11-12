@@ -31016,6 +31016,15 @@ def _sym_conversion(sm, e, ow, tw, state_squash):
             # Icarus 12.0 and the Yosys 0.53 netlist give 255).
             return unsupported(sm, e, "ConversionExpression:default-point-fold")
         return None
+    # An implicit assignment conversion of an integral constant tree is
+    # evaluated at the declaration's current target width (§11.8.2).  Keep
+    # the tree source-shaped and carry the width marker; rejecting this case
+    # as a run-time width conversion loses exact localparam semantics when a
+    # parameter changes the packed range.
+    if (not resizable and e.conversionKind == ConversionKind.Implicit
+            and op.type.isIntegral and e.type.isIntegral):
+        return {"kind": "SignedResize" if op.type.isSigned and e.type.isSigned else "Resize",
+                "span": node_span(sm, e), "width": tw, "operand": inner}
     if not resizable:
         widening = _sym_signed_widening(sm, e, op, inner, tw)
         if widening is not None:

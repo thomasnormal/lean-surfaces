@@ -783,6 +783,19 @@
       "measured": "A parameterized generate loop drives every bit of an output wire exactly once; the source-shaped AssignL windows are admitted as a net-as-variable and the trace matches Icarus."
     },
     {
+      "name": "fdivp_sized_localparam_e",
+      "example": "sem2/fdivp_walls",
+      "file": "fdivp_sized_localparam",
+      "top": "fdivp_sized_localparam",
+      "params": {"W": 8, "OFF": 0},
+      "signals": ["a", "y"],
+      "stimulus": [
+        {"a": "00000000"},
+        {"a": "10100101"}
+      ],
+      "measured": "2026-11-12: an implicit width conversion on an exact typed localparam tree is retained and evaluated at the current declaration width; E matches Icarus and Xcelium."
+    },
+    {
       "name": "function_inline_e",
       "example": "sem2/symbolic_inline_function",
       "top": "symbolic_inline_function",

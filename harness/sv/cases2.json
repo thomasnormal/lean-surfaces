@@ -73289,5 +73289,17 @@
     "refusal": "Clock:async-reset",
     "measured": "2026-11-12: the source-shaped async-reset edge plus continuous output satisfies ffResetProfileB and ffMixedProfileB but remains outside ordinary E; the runner names Clock:async-reset while Icarus Verilog 13.0 and Xcelium 24.03-s004 provide the source trace."
   }
+  ,{
+    "name": "memory_edge_incdec_e",
+    "example": "sem2/memory_edge_incdec_e",
+    "top": "memory_edge_incdec_e",
+    "params": {"W": 8, "N": 4},
+    "memory": true,
+    "clock": "clk",
+    "signals": ["rstn", "d", "q"],
+    "stimulus": [{"rstn": "0", "d": "00000011"}, {"rstn": "1", "d": "00010001"}, {"rstn": "1", "d": "00010001"}, {"rstn": "1", "d": "00100010"}],
+    "refusal": "Schedule:preemptive",
+    "measured": "2026-11-12: source-shaped for-loop increment `i++` is retained as UnaryOp.inc in the canonical memory E route; E matches Icarus Verilog 13.0 and Xcelium 24.03-s004 over four rows."
+  }
   ]
 }

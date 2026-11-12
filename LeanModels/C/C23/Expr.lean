@@ -195,6 +195,48 @@ def plainStringBytes (s : String) : Option (List CByte) :=
       | _ => none
   | _ => none
 
+/-! Parser metadata helpers.  `float_bits_hex` is emitted by the pinned
+Clang probe, not copied from C source spelling.  Decoding this envelope field
+is therefore not a second C literal parser; it merely reconstructs the exact
+bit pattern Clang already chose. -/
+
+def hexDigitValue : Char → Option Nat
+  | '0' => some 0 | '1' => some 1 | '2' => some 2 | '3' => some 3
+  | '4' => some 4 | '5' => some 5 | '6' => some 6 | '7' => some 7
+  | '8' => some 8 | '9' => some 9 | 'a' => some 10 | 'b' => some 11
+  | 'c' => some 12 | 'd' => some 13 | 'e' => some 14 | 'f' => some 15
+  | 'A' => some 10 | 'B' => some 11 | 'C' => some 12 | 'D' => some 13
+  | 'E' => some 14 | 'F' => some 15 | _ => none
+
+def hexNatAux : List Char → Nat → Option Nat
+  | [], n => some n
+  | c :: cs, n => do
+      let d ← hexDigitValue c
+      hexNatAux cs (n * 16 + d)
+
+def hexNat (s : String) : Option Nat :=
+  if s.toList.isEmpty then none else hexNatAux s.toList 0
+
+def floatLiteralValue (bitsHex : Option String) (bitWidth : Option Nat) : EvalM CVal :=
+  match bitsHex, bitWidth with
+  | some bits, some 32 =>
+      match hexNat bits with
+      | some n =>
+          if n < 2 ^ 32 then
+            pure (.float32 (Float32.Model.ofBits (UInt32.ofNat n)))
+          else refuseUnsupported "floating literal bit pattern exceeds binary32"
+      | none => refuseUnsupported "floating literal has invalid parser-native bits"
+  | some bits, some 64 =>
+      match hexNat bits with
+      | some n =>
+          if n < 2 ^ 64 then
+            pure (.float64 (Float.Model.ofBits (UInt64.ofNat n)))
+          else refuseUnsupported "floating literal bit pattern exceeds binary64"
+      | none => refuseUnsupported "floating literal has invalid parser-native bits"
+  | some _, some 80 => refuseUnsupported "long double floating literal"
+  | some _, some _ => refuseUnsupported "unsupported floating literal width"
+  | _, _ => refuseUnsupported "floating literal lacks parser-native bits"
+
 /-! ## §6.2.5 — resolving a type spelling to an integer type
 
 **The census found a real problem here.** `CType` is clang's unparsed
@@ -446,6 +488,8 @@ and `undef` REFUSES rather than guessing. -/
 def truthy (v : CVal) : EvalM Bool :=
   match v with
   | .int _ n => pure (n != 0)
+  | .float32 f => pure (!Float32.Model.beq f (Float32.Model.ofBits 0))
+  | .float64 f => pure (!Float.Model.beq f (Float.Model.ofBits 0))
   | .ptr p => pure (!p.isNull)
   | .aggregate _ _ => refuseUnsupported "aggregate used as truth value"
   | .undef => refuseUB (.indetAutomatic 0 0)
@@ -497,6 +541,46 @@ def intBinop (op : String) (t : IntTy) (a b : Int) : EvalM CVal :=
   | "!=" => pure (ofBool (a != b))
   | _ => refuseUnsupported s!"binary operator '{op}'"
 
+/-! IEEE binary arithmetic.  The profile registers binary32 and binary64
+round-to-nearest-even through the shared SoftFloat transfer layer.  C23
+§6.5.5 still makes a zero divisor undefined; the IEEE model is used for the
+defined arithmetic and comparison cases, while NaN comparisons follow its
+unordered Boolean results. -/
+
+def float32Binop (op : String) (a b : Float32.Model) : EvalM CVal :=
+  match op with
+  | "+" => pure (.float32 (a + b))
+  | "-" => pure (.float32 (a - b))
+  | "*" => pure (.float32 (a * b))
+  | "/" =>
+      if h : Float32.Model.beq b (Float32.Model.ofBits 0) = true then
+        refuseValue (.divideByZero "/")
+      else pure (.float32 (a / b))
+  | "==" => pure (ofBool (Float32.Model.beq a b))
+  | "!=" => pure (ofBool (!Float32.Model.beq a b))
+  | "<" => pure (ofBool (Float32.Model.lt a b))
+  | ">" => pure (ofBool (Float32.Model.lt b a))
+  | "<=" => pure (ofBool (Float32.Model.le a b))
+  | ">=" => pure (ofBool (Float32.Model.le b a))
+  | _ => refuseUnsupported s!"binary operator '{op}' on binary32"
+
+def float64Binop (op : String) (a b : Float.Model) : EvalM CVal :=
+  match op with
+  | "+" => pure (.float64 (a + b))
+  | "-" => pure (.float64 (a - b))
+  | "*" => pure (.float64 (a * b))
+  | "/" =>
+      if h : Float.Model.beq b (Float.Model.ofBits 0) = true then
+        refuseValue (.divideByZero "/")
+      else pure (.float64 (a / b))
+  | "==" => pure (ofBool (Float.Model.beq a b))
+  | "!=" => pure (ofBool (!Float.Model.beq a b))
+  | "<" => pure (ofBool (Float.Model.lt a b))
+  | ">" => pure (ofBool (Float.Model.lt b a))
+  | "<=" => pure (ofBool (Float.Model.le a b))
+  | ">=" => pure (ofBool (Float.Model.le b a))
+  | _ => refuseUnsupported s!"binary operator '{op}' on binary64"
+
 /-! ### Projecting a value
 
 Named, because every refusal must be. -/
@@ -506,6 +590,7 @@ def asPtr (v : CVal) : EvalM Ptr :=
   match v with
   | .ptr p => pure p
   | .int _ _ => refuseUnsupported "integer used as a pointer (no int↔ptr cast in tier)"
+  | .float32 _ | .float64 _ => refuseUnsupported "floating value used as a pointer"
   | .aggregate _ _ => refuseUnsupported "aggregate used as a pointer"
   | .undef => refuseUB (.indetAutomatic 0 0)
 
@@ -514,6 +599,7 @@ def asInt (v : CVal) : EvalM (IntTy × Int) :=
   match v with
   | .int t n => pure (t, n)
   | .ptr _ => refuseUnsupported "pointer used as an integer (no ptr↔int cast in tier)"
+  | .float32 _ | .float64 _ => refuseUnsupported "floating value used as an integer"
   | .aggregate _ _ => refuseUnsupported "aggregate used as an integer"
   | .undef => refuseUB (.indetAutomatic 0 0)
 
@@ -565,6 +651,8 @@ def storeAt (p : Ptr) (ty : CType) (v : CVal) : EvalM Unit :=
   | .int _ n => do
       let t ← intTyOf ty
       writeMem (fun m => Mem.storeInt m p t n)
+  | .float32 _ | .float64 _ =>
+      refuseUnsupported "floating store without a floating layout"
   | .aggregate _ bs => writeMem (fun m => Mem.storeBytes m p bs)
   | .undef => refuseUnsupported "storing an indeterminate value"
 
@@ -634,6 +722,8 @@ def chooseCond : Expr → Option Bool
 def evalArith (ctx : Ctx) (op : String) (lv rv : CVal) (ty : CType)
     (elemTy : Option CType := none) : EvalM CVal :=
   match lv, rv with
+  | .float32 a, .float32 b => float32Binop op a b
+  | .float64 a, .float64 b => float64Binop op a b
   -- §6.5.7p8 — pointer + integer, and it is the pointer rule that applies
   -- whenever either operand is one. Measured: 8 `+`, 4 `-`.
   | .ptr p, .int _ i =>
@@ -968,10 +1058,14 @@ def evalExpr (ctx : Ctx) : Expr → EvalM CVal
       else if op == "-" then do
         -- §6.5.4.3p3 — unary minus OVERFLOWS at `-INT_MIN`: `J.2(35)`.
         let v ← evalExpr ctx sub
-        let (t, n) ← asInt v
-        match negOp t n with
-        | .ok r => pure r
-        | .ub u => refuseValue u
+        match v with
+        | .float32 f => pure (.float32 (-f))
+        | .float64 f => pure (.float64 (-f))
+        | _ =>
+            let (t, n) ← asInt v
+            match negOp t n with
+            | .ok r => pure r
+            | .ub u => refuseValue u
       else if op == "+" then evalExpr ctx sub
       else if op == "++" || op == "--" then do
         -- §6.5.3.5 — and MEASURED: all 63 increment sites in the corpus are
@@ -1063,7 +1157,7 @@ def evalExpr (ctx : Ctx) : Expr → EvalM CVal
       set m'
       writeMem (fun m => m.storeBytes (Ptr.toObjectBound o bs.length) bs)
       pure (.ptr (Ptr.toObjectBound o bs.length))
-  | .floatLit .. => refuseUnsupported "floating literal (floats are a named decision)"
+  | .floatLit _ bitsHex bitWidth _ _ => floatLiteralValue bitsHex bitWidth
 
   -- A bare name in value position is an enumeration constant; every other
   -- name arrives wrapped in a conversion or a decay.
@@ -1638,6 +1732,32 @@ theorem intBinop' (op : String) (t : IntTy) (a b : Int) :
     | exact refuseUB' _
     | exact refuseUnsupported' _
 
+theorem float32Binop' (op : String) (a b : Float32.Model) :
+    MemInvariant (float32Binop op a b) := by
+  first | simp only [float32Binop] | rw [float32Binop.eq_def]
+  repeat (any_goals split)
+  all_goals first
+    | exact pure' _
+    | exact refuseValue' _
+    | exact refuseUnsupported' _
+
+theorem float64Binop' (op : String) (a b : Float.Model) :
+    MemInvariant (float64Binop op a b) := by
+  first | simp only [float64Binop] | rw [float64Binop.eq_def]
+  repeat (any_goals split)
+  all_goals first
+    | exact pure' _
+    | exact refuseValue' _
+    | exact refuseUnsupported' _
+
+theorem floatLiteralValue' (bitsHex : Option String) (bitWidth : Option Nat) :
+    MemInvariant (floatLiteralValue bitsHex bitWidth) := by
+  simp only [floatLiteralValue]
+  repeat (any_goals split)
+  all_goals first
+    | exact pure' _
+    | exact refuseUnsupported' _
+
 theorem evalArith' (ctx : Ctx) (op : String) (lv rv : CVal) (ty : CType)
     (elemTy : Option CType := none) :
     MemInvariant (evalArith ctx op lv rv ty elemTy) := by
@@ -1649,6 +1769,8 @@ theorem evalArith' (ctx : Ctx) (op : String) (lv rv : CVal) (ty : CType)
     | exact refuseValue' _
     | exact refuseUB' _
     | exact refuseUnsupported' _
+    | exact float32Binop' _ _ _
+    | exact float64Binop' _ _ _
     | exact intBinop' _ _ _ _
     | exact bind (readMem' _) fun _ => pure' _
     | exact bind (readMem' _) fun _ =>
@@ -1772,7 +1894,9 @@ private theorem memInvariant_core (ctx : Ctx) : ∀ (n : Nat) (e : Expr), e.size
       | choose _ _ _ _ _ => exact ⟨by open_eval; mem_inv, by open_lvalue; mem_inv⟩
       | charLit _ _ _ => exact ⟨by open_eval; mem_inv, by open_lvalue; mem_inv⟩
       | strLit _ _ _ _ => exact ⟨by open_eval; mem_inv, by open_lvalue; mem_inv⟩
-      | floatLit _ _ _ _ _ => exact ⟨by open_eval; mem_inv, by open_lvalue; mem_inv⟩
+      | floatLit _ bitsHex bitWidth _ _ =>
+          exact ⟨by open_eval; exact MemInvariant.floatLiteralValue' bitsHex bitWidth,
+            by open_lvalue; mem_inv⟩
       | declRef _ _ _ _ => exact ⟨by open_eval; mem_inv, by open_lvalue; mem_inv⟩
       | typeTrait _ _ _ _ _ => exact ⟨by open_eval; mem_inv, by open_lvalue; mem_inv⟩
       | constExpr value sub ty span =>

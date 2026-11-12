@@ -619,7 +619,7 @@ def scoreEnvelope (fuel : Nat) (envl : Envelope)
         .failed
       else match value with
         | .int _ 0 | .undef => .passed
-        | .int _ _ | .ptr _ | .aggregate _ _ => .failed
+        | .int _ _ | .float32 _ | .float64 _ | .ptr _ | .aggregate _ _ => .failed
   | .ok (.error (.libc "abort"), _) =>
       match oracleSym with
       | some sym =>

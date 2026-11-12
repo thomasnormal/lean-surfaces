@@ -1,5 +1,9 @@
 import LeanModels.C.Ast
 import LeanModels.Core.Basic
+import Init.Data.Float.Model
+
+deriving instance Repr for Float.Model
+deriving instance Repr for Float32.Model
 
 /-!
 # §6.2.5 / §6.2.6 / §6.3.1 — values and integer arithmetic — M2 inch 1
@@ -256,6 +260,11 @@ deriving Repr, Inhabited, BEq
 which every consumer refuses. -/
 inductive CVal where
   | int (ty : IntTy) (v : Int)
+  /-- IEEE binary32 and binary64 values under the pinned profile.  The
+  shared SoftFloat models carry the exact parser-rounded bit pattern and
+  operations; `long double` has no constructor and stays loud. -/
+  | float32 (v : Float32.Model)
+  | float64 (v : Float.Model)
   | ptr (p : Ptr)
   | aggregate (ty : CType) (bytes : List CByte)
   | undef

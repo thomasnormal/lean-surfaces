@@ -88,6 +88,10 @@ The transitive port-copy row, `acg_alias_port`, is likewise a loud
 has the same refusal boundary, so no E verdict or migration-count change is
 claimed.
 
+The multi-assignment copy chain, `acg_alias_chain`, is also refused by E as
+`AlwaysComb:alias-read`.  The refusal is source-shaped and agrees with the
+legacy boundary; no E verdict or migration-count change is claimed.
+
 The receipts were produced with:
 
 ```text

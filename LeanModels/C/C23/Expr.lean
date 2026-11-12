@@ -480,6 +480,9 @@ structure Ctx where
   enumIds : List (DeclarationId × Int) := []
   layout : Layout := Layout.unknown
   call : CallHandler := noCalls
+  /-- Conservative effect summary for direct calls. `false` means the
+  callee may write and must stay in the indeterminate-order refusal path. -/
+  callPure : Expr → Bool := fun _ => false
   /-- Statement-layer aggregate initialization for compound literals. -/
   compoundInit : Nat → Env → IdEnv → Layout → Ptr → CType → Expr → EvalM Unit :=
     fun _ _ _ _ _ _ _ => refuseUnsupported "compound literal initializer callback unavailable"
@@ -869,9 +872,10 @@ first (1837 + 405 sites), then the short-circuits whose rule is not
 
 /-! Refuse calls whose indeterminately sequenced arguments can both write.
 The check is conservative and happens before either argument runs. -/
-def mayWrite (e : Expr) : Bool :=
+def mayWrite (ctx : Ctx) (e : Expr) : Bool :=
   e.subexprs.any fun n => match n with
-    | .call .. | .compoundAssign .. => true
+    | .call callee .. => !ctx.callPure callee
+    | .compoundAssign .. => true
     | .unop op .. => op == "++" || op == "--"
     | _ => false
 
@@ -917,11 +921,11 @@ def assignmentHasUnsequencedWrite (lhs rhs : Expr) : Bool :=
         | some b => (readKeys lhs).any (· == b)
         | none => false
 
-def hasTwoImpure : List Expr → Bool
+def hasTwoImpure (ctx : Ctx) : List Expr → Bool
   | [] => false
   | e :: es =>
-      if mayWrite e then es.any mayWrite || hasTwoImpure es
-      else hasTwoImpure es
+      if mayWrite ctx e then es.any (mayWrite ctx) || hasTwoImpure ctx es
+      else hasTwoImpure ctx es
 
 mutual
 
@@ -1085,7 +1089,7 @@ def evalExpr (ctx : Ctx) : Expr → EvalM CVal
   -- precisely what the amendment forbids concluding. 181 sites in all.
   | .binop op l r ty _ =>
       if op != "&&" && op != "||" && op != "," && op != "=" &&
-          mayWrite l && mayWrite r then
+          mayWrite ctx l && mayWrite ctx r then
         refuseUnsupported "unsequenced side effects in binary operands"
       else
       if op == "&&" then do
@@ -1192,7 +1196,7 @@ def evalExpr (ctx : Ctx) : Expr → EvalM CVal
   -- §6.5.17.3 — compound assignment: `a op= b` is `a = a op b` with the
   -- lvalue evaluated ONCE. 24 sites (`+=` 10, `|=` 6, `^=` 3, `-=` 3, `*=` 2).
   | .compoundAssign op l r computeLHSType computeResultType ty _ => do
-      if mayWrite r then
+      if mayWrite ctx r then
         refuseUnsupported "unsequenced side effects in compound assignment"
       let p ← evalLValue ctx l
       let old ← loadAt p (ctx.layout.normalizeTy l.ty) (ctx.layout.size (ctx.layout.normalizeTy l.ty))
@@ -1294,7 +1298,7 @@ def evalExpr (ctx : Ctx) : Expr → EvalM CVal
   | .call callee args _ _ => do
       if functionPointerBitCast callee then
         refuseUnsupported "call through an incompatible function-pointer cast"
-      if hasTwoImpure args then
+      if hasTwoImpure ctx args then
         refuseUnsupported "unsequenced side effects in call arguments"
       let vs ← evalArgs ctx args
       ctx.call callee vs

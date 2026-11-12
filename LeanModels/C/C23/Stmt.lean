@@ -705,6 +705,16 @@ def bindParams (lay : Layout) : Ctx → List LeanModels.C.Decl → List CVal →
             bindParams lay { ctx with env := env', idEnv := idEnv' } ps vs
     | _ => refuseUnsupported "non-parameter in a parameter list"
 
+/-! A call-free body is a sound sufficient effect summary for §6.5.1's
+indeterminate-order check. It is deliberately conservative: any nested call,
+write, aggregate initializer, or unsupported expression makes the summary
+false. -/
+def stmtCallFree (s : Stmt) : Bool :=
+  s.substmts.all (fun sub => sub.ownExprs.all Expr.isPure)
+
+def functionCallFree (f : LeanModels.C.FunctionDefn) : Bool :=
+  f.body.map stmtCallFree |>.getD false
+
 /-- §6.5.3.3 — call a defined function with already-evaluated arguments.
 
 The handler the callee's frame carries is built HERE, closing over the
@@ -1304,7 +1314,14 @@ def callFn : Nat → Program → LeanModels.C.FunctionDefn → List CVal → Exe
         let ctx0 : Ctx :=
           ({ env := prog.globals, idEnv := prog.globalIds, enums := prog.enums,
              enumIds := prog.enumIds, layout := prog.layout,
-             call := handler } : Ctx).withCompoundInit
+             call := handler,
+             callPure := fun callee =>
+               match calleeId callee with
+               | some declaration =>
+                   match prog.findId? declaration with
+                   | some g => functionCallFree g
+                   | none => false
+               | none => false } : Ctx).withCompoundInit
         let ctx ← bindParams prog.layout ctx0 f.params fixedArgs
         let flow ← execStmt fuel ctx body
         let m₁ ← get

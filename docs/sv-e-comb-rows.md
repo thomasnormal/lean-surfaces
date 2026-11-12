@@ -41,6 +41,11 @@ source-shaped envelope and matches Icarus Verilog 13.0 and Xcelium 24.03-s004
 for all 6 cycles.  It is an E-MATCH and does not change the frozen migration
 count.
 
+The nested conditional/case slice, `acg_nested_ok`, runs from its committed
+source-shaped envelope and matches Icarus Verilog 13.0 and Xcelium 24.03-s004
+for all 6 cycles.  It is an E-MATCH and does not change the frozen migration
+count.
+
 The latch and self-read boundaries are explicit.  `latch_comb` also matches
 both simulators in 8 cycles.  `rbw_comb` remains a loud
 `AlwaysComb:self-read` refusal, so it has no E verdict and is not counted as a

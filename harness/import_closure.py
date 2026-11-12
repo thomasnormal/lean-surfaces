@@ -805,9 +805,32 @@ def main(argv=None):
           % (len(dyn), ", ".join(dyn[:12]) + (" ..." if len(dyn) > 12 else "")))
 
     if opts.json_out:
+        importing_rows = [r for r in rows if r["top"]["verdict"] != "NO-IMPORT"]
+        c_rows = [r for r in rows if r["top"]["verdict"] == "C-REACHING"]
+        c_sets = [set(r["top"]["c"]) for r in c_rows]
+        only_computational = sum(1 for r in c_rows if not kind_split(r["top"]["c"])[1])
+        by_kind = len(c_rows) - only_computational
+        c_counts = sorted(len(c) for c in c_sets)
+        price = {
+            "importing_seeds": len(importing_rows),
+            "no_import_seeds": len(rows) - len(importing_rows),
+            "pure_closures": sum(r["top"]["verdict"] == "PURE" for r in rows),
+            "c_reaching_seeds": len(c_rows),
+            "only_computational_c": only_computational,
+            "by_kind_c": by_kind,
+            "distinct_c_modules": len({m for c in c_sets for m in c}),
+            "nearest_c_median_modules": (c_counts[len(c_counts) // 2]
+                                          if c_counts else 0),
+            "dynamic_import_seeds": sum(bool(r["top"]["dynamic"]) for r in rows),
+            "greedy_cover": [
+                {"module": m, "additional_seeds": gained, "freed_seeds": freed}
+                for m, gained, freed in cover
+            ],
+        }
         with open(opts.json_out, "w", encoding="utf-8") as f:
             json.dump({"cpython": table.version, "lib": table.lib,
-                       "seeds": len(seeds), "rows": rows}, f, indent=2)
+                       "seeds": len(seeds), "price": price, "rows": rows},
+                      f, indent=2)
             f.write("\n")
         print("wrote %s" % opts.json_out)
     return 0

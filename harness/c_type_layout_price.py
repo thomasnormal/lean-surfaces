@@ -65,6 +65,40 @@ def envelope_dependencies(data, manifest_path):
     return out
 
 
+def envelope_identity_joins(data, manifest_path):
+    if not manifest_path:
+        return {}
+    manifest = json.loads(Path(manifest_path).read_text())
+    by_name = {item["name"]: item for item in manifest.get("tests", [])}
+    out = {}
+    for row in data.get("rows", []):
+        if "no layout for declared type 'struct S'" not in row.get("detail", ""):
+            continue
+        item = by_name.get(row.get("name"), {})
+        env_path = item.get("envelope")
+        if not env_path or not Path(env_path).is_file():
+            continue
+        env = json.loads(Path(env_path).read_text())
+        records, refs = [], []
+        def walk(value):
+            if isinstance(value, dict):
+                if value.get("kind") == "RecordDecl" and value.get("name") == "S":
+                    records.append({"decl_id": value.get("decl_id"),
+                                    "field_count": len(value.get("fields", []))})
+                if value.get("kind") == "VarDecl" and value.get("record_decl_id"):
+                    refs.append({"name": value.get("name"),
+                                 "record_decl_id": value.get("record_decl_id"),
+                                 "type": value.get("type")})
+                for child in value.values():
+                    walk(child)
+            elif isinstance(value, list):
+                for child in value:
+                    walk(child)
+        walk(env)
+        out[row["name"]] = {"records": records, "variable_refs": refs}
+    return out
+
+
 def price(data, manifest_path=None):
     rows = data.get("rows", [])
     corpora = sorted({row.get("corpus", "") for row in rows})
@@ -136,6 +170,16 @@ def price(data, manifest_path=None):
             "layout was guessed."
         ),
     }
+    joins = envelope_identity_joins(data, manifest_path)
+    report["struct_S_identity_joins"] = {
+        "files": len(joins),
+        "rows": [{"name": name, **value} for name, value in sorted(joins.items())],
+        "interpretation": (
+            "RecordDecl.decl_id and VarDecl.record_decl_id are retained from "
+            "Clang's envelope; an empty variable_refs list means this envelope "
+            "has no variable carrying that direct declaration identity."
+        ),
+    }
     return report
 
 
@@ -178,6 +222,17 @@ def render(report):
                 for field in item["fields"])
             lines.append("| `%s` | %s |" % (item["name"], fields or "<none>"))
         lines += ["", deps.get("interpretation", ""), ""]
+    joins = report.get("struct_S_identity_joins", {})
+    if joins.get("rows"):
+        lines += ["", "## `struct S` declaration-identity joins", "",
+                  "| file | RecordDecl ids | VarDecl identity refs |", "| --- | --- | --- |"]
+        for item in joins["rows"]:
+            records = ", ".join(str(x.get("decl_id") or "<missing>") for x in item["records"])
+            refs = ", ".join(
+                "%s→%s" % (x.get("name") or "<unnamed>", x.get("record_decl_id"))
+                for x in item["variable_refs"])
+            lines.append("| `%s` | %s | %s |" % (item["name"], records or "<none>", refs or "<none>"))
+        lines += ["", joins.get("interpretation", ""), ""]
     lines += ["", report["interpretation"], ""]
     return "\n".join(lines)
 
@@ -200,6 +255,8 @@ def self_test():
             "static_candidate_without_observed_decl": 1}
     if got != want:
         raise SystemExit("c_type_layout_price --self-test: got %r want %r" % (got, want))
+    if envelope_identity_joins({"rows": []}, None) != {}:
+        raise SystemExit("c_type_layout_price --self-test: empty identity join changed")
     print("c_type_layout_price --self-test: ok")
 
 

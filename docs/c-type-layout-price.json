@@ -1270,6 +1270,232 @@
    }
   ]
  },
+ "struct_S_identity_joins": {
+  "files": 22,
+  "interpretation": "RecordDecl.decl_id and VarDecl.record_decl_id are retained from Clang's envelope; an empty variable_refs list means this envelope has no variable carrying that direct declaration identity.",
+  "rows": [
+   {
+    "name": "00087.c",
+    "records": [
+     {
+      "decl_id": "id15",
+      "field_count": 1
+     }
+    ],
+    "variable_refs": []
+   },
+   {
+    "name": "20050107-1.c",
+    "records": [
+     {
+      "decl_id": "id31",
+      "field_count": 2
+     }
+    ],
+    "variable_refs": []
+   },
+   {
+    "name": "20081103-1.c",
+    "records": [
+     {
+      "decl_id": "id15",
+      "field_count": 3
+     }
+    ],
+    "variable_refs": []
+   },
+   {
+    "name": "20100708-1.c",
+    "records": [
+     {
+      "decl_id": "id15",
+      "field_count": 3
+     }
+    ],
+    "variable_refs": []
+   },
+   {
+    "name": "20171008-1.c",
+    "records": [
+     {
+      "decl_id": "id15",
+      "field_count": 5
+     }
+    ],
+    "variable_refs": []
+   },
+   {
+    "name": "20230630-1.c",
+    "records": [
+     {
+      "decl_id": "id15",
+      "field_count": 5
+     }
+    ],
+    "variable_refs": []
+   },
+   {
+    "name": "20230630-2.c",
+    "records": [
+     {
+      "decl_id": "id15",
+      "field_count": 5
+     }
+    ],
+    "variable_refs": []
+   },
+   {
+    "name": "20230630-3.c",
+    "records": [
+     {
+      "decl_id": "id15",
+      "field_count": 9
+     }
+    ],
+    "variable_refs": []
+   },
+   {
+    "name": "20230630-4.c",
+    "records": [
+     {
+      "decl_id": "id15",
+      "field_count": 9
+     }
+    ],
+    "variable_refs": []
+   },
+   {
+    "name": "pr101188.c",
+    "records": [
+     {
+      "decl_id": "id33",
+      "field_count": 5
+     }
+    ],
+    "variable_refs": []
+   },
+   {
+    "name": "pr108498-2.c",
+    "records": [
+     {
+      "decl_id": "id19",
+      "field_count": 8
+     }
+    ],
+    "variable_refs": []
+   },
+   {
+    "name": "pr47538.c",
+    "records": [
+     {
+      "decl_id": "id15",
+      "field_count": 4
+     }
+    ],
+    "variable_refs": []
+   },
+   {
+    "name": "pr49123.c",
+    "records": [
+     {
+      "decl_id": "id21",
+      "field_count": 1
+     }
+    ],
+    "variable_refs": []
+   },
+   {
+    "name": "pr52979-1.c",
+    "records": [
+     {
+      "decl_id": "id26",
+      "field_count": 3
+     }
+    ],
+    "variable_refs": []
+   },
+   {
+    "name": "pr52979-2.c",
+    "records": [
+     {
+      "decl_id": "id26",
+      "field_count": 3
+     }
+    ],
+    "variable_refs": []
+   },
+   {
+    "name": "pr58984.c",
+    "records": [
+     {
+      "decl_id": "id15",
+      "field_count": 3
+     }
+    ],
+    "variable_refs": []
+   },
+   {
+    "name": "pr65215-3.c",
+    "records": [
+     {
+      "decl_id": "id15",
+      "field_count": 3
+     }
+    ],
+    "variable_refs": []
+   },
+   {
+    "name": "pr65215-4.c",
+    "records": [
+     {
+      "decl_id": "id15",
+      "field_count": 1
+     }
+    ],
+    "variable_refs": []
+   },
+   {
+    "name": "pr70127.c",
+    "records": [
+     {
+      "decl_id": "id15",
+      "field_count": 2
+     }
+    ],
+    "variable_refs": []
+   },
+   {
+    "name": "pr79737-1.c",
+    "records": [
+     {
+      "decl_id": "id17",
+      "field_count": 6
+     }
+    ],
+    "variable_refs": []
+   },
+   {
+    "name": "pr89195.c",
+    "records": [
+     {
+      "decl_id": "id15",
+      "field_count": 1
+     }
+    ],
+    "variable_refs": []
+   },
+   {
+    "name": "pr97764.c",
+    "records": [
+     {
+      "decl_id": "id15",
+      "field_count": 3
+     }
+    ],
+    "variable_refs": []
+   }
+  ]
+ },
  "survey_commit": "04e05fa491c9104d03fdbdf1edc98eb20bd220f4",
  "survey_measured_at_utc": "2026-11-12T12:48:42Z",
  "survey_schema": "c-survey-0.1",

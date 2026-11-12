@@ -70,4 +70,34 @@ This report compares the envelope-derived candidate wall with the runner's first
 field records come directly from the approved Clang envelope; an empty list means the envelope has no named S record, not that a layout was guessed.
 
 
+## `struct S` declaration-identity joins
+
+| file | RecordDecl ids | VarDecl identity refs |
+| --- | --- | --- |
+| `00087.c` | id15 | <none> |
+| `20050107-1.c` | id31 | <none> |
+| `20081103-1.c` | id15 | <none> |
+| `20100708-1.c` | id15 | <none> |
+| `20171008-1.c` | id15 | <none> |
+| `20230630-1.c` | id15 | <none> |
+| `20230630-2.c` | id15 | <none> |
+| `20230630-3.c` | id15 | <none> |
+| `20230630-4.c` | id15 | <none> |
+| `pr101188.c` | id33 | <none> |
+| `pr108498-2.c` | id19 | <none> |
+| `pr47538.c` | id15 | <none> |
+| `pr49123.c` | id21 | <none> |
+| `pr52979-1.c` | id26 | <none> |
+| `pr52979-2.c` | id26 | <none> |
+| `pr58984.c` | id15 | <none> |
+| `pr65215-3.c` | id15 | <none> |
+| `pr65215-4.c` | id15 | <none> |
+| `pr70127.c` | id15 | <none> |
+| `pr79737-1.c` | id17 | <none> |
+| `pr89195.c` | id15 | <none> |
+| `pr97764.c` | id15 | <none> |
+
+RecordDecl.decl_id and VarDecl.record_decl_id are retained from Clang's envelope; an empty variable_refs list means this envelope has no variable carrying that direct declaration identity.
+
+
 type-layout is a candidate wall, not a dynamic verdict: the static heuristic over-approximates the files that reach a missing layout and misses some declaration types. Price a tier from observed no-layout refusals, retaining the static ranking for discovery.

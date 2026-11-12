@@ -746,6 +746,25 @@ def callFn : Nat → Program → LeanModels.C.FunctionDefn → List CVal → Exe
                 liftEval (writeMem (fun m => m.storeBytes dp bs))
                 pure (.ptr dp)
           | _ => refuseUnsupported "memcpy: wrong argument count"
+        let runBuiltinStrcpy : List CVal → ExecM CVal := fun vs =>
+          match vs with
+          | [dst, src] => do
+              let dp ← asPtr dst
+              let sp ← asPtr src
+              let m ← get
+              let (_, source, off) ← liftEval (m.resolve sp 0)
+              let rec takeString : List CByte → Option (List CByte)
+                | [] => none
+                | .conc x :: rest =>
+                    if x == 0 then some [CByte.conc 0]
+                    else (takeString rest).map (fun tail => CByte.conc x :: tail)
+                | _ => none
+              match takeString (source.bytes.drop off) with
+              | some bytes =>
+                  liftEval (writeMem (fun mem => mem.storeBytes dp bytes))
+                  pure (.ptr dp)
+              | none => refuseUnsupported "__builtin_strcpy: non-concrete or unterminated string"
+          | _ => refuseUnsupported "__builtin_strcpy: wrong argument count"
         let runStrcmp : List CVal → ExecM CVal := fun vs =>
           match vs with
           | [left, right] => do
@@ -863,6 +882,8 @@ def callFn : Nat → Program → LeanModels.C.FunctionDefn → List CVal → Exe
             | some nm =>
               if nm == "__builtin_strcmp" then
                 runStrcmp vs
+              else if nm == "__builtin_strcpy" then
+                runBuiltinStrcpy vs
               else if nm == "strlen" then
                 runStrlen vs
               else if nm == "abort" || nm == "exit" then
@@ -893,6 +914,7 @@ def callFn : Nat → Program → LeanModels.C.FunctionDefn → List CVal → Exe
             -- widening the slice and never pools with the other two.
             | none =>
               if nm == "__builtin_strcmp" then runStrcmp vs
+              else if nm == "__builtin_strcpy" then runBuiltinStrcpy vs
               else if nm == "strlen" then runStrlen vs
               else if nm == "memset" || nm == "__builtin_memset" then runMemset vs
               else if nm == "memcpy" || nm == "__builtin_memcpy" then runMemcpy vs

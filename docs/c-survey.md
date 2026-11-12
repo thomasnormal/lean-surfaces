@@ -2,10 +2,10 @@
 
 Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manifest.
 
-- verdicts: 704/2214 MATCH (passed 704, failed 0, oracle 0)
+- verdicts: 706/2214 MATCH (passed 706, failed 0, oracle 0)
 - manifest SHA-256: `1de1a60c299d5bb51dae7ca001b0a008010cad0b25670cde2090c08bfc1a84ce`
-- measured commit: `02dfcf654`
-- measured at: `2026-11-12T09:36:30Z`
+- measured commit: `7ed068069`
+- measured at: `2026-11-12T09:41:39Z`
 
 ## Verdict counts
 
@@ -13,8 +13,8 @@ Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manife
 | --- | ---: |
 | `not-ingested` | 25 |
 | `not-parsed` | 350 |
-| `passed` | 704 |
-| `refused-libc` | 84 |
+| `passed` | 706 |
+| `refused-libc` | 82 |
 | `refused-ub` | 36 |
 | `refused-unsupported` | 967 |
 | `timeout` | 48 |
@@ -32,8 +32,8 @@ Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manife
 | `c-testsuite/single-exec` | `timeout` | 2 |
 | `gcc.c-torture/execute` | `not-ingested` | 19 |
 | `gcc.c-torture/execute` | `not-parsed` | 321 |
-| `gcc.c-torture/execute` | `passed` | 592 |
-| `gcc.c-torture/execute` | `refused-libc` | 76 |
+| `gcc.c-torture/execute` | `passed` | 594 |
+| `gcc.c-torture/execute` | `refused-libc` | 74 |
 | `gcc.c-torture/execute` | `refused-ub` | 33 |
 | `gcc.c-torture/execute` | `refused-unsupported` | 831 |
 | `gcc.c-torture/execute` | `timeout` | 46 |
@@ -148,7 +148,6 @@ The run's first refusal, normalized by construct; `sole` counts rows whose first
 | `unsupported:unbound declaration 'id180' (name 'stdout')` | 3 | 3 | 00189.c, fprintf-1.c, fprintf-chk-1.c |
 | `unsupported:unbound declaration 'id25' (name 's')` | 3 | 3 | pr40404.c, pr48973-1.c, pr48973-2.c |
 | `unsupported:unbound declaration 'id27' (name 'x')` | 3 | 3 | 20030209-1.c, 960405-1.c, 991030-1.c |
-| `libc-call: __builtin_strcpy` | 2 | 2 | 20021011-1.c, 921117-1.c |
 | `libc-call: bar` | 2 | 2 | 20000722-1.c, 20000801-2.c |
 | `libc-call: f` | 2 | 2 | 20030203-1.c, 980505-1.c |
 | `libc-call: f1` | 2 | 2 | 20020227-1.c, 20020529-1.c |

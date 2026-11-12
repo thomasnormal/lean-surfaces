@@ -12,8 +12,8 @@
   "gcc.c-torture/execute": {
    "not-ingested": 19,
    "not-parsed": 321,
-   "passed": 592,
-   "refused-libc": 76,
+   "passed": 594,
+   "refused-libc": 74,
    "refused-ub": 33,
    "refused-unsupported": 831,
    "timeout": 46
@@ -31,8 +31,8 @@
  "counts": {
   "not-ingested": 25,
   "not-parsed": 350,
-  "passed": 704,
-  "refused-libc": 84,
+  "passed": 706,
+  "refused-libc": 82,
   "refused-ub": 36,
   "refused-unsupported": 967,
   "timeout": 48
@@ -1590,15 +1590,6 @@
    "present": 3,
    "sole": 3,
    "wall": "unsupported:unbound declaration 'id27' (name 'x')"
-  },
-  {
-   "files": [
-    "20021011-1.c",
-    "921117-1.c"
-   ],
-   "present": 2,
-   "sole": 2,
-   "wall": "libc-call: __builtin_strcpy"
   },
   {
    "files": [
@@ -4266,8 +4257,8 @@
   }
  ],
  "manifest_hash": "1de1a60c299d5bb51dae7ca001b0a008010cad0b25670cde2090c08bfc1a84ce",
- "measured_at_utc": "2026-11-12T09:36:30Z",
- "measured_commit": "02dfcf654",
+ "measured_at_utc": "2026-11-12T09:41:39Z",
+ "measured_commit": "7ed068069",
  "pin": null,
  "rows": [
   {
@@ -9053,8 +9044,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "__builtin_strcpy",
-   "dynamic_wall": "libc-call: __builtin_strcpy",
+   "detail": "",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "20021011-1.c",
    "sha256": "cc2e4b4355551ef32eeca6b9fa46e4351f475f3c686f5287974a3f38fb427301",
@@ -9063,7 +9054,7 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -13013,8 +13004,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "__builtin_strcpy",
-   "dynamic_wall": "libc-call: __builtin_strcpy",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "921117-1.c",
    "sha256": "0e2ba7511fba9c9146762719400a71a9feb7764ef706b852d54089ab9a3b8534",
@@ -13023,7 +13014,7 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",

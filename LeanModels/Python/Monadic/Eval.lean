@@ -391,7 +391,7 @@ def iterSentinelValH (h : Heap) : RVal → Res RVal
 and returns restore the caller's active depth. -/
 def withFrameRecursionUnit {α : Type} (action : SemF α) : SemF α := do
   let st ← get
-  if pythonRecursionFull st.world.callDepth then
+  if pythonFrameFull st.world.callDepth then
     raisePy .recursionError
   else
     set { st with world := { st.world with callDepth := st.world.callDepth + 1 } }
@@ -407,7 +407,7 @@ def withFrameRecursionUnit {α : Type} (action : SemF α) : SemF α := do
 /-- The world-state counterpart of `withFrameRecursionUnit`. -/
 def withWorldRecursionUnit {α : Type} (action : SemW α) : SemW α := do
   let w ← get
-  if pythonRecursionFull w.callDepth then
+  if pythonFrameFull w.callDepth then
     raisePy .recursionError
   else
     set { w with callDepth := w.callDepth + 1 }
@@ -492,6 +492,8 @@ def applyBuiltin (K : Kont) (m : Module) (fname : String) (vs : List RVal) :
             | _ => refuse "round() over this non-integral value is outside the tier"
       | _ => refuse "round() with ndigits is outside the tier"
   else if fname == "int" then
+    let st ← get
+    let _ ← liftRes (builtinMethORecursionCheck st.world.callDepth)
     liftRes (intCastArgs vs)
   else if fname == "float" then
     do
@@ -533,7 +535,10 @@ def applyBuiltin (K : Kont) (m : Module) (fname : String) (vs : List RVal) :
   else if fname == "str" then
     match vs with
     | [] => pure (.str "")
-    | [v] => do liftRes (strOfValH (← frameHeap) v)
+    | [v] => do
+        let st ← get
+        let _ ← liftRes (builtinMethORecursionCheck st.world.callDepth)
+        liftRes (strOfValH st.world.heap v)
     | _ => refuse "str() with encoding/errors arguments is outside the tier (bytes decoding is not guessed; docs/memory-model.md §the cast tier)"
   else if fname == "repr" then
     liftRes (reprArgsH m (← frameHeap) vs)
@@ -888,10 +893,15 @@ def applyAttrPlan (K : Kont) (a : Addr) (attr : String) :
   | .refuse msg, _ => refuse msg
   | .dangling, _ => refuse danglingMsg
   | .dictGet, vs => do
-      let h ← frameHeap
       match vs with
-      | [k] => liftRes (heapGet h a k .none)
-      | [k, d] => liftRes (heapGet h a k d)
+      | [k] => do
+          let st ← get
+          let _ ← liftRes (builtinMethORecursionCheck st.world.callDepth)
+          liftRes (heapGet (← frameHeap) a k .none)
+      | [k, d] => do
+          let st ← get
+          let _ ← liftRes (builtinMethORecursionCheck st.world.callDepth)
+          liftRes (heapGet (← frameHeap) a k d)
       | vs => raisePy (.typeError s!"get expected at most 2 arguments, got {vs.length}")
   | .dictView kind, vs =>
       match vs with
@@ -911,9 +921,11 @@ def applyAttrPlan (K : Kont) (a : Addr) (attr : String) :
               | Option.none => refuse danglingMsg
           | _ => refuse danglingMsg
       | vs => raisePy (.typeError s!"clear() takes no arguments ({vs.length} given)")
-  | .listAppend, vs =>
+  | .listAppend, vs => do
       match vs with
       | [v] => do
+          let st ← get
+          let _ ← liftRes (builtinMethORecursionCheck st.world.callDepth)
           let h' ← liftRes (heapAppend (← frameHeap) a v)
           heapPut h'; pure .none
       | vs => raisePy (.typeError s!"append() takes exactly one argument ({vs.length} given)")
@@ -2619,7 +2631,7 @@ def callInM (K : Kont) (m : Module) (fname : String) (args : Array RVal) : SemW 
         | .next  => pure .none
         | .brk   => refuse "'break' outside loop"
         | .cont  => refuse "'continue' outside loop"
-      else if pythonRecursionFull w.callDepth then
+      else if pythonFrameFull w.callDepth then
         raisePy .recursionError
       else
         set { w with callDepth := w.callDepth + 1 }

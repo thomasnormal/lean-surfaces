@@ -9681,6 +9681,7 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                     | _ => .unsupported "round() with ndigits is outside the tier"
                   else if fname == "int" then
                     flattenStarRun (evalExprs m fuel st args.toList) ⤳ fun st vs =>
+                    Run.liftRes st (builtinMethORecursionCheck st.world.callDepth) ⤳ fun st _ =>
                     Run.liftRes st (intCastArgs vs)
                   else if fname == "float" then
                     flattenStarRun (evalExprs m fuel st args.toList) ⤳ fun st vs =>
@@ -9993,7 +9994,9 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                     flattenStarRun (evalExprs m fuel st args.toList) ⤳ fun st vs =>
                     (match vs with
                      | [] => .ok st (.str "")
-                     | [v] => Run.liftRes st (strOfValH st.world.heap v)
+                     | [v] =>
+                       Run.liftRes st (builtinMethORecursionCheck st.world.callDepth) ⤳ fun st _ =>
+                       Run.liftRes st (strOfValH st.world.heap v)
                      | _ => .unsupported "str() with encoding/errors arguments is outside the tier (bytes decoding is not guessed; docs/memory-model.md §the cast tier)")
                   else if fname == "repr" then
                     flattenStarRun (evalExprs m fuel st args.toList) ⤳ fun st vs =>
@@ -10555,8 +10558,12 @@ def execAttrCall (m : Module) (fuel : Nat) (st : FrameState) (a : Addr)
     | .dictGet =>
       evalExprs m fuel st args ⤳ fun st vs =>
       match vs with
-      | [k] => Run.liftRes st (heapGet st.world.heap a k .none)
-      | [k, d] => Run.liftRes st (heapGet st.world.heap a k d)
+      | [k] =>
+        Run.liftRes st (builtinMethORecursionCheck st.world.callDepth) ⤳ fun st _ =>
+        Run.liftRes st (heapGet st.world.heap a k .none)
+      | [k, d] =>
+        Run.liftRes st (builtinMethORecursionCheck st.world.callDepth) ⤳ fun st _ =>
+        Run.liftRes st (heapGet st.world.heap a k d)
       | vs => .exn st (.typeError s!"get expected at most 2 arguments, got {vs.length}")
     | .dictView _ =>
       .unsupported "dictionary view allocation is outside the proof tier"
@@ -10578,6 +10585,7 @@ def execAttrCall (m : Module) (fuel : Nat) (st : FrameState) (a : Addr)
       evalExprs m fuel st args ⤳ fun st vs =>
       match vs with
       | [v] =>
+        Run.liftRes st (builtinMethORecursionCheck st.world.callDepth) ⤳ fun st _ =>
         Run.liftRes st (heapAppend st.world.heap a v) ⤳ fun st h' =>
         .ok { st with world := { st.world with heap := h' } } .none
       | vs => .exn st (.typeError s!"append() takes exactly one argument ({vs.length} given)")
@@ -11412,7 +11420,7 @@ def callIn (m : Module) (fuel : Nat) (w : World) (fname : String)
             | .next => .ok st .none
             | .brk => .unsupported "'break' outside loop"
             | .cont => .unsupported "'continue' outside loop"
-      else if pythonRecursionFull w.callDepth then
+      else if pythonFrameFull w.callDepth then
         .exn w .recursionError
       else
         Run.leaveCallDepth <|
@@ -11780,7 +11788,7 @@ def callClosure (m : Module) (fuel : Nat) (w : World) (name : String)
         .generator s!"<closure:{name}>" (mkCallEnv params args ++ captured)
           [.block body.toList] .created
       .ok { w with heap := w.heap.push g } (.ref w.heap.size)
-    else if pythonRecursionFull w.callDepth then
+    else if pythonFrameFull w.callDepth then
       .exn w .recursionError
     else
       -- Objects/call.c:_PyFunction_Vectorcall evaluates an ordinary closure

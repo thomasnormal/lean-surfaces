@@ -3265,7 +3265,10 @@ theorem worldInv (m : Module) (hm : m.heapFree = true) (fuel : Nat) :
                                           | nil => exact .okF h₁ _
                                           | cons v rest =>
                                             cases rest with
-                                            | nil => exact .liftResF h₁ _
+                                            | nil =>
+                                              refine .bind (.liftResF h₁
+                                                  (builtinMethORecursionCheck st₁.world.callDepth))
+                                                  fun st₂ _ h₂ => .liftResF h₂ _
                                             | cons _ _ => exact .unsupported)
                                         (.ite (.bind hargs fun st₁ vs h₁ => .liftResF h₁ _)
                                         (.ite .unsupported ?_)))))))))))))))
@@ -3314,7 +3317,9 @@ theorem worldInv (m : Module) (hm : m.heapFree = true) (fuel : Nat) :
                                   | _ =>
                                     simp only [hdi]
                                     exact .unsupported
-                        · exact .liftResF h₁ _
+                        · refine .bind (.liftResF h₁
+                            (builtinMethORecursionCheck st₁.world.callDepth))
+                            fun st₂ _ h₂ => .liftResF h₂ _
                         · cases vs with
                           | nil => exact .exn
                           | cons _ rest =>
@@ -3949,14 +3954,22 @@ theorem worldInv (m : Module) (hm : m.heapFree = true) (fuel : Nat) :
         hp | hp | hp | ⟨msg, hp⟩ <;> rw [hp]
       · refine .bind (ihEs st args hargs) fun st₂ vs h₂ => ?_
         cases vs with
-        | nil => exact .exn
+        | nil =>
+          exact .exn
         | cons k rest =>
           cases rest with
-          | nil => exact .liftResF h₂ _
+          | nil =>
+            refine .bind (.liftResF h₂
+                (builtinMethORecursionCheck st₂.world.callDepth))
+                fun st₃ _ h₃ => .liftResF h₃ _
           | cons d rest2 =>
             cases rest2 with
-            | nil => exact .liftResF h₂ _
-            | cons _ _ => exact .exn
+            | nil =>
+              refine .bind (.liftResF h₂
+                  (builtinMethORecursionCheck st₂.world.callDepth))
+                  fun st₃ _ h₃ => .liftResF h₃ _
+            | cons _ _ =>
+              exact .exn
       · exact .unsupported
       · exact .unsupported
       · exact .unsupported

@@ -330,6 +330,12 @@ CPython thread's active recursion count minus the module boundary's unit;
 entering a new unit would exceed the pinned limit at this boundary. -/
 abbrev pythonRecursionFull (depth : Nat) : Prop := depth + 1 >= pythonRecursionLimit
 
+/-- A Python frame itself may occupy the last available slot.  The C-level
+entry points use `pythonRecursionFull` above because their additional unit is
+checked before dispatch; frame entry fails only when the current count is
+already at the limit. -/
+abbrev pythonFrameFull (depth : Nat) : Prop := depth >= pythonRecursionLimit
+
 /-- The script/monadic runner's module boundary contributes one virtual frame;
 the closed-function `callFunction` surface starts at ordinary depth zero so
 its body and the `CallsIn` frame theorem share one execution geometry. -/

@@ -1158,17 +1158,14 @@ effects, and generator state after a caught recursion error. CPython paths:
 `Python/bltinmodule.c:builtin_all`/`builtin_any`, and
 `Objects/genobject.c:gen_send_ex`.
 
-A boundary sweep against CPython 3.9.25 with harness recursion base 2 exposed
-more decided mismatches in both interpreters: calls to `sum`,
-`max`, `min`, `sorted`, `round`, `str`, `int`, list `append`, and dict `get`
-can reach `RecursionError` where the model returns normally. `max`, `min`,
-`sorted`, `round`, and `str` also have a deeper nested recursion site: they
-mismatch at two consecutive depths in the probe. The measured source and row
-logs are retained outside the tree at `/tmp/ls_python_builtin_rec_probe.py`,
-`/tmp/ls_python_builtin_rec_cases.json`, `/tmp/ls-python-builtin-rec-probe.log`,
-and `/tmp/ls-python-builtin-rec-proof.log`. `iter` itself refused and is not a
-decided mismatch in this sweep. These are unclosed audit findings; each call
-path needs its own source trace, argument-order controls, and a passing CI row.
+The remaining four boundary mismatches are closed in F1. With recursion base 2
+and depths 2, 993--997, `str`, `int`, list `append`, and dict `get` now use
+the CPython frame unit for Python calls and the C-call unit after argument
+evaluation. `int`, `append`, and `get` return CPython 3.9.25's exact arity
+`TypeError`; the admitted one-argument `str` call agrees, while its extra
+argument form remains a loud refusal. `harness/str_recursion.py`,
+`int_recursion.py`, `list_append_recursion.py`, and `dict_get_recursion.py`
+carry the rows in both interpreters.
 
 ## 2026-11-10-pyfoundation-6 — finish CPython recursion units
 

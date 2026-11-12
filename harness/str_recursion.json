@@ -1,0 +1,661 @@
+{
+  "schema_version": "0.1",
+  "language": "python",
+  "frontend": {
+    "name": "cpython-ast",
+    "version": "3.9.25"
+  },
+  "source_file": "harness/str_recursion.py",
+  "source_sha256": "c8a0c6d5d7a3b6e7dbfc5888e90c029eabd1da2e221db5b060c682059813e2ee",
+  "module": {
+    "kind": "Module",
+    "body": [
+      {
+        "kind": "Expr",
+        "span": {
+          "lineno": 1,
+          "col_offset": 0,
+          "end_lineno": 1,
+          "end_col_offset": 68
+        },
+        "value": {
+          "kind": "Constant",
+          "span": {
+            "lineno": 1,
+            "col_offset": 0,
+            "end_lineno": 1,
+            "end_col_offset": 68
+          },
+          "value": {
+            "type": "str",
+            "value": "Recursion-limit probes for str()'s C entry and arity boundary."
+          }
+        }
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 3,
+          "col_offset": 0,
+          "end_lineno": 15,
+          "end_col_offset": 17
+        },
+        "name": "valid",
+        "args": [
+          {
+            "arg": "n",
+            "span": {
+              "lineno": 3,
+              "col_offset": 10,
+              "end_lineno": 3,
+              "end_col_offset": 11
+            }
+          }
+        ],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "NestedDef",
+            "span": {
+              "lineno": 4,
+              "col_offset": 4,
+              "end_lineno": 9,
+              "end_col_offset": 21
+            },
+            "name": "leaf",
+            "args": [],
+            "args_unsupported": null,
+            "locals_unsupported": null,
+            "body": [
+              {
+                "kind": "Try",
+                "span": {
+                  "lineno": 5,
+                  "col_offset": 8,
+                  "end_lineno": 9,
+                  "end_col_offset": 21
+                },
+                "body": [
+                  {
+                    "kind": "Expr",
+                    "span": {
+                      "lineno": 6,
+                      "col_offset": 12,
+                      "end_lineno": 6,
+                      "end_col_offset": 18
+                    },
+                    "value": {
+                      "kind": "Call",
+                      "span": {
+                        "lineno": 6,
+                        "col_offset": 12,
+                        "end_lineno": 6,
+                        "end_col_offset": 18
+                      },
+                      "func": {
+                        "kind": "Name",
+                        "span": {
+                          "lineno": 6,
+                          "col_offset": 12,
+                          "end_lineno": 6,
+                          "end_col_offset": 15
+                        },
+                        "id": "str"
+                      },
+                      "args": [
+                        {
+                          "kind": "Constant",
+                          "span": {
+                            "lineno": 6,
+                            "col_offset": 16,
+                            "end_lineno": 6,
+                            "end_col_offset": 17
+                          },
+                          "value": {
+                            "type": "int",
+                            "repr": "1"
+                          }
+                        }
+                      ],
+                      "keywords": [],
+                      "call_unsupported": null
+                    }
+                  },
+                  {
+                    "kind": "Return",
+                    "span": {
+                      "lineno": 7,
+                      "col_offset": 12,
+                      "end_lineno": 7,
+                      "end_col_offset": 21
+                    },
+                    "value": {
+                      "kind": "Constant",
+                      "span": {
+                        "lineno": 7,
+                        "col_offset": 19,
+                        "end_lineno": 7,
+                        "end_col_offset": 21
+                      },
+                      "value": {
+                        "type": "int",
+                        "repr": "42"
+                      }
+                    }
+                  }
+                ],
+                "exc_names": [
+                  "TypeError"
+                ],
+                "handler": [
+                  {
+                    "kind": "Return",
+                    "span": {
+                      "lineno": 9,
+                      "col_offset": 12,
+                      "end_lineno": 9,
+                      "end_col_offset": 21
+                    },
+                    "value": {
+                      "kind": "Constant",
+                      "span": {
+                        "lineno": 9,
+                        "col_offset": 19,
+                        "end_lineno": 9,
+                        "end_col_offset": 21
+                      },
+                      "value": {
+                        "type": "int",
+                        "repr": "27"
+                      }
+                    }
+                  }
+                ],
+                "try_unsupported": null
+              }
+            ],
+            "captures": [],
+            "closure_unsupported": null
+          },
+          {
+            "kind": "Try",
+            "span": {
+              "lineno": 10,
+              "col_offset": 4,
+              "end_lineno": 15,
+              "end_col_offset": 17
+            },
+            "body": [
+              {
+                "kind": "If",
+                "span": {
+                  "lineno": 11,
+                  "col_offset": 8,
+                  "end_lineno": 12,
+                  "end_col_offset": 31
+                },
+                "test": {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 11,
+                    "col_offset": 11,
+                    "end_lineno": 11,
+                    "end_col_offset": 12
+                  },
+                  "id": "n"
+                },
+                "body": [
+                  {
+                    "kind": "Return",
+                    "span": {
+                      "lineno": 12,
+                      "col_offset": 12,
+                      "end_lineno": 12,
+                      "end_col_offset": 31
+                    },
+                    "value": {
+                      "kind": "Call",
+                      "span": {
+                        "lineno": 12,
+                        "col_offset": 19,
+                        "end_lineno": 12,
+                        "end_col_offset": 31
+                      },
+                      "func": {
+                        "kind": "Name",
+                        "span": {
+                          "lineno": 12,
+                          "col_offset": 19,
+                          "end_lineno": 12,
+                          "end_col_offset": 24
+                        },
+                        "id": "valid"
+                      },
+                      "args": [
+                        {
+                          "kind": "BinOp",
+                          "span": {
+                            "lineno": 12,
+                            "col_offset": 25,
+                            "end_lineno": 12,
+                            "end_col_offset": 30
+                          },
+                          "left": {
+                            "kind": "Name",
+                            "span": {
+                              "lineno": 12,
+                              "col_offset": 25,
+                              "end_lineno": 12,
+                              "end_col_offset": 26
+                            },
+                            "id": "n"
+                          },
+                          "op": "Sub",
+                          "right": {
+                            "kind": "Constant",
+                            "span": {
+                              "lineno": 12,
+                              "col_offset": 29,
+                              "end_lineno": 12,
+                              "end_col_offset": 30
+                            },
+                            "value": {
+                              "type": "int",
+                              "repr": "1"
+                            }
+                          }
+                        }
+                      ],
+                      "keywords": [],
+                      "call_unsupported": null
+                    }
+                  }
+                ],
+                "orelse": []
+              },
+              {
+                "kind": "Return",
+                "span": {
+                  "lineno": 13,
+                  "col_offset": 8,
+                  "end_lineno": 13,
+                  "end_col_offset": 21
+                },
+                "value": {
+                  "kind": "Call",
+                  "span": {
+                    "lineno": 13,
+                    "col_offset": 15,
+                    "end_lineno": 13,
+                    "end_col_offset": 21
+                  },
+                  "func": {
+                    "kind": "Name",
+                    "span": {
+                      "lineno": 13,
+                      "col_offset": 15,
+                      "end_lineno": 13,
+                      "end_col_offset": 19
+                    },
+                    "id": "leaf"
+                  },
+                  "args": [],
+                  "keywords": [],
+                  "call_unsupported": null
+                }
+              }
+            ],
+            "exc_names": [
+              "RecursionError"
+            ],
+            "handler": [
+              {
+                "kind": "Return",
+                "span": {
+                  "lineno": 15,
+                  "col_offset": 8,
+                  "end_lineno": 15,
+                  "end_col_offset": 17
+                },
+                "value": {
+                  "kind": "Constant",
+                  "span": {
+                    "lineno": 15,
+                    "col_offset": 15,
+                    "end_lineno": 15,
+                    "end_col_offset": 17
+                  },
+                  "value": {
+                    "type": "int",
+                    "repr": "11"
+                  }
+                }
+              }
+            ],
+            "try_unsupported": null
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 18,
+          "col_offset": 0,
+          "end_lineno": 30,
+          "end_col_offset": 17
+        },
+        "name": "invalid",
+        "args": [
+          {
+            "arg": "n",
+            "span": {
+              "lineno": 18,
+              "col_offset": 12,
+              "end_lineno": 18,
+              "end_col_offset": 13
+            }
+          }
+        ],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "NestedDef",
+            "span": {
+              "lineno": 19,
+              "col_offset": 4,
+              "end_lineno": 24,
+              "end_col_offset": 21
+            },
+            "name": "leaf",
+            "args": [],
+            "args_unsupported": null,
+            "locals_unsupported": null,
+            "body": [
+              {
+                "kind": "Try",
+                "span": {
+                  "lineno": 20,
+                  "col_offset": 8,
+                  "end_lineno": 24,
+                  "end_col_offset": 21
+                },
+                "body": [
+                  {
+                    "kind": "Expr",
+                    "span": {
+                      "lineno": 21,
+                      "col_offset": 12,
+                      "end_lineno": 21,
+                      "end_col_offset": 21
+                    },
+                    "value": {
+                      "kind": "Call",
+                      "span": {
+                        "lineno": 21,
+                        "col_offset": 12,
+                        "end_lineno": 21,
+                        "end_col_offset": 21
+                      },
+                      "func": {
+                        "kind": "Name",
+                        "span": {
+                          "lineno": 21,
+                          "col_offset": 12,
+                          "end_lineno": 21,
+                          "end_col_offset": 15
+                        },
+                        "id": "str"
+                      },
+                      "args": [
+                        {
+                          "kind": "Constant",
+                          "span": {
+                            "lineno": 21,
+                            "col_offset": 16,
+                            "end_lineno": 21,
+                            "end_col_offset": 17
+                          },
+                          "value": {
+                            "type": "int",
+                            "repr": "1"
+                          }
+                        },
+                        {
+                          "kind": "Constant",
+                          "span": {
+                            "lineno": 21,
+                            "col_offset": 19,
+                            "end_lineno": 21,
+                            "end_col_offset": 20
+                          },
+                          "value": {
+                            "type": "int",
+                            "repr": "2"
+                          }
+                        }
+                      ],
+                      "keywords": [],
+                      "call_unsupported": null
+                    }
+                  },
+                  {
+                    "kind": "Return",
+                    "span": {
+                      "lineno": 22,
+                      "col_offset": 12,
+                      "end_lineno": 22,
+                      "end_col_offset": 21
+                    },
+                    "value": {
+                      "kind": "Constant",
+                      "span": {
+                        "lineno": 22,
+                        "col_offset": 19,
+                        "end_lineno": 22,
+                        "end_col_offset": 21
+                      },
+                      "value": {
+                        "type": "int",
+                        "repr": "42"
+                      }
+                    }
+                  }
+                ],
+                "exc_names": [
+                  "TypeError"
+                ],
+                "handler": [
+                  {
+                    "kind": "Return",
+                    "span": {
+                      "lineno": 24,
+                      "col_offset": 12,
+                      "end_lineno": 24,
+                      "end_col_offset": 21
+                    },
+                    "value": {
+                      "kind": "Constant",
+                      "span": {
+                        "lineno": 24,
+                        "col_offset": 19,
+                        "end_lineno": 24,
+                        "end_col_offset": 21
+                      },
+                      "value": {
+                        "type": "int",
+                        "repr": "27"
+                      }
+                    }
+                  }
+                ],
+                "try_unsupported": null
+              }
+            ],
+            "captures": [],
+            "closure_unsupported": null
+          },
+          {
+            "kind": "Try",
+            "span": {
+              "lineno": 25,
+              "col_offset": 4,
+              "end_lineno": 30,
+              "end_col_offset": 17
+            },
+            "body": [
+              {
+                "kind": "If",
+                "span": {
+                  "lineno": 26,
+                  "col_offset": 8,
+                  "end_lineno": 27,
+                  "end_col_offset": 33
+                },
+                "test": {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 26,
+                    "col_offset": 11,
+                    "end_lineno": 26,
+                    "end_col_offset": 12
+                  },
+                  "id": "n"
+                },
+                "body": [
+                  {
+                    "kind": "Return",
+                    "span": {
+                      "lineno": 27,
+                      "col_offset": 12,
+                      "end_lineno": 27,
+                      "end_col_offset": 33
+                    },
+                    "value": {
+                      "kind": "Call",
+                      "span": {
+                        "lineno": 27,
+                        "col_offset": 19,
+                        "end_lineno": 27,
+                        "end_col_offset": 33
+                      },
+                      "func": {
+                        "kind": "Name",
+                        "span": {
+                          "lineno": 27,
+                          "col_offset": 19,
+                          "end_lineno": 27,
+                          "end_col_offset": 26
+                        },
+                        "id": "invalid"
+                      },
+                      "args": [
+                        {
+                          "kind": "BinOp",
+                          "span": {
+                            "lineno": 27,
+                            "col_offset": 27,
+                            "end_lineno": 27,
+                            "end_col_offset": 32
+                          },
+                          "left": {
+                            "kind": "Name",
+                            "span": {
+                              "lineno": 27,
+                              "col_offset": 27,
+                              "end_lineno": 27,
+                              "end_col_offset": 28
+                            },
+                            "id": "n"
+                          },
+                          "op": "Sub",
+                          "right": {
+                            "kind": "Constant",
+                            "span": {
+                              "lineno": 27,
+                              "col_offset": 31,
+                              "end_lineno": 27,
+                              "end_col_offset": 32
+                            },
+                            "value": {
+                              "type": "int",
+                              "repr": "1"
+                            }
+                          }
+                        }
+                      ],
+                      "keywords": [],
+                      "call_unsupported": null
+                    }
+                  }
+                ],
+                "orelse": []
+              },
+              {
+                "kind": "Return",
+                "span": {
+                  "lineno": 28,
+                  "col_offset": 8,
+                  "end_lineno": 28,
+                  "end_col_offset": 21
+                },
+                "value": {
+                  "kind": "Call",
+                  "span": {
+                    "lineno": 28,
+                    "col_offset": 15,
+                    "end_lineno": 28,
+                    "end_col_offset": 21
+                  },
+                  "func": {
+                    "kind": "Name",
+                    "span": {
+                      "lineno": 28,
+                      "col_offset": 15,
+                      "end_lineno": 28,
+                      "end_col_offset": 19
+                    },
+                    "id": "leaf"
+                  },
+                  "args": [],
+                  "keywords": [],
+                  "call_unsupported": null
+                }
+              }
+            ],
+            "exc_names": [
+              "RecursionError"
+            ],
+            "handler": [
+              {
+                "kind": "Return",
+                "span": {
+                  "lineno": 30,
+                  "col_offset": 8,
+                  "end_lineno": 30,
+                  "end_col_offset": 17
+                },
+                "value": {
+                  "kind": "Constant",
+                  "span": {
+                    "lineno": 30,
+                    "col_offset": 15,
+                    "end_lineno": 30,
+                    "end_col_offset": 17
+                  },
+                  "value": {
+                    "type": "int",
+                    "repr": "11"
+                  }
+                }
+              }
+            ],
+            "try_unsupported": null
+          }
+        ]
+      }
+    ]
+  },
+  "lean_blocks": []
+}

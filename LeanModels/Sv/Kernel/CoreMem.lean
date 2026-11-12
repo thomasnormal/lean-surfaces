@@ -438,6 +438,31 @@ private def cpuregsWrite : MemNbaRecord :=
   | some s => (s.readId cpuregsShape.id 3).getD (LVec.xVec 32) == LVec.ofNat 32 2
   | none => false
 
+-- A memory increment is a normal source expression evaluated at issue time:
+-- read the selected cell, add one with the shared four-state arithmetic, then
+-- capture that value as the NBA.  Unknown reads stay unknown, so the update
+-- never invents a known value (§10.4.2, §11.4.3).
+private def cpuregsIncrementState : MemState :=
+  match MemState.commitNba cpuregsState
+      [{ id := cpuregsShape.id, label := 3, value := LVec.ofNat 32 0xa5 }] with
+  | some s => s
+  | none => cpuregsState
+
+#guard match MemState.issueNba cpuregsIncrementState cpuregsShape.id false
+    (LVec.ofNat 5 3)
+    (LVec.add ((MemState.readId cpuregsIncrementState cpuregsShape.id 3).getD (LVec.xVec 32))
+      (LVec.ofNat 32 1)) with
+  | .queued u =>
+      match cpuregsIncrementState.commitNba [u] with
+      | some s => (s.readId cpuregsShape.id 3).getD (LVec.xVec 32) == LVec.ofNat 32 0xa6
+      | none => false
+  | _ => false
+
+#guard match MemState.issueNba cpuregsState cpuregsShape.id false
+    (LVec.lit "xxxxx") (LVec.add (LVec.xVec 32) (LVec.ofNat 32 1)) with
+  | .noOp => true
+  | _ => false
+
 private def cpuregsSite3 : MemReadSite :=
   { id := cpuregsShape.id, signedIndex := false, index := LVec.ofNat 5 3 }
 private def cpuregsSite2 : MemReadSite :=

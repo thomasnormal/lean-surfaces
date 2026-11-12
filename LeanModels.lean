@@ -98,6 +98,7 @@ import LeanModels.Sv.Adequacy
 -- cycle machine and module contracts over `run2` under the `ObsLib` root; the XOR-sum calculus
 -- (XorSum) and the 4-state operator monotonicity theorems (XMono).
 import LeanModels.Sv.Kernel
+import LeanModels.Sv.ObserveResolve
 import LeanModels.Sv.ObsLib
 import LeanModels.Sv.XorSum
 import LeanModels.Sv.XMono

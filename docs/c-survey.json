@@ -12,8 +12,8 @@
   "gcc.c-torture/execute": {
    "not-ingested": 19,
    "not-parsed": 321,
-   "passed": 598,
-   "refused-libc": 69,
+   "passed": 600,
+   "refused-libc": 67,
    "refused-ub": 33,
    "refused-unsupported": 832,
    "timeout": 46
@@ -31,8 +31,8 @@
  "counts": {
   "not-ingested": 25,
   "not-parsed": 350,
-  "passed": 710,
-  "refused-libc": 77,
+  "passed": 712,
+  "refused-libc": 75,
   "refused-ub": 36,
   "refused-unsupported": 968,
   "timeout": 48
@@ -1453,16 +1453,6 @@
   },
   {
    "files": [
-    "970214-1.c",
-    "970214-2.c",
-    "970217-1.c"
-   ],
-   "present": 3,
-   "sole": 3,
-   "wall": "libc-call: exit (an argument is not a literal 0 \u2014 which exit was reached is unknown)"
-  },
-  {
-   "files": [
     "00176.c",
     "00194.c",
     "printf-1.c"
@@ -2067,6 +2057,14 @@
    "present": 1,
    "sole": 1,
    "wall": "libc-call: checkit"
+  },
+  {
+   "files": [
+    "970217-1.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "libc-call: exit (an argument is not a literal 0 \u2014 which exit was reached is unknown)"
   },
   {
    "files": [
@@ -4246,8 +4244,8 @@
   }
  ],
  "manifest_hash": "1de1a60c299d5bb51dae7ca001b0a008010cad0b25670cde2090c08bfc1a84ce",
- "measured_at_utc": "2026-11-12T09:55:31Z",
- "measured_commit": "ab2da33fa",
+ "measured_at_utc": "2026-11-12T10:01:40Z",
+ "measured_commit": "da0514d2a",
  "pin": null,
  "rows": [
   {
@@ -14670,23 +14668,23 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "exit (an argument is not a literal 0 \u2014 which exit was reached is unknown)",
-   "dynamic_wall": "libc-call: exit (an argument is not a literal 0 \u2014 which exit was reached is unknown)",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "970214-1.c",
    "sha256": "b187ebc071f72cc8146a68bf03b6125cdd4b466dc4f74c8d069a9105b74e9007",
    "static_walls": [],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "exit (an argument is not a literal 0 \u2014 which exit was reached is unknown)",
-   "dynamic_wall": "libc-call: exit (an argument is not a literal 0 \u2014 which exit was reached is unknown)",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "970214-2.c",
    "sha256": "a10fb6166dedc13c0573f70cac10815be56eb24da8e04c672d3d1950cf9e51df",
    "static_walls": [],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",

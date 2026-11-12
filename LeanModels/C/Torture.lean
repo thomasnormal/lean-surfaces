@@ -413,13 +413,35 @@ was reached, and guessing is the pooling §3.1 forbids.
 Measured when it was written: all 36 tests that refused on `exit` contain
 `exit(0)` and nothing else, so this guard is free today. It is here
 because it is what makes the reading honest rather than lucky. -/
+def constInt : Expr → Option Int
+  | .paren sub _ _ => constInt sub
+  | .implicitCast _ sub _ _ => constInt sub
+  | .cast _ sub _ _ => constInt sub
+  | .intLit v _ _ => v.toInt?
+  | .charLit v _ _ => v.toInt?
+  | .binop op l r _ _ => do
+      let a ← constInt l
+      let b ← constInt r
+      match op with
+      | "+" => some (a + b)
+      | "-" => some (a - b)
+      | "*" => some (a * b)
+      | "==" => some (if a == b then 1 else 0)
+      | "!=" => some (if a != b then 1 else 0)
+      | "<" => some (if a < b then 1 else 0)
+      | ">" => some (if a > b then 1 else 0)
+      | "<=" => some (if a ≤ b then 1 else 0)
+      | ">=" => some (if a ≥ b then 1 else 0)
+      | _ => none
+  | _ => none
+
 def exitIsAlwaysZero (envl : Envelope) : Bool :=
   envl.unit.exprs.all fun e => match e with
     | .call callee args _ _ =>
         if calleeNameOf callee == "exit" then
           match args with
-          | [a] => match peelVal a with
-                   | .intLit "0" _ _ => true
+          | [a] => match constInt (peelVal a) with
+                   | some 0 => true
                    | _ => false
           | _ => false
         else true

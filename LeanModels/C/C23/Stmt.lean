@@ -987,6 +987,34 @@ def callFn : Nat → Program → LeanModels.C.FunctionDefn → List CVal → Exe
               else
                 pure (.int IntTy.int_ (if n < 0 then -n else n))
           | _ => refuseUnsupported "__builtin_abs: wrong argument count"
+        let runSyncAdd8 : List CVal → ExecM CVal := fun vs =>
+          match vs with
+          | [dst, value] => do
+              let dp ← asPtr dst
+              let (vt, y) ← asInt value
+              if vt != IntTy.ulong then
+                refuseUnsupported "__sync_add_and_fetch_8: argument is not unsigned long long"
+              else
+                let m ← get
+                let ty ← match dp.obj with
+                  | some o =>
+                      match m.get? o with
+                      | some c =>
+                          match c.effTy with
+                          | some t => pure t
+                          | none => refuseUnsupported "__sync_add_and_fetch_8: destination has no declared type"
+                      | none => refuseUnsupported "__sync_add_and_fetch_8: destination object is not live"
+                  | none => refuseUnsupported "__sync_add_and_fetch_8: null destination"
+                let t ← liftEval (intTyOf ty)
+                if t != IntTy.ulong then
+                  refuseUnsupported "__sync_add_and_fetch_8: destination is not unsigned long long"
+                else do
+                  let old ← liftEval (loadAt dp ty (prog.layout.size ty))
+                  let (_, x) ← asInt old
+                  let result := t.wrap (x + y)
+                  liftEval (storeAt dp ty (.int t result))
+                  pure (.int t result)
+          | _ => refuseUnsupported "__sync_add_and_fetch_8: wrong argument count"
         let runArithOverflow (op : String) : List CVal → ExecM CVal := fun vs =>
           match vs with
           | [a, b, dst] => do
@@ -1034,6 +1062,8 @@ def callFn : Nat → Program → LeanModels.C.FunctionDefn → List CVal → Exe
                 runBswap32 vs
               else if nm == "__builtin_abs" || nm == "abs" then
                 runAbs vs
+              else if nm == "__sync_add_and_fetch_8" then
+                runSyncAdd8 vs
               else if nm == "printf" || nm == "__builtin_printf" then
                 runPrintf vs
               else if nm == "abort" || nm == "exit" then
@@ -1076,6 +1106,7 @@ def callFn : Nat → Program → LeanModels.C.FunctionDefn → List CVal → Exe
               else if nm == "__builtin_bswap16" then runBswap16 vs
               else if nm == "__builtin_bswap32" then runBswap32 vs
               else if nm == "__builtin_abs" || nm == "abs" then runAbs vs
+              else if nm == "__sync_add_and_fetch_8" then runSyncAdd8 vs
               else if nm == "__builtin_alloca" then runAlloca vs
               else if nm == "__builtin_ffs" then runFfs vs
               else if nm == "__builtin_mul_overflow" then runArithOverflow "mul" vs

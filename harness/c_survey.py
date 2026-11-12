@@ -83,12 +83,7 @@ def static_walls(env):
         elif kind == "BinaryOperator":
             op = n.get("op")
             lhs, rhs = n.get("lhs"), n.get("rhs")
-            if op == "=" and effectful(rhs):
-                # C23 §6.5.17.1 sequences the store after the RHS.  This is
-                # the pre-registered G1a wall, kept separate from genuinely
-                # unsequenced operands so the flip can be named.
-                walls.add("assignment-call")
-            elif op not in ("&&", "||", ",", "=") and effectful(lhs) and effectful(rhs):
+            if op not in ("&&", "||", ",", "=") and effectful(lhs) and effectful(rhs):
                 walls.add("unsequenced-effects")
         for key in ("type", "compute_lhs_type", "compute_result_type"):
             ty = n.get(key)
@@ -222,8 +217,8 @@ def selftest():
         }
     }
     walls = static_walls(env)
-    if "assignment-call" not in walls:
-        print("c_survey --self-test: assignment wall missing", file=sys.stderr)
+    if "assignment-call" in walls:
+        print("c_survey --self-test: stale assignment wall", file=sys.stderr)
         return 1
     page = render({"counts": {"passed": 1}, "total": 1, "manifest_hash": "x",
                    "wall_ranking": [{"wall": "assignment-call", "sole": 1,

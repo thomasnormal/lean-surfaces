@@ -4,8 +4,8 @@ Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manife
 
 - verdicts: 414/2214 scored (passed 414, failed 0)
 - manifest SHA-256: `953938cce1637cf91ba3dda661a9b9309cd83f0ebf7d7f17cc1a36704295f367`
-- measured commit: `f6680e3a8`
-- measured at: `2026-11-12T01:45:00Z`
+- measured commit: `ecac15649`
+- measured at: `2026-11-12T01:52:00Z`
 
 ## Verdict counts
 
@@ -49,12 +49,11 @@ Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manife
 
 | wall | sole | present | example files |
 | --- | ---: | ---: | --- |
-| `type-layout` | 303 | 1061 | 00015.c, 00016.c, 00017.c, 00018.c, 00019.c |
-| `libc-call` | 200 | 737 | 00025.c, 00040.c, 00056.c, 00087.c, 00089.c |
-| `assignment-call` | 28 | 186 | 00011.c, 00031.c, 00040.c, 00140.c, 00187.c |
+| `type-layout` | 353 | 1061 | 00015.c, 00016.c, 00017.c, 00018.c, 00019.c |
+| `libc-call` | 212 | 737 | 00025.c, 00040.c, 00056.c, 00087.c, 00089.c |
+| `cast:IntegralToPointer` | 3 | 26 | 00214.c, 20000314-1.c, 20000622-1.c, 20010329-1.c, 20021010-2.c |
 | `unsequenced-effects` | 3 | 20 | 00121.c, 20001228-1.c, 20020406-1.c, 20060102-1.c, 20230802-1.c |
 | `cast:PointerToIntegral` | 2 | 27 | 00144.c, 20000622-1.c, 20011121-1.c, 20030811-1.c, 20050215-1.c |
-| `cast:IntegralToPointer` | 2 | 26 | 00214.c, 20000314-1.c, 20000622-1.c, 20010329-1.c, 20021010-2.c |
 | `unsupported:EmptyDecl` | 2 | 6 | 20050106-1.c, 20230630-2.c, 20230630-4.c, builtin-bitops-1.c, pr34154.c |
 | `unsupported:StmtExpr` | 1 | 10 | 00213.c, 00214.c, 20000703-1.c, 20000917-1.c, 20001203-2.c |
 | `unsupported:AddrLabelExpr` | 1 | 8 | 20040302-1.c, 20041214-1.c, 20071210-1.c, 920501-4.c, 920501-5.c |

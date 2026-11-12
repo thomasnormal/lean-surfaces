@@ -37,8 +37,8 @@
   "timeout": 44
  },
  "manifest_hash": "953938cce1637cf91ba3dda661a9b9309cd83f0ebf7d7f17cc1a36704295f367",
- "measured_at_utc": "2026-11-12T01:45:00Z",
- "measured_commit": "f6680e3a8",
+ "measured_at_utc": "2026-11-12T01:52:00Z",
+ "measured_commit": "ecac15649",
  "pin": null,
  "rows": [
   {
@@ -137,9 +137,7 @@
    "manifest_status": "parsed",
    "name": "00011.c",
    "sha256": "a5db72a9dc5832758b18f3847a182503a48b3c6fa30dfa42c72a5007ee20180f",
-   "static_walls": [
-    "assignment-call"
-   ],
+   "static_walls": [],
    "verdict": "passed"
   },
   {
@@ -338,9 +336,7 @@
    "manifest_status": "parsed",
    "name": "00031.c",
    "sha256": "5bc79561c33023827e774b67d71ef33c3a9668cd491668ee5d92fb4a1f9496c0",
-   "static_walls": [
-    "assignment-call"
-   ],
+   "static_walls": [],
    "verdict": "passed"
   },
   {
@@ -426,7 +422,6 @@
    "name": "00040.c",
    "sha256": "cfa5225b5d1ffd079082937dfe73c3178eb75f7ac60fec50c43d9a159ac4d509",
    "static_walls": [
-    "assignment-call",
     "libc-call"
    ],
    "verdict": "refused-libc"
@@ -1433,7 +1428,6 @@
    "name": "00140.c",
    "sha256": "84adaccee870947000971d7e35d97786165c66258c094fec92756aa9594c2bad",
    "static_walls": [
-    "assignment-call",
     "type-layout"
    ],
    "verdict": "refused-unsupported"
@@ -2006,7 +2000,6 @@
    "name": "00187.c",
    "sha256": "78fe8f7f6f79a04a3fb9c07942726cd25b0898bbf9abc06d341733b641fea93b",
    "static_walls": [
-    "assignment-call",
     "libc-call",
     "string-literal",
     "type-layout"
@@ -2359,7 +2352,6 @@
    "name": "00214.c",
    "sha256": "5164bc3a4482815ba765ec253765a69bf59bc074e4313fdf607e4554daf798bb",
    "static_walls": [
-    "assignment-call",
     "cast:IntegralToPointer",
     "libc-call",
     "string-literal",
@@ -2428,7 +2420,6 @@
    "name": "00219.c",
    "sha256": "10a4f4d8ae4e76190fd5a66a22f41cf5d509ca4d824e7d052a55396c57a04537",
    "static_walls": [
-    "assignment-call",
     "libc-call",
     "string-literal",
     "type-layout",
@@ -2998,7 +2989,6 @@
    "name": "20000801-2.c",
    "sha256": "c9a6d4624d1532eeab33fa70e1a4cb7ce601854092cf7f5bd1927415a6c360c6",
    "static_walls": [
-    "assignment-call",
     "type-layout"
    ],
    "verdict": "refused-libc"
@@ -3050,9 +3040,7 @@
    "manifest_status": "parsed",
    "name": "20000818-1.c",
    "sha256": "fbd876bd8406fe0fd788518d614d0e7a2165df99da8ab2db3e95e03eea7820b3",
-   "static_walls": [
-    "assignment-call"
-   ],
+   "static_walls": [],
    "verdict": "refused-libc"
   },
   {
@@ -3115,7 +3103,6 @@
    "name": "20000917-1.c",
    "sha256": "af46d094c68fe6e9cb0e7a37fcc6b7deaf727e946d32c609c5295a5c6371248c",
    "static_walls": [
-    "assignment-call",
     "type-layout",
     "unsupported:StmtExpr"
    ],
@@ -3276,7 +3263,6 @@
    "name": "20001124-1.c",
    "sha256": "c4f0c40ed16dfed6dee46089312e3ebe51477c054fe210fa032fb1fe13e38979",
    "static_walls": [
-    "assignment-call",
     "type-layout"
    ],
    "verdict": "refused-unsupported"
@@ -3288,7 +3274,6 @@
    "name": "20001130-1.c",
    "sha256": "10bdc986464fded284df081c0fafb5ac37a3510fbeef8d117f36455c5921791d",
    "static_walls": [
-    "assignment-call",
     "type-layout"
    ],
    "verdict": "passed"
@@ -3323,7 +3308,6 @@
    "name": "20001203-2.c",
    "sha256": "7cadd06740113c17aa0f79396a0b832269f3ba374b55c64b5af654750b9efd78",
    "static_walls": [
-    "assignment-call",
     "libc-call",
     "type-layout",
     "unsupported:StmtExpr"
@@ -3423,7 +3407,6 @@
    "name": "20010122-1.c",
    "sha256": "4210cf56b3c94ef460267f46d90d50035f8925bf925a60ee015024c4403ae9f1",
    "static_walls": [
-    "assignment-call",
     "libc-call",
     "type-layout"
    ],
@@ -3448,7 +3431,6 @@
    "name": "20010129-1.c",
    "sha256": "52073831916d7e42214422b7f3ec122c3c99672405efb246c0ac19e3bed5bc76",
    "static_walls": [
-    "assignment-call",
     "type-layout"
    ],
    "verdict": "refused-unsupported"
@@ -3498,7 +3480,6 @@
    "name": "20010224-1.c",
    "sha256": "5550548c308e4dff8b1524a50346835e5b1c5e506b211bd4707d4ff687ff039d",
    "static_walls": [
-    "assignment-call",
     "type-layout"
    ],
    "verdict": "refused-libc"
@@ -3542,7 +3523,6 @@
    "name": "20010409-1.c",
    "sha256": "69ea3edd9718045635f1aaf4f5d81da4e617a06ff7e2bbc27ba909a1231add8d",
    "static_walls": [
-    "assignment-call",
     "libc-call",
     "string-literal",
     "type-layout"
@@ -3686,7 +3666,6 @@
    "name": "20010915-1.c",
    "sha256": "079287a9978b9ab65d73a966feb4a5b2962386f23619512e92c469b094e380bc",
    "static_walls": [
-    "assignment-call",
     "libc-call",
     "string-literal",
     "type-layout"
@@ -3936,7 +3915,6 @@
    "name": "20020129-1.c",
    "sha256": "a7719700b9f83009fc010d981c005f6fb9c225b32ab6e352788c072f94bb121b",
    "static_walls": [
-    "assignment-call",
     "type-layout"
    ],
    "verdict": "refused-ub"
@@ -3980,7 +3958,6 @@
    "name": "20020213-1.c",
    "sha256": "153845b47ddb0d3ebc7e4bf6f0bfb3abac63562ed84cac21a821418e831c1297",
    "static_walls": [
-    "assignment-call",
     "type-layout"
    ],
    "verdict": "refused-unsupported"
@@ -4138,7 +4115,6 @@
    "name": "20020402-3.c",
    "sha256": "5ab1e0c0dcc433fcbce0f41e7eef7a06250ae9047e8ce766d27187ad5fcc1fdc",
    "static_walls": [
-    "assignment-call",
     "type-layout"
    ],
    "verdict": "passed"
@@ -4159,7 +4135,6 @@
    "name": "20020406-1.c",
    "sha256": "34df7369b73cbc4f119553b58f5fa4fe373fa108f9c3d790a62e997f6a9b8816",
    "static_walls": [
-    "assignment-call",
     "libc-call",
     "string-literal",
     "type-layout",
@@ -4174,7 +4149,6 @@
    "name": "20020411-1.c",
    "sha256": "fffe831c2eba4bc557ea7c8d048dcd56f5b6ad0cdb49f9b90ac4aa7cfd8e03d8",
    "static_walls": [
-    "assignment-call",
     "cast:FloatingCast",
     "libc-call",
     "type-layout"
@@ -4230,7 +4204,6 @@
    "name": "20020503-1.c",
    "sha256": "faa87d6b8a37a51510f77989304f7d5fa64607b82bb8ea8a6822225d350f41bf",
    "static_walls": [
-    "assignment-call",
     "type-layout"
    ],
    "verdict": "refused-unsupported"
@@ -4287,7 +4260,6 @@
    "name": "20020529-1.c",
    "sha256": "4f1736545a78454520641f373c2b81155a0afcc6ef6f8fc52df56d4f3b8cdc35",
    "static_walls": [
-    "assignment-call",
     "type-layout"
    ],
    "verdict": "refused-libc"
@@ -4349,7 +4321,6 @@
    "name": "20020720-1.c",
    "sha256": "fa967332a209a596d6a8ef38a38d9ac2348073fb0087d597294abeb9010b9584",
    "static_walls": [
-    "assignment-call",
     "libc-call",
     "type-layout"
    ],
@@ -4371,7 +4342,6 @@
    "name": "20020810-1.c",
    "sha256": "c66b83e023177a54b8a704fb0d2f7f309ab92550f940618a9137a41c38e4ad9b",
    "static_walls": [
-    "assignment-call",
     "type-layout"
    ],
    "verdict": "refused-unsupported"
@@ -4869,7 +4839,6 @@
    "name": "20030613-1.c",
    "sha256": "f56e737e0db6fa7a90e2905850977654f861bcadf7b3579760e28344ce64fe5e",
    "static_walls": [
-    "assignment-call",
     "type-layout"
    ],
    "verdict": "refused-unsupported"
@@ -4929,7 +4898,6 @@
    "name": "20030717-1.c",
    "sha256": "c104496dfac2cde6fbbf2ace57788e9df5fa6ea2ca791652a8caa9585d043281",
    "static_walls": [
-    "assignment-call",
     "libc-call",
     "type-layout"
    ],
@@ -5141,7 +5109,6 @@
    "name": "20031201-1.c",
    "sha256": "f3e4a30dbe3bf5776e0b16f2e9b83e727d451dd33d159c5707152179c44eef6f",
    "static_walls": [
-    "assignment-call",
     "type-layout"
    ],
    "verdict": "refused-unsupported"
@@ -5153,7 +5120,6 @@
    "name": "20031204-1.c",
    "sha256": "f312b548f8ad48c4650e1c9598de8c702c605cb349fb7a0e7a50e1a993bf2431",
    "static_walls": [
-    "assignment-call",
     "libc-call",
     "string-literal",
     "type-layout"
@@ -5301,7 +5267,6 @@
    "name": "20040313-1.c",
    "sha256": "ac45f1d7f24589a4abbdd8358a84607584f1dcc37adb795bc698ec1e4750a7ca",
    "static_walls": [
-    "assignment-call",
     "type-layout"
    ],
    "verdict": "timeout"
@@ -5440,7 +5405,6 @@
    "name": "20040703-1.c",
    "sha256": "2851a1460730cd2e292bb4d1313cc6a37e04599ff05881724432dbab93db6b19",
    "static_walls": [
-    "assignment-call",
     "type-layout"
    ],
    "verdict": "refused-unsupported"
@@ -5499,7 +5463,6 @@
    "name": "20040709-1.c",
    "sha256": "847815685fbf49bfa25f2a5c3fcd71f7a5b791f855138b2fe582b377bc5c592a",
    "static_walls": [
-    "assignment-call",
     "cast:FloatingCast",
     "cast:FloatingToIntegral",
     "libc-call",
@@ -5514,7 +5477,6 @@
    "name": "20040709-2.c",
    "sha256": "e7053c30dcf6effda4a98f7060d3587aea9a6433289236a4c1d661620331c849",
    "static_walls": [
-    "assignment-call",
     "cast:FloatingCast",
     "cast:FloatingToIntegral",
     "libc-call",
@@ -5539,7 +5501,6 @@
    "name": "20040805-1.c",
    "sha256": "198e9b0dc6d142d80e7358a32189d7e573aa6f54491412ccd1b8cdbd2debcae7",
    "static_walls": [
-    "assignment-call",
     "type-layout"
    ],
    "verdict": "refused-libc"
@@ -5624,7 +5585,6 @@
    "name": "20041112-1.c",
    "sha256": "1dea30cad5697db71e774a3f55f061505fdb9f09b27e79a0320d2171103f3576",
    "static_walls": [
-    "assignment-call",
     "cast:IntegralToPointer"
    ],
    "verdict": "refused-unsupported"
@@ -5741,7 +5701,6 @@
    "name": "20041218-1.c",
    "sha256": "b5d1601f6799841f2bae31fac4e6e3f754cae2c1d23a4342665fd42f6668ffee",
    "static_walls": [
-    "assignment-call",
     "libc-call",
     "string-literal",
     "type-layout"
@@ -5850,7 +5809,6 @@
    "name": "20050125-1.c",
    "sha256": "4a29243c05c71c8eb655fe7dbe5212d8e9ba47756332e7d10c56d558e32174e9",
    "static_walls": [
-    "assignment-call",
     "cast:IntegralToPointer",
     "type-layout"
    ],
@@ -5916,7 +5874,6 @@
    "name": "20050316-1.c",
    "sha256": "7b4b7355263f603b579f1bd4aeb9bd9d9b7bff00b919d36191cf9a5da2247585",
    "static_walls": [
-    "assignment-call",
     "type-layout"
    ],
    "verdict": "refused-unsupported"
@@ -5928,7 +5885,6 @@
    "name": "20050316-2.c",
    "sha256": "e096ec82c6ec33d62c00335c4a3fc73b535ba2cd94b9bdf0532928e2ce2072d3",
    "static_walls": [
-    "assignment-call",
     "cast:FloatingCast",
     "type-layout"
    ],
@@ -5941,7 +5897,6 @@
    "name": "20050316-3.c",
    "sha256": "05e257f48a4da395630ab47f31a09833f1db0b43ce32520e99062457c367714c",
    "static_walls": [
-    "assignment-call",
     "type-layout"
    ],
    "verdict": "refused-unsupported"
@@ -6131,9 +6086,7 @@
    "manifest_status": "parsed",
    "name": "20051215-1.c",
    "sha256": "910ed802e46cd3ef979f04863e08a7e0d849ce2c8a34ff03ebf645bf8c38a0d0",
-   "static_walls": [
-    "assignment-call"
-   ],
+   "static_walls": [],
    "verdict": "passed"
   },
   {
@@ -6265,9 +6218,7 @@
    "manifest_status": "parsed",
    "name": "20061101-1.c",
    "sha256": "fea0ce615e3d8e8386f5657d3daa0a6c351629d6e328733d8ced9ab72b5a328d",
-   "static_walls": [
-    "assignment-call"
-   ],
+   "static_walls": [],
    "verdict": "passed"
   },
   {
@@ -6276,9 +6227,7 @@
    "manifest_status": "parsed",
    "name": "20061101-2.c",
    "sha256": "30b1a0909258216743d78227a49cfd75747810b36e1fa07d27c7a5dd33bdb81b",
-   "static_walls": [
-    "assignment-call"
-   ],
+   "static_walls": [],
    "verdict": "passed"
   },
   {
@@ -6472,7 +6421,6 @@
    "name": "20071120-1.c",
    "sha256": "2a7087931d9add1d20c6b5247ab16d5917b09f557bff70413c7e69f58b275121",
    "static_walls": [
-    "assignment-call",
     "libc-call",
     "type-layout"
    ],
@@ -6905,7 +6853,6 @@
    "name": "20100430-1.c",
    "sha256": "b0620bda1d0f8ec4b4df7772215b5804066e030e383ef80107482d82abc36a9e",
    "static_walls": [
-    "assignment-call",
     "type-layout",
     "unsupported:PackedAttr"
    ],
@@ -6960,9 +6907,7 @@
    "manifest_status": "parsed",
    "name": "20101013-1.c",
    "sha256": "ca07f4f535cf9ba5337978c7ac8c9a88f304be04bb62acf3c8ca7d4654933838",
-   "static_walls": [
-    "assignment-call"
-   ],
+   "static_walls": [],
    "verdict": "passed"
   },
   {
@@ -7027,7 +6972,6 @@
    "name": "20120105-1.c",
    "sha256": "e3071a89402ef81e3195825973cbb558d876e54f9eb0649389d702a7a240a50f",
    "static_walls": [
-    "assignment-call",
     "libc-call",
     "type-layout",
     "unsupported:PackedAttr"
@@ -7040,9 +6984,7 @@
    "manifest_status": "parsed",
    "name": "20120111-1.c",
    "sha256": "f32944da45cc50048f8036585688f0c7c36be510320e67a8c4a80e0c601d01a2",
-   "static_walls": [
-    "assignment-call"
-   ],
+   "static_walls": [],
    "verdict": "refused-unsupported"
   },
   {
@@ -7137,7 +7079,6 @@
    "name": "20131127-1.c",
    "sha256": "32fee8fe474bff736cb9b3762d01e535a606160826cb6947d8285408776b6910",
    "static_walls": [
-    "assignment-call",
     "type-layout",
     "unsupported:MaxFieldAlignmentAttr"
    ],
@@ -7149,9 +7090,7 @@
    "manifest_status": "parsed",
    "name": "20140212-1.c",
    "sha256": "207b91ef9f39b961d2be4cce9a0d1f5df5a945c7d06322b97a1017f8b822cddc",
-   "static_walls": [
-    "assignment-call"
-   ],
+   "static_walls": [],
    "verdict": "passed"
   },
   {
@@ -7261,7 +7200,6 @@
    "name": "20170111-1.c",
    "sha256": "83a813b64f0551d67eddfebbe2ff4d06dfd42a55739ca4bd8efcb325e4b04e8c",
    "static_walls": [
-    "assignment-call",
     "type-layout"
    ],
    "verdict": "passed"
@@ -7305,7 +7243,6 @@
    "name": "20171008-1.c",
    "sha256": "9ead3cbf5a1c234f638b8175a6cedf392b3d547763079f41d440cf3f0f63c849",
    "static_walls": [
-    "assignment-call",
     "libc-call",
     "type-layout",
     "unsupported:AlignedAttr"
@@ -7427,7 +7364,6 @@
    "name": "20221006-1.c",
    "sha256": "745a210ba0a7f54b21965c4b0308f8a57412711e5b0129d8581b9ce67077d3a4",
    "static_walls": [
-    "assignment-call",
     "libc-call",
     "type-layout"
    ],
@@ -7899,7 +7835,6 @@
    "name": "920810-1.c",
    "sha256": "69a81f788008f52368bd0fcaf13f657300f12fdc28d4ea4d9f816175017f9c91",
    "static_walls": [
-    "assignment-call",
     "libc-call",
     "type-layout"
    ],
@@ -8131,7 +8066,6 @@
    "name": "921123-2.c",
    "sha256": "828676e8734291950b55b40e49181175887e35e2e3925a331f11b665f8c5ea57",
    "static_walls": [
-    "assignment-call",
     "type-layout"
    ],
    "verdict": "refused-unsupported"
@@ -8170,7 +8104,6 @@
    "name": "921204-1.c",
    "sha256": "9563fd40b1fff297b9b28837bb5c1fb649271632a23a89abd6a7926de702a17a",
    "static_walls": [
-    "assignment-call",
     "type-layout"
    ],
    "verdict": "refused-unsupported"
@@ -8269,7 +8202,6 @@
    "name": "930126-1.c",
    "sha256": "d8975e0960e19c2273a8a5239f1ce73e76842711a1e6d2113da9f8c13fc786fc",
    "static_walls": [
-    "assignment-call",
     "type-layout"
    ],
    "verdict": "refused-unsupported"
@@ -8930,7 +8862,6 @@
    "name": "941014-2.c",
    "sha256": "188d52462aac626921914c0541fd63a4fb1a40601a4b891635a9d15cda08c109",
    "static_walls": [
-    "assignment-call",
     "cast:PointerToIntegral",
     "libc-call",
     "string-literal",
@@ -9091,7 +9022,6 @@
    "name": "950607-2.c",
    "sha256": "cfcc65810cb604c53487db48f1cc7c8948205030c1522b121612e27058e7d4c3",
    "static_walls": [
-    "assignment-call",
     "type-layout"
    ],
    "verdict": "refused-unsupported"
@@ -9121,7 +9051,6 @@
    "name": "950628-1.c",
    "sha256": "fe06b6bc5b4e45c6a604f37165181ccc845e0757cdcd2450055ac126c7fab854",
    "static_walls": [
-    "assignment-call",
     "type-layout",
     "unsupported:ExprWithCleanups"
    ],
@@ -9213,9 +9142,7 @@
    "manifest_status": "parsed",
    "name": "951003-1.c",
    "sha256": "08edc9f35994cee3f0c5b7535f91f7cb74347059cb7d3821f48e9355c8f92a94",
-   "static_walls": [
-    "assignment-call"
-   ],
+   "static_walls": [],
    "verdict": "refused-libc"
   },
   {
@@ -9459,7 +9386,6 @@
    "name": "960512-1.c",
    "sha256": "0ba045de14f9208e1ec847d39fb4712a943f00ac2b9ad1e45abf5735852b2699",
    "static_walls": [
-    "assignment-call",
     "cast:IntegralToFloating",
     "type-layout"
    ],
@@ -9621,7 +9547,6 @@
    "name": "961213-1.c",
    "sha256": "71dac08b4547ca177c4b301a74bb44a769ca61d607ecafc2afae5911cc08ede0",
    "static_walls": [
-    "assignment-call",
     "type-layout"
    ],
    "verdict": "refused-libc"
@@ -9633,7 +9558,6 @@
    "name": "961223-1.c",
    "sha256": "46501b824f2ecd0efdd8168ed271fdfd62542e6707f5a2fa2d58ae58cd17b654",
    "static_walls": [
-    "assignment-call",
     "type-layout"
    ],
    "verdict": "refused-unsupported"
@@ -9696,7 +9620,6 @@
    "name": "980223.c",
    "sha256": "976fe57f96fd37a3cf9d4bb94bb3b1cde8a05b8a6892799c576c795e99eb915f",
    "static_walls": [
-    "assignment-call",
     "type-layout"
    ],
    "verdict": "refused-unsupported"
@@ -9718,9 +9641,7 @@
    "manifest_status": "parsed",
    "name": "980505-1.c",
    "sha256": "c8f7d41c2d33810af729d491e52884bc638937b3812ec7bc5d917522f52c2642",
-   "static_walls": [
-    "assignment-call"
-   ],
+   "static_walls": [],
    "verdict": "refused-libc"
   },
   {
@@ -9784,7 +9705,6 @@
    "name": "980526-2.c",
    "sha256": "89c8f15e8515cb45e315f375b87f60611c7a1573b59fc60a3184ac517ceb758e",
    "static_walls": [
-    "assignment-call",
     "cast:IntegralToPointer",
     "cast:PointerToIntegral",
     "string-literal",
@@ -9840,7 +9760,6 @@
    "name": "980605-1.c",
    "sha256": "4fce18a15b8674a4eb025d68f5c154bbfc61a066445526ef60ba52cfc22abfaf",
    "static_walls": [
-    "assignment-call",
     "cast:FloatingToIntegral",
     "cast:IntegralToFloating",
     "libc-call",
@@ -9910,7 +9829,6 @@
    "name": "980707-1.c",
    "sha256": "5521d0bf62e7210d9e0d74cc80322eb8ca1e7379fa643d747b70c956c5c5b9e5",
    "static_walls": [
-    "assignment-call",
     "libc-call",
     "string-literal",
     "type-layout"
@@ -9924,7 +9842,6 @@
    "name": "980709-1.c",
    "sha256": "54368958f8fa7dce11630041f1333e5cf9f3ab65a056ddcb49b4265d1ecdf411",
    "static_walls": [
-    "assignment-call",
     "libc-call",
     "type-layout"
    ],
@@ -10129,7 +10046,6 @@
    "name": "990413-2.c",
    "sha256": "74e56d5f5fce2487ccf3831832494ddb3ec37f1d8f113905d559879b34d62660",
    "static_walls": [
-    "assignment-call",
     "cast:FloatingCast",
     "type-layout",
     "unsupported:GCCAsmStmt"
@@ -10178,7 +10094,6 @@
    "name": "990525-2.c",
    "sha256": "962d799e85c2a6f43a0027098cf338d3b1c15ee90af3b7c456083a0c6a3985c1",
    "static_walls": [
-    "assignment-call",
     "type-layout"
    ],
    "verdict": "refused-unsupported"
@@ -10230,9 +10145,7 @@
    "manifest_status": "parsed",
    "name": "990804-1.c",
    "sha256": "fb0ab862da003e1d182e03960d1cc63f9a57fee867f6d93f13efa2675975428f",
-   "static_walls": [
-    "assignment-call"
-   ],
+   "static_walls": [],
    "verdict": "refused-libc"
   },
   {
@@ -10274,7 +10187,6 @@
    "name": "990829-1.c",
    "sha256": "575c60c6af37d89dd7922784a88dbfc329131fe89ff78d6a8dd9a75cd02658c6",
    "static_walls": [
-    "assignment-call",
     "type-layout"
    ],
    "verdict": "refused-unsupported"
@@ -10313,7 +10225,6 @@
    "name": "991019-1.c",
    "sha256": "2d2eb0c511572590b8dafc4df6a841ebcdde0919f6d8129cf439b58813752df7",
    "static_walls": [
-    "assignment-call",
     "type-layout"
    ],
    "verdict": "refused-unsupported"
@@ -10356,7 +10267,6 @@
    "name": "991118-1.c",
    "sha256": "098e5c478b0e18053d843f15d42802f3631f84acde0b39660c1adb486b9434e8",
    "static_walls": [
-    "assignment-call",
     "type-layout"
    ],
    "verdict": "refused-unsupported"
@@ -10368,7 +10278,6 @@
    "name": "991201-1.c",
    "sha256": "b049ece642416fc1272b7b90f44f217468d3e96ab5692b82660192a3264afabc",
    "static_walls": [
-    "assignment-call",
     "type-layout"
    ],
    "verdict": "timeout"
@@ -10615,9 +10524,7 @@
    "manifest_status": "parsed",
    "name": "arith-rand-ll.c",
    "sha256": "8e4da7b080eee46dd5d37a9b588ee64a439ef009a8fa3458573475278bbd9cf0",
-   "static_walls": [
-    "assignment-call"
-   ],
+   "static_walls": [],
    "verdict": "refused-unsupported"
   },
   {
@@ -10626,9 +10533,7 @@
    "manifest_status": "parsed",
    "name": "arith-rand.c",
    "sha256": "2a7bade42fd22c970f880cb2fe78665cb71755c8557d224dd1fa97f176bc6764",
-   "static_walls": [
-    "assignment-call"
-   ],
+   "static_walls": [],
    "verdict": "refused-unsupported"
   },
   {
@@ -10718,7 +10623,6 @@
    "name": "bf64-1.c",
    "sha256": "d3035b700fbe0ba71cea78f1d69b7333698986ea945b0a9b904fdb1cc06e2c2e",
    "static_walls": [
-    "assignment-call",
     "type-layout"
    ],
    "verdict": "refused-unsupported"
@@ -10877,7 +10781,6 @@
    "name": "bswap-2.c",
    "sha256": "89b664eba9f6220422b3395c3d96099c591b0f3fdcbf154da9e992fcf8c3e22c",
    "static_walls": [
-    "assignment-call",
     "libc-call",
     "type-layout"
    ],
@@ -11038,7 +10941,6 @@
    "name": "builtins/20010124-1.c",
    "sha256": "2db9734f594a277fa8f9df9f2318cf200e9e34f8cd9f7eaa5f12d7baa76139f0",
    "static_walls": [
-    "assignment-call",
     "libc-call",
     "type-layout"
    ],
@@ -11151,7 +11053,6 @@
    "name": "builtins/fputs-lib.c",
    "sha256": "e232cc9dcd885e1900329d2a17938bb028b5dd374dacba44548b9a2948d7d66e",
    "static_walls": [
-    "assignment-call",
     "libc-call"
    ],
    "verdict": "refused-unsupported"
@@ -11199,7 +11100,6 @@
    "name": "builtins/lib/chk.c",
    "sha256": "65d4222e187651efd39074eadeb195ea4c525b49ff0f4f21d11bebfee9d64da6",
    "static_walls": [
-    "assignment-call",
     "libc-call",
     "type-layout",
     "unsequenced-effects"
@@ -11213,7 +11113,6 @@
    "name": "builtins/lib/fprintf.c",
    "sha256": "3a1bc523c54e2276486e5d1f56739d256908b1466f3cf3d74c3a49c40a60511c",
    "static_walls": [
-    "assignment-call",
     "libc-call",
     "type-layout"
    ],
@@ -11282,7 +11181,6 @@
    "name": "builtins/lib/printf.c",
    "sha256": "20a1960eb44ba2304118db9bc080fcdc300572eabc73645d2a415e6be9c9f76d",
    "static_walls": [
-    "assignment-call",
     "libc-call",
     "type-layout"
    ],
@@ -11295,7 +11193,6 @@
    "name": "builtins/lib/sprintf.c",
    "sha256": "8acdc56ed1b544ddea645fe20788dcedbec1e7714216e5c34053051839219f48",
    "static_walls": [
-    "assignment-call",
     "libc-call",
     "type-layout"
    ],
@@ -11719,7 +11616,6 @@
    "name": "builtins/pr22237.c",
    "sha256": "37ce49f38252308b8bf6dee9ffce4b735fce29bf22b187f18c80ea5a21c5e0b3",
    "static_walls": [
-    "assignment-call",
     "type-layout"
    ],
    "verdict": "refused-unsupported"
@@ -11972,7 +11868,6 @@
    "name": "builtins/strcpy-2.c",
    "sha256": "41a8a145cc1e3a3174892f35243b35599f064ab19be10b8c696b2334934b8923",
    "static_walls": [
-    "assignment-call",
     "libc-call",
     "string-literal",
     "type-layout"
@@ -12615,7 +12510,6 @@
    "name": "complex-1.c",
    "sha256": "346f9d33f635adfa96ba4f9d3d3602caccd1372396679900e34e22612adaf7cb",
    "static_walls": [
-    "assignment-call",
     "type-layout",
     "unsupported:ImaginaryLiteral"
    ],
@@ -12628,7 +12522,6 @@
    "name": "complex-2.c",
    "sha256": "cf52b8d4e65f4c3a714bf35282345919b8ad83bd82bdf7b6e29f5c41c9136cfc",
    "static_walls": [
-    "assignment-call",
     "type-layout",
     "unsupported:ImaginaryLiteral"
    ],
@@ -12664,7 +12557,6 @@
    "name": "complex-5.c",
    "sha256": "9626fce271adb616a8e0ec349caf8ff1242172fc0eed7415399438006ab3ea8b",
    "static_walls": [
-    "assignment-call",
     "type-layout",
     "unsupported:ImaginaryLiteral"
    ],
@@ -12677,7 +12569,6 @@
    "name": "complex-6.c",
    "sha256": "0410a78a4a86951981fa52b7a18a6ffc5d4d147580c9ef2264c76bfc1dcf6c0c",
    "static_walls": [
-    "assignment-call",
     "libc-call",
     "string-literal",
     "type-layout",
@@ -12981,7 +12872,6 @@
    "name": "fprintf-chk-1.c",
    "sha256": "1f8ad943caf97cf3e4cd44c9466a36a57279d219a5185203225b99ab5480e837",
    "static_walls": [
-    "assignment-call",
     "libc-call",
     "string-literal",
     "type-layout"
@@ -13910,7 +13800,6 @@
    "name": "ieee/20041213-1.c",
    "sha256": "625aa7e6b26a3f201c47803734a8bd6a5dadfe65b8a7d21e00f586f6f43e6fd9",
    "static_walls": [
-    "assignment-call",
     "libc-call",
     "type-layout"
    ],
@@ -14020,7 +13909,6 @@
    "name": "ieee/cdivchkd.c",
    "sha256": "3534d6b68cb2ef9f715706c0f43d9275af460f2e1b929b6a47e7607ff63e7ffb",
    "static_walls": [
-    "assignment-call",
     "libc-call",
     "type-layout",
     "unsequenced-effects"
@@ -14034,7 +13922,6 @@
    "name": "ieee/cdivchkf.c",
    "sha256": "02e06370917d73750aed4ff9b747ad2e3298d05ff38034d1567fefd7b0c79403",
    "static_walls": [
-    "assignment-call",
     "cast:FloatingCast",
     "libc-call",
     "type-layout",
@@ -14049,7 +13936,6 @@
    "name": "ieee/cdivchkld.c",
    "sha256": "737078ddcaf6d6557fcfbc472cb483d14ce07583fce3cb524abd977d7aa4cc66",
    "static_walls": [
-    "assignment-call",
     "cast:FloatingCast",
     "libc-call",
     "type-layout",
@@ -14119,7 +14005,6 @@
    "name": "ieee/copysign1.c",
    "sha256": "eaa559171205738e58dbe5e0bb0c390594e9193c8845b1b3d2d479d7746acae6",
    "static_walls": [
-    "assignment-call",
     "cast:FloatingCast",
     "libc-call",
     "string-literal",
@@ -14134,7 +14019,6 @@
    "name": "ieee/copysign2.c",
    "sha256": "fc8e48ba90e3146485d7acb6dede7c977cef18360756eb43f160238e4892b35c",
    "static_walls": [
-    "assignment-call",
     "cast:FloatingCast",
     "libc-call",
     "string-literal",
@@ -14611,7 +14495,6 @@
    "name": "ieee/pr30704.c",
    "sha256": "69e9e465770fdeb58624c8050bb90a150228d5972e4405d2062dd122b6640715",
    "static_walls": [
-    "assignment-call",
     "libc-call",
     "type-layout"
    ],
@@ -14705,7 +14588,6 @@
    "name": "ieee/rbug.c",
    "sha256": "09986cf0fdefc44a3f039b7e623f93138a64c59a993b46fd5dc1135f317e85d8",
    "static_walls": [
-    "assignment-call",
     "cast:FloatingCast",
     "cast:FloatingToIntegral",
     "cast:IntegralToFloating",
@@ -14781,7 +14663,6 @@
    "name": "ipa-sra-1.c",
    "sha256": "4e7a91f246600547232431ef63749e5e796f0fbc831442ba8b9df0ceec8055a5",
    "static_walls": [
-    "assignment-call",
     "cast:FloatingToIntegral",
     "type-layout"
    ],
@@ -14794,7 +14675,6 @@
    "name": "ipa-sra-2.c",
    "sha256": "ec09602287bd83ad97146911d37f177f4249422073304778523e3fd17e6d93b7",
    "static_walls": [
-    "assignment-call",
     "libc-call",
     "type-layout"
    ],
@@ -14818,7 +14698,6 @@
    "name": "loop-1.c",
    "sha256": "79bb299d7424c4e3defd5f3dabc23c501a4b93a7fb93f4f9410357a8604edd47",
    "static_walls": [
-    "assignment-call",
     "type-layout"
    ],
    "verdict": "refused-libc"
@@ -14904,7 +14783,6 @@
    "name": "loop-2b.c",
    "sha256": "f22fa29d3fd942b2069ec1fcdb6764cd6afc6070001c2026f236aaf24c4d1e29",
    "static_walls": [
-    "assignment-call",
     "type-layout"
    ],
    "verdict": "refused-libc"
@@ -14916,7 +14794,6 @@
    "name": "loop-2c.c",
    "sha256": "4fa4898d7078ff611dc61017f1470a8e08aa09bc8bb788e99b96eb8a1be278d8",
    "static_walls": [
-    "assignment-call",
     "cast:PointerToIntegral",
     "type-layout"
    ],
@@ -14950,7 +14827,6 @@
    "name": "loop-2f.c",
    "sha256": "a2d52eb6a92ce7d5dc7f225de6b18392b6153fff41c98fe76aa1380c4999788a",
    "static_walls": [
-    "assignment-call",
     "cast:IntegralToPointer",
     "libc-call",
     "string-literal",
@@ -14965,7 +14841,6 @@
    "name": "loop-2g.c",
    "sha256": "268c47639d02a1978808b460f8bb5545ba9476058ddacbe376f5bdcf0ef36221",
    "static_walls": [
-    "assignment-call",
     "cast:IntegralToPointer",
     "libc-call",
     "string-literal",
@@ -15108,7 +14983,6 @@
    "name": "lto-tbaa-1.c",
    "sha256": "9e8dfcd6a42b4b75851495ff672e84442e0b59d8cd71d23fdac32c8883bb363c",
    "static_walls": [
-    "assignment-call",
     "libc-call",
     "type-layout"
    ],
@@ -15545,7 +15419,6 @@
    "name": "pr101188.c",
    "sha256": "5eeea37eee1a69d67b71267c616946c410729b9d6336cb05ca1849fc4ed37914",
    "static_walls": [
-    "assignment-call",
     "libc-call",
     "type-layout"
    ],
@@ -15786,7 +15659,6 @@
    "name": "pr108064.c",
    "sha256": "c8d12e6997090874a3e21ef1611f44f6fe6a910f53102495a58f440944a30af7",
    "static_walls": [
-    "assignment-call",
     "libc-call",
     "type-layout",
     "unsupported:AlignedAttr"
@@ -16051,7 +15923,6 @@
    "name": "pr111331-1.c",
    "sha256": "0453436ff839ace1041cc13f6238b7bc1e63406f0c135ace89fe08b225d4ff9a",
    "static_walls": [
-    "assignment-call",
     "libc-call"
    ],
    "verdict": "passed"
@@ -16096,7 +15967,6 @@
    "name": "pr111422.c",
    "sha256": "c42abda5f16acd31ef04a1327552f1efc0fa771169dafe2c830f2f7a3cf69793",
    "static_walls": [
-    "assignment-call",
     "libc-call",
     "type-layout"
    ],
@@ -16209,7 +16079,6 @@
    "name": "pr114396.c",
    "sha256": "23d02e979233f044300c571e65768b6e652330b353ae238eaaed15a7c828c80d",
    "static_walls": [
-    "assignment-call",
     "libc-call",
     "type-layout"
    ],
@@ -16278,7 +16147,6 @@
    "name": "pr117095.c",
    "sha256": "d2785321e996f432cf05df8afe8e1d08cf3ea895cc7ccd73a0ccc7600d513ec8",
    "static_walls": [
-    "assignment-call",
     "libc-call"
    ],
    "verdict": "refused-unsupported"
@@ -16302,9 +16170,7 @@
    "manifest_status": "parsed",
    "name": "pr117498.c",
    "sha256": "d98e620b649ffa4dbd207f9efa5beaeada6d9fc02b7026e5a3b9ff551be91642",
-   "static_walls": [
-    "assignment-call"
-   ],
+   "static_walls": [],
    "verdict": "refused-unsupported"
   },
   {
@@ -16405,7 +16271,6 @@
    "name": "pr120677.c",
    "sha256": "aad231e615d9f32a22ce72ebaa06bfabcc21c9b7a694ea9a6e56998c715b0750",
    "static_walls": [
-    "assignment-call",
     "libc-call"
    ],
    "verdict": "refused-unsupported"
@@ -16546,7 +16411,6 @@
    "name": "pr126405-3.c",
    "sha256": "ceb8a575ddede2cb8131e9ab80fa3d93129f84bc01f409e44c02f709dc007759",
    "static_walls": [
-    "assignment-call",
     "libc-call",
     "type-layout"
    ],
@@ -16596,7 +16460,6 @@
    "name": "pr15262.c",
    "sha256": "89ee2a24ca23b44d71e28ac3578fa8095341728c36b1097b7fdadadbd53cbdfa",
    "static_walls": [
-    "assignment-call",
     "cast:FloatingCast",
     "type-layout"
    ],
@@ -16702,9 +16565,7 @@
    "manifest_status": "parsed",
    "name": "pr19606.c",
    "sha256": "07944398e3ce4cbd7a5e08e9c19851e7651ebaec0aab6484783a36739c44aa7b",
-   "static_walls": [
-    "assignment-call"
-   ],
+   "static_walls": [],
    "verdict": "refused-libc"
   },
   {
@@ -16735,9 +16596,7 @@
    "manifest_status": "parsed",
    "name": "pr20100-1.c",
    "sha256": "b83bd9f5e8419a32d79a438c7a5a4e6b835a9f6e4c5f75558d800f50b358e68e",
-   "static_walls": [
-    "assignment-call"
-   ],
+   "static_walls": [],
    "verdict": "refused-unsupported"
   },
   {
@@ -16776,7 +16635,6 @@
    "name": "pr20601-1.c",
    "sha256": "2c806b4cdec5d59f743c669860262171a9a45579f3abe244332c6365b38c27c8",
    "static_walls": [
-    "assignment-call",
     "string-literal",
     "type-layout"
    ],
@@ -16957,9 +16815,7 @@
    "manifest_status": "parsed",
    "name": "pr22630.c",
    "sha256": "10824dd9695915f0d9e148983866b51a2882b3a0bb1ff8cee4e55a6ef05b923d",
-   "static_walls": [
-    "assignment-call"
-   ],
+   "static_walls": [],
    "verdict": "passed"
   },
   {
@@ -16989,7 +16845,6 @@
    "name": "pr23324.c",
    "sha256": "8b6c8e94d29e9bf08299873ef44903f8bf907525465bcac25a5f90a6501fce22",
    "static_walls": [
-    "assignment-call",
     "cast:FloatingCast",
     "cast:IntegralToPointer",
     "type-layout"
@@ -17064,7 +16919,6 @@
    "name": "pr24716.c",
    "sha256": "bd766722ade8b6139deeeabc61d1467fe0bb6b5b22e0a98dda96823f8b96d6d4",
    "static_walls": [
-    "assignment-call",
     "type-layout"
    ],
    "verdict": "passed"
@@ -17458,7 +17312,6 @@
    "name": "pr33669.c",
    "sha256": "f9d1cb188e5a2cdd31d51f3efb09be9cd4205887159f89796c5e13ccebff0dd3",
    "static_walls": [
-    "assignment-call",
     "type-layout"
    ],
    "verdict": "refused-unsupported"
@@ -17488,7 +17341,6 @@
    "name": "pr33870-1.c",
    "sha256": "5fc97b239cd3dc666ef73b5f8d03a865549749839b8abd0d943f94e4907f546c",
    "static_walls": [
-    "assignment-call",
     "libc-call",
     "type-layout"
    ],
@@ -17501,7 +17353,6 @@
    "name": "pr33870.c",
    "sha256": "64a9b80786fb99086ef2e1f0a05000b05528e43ec0ca7846e6aac45beebb629b",
    "static_walls": [
-    "assignment-call",
     "libc-call",
     "type-layout"
    ],
@@ -17581,7 +17432,6 @@
    "name": "pr34176.c",
    "sha256": "9acd2bb99915c1e65a65c9feb9316947049a1e56d8a1fdd18f6e81de0bd904a0",
    "static_walls": [
-    "assignment-call",
     "type-layout"
    ],
    "verdict": "refused-unsupported"
@@ -17686,7 +17536,6 @@
    "name": "pr35456.c",
    "sha256": "439a70fd3b4e169b9fa8e152cbfefa747f1d1fed58e6e7f96c59b244df6baf5d",
    "static_walls": [
-    "assignment-call",
     "libc-call",
     "type-layout"
    ],
@@ -18001,7 +17850,6 @@
    "name": "pr38969.c",
    "sha256": "9aff21d405a2044acd737d24d37128b16147249a8ff89bf61ad0cdda44df2633",
    "static_walls": [
-    "assignment-call",
     "cast:IntegralToFloating",
     "type-layout"
    ],
@@ -18026,7 +17874,6 @@
    "name": "pr39120.c",
    "sha256": "a491c1cac905a641e2d97ebae8205d7e0adb9d7d57c5a10730af37d8b259eb84",
    "static_walls": [
-    "assignment-call",
     "type-layout"
    ],
    "verdict": "refused-unsupported"
@@ -18139,9 +17986,7 @@
    "manifest_status": "parsed",
    "name": "pr40579.c",
    "sha256": "fc8fc4686facb9e8be2e4a03d4da6504779ef00e5d875c90f564f371138230a9",
-   "static_walls": [
-    "assignment-call"
-   ],
+   "static_walls": [],
    "verdict": "passed"
   },
   {
@@ -18236,7 +18081,6 @@
    "name": "pr41750.c",
    "sha256": "feb47f4ce9779c8d51b10df6a9ae7446a3130c54c571146c745d5e8a041cae0f",
    "static_walls": [
-    "assignment-call",
     "type-layout"
    ],
    "verdict": "refused-ub"
@@ -18276,9 +18120,7 @@
    "manifest_status": "parsed",
    "name": "pr42006.c",
    "sha256": "86e72b880619ff3633849240ed2b4c9ef9e92397fd148538ce29a0303b75b006",
-   "static_walls": [
-    "assignment-call"
-   ],
+   "static_walls": [],
    "verdict": "passed"
   },
   {
@@ -18416,7 +18258,6 @@
    "name": "pr43008.c",
    "sha256": "0e5c8a2e78e0a0ea514a4fec51bedceb61a489347d96f9a29537ca8a0e52e4bb",
    "static_walls": [
-    "assignment-call",
     "libc-call",
     "type-layout"
    ],
@@ -18497,7 +18338,6 @@
    "name": "pr43784.c",
    "sha256": "e84096a5fa025d38be9550d80dc8761150e73dcec82c323cc7efed1e888095cb",
    "static_walls": [
-    "assignment-call",
     "libc-call",
     "type-layout"
    ],
@@ -18767,7 +18607,6 @@
    "name": "pr47337.c",
    "sha256": "e35d8c36b3f0766784cbf87955951da4ad5d04912220fa78933b08c232bb91ce",
    "static_walls": [
-    "assignment-call",
     "libc-call",
     "string-literal",
     "type-layout"
@@ -18841,7 +18680,6 @@
    "name": "pr48814-1.c",
    "sha256": "d31c633f538e99af327d9a2e2842e1ff8b0c70253b7d076d598dbc2abe3cb756",
    "static_walls": [
-    "assignment-call",
     "type-layout"
    ],
    "verdict": "passed"
@@ -18853,7 +18691,6 @@
    "name": "pr48814-2.c",
    "sha256": "319b2071f06eb78dc5dfa5dd97f0ac549ad4c5242f2c90673b576e20335d5430",
    "static_walls": [
-    "assignment-call",
     "type-layout"
    ],
    "verdict": "passed"
@@ -19245,9 +19082,7 @@
    "manifest_status": "parsed",
    "name": "pr54471.c",
    "sha256": "efa3e402e1baff6def4a881c69c3ca8db8867206f10e97e1b098b570559ab14f",
-   "static_walls": [
-    "assignment-call"
-   ],
+   "static_walls": [],
    "verdict": "refused-unsupported"
   },
   {
@@ -19338,7 +19173,6 @@
    "name": "pr56799.c",
    "sha256": "165056aa546d0ec05b2992f359e233a38f011d1ba46af5d08bfd74183964c14c",
    "static_walls": [
-    "assignment-call",
     "type-layout"
    ],
    "verdict": "refused-unsupported"
@@ -19443,9 +19277,7 @@
    "manifest_status": "parsed",
    "name": "pr57281.c",
    "sha256": "e4538d83cfa71b835bb5e69da31bad35d5f223ff6dc5a3cc4abeae5bc4aa31a0",
-   "static_walls": [
-    "assignment-call"
-   ],
+   "static_walls": [],
    "verdict": "passed"
   },
   {
@@ -19524,7 +19356,6 @@
    "name": "pr57860.c",
    "sha256": "52d41cab88ec31ce9b3cee9415ca231fa088bff85ad8180be329111724d3b788",
    "static_walls": [
-    "assignment-call",
     "type-layout"
    ],
    "verdict": "passed"
@@ -19535,9 +19366,7 @@
    "manifest_status": "parsed",
    "name": "pr57861.c",
    "sha256": "fdd0f8a1747ffa36086fe1379f082f1b64ab89ea06b77c66a713b867bb8380bd",
-   "static_walls": [
-    "assignment-call"
-   ],
+   "static_walls": [],
    "verdict": "passed"
   },
   {
@@ -19620,7 +19449,6 @@
    "name": "pr58365.c",
    "sha256": "032d5d2147642b6aecaa28936e05f8bd1792035853183d1c16c8ffeb5d419da3",
    "static_walls": [
-    "assignment-call",
     "type-layout"
    ],
    "verdict": "refused-unsupported"
@@ -19725,9 +19553,7 @@
    "manifest_status": "parsed",
    "name": "pr58662.c",
    "sha256": "43a2156f48c652be1408516833b913c8817fe6b9eb5f887cec965f7925979d7b",
-   "static_walls": [
-    "assignment-call"
-   ],
+   "static_walls": [],
    "verdict": "passed"
   },
   {
@@ -19749,7 +19575,6 @@
    "name": "pr58831.c",
    "sha256": "f1374e66a79e755345fc9c19017bcaeaeaf2be04538d5e456d9c6602d913fc9e",
    "static_walls": [
-    "assignment-call",
     "libc-call",
     "string-literal",
     "type-layout",
@@ -19845,7 +19670,6 @@
    "name": "pr59358.c",
    "sha256": "16c9af853827413a07a9bdc29eb04281999fc7f20b89deb12841ed8f8cd3a0b0",
    "static_walls": [
-    "assignment-call",
     "libc-call"
    ],
    "verdict": "passed"
@@ -19982,7 +19806,6 @@
    "name": "pr60960.c",
    "sha256": "b70701c483980b963007b720f38d87bc8f5e8fe313a9fda32e57a1869f6e1276",
    "static_walls": [
-    "assignment-call",
     "libc-call"
    ],
    "verdict": "refused-unsupported"
@@ -20565,7 +20388,6 @@
    "name": "pr68249.c",
    "sha256": "bd5d046ed3b03d9881b0c799e2887419f70326af62936bbf1156a6cc2bc5b7c6",
    "static_walls": [
-    "assignment-call",
     "libc-call",
     "unsupported:BinaryConditionalOperator"
    ],
@@ -20641,7 +20463,6 @@
    "name": "pr68390.c",
    "sha256": "bab36ab4474180ee6b3e51c921e2b9322995f4da27066febed276f13b5e3bebf",
    "static_walls": [
-    "assignment-call",
     "cast:IntegralToFloating",
     "libc-call",
     "type-layout"
@@ -20654,9 +20475,7 @@
    "manifest_status": "parsed",
    "name": "pr68506.c",
    "sha256": "2371984d4a573d0e31248daf562d611be5c6cffa510da476bd15ad0b1b2dff29",
-   "static_walls": [
-    "assignment-call"
-   ],
+   "static_walls": [],
    "verdict": "timeout"
   },
   {
@@ -20700,7 +20519,6 @@
    "name": "pr68841.c",
    "sha256": "72b92c0ee5fab233ec4d48bc1651c137c49473621365436b7f6220b355e5c342",
    "static_walls": [
-    "assignment-call",
     "libc-call"
    ],
    "verdict": "passed"
@@ -20821,7 +20639,6 @@
    "name": "pr70127.c",
    "sha256": "5d953d45464793f22890f1ab67863a08b782484471f773d0374d60b36c6b94db",
    "static_walls": [
-    "assignment-call",
     "libc-call",
     "type-layout"
    ],
@@ -20892,9 +20709,7 @@
    "manifest_status": "parsed",
    "name": "pr70586.c",
    "sha256": "218a28dbb977c7749e79ef78a025da0bd6d0b1b03a26eb4e3977e0e0656b0417",
-   "static_walls": [
-    "assignment-call"
-   ],
+   "static_walls": [],
    "verdict": "passed"
   },
   {
@@ -21072,7 +20887,6 @@
    "name": "pr78170.c",
    "sha256": "d835b10ea07ed5c1b11febb521abf16e17adca6155adb6bf237b5b64fb56a597",
    "static_walls": [
-    "assignment-call",
     "libc-call",
     "type-layout"
    ],
@@ -21382,9 +21196,7 @@
    "manifest_status": "parsed",
    "name": "pr81423.c",
    "sha256": "d8d810ef41d80f0742a1affcd9363b56f34be8f33c6ddc354f776b0146e4371b",
-   "static_walls": [
-    "assignment-call"
-   ],
+   "static_walls": [],
    "verdict": "passed"
   },
   {
@@ -21480,7 +21292,6 @@
    "name": "pr82388.c",
    "sha256": "50c5ded382b87e6603a3bb43a597e18acaeb69b878be7d2e24bfbbc229e0bab1",
    "static_walls": [
-    "assignment-call",
     "type-layout"
    ],
    "verdict": "refused-unsupported"
@@ -21492,7 +21303,6 @@
    "name": "pr82524.c",
    "sha256": "396b3905e87fb23ff60e00b001acafe160aa23d81beea6fd2a30a89838201409",
    "static_walls": [
-    "assignment-call",
     "libc-call",
     "type-layout"
    ],
@@ -21603,7 +21413,6 @@
    "name": "pr84521.c",
    "sha256": "7e8cd3970fa28c4abf3de7b014abbb673d2fb6c75d99e28b8adebaa26302115c",
    "static_walls": [
-    "assignment-call",
     "libc-call",
     "type-layout"
    ],
@@ -21752,7 +21561,6 @@
    "name": "pr86492.c",
    "sha256": "db6f6e5f76afb528164225737f93e818ea209848429f8cc8cd9c015260833655",
    "static_walls": [
-    "assignment-call",
     "libc-call",
     "type-layout"
    ],
@@ -21945,7 +21753,6 @@
    "name": "pr89634.c",
    "sha256": "f76b02a8419ebc4bf57f3814163216e22f714f48892ca22c9211ab37ca6ae8c9",
    "static_walls": [
-    "assignment-call",
     "libc-call",
     "type-layout"
    ],
@@ -21969,7 +21776,6 @@
    "name": "pr90025.c",
    "sha256": "444126cb1994cbd436f7d00f7692773deab2d45530e9835445f3413fed46548e",
    "static_walls": [
-    "assignment-call",
     "libc-call",
     "string-literal",
     "type-layout"
@@ -22111,7 +21917,6 @@
    "name": "pr92904.c",
    "sha256": "bce28f06aa69e28c01ce5e66aefddfce0273244d17aa59cc4036b463a8bc0795",
    "static_walls": [
-    "assignment-call",
     "libc-call",
     "type-layout",
     "unsupported:AlignedAttr",
@@ -22295,7 +22100,6 @@
    "name": "pr94524-2.c",
    "sha256": "8db61e522f5d2c9b76e57bacc4df48e9ff4c2283dc915081d3aa9e4b33ee47c1",
    "static_walls": [
-    "assignment-call",
     "libc-call"
    ],
    "verdict": "refused-unsupported"
@@ -22428,7 +22232,6 @@
    "name": "pr97404.c",
    "sha256": "3f641e874d1ce4dce6f01f0e7dfcbd8b36f72de162adede67efb2430a686dc26",
    "static_walls": [
-    "assignment-call",
     "libc-call"
    ],
    "verdict": "passed"
@@ -22462,7 +22265,6 @@
    "name": "pr97421-3.c",
    "sha256": "5310faba6674536fd87499fb3d33a75a6aa98019f61b84cbc05650be1c2271dd",
    "static_walls": [
-    "assignment-call",
     "cast:PointerToIntegral",
     "libc-call",
     "type-layout"
@@ -22629,7 +22431,6 @@
    "name": "pr99751.c",
    "sha256": "b0b977a73685d2ad21a8c5c90c141740d6c79c311f32465551c4f36c9481ecd9",
    "static_walls": [
-    "assignment-call",
     "libc-call"
    ],
    "verdict": "passed"
@@ -22663,7 +22464,6 @@
    "name": "printf-chk-1.c",
    "sha256": "f085b13f50d60e7d4928c453fb38efbbc385625e16b4cb5313bc78eed03042d3",
    "static_walls": [
-    "assignment-call",
     "libc-call",
     "string-literal",
     "type-layout"
@@ -22711,7 +22511,6 @@
    "name": "pure-1.c",
    "sha256": "abf51160df63f0ee8af3a8d427777a4e8dedae1c39f76dbb1b226a77aab64ce2",
    "static_walls": [
-    "assignment-call",
     "type-layout"
    ],
    "verdict": "refused-unsupported"
@@ -22745,7 +22544,6 @@
    "name": "restrict-1.c",
    "sha256": "39853984b84886b20804ca1610705bfab4b747534aab8a9c9ddcd7986a52d6a7",
    "static_walls": [
-    "assignment-call",
     "type-layout"
    ],
    "verdict": "refused-unsupported"
@@ -22881,7 +22679,6 @@
    "name": "simd-4.c",
    "sha256": "af07ae0d3adcb12a8c054c9747fdb1d548d15ef0c1ea42460fb694f56a38158e",
    "static_walls": [
-    "assignment-call",
     "type-layout"
    ],
    "verdict": "refused-unsupported"
@@ -22904,7 +22701,6 @@
    "name": "simd-6.c",
    "sha256": "1766f85f6143d717c4c19e4e8c992109221881be2935260ed105d6320ac7be2d",
    "static_walls": [
-    "assignment-call",
     "libc-call"
    ],
    "verdict": "refused-unsupported"
@@ -22927,7 +22723,6 @@
    "name": "ssad-run.c",
    "sha256": "93374b66425569aa08a54b30cfe8ed1769e8a0f0e20467edffe52fc7f30a2e2d",
    "static_walls": [
-    "assignment-call",
     "libc-call",
     "type-layout"
    ],
@@ -22981,7 +22776,6 @@
    "name": "stdarg-4.c",
    "sha256": "df92949fcdfbb1dec3c0d7fdad72e494a01ab6d678bd237196fa300234673e54",
    "static_walls": [
-    "assignment-call",
     "cast:FloatingToIntegral",
     "libc-call",
     "type-layout",
@@ -23017,7 +22811,6 @@
    "name": "strcpy-1.c",
    "sha256": "1b3e448671092bdc6c1b79b6455e8a197c58280bf6bb82e3b2676fb4d470add3",
    "static_walls": [
-    "assignment-call",
     "libc-call",
     "type-layout"
    ],
@@ -23078,7 +22871,6 @@
    "name": "strct-pack-4.c",
    "sha256": "fa8ad14fb6fb7f115f2b2f0c3dce45abefb59074e47ff28c23a5ffeb117f29e7",
    "static_walls": [
-    "assignment-call",
     "type-layout",
     "unsupported:PackedAttr"
    ],
@@ -23155,7 +22947,6 @@
    "name": "strlen-1.c",
    "sha256": "93b80cc7255924aa74cfc03632dde0db9f7f4fe90c54aa3d4004100496ad19d3",
    "static_walls": [
-    "assignment-call",
     "libc-call",
     "type-layout"
    ],
@@ -23325,7 +23116,6 @@
    "name": "struct-ret-1.c",
    "sha256": "cc8d3fc1dcaa9721231f0fcde3544356f5d859785219755cc649e9c7ead8fe78",
    "static_walls": [
-    "assignment-call",
     "libc-call",
     "string-literal",
     "type-layout"
@@ -23339,7 +23129,6 @@
    "name": "struct-ret-2.c",
    "sha256": "b2953932ffb53f08d74942c5799f510f59eaf732f55d0ce7c1c030fd0eca9bb0",
    "static_walls": [
-    "assignment-call",
     "type-layout",
     "unsupported:PackedAttr"
    ],
@@ -23362,9 +23151,7 @@
    "manifest_status": "parsed",
    "name": "switch-1.c",
    "sha256": "7909465fd9bd7e2501772ae0c636381432a306313b3fe817e8d1bfbb45ed126b",
-   "static_walls": [
-    "assignment-call"
-   ],
+   "static_walls": [],
    "verdict": "refused-unsupported"
   },
   {
@@ -23392,7 +23179,6 @@
    "name": "usad-run.c",
    "sha256": "804dcb3bf7fce195965bbf7919d8d810eec3fa42754f78109e636028e6c2afd6",
    "static_walls": [
-    "assignment-call",
     "libc-call",
     "type-layout"
    ],
@@ -25042,7 +24828,7 @@
     "zerolen-2.c"
    ],
    "present": 1061,
-   "sole": 303,
+   "sole": 353,
    "wall": "type-layout"
   },
   {
@@ -25786,201 +25572,41 @@
     "widechar-3.c"
    ],
    "present": 737,
-   "sole": 200,
+   "sole": 212,
    "wall": "libc-call"
   },
   {
    "files": [
-    "00011.c",
-    "00031.c",
-    "00040.c",
-    "00140.c",
-    "00187.c",
     "00214.c",
-    "00219.c",
-    "20000801-2.c",
-    "20000818-1.c",
-    "20000917-1.c",
-    "20001124-1.c",
-    "20001130-1.c",
-    "20001203-2.c",
-    "20010122-1.c",
-    "20010129-1.c",
-    "20010224-1.c",
-    "20010409-1.c",
-    "20010915-1.c",
-    "20020129-1.c",
-    "20020213-1.c",
-    "20020402-3.c",
-    "20020406-1.c",
-    "20020411-1.c",
-    "20020503-1.c",
-    "20020529-1.c",
-    "20020720-1.c",
-    "20020810-1.c",
-    "20030613-1.c",
-    "20030717-1.c",
-    "20031201-1.c",
-    "20031204-1.c",
-    "20040313-1.c",
-    "20040703-1.c",
-    "20040709-1.c",
-    "20040709-2.c",
-    "20040805-1.c",
+    "20000314-1.c",
+    "20000622-1.c",
+    "20010329-1.c",
+    "20021010-2.c",
     "20041112-1.c",
-    "20041218-1.c",
     "20050125-1.c",
-    "20050316-1.c",
-    "20050316-2.c",
-    "20050316-3.c",
-    "20051215-1.c",
-    "20061101-1.c",
-    "20061101-2.c",
-    "20071120-1.c",
-    "20100430-1.c",
-    "20101013-1.c",
-    "20120105-1.c",
-    "20120111-1.c",
-    "20131127-1.c",
-    "20140212-1.c",
-    "20170111-1.c",
-    "20171008-1.c",
-    "20221006-1.c",
-    "920810-1.c",
-    "921123-2.c",
-    "921204-1.c",
-    "930126-1.c",
-    "941014-2.c",
-    "950607-2.c",
-    "950628-1.c",
-    "951003-1.c",
-    "960512-1.c",
-    "961213-1.c",
-    "961223-1.c",
-    "980223.c",
-    "980505-1.c",
+    "20050215-1.c",
+    "960116-1.c",
     "980526-2.c",
-    "980605-1.c",
-    "980707-1.c",
-    "980709-1.c",
-    "990413-2.c",
-    "990525-2.c",
-    "990804-1.c",
-    "990829-1.c",
-    "991019-1.c",
-    "991118-1.c",
-    "991201-1.c",
-    "arith-rand-ll.c",
-    "arith-rand.c",
-    "bf64-1.c",
-    "bswap-2.c",
-    "builtins/20010124-1.c",
-    "builtins/fputs-lib.c",
-    "builtins/lib/chk.c",
-    "builtins/lib/fprintf.c",
-    "builtins/lib/printf.c",
-    "builtins/lib/sprintf.c",
-    "builtins/pr22237.c",
-    "builtins/strcpy-2.c",
-    "complex-1.c",
-    "complex-2.c",
-    "complex-5.c",
-    "complex-6.c",
-    "fprintf-chk-1.c",
-    "ieee/20041213-1.c",
-    "ieee/cdivchkd.c",
-    "ieee/cdivchkf.c",
-    "ieee/cdivchkld.c",
-    "ieee/copysign1.c",
-    "ieee/copysign2.c",
-    "ieee/pr30704.c",
-    "ieee/rbug.c",
-    "ipa-sra-1.c",
-    "ipa-sra-2.c",
-    "loop-1.c",
-    "loop-2b.c",
-    "loop-2c.c",
+    "builtin-prefetch-6.c",
+    "loop-2e.c",
     "loop-2f.c",
     "loop-2g.c",
-    "lto-tbaa-1.c",
-    "pr101188.c",
-    "pr108064.c",
-    "pr111331-1.c",
-    "pr111422.c",
-    "pr114396.c",
-    "pr117095.c",
-    "pr117498.c",
-    "pr120677.c",
-    "pr126405-3.c",
-    "pr15262.c",
-    "pr19606.c",
-    "pr20100-1.c",
-    "pr20601-1.c",
-    "pr22630.c",
+    "pr103255.c",
+    "pr17133.c",
+    "pr22098-1.c",
+    "pr22098-2.c",
+    "pr22098-3.c",
     "pr23324.c",
-    "pr24716.c",
-    "pr33669.c",
-    "pr33870-1.c",
-    "pr33870.c",
-    "pr34176.c",
-    "pr35456.c",
-    "pr38969.c",
-    "pr39120.c",
-    "pr40579.c",
-    "pr41750.c",
-    "pr42006.c",
-    "pr43008.c",
-    "pr43784.c",
-    "pr47337.c",
-    "pr48814-1.c",
-    "pr48814-2.c",
-    "pr54471.c",
-    "pr56799.c",
-    "pr57281.c",
-    "pr57860.c",
-    "pr57861.c",
-    "pr58365.c",
-    "pr58662.c",
-    "pr58831.c",
-    "pr59358.c",
-    "pr60960.c",
-    "pr68249.c",
-    "pr68390.c",
-    "pr68506.c",
-    "pr68841.c",
-    "pr70127.c",
-    "pr70586.c",
-    "pr78170.c",
-    "pr81423.c",
-    "pr82388.c",
-    "pr82524.c",
-    "pr84521.c",
-    "pr86492.c",
-    "pr89634.c",
-    "pr90025.c",
-    "pr92904.c",
-    "pr94524-2.c",
-    "pr97404.c",
-    "pr97421-3.c",
-    "pr99751.c",
-    "printf-chk-1.c",
-    "pure-1.c",
-    "restrict-1.c",
-    "simd-4.c",
-    "simd-6.c",
-    "ssad-run.c",
-    "stdarg-4.c",
-    "strcpy-1.c",
-    "strct-pack-4.c",
-    "strlen-1.c",
-    "struct-ret-1.c",
-    "struct-ret-2.c",
-    "switch-1.c",
-    "usad-run.c"
+    "pr36339.c",
+    "pr38051.c",
+    "pr39233.c",
+    "pr43987.c",
+    "pr58209.c",
+    "pr86231.c"
    ],
-   "present": 186,
-   "sole": 28,
-   "wall": "assignment-call"
+   "present": 26,
+   "sole": 3,
+   "wall": "cast:IntegralToPointer"
   },
   {
    "files": [
@@ -26042,39 +25668,6 @@
    "present": 27,
    "sole": 2,
    "wall": "cast:PointerToIntegral"
-  },
-  {
-   "files": [
-    "00214.c",
-    "20000314-1.c",
-    "20000622-1.c",
-    "20010329-1.c",
-    "20021010-2.c",
-    "20041112-1.c",
-    "20050125-1.c",
-    "20050215-1.c",
-    "960116-1.c",
-    "980526-2.c",
-    "builtin-prefetch-6.c",
-    "loop-2e.c",
-    "loop-2f.c",
-    "loop-2g.c",
-    "pr103255.c",
-    "pr17133.c",
-    "pr22098-1.c",
-    "pr22098-2.c",
-    "pr22098-3.c",
-    "pr23324.c",
-    "pr36339.c",
-    "pr38051.c",
-    "pr39233.c",
-    "pr43987.c",
-    "pr58209.c",
-    "pr86231.c"
-   ],
-   "present": 26,
-   "sole": 2,
-   "wall": "cast:IntegralToPointer"
   },
   {
    "files": [

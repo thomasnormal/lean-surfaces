@@ -73237,5 +73237,13 @@
     "refusal": "NetSymbol:type",
     "measured": "2026-11-12: Slang retains the typed unpacked net declaration as NetSymbol:type; ordinary E refuses the declaration before evaluating the continuous read."
   }
+  ,{
+    "name": "wire_output_port_e",
+    "example": "sem2/wire_output_port_e",
+    "top": "wire_output_port_e",
+    "signals": ["a", "y"],
+    "stimulus": [{"a": "0"}, {"a": "1"}, {"a": "x"}, {"a": "z"}],
+    "measured": "2026-11-12: a complete single continuous driver makes the output wire’s resolution identity; E retains `isNet` and matches Icarus Verilog 13.0 and Xcelium 24.03-s004 for 0, 1, x and z."
+  }
   ]
 }

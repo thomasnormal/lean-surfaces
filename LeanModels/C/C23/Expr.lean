@@ -672,13 +672,26 @@ def directWriteTargets (e : Expr) : List (Option String) :=
     | .binop "=" lhs .. => [lvalueKey lhs]
     | _ => []
 
+def readKeys (e : Expr) : List String :=
+  e.subexprs.flatMap fun n => match n with
+    | .declRef (some id) .. => ["id:" ++ id.value]
+    | .declRef none name .. => ["name:" ++ name]
+    | _ => []
+
 def assignmentHasUnsequencedWrite (lhs rhs : Expr) : Bool :=
   let target := lvalueKey lhs
-  (directWriteTargets rhs).any fun written =>
-    match target, written with
-    | some a, some b => a == b
-    | none, _ => true
-    | _, none => false
+  let writes := directWriteTargets rhs
+  match target with
+  | some a => writes.any fun written => written == some a
+  | none =>
+      -- An indexed/dereferenced lvalue has no single scalar key. Its own
+      -- address expression can still carry a key (`a[i++]`), and a RHS
+      -- update of that key is unsequenced with the address computation.
+      if (directWriteTargets lhs).any (·.isNone) then true
+      else writes.any fun written =>
+        match written with
+        | some b => (readKeys lhs).any (· == b)
+        | none => false
 
 def hasTwoImpure : List Expr → Bool
   | [] => false

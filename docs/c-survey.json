@@ -37,8 +37,8 @@
   "timeout": 44
  },
  "manifest_hash": "1de1a60c299d5bb51dae7ca001b0a008010cad0b25670cde2090c08bfc1a84ce",
- "measured_at_utc": "2026-11-12T02:53:53Z",
- "measured_commit": "0c0bc5f31",
+ "measured_at_utc": "2026-11-12T03:27:59Z",
+ "measured_commit": "d1813f66e",
  "pin": null,
  "rows": [
   {
@@ -6175,7 +6175,7 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "pointer used as an integer (no ptr\u2194int cast in tier)",
+   "detail": "unsequenced side effects in assignment",
    "manifest_status": "parsed",
    "name": "20060929-1.c",
    "sha256": "cd7394485efb1f6254e960afdafaa7a00241adf070bd680adff47d76b854f4b3",

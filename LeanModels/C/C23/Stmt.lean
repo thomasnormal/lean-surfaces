@@ -1032,7 +1032,7 @@ def callFn : Nat → Program → LeanModels.C.FunctionDefn → List CVal → Exe
                 runBswap16 vs
               else if nm == "__builtin_bswap32" then
                 runBswap32 vs
-              else if nm == "__builtin_abs" then
+              else if nm == "__builtin_abs" || nm == "abs" then
                 runAbs vs
               else if nm == "printf" || nm == "__builtin_printf" then
                 runPrintf vs
@@ -1075,7 +1075,7 @@ def callFn : Nat → Program → LeanModels.C.FunctionDefn → List CVal → Exe
               else if nm == "__builtin_strlen" then runStrlen vs
               else if nm == "__builtin_bswap16" then runBswap16 vs
               else if nm == "__builtin_bswap32" then runBswap32 vs
-              else if nm == "__builtin_abs" then runAbs vs
+              else if nm == "__builtin_abs" || nm == "abs" then runAbs vs
               else if nm == "__builtin_alloca" then runAlloca vs
               else if nm == "__builtin_ffs" then runFfs vs
               else if nm == "__builtin_mul_overflow" then runArithOverflow "mul" vs

@@ -86,8 +86,8 @@
    "decided_by_thomas": true
   },
   {
-   "policy": "The operator banlist is per task: it bans the run-time operator that IS the task plus what Yosys merges into the same cell (alumacc: `+ - *` share cells). Constant arithmetic and comparisons stay allowed; whether comparisons should stay allowed in the `add` task is an open policy question.",
-   "source": "memory svgolf-project (2026-10-27); svgolf/README.md The banlist; svgolf/tasks/add/README.md",
+   "policy": "The operator banlist is per task: it bans the run-time operator that IS the task plus what Yosys merges into the same cell (alumacc: `+ - *` share cells). Constant arithmetic and equality stay allowed. In a task that bans `+` or `-`, a run-time ordering comparison (`< <= > >=`) is banned too, at the Yosys level (decided 2026-11-05): alumacc builds it as an `$alu`, Yosys's own adder, and the banlist's backstop rejects every `$alu` alumacc builds.",
+   "source": "memory svgolf-project (2026-10-27); svgolf/README.md The banlist; svgolf/tasks/add/README.md; svgolf/score/banlist.py (2026-11-05)",
    "decided_by_thomas": true
   },
   {
@@ -393,7 +393,7 @@
   {
    "id": "BANOPS",
    "title": "banlist operator coverage beyond + - * / % **: Yosys cell maps for shifts and comparisons",
-   "source": "svgolf/PLAN.md task ladder (barrel shifter, comparator); svgolf/tasks/add/README.md (comparisons open policy question)",
+   "source": "svgolf/PLAN.md task ladder (barrel shifter, comparator); the run-time ordering comparisons of a task that bans `+` or `-` are decided (2026-11-05, `sg-ban-cmp`, through the cells alumacc builds), a task banning comparisons as its own operators is not",
    "decided_by_thomas": false
   },
   {
@@ -517,7 +517,7 @@
   },
   {
    "name": "slang's driver: what the analysis-pass rule still does not read",
-   "text": "The analysis-pass errors (`multiple-always-assigns`, `mixed-var-assigns`, `multiple-cont-assigns`, \"cannot assign to input port\", \"'always' procedure does not advance time\") ARE read since 2026-11-01 (policy \"slang reports a program illegal\"). What it does not read, measured on the committed corpora with the Driver's own severities: (1) the elaboration-time warnings that the driver promotes to errors (`IndexOOB`, `RangeOOB`, `DynamicNotProcedural`, `UnknownSystemName`, ...: 175 diagnostic codes have another severity in the Driver's engine than in a bare DiagnosticEngine, 41 of them promoted from warning to error and 134 switched off): they are NOT errors for the extractor, because 9 envelopes with `IndexOOB`, 9 with `RangeOOB` and 1 with `DynamicNotProcedural` (of the 1271 committed envelopes) are admitted differential rows that read x for the out-of-range select, Xcelium-pinned; for svGolf `fourstate`'s rule (c) already refuses the out-of-range ones as x sources, and the 4 svGolf corpus files with such a code (const_oob_write, param_oob, unique_rare, host_dump) are refused by other rules; promoting them is a policy choice, not a measurement; (2) the extractor's M0 single-file mode (`process_file`, sv-0.1): 3 committed M0 envelopes hold an analysis error (always_comb_written_excluded, always_no_control_refuse, multiple_variable_continuous_drivers) and are conformance-lane designs, untouched; (3) a parametric top's default-point envelope carries no analysis marker, and since WP-RB1 no `SlangError` marker when `--probe-points` was given (the verdict is per point, the probe sidecar), so a consumer that instantiates a parametric envelope at a point no sidecar covers relies on the Lean `driversOk` guard (svGolf always probes the scoring point); (4) a task with an EMPTY banlist skips the banlist front check (`banlist.check` returns early), so `fourstate` is the only svGolf stage that reads slang's analysis errors there; (5) `srcgate.py` parses without elaborating and has no analysis to read; (6) the analysis reads the design's own hierarchy, as the other stages do: an uninstantiated module with an analysis error is not refused (the slang CLI would); parse and elaboration errors, by contrast, are read over the whole compilation since WP-RB1 (row sa-slang-error), an uninstantiated module's undeclared name included.",
+   "text": "The analysis-pass errors (`multiple-always-assigns`, `mixed-var-assigns`, `multiple-cont-assigns`, \"cannot assign to input port\", \"'always' procedure does not advance time\") ARE read since 2026-11-01 (policy \"slang reports a program illegal\"). What it does not read, measured on the committed corpora with the Driver's own severities: (1) the elaboration-time warnings that the driver promotes to errors (`IndexOOB`, `RangeOOB`, `DynamicNotProcedural`, `UnknownSystemName`, ...: 175 diagnostic codes have another severity in the Driver's engine than in a bare DiagnosticEngine, 41 of them promoted from warning to error and 134 switched off): they are NOT errors for the extractor, because 9 envelopes with `IndexOOB`, 9 with `RangeOOB` and 1 with `DynamicNotProcedural` (of the 1271 committed envelopes) are admitted differential rows that read x for the out-of-range select, Xcelium-pinned; for svGolf `fourstate`'s rule (c) already refuses the out-of-range ones as x sources, and the 4 svGolf corpus files with such a code (const_oob_write, param_oob, unique_rare, host_dump) are refused by other rules; promoting them is a policy choice, not a measurement; (2) the extractor's M0 single-file mode (`process_file`, sv-0.1): 3 committed M0 envelopes hold an analysis error (always_comb_written_excluded, always_no_control_refuse, multiple_variable_continuous_drivers) and are conformance-lane designs, untouched; (3) a parametric top's default-point envelope carries no analysis marker, and since WP-RB1 no `SlangError` marker when `--probe-points` was given (the verdict is per point, the probe sidecar), so a consumer that instantiates a parametric envelope at a point no sidecar covers relies on the Lean `driversOk` guard (svGolf always probes the scoring point); (4) until 2026-11-06, a task with an EMPTY banlist: it skipped the banlist front check, so `fourstate` was the only svGolf stage that read slang's analysis errors there; since then every task bans run-time `/ % **` (`banlist.task_banlist` adds them to every task's list), so check.py runs the front check for every task (`banlist.check` called directly with no operator still returns before it reads anything); (5) `srcgate.py` parses without elaborating and has no analysis to read; (6) the analysis reads the design's own hierarchy, as the other stages do: an uninstantiated module with an analysis error is not refused (the slang CLI would); parse and elaboration errors, by contrast, are read over the whole compilation since WP-RB1 (row sa-slang-error), an uninstantiated module's undeclared name included.",
    "source": "docs/sv-tools-split-audit.md section 5; svgolf/score/slangdriver.py; extractors/sv/test_slang_analysis.py; measured by WP-R-D 2026-11-01 (harness: scratchpad measure.py over Examples/system-verilog and svgolf); extractors/sv/test_slang_errors.py"
   },
   {
@@ -7455,7 +7455,7 @@
    {
     "id": "source",
     "what": "`score/srcgate.py`: makes the proved program and the scored program ONE text and strips every comment",
-    "refuses": "preprocessor directives, attributes, synthesis-pragma comments, `unique` / `unique0` / `priority`, x/z/? literal digits, odd characters, host access (file, process, environment, dump and DPI constructs)"
+    "refuses": "preprocessor directives, attributes, synthesis-pragma comments, `unique` / `unique0` / `priority`, x/z/? literal digits, odd characters, host access (file, process, environment, dump and DPI constructs); in a CLOCKED task also every edge process but `always_ff @(posedge <clock>)` (an asynchronous reset, a second clock, `negedge`, `iff`), a blocking write in it, `initial`, `final`, `always_latch`, a delay or another event control, a declaration initializer"
    },
    {
     "id": "extract",
@@ -7465,12 +7465,17 @@
    {
     "id": "banlist",
     "what": "`score/banlist.py`: pyslang front check plus a Yosys backstop",
-    "refuses": "the run-time operators the task bans, in every disguise Yosys turns into the same cell; for a task that bans an operator, also every error of slang's analysis pass (as `fourstate`)"
+    "refuses": "the run-time operators the task bans, and the run-time `/ % **` that every task bans (since 2026-11-06: a zero divisor makes an x from known inputs), in every disguise Yosys turns into the same cell; also every error of slang's analysis pass (as `fourstate`)"
    },
    {
     "id": "fourstate",
-    "what": "`score/fourstate.py` at the scoring point",
+    "what": "`score/fourstate.py` at every point the checker probes: the scoring point, then the task's probe and backstop points (since 2026-11-06; before, at the scoring point only)",
     "refuses": "any way an x or z value can arise: constants with unknown bits, out-of-range selects, undriven or conflicting nets, logic loops, latches, and every error of slang's analysis pass (two writers of one variable, mixed continuous and procedural assignment, writing an input port, an `always` without timing control)"
+   },
+   {
+    "id": "clocked_rules",
+    "what": "(clocked tasks) `check/clocked_rules.py`: Python twins of the clocked statements' rules on the envelope at every probe point, before any proof",
+    "refuses": "the constructs rule 3 (`XSafe`, no construct creates an x from known operands) certainly refuses: a run-time `/` or `%` by a divisor that reads a signal, `**` with a signed exponent over a base that reads one, a run-time index that mentions a signal declared signed, a run-time bit select whose index can leave the vector, a run-time indexed part-select read, an x/z literal outside a casez/casex item; a register every write of which is its own value only WARNS here (the `score` stage decides)"
    },
    {
     "id": "trusted",
@@ -7484,7 +7489,7 @@
    },
    {
     "id": "solution",
-    "what": "compiles `Solution.lean` under the task's time limit",
+    "what": "compiles `Solution.lean` under the task's time limit: CPU seconds of the Lean process, with a wall-clock backstop of 5 times it",
     "refuses": "a proof that does not compile in time"
    },
    {
@@ -7505,7 +7510,7 @@
    {
     "id": "score",
     "what": "`score/score.py`: the two-stage Yosys + ABC flow and the GE table",
-    "refuses": "a netlist with cells the table does not price (latches, flip-flops), a non-deterministic flow, a design over the depth budget"
+    "refuses": "a netlist with cells the table does not price (latches, flip-flops), a non-deterministic flow, a design over the depth budget; in a CLOCKED task (the clocked flow, `score/svgolf_seq.ys`, which runs no fsm pass) a flip-flop the flow removes while reads of it remain and an array lane no write loads (never-loaded), and, as a backstop, a state register the fsm pass re-implements"
    },
    {
     "id": "postsynth",
@@ -7517,7 +7522,7 @@
    "**Combinational tasks only for now.** Clocked designs, registers and pipelines are refused until the sequential layer exists (decided 2026-10-29).",
    "**Where the pipeline tools split, the design is refused**, never decided for one side: slang / ls-sv (the proof), Yosys (the score), Verilator and Xcelium are compared, and a shape they read differently is a loud refusal. A difference that only Icarus shows is a declared departure, not a refusal (decided 2026-10-31), and so is one that only Xcelium shows against LRM text the other tools follow (decided 2026-11-01: `\\a \\v \\f` are admitted).",
    "**A program slang rejects is rejected, and LRM-legal nondeterminism is to be modelled rather than forbidden** (decided 2026-10-31). No construct is admitted on the second ruling yet: the model does not exist, and the audit found that the rows it was first thought to cover are not LRM nondeterminism (self-reading `always_comb`: the LRM's answer is deterministic and the synthesizers compute another; settling combinational loops: refused by fourstate, and some hold state).",
-   "**Everything the proof and the score could read differently is refused exactly, before any proof is tried** (the x/z rules, the source gate), and the post-synthesis check is the backstop for the disagreements nobody has found.",
+   "**Everything known that the proof and the score could read differently is refused statically, before any proof is tried** (the source gate at every parameter value; the banlist's run-time `/ % **` in every task; the 4-state rules at the points the checker probes, which narrows and does not close the gap to a statement over every value: svgolf/README.md, \"Checker v0 limits\"), and the post-synthesis check is the backstop for the disagreements nobody has found.",
    "**No other restrictions.** Beyond the per-task operator banlist and these safety gates, write any SystemVerilog ls-sv can load.",
    "**Contestants may add features to ls-sv by pull request, and the maintainers approve every such PR.** See 'How a refusal becomes allowed'.",
    "**Proofs are symbolic and parametric** (for all N). `bv_decide` is not supported for now (it runs an external SAT solver, which the checker does not support: decided 2026-11-01); `native_decide` is banned in submissions.",
@@ -7544,7 +7549,7 @@
     "id": "g-banlist",
     "stage": "banlist",
     "title": "Stage `banlist`: the task's banned operators",
-    "intro": "A task bans the run-time operator that IS the task, plus whatever Yosys merges into the same cell (alumacc turns `+` and `-` chains into the cells of `*`). Constant arithmetic (parameters, genvar loops, index arithmetic over parameters and genvars) and comparisons stay allowed. Which operators are banned is per task: `add`, `mul` and `_example` ban `+ - * / % **`; `fdivp` bans `/ % **`.",
+    "intro": "A task bans the run-time operator that IS the task, plus whatever Yosys merges into the same cell (alumacc turns `+` and `-` chains into the cells of `*`). Constant arithmetic (parameters, genvar loops, index arithmetic over parameters and genvars) and equality stay allowed. A task that bans `+` or `-` also bans run-time ordering comparisons (`< <= > >=`; decided 2026-11-05), which Yosys builds as its own adder. Which operators are banned is per task: `add`, `mul` and `_example` ban `+ - * / % **`; `clmul` bans `+ - *`; `fdivp` bans `/ % **` (and keeps every comparison).",
     "write_ok": "for (genvar i = 0; i < N; i++) begin : g\n  assign s[i] = a[i] ^ b[i] ^ c[i];     // gates, not +\n  assign c[i+1] = (a[i] & b[i]) | (c[i] & (a[i] ^ b[i]));   // i+1 is constant arithmetic\nend",
     "refused_example": "assign s = a + b + cin;          // run-time + in a task that bans it\nassign y = a * b;                // run-time *\nassign n = $countones(a);        // Yosys builds it from $add cells\nassign p = arr.sum();            // array reduction = run-time +"
    },
@@ -7589,6 +7594,14 @@
     "refused_example": "always_ff @(posedge clk) y <= a & b;    // a flip-flop in the netlist: not priced"
    },
    {
+    "id": "g-clocked",
+    "stage": "clocked_rules",
+    "title": "Clocked tasks: one clock edge, no x-creating construct, no never-loaded register",
+    "intro": "A clocked task (the sequential, transaction, stream and reactive kinds) adds refusals of its own. The source gate's clocked rules (`score/srcgate.py`, item 6) admit an edge process only as `always_ff @(posedge <clock>)` with nonblocking writes (and a `for` header's step on its own iterator), and no `initial`, `final`, `always_latch`, delay, `wait`, `fork` or declaration initializer; the edge rule exists because the loader drops what the clocked semantics cannot express (an asynchronous reset, a `negedge` clock, an `iff` guard), and ls-sv would then prove a different, synchronous circuit. The `clocked_rules` stage refuses before the proof the x-creating constructs that rule 3 of the statement forbids (the statement stays the authority). The `score` stage refuses a design where the pinned flow removes a flip-flop while reads of it remain, or connects the reads of an array lane no write loads to an undefined value: Yosys resolves each such read separately, while ls-sv gives a register one power-up value for every read (decided 2026-11-06: svGolf disallows a design where the pinned Yosys deviates from the semantics). The clocked flow runs no fsm pass (`synth -nofsm`, decided 2026-11-06), so a state register keeps its own flip-flops.",
+    "write_ok": "always_ff @(posedge clk)            // one clock, one edge\n  if (rst) begin                     // a synchronous reset\n    gnt <= '0;\n    mask <= '1;\n  end else begin\n    gnt <= pick;                     // nonblocking writes only\n    if (pick != '0) mask <= ~((pick << 1) - 1'b1);\n  end",
+    "refused_example": "always_ff @(posedge clk or posedge rst)   // an asynchronous reset: refused at source\n  if (rst) gnt <= '0; else gnt <= pick;\nlogic u;\nalways_ff @(posedge clk) u <= u;           // never loaded, and read: refused at score\nassign sel = !u;\nalways_ff @(posedge clk) q <= a / b;       // a run-time divisor that reads a signal: refused at clocked_rules"
+   },
+   {
     "id": "g-task",
     "stage": "task",
     "title": "Task authors: `task.json`",
@@ -7618,14 +7631,14 @@
    "Open: should the Lean file be gated against host access too (`#eval`, `IO`, `run_cmd`, `elab`, `initialize`, `unsafe`; `import Lean` is allowed)? Nothing gates it today.",
    "The parameter's declared type is not pinned by the statement; the multi-point cross-check at the scoring point keeps the scored design one ls-sv and slang agree on, elsewhere the statement is about ls-sv's reading.",
    "The banlist front check is heuristic (a variable copied from a loop counter counts as run-time); the Yosys backstop covers the scored points only.",
-   "The fourstate stage checks the SCORING POINT only (not the probe points) and filters `tri-state` warnings out of Yosys `check`. Its run-time index rule reasons from index TYPES: `a[i-1]` with a 2-bit `i` is a 32-bit index and is refused on any declared range (over-refusal), as is any procedural loop counter used as an index.",
+   "The fourstate stage checks the points the checker probes, no others (since 2026-11-06 the scoring point, then the task's probe and backstop points; before, the scoring point only), and filters `tri-state` warnings out of Yosys `check`. Its run-time index rule reasons from index TYPES: `a[i-1]` with a 2-bit `i` is a 32-bit index and is refused on any declared range (over-refusal), as is any procedural loop counter used as an index.",
    "A gate hole not yet measured: x/z digits are exempt anywhere inside a casez/casex item EXPRESSION, not only as the item's own literal (`casez (a[1:0]) (a[0] == 1'bz) ? 2'b00 : 2'b01: ...` passes the gate). Whether ls-sv and Yosys then differ was not measured; do not rely on it.",
    "A plain syntax error is reported by the gate as `preprocessor-skipped text` before the extractor or Yosys see it; `always @(*)` passes the gate (the `(*)` is exempt) and is refused later by the language tier.",
-   "`ARITH_PRIMITIVES` (`$alu $macc $macc_v2 $lcu $fa`) in the banlist backstop are dead entries: the backstop reads without `-icells`, so instantiating one fails earlier with `yosys failed`.",
+   "`ARITH_PRIMITIVES` (`$alu $macc $macc_v2 $lcu $fa`) cannot be instantiated by a submission: the backstop reads without `-icells`, so instantiating one fails earlier with `yosys failed`. In a task that bans `+` or `-` the same five types are what the post-`alumacc` check rejects: every one that `alumacc` builds, e.g. for a run-time ordering comparison (`sg-ban-cmp`, decided 2026-11-05).",
    "`--no-gate` in `score.py` and `postsynth.py` is a research flag: the result says `gated: false` and is not a svGolf score. Missing Verilator, make, a C++ compiler, Yosys or `svgolf-eval` is an infrastructure error (exit 2), never a rejection.",
-   "Open policy question: comparisons are not banned in `add` / `mul`; a carry written as a comparison is Yosys's own alu logic and scores lower depth than the proved ripple reference.",
+   "The ordering-comparison rule (`sg-ban-cmp`) is the backstop's alone, so it holds at the backstop points only: a run-time comparison in code that only other parameter values elaborate (measured: a generate branch taken only at `N = 7` in `add`) passes the banlist, where a `+` in the same place is rejected by the front check. The scored netlist never contains it.",
    "Open: must challenge proofs be parametric (for all N)? The README treats it as decided; `svgolf/PLAN.md` still lists it as a question for the maintainers.",
-   "slang's ANALYSIS-pass errors (`multiple-always-assigns`, `mixed-var-assigns`, `multiple-cont-assigns`, \"cannot assign to input port\", \"'always' procedure does not advance time\") are read since 2026-11-01 by the banlist front check and the `fourstate` stage (`score/slangdriver.py`, the Driver's own severities, per parameter point) and by the extractor. Still unread: the elaboration warnings the driver promotes to errors (`IndexOOB`, `RangeOOB`, ...: `fourstate`'s rule (c) refuses the out-of-range ones as x sources); a task with an EMPTY banlist skips the banlist front check, so `fourstate` is the only stage that reads them there; a module the design does not instantiate (docs/sv-refusals.json, `holes`)."
+   "slang's ANALYSIS-pass errors (`multiple-always-assigns`, `mixed-var-assigns`, `multiple-cont-assigns`, \"cannot assign to input port\", \"'always' procedure does not advance time\") are read since 2026-11-01 by the banlist front check and the `fourstate` stage (`score/slangdriver.py`, the Driver's own severities, per parameter point) and by the extractor. Still unread: the elaboration warnings the driver promotes to errors (`IndexOOB`, `RangeOOB`, ...: `fourstate`'s rule (c) refuses the out-of-range ones as x sources); a module the design does not instantiate (docs/sv-refusals.json, `holes`). The banlist front check runs for every task: every task bans run-time `/ % **` since 2026-11-06, so none has an empty banlist (until then such a task skipped the front check, and `fourstate` was the only stage that read the analysis errors there)."
   ],
   "links": [
    {
@@ -8352,6 +8365,78 @@
     ]
    },
    {
+    "id": "sg-ban-div-any",
+    "tag": "a run-time `/ % **` in ANY task, whatever its own banlist",
+    "group": "g-banlist",
+    "layers": [
+     "svgolf-banlist"
+    ],
+    "trigger": "assign q = 1'b1 / ~rare;  a % b;  a ** e;  with run-time operands, in clmul, aes_sbox, matmul or sorter as in the tasks that ban them anyway",
+    "why": "A zero divisor (or 0 ** a negative exponent) makes an x from KNOWN operands (IEEE 1800 11.4.2). ls-sv carries it into a decision (`if (x)` takes the else branch) while Yosys builds a defined value, and with a 2-state destination IEEE itself defines the value (0) and Yosys builds another, so the scored circuit can differ from the proved one on the one input that divides by zero (2^-32 of the inputs in clmul/div_zero_x, which the post-synthesis vectors miss). No 4-state rule can be exact about it, so the operators are banned: banlist.py ALWAYS_BANNED, added to every task's list by task_banlist, front check and backstop, with the rule in the message. Constants and parameter, genvar and localparam arithmetic stay allowed.",
+    "category": "refused-now",
+    "proposed": false,
+    "decided_by": "decided 2026-11-06, under the 2026-11-05 ruling that svGolf disallows a construct where Yosys departs from the standard",
+    "since": "2026-11-06",
+    "match": [
+     {
+      "file": "svgolf/score/banlist.py",
+      "text": "every task bans run-time / % **"
+     }
+    ],
+    "where": [
+     {
+      "file": "svgolf/score/banlist.py",
+      "fn": "task_banlist"
+     },
+     {
+      "file": "svgolf/score/banlist.py",
+      "fn": "FrontCheck._check_root"
+     },
+     {
+      "file": "svgolf/score/banlist.py",
+      "fn": "backstop_check"
+     }
+    ],
+    "evidence": "banlist.py --selftest (bad_div_any_task.sv); tests/clmul/attacks/div_zero_x.sv; svgolf/README.md Rules",
+    "verified_by_run": true,
+    "attacks": [
+     "clmul/div_zero_x"
+    ]
+   },
+   {
+    "id": "sg-ban-cmp",
+    "tag": "a run-time ordering comparison `< <= > >=` in a task that bans `+` or `-`",
+    "group": "g-banlist",
+    "layers": [
+     "svgolf-banlist"
+    ],
+    "trigger": "assign c = a > ~b;  a[0] < b[0];  x <= 5;  with run-time operands",
+    "why": "Yosys's alumacc builds a run-time ordering comparison as an $alu, Yosys's own adder (a > ~b IS the carry out of a + b, so an adder whose every carry is a comparison is Yosys's adder), so after proc; opt the backstop also runs alumacc and rejects every $alu / $macc / $lcu / $fa cell it builds, at the comparison's source location. Equality (== != === !==), comparisons over parameters and genvars (folded as constants) and a comparator built from & | ^ ~ stay allowed; a task that bans neither + nor - keeps every comparison.",
+    "category": "refused-now",
+    "proposed": false,
+    "decided_by": "decided 2026-11-05: the ban is at the Yosys level (the cells alumacc builds), not by source operators",
+    "since": "2026-11-05",
+    "match": [
+     {
+      "file": "svgolf/score/banlist.py",
+      "text": "banned run-time ordering comparison"
+     }
+    ],
+    "where": [
+     {
+      "file": "svgolf/score/banlist.py",
+      "fn": "alumacc_findings"
+     },
+     {
+      "file": "svgolf/score/banlist.py",
+      "fn": "backstop_check"
+     }
+    ],
+    "evidence": "banlist.py --selftest (bad_cmp_*.sv, ok_cmp_*.sv, tests/add/baselines/cmp_carry.sv); README The banlist",
+    "verified_by_run": true,
+    "notes": "tests/add/baselines/cmp_carry.sv, the adder the rule is for, is a baseline scored with the banlist lifted (tests/expected.json `banned`), not a negative."
+   },
+   {
     "id": "sg-ban-forms",
     "tag": "the same arithmetic in other forms: compound assignment, unary minus, ++ / --, array .sum() / .product(), $countones & co, run-time index arithmetic",
     "group": "g-banlist",
@@ -8628,7 +8713,8 @@
      "add/eqx_undriven",
      "_example/reads_x",
      "add/dead_clock",
-     "aes_sbox/undriven_bit"
+     "aes_sbox/undriven_bit",
+     "_example/undriven_offpoint"
     ]
    },
    {
@@ -8639,7 +8725,7 @@
      "svgolf-fourstate"
     ],
     "trigger": "two continuous assigns to one net;  assign t = a & u; assign u = t | a;",
-    "why": "Bus contention is not a combinational function; a loop is not a combinational function either (and the statement also needs Terminates2).",
+    "why": "Bus contention is not a combinational function; a loop is not a combinational function either (and the statement refuses every loop itself since 2026-11-06: LoopFree).",
     "category": "never",
     "proposed": true,
     "principle": "P-SYNTHESIZABLE",
@@ -8667,7 +8753,7 @@
      "svgolf-fourstate"
     ],
     "trigger": "always_comb begin if (en) y = a; end   (an output not assigned on every path)",
-    "why": "A variable an always_comb block reads before it assigns it on every path holds x; Yosys `proc` refuses it ('Latch inferred ... from always_comb').",
+    "why": "A variable an always_comb block reads before it assigns it on every path holds x; Yosys `proc` refuses it ('Latch inferred ... from always_comb'). Since 2026-11-06 the banlist backstop runs for every task (every task bans run-time / % **), so a latch an always_comb block infers meets Yosys's own `proc` refusal there first (aes_sbox/case_missing_nodefault stops at `banlist`); this rule refuses the latches `proc` infers without an error (always @*, always_latch).",
     "category": "later",
     "proposed": false,
     "prerequisite": "the sequential layer (tasks stay combinational), latch semantics in ls-sv and a latch price in score/ge.json",
@@ -8858,23 +8944,23 @@
    },
    {
     "id": "sg-fourstate-stage",
-    "tag": "an x or z value can arise in the design at the scoring point",
+    "tag": "an x or z value can arise in the design at a point the checker probes",
     "group": "g-x",
     "layers": [
      "svgolf-checker"
     ],
     "trigger": "(aggregate of the fourstate findings)",
-    "why": "See the fourstate rows. Scope: the scoring point only, not the probe points. A slang ERROR at the scoring point (the diagnostics of `fourstate.slang_check`, e.g. an unknown package) is reported under its own header, \"slang reports the program illegal at the scoring point\", not as an x/z finding; this stage is the one that always runs (the banlist front check is skipped for a task with an empty banlist), pinned by svgolf/tests/checker/test_slang_errors.py.",
+    "why": "See the fourstate rows. Scope: every point the checker probes, the scoring point first, then the task's probe and backstop points (since 2026-11-06; before, the scoring point only), stopping at the first that fails; a parameter value nobody probes is not checked. A slang ERROR at such a point (the diagnostics of `fourstate.slang_check`, e.g. an unknown package) is reported under its own header, \"slang reports the program illegal at ...\", not as an x/z finding. Since every task bans run-time / % ** (2026-11-06), the banlist front check, which reads the same slang analysis errors, runs for every task too; this stage still runs after it, pinned by svgolf/tests/checker/test_slang_errors.py.",
     "category": "refused-now",
     "proposed": false,
     "match": [
      {
       "file": "svgolf/check.py",
-      "text": "an x or z value can arise in the design at the scoring"
+      "text": "an x or z value can arise in the design at"
      },
      {
       "file": "svgolf/check.py",
-      "text": "slang reports the program illegal at the scoring point"
+      "text": "slang reports the program illegal at"
      }
     ],
     "where": [
@@ -9028,27 +9114,35 @@
     "tag": "ports that are not EXACTLY the task's (names, order, widths)",
     "group": "g-statement",
     "layers": [
-     "svgolf-statement"
+     "svgolf-statement",
+     "svgolf-checker"
     ],
-    "trigger": "an extra or hidden input (en, a rounding-mode pin); a renamed port (ci for cin); a wider or merged output; an inout",
-    "why": "Stimulus conventions ignore unknown names and store values at their own width, so only pinned ports mean what the hypothesis says.",
+    "trigger": "an extra or hidden input (en, a rounding-mode pin); a renamed port (ci for cin); a wider or merged output; an inout; a port one bit wider than the task's (the arbiter's mutants m004 and m007)",
+    "why": "Stimulus conventions ignore unknown names and store values at their own width, so only pinned ports mean what the hypothesis says. Since 2026-11-07 (decided; the arbiter's mutation sweep, finding F-a) the `extract` stage also compares the extractor's ports at every probe point (the defaults when a task has none) with task.json `ports` (the input ports in declaration order with their widths, then the outputs likewise, no other direction), for every kind, before any proof: the statement's `Interface` at those points. Before, a port one bit wider passed every check that needs no proof (`--unproved` called the arbiter's m004 and m007 admissible) and only the proof, which cannot exist, stood in its way.",
     "category": "refused-now",
     "proposed": false,
     "match": [
      {
       "file": "svgolf/SvGolf/Task.lean",
       "text": "Interface"
+     },
+     {
+      "file": "svgolf/check.py",
+      "text": "its ports are not the task's"
      }
     ],
     "where": [
      {
       "file": "svgolf/SvGolf/Task.lean",
       "fn": "CombTask.Interface"
+     },
+     {
+      "file": "svgolf/check.py",
+      "fn": "port_problems"
      }
     ],
-    "evidence": "tests/*/negative/Refute.lean (kernel-checked at lake build)",
-    "unverified": true,
-    "verified_by_run": false,
+    "evidence": "tests/*/negative/Refute.lean (kernel-checked at lake build); check.py --no-score (2026-11-07): ten of the negatives cited here (all but add/no_cin, whose ports are the task's: a wrong function) and the arbiter's m004 and m007 are rejected at extract with the port check's message",
+    "verified_by_run": true,
     "attacks": [
      "_example/extra_in",
      "_example/wide_out",
@@ -9060,7 +9154,9 @@
      "fdivp/status_flag",
      "fdivp/wide_q",
      "aes_sbox/wrong_names",
-     "clmul/wide_out"
+     "clmul/wide_out",
+     "arbiter/m004_wide_req",
+     "arbiter/m007_wide_gnt"
     ]
    },
    {
@@ -9105,7 +9201,7 @@
     "layers": [
      "svgolf-statement"
     ],
-    "trigger": "a combinational loop; a design the loader refused (errorDesign)",
+    "trigger": "an oscillating combinational loop; a design the loader refused (errorDesign)",
     "why": "Models2 quantifies over completed runs only, so a design that never settles satisfies every property vacuously; Terminates2 requires a completed run for every schedule and stimulus.",
     "category": "never",
     "proposed": true,
@@ -9120,6 +9216,33 @@
      {
       "file": "svgolf/SvGolf/Task.lean",
       "fn": "CombTask.SatisfiedAt"
+     }
+    ],
+    "unverified": true,
+    "verified_by_run": false
+   },
+   {
+    "id": "sg-loopfree",
+    "tag": "a combinational loop or a latch, even one that settles (LoopFree)",
+    "group": "g-statement",
+    "layers": [
+     "svgolf-statement"
+    ],
+    "trigger": "always_comb u = t; always_comb if (u) t = 1'b1; else t = 1'b0;  always_comb if (en) q = d;  one assign that reads a window it writes",
+    "why": "A run starts every variable at x and settles, so a loop is read at one state while a circuit powers up in any 0/1 state the loop can hold; the statement does not quantify over those states and requires LoopFree instead: the design lowers (Design2.lowerComb, which refuses a latch) to continuous assigns with an Acyclic rank, the certificate the proof helpers already use. The rank is on processes, not bits, so it also refuses a process-level cycle in which no bit depends on itself (write such bits as separate assigns).",
+    "category": "never",
+    "proposed": true,
+    "principle": "P-SYNTHESIZABLE",
+    "match": [
+     {
+      "file": "svgolf/SvGolf/Task.lean",
+      "text": "LoopFree"
+     }
+    ],
+    "where": [
+     {
+      "file": "svgolf/SvGolf/Task.lean",
+      "fn": "LoopFree"
      }
     ],
     "unverified": true,
@@ -9173,6 +9296,16 @@
      "fdivp/newton_r0_off",
      "fdivp/newton_rnz_no2mb",
      "fdivp/newton_rnz_nomb",
+     "fdivp/srt_qds_t2_d0",
+     "fdivp/srt_qds_t1_d0",
+     "fdivp/srt_qds_tm_d7",
+     "fdivp/srt_no_corr",
+     "fdivp/srt_drop_carry",
+     "fdivp/srt_no_cin",
+     "fdivp/srt_sticky_sign",
+     "fdivp/srt_stages_m1",
+     "fdivp/srt_otfc_um",
+     "fdivp/srt_otfc_digit",
      "aes_sbox/no_constant",
      "aes_sbox/one_entry",
      "aes_sbox/reversed_bits",
@@ -9191,7 +9324,7 @@
      "svgolf-statement"
     ],
     "trigger": "an off-by-one step counter; unsigned instead of signed products; a missing sign extension; done one cycle early; the accumulator not cleared on start; an accumulator truncated to 2W",
-    "why": "`TxTask.Statement` (txtask-v1, svgolf/SvGolf/TaskSeq.lean) claims `Guar` for every transaction under `Released` and `Rely`, at every parameter point in range, and the proof must establish it; a design wrong at any point, or late by a cycle, fails at the solution stage. Each matmul attack is also wrong at post-synthesis (`check.py --unproved`), so none is merely different.",
+    "why": "`TxTask.StatementV2` (txtask-v2, svgolf/SvGolf/TaskSeq.lean) claims `Guar` for every transaction under `Released` and `Rely`, in every run from every power-up state on every known stimulus, at every parameter point in range, and the proof must establish it; a design wrong at any point, or late by a cycle, fails at the solution stage. Each matmul attack is also wrong at post-synthesis (`check.py --unproved`), so none is merely different.",
     "category": "refused-now",
     "proposed": false,
     "match": [
@@ -9225,7 +9358,7 @@
      "svgolf-statement"
     ],
     "trigger": "the token shift reading the cell's own token (no value ever emitted); a missing else (two writes, the later wins); the neighbour push comparing the cell's own value; the valid token entering with the start (out_valid one cycle early, one value too many); a reset that leaves the cells; a top cell the drain does not clear; signed instead of unsigned order",
-    "why": "`StreamTask.Statement` (txtask-v1, svgolf/SvGolf/TaskSeq.lean) claims `Guar` for every transaction under `Released` and `Rely`, at every parameter point in range, and the proof must establish it; a design wrong at any point, or one value early or late, fails at the solution stage. Each sorter attack is also wrong at post-synthesis (`check.py --unproved`), so none is merely different; designs that differ from the reference only in how they order EQUAL values (`>=` for `>`) are not attacks, since equal values are interchangeable in the emitted list.",
+    "why": "`StreamTask.StatementV2` (txtask-v2, svgolf/SvGolf/TaskSeq.lean) claims `Guar` for every transaction under `Released` and `Rely`, in every run from every power-up state on every known stimulus, at every parameter point in range, and the proof must establish it; a design wrong at any point, or one value early or late, fails at the solution stage. Each sorter attack is also wrong at post-synthesis (`check.py --unproved`), so none is merely different; designs that differ from the reference only in how they order EQUAL values (`>=` for `>`) are not attacks, since equal values are interchangeable in the emitted list.",
     "category": "refused-now",
     "proposed": false,
     "match": [
@@ -9253,6 +9386,89 @@
     ]
    },
    {
+    "id": "sg-txstream-moore",
+    "tag": "(tx-family and stream-family tasks) an output in the combinational cone of an input port, the reset included: txtask-v2 rule 1, `MooreOutDep d []`, nothing exempt since 2026-11-09",
+    "group": "g-statement",
+    "layers": [
+     "svgolf-statement"
+    ],
+    "trigger": "assign out_valid = ov_q & ~rst (tests/sorter/attacks/rst_gate.sv: every snapshot right, the last output before a reset hidden on the wire); an output that reads start or an operand combinationally",
+    "why": "`TxTask.SatisfiedAtV2` and `StreamTask.SatisfiedAtV2` (svgolf/SvGolf/TaskSeq.lean) ask `MooreOutDep d []`: no combinational path, control dependencies included, from any input port to an output port, so that every claimed snapshot is what the outputs show on the wire for the whole next period. Until 2026-11-09 `rst` was exempt, which let a reset-gated output hide the snapshot before a reset entry, a snapshot the claims still cover (review L1). The post-synthesis check does not look for this (the snapshots are right), so the proof must establish it: such a design fails at the solution stage, and the kernel refutes it for every latency (tests/sorter/negative/Refute.lean, `rst_gate_refuted`).",
+    "category": "refused-now",
+    "proposed": false,
+    "match": [
+     {
+      "file": "svgolf/SvGolf/TaskSeq.lean",
+      "text": "def MooreOutDep"
+     }
+    ],
+    "where": [
+     {
+      "file": "svgolf/SvGolf/TaskSeq.lean",
+      "fn": "MooreOutDep"
+     }
+    ],
+    "unverified": true,
+    "verified_by_run": false,
+    "attacks": [
+     "sorter/rst_gate"
+    ]
+   },
+   {
+    "id": "sg-react-guar",
+    "tag": "a reactive controller that misses the ReactTask guarantee: from some power-up state, a reset snapshot that does not show atReset, an unsafe cycle, an obligation triggered at K + 1 consecutive entries and answered in none of them, or an output in the combinational cone of an input",
+    "group": "g-statement",
+    "layers": [
+     "svgolf-statement"
+    ],
+    "trigger": "the arbiter's attacks: never grant; grant every requester; always client 0; fixed priority; a free-running or a request-gated token ring; the right grant one cycle late; a sticky or a stale-mask round-robin; a rotation that wraps at 2^clog2(N); a Mealy grant; a grant flop with no reset; arbitration every other cycle; fixed priority after 4095 cycles. Its negatives: a never-reset 2-state ring `u` that gives fixed priority when `&u`; a flag set at the first reset edge from the pre-reset `&u`",
+    "why": "`ReactTask.Statement` (svgolf/SvGolf/TaskReact.lean; the arbiter's instance, tasks/arbiter/Spec.lean) claims, from every power-up state, under every schedule, on every known stimulus, at every reset release and for every list of inputs, that the reset snapshot shows `atReset` (the arbiter's G0) and every later snapshot meets safety (`Safe`: G1 to G3) and bounded response (`Responds`: G4 with K = N - 1), with the output discipline `MooreOut` (no combinational path from an input port to an output port) and rule 3 (`XSafe`); the proof must establish it at every parameter point in range, so a design wrong at any point fails at the solution stage. Each arbiter attack is also wrong at post-synthesis (`check.py --unproved`: the reactive check holds the netlist's outputs to the guarantee on the oracle's segments, a 70000-entry reset-free run among them, and samples the outputs before every edge for the Moore discipline), so none is merely different. The two negatives are right from ls-sv's own start (x, or 0 for a 2-state variable) and wrong from a power-up state the netlist can take (`u` all ones); they pass every stage before the proof and are refuted in the kernel (tests/arbiter/negative/Refute.lean).",
+    "category": "refused-now",
+    "proposed": false,
+    "match": [
+     {
+      "file": "svgolf/SvGolf/TaskReact.lean",
+      "text": "def Guar"
+     },
+     {
+      "file": "svgolf/check/postsynth.py",
+      "text": "THE REACTIVE CHECK"
+     }
+    ],
+    "where": [
+     {
+      "file": "svgolf/SvGolf/TaskReact.lean",
+      "fn": "ReactTask.Guar"
+     },
+     {
+      "file": "svgolf/check/postsynth.py",
+      "fn": "react_seed"
+     }
+    ],
+    "evidence": "tasks/arbiter/README.md (the attacks, the statement, what it closes); tests/expected.json (each attack's stage and message)",
+    "verified_by_run": true,
+    "attacks": [
+     "arbiter/a01_never",
+     "arbiter/a02_everyone",
+     "arbiter/a03_zero",
+     "arbiter/a04_fixed",
+     "arbiter/a05_ring",
+     "arbiter/a06_tdma",
+     "arbiter/a07_late",
+     "arbiter/a08_sticky",
+     "arbiter/a09_rotate_pow2",
+     "arbiter/a10_mealy_last",
+     "arbiter/a11_noreset",
+     "arbiter/a12_stale_mask",
+     "arbiter/a14_mealy_rr",
+     "arbiter/a15_half_rate",
+     "arbiter/a17_timebomb",
+     "arbiter/bit_ring",
+     "arbiter/reset_edge"
+    ],
+    "since": "2026-11-05"
+   },
+   {
     "id": "sg-range",
     "tag": "a proof that holds at the scoring point N = 16 only",
     "group": "g-statement",
@@ -9260,7 +9476,7 @@
      "svgolf-statement"
     ],
     "trigger": "a ripple adder at N = 16, carry-free elsewhere",
-    "why": "The statement quantifies over every N in the task's range (1 <= N), so a one-width proof does not typecheck; a fixed-size task (aes_sbox) is StatementFixed.",
+    "why": "The statement quantifies over every N in the task's range (1 <= N < 2^31 in _example and add, 1 <= N < 2^30 in mul and clmul, so that every width stays an int), so a one-width proof does not typecheck; a fixed-size task (aes_sbox) is StatementFixed.",
     "category": "refused-now",
     "proposed": false,
     "match": [
@@ -9579,8 +9795,8 @@
     "layers": [
      "svgolf-checker"
     ],
-    "trigger": "Solution.lean slower than task.json time_limit_s; comparator or leanchecker slower than verify_time_limit_s",
-    "why": "Bounded checking time; the limit excludes waiting for the Lean slot wrapper.",
+    "trigger": "Solution.lean using more CPU seconds than task.json time_limit_s, or more wall-clock seconds than its backstop (5 times the limit); comparator or leanchecker using more CPU seconds than verify_time_limit_s, or more wall-clock seconds than its backstop (5 times it)",
+    "why": "Bounded checking time. The proof limit counts the CPU seconds of the Lean process (decided 2026-11-05), and so do the comparator's and leanchecker's (since 2026-11-06), so the machine's load does not count; the wall-clock backstop stops a proof or a replay that waits instead of computing. None of them counts the wait for the Lean slot wrapper.",
     "category": "refused-now",
     "proposed": false,
     "match": [
@@ -9927,6 +10143,183 @@
      "add/slang_initial_comb",
      "add/slang_always_notime"
     ]
+   },
+   {
+    "id": "sg-clocked-edge",
+    "tag": "(clocked tasks) an edge process other than `always_ff @(posedge <clock>)`: an asynchronous reset or a second clock in its sensitivity list, a `negedge`, `edge` or level-sensitive event, an `iff` guard on the clock, a clock other than the task's",
+    "group": "g-clocked",
+    "layers": [
+     "svgolf-gate"
+    ],
+    "trigger": "always_ff @(posedge clk or posedge rst) (tests/arbiter/attacks/a13_async.sv, tests/matmul/attacks/async_reset.sv); always_ff @(negedge clk); always_ff @(posedge clk iff en)",
+    "why": "The loader drops the extractor's `areset`, `edge: neg` and `iff` fields, so each of these shapes would reach ls-sv as a plain `always_ff @(posedge clk)`, a different circuit from the one Yosys scores (an asynchronous reset changes the outputs inside a period, and the scoring flow has no asynchronous-reset flop), and the statement's `ClockedBy clk none` cannot see a dropped field. So the source gate's clocked rules refuse them in every clocked kind: the reset is synchronous (contract C1).",
+    "category": "refused-now",
+    "proposed": false,
+    "match": [
+     {
+      "file": "svgolf/score/srcgate.py",
+      "text": "a second event in an `always_ff` sensitivity list"
+     },
+     {
+      "file": "svgolf/score/srcgate.py",
+      "text": "on the clock event (a gated clock)"
+     }
+    ],
+    "where": [
+     {
+      "file": "svgolf/score/srcgate.py",
+      "fn": "clocked_findings"
+     }
+    ],
+    "evidence": "svgolf/score/srcgate.py docstring item 6; design/reactive/README.md H2",
+    "verified_by_run": true,
+    "attacks": [
+     "arbiter/a13_async",
+     "matmul/async_reset"
+    ]
+   },
+   {
+    "id": "sg-clocked-rules",
+    "tag": "(clocked tasks) an x-creating construct, refused before the proof by the twin of rule 3 (`XSafe`)",
+    "group": "g-clocked",
+    "layers": [
+     "svgolf-checker"
+    ],
+    "trigger": "q <= a / b with b a signal; a ** e with a signed exponent e; v[i] with i declared signed; v[i] where i can leave the vector; v[i +: 4] read; 4'b1x00 outside a casez/casex item",
+    "why": "Rule 3 of the clocked statements (`XSafe`, svgolf/SvGolf/TaskSeq.lean, txtask-v2, decided 2026-11-06) forbids every construct that can create an x from known operands, so that every value of every run from every power-up state is known; the statement is the authority and the proof must establish it. check/clocked_rules.py refuses early, with a message per construct, only what ls-sv's lowering certainly turns into a construct `xsWidth` refuses, and admits the rest to the proof (tests/checker/test_xsafe_twin.py: the twin and `xsafeB` agree on the counter's and the arbiter's fixtures).",
+    "category": "refused-now",
+    "proposed": false,
+    "match": [
+     {
+      "file": "svgolf/check.py",
+      "text": "refused before the proof by a twin of txtask-v2's rules"
+     }
+    ],
+    "where": [
+     {
+      "file": "svgolf/check/clocked_rules.py",
+      "fn": "xsafe_findings"
+     },
+     {
+      "file": "svgolf/check.py",
+      "fn": "check"
+     }
+    ],
+    "evidence": "check/clocked_rules.py docstring; design/soundness/TXTASK-V2-REVIEW.md sections 11 and 12",
+    "verified_by_run": true,
+    "since": "2026-11-06"
+   },
+   {
+    "id": "sg-never-loaded",
+    "tag": "(clocked tasks) a never-loaded register: a flip-flop the pinned flow removes while reads of it remain",
+    "group": "g-clocked",
+    "layers": [
+     "svgolf-checker"
+    ],
+    "trigger": "u <= u read by if (!u) (tests/arbiter/attacks/a16_xopt.sv); a register loaded only under a condition that is never true or an enable that is never active; a register whose only load is an undefined value",
+    "why": "The pinned Yosys removes a flip-flop whose next value is always its own, whose enable is never active or whose clock is constant (its log: `Handling D = Q ... (removing D path)`), or whose only load is an undefined value (a constant x), and resolves each READ of the undefined value separately, while ls-sv gives a register one power-up value for every read, so the proved and the scored circuits differ (a16_xopt: every snapshot fair in ls-sv, the scored netlist fixed priority). The verdict is the scored run's own log (`score.flop_removals`), at the scoring point and at every post-synthesis point; a register whose every read folds away is removed as unread and accepted, and one loaded with a constant 0 or 1 gives every read one value and is accepted. An undriven net, the combinational analogue, is the `fourstate` stage's. Write: reset it, load it with a value other than its own, or remove it.",
+    "category": "refused-now",
+    "proposed": false,
+    "decided_by": "the maintainers, 2026-11-06 (txtask-v2): svGolf disallows a design where the pinned Yosys deviates from the semantics",
+    "since": "2026-11-06",
+    "match": [
+     {
+      "file": "svgolf/check.py",
+      "text": "never-loaded register at"
+     },
+     {
+      "file": "svgolf/score/score.py",
+      "text": "removing D path"
+     }
+    ],
+    "where": [
+     {
+      "file": "svgolf/check.py",
+      "fn": "never_loaded"
+     },
+     {
+      "file": "svgolf/score/score.py",
+      "fn": "flop_removals"
+     }
+    ],
+    "evidence": "tests/seq_counter/never_loaded/ (hold, hold_if, hold_and, never_true, never_active_en, partial; ok_* accepted), tests/checker/test_clocked_post.py; design/soundness/TXTASK-V2-REVIEW.md sections 11 and 12",
+    "verified_by_run": true,
+    "attacks": [
+     "arbiter/a16_xopt"
+    ]
+   },
+   {
+    "id": "sg-never-loaded-mem",
+    "tag": "(clocked tasks) a never-loaded memory lane: a bit lane of an unpacked array that no write loads, read",
+    "group": "g-clocked",
+    "layers": [
+     "svgolf-checker"
+    ],
+    "trigger": "an array read at a constant index and never written (tests/seq_counter/never_loaded/mem_rom_const.sv); a write that never reaches the lane (mem_dead_write.sv, mem_unreached_word.sv)",
+    "why": "opt_mem connects every read of a lane no write loads with a defined value to an undefined value before any flip-flop exists (its log: `removing const-x lane`), which Yosys resolves separately at each read, while ls-sv gives every word one power-up value for every read. MEASURED (2026-11-06): the arbiter reference plus an unwritten two-word array read at a constant index, decided both ways at one cycle count, passed every stage before this rule and withheld the grant at entry 131071 (design/soundness/TXTASK-V2-REVIEW.md section 12, finding F1). A lane every write loads with the constant 0 or 1 gives every read one value and is accepted (`ok_mem_const0.sv`). Write: write the lane, or replace the array by constants.",
+    "category": "refused-now",
+    "proposed": false,
+    "decided_by": "the maintainers, 2026-11-06 (txtask-v2): svGolf disallows a design where the pinned Yosys deviates from the semantics",
+    "since": "2026-11-06",
+    "match": [
+     {
+      "file": "svgolf/check.py",
+      "text": "never-loaded memory at"
+     },
+     {
+      "file": "svgolf/score/score.py",
+      "text": "removing const-x lane"
+     }
+    ],
+    "where": [
+     {
+      "file": "svgolf/check.py",
+      "fn": "never_loaded"
+     },
+     {
+      "file": "svgolf/score/score.py",
+      "fn": "flop_removals"
+     }
+    ],
+    "evidence": "tests/seq_counter/never_loaded/mem_*.sv, tests/checker/test_clocked_post.py",
+    "verified_by_run": true
+   },
+   {
+    "id": "sg-fsm-backstop",
+    "tag": "(clocked tasks, a backstop) a state register re-implemented by Yosys's fsm pass",
+    "group": "g-clocked",
+    "layers": [
+     "svgolf-checker"
+    ],
+    "trigger": "none in the pinned flow, which runs `synth -nofsm`; before 2026-11-06 a state register read only by comparisons with constants was recoded one-hot, with or without a reset (tests/seq_counter/never_loaded/fsm_unreset.sv, fsm_reset.sv)",
+    "why": "The fsm pass re-encodes a state register from the state codes it extracts: the new flip-flops power up in codes that are no value of the register, and a value that is no extracted state has no code, while ls-sv gives the register one power-up value of its width, so the proved and the scored circuits differ from some power-ups (design/soundness/TXTASK-V2-REVIEW.md section 12, finding F2). Since 2026-11-06 the clocked flow runs `synth -nofsm` (the combinational flow is unchanged), so a state register keeps its own flip-flops and the log has no `Mapping FSM` line; should one appear, the `score` stage refuses the design and asks for a report to the maintainers.",
+    "category": "refused-now",
+    "proposed": false,
+    "decided_by": "the maintainers, 2026-11-06: the fsm pass is off in the clocked flow; the log refusal stays as a backstop",
+    "since": "2026-11-06",
+    "match": [
+     {
+      "file": "svgolf/check.py",
+      "text": "state register re-implemented as a state machine at"
+     },
+     {
+      "file": "svgolf/score/svgolf_seq.ys",
+      "text": "-nofsm"
+     }
+    ],
+    "where": [
+     {
+      "file": "svgolf/check.py",
+      "fn": "never_loaded"
+     },
+     {
+      "file": "svgolf/score/score.py",
+      "fn": "flop_removals"
+     }
+    ],
+    "evidence": "tests/checker/test_clocked_post.py test_the_fsm_backstop (a synthetic log line: the pinned flow prints none); score/test_score.py test_no_fsm_pass",
+    "verified_by_run": true,
+    "notes": "The three former FSM fixtures (fsm_reset_controller.sv, fsm_unreset.sv, fsm_reset.sv) now pass this rule; they stopped at `postsynth` on a Verilator lint of a dead techmap wire (an over-rejection recorded in design/soundness/TXTASK-V2-REVIEW.md section 12.2) until the clocked flow's last clean-up became `opt_clean -purge` (decided 2026-11-07), and now pass every stage but the proof."
    }
   ]
  }

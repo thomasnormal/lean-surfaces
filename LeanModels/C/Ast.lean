@@ -106,6 +106,26 @@ inductive TypeNode where
   | unsupported (cKind : String) (text : String)
 deriving Repr, Inhabited, BEq
 
+/-- A record layout observed from Clang's `ASTRecordLayout` probe.  These are
+frontend facts carried by the envelope; the C semantics may use them only
+after checking the profile and the record identity. -/
+structure RecordLayoutField where
+  name : String
+  offsetBits : Nat
+  bitfield : Bool
+  widthBits : Option Nat := none
+deriving Repr, Inhabited, BEq, Lean.ToExpr
+
+structure RecordLayout where
+  offset : Nat
+  tokenLength : Nat
+  name : String
+  tagKind : String
+  sizeBytes : Nat
+  alignmentBytes : Nat
+  fields : List RecordLayoutField
+deriving Repr, Inhabited, BEq, Lean.ToExpr
+
 /-! ## The three layers
 
 C's grammar makes the layering, not us: a function DEFINITION is the only
@@ -183,7 +203,8 @@ inductive Decl where
   behaviour, and an AST that cannot tell them apart makes the model answer
   correctly about whichever one it happened to build. -/
   | field (name : Option String) (ty : CType) (bits : Option Nat) (span : CSpan)
-  | record (id : Option DeclarationId) (name : Option String) (fields : List Decl) (span : CSpan)
+  | record (id : Option DeclarationId) (name : Option String) (fields : List Decl)
+      (layout : Option RecordLayout) (span : CSpan)
   | typedef (name : String) (ty : CType) (underlying : Option TypeNode) (span : CSpan)
   | enum (name : Option String) (constants : List Decl) (span : CSpan)
   /-- An enumeration constant. clang's `ConstantExpr` wrapper is flattened

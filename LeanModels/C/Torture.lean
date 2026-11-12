@@ -274,14 +274,14 @@ def allDecls (envl : Envelope) : List Decl :=
 def recordsOf (envl : Envelope) : List (String × List (String × CType)) :=
   let ds := allDecls envl
   let records := ds.filterMap fun d => match d with
-    | .record _ (some nm) fields _ => (fieldsOf fields).map (fun fs => (nm, fs))
+    | .record _ (some nm) fields _ _ => (fieldsOf fields).map (fun fs => (nm, fs))
     | _ => none
   let anonymous := ds.filterMap fun d => match d with
     | .var _ _ ty _ _ (some rid) _ =>
         match ds.find? (fun q => match q with
-          | .record id none _ _ => id == some rid
+          | .record id none _ _ _ => id == some rid
           | _ => false) with
-        | some (.record _ none fields _) => (fieldsOf fields).map (fun fs => (ty, fs))
+        | some (.record _ none fields _ _) => (fieldsOf fields).map (fun fs => (ty, fs))
         | _ => none
     | _ => none
   records ++ anonymous

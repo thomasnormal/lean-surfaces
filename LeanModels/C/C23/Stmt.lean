@@ -597,7 +597,7 @@ def declare : Nat → Ctx → List Decl → ExecM Ctx
                 initObject fuel ctx' (Ptr.toObject o) ty e
                 declare fuel ctx' ds
     | .empty _ => declare fuel ctx ds
-    | .record _ _ _ _ | .enum _ _ _ | .typedef _ _ _ _ =>
+    | .record _ _ _ _ _ | .enum _ _ _ | .typedef _ _ _ _ =>
         declare fuel ctx ds
     | _ => refuseUnsupported "non-object declaration in a block"
 

@@ -114,6 +114,29 @@ def getBool (j : Json) (name : String) : Except String Bool :=
   | .ok .null => .ok false
   | .ok v => withCtx s!"field '{name}'" v.getBool?
 
+def getRecordLayoutField (j : Json) : Except String RecordLayoutField := do
+  withCtx "record layout field" do
+    return ({ name := ← getStr j "name"
+              offsetBits := ← getNat j "offset_bits"
+              bitfield := ← getBool j "bitfield"
+              widthBits := ← getOptNat j "width_bits" } : RecordLayoutField)
+
+def getRecordLayout (j : Json) : Except String RecordLayout := do
+  withCtx "record layout" do
+    let fields ← (← getArr j "fields").mapM getRecordLayoutField
+    return ({ offset := ← getNat j "offset"
+              tokenLength := ← getNat j "token_length"
+              name := ← getStr j "name"
+              tagKind := ← getStr j "tag_kind"
+              sizeBytes := ← getNat j "size_bytes"
+              alignmentBytes := ← getNat j "alignment_bytes"
+              fields := fields } : RecordLayout)
+
+def getOptRecordLayout (j : Json) : Except String (Option RecordLayout) :=
+  match getOptNode j "record_layout" with
+  | none => .ok none
+  | some value => some <$> getRecordLayout value
+
 /-! ## Spans and types -/
 
 def parseSpan (j : Json) : Except String CSpan :=
@@ -275,7 +298,7 @@ partial def parseDecl (j : Json) : Except String Decl := do
         return .field (← getOptStr j "name") (← getStr j "type") (← getOptNat j "bits") span
     | "RecordDecl" =>
         return .record ((← getOptStr j "decl_id").map DeclarationId.mk) (← getOptStr j "name")
-          (← (← getArr j "fields").mapM parseDecl) span
+          (← (← getArr j "fields").mapM parseDecl) (← getOptRecordLayout j) span
     | "TypedefDecl" =>
         return .typedef (← getStr j "name") (← getStr j "type")
           (← match getOptNode j "underlying" with

@@ -746,6 +746,28 @@ def callFn : Nat → Program → LeanModels.C.FunctionDefn → List CVal → Exe
                 liftEval (writeMem (fun m => m.storeBytes dp bs))
                 pure (.ptr dp)
           | _ => refuseUnsupported "memcpy: wrong argument count"
+        let runMulOverflow : List CVal → ExecM CVal := fun vs =>
+          match vs with
+          | [a, b, dst] => do
+              let (_, x) ← asInt a
+              let (_, y) ← asInt b
+              let dp ← asPtr dst
+              let m ← get
+              let ty ← match dp.obj with
+                | some o =>
+                    match m.get? o with
+                    | some c =>
+                        match c.effTy with
+                        | some t => pure t
+                        | none => refuseUnsupported "__builtin_mul_overflow: destination has no declared type"
+                    | none => refuseUnsupported "__builtin_mul_overflow: destination object is not live"
+                | none => refuseUnsupported "__builtin_mul_overflow: null destination"
+              let t ← liftEval (intTyOf ty)
+              let product := x * y
+              let overflow := !t.inRange product
+              liftEval (storeAt dp ty (.int t (t.wrap product)))
+              pure (.int IntTy.int_ (if overflow then 1 else 0))
+          | _ => refuseUnsupported "__builtin_mul_overflow: wrong argument count"
         -- The callee's own call handler: one fuel less, so the recursion
         -- terminates on the fuel and on nothing else.
         let handler : CallHandler := fun callee vs =>
@@ -763,6 +785,7 @@ def callFn : Nat → Program → LeanModels.C.FunctionDefn → List CVal → Exe
                 | none =>
                     if nm == "memset" || nm == "__builtin_memset" then runMemset vs
                     else if nm == "memcpy" || nm == "__builtin_memcpy" then runMemcpy vs
+                    else if nm == "__builtin_mul_overflow" then runMulOverflow vs
                     else throw (.libc nm)
                 | some g => callFn fuel prog g vs
             | none => match prog.findId? declaration with
@@ -779,6 +802,7 @@ def callFn : Nat → Program → LeanModels.C.FunctionDefn → List CVal → Exe
             | none =>
               if nm == "memset" || nm == "__builtin_memset" then runMemset vs
               else if nm == "memcpy" || nm == "__builtin_memcpy" then runMemcpy vs
+              else if nm == "__builtin_mul_overflow" then runMulOverflow vs
               else throw (.libc nm)
             -- A NESTED call to a defined function. `evalArgs` has already
             -- evaluated `vs` in the CALLER's scope (§6.5.3.3p4), so this is

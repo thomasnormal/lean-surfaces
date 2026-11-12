@@ -2,10 +2,10 @@
 
 Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manifest.
 
-- verdicts: 683/2214 MATCH (passed 683, failed 0, oracle 0)
+- verdicts: 689/2214 MATCH (passed 689, failed 0, oracle 0)
 - manifest SHA-256: `1de1a60c299d5bb51dae7ca001b0a008010cad0b25670cde2090c08bfc1a84ce`
-- measured commit: `770f348b8`
-- measured at: `2026-11-12T08:15:00Z`
+- measured commit: `bf32c696f`
+- measured at: `2026-11-12T08:08:25Z`
 
 ## Verdict counts
 
@@ -13,10 +13,10 @@ Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manife
 | --- | ---: |
 | `not-ingested` | 25 |
 | `not-parsed` | 350 |
-| `passed` | 683 |
-| `refused-libc` | 110 |
+| `passed` | 689 |
+| `refused-libc` | 103 |
 | `refused-ub` | 36 |
-| `refused-unsupported` | 963 |
+| `refused-unsupported` | 964 |
 | `timeout` | 47 |
 
 ## Counts by corpus
@@ -32,10 +32,10 @@ Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manife
 | `c-testsuite/single-exec` | `timeout` | 2 |
 | `gcc.c-torture/execute` | `not-ingested` | 19 |
 | `gcc.c-torture/execute` | `not-parsed` | 321 |
-| `gcc.c-torture/execute` | `passed` | 572 |
-| `gcc.c-torture/execute` | `refused-libc` | 101 |
+| `gcc.c-torture/execute` | `passed` | 578 |
+| `gcc.c-torture/execute` | `refused-libc` | 94 |
 | `gcc.c-torture/execute` | `refused-ub` | 33 |
-| `gcc.c-torture/execute` | `refused-unsupported` | 827 |
+| `gcc.c-torture/execute` | `refused-unsupported` | 828 |
 | `gcc.c-torture/execute` | `timeout` | 45 |
 | `gcc.c23-run` | `not-ingested` | 1 |
 | `gcc.c23-run` | `not-parsed` | 28 |
@@ -111,7 +111,6 @@ The run's first refusal, normalized by construct; `sole` counts rows whose first
 | `unsupported:case label nested in a control statement` | 10 | 10 | 00051.c, 00143.c, 20011109-1.c, 20080719-1.c, 920506-1.c |
 | `unsupported:no layout for declared type 'V'` | 9 | 9 | pr105613.c, pr110817-1.c, pr110817-2.c, pr110817-3.c, pr71626-1.c |
 | `unsupported:no layout for declared type 'float'` | 9 | 9 | 00113.c, 00174.c, 20050121-1.c, ieee/920518-1.c, ieee/980619-1.c |
-| `libc-call: __builtin_mul_overflow` | 7 | 7 | pr64006.c, pr68381.c, pr71554.c, pr84169.c, pr89434.c |
 | `libc-call: malloc` | 7 | 7 | 20020406-1.c, 960521-1.c, 990628-1.c, pr41395-1.c, pr41463.c |
 | `unsupported:no layout for declared type 'struct s'` | 7 | 7 | 00043.c, 20040625-1.c, 930126-1.c, 961223-1.c, pr110165-1.c |
 | `unsupported:no layout for declared type 'va_list'` | 7 | 7 | printf-chk-1.c, stdarg-1.c, va-arg-14.c, vfprintf-1.c, vfprintf-chk-1.c |
@@ -348,6 +347,7 @@ The run's first refusal, normalized by construct; `sole` counts rows whose first
 | `unsupported:no layout for parameter type 'foo_t *const'` | 1 | 1 | pr33669.c |
 | `unsupported:no layout for parameter type 'int **restrict'` | 1 | 1 | 20080506-2.c |
 | `unsupported:no layout for parameter type 'int *restrict'` | 1 | 1 | pr38212.c |
+| `unsupported:not an integer type: 'T'` | 1 | 1 | pr84169.c |
 | `unsupported:not an integer type: 'unsigned char *'` | 1 | 1 | pr119428.c |
 | `unsupported:not an lvalue: PredefinedExpr` | 1 | 1 | 20001011-1.c |
 | `unsupported:sizeof: no layout for operand type 'PT[9]'` | 1 | 1 | 00205.c |

@@ -129,6 +129,11 @@ source-shaped envelope and matches Icarus Verilog 13.0 and Xcelium 24.03-s004
 for all 8 cycles.  It is an E-MATCH and does not change the frozen migration
 count.
 
+The port-write-safe alias row, `acg_alias_port_wr`, runs from its committed
+source-shaped envelope and matches Icarus Verilog 13.0 and Xcelium 24.03-s004
+for all 8 cycles.  It is an E-MATCH and does not change the frozen migration
+count.
+
 The receipts were produced with:
 
 ```text

@@ -110,6 +110,11 @@ The child-port alias row, `acg_alias_thru`, is refused by E as
 matches the legacy refusal boundary and adds no E verdict or migration-count
 change.
 
+The write-safe alias row, `acg_alias_wr`, runs from its committed
+source-shaped envelope and matches Icarus Verilog 13.0 and Xcelium 24.03-s004
+for all 8 cycles.  It is an E-MATCH and does not change the frozen migration
+count.
+
 The receipts were produced with:
 
 ```text

@@ -447,6 +447,7 @@ def truthy (v : CVal) : EvalM Bool :=
   match v with
   | .int _ n => pure (n != 0)
   | .ptr p => pure (!p.isNull)
+  | .aggregate _ _ => refuseUnsupported "aggregate used as truth value"
   | .undef => refuseUB (.indetAutomatic 0 0)
 
 /-- §6.5.9p3 / §6.5.10p3: a comparison yields `int`, 0 or 1. -/
@@ -505,6 +506,7 @@ def asPtr (v : CVal) : EvalM Ptr :=
   match v with
   | .ptr p => pure p
   | .int _ _ => refuseUnsupported "integer used as a pointer (no int↔ptr cast in tier)"
+  | .aggregate _ _ => refuseUnsupported "aggregate used as a pointer"
   | .undef => refuseUB (.indetAutomatic 0 0)
 
 /-- Require an integer, with its type. -/
@@ -512,6 +514,7 @@ def asInt (v : CVal) : EvalM (IntTy × Int) :=
   match v with
   | .int t n => pure (t, n)
   | .ptr _ => refuseUnsupported "pointer used as an integer (no ptr↔int cast in tier)"
+  | .aggregate _ _ => refuseUnsupported "aggregate used as an integer"
   | .undef => refuseUB (.indetAutomatic 0 0)
 
 /-- Is this spelling a pointer type? Spelling-based, and deliberately so:
@@ -541,13 +544,19 @@ def pointeeOf (ty : CType) : Option CType :=
 /-- Load whatever an lvalue of this type holds — an integer or a pointer.
 §6.3.2.1p2, the lvalue conversion: **1837 sites, the load-bearing
 implicit of the whole corpus.** -/
-def loadAt (p : Ptr) (ty : CType) : EvalM CVal :=
+def loadAt (p : Ptr) (ty : CType) (size : Option Nat) : EvalM CVal :=
   if isPtrType ty then do
     let q ← readMem (fun m => Mem.loadPtr m p)
     pure (.ptr q)
   else do
-    let t ← intTyOf ty
-    readMem (fun m => Mem.loadInt m p t)
+    match intTyOf? ty with
+    | some t => readMem (fun m => Mem.loadInt m p t)
+    | none =>
+        match size with
+        | some n => do
+            let bs ← readMem (fun m => Mem.loadBytes m p n)
+            pure (.aggregate ty bs)
+        | none => refuseUnsupported s!"aggregate load without a layout '{ty}'"
 
 /-- Store a value at an address, at the lvalue's type. -/
 def storeAt (p : Ptr) (ty : CType) (v : CVal) : EvalM Unit :=
@@ -556,6 +565,7 @@ def storeAt (p : Ptr) (ty : CType) (v : CVal) : EvalM Unit :=
   | .int _ n => do
       let t ← intTyOf ty
       writeMem (fun m => Mem.storeInt m p t n)
+  | .aggregate _ bs => writeMem (fun m => Mem.storeBytes m p bs)
   | .undef => refuseUnsupported "storing an indeterminate value"
 
 /-- Peel the conversions clang wraps a callee in and read its name.
@@ -808,7 +818,7 @@ def evalExpr (ctx : Ctx) : Expr → EvalM CVal
       if ck == "LValueToRValue" then do
         -- §6.3.2.1p2 — 1837 sites, the load-bearing implicit of the corpus.
         let p ← evalLValue ctx sub
-        loadAt p (ctx.layout.normalizeTy ty)
+        loadAt p (ctx.layout.normalizeTy ty) (ctx.layout.size (ctx.layout.normalizeTy ty))
       else if ck == "ArrayToPointerDecay" then do
         -- §6.3.2.1p3 — 405 sites, the LARGEST pointer producer there is.
         let p ← evalLValue ctx sub
@@ -908,7 +918,7 @@ def evalExpr (ctx : Ctx) : Expr → EvalM CVal
         -- §6.5.4.2p4 — indirection reaching value position directly.
         let v ← evalExpr ctx sub
         let p ← asPtr v
-        loadAt p (ctx.layout.normalizeTy ty)
+        loadAt p (ctx.layout.normalizeTy ty) (ctx.layout.size (ctx.layout.normalizeTy ty))
       else if op == "!" then do
         -- §6.5.4.3p5 — `!x` is `(0 == x)`. 80 sites.
         let v ← evalExpr ctx sub
@@ -932,7 +942,7 @@ def evalExpr (ctx : Ctx) : Expr → EvalM CVal
         -- POSTFIX; it never writes `++i`. Postfix yields the value BEFORE
         -- the update, and the update itself can overflow (`J.2(35)`).
         let p ← evalLValue ctx sub
-        let old ← loadAt p (ctx.layout.normalizeTy sub.ty)
+        let old ← loadAt p (ctx.layout.normalizeTy sub.ty) (ctx.layout.size (ctx.layout.normalizeTy sub.ty))
         let (storageT, n) ← asInt old
         let t := promoteIntTy storageT
         match (if op == "++" then addOp t n 1 else subOp t n 1) with
@@ -951,7 +961,7 @@ def evalExpr (ctx : Ctx) : Expr → EvalM CVal
       if mayWrite r then
         refuseUnsupported "unsequenced side effects in compound assignment"
       let p ← evalLValue ctx l
-      let old ← loadAt p (ctx.layout.normalizeTy l.ty)
+      let old ← loadAt p (ctx.layout.normalizeTy l.ty) (ctx.layout.size (ctx.layout.normalizeTy l.ty))
       let rv ← evalExpr ctx r
       let lhsT ← intTyOf (ctx.layout.normalizeTy computeLHSType)
       let resultT ← intTyOf (ctx.layout.normalizeTy computeResultType)
@@ -972,10 +982,10 @@ def evalExpr (ctx : Ctx) : Expr → EvalM CVal
   -- either way (§6.3.2.1p2).
   | .member base field arrow ty _ => do
       let p ← memberAddr ctx base field arrow ty
-      loadAt p (ctx.layout.normalizeTy ty)
+      loadAt p (ctx.layout.normalizeTy ty) (ctx.layout.size (ctx.layout.normalizeTy ty))
   | .index base idx ty _ => do
       let p ← indexAddr ctx base idx ty
-      loadAt p (ctx.layout.normalizeTy ty)
+      loadAt p (ctx.layout.normalizeTy ty) (ctx.layout.size (ctx.layout.normalizeTy ty))
 
   -- ===== §6.4.4 — constants =====
   | .intLit v ty _ => do
@@ -1542,7 +1552,7 @@ theorem intTyOf' (ty : CType) : MemInvariant (intTyOf ty) := by
   · exact refuseUnsupported' _
 
 theorem truthy' (v : CVal) : MemInvariant (truthy v) := by
-  cases v <;> first | exact pure' _ | exact refuseUB' _
+  cases v <;> first | exact pure' _ | exact refuseUnsupported' _ | exact refuseUB' _
 
 theorem asPtr' (v : CVal) : MemInvariant (asPtr v) := by
   cases v <;> first | exact pure' _ | exact refuseUnsupported' _ | exact refuseUB' _
@@ -1550,11 +1560,16 @@ theorem asPtr' (v : CVal) : MemInvariant (asPtr v) := by
 theorem asInt' (v : CVal) : MemInvariant (asInt v) := by
   cases v <;> first | exact pure' _ | exact refuseUnsupported' _ | exact refuseUB' _
 
-theorem loadAt' (p : Ptr) (ty : CType) : MemInvariant (loadAt p ty) := by
-  first | simp only [loadAt] | rw [loadAt.eq_def]
+theorem loadAt' (p : Ptr) (ty : CType) (size : Option Nat) : MemInvariant (loadAt p ty size) := by
+  unfold loadAt
   split
   · exact bind (readMem' _) fun _ => pure' _
-  · exact bind (intTyOf' _) fun _ => readMem' _
+  · cases h : intTyOf? ty with
+    | some t => simp [h]; exact readMem' _
+    | none =>
+      cases hs : size with
+      | some n => simp [h, hs]; exact bind (readMem' _) fun _ => pure' _
+      | none => simp [h, hs]; exact refuseUnsupported' _
 
 theorem intBinop' (op : String) (t : IntTy) (a b : Int) :
     MemInvariant (intBinop op t a b) := by

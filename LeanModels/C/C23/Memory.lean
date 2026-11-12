@@ -78,7 +78,7 @@ one. `docs/c-semantics-design.md` §1.1 always said so. -/
 
 /-! ## §6.2.6.1 Representations of types — the byte lattice -/
 
-/-- One byte of an object's representation.
+/-! One byte of an object's representation.
 
 C23 §6.2.6.1p2-p4 gives every object a representation as a sequence of
 `CHAR_BIT`-bit bytes; the lattice adds the two states the standard talks
@@ -89,18 +89,6 @@ Per-BYTE and not per-object, because `setup_fen` declares `Pos p;` then
 `p.kp` and `p.h` indeterminate while `p.b` is fully determined. A model
 that refused any read from a partly-initialized object would refuse the
 corpus; one that allowed it would invent values. -/
-inductive CByte where
-  /-- A determinate byte value. -/
-  | conc (b : UInt8)
-  /-- Byte `k` of some pointer's representation. Kept whole so that a
-  torn read — part of a pointer, or a pointer read as an integer — is
-  DETECTABLE rather than plausible (§6.2.6.1p5, `J.2(12)`). -/
-  | ptrByte (p : Ptr) (k : Nat)
-  /-- Indeterminate. C23 §6.2.6.1p5 and §6.7.11: an object with no
-  initializer has an indeterminate representation. -/
-  | indet
-deriving Repr, Inhabited, BEq
-
 /-! ## The refusal causes
 
 `docs/c23-goal.md` §3.1 fixed three causes that must never be pooled,

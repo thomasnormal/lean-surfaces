@@ -1,3 +1,4 @@
+import LeanModels.C.Ast
 import LeanModels.Core.Basic
 
 /-!
@@ -245,11 +246,18 @@ def toObjectBound (o : ObjId) (size : Nat) : Ptr := ⟨some o, 0, some size⟩
 
 end Ptr
 
+inductive CByte where
+  | conc (b : UInt8)
+  | ptrByte (p : Ptr) (k : Nat)
+  | indet
+deriving Repr, Inhabited, BEq
+
 /-- A C value. `undef` is an indeterminate value that reached a use,
 which every consumer refuses. -/
 inductive CVal where
   | int (ty : IntTy) (v : Int)
   | ptr (p : Ptr)
+  | aggregate (ty : CType) (bytes : List CByte)
   | undef
 deriving Repr, Inhabited, BEq
 

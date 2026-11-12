@@ -588,6 +588,7 @@ def scoreEnvelope (fuel : Nat) (envl : Envelope)
   | .ok (.int _ 0) | .ok .undef => .passed
   | .ok (.int _ _) => .failed
   | .ok (.ptr _) => .failed
+  | .ok (.aggregate _ _) => .failed
   | .refused (.libc "abort") =>
       match oracleSym with
       | some sym =>

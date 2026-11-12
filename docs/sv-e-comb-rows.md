@@ -168,3 +168,8 @@ matches Xcelium 24.03-s004 for all 7 cycles.  It is marked Xcelium-only in the
 corpus because Icarus cannot parse this source form; no Icarus result is
 claimed.  This is an E-MATCH against the available pinned oracle and does not
 change the frozen migration count.
+
+The mixed profile `mixed_comb_profile` remains outside E-core-0 because its
+source-shaped envelope contains an edge/timed process.  E refuses before
+execution; the legacy route independently refuses its preemptive schedule
+profile under IEEE 1800-2023 §4.7.  No simulator result is claimed.

@@ -69,3 +69,14 @@ python3 harness/c_record_layout_determinism.py --self-test \
 python3 harness/c_record_layout_determinism.py \
   --clang "$LEAN_C_CLANG" --plugin "$LEAN_C_RECORD_LAYOUT_PLUGIN" file.c
 ```
+
+To price joins on selected frozen files, keep outputs outside the repository
+and restrict the manifest by repeating `--name`:
+
+```sh
+python3 harness/c_record_layout_join_price.py \
+  --manifest /outside/cache/c1-manifest.json \
+  --plugin "$LEAN_C_RECORD_LAYOUT_PLUGIN" --clang "$LEAN_C_CLANG" \
+  --out-dir /outside/cache/layout-env \
+  --name 20230630-1.c --name pr49123.c
+```

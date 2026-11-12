@@ -279,6 +279,16 @@ theorem keyEq_refl {k : RVal} (h : hashableKey k = true) : keyEq k k = true := b
   rw [keyEq_iff_nf k k]
   exact ⟨(hashableKey_iff_nf k).mp h, rfl⟩
 
+/-! On the finite bool/int key domain, the hash-table worker is exactly the
+RichCompareBool result used by ordinary equality.  This is the small overlap
+that lets the census keep `keyEq` separate from the container `heapEq` worker:
+CPython's dict lookup has its own hash gate and table traversal, while the
+element comparison agrees at this shared scalar boundary. -/
+theorem keyEq_bool_int_richCompare (b : Bool) (n : Int) :
+    keyEq (.bool b) (.int n) = true ↔
+      valEq (.bool b) (.int n) = .ok true := by
+  cases b <;> simp [keyEq, valEq]
+
 theorem keyEq_symm (a b : RVal) : keyEq a b = keyEq b a := by
   rw [Bool.eq_iff_iff, keyEq_iff_nf a b, keyEq_iff_nf b a]
   constructor

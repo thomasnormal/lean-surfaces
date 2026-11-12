@@ -4119,13 +4119,23 @@ theorem pbExecAttrCall_succ (htwin : PayloadTwin o₀ o) (ih : PBAll pa o₀ o f
           cases rest with
           | nil =>
               simp only [FrameState.swapAt_world, World.swapAt_heap, heapGet_swapAt hs htwin]
-              exact PBF.liftRes hs _
+              simp only [World.swapAt_callDepth]
+              refine PBF.bind (PBF.liftRes hs _) fun s' _ _ hs' => ?_
+              simpa only [FrameState.swapAt_world, World.swapAt_heap,
+                heapGet_swapAt hs' htwin] using
+                (PBF.liftRes (a := pa) (o₀ := o₀) (o := o) hs'
+                  (heapGet s'.world.heap b k .none))
           | cons d rest' =>
               cases rest' with
               | nil =>
                   simp only [FrameState.swapAt_world, World.swapAt_heap,
                     heapGet_swapAt hs htwin]
-                  exact PBF.liftRes hs _
+                  simp only [World.swapAt_callDepth]
+                  refine PBF.bind (PBF.liftRes hs _) fun s' _ _ hs' => ?_
+                  simpa only [FrameState.swapAt_world, World.swapAt_heap,
+                    heapGet_swapAt hs' htwin] using
+                    (PBF.liftRes (a := pa) (o₀ := o₀) (o := o) hs'
+                      (heapGet s'.world.heap b k d))
               | cons _ _ => exact PBF.exn hs _
   | dictView _ => exact PBF.unsupported
   | dictClear =>
@@ -4160,7 +4170,12 @@ theorem pbExecAttrCall_succ (htwin : PayloadTwin o₀ o) (ih : PBAll pa o₀ o f
           | nil =>
               simp only [FrameState.swapAt_world, World.swapAt_heap,
                 heapAppend_swapAt hs htwin]
-              exact PBF.liftMapOk hs fun h' hw => PBF.okWrite (heapAppend_slot hs htwin hw) _
+              simp only [World.swapAt_callDepth]
+              refine PBF.bind (PBF.liftRes hs _) fun s' _ _ hs' => ?_
+              simpa only [FrameState.swapAt_world, World.swapAt_heap,
+                heapAppend_swapAt hs' htwin] using
+                (PBF.liftMapOk (a := pa) (o₀ := o₀) (o := o) hs'
+                  (fun h' hw => PBF.okWrite (heapAppend_slot hs' htwin hw) _))
   | listPop =>
       refine PBF.bind (ihEs m st args hslot) fun s vs _ hs => ?_
       cases vs with
@@ -5691,8 +5706,11 @@ theorem pbEvalExpr_succ (htwin : PayloadTwin o₀ o) (ih : PBAll pa o₀ o fuel)
                                                           simp only [hdi]
                                                           exact PBF.unsupported
                                     refine PBF.ite (fun _ => ?_) fun _ => ?_
-                                    · exact PBF.bind (PBF.flattenStarRun (ihEs m st args.toList hslot))
-                                        fun s1 vs _ hs1 => PBF.liftRes hs1 _
+                                    · refine PBF.bind (PBF.flattenStarRun (ihEs m st args.toList hslot))
+                                        fun s1 vs _ hs1 => ?_
+                                      simp only [FrameState.swapAt_world, World.swapAt_callDepth]
+                                      refine PBF.bind (PBF.liftRes hs1 _) fun s2 _ _ hs2 => ?_
+                                      exact PBF.liftRes hs2 _
                                     refine PBF.ite (fun _ => ?_) fun _ => ?_
                                     · exact PBF.bind (PBF.flattenStarRun (ihEs m st args.toList hslot))
                                         fun s1 vs _ hs1 => by
@@ -6161,9 +6179,12 @@ theorem pbEvalExpr_succ (htwin : PayloadTwin o₀ o) (ih : PBAll pa o₀ o fuel)
                                           cases rest with
                                           | cons _ _ => exact PBF.unsupported
                                           | nil =>
-                                              simp only [FrameState.swapAt_world, World.swapAt_heap,
-                                                strOfValH_swapAt hs1 htwin]
-                                              exact PBF.liftRes hs1 _
+                                              simp only [FrameState.swapAt_world, World.swapAt_callDepth]
+                                              refine PBF.bind (PBF.liftRes hs1 _) fun s2 _ _ hs2 => ?_
+                                              simpa only [FrameState.swapAt_world, World.swapAt_heap,
+                                                strOfValH_swapAt hs2 htwin] using
+                                                (PBF.liftRes (a := pa) (o₀ := o₀) (o := o) hs2
+                                                  (strOfValH s2.world.heap v))
                                     refine PBF.ite (fun _ => ?_) fun _ => ?_
                                     · refine PBF.bind (PBF.flattenStarRun (ihEs m st args.toList hslot))
                                         fun s1 vs _ hs1 => ?_

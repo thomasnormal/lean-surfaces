@@ -1752,5 +1752,9 @@
   {"file": "harness/list_append_recursion.py", "function": "valid", "args": [[2], [993], [994], [995], [996], [997]], "recursion_base": 2, "expect": "match", "note": "list.append() frame and C entry after argument evaluation, including faithful arity TypeError."},
   {"file": "harness/list_append_recursion.py", "function": "invalid", "args": [[2], [993], [994], [997]], "recursion_base": 2, "expect": "match", "note": "list.append() frame and C entry after argument evaluation, including faithful arity TypeError."},
   {"file": "harness/dict_get_recursion.py", "function": "valid", "args": [[2], [993], [994], [995], [996], [997]], "recursion_base": 2, "expect": "match", "note": "dict.get() frame and C entry after argument evaluation, including faithful arity TypeError."},
-  {"file": "harness/dict_get_recursion.py", "function": "invalid", "args": [[2], [993], [994], [997]], "recursion_base": 2, "expect": "match", "note": "dict.get() frame and C entry after argument evaluation, including faithful arity TypeError."}
+  {"file": "harness/dict_get_recursion.py", "function": "invalid", "args": [[2], [993], [994], [997]], "recursion_base": 2, "expect": "match", "note": "dict.get() frame and C entry after argument evaluation, including faithful arity TypeError."},
+  {"file": "harness/richcompare_bool.py", "function": "scalar_pair", "args": [[]], "expect": "match", "note": "RichCompareBool scalar equality agrees with hash-key equality on bool/int keys."},
+  {"file": "harness/richcompare_bool.py", "function": "list_contains", "args": [[]], "expect": "match", "note": "RichCompareBool list membership probes bool/int values left-to-right."},
+  {"file": "harness/richcompare_bool.py", "function": "dict_key_probe", "args": [[]], "expect": "match", "note": "Dict key lookup and membership use the hash-key equality worker."},
+  {"file": "harness/richcompare_bool.py", "function": "nested_equality", "args": [[]], "expect": "match", "note": "Container equality delegates element probes to RichCompareBool."}
 ]

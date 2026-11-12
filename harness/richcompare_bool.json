@@ -1,0 +1,934 @@
+{
+  "schema_version": "0.1",
+  "language": "python",
+  "frontend": {
+    "name": "cpython-ast",
+    "version": "3.9.25"
+  },
+  "source_file": "harness/richcompare_bool.py",
+  "source_sha256": "db4cf7bc59f5912361dc6655b1106f1fef3ce8ac1258352fd86ca4129e41081d",
+  "module": {
+    "kind": "Module",
+    "body": [
+      {
+        "kind": "Expr",
+        "span": {
+          "lineno": 1,
+          "col_offset": 0,
+          "end_lineno": 1,
+          "end_col_offset": 72
+        },
+        "value": {
+          "kind": "Constant",
+          "span": {
+            "lineno": 1,
+            "col_offset": 0,
+            "end_lineno": 1,
+            "end_col_offset": 72
+          },
+          "value": {
+            "type": "str",
+            "value": "Rows that cross CPython's RichCompareBool equality and key probes."
+          }
+        }
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 3,
+          "col_offset": 0,
+          "end_lineno": 4,
+          "end_col_offset": 52
+        },
+        "name": "scalar_pair",
+        "args": [],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 4,
+              "col_offset": 4,
+              "end_lineno": 4,
+              "end_col_offset": 52
+            },
+            "value": {
+              "kind": "Tuple",
+              "span": {
+                "lineno": 4,
+                "col_offset": 11,
+                "end_lineno": 4,
+                "end_col_offset": 52
+              },
+              "elts": [
+                {
+                  "kind": "Compare",
+                  "span": {
+                    "lineno": 4,
+                    "col_offset": 12,
+                    "end_lineno": 4,
+                    "end_col_offset": 21
+                  },
+                  "left": {
+                    "kind": "Constant",
+                    "span": {
+                      "lineno": 4,
+                      "col_offset": 12,
+                      "end_lineno": 4,
+                      "end_col_offset": 16
+                    },
+                    "value": {
+                      "type": "bool",
+                      "value": true
+                    }
+                  },
+                  "ops": [
+                    "Eq"
+                  ],
+                  "comparators": [
+                    {
+                      "kind": "Constant",
+                      "span": {
+                        "lineno": 4,
+                        "col_offset": 20,
+                        "end_lineno": 4,
+                        "end_col_offset": 21
+                      },
+                      "value": {
+                        "type": "int",
+                        "repr": "1"
+                      }
+                    }
+                  ]
+                },
+                {
+                  "kind": "Compare",
+                  "span": {
+                    "lineno": 4,
+                    "col_offset": 23,
+                    "end_lineno": 4,
+                    "end_col_offset": 32
+                  },
+                  "left": {
+                    "kind": "Constant",
+                    "span": {
+                      "lineno": 4,
+                      "col_offset": 23,
+                      "end_lineno": 4,
+                      "end_col_offset": 24
+                    },
+                    "value": {
+                      "type": "int",
+                      "repr": "1"
+                    }
+                  },
+                  "ops": [
+                    "Eq"
+                  ],
+                  "comparators": [
+                    {
+                      "kind": "Constant",
+                      "span": {
+                        "lineno": 4,
+                        "col_offset": 28,
+                        "end_lineno": 4,
+                        "end_col_offset": 32
+                      },
+                      "value": {
+                        "type": "bool",
+                        "value": true
+                      }
+                    }
+                  ]
+                },
+                {
+                  "kind": "Compare",
+                  "span": {
+                    "lineno": 4,
+                    "col_offset": 34,
+                    "end_lineno": 4,
+                    "end_col_offset": 43
+                  },
+                  "left": {
+                    "kind": "Constant",
+                    "span": {
+                      "lineno": 4,
+                      "col_offset": 34,
+                      "end_lineno": 4,
+                      "end_col_offset": 38
+                    },
+                    "value": {
+                      "type": "bool",
+                      "value": true
+                    }
+                  },
+                  "ops": [
+                    "Eq"
+                  ],
+                  "comparators": [
+                    {
+                      "kind": "Constant",
+                      "span": {
+                        "lineno": 4,
+                        "col_offset": 42,
+                        "end_lineno": 4,
+                        "end_col_offset": 43
+                      },
+                      "value": {
+                        "type": "int",
+                        "repr": "2"
+                      }
+                    }
+                  ]
+                },
+                {
+                  "kind": "Compare",
+                  "span": {
+                    "lineno": 4,
+                    "col_offset": 45,
+                    "end_lineno": 4,
+                    "end_col_offset": 51
+                  },
+                  "left": {
+                    "kind": "Constant",
+                    "span": {
+                      "lineno": 4,
+                      "col_offset": 45,
+                      "end_lineno": 4,
+                      "end_col_offset": 46
+                    },
+                    "value": {
+                      "type": "int",
+                      "repr": "1"
+                    }
+                  },
+                  "ops": [
+                    "Eq"
+                  ],
+                  "comparators": [
+                    {
+                      "kind": "Constant",
+                      "span": {
+                        "lineno": 4,
+                        "col_offset": 50,
+                        "end_lineno": 4,
+                        "end_col_offset": 51
+                      },
+                      "value": {
+                        "type": "int",
+                        "repr": "2"
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 7,
+          "col_offset": 0,
+          "end_lineno": 9,
+          "end_col_offset": 38
+        },
+        "name": "list_contains",
+        "args": [],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Assign",
+            "span": {
+              "lineno": 8,
+              "col_offset": 4,
+              "end_lineno": 8,
+              "end_col_offset": 18
+            },
+            "targets": [
+              {
+                "kind": "Name",
+                "span": {
+                  "lineno": 8,
+                  "col_offset": 4,
+                  "end_lineno": 8,
+                  "end_col_offset": 6
+                },
+                "id": "xs"
+              }
+            ],
+            "value": {
+              "kind": "List",
+              "span": {
+                "lineno": 8,
+                "col_offset": 9,
+                "end_lineno": 8,
+                "end_col_offset": 18
+              },
+              "elts": [
+                {
+                  "kind": "Constant",
+                  "span": {
+                    "lineno": 8,
+                    "col_offset": 10,
+                    "end_lineno": 8,
+                    "end_col_offset": 14
+                  },
+                  "value": {
+                    "type": "bool",
+                    "value": true
+                  }
+                },
+                {
+                  "kind": "Constant",
+                  "span": {
+                    "lineno": 8,
+                    "col_offset": 16,
+                    "end_lineno": 8,
+                    "end_col_offset": 17
+                  },
+                  "value": {
+                    "type": "int",
+                    "repr": "2"
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 9,
+              "col_offset": 4,
+              "end_lineno": 9,
+              "end_col_offset": 38
+            },
+            "value": {
+              "kind": "Tuple",
+              "span": {
+                "lineno": 9,
+                "col_offset": 11,
+                "end_lineno": 9,
+                "end_col_offset": 38
+              },
+              "elts": [
+                {
+                  "kind": "Compare",
+                  "span": {
+                    "lineno": 9,
+                    "col_offset": 12,
+                    "end_lineno": 9,
+                    "end_col_offset": 19
+                  },
+                  "left": {
+                    "kind": "Constant",
+                    "span": {
+                      "lineno": 9,
+                      "col_offset": 12,
+                      "end_lineno": 9,
+                      "end_col_offset": 13
+                    },
+                    "value": {
+                      "type": "int",
+                      "repr": "1"
+                    }
+                  },
+                  "ops": [
+                    "In"
+                  ],
+                  "comparators": [
+                    {
+                      "kind": "Name",
+                      "span": {
+                        "lineno": 9,
+                        "col_offset": 17,
+                        "end_lineno": 9,
+                        "end_col_offset": 19
+                      },
+                      "id": "xs"
+                    }
+                  ]
+                },
+                {
+                  "kind": "Compare",
+                  "span": {
+                    "lineno": 9,
+                    "col_offset": 21,
+                    "end_lineno": 9,
+                    "end_col_offset": 28
+                  },
+                  "left": {
+                    "kind": "Constant",
+                    "span": {
+                      "lineno": 9,
+                      "col_offset": 21,
+                      "end_lineno": 9,
+                      "end_col_offset": 22
+                    },
+                    "value": {
+                      "type": "int",
+                      "repr": "2"
+                    }
+                  },
+                  "ops": [
+                    "In"
+                  ],
+                  "comparators": [
+                    {
+                      "kind": "Name",
+                      "span": {
+                        "lineno": 9,
+                        "col_offset": 26,
+                        "end_lineno": 9,
+                        "end_col_offset": 28
+                      },
+                      "id": "xs"
+                    }
+                  ]
+                },
+                {
+                  "kind": "Compare",
+                  "span": {
+                    "lineno": 9,
+                    "col_offset": 30,
+                    "end_lineno": 9,
+                    "end_col_offset": 37
+                  },
+                  "left": {
+                    "kind": "Constant",
+                    "span": {
+                      "lineno": 9,
+                      "col_offset": 30,
+                      "end_lineno": 9,
+                      "end_col_offset": 31
+                    },
+                    "value": {
+                      "type": "int",
+                      "repr": "3"
+                    }
+                  },
+                  "ops": [
+                    "In"
+                  ],
+                  "comparators": [
+                    {
+                      "kind": "Name",
+                      "span": {
+                        "lineno": 9,
+                        "col_offset": 35,
+                        "end_lineno": 9,
+                        "end_col_offset": 37
+                      },
+                      "id": "xs"
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 12,
+          "col_offset": 0,
+          "end_lineno": 14,
+          "end_col_offset": 49
+        },
+        "name": "dict_key_probe",
+        "args": [],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Assign",
+            "span": {
+              "lineno": 13,
+              "col_offset": 4,
+              "end_lineno": 13,
+              "end_col_offset": 23
+            },
+            "targets": [
+              {
+                "kind": "Name",
+                "span": {
+                  "lineno": 13,
+                  "col_offset": 4,
+                  "end_lineno": 13,
+                  "end_col_offset": 5
+                },
+                "id": "d"
+              }
+            ],
+            "value": {
+              "kind": "Dict",
+              "span": {
+                "lineno": 13,
+                "col_offset": 8,
+                "end_lineno": 13,
+                "end_col_offset": 23
+              },
+              "keys": [
+                {
+                  "kind": "Constant",
+                  "span": {
+                    "lineno": 13,
+                    "col_offset": 9,
+                    "end_lineno": 13,
+                    "end_col_offset": 13
+                  },
+                  "value": {
+                    "type": "bool",
+                    "value": true
+                  }
+                },
+                {
+                  "kind": "Constant",
+                  "span": {
+                    "lineno": 13,
+                    "col_offset": 18,
+                    "end_lineno": 13,
+                    "end_col_offset": 19
+                  },
+                  "value": {
+                    "type": "int",
+                    "repr": "2"
+                  }
+                }
+              ],
+              "values": [
+                {
+                  "kind": "Constant",
+                  "span": {
+                    "lineno": 13,
+                    "col_offset": 15,
+                    "end_lineno": 13,
+                    "end_col_offset": 16
+                  },
+                  "value": {
+                    "type": "int",
+                    "repr": "7"
+                  }
+                },
+                {
+                  "kind": "Constant",
+                  "span": {
+                    "lineno": 13,
+                    "col_offset": 21,
+                    "end_lineno": 13,
+                    "end_col_offset": 22
+                  },
+                  "value": {
+                    "type": "int",
+                    "repr": "9"
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 14,
+              "col_offset": 4,
+              "end_lineno": 14,
+              "end_col_offset": 49
+            },
+            "value": {
+              "kind": "Tuple",
+              "span": {
+                "lineno": 14,
+                "col_offset": 11,
+                "end_lineno": 14,
+                "end_col_offset": 49
+              },
+              "elts": [
+                {
+                  "kind": "Subscript",
+                  "span": {
+                    "lineno": 14,
+                    "col_offset": 12,
+                    "end_lineno": 14,
+                    "end_col_offset": 16
+                  },
+                  "value": {
+                    "kind": "Name",
+                    "span": {
+                      "lineno": 14,
+                      "col_offset": 12,
+                      "end_lineno": 14,
+                      "end_col_offset": 13
+                    },
+                    "id": "d"
+                  },
+                  "index": {
+                    "kind": "Constant",
+                    "span": {
+                      "lineno": 14,
+                      "col_offset": 14,
+                      "end_lineno": 14,
+                      "end_col_offset": 15
+                    },
+                    "value": {
+                      "type": "int",
+                      "repr": "1"
+                    }
+                  }
+                },
+                {
+                  "kind": "Call",
+                  "span": {
+                    "lineno": 14,
+                    "col_offset": 18,
+                    "end_lineno": 14,
+                    "end_col_offset": 32
+                  },
+                  "func": {
+                    "kind": "Attribute",
+                    "span": {
+                      "lineno": 14,
+                      "col_offset": 18,
+                      "end_lineno": 14,
+                      "end_col_offset": 23
+                    },
+                    "value": {
+                      "kind": "Name",
+                      "span": {
+                        "lineno": 14,
+                        "col_offset": 18,
+                        "end_lineno": 14,
+                        "end_col_offset": 19
+                      },
+                      "id": "d"
+                    },
+                    "attr": "get"
+                  },
+                  "args": [
+                    {
+                      "kind": "Constant",
+                      "span": {
+                        "lineno": 14,
+                        "col_offset": 24,
+                        "end_lineno": 14,
+                        "end_col_offset": 28
+                      },
+                      "value": {
+                        "type": "bool",
+                        "value": true
+                      }
+                    },
+                    {
+                      "kind": "Constant",
+                      "span": {
+                        "lineno": 14,
+                        "col_offset": 30,
+                        "end_lineno": 14,
+                        "end_col_offset": 31
+                      },
+                      "value": {
+                        "type": "int",
+                        "repr": "0"
+                      }
+                    }
+                  ],
+                  "keywords": [],
+                  "call_unsupported": null
+                },
+                {
+                  "kind": "Compare",
+                  "span": {
+                    "lineno": 14,
+                    "col_offset": 34,
+                    "end_lineno": 14,
+                    "end_col_offset": 40
+                  },
+                  "left": {
+                    "kind": "Constant",
+                    "span": {
+                      "lineno": 14,
+                      "col_offset": 34,
+                      "end_lineno": 14,
+                      "end_col_offset": 35
+                    },
+                    "value": {
+                      "type": "int",
+                      "repr": "2"
+                    }
+                  },
+                  "ops": [
+                    "In"
+                  ],
+                  "comparators": [
+                    {
+                      "kind": "Name",
+                      "span": {
+                        "lineno": 14,
+                        "col_offset": 39,
+                        "end_lineno": 14,
+                        "end_col_offset": 40
+                      },
+                      "id": "d"
+                    }
+                  ]
+                },
+                {
+                  "kind": "Compare",
+                  "span": {
+                    "lineno": 14,
+                    "col_offset": 42,
+                    "end_lineno": 14,
+                    "end_col_offset": 48
+                  },
+                  "left": {
+                    "kind": "Constant",
+                    "span": {
+                      "lineno": 14,
+                      "col_offset": 42,
+                      "end_lineno": 14,
+                      "end_col_offset": 43
+                    },
+                    "value": {
+                      "type": "int",
+                      "repr": "3"
+                    }
+                  },
+                  "ops": [
+                    "In"
+                  ],
+                  "comparators": [
+                    {
+                      "kind": "Name",
+                      "span": {
+                        "lineno": 14,
+                        "col_offset": 47,
+                        "end_lineno": 14,
+                        "end_col_offset": 48
+                      },
+                      "id": "d"
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 17,
+          "col_offset": 0,
+          "end_lineno": 18,
+          "end_col_offset": 53
+        },
+        "name": "nested_equality",
+        "args": [],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 18,
+              "col_offset": 4,
+              "end_lineno": 18,
+              "end_col_offset": 53
+            },
+            "value": {
+              "kind": "List",
+              "span": {
+                "lineno": 18,
+                "col_offset": 11,
+                "end_lineno": 18,
+                "end_col_offset": 53
+              },
+              "elts": [
+                {
+                  "kind": "Compare",
+                  "span": {
+                    "lineno": 18,
+                    "col_offset": 12,
+                    "end_lineno": 18,
+                    "end_col_offset": 31
+                  },
+                  "left": {
+                    "kind": "List",
+                    "span": {
+                      "lineno": 18,
+                      "col_offset": 12,
+                      "end_lineno": 18,
+                      "end_col_offset": 21
+                    },
+                    "elts": [
+                      {
+                        "kind": "Constant",
+                        "span": {
+                          "lineno": 18,
+                          "col_offset": 13,
+                          "end_lineno": 18,
+                          "end_col_offset": 17
+                        },
+                        "value": {
+                          "type": "bool",
+                          "value": true
+                        }
+                      },
+                      {
+                        "kind": "Constant",
+                        "span": {
+                          "lineno": 18,
+                          "col_offset": 19,
+                          "end_lineno": 18,
+                          "end_col_offset": 20
+                        },
+                        "value": {
+                          "type": "int",
+                          "repr": "2"
+                        }
+                      }
+                    ]
+                  },
+                  "ops": [
+                    "Eq"
+                  ],
+                  "comparators": [
+                    {
+                      "kind": "List",
+                      "span": {
+                        "lineno": 18,
+                        "col_offset": 25,
+                        "end_lineno": 18,
+                        "end_col_offset": 31
+                      },
+                      "elts": [
+                        {
+                          "kind": "Constant",
+                          "span": {
+                            "lineno": 18,
+                            "col_offset": 26,
+                            "end_lineno": 18,
+                            "end_col_offset": 27
+                          },
+                          "value": {
+                            "type": "int",
+                            "repr": "1"
+                          }
+                        },
+                        {
+                          "kind": "Constant",
+                          "span": {
+                            "lineno": 18,
+                            "col_offset": 29,
+                            "end_lineno": 18,
+                            "end_col_offset": 30
+                          },
+                          "value": {
+                            "type": "int",
+                            "repr": "2"
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "kind": "Compare",
+                  "span": {
+                    "lineno": 18,
+                    "col_offset": 33,
+                    "end_lineno": 18,
+                    "end_col_offset": 52
+                  },
+                  "left": {
+                    "kind": "Tuple",
+                    "span": {
+                      "lineno": 18,
+                      "col_offset": 33,
+                      "end_lineno": 18,
+                      "end_col_offset": 42
+                    },
+                    "elts": [
+                      {
+                        "kind": "Constant",
+                        "span": {
+                          "lineno": 18,
+                          "col_offset": 34,
+                          "end_lineno": 18,
+                          "end_col_offset": 38
+                        },
+                        "value": {
+                          "type": "bool",
+                          "value": true
+                        }
+                      },
+                      {
+                        "kind": "Constant",
+                        "span": {
+                          "lineno": 18,
+                          "col_offset": 40,
+                          "end_lineno": 18,
+                          "end_col_offset": 41
+                        },
+                        "value": {
+                          "type": "int",
+                          "repr": "2"
+                        }
+                      }
+                    ]
+                  },
+                  "ops": [
+                    "Eq"
+                  ],
+                  "comparators": [
+                    {
+                      "kind": "Tuple",
+                      "span": {
+                        "lineno": 18,
+                        "col_offset": 46,
+                        "end_lineno": 18,
+                        "end_col_offset": 52
+                      },
+                      "elts": [
+                        {
+                          "kind": "Constant",
+                          "span": {
+                            "lineno": 18,
+                            "col_offset": 47,
+                            "end_lineno": 18,
+                            "end_col_offset": 48
+                          },
+                          "value": {
+                            "type": "int",
+                            "repr": "1"
+                          }
+                        },
+                        {
+                          "kind": "Constant",
+                          "span": {
+                            "lineno": 18,
+                            "col_offset": 50,
+                            "end_lineno": 18,
+                            "end_col_offset": 51
+                          },
+                          "value": {
+                            "type": "int",
+                            "repr": "2"
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "lean_blocks": []
+}

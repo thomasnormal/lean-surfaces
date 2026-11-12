@@ -182,7 +182,7 @@ inductive Decl where
   behaviour, and an AST that cannot tell them apart makes the model answer
   correctly about whichever one it happened to build. -/
   | field (name : String) (ty : CType) (bits : Option Nat) (span : CSpan)
-  | record (name : Option String) (fields : List Decl) (span : CSpan)
+  | record (id : Option DeclarationId) (name : Option String) (fields : List Decl) (span : CSpan)
   | typedef (name : String) (ty : CType) (underlying : Option TypeNode) (span : CSpan)
   | enum (name : Option String) (constants : List Decl) (span : CSpan)
   /-- An enumeration constant. clang's `ConstantExpr` wrapper is flattened

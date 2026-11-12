@@ -78,6 +78,18 @@
     "return_value": 19
   },
   {
+    "id": "local-anonymous-record",
+    "source": "int main(void) { struct { int x; int y; } s; s.x = 3; s.y = 5; return s.y - s.x - 2; }",
+    "expect": "match",
+    "return_value": 0
+  },
+  {
+    "id": "local-anonymous-union",
+    "source": "int main(void) { union { int a; int b; } u; u.a = 1; u.b = 3; return (u.a == 3 && u.b == 3) ? 0 : 1; }",
+    "expect": "match",
+    "return_value": 0
+  },
+  {
     "id": "compound-signed-char",
     "source": "int main(void) { signed char s = 127; s += 1; return s; }",
     "expect": "match",

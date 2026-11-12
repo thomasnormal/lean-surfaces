@@ -3,10 +3,10 @@
   "c-testsuite/single-exec": {
    "not-ingested": 5,
    "not-parsed": 1,
-   "passed": 97,
+   "passed": 103,
    "refused-libc": 2,
    "refused-ub": 2,
-   "refused-unsupported": 111,
+   "refused-unsupported": 105,
    "timeout": 2
   },
   "gcc.c-torture/execute": {
@@ -21,19 +21,20 @@
   "gcc.c23-run": {
    "not-ingested": 1,
    "not-parsed": 28,
+   "passed": 1,
    "refused-libc": 2,
    "refused-ub": 1,
-   "refused-unsupported": 44
+   "refused-unsupported": 43
   }
  },
  "corpus": "C1-C3 (gcc torture, c-testsuite, gcc c23-run)",
  "counts": {
   "not-ingested": 25,
   "not-parsed": 350,
-  "passed": 597,
+  "passed": 604,
   "refused-libc": 99,
   "refused-ub": 31,
-  "refused-unsupported": 1068,
+  "refused-unsupported": 1061,
   "timeout": 44
  },
  "dynamic_wall_ranking": [
@@ -987,47 +988,6 @@
   },
   {
    "files": [
-    "00017.c",
-    "00018.c",
-    "00019.c",
-    "00042.c",
-    "00044.c",
-    "00052.c",
-    "00053.c",
-    "00118.c",
-    "20000412-5.c",
-    "20001203-1.c",
-    "20020225-2.c",
-    "20020619-1.c",
-    "20040307-1.c",
-    "20040331-1.c",
-    "20040411-1.c",
-    "20050316-3.c",
-    "20111212-1.c",
-    "921016-1.c",
-    "930628-1.c",
-    "950607-1.c",
-    "980506-2.c",
-    "bf-sign-1.c",
-    "gcc/testsuite/gcc.dg/c23-tag-alias-1.c",
-    "gcc/testsuite/gcc.dg/c23-tag-alias-2.c",
-    "gcc/testsuite/gcc.dg/c23-tag-incomplete-alias-1.c",
-    "ieee/930529-1.c",
-    "ieee/fp-cmp-5.c",
-    "ieee/fp-cmp-8.c",
-    "ieee/minuszero.c",
-    "ieee/pr30704.c",
-    "pr33631.c",
-    "pr38051.c",
-    "pr92904.c",
-    "simd-4.c"
-   ],
-   "present": 34,
-   "sole": 34,
-   "wall": "unsupported:non-object declaration in a block"
-  },
-  {
-   "files": [
     "00115.c",
     "00204.c",
     "00208.c",
@@ -1102,6 +1062,40 @@
    "present": 31,
    "sole": 31,
    "wall": "undefined-behavior"
+  },
+  {
+   "files": [
+    "00182.c",
+    "20000910-1.c",
+    "20010129-1.c",
+    "20020615-1.c",
+    "20021024-1.c",
+    "20021111-1.c",
+    "20031204-1.c",
+    "20040302-1.c",
+    "20040707-1.c",
+    "20071108-1.c",
+    "20071210-1.c",
+    "20080424-1.c",
+    "920501-4.c",
+    "930126-1.c",
+    "931110-2.c",
+    "950809-1.c",
+    "980505-2.c",
+    "990326-1.c",
+    "arith-rand-ll.c",
+    "arith-rand.c",
+    "gcc/testsuite/gcc.dg/c23-empty-init-warn-17.c",
+    "ieee/fp-cmp-5.c",
+    "ieee/fp-cmp-8.c",
+    "pr34176.c",
+    "pr53084.c",
+    "pr70460.c",
+    "va-arg-4.c"
+   ],
+   "present": 27,
+   "sole": 27,
+   "wall": "unsupported:block-scope storage class 'static' is outside the tier"
   },
   {
    "files": [
@@ -1202,38 +1196,6 @@
   },
   {
    "files": [
-    "00182.c",
-    "20000910-1.c",
-    "20010129-1.c",
-    "20020615-1.c",
-    "20021024-1.c",
-    "20021111-1.c",
-    "20031204-1.c",
-    "20040302-1.c",
-    "20040707-1.c",
-    "20071108-1.c",
-    "20071210-1.c",
-    "20080424-1.c",
-    "920501-4.c",
-    "930126-1.c",
-    "931110-2.c",
-    "950809-1.c",
-    "980505-2.c",
-    "990326-1.c",
-    "arith-rand-ll.c",
-    "arith-rand.c",
-    "gcc/testsuite/gcc.dg/c23-empty-init-warn-17.c",
-    "pr34176.c",
-    "pr53084.c",
-    "pr70460.c",
-    "va-arg-4.c"
-   ],
-   "present": 25,
-   "sole": 25,
-   "wall": "unsupported:block-scope storage class 'static' is outside the tier"
-  },
-  {
-   "files": [
     "20230802-1.c",
     "bitops-1.c",
     "bswap-3.c",
@@ -1292,6 +1254,32 @@
   },
   {
    "files": [
+    "00205.c",
+    "20040411-1.c",
+    "20051113-1.c",
+    "20120105-1.c",
+    "941014-2.c",
+    "991228-1.c",
+    "bcp-1.c",
+    "bf-layout-1.c",
+    "bitfld-2.c",
+    "ffs-2.c",
+    "gcc/testsuite/gcc.dg/atomic/c23-stdatomic-lockfree-char8_t.c",
+    "ieee/20000320-1.c",
+    "ieee/copysign1.c",
+    "ieee/mul-subnormal-single-1.c",
+    "ieee/unsafe-fp-assoc-1.c",
+    "pr111613.c",
+    "pr41395-2.c",
+    "pr44468.c",
+    "strlen-7.c"
+   ],
+   "present": 19,
+   "sole": 19,
+   "wall": "unsupported:sizeof"
+  },
+  {
+   "files": [
     "00087.c",
     "20081103-1.c",
     "20100708-1.c",
@@ -1314,31 +1302,6 @@
    "present": 18,
    "sole": 18,
    "wall": "unsupported:no layout for declared type 'struct S'"
-  },
-  {
-   "files": [
-    "00205.c",
-    "20051113-1.c",
-    "20120105-1.c",
-    "941014-2.c",
-    "991228-1.c",
-    "bcp-1.c",
-    "bf-layout-1.c",
-    "bitfld-2.c",
-    "ffs-2.c",
-    "gcc/testsuite/gcc.dg/atomic/c23-stdatomic-lockfree-char8_t.c",
-    "ieee/20000320-1.c",
-    "ieee/copysign1.c",
-    "ieee/mul-subnormal-single-1.c",
-    "ieee/unsafe-fp-assoc-1.c",
-    "pr111613.c",
-    "pr41395-2.c",
-    "pr44468.c",
-    "strlen-7.c"
-   ],
-   "present": 18,
-   "sole": 18,
-   "wall": "unsupported:sizeof"
   },
   {
    "files": [
@@ -1682,6 +1645,16 @@
    "present": 3,
    "sole": 3,
    "wall": "unsupported:no layout for declared type 'T'"
+  },
+  {
+   "files": [
+    "gcc/testsuite/gcc.dg/c23-tag-alias-1.c",
+    "gcc/testsuite/gcc.dg/c23-tag-alias-2.c",
+    "gcc/testsuite/gcc.dg/c23-tag-alias-3.c"
+   ],
+   "present": 3,
+   "sole": 3,
+   "wall": "unsupported:no layout for declared type 'enum bar'"
   },
   {
    "files": [
@@ -2380,14 +2353,6 @@
   },
   {
    "files": [
-    "gcc/testsuite/gcc.dg/c23-tag-alias-3.c"
-   ],
-   "present": 1,
-   "sole": 1,
-   "wall": "unsupported:no layout for declared type 'enum bar'"
-  },
-  {
-   "files": [
     "enum-3.c"
    ],
    "present": 1,
@@ -2748,6 +2713,14 @@
   },
   {
    "files": [
+    "pr92904.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "unsupported:no layout for declared type 'union Y'"
+  },
+  {
+   "files": [
     "pr42691.c"
    ],
    "present": 1,
@@ -2852,6 +2825,14 @@
   },
   {
    "files": [
+    "00053.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "unsupported:no layout for field 'y'"
+  },
+  {
+   "files": [
     "pr63209.c"
    ],
    "present": 1,
@@ -2881,6 +2862,166 @@
    "present": 1,
    "sole": 1,
    "wall": "unsupported:no layout for parameter type 'int *restrict'"
+  },
+  {
+   "files": [
+    "20000412-5.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "unsupported:src/20000412-5.c"
+  },
+  {
+   "files": [
+    "20001203-1.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "unsupported:src/20001203-1.c"
+  },
+  {
+   "files": [
+    "20020225-2.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "unsupported:src/20020225-2.c"
+  },
+  {
+   "files": [
+    "20020619-1.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "unsupported:src/20020619-1.c"
+  },
+  {
+   "files": [
+    "20040307-1.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "unsupported:src/20040307-1.c"
+  },
+  {
+   "files": [
+    "20040331-1.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "unsupported:src/20040331-1.c"
+  },
+  {
+   "files": [
+    "20050316-3.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "unsupported:src/20050316-3.c"
+  },
+  {
+   "files": [
+    "20111212-1.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "unsupported:src/20111212-1.c"
+  },
+  {
+   "files": [
+    "921016-1.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "unsupported:src/921016-1.c"
+  },
+  {
+   "files": [
+    "930628-1.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "unsupported:src/930628-1.c"
+  },
+  {
+   "files": [
+    "950607-1.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "unsupported:src/950607-1.c"
+  },
+  {
+   "files": [
+    "980506-2.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "unsupported:src/980506-2.c"
+  },
+  {
+   "files": [
+    "bf-sign-1.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "unsupported:src/bf-sign-1.c"
+  },
+  {
+   "files": [
+    "ieee/930529-1.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "unsupported:src/ieee/930529-1.c"
+  },
+  {
+   "files": [
+    "ieee/minuszero.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "unsupported:src/ieee/minuszero.c"
+  },
+  {
+   "files": [
+    "ieee/pr30704.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "unsupported:src/ieee/pr30704.c"
+  },
+  {
+   "files": [
+    "pr33631.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "unsupported:src/pr33631.c"
+  },
+  {
+   "files": [
+    "pr38051.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "unsupported:src/pr38051.c"
+  },
+  {
+   "files": [
+    "simd-4.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "unsupported:src/simd-4.c"
+  },
+  {
+   "files": [
+    "00118.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "unsupported:tests/single-exec/00118.c"
   },
   {
    "files": [
@@ -3700,8 +3841,8 @@
   }
  ],
  "manifest_hash": "1de1a60c299d5bb51dae7ca001b0a008010cad0b25670cde2090c08bfc1a84ce",
- "measured_at_utc": "2026-11-12T04:45:00Z",
- "measured_commit": "f76314ce8",
+ "measured_at_utc": "2026-11-12T04:55:00Z",
+ "measured_commit": "fe2552444",
  "pin": null,
  "rows": [
   {
@@ -3870,39 +4011,39 @@
   },
   {
    "corpus": "c-testsuite/single-exec",
-   "detail": "non-object declaration in a block",
-   "dynamic_wall": "unsupported:non-object declaration in a block",
+   "detail": "",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "00017.c",
    "sha256": "b179f635d69b84555155c25ab8c55cb014aa1891e5acf26690e9a156fb637b46",
    "static_walls": [
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "c-testsuite/single-exec",
-   "detail": "non-object declaration in a block",
-   "dynamic_wall": "unsupported:non-object declaration in a block",
+   "detail": "",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "00018.c",
    "sha256": "fb784bdd9cbdc9c240e697eb25fdde08ef4225985f5b60db5167f52e4640e671",
    "static_walls": [
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "c-testsuite/single-exec",
-   "detail": "non-object declaration in a block",
-   "dynamic_wall": "unsupported:non-object declaration in a block",
+   "detail": "",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "00019.c",
    "sha256": "002695703865f14166c42edd772432cf084d3785e895b673e2bfbde34f140873",
    "static_walls": [
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "c-testsuite/single-exec",
@@ -4141,15 +4282,15 @@
   },
   {
    "corpus": "c-testsuite/single-exec",
-   "detail": "non-object declaration in a block",
-   "dynamic_wall": "unsupported:non-object declaration in a block",
+   "detail": "",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "00042.c",
    "sha256": "c4d0f3536e07c614199ba3acbba23063d673bc8a918fedc28e8ad4c6938b079e",
    "static_walls": [
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "c-testsuite/single-exec",
@@ -4165,15 +4306,15 @@
   },
   {
    "corpus": "c-testsuite/single-exec",
-   "detail": "non-object declaration in a block",
-   "dynamic_wall": "unsupported:non-object declaration in a block",
+   "detail": "",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "00044.c",
    "sha256": "d800dda9662a174c7525f7e99edfe05997d9731243d9d711bf51e980fff12ad1",
    "static_walls": [
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "c-testsuite/single-exec",
@@ -4259,20 +4400,20 @@
   },
   {
    "corpus": "c-testsuite/single-exec",
-   "detail": "non-object declaration in a block",
-   "dynamic_wall": "unsupported:non-object declaration in a block",
+   "detail": "",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "00052.c",
    "sha256": "ee05135b1fd92b799264f4106a959e6bed61eec6953a1a040f4407d102b552b1",
    "static_walls": [
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "c-testsuite/single-exec",
-   "detail": "non-object declaration in a block",
-   "dynamic_wall": "unsupported:non-object declaration in a block",
+   "detail": "no layout for field 'y'",
+   "dynamic_wall": "unsupported:no layout for field 'y'",
    "manifest_status": "parsed",
    "name": "00053.c",
    "sha256": "9d5138fe1b44736c85bcddd0a5f9adcc963daf40522d83180ea407bea6e00c33",
@@ -4969,8 +5110,8 @@
   },
   {
    "corpus": "c-testsuite/single-exec",
-   "detail": "non-object declaration in a block",
-   "dynamic_wall": "unsupported:non-object declaration in a block",
+   "detail": "tests/single-exec/00118.c:4:2)'",
+   "dynamic_wall": "unsupported:tests/single-exec/00118.c",
    "manifest_status": "parsed",
    "name": "00118.c",
    "sha256": "6a5c1059595e3dbab18d259736eaaa100754ad588e6afbbf9041ca35a46bdca8",
@@ -6529,8 +6670,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "non-object declaration in a block",
-   "dynamic_wall": "unsupported:non-object declaration in a block",
+   "detail": "src/20000412-5.c:5:5)[1]'",
+   "dynamic_wall": "unsupported:src/20000412-5.c",
    "manifest_status": "parsed",
    "name": "20000412-5.c",
    "sha256": "08f980ed32b546363beca355277a1c285f18ef9f55ee989e52a0cec0dc9d3235",
@@ -7258,8 +7399,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "non-object declaration in a block",
-   "dynamic_wall": "unsupported:non-object declaration in a block",
+   "detail": "src/20001203-1.c:11:3)'",
+   "dynamic_wall": "unsupported:src/20001203-1.c",
    "manifest_status": "parsed",
    "name": "20001203-1.c",
    "sha256": "305f24a8ea961801aa63db2491607c4037cba797ac6daa51dc9b23e7371f9cfe",
@@ -8033,8 +8174,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "non-object declaration in a block",
-   "dynamic_wall": "unsupported:non-object declaration in a block",
+   "detail": "src/20020225-2.c:7:3)'",
+   "dynamic_wall": "unsupported:src/20020225-2.c",
    "manifest_status": "parsed",
    "name": "20020225-2.c",
    "sha256": "172508d3dff2b47fa12bee6de0b8f6a4dffba3ab8cf088e7cca89df5db7cc86e",
@@ -8354,8 +8495,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "non-object declaration in a block",
-   "dynamic_wall": "unsupported:non-object declaration in a block",
+   "detail": "src/20020619-1.c:11:3)'",
+   "dynamic_wall": "unsupported:src/20020619-1.c",
    "manifest_status": "parsed",
    "name": "20020619-1.c",
    "sha256": "27fa68e11e5480bf75020118a6e17974d515fe225e0a46d4f6124465a6ddf174",
@@ -9371,8 +9512,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "non-object declaration in a block",
-   "dynamic_wall": "unsupported:non-object declaration in a block",
+   "detail": "src/20040307-1.c:7:3)'",
+   "dynamic_wall": "unsupported:src/20040307-1.c",
    "manifest_status": "parsed",
    "name": "20040307-1.c",
    "sha256": "5f18eddd92b27b21968897d9418e4074443bfdd662f61f342fcadb65b1aba932",
@@ -9435,8 +9576,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "non-object declaration in a block",
-   "dynamic_wall": "unsupported:non-object declaration in a block",
+   "detail": "src/20040331-1.c:9:3)'",
+   "dynamic_wall": "unsupported:src/20040331-1.c",
    "manifest_status": "parsed",
    "name": "20040331-1.c",
    "sha256": "5d2bc65ff7c03437b73bdd479eb51aec0985f3367aa8c0d6e8d20fc4b39cd304",
@@ -9507,8 +9648,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "non-object declaration in a block",
-   "dynamic_wall": "unsupported:non-object declaration in a block",
+   "detail": "sizeof: no layout for the operand type",
+   "dynamic_wall": "unsupported:sizeof",
    "manifest_status": "parsed",
    "name": "20040411-1.c",
    "sha256": "33154d781272908eb8c8a87e8f9b98c4f61a102e0585ae584f2dcd5e84bad109",
@@ -10100,8 +10241,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "non-object declaration in a block",
-   "dynamic_wall": "unsupported:non-object declaration in a block",
+   "detail": "src/20050316-3.c:27:3)'",
+   "dynamic_wall": "unsupported:src/20050316-3.c",
    "manifest_status": "parsed",
    "name": "20050316-3.c",
    "sha256": "05e257f48a4da395630ab47f31a09833f1db0b43ce32520e99062457c367714c",
@@ -11252,8 +11393,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "non-object declaration in a block",
-   "dynamic_wall": "unsupported:non-object declaration in a block",
+   "detail": "src/20111212-1.c:24:5)'",
+   "dynamic_wall": "unsupported:src/20111212-1.c",
    "manifest_status": "parsed",
    "name": "20111212-1.c",
    "sha256": "2fe0e8876945d6cb65271a41da92289bb89fc4fa8b9d76d9483d924f4003eb79",
@@ -12346,8 +12487,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "non-object declaration in a block",
-   "dynamic_wall": "unsupported:non-object declaration in a block",
+   "detail": "src/921016-1.c:8:1)'",
+   "dynamic_wall": "unsupported:src/921016-1.c",
    "manifest_status": "parsed",
    "name": "921016-1.c",
    "sha256": "fe4ed290bb1efb9a2b0e15ceec69bee88c254f9b0695a9c969bd99699b4cfc5e",
@@ -12856,8 +12997,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "non-object declaration in a block",
-   "dynamic_wall": "unsupported:non-object declaration in a block",
+   "detail": "src/930628-1.c:14:3)[4][2]'",
+   "dynamic_wall": "unsupported:src/930628-1.c",
    "manifest_status": "parsed",
    "name": "930628-1.c",
    "sha256": "4a9915c8ff719eaee492a2b6dde127214579c8b3f5a279ebf4cb15e417290d70",
@@ -13510,8 +13651,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "non-object declaration in a block",
-   "dynamic_wall": "unsupported:non-object declaration in a block",
+   "detail": "src/950607-1.c:7:3)'",
+   "dynamic_wall": "unsupported:src/950607-1.c",
    "manifest_status": "parsed",
    "name": "950607-1.c",
    "sha256": "bbafedfbc50e9b34c0daa944abc0903a53ed554db102cb3837463e9a562ad9fa",
@@ -14236,8 +14377,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "non-object declaration in a block",
-   "dynamic_wall": "unsupported:non-object declaration in a block",
+   "detail": "src/980506-2.c:9:3)'",
+   "dynamic_wall": "unsupported:src/980506-2.c",
    "manifest_status": "parsed",
    "name": "980506-2.c",
    "sha256": "b0ffba5b4856c8d2369727a186f5a13c4fe505977808849374d9a45a73e39594",
@@ -15253,8 +15394,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "non-object declaration in a block",
-   "dynamic_wall": "unsupported:non-object declaration in a block",
+   "detail": "src/bf-sign-1.c:7:3)'",
+   "dynamic_wall": "unsupported:src/bf-sign-1.c",
    "manifest_status": "parsed",
    "name": "bf-sign-1.c",
    "sha256": "92271ed63e419cbde8e15e93e0fb80554379d351026b7df5eec6e96e6017b423",
@@ -18473,8 +18614,8 @@
   },
   {
    "corpus": "gcc.c23-run",
-   "detail": "non-object declaration in a block",
-   "dynamic_wall": "unsupported:non-object declaration in a block",
+   "detail": "no layout for declared type 'enum bar'",
+   "dynamic_wall": "unsupported:no layout for declared type 'enum bar'",
    "manifest_status": "parsed",
    "name": "gcc/testsuite/gcc.dg/c23-tag-alias-1.c",
    "sha256": "edd988da4030c019f97f854e8100aa5b4536d2dd131240eb45978059859fe64a",
@@ -18486,8 +18627,8 @@
   },
   {
    "corpus": "gcc.c23-run",
-   "detail": "non-object declaration in a block",
-   "dynamic_wall": "unsupported:non-object declaration in a block",
+   "detail": "no layout for declared type 'enum bar'",
+   "dynamic_wall": "unsupported:no layout for declared type 'enum bar'",
    "manifest_status": "parsed",
    "name": "gcc/testsuite/gcc.dg/c23-tag-alias-2.c",
    "sha256": "2ba04a1959b626f527dfe0039c50e97f947aa7ea59d8e067cf0313302e1dc697",
@@ -18567,8 +18708,8 @@
   },
   {
    "corpus": "gcc.c23-run",
-   "detail": "non-object declaration in a block",
-   "dynamic_wall": "unsupported:non-object declaration in a block",
+   "detail": "",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "gcc/testsuite/gcc.dg/c23-tag-incomplete-alias-1.c",
    "sha256": "705bafd95a0fe0993ebc5667a8a850a4c9c676f54c29db0699ad2a7156df5267",
@@ -18576,7 +18717,7 @@
     "libc-call",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c23-run",
@@ -18791,8 +18932,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "non-object declaration in a block",
-   "dynamic_wall": "unsupported:non-object declaration in a block",
+   "detail": "src/ieee/930529-1.c:8:3)'",
+   "dynamic_wall": "unsupported:src/ieee/930529-1.c",
    "manifest_status": "parsed",
    "name": "ieee/930529-1.c",
    "sha256": "a2a42c2b6c74554e0b4ac24d6fb06a913d308a02c1c7857fc9ff0e7580731bee",
@@ -19146,8 +19287,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "non-object declaration in a block",
-   "dynamic_wall": "unsupported:non-object declaration in a block",
+   "detail": "block-scope storage class 'static' is outside the tier",
+   "dynamic_wall": "unsupported:block-scope storage class 'static' is outside the tier",
    "manifest_status": "parsed",
    "name": "ieee/fp-cmp-5.c",
    "sha256": "3287dadc1c6a407b00841baa398829495ee9863d5890a5ab25ea234e70752920",
@@ -19184,8 +19325,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "non-object declaration in a block",
-   "dynamic_wall": "unsupported:non-object declaration in a block",
+   "detail": "block-scope storage class 'static' is outside the tier",
+   "dynamic_wall": "unsupported:block-scope storage class 'static' is outside the tier",
    "manifest_status": "parsed",
    "name": "ieee/fp-cmp-8.c",
    "sha256": "ff577c6ffef173008f543040c4da071a51d9002644d38a080d05c1ea126c4e87",
@@ -19322,8 +19463,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "non-object declaration in a block",
-   "dynamic_wall": "unsupported:non-object declaration in a block",
+   "detail": "src/ieee/minuszero.c:8:3)'",
+   "dynamic_wall": "unsupported:src/ieee/minuszero.c",
    "manifest_status": "parsed",
    "name": "ieee/minuszero.c",
    "sha256": "88a6ec71324f6c3b6c5845b165185041d06bcc9d6f3728312880767a01653bb4",
@@ -19510,8 +19651,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "non-object declaration in a block",
-   "dynamic_wall": "unsupported:non-object declaration in a block",
+   "detail": "src/ieee/pr30704.c:33:3)'",
+   "dynamic_wall": "unsupported:src/ieee/pr30704.c",
    "manifest_status": "parsed",
    "name": "ieee/pr30704.c",
    "sha256": "69e9e465770fdeb58624c8050bb90a150228d5972e4405d2062dd122b6640715",
@@ -22576,8 +22717,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "non-object declaration in a block",
-   "dynamic_wall": "unsupported:non-object declaration in a block",
+   "detail": "src/pr33631.c:10:5)'",
+   "dynamic_wall": "unsupported:src/pr33631.c",
    "manifest_status": "parsed",
    "name": "pr33631.c",
    "sha256": "0b4d847625fa095c99f6112f2bf9a1c60eb57f1f849f903a3e341d45ec02a80a",
@@ -23087,8 +23228,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "non-object declaration in a block",
-   "dynamic_wall": "unsupported:non-object declaration in a block",
+   "detail": "src/pr38051.c:197:3)'",
+   "dynamic_wall": "unsupported:src/pr38051.c",
    "manifest_status": "parsed",
    "name": "pr38051.c",
    "sha256": "f605ca4bbd46e9015fcb4052d477a68a8cb5c1160be61a2d7735b5568b6f0847",
@@ -27617,8 +27758,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "non-object declaration in a block",
-   "dynamic_wall": "unsupported:non-object declaration in a block",
+   "detail": "no layout for declared type 'union Y'",
+   "dynamic_wall": "unsupported:no layout for declared type 'union Y'",
    "manifest_status": "parsed",
    "name": "pr92904.c",
    "sha256": "bce28f06aa69e28c01ce5e66aefddfce0273244d17aa59cc4036b463a8bc0795",
@@ -28447,8 +28588,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "non-object declaration in a block",
-   "dynamic_wall": "unsupported:non-object declaration in a block",
+   "detail": "src/simd-4.c:17:3)'",
+   "dynamic_wall": "unsupported:src/simd-4.c",
    "manifest_status": "parsed",
    "name": "simd-4.c",
    "sha256": "af07ae0d3adcb12a8c054c9747fdb1d548d15ef0c1ea42460fb694f56a38158e",

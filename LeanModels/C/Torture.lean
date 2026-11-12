@@ -240,14 +240,49 @@ def recordHasUnsupported (fields : List Decl) : Bool :=
     | .unsupported .. => true
     | _ => false
 
+def fieldsOf (fields : List Decl) : Option (List (String × CType)) :=
+  if recordHasBitfield fields || recordHasUnsupported fields || fields.isEmpty then none
+  else some (fields.filterMap fun d => match d with
+    | .field fn fty _ _ => some (fn, fty)
+    | _ => none)
+
+mutual
+def stmtDeclsList : List Stmt → List Decl
+  | [] => []
+  | s :: ss => stmtDecls s ++ stmtDeclsList ss
+
+def stmtDecls : Stmt → List Decl
+  | .compound body _ => stmtDeclsList body
+  | .decl ds _ => ds
+  | .ifS _ t none _ => stmtDecls t
+  | .ifS _ t (some e) _ => stmtDecls t ++ stmtDecls e
+  | .forS none _ _ b _ => stmtDecls b
+  | .forS (some i) _ _ b _ => stmtDecls i ++ stmtDecls b
+  | .whileS _ b _ | .doS b _ _ | .label _ b _ => stmtDecls b
+  | .switchS _ b _ => stmtDecls b
+  | .caseS _ b _ | .caseRange _ _ b _ | .defaultS b _ => stmtDecls b
+  | _ => []
+end
+
+def allDecls (envl : Envelope) : List Decl :=
+  envl.unit.items.flatMap fun i => match i with
+    | .decl d => [d]
+    | .fn f => f.body.map stmtDecls |>.getD []
+
 def recordsOf (envl : Envelope) : List (String × List (String × CType)) :=
-  envl.unit.items.filterMap fun i => match i with
-    | .decl (.record (some nm) fields _) =>
-        if recordHasBitfield fields || recordHasUnsupported fields || fields.isEmpty then none
-        else some (nm, fields.filterMap fun d => match d with
-                    | .field fn fty _ _ => some (fn, fty)
-                    | _ => none)
+  let ds := allDecls envl
+  let records := ds.filterMap fun d => match d with
+    | .record _ (some nm) fields _ => (fieldsOf fields).map (fun fs => (nm, fs))
     | _ => none
+  let anonymous := ds.filterMap fun d => match d with
+    | .var _ _ ty _ _ (some rid) _ =>
+        match ds.find? (fun q => match q with
+          | .record id none _ _ => id == some rid
+          | _ => false) with
+        | some (.record _ none fields _) => (fieldsOf fields).map (fun fs => (ty, fs))
+        | _ => none
+    | _ => none
+  records ++ anonymous
 
 /-- `struct s` / `union u` → the tag. -/
 def recordTag (t : CType) : Option String :=
@@ -299,10 +334,8 @@ def sizeAlign (tds : List (CType × CType))
         match arrayOf t with
         | some (e, k) => (sizeAlign tds recs n e).map fun p => (p.1 * k, p.2)
         | none =>
-          match recordTag t with
-          | none => none
-          | some tag =>
-            match recs.find? (·.1 == tag) with
+          let record := recs.find? (·.1 == t) |>.orElse (fun _ => recordTag t |>.bind (fun tag => recs.find? (·.1 == tag)))
+          match record with
             | none => none
             | some r =>
                 let isUnion := t.startsWith "union "
@@ -325,10 +358,8 @@ def fieldOffIn (tds : List (CType × CType))
   let t0 := stripQuals 8 base
   let t1 := if t0.endsWith "*" then stripQuals 8 (t0.dropEnd 1).toString.trimAsciiEnd.toString else t0
   let t := resolve tds 8 t1
-  match recordTag t with
-  | none => none
-  | some tag =>
-    match recs.find? (·.1 == tag) with
+  let record := recs.find? (·.1 == t) |>.orElse (fun _ => recordTag t |>.bind (fun tag => recs.find? (·.1 == tag)))
+  match record with
     | none => none
     | some r =>
         let isUnion := t.startsWith "union "

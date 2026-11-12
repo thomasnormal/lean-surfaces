@@ -271,6 +271,11 @@
     "note": "decimal.py defines no public pure-Python functions; its guarded _decimal accelerator import is an unmeasured wall with zero PY-REAL payoff."
   },
   {
+    "file": "harness/scripts/dictcomp_boundary.py",
+    "expect": "unsupported",
+    "note": "P3 price row: CPython's direct DictComp result is pinned while the native AST-node evaluator remains outside the current tier."
+  },
+  {
     "file": "harness/scripts/insort_alias_script.py",
     "expect": "match",
     "note": "alias tier composed with list.insert: the bisect consumer shape end to end"

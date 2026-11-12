@@ -359,6 +359,11 @@ def switchHasNestedLabel : Stmt → Bool
       | _ => containsCaseLabel s
   | s => containsCaseLabel s
 
+def switchHasUnsupportedRange (s : Stmt) : Bool :=
+  s.substmts.any fun t => match t with
+    | .unsupported "CaseStmt" _ _ => true
+    | _ => false
+
 def switchFindAux (ctx : Ctx) (cv : CVal) :
     List SwitchItem → Option (List Stmt) → Option (List Stmt) → EvalM (Option (List Stmt))
   | [], selected, fallback =>
@@ -392,6 +397,8 @@ def execSwitch : Nat → Ctx → Expr → Stmt → ExecM Flow
   | fuel + 1, ctx, cond, body => do
       if switchHasNestedLabel body then
         refuseUnsupported "case label nested in a control statement"
+      if switchHasUnsupportedRange body then
+        refuseUnsupported "GNU case range is outside the tier"
       let cv ← evalE ctx cond
       let selected ← switchFind ctx cv body
       match selected with
@@ -671,15 +678,31 @@ def callFn : Nat → Program → LeanModels.C.FunctionDefn → List CVal → Exe
     match f.body with
     | none => refuseUnsupported s!"'{f.name}' is a prototype, not a definition"
     | some body => do
+        if f.params.any fun d => match d with
+          | .param _ none ty _ => isPtrType ty
+          | _ => false then
+          refuseUnsupported "unnamed pointer parameter (array-bound effects are not retained by clang)"
         let m₀ ← get
         let base := m₀.count
         -- The callee's own call handler: one fuel less, so the recursion
         -- terminates on the fuel and on nothing else.
         let handler : CallHandler := fun callee vs =>
           match calleeId callee with
-          | some declaration => match prog.findId? declaration with
-            | none => throw (.libc declaration.value)
-            | some g => callFn fuel prog g vs
+          | some declaration =>
+            -- `abort` and `exit` are the score oracle even when clang's
+            -- callee carries an external declaration ID. Resolve those two
+            -- names before the ID lookup; otherwise the ID itself leaks into
+            -- the refusal (`libc id24`) and the oracle arm never sees it.
+            match calleeName callee with
+            | some nm =>
+              if nm == "abort" || nm == "exit" then
+                throw (.libc nm)
+              else match prog.findId? declaration with
+                | none => throw (.libc declaration.value)
+                | some g => callFn fuel prog g vs
+            | none => match prog.findId? declaration with
+              | none => throw (.libc declaration.value)
+              | some g => callFn fuel prog g vs
           | none => match calleeName callee with
           | none =>
             -- A DeclRefExpr to a local variable is not a function call target.

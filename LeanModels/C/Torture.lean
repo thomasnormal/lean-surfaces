@@ -123,7 +123,7 @@ def torScalarSize : CType → Option Nat
   | "int" | "unsigned int" | "unsigned" => some 4
   | "long" | "unsigned long" | "long long" | "unsigned long long"
   | "long int" | "unsigned long int" => some 8
-  | t => if t.endsWith "*" || (t.contains "(*)" && t.endsWith "]")
+  | t => if t.endsWith "*" || LeanModels.C.isConstPointerToArray t
          then some 8 else none
 
 /-- The envelope's ordinary declaration types are flat Clang spellings.
@@ -135,7 +135,7 @@ qualified forms, while admitting constant nested-array syntax and its
 pointer-to-array object form. Variable extents and elaborated scope spellings
 remain outside the fragment. -/
 def typeSpellingAdmitted (t : CType) : Bool :=
-  ((!t.contains "(*") || (t.contains "(*)" && t.endsWith "]")) &&
+  ((!t.contains "(*") || LeanModels.C.isConstPointerToArray t) &&
   !t.endsWith " const" && !t.endsWith " volatile" &&
   !t.contains ") [" && !t.contains "::"
 
@@ -165,6 +165,8 @@ def arrayOf (t : CType) : Option (CType × Nat) :=
 -- nested constant arrays, pointer-to-array objects, and no variable extents.
 #guard arrayOf "int[2][1]" == some ("int[1]", 2)
 #guard arrayOf "int[n % 1000 + 1]" == none
+#guard LeanModels.C.isConstPointerToArray "int (*)[1]"
+#guard !LeanModels.C.isConstPointerToArray "int (*)[++i]"
 #guard torScalarSize "int (*)[1]" == some 8
 #guard typeSpellingAdmitted "int (*)(int)" == false
 
@@ -498,6 +500,9 @@ def runEnvelope (fuel : Nat) (envl : Envelope) : ExecM CVal :=
   let prog := { prog with layout := lay }
   let prog := { prog with enumIds := envl.unit.enumBindings }
   do
+    if envl.unit.functionDefns.any fun f =>
+        f.name == "__cyg_profile_func_enter" || f.name == "__cyg_profile_func_exit" then
+      refuseUnsupported "function instrumentation is outside the tier"
     let genv ← setupGlobalsWithIds fuel lay envl.unit.fileScopeObjects [] []
     callByName fuel { prog with globals := genv.1, globalIds := genv.2 } "main" []
 

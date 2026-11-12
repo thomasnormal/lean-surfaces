@@ -262,6 +262,13 @@ class Extractor:
             return None
         span = span_of(n, self.loc)
         k = n.get("kind")
+        # GNU case ranges are a distinct clang CaseStmt shape (`isGNURange`)
+        # with two label expressions. The envelope has one `value` slot, so
+        # retaining the lower endpoint would silently turn `case lo ... hi`
+        # into `case lo`. Refuse the parser node loudly until the AST carries
+        # both endpoints.
+        if k == "CaseStmt" and n.get("isGNURange"):
+            return self.unsupported_leaf(n, span)
         if k not in VOCAB:
             return self.unsupported_leaf(n, span)
         fn = getattr(self, "e_" + k, None)

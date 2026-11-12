@@ -51,6 +51,16 @@ def pinnedFrontendVersion : String :=
 frontend's string, deliberately unparsed. -/
 abbrev CType := String
 
+/-- A constant pointer-to-array spelling from clang's flat `qualType`.
+Only decimal extents are in the layout fragment; a VLA extent remains a
+loud refusal rather than being treated as a fixed pointer target. -/
+def isConstPointerToArray (ty : CType) : Bool :=
+  match ty.splitOn "[" with
+  | base :: extents =>
+      base.endsWith "(*)" && extents.all fun ext =>
+        ext.endsWith "]" && (ext.dropEnd 1).toString.toNat?.isSome
+  | _ => false
+
 /- Clang's declaration handle is an identity, not a source spelling. Keep it
    distinct from names even though the frontend currently serializes the
    token as text. -/
@@ -394,6 +404,11 @@ def Expr.sizes (es : List Expr) : Nat := (es.flatMap Expr.subexprs).length
 
 @[simp] theorem Expr.size_compoundLit (i : Expr) (t : CType) (sp : CSpan) :
     (Expr.compoundLit i t sp).size = i.size + 1 := by
+  simp [Expr.size, Expr.subexprs] <;> omega
+
+@[simp] theorem Expr.size_constExpr (value : String) (sub : Expr)
+    (ty : CType) (sp : CSpan) :
+    (Expr.constExpr value (some sub) ty sp).size = sub.size + 1 := by
   simp [Expr.size, Expr.subexprs] <;> omega
 
 @[simp] theorem Expr.sizes_cons (e : Expr) (es : List Expr) :

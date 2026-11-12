@@ -167,14 +167,15 @@ def build(manifest_path, log_path, commit=None, measured_at=None):
 
 def render(data):
     counts = data.get("counts", {})
-    scored = counts.get("passed", 0) + counts.get("failed", 0)
+    matched = counts.get("passed", 0)
     lines = [
         "# C torture survey",
         "",
         "Generated from the pinned `%s` manifest." % data.get("corpus", "C"),
         "",
-        "- verdicts: %d/%d scored (passed %d, failed %d)" %
-        (scored, data.get("total", 0), counts.get("passed", 0), counts.get("failed", 0)),
+        "- verdicts: %d/%d MATCH (passed %d, failed %d, oracle %d)" %
+        (matched, data.get("total", 0), counts.get("passed", 0),
+         counts.get("failed", 0), counts.get("oracle", 0)),
         "- manifest SHA-256: `%s`" % data.get("manifest_hash", ""),
     ]
     if data.get("measured_commit"):

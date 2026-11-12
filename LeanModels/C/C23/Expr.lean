@@ -497,7 +497,7 @@ the tier carries clang's `qualType` string rather than a type tree
 (`docs/c-envelope-schema.md` §3). Measured: 199 distinct pointer/array
 spellings on expression nodes, every one ending in `*` or `]`. -/
 def isPtrType (ty : CType) : Bool :=
-  ty.endsWith "*" || (ty.contains "(*)" && ty.endsWith "]")
+  ty.endsWith "*" || LeanModels.C.isConstPointerToArray ty
 
 /-- The POINTEE spelling of a pointer type: `int *` → `int`, `const S *` →
 `const S`. `none` when the spelling is not a pointer at all.
@@ -549,6 +549,11 @@ def calleeId : Expr → Option DeclarationId
   | .paren s _ _ => calleeId s
   | .declRef (some id) _ "FunctionDecl" _ _ => some id
   | _ => none
+
+def functionPointerBitCast : Expr → Bool
+  | .paren s _ _ => functionPointerBitCast s
+  | .cast "BitCast" _ ty _ => ty.contains "(*"
+  | _ => false
 
 /-! ## §6.5 — the evaluator
 
@@ -905,6 +910,8 @@ def evalExpr (ctx : Ctx) : Expr → EvalM CVal
   -- and the handler receives VALUES. Still fuel-free: `evalArgs` is in this
   -- mutual block and shrinks the same `Expr` measure.
   | .call callee args _ _ => do
+      if functionPointerBitCast callee then
+        refuseUnsupported "call through an incompatible function-pointer cast"
       if hasTwoImpure args then
         refuseUnsupported "unsequenced side effects in call arguments"
       let vs ← evalArgs ctx args
@@ -921,7 +928,16 @@ def evalExpr (ctx : Ctx) : Expr → EvalM CVal
         | some n => do let t ← intTyOf (ctx.layout.normalizeTy ty); pure (.int t (n : Int))
         | none => refuseUnsupported "sizeof: no layout for the operand type"
 
-  | .constExpr v _ ty _ => do
+  | .constExpr v (some sub) ty _ => do
+      -- Clang's folded spelling drops the sign from a negative constant
+      -- (`value = "1"`, with `sub = -1`).  The approved AST keeps that
+      -- operand, so evaluate it rather than treating the diagnostic value as
+      -- the program's value (§6.6 constant expressions).
+      let sv ← evalExpr ctx sub
+      let (_, n) ← asInt sv
+      let t ← intTyOf (ctx.layout.normalizeTy ty)
+      pure (.int t n)
+  | .constExpr v none ty _ => do
       let t ← intTyOf (ctx.layout.normalizeTy ty)
       match v.toInt? with
       | some n => pure (.int t n)
@@ -932,7 +948,8 @@ def evalExpr (ctx : Ctx) : Expr → EvalM CVal
   | .compoundLit .. => refuseUnsupported "compound literal (inch 4)"
   | .unsupported k _ _ => refuseUnsupported s!"out of tier: {k}"
   termination_by e => 2 * e.size + 1
-  decreasing_by all_goals (simp_wf <;> omega)
+  decreasing_by
+    all_goals (simp_wf <;> (try simp [Expr.size_constExpr]) <;> omega)
 
 /-- §6.5.3.3p4 — a call's arguments, evaluated in the CALLER's scope,
 **left to right**.
@@ -1575,7 +1592,20 @@ private theorem memInvariant_core (ctx : Ctx) : ∀ (n : Nat) (e : Expr), e.size
       | floatLit _ _ _ => exact ⟨by open_eval; mem_inv, by open_lvalue; mem_inv⟩
       | declRef _ _ _ _ => exact ⟨by open_eval; mem_inv, by open_lvalue; mem_inv⟩
       | typeTrait _ _ _ _ _ => exact ⟨by open_eval; mem_inv, by open_lvalue; mem_inv⟩
-      | constExpr _ _ _ _ => exact ⟨by open_eval; mem_inv, by open_lvalue; mem_inv⟩
+      | constExpr value sub ty span =>
+          cases sub with
+          | none => exact ⟨by open_eval; mem_inv, by open_lvalue; mem_inv⟩
+          | some sub =>
+              have hsub : sub.size ≤ n := by
+                change sub.subexprs.length ≤ n
+                simp only [Expr.size, Expr.subexprs, List.length_cons] at he
+                omega
+              have hpure : Expr.isPure sub = true := by
+                simp only [Expr.isPure, Expr.subexprs, List.all_cons,
+                  Bool.and_eq_true] at hp
+                exact hp.2
+              obtain ⟨i1, i2⟩ := ih sub hsub hpure
+              exact ⟨by open_eval; mem_inv, by open_lvalue; mem_inv⟩
       | paren s _ _ =>
           obtain ⟨i1, i2⟩ := ih s (by simp only [Expr.size_paren] at he; omega)
             (Expr.isPure_paren hp)

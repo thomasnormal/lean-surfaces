@@ -42,6 +42,9 @@ structure MemEDesign where
   /-- Source declarations retained for fixed unpacked arrays whose cells are
       represented as scalar declarations by the frontend. -/
   sourceDecls : List PDecl := []
+  /-- Hierarchical port connections settle once before an edge, as required
+      by the active-region ordering of an instantiated child. -/
+  preSettle : Bool := false
 deriving Repr, Inhabited
 
 structure MemEState where
@@ -850,8 +853,11 @@ def execMemEAssign (d : MemEDesign) (s : MemEState) : List PProcess → Except S
  pre-edge state, commit them, then settle direct continuous cell reads. -/
 def MemEDesign.step (d : MemEDesign) (s : MemEState) (inputs : SvState) : Except String MemEState := do
   let sIn := d.applyInputs inputs s
-  let us ← execMemEEdge d s.scalar sIn.scalar sIn d.processes
-  let s' ← commitMemE sIn us
+  let sPre ← if d.preSettle then
+      execMemEAssign d sIn d.processes
+    else .ok sIn
+  let us ← execMemEEdge d s.scalar sPre.scalar sPre d.processes
+  let s' ← commitMemE sPre us
   let s'' ← execMemEAssign d s' d.processes
   -- Sensitivity is measured against the complete pre-slot state: input
   -- changes, edge commits, and continuous assignments all create events.

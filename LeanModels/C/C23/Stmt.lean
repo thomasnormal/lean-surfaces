@@ -933,6 +933,26 @@ def callFn : Nat → Program → LeanModels.C.FunctionDefn → List CVal → Exe
               | some n => pure (.int IntTy.ulong n)
               | none => refuseUnsupported "strlen: no concrete NUL in object"
           | _ => refuseUnsupported "strlen: wrong argument count"
+        let runStrchr : List CVal → ExecM CVal := fun vs =>
+          match vs with
+          | [src, ch] => do
+              let sp ← asPtr src
+              let (_, needle) ← asInt ch
+              let m ← get
+              let (_, source, off) ← liftEval (m.resolve sp 0)
+              let rec scanChar : List CByte → Nat → Option Nat
+                | [], _ => none
+                | b :: rest, n =>
+                    match b with
+                    | .conc x =>
+                        if x.toNat == (needle % 256).toNat then some n
+                        else if x == 0 then none
+                        else scanChar rest (n + 1)
+                    | _ => none
+              match scanChar (source.bytes.drop off) 0 with
+              | some n => pure (.ptr { sp with off := sp.off + n })
+              | none => pure (.ptr Ptr.null)
+          | _ => refuseUnsupported "strchr: wrong argument count"
         let runAlloca : List CVal → ExecM CVal := fun vs =>
           match vs with
           | [size] => do
@@ -1076,6 +1096,8 @@ def callFn : Nat → Program → LeanModels.C.FunctionDefn → List CVal → Exe
                 runBuiltinExpect vs
               else if nm == "__builtin_prefetch" then
                 runBuiltinPrefetch vs
+              else if nm == "strchr" then
+                runStrchr vs
               else if nm == "printf" || nm == "__builtin_printf" then
                 runPrintf vs
               else if nm == "abort" || nm == "exit" then
@@ -1121,6 +1143,7 @@ def callFn : Nat → Program → LeanModels.C.FunctionDefn → List CVal → Exe
               else if nm == "__sync_add_and_fetch_8" then runSyncAdd8 vs
               else if nm == "__builtin_expect" then runBuiltinExpect vs
               else if nm == "__builtin_prefetch" then runBuiltinPrefetch vs
+              else if nm == "strchr" then runStrchr vs
               else if nm == "__builtin_alloca" then runAlloca vs
               else if nm == "__builtin_ffs" then runFfs vs
               else if nm == "__builtin_mul_overflow" then runArithOverflow "mul" vs

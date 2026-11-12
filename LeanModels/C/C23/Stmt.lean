@@ -976,6 +976,17 @@ def callFn : Nat → Program → LeanModels.C.FunctionDefn → List CVal → Exe
                 pure (.int IntTy.uint
                   (b0 * 16777216 + b1 * 65536 + b2 * 256 + b3))
           | _ => refuseUnsupported "__builtin_bswap32: wrong argument count"
+        let runAbs : List CVal → ExecM CVal := fun vs =>
+          match vs with
+          | [value] => do
+              let (t, n) ← asInt value
+              if t != IntTy.int_ then
+                refuseUnsupported "__builtin_abs: argument is not int"
+              else if n == t.minVal then
+                refuseValue (.signedOverflow "abs" t n)
+              else
+                pure (.int IntTy.int_ (if n < 0 then -n else n))
+          | _ => refuseUnsupported "__builtin_abs: wrong argument count"
         let runArithOverflow (op : String) : List CVal → ExecM CVal := fun vs =>
           match vs with
           | [a, b, dst] => do
@@ -1021,6 +1032,8 @@ def callFn : Nat → Program → LeanModels.C.FunctionDefn → List CVal → Exe
                 runBswap16 vs
               else if nm == "__builtin_bswap32" then
                 runBswap32 vs
+              else if nm == "__builtin_abs" then
+                runAbs vs
               else if nm == "printf" || nm == "__builtin_printf" then
                 runPrintf vs
               else if nm == "abort" || nm == "exit" then
@@ -1062,6 +1075,7 @@ def callFn : Nat → Program → LeanModels.C.FunctionDefn → List CVal → Exe
               else if nm == "__builtin_strlen" then runStrlen vs
               else if nm == "__builtin_bswap16" then runBswap16 vs
               else if nm == "__builtin_bswap32" then runBswap32 vs
+              else if nm == "__builtin_abs" then runAbs vs
               else if nm == "__builtin_alloca" then runAlloca vs
               else if nm == "__builtin_ffs" then runFfs vs
               else if nm == "__builtin_mul_overflow" then runArithOverflow "mul" vs

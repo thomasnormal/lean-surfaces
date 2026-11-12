@@ -27,6 +27,20 @@ def effect(fn):
             "call_targets": targets, "variable_refs": globals,
             "conservative_pure_shape": calls == 0 and writes == 0 and increments == 0}
 
+def transitive(functions):
+    by_name={f.get('name'):f for f in functions if f.get('name')}
+    direct={f.get('name'):effect(f) for f in functions if f.get('name')}
+    pure={name: (v['writes']==0 and v['increments']==0 and not v['variable_refs'])
+          for name,v in direct.items()}
+    for _ in range(len(by_name)+1):
+        changed=False
+        for name,v in direct.items():
+            calls=[c for c in v['call_targets'] if c in by_name]
+            q=pure[name] and all(pure[c] for c in calls)
+            if q != pure[name]: pure[name]=q; changed=True
+        if not changed: break
+    return pure
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--survey", default="docs/c-survey.json")
@@ -50,13 +64,16 @@ def main():
     for name in rows:
         env=json.loads(Path(items[name]).read_text()) if name in items else {}
         f=[n for n in walk(env) if n.get("kind")=="FunctionDecl" and n.get("body") is not None]
-        out.append({"name":name,"functions":[{"name":x.get("name"),**effect(x)} for x in f]})
+        ef=[{"name":x.get("name"),**effect(x)} for x in f]
+        pure=transitive(f)
+        for row in ef: row["transitive_pure_shape"]=pure.get(row["name"],False)
+        out.append({"name":name,"functions":ef,"transitive_pure_functions":sorted(k for k,v in pure.items() if v)})
     report={"schema":"c-effect-summary-price-0.1","wall":"unsequenced-effects","files":len(out),"rows":out}
     Path(a.json).write_text(json.dumps(report,indent=1,sort_keys=True)+"\n")
-    lines=["# C unsequenced-effect summary price","", "Parser-envelope census only; no purity theorem is claimed.","", "| file | functions | conservative pure shapes | calls / variable refs |", "| --- | ---: | ---: | --- |"]
+    lines=["# C unsequenced-effect summary price","", "Parser-envelope census only; no purity theorem is claimed.","", "| file | functions | transitive pure shapes | calls / variable refs |", "| --- | ---: | ---: | --- |"]
     for r in out:
         calls=sorted({t for f in r["functions"] for t in f["call_targets"]}); vars=sorted({t for f in r["functions"] for t in f["variable_refs"]})
-        lines.append("| `%s` | %d | %d | `%s` / `%s` |"%(r["name"],len(r["functions"]),sum(x["conservative_pure_shape"] for x in r["functions"]),','.join(calls) or 'none',','.join(vars) or 'none'))
+        lines.append("| `%s` | %d | %d | `%s` / `%s` |"%(r["name"],len(r["functions"]),len(r["transitive_pure_functions"]),','.join(calls) or 'none',','.join(vars) or 'none'))
     Path(a.page).write_text("\n".join(lines)+"\n")
     print("c_effect_summary_price: wrote",a.json,a.page)
 

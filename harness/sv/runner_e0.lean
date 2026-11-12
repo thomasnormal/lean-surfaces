@@ -152,6 +152,12 @@ def main (argv : List String) : IO UInt32 := do
       let d := d.aliasGuard
       let sourceE := pd.processes.any fun p =>
         match p with | .alwaysImplicit _ => true | _ => false
+      match d.clockViolation with
+      | some (k, msg) =>
+          if k == "Clock:multiple" then
+            .error s!"{k}: {msg}"
+          else pure ()
+      | none => pure ()
       for p in d.processes do
         match p with
         | .unsupported k msg =>

@@ -75,4 +75,16 @@ theorem sva_past_xread {trace trace' : List SvState} {index cycles : Nat}
   cases heq
   simp [SvaValue.eval, exprAt, hcycles, hsource, hconcrete]
 
+theorem sva_countOnes_xread {trace trace' : List SvState} {index : Nat}
+    {name : String} {source concrete : LVec}
+    (hsource : trace[index]? = some ([(name, source)]))
+    (hconcrete : trace'[index]? = some ([(name, concrete)]))
+    (hknown : source.bits.toList.all Logic.isKnown = true)
+    (hread : XRead source concrete) :
+    SvaValue.eval trace index (.countOnes (.ident name)) =
+      SvaValue.eval trace' index (.countOnes (.ident name)) := by
+  have heq := xRead_eq_of_known hknown hread
+  cases heq
+  simp [SvaValue.eval, exprAt, hsource, hconcrete]
+
 end LeanModels.Sv.Kernel

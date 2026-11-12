@@ -526,20 +526,21 @@ class UnsizedXZExpressions(unittest.TestCase):
         self.assertEqual((node["kind"], node["sv_kind"]),
                          ("Unsupported", "ConversionExpression:unsized-xz"))
 
-    def test_other_literals_are_unchanged(self):
-        # A sized x literal and a 0 high-order bit zero-extend (Resize); a
-        # narrowing context is not a widening. (Round 5 repair: in a family
-        # the module is refused anyway — `XZLiteralScan` below.)
+    def test_other_literals_and_narrow_unsized_marker(self):
+        # A sized x literal and a 0 high-order bit zero-extend (Resize).
+        # A bare unsized x/z literal remains source-shaped even when the
+        # default point narrows it: canonical E applies §5.7.1 at the
+        # concrete point, so the family does not freeze a default literal.
         source = ("module top #(parameter int N = 40) (output logic [N-1:0] y, z, "
                   "output logic [3:0] w); assign y = 8'bx; assign z = 'h0x; "
                   "assign w = 'hz1; endmodule\n")
         (v1, v2, v3) = self.values(source)
         self.assertEqual(v1["kind"], "Resize")
         self.assertEqual(v2["kind"], "Resize")
-        self.assertNotEqual(v3["kind"], "Unsupported")
+        self.assertEqual((v3["kind"], v3["sv_kind"]),
+                         ("Unsupported", "ConversionExpression:unsized-xz"))
         others = kinds(extract_sym(source, "top")["design"]["modules"][0]["others"])
         self.assertIn("ConversionExpression:xz-literal-parametric", others)
-        self.assertIn("IntegerLiteral:unsized-xz-parametric", others)
 
 
 if __name__ == "__main__":

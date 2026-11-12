@@ -30487,6 +30487,7 @@ class SymCtx:
         # handled nodes back into loud module members.  Constant-position and
         # other x/z markers are deliberately not recorded here.
         self.unsized_xz_conversions = set()
+        self.decl_init = False
 
 
 class _SymPos:
@@ -30498,6 +30499,18 @@ class _SymPos:
 
     def __exit__(self, *exc):
         _SYM.symctx = self.saved
+        return False
+
+
+class _SymDeclInit:
+    """with _SymDeclInit(): keep declaration initializers on their own tier."""
+
+    def __enter__(self):
+        self.saved = _SYM.decl_init
+        _SYM.decl_init = True
+
+    def __exit__(self, *exc):
+        _SYM.decl_init = self.saved
         return False
 
 
@@ -30813,7 +30826,11 @@ def _sym_named_value(sm, e, sym, skind):
 def _sym_literal(sm, e, cname):
     """Symbolic-mode literals: '0/'1/'x/'z -> Fill (their width is
     context-propagated, i.e. potentially a parameter value); unsized
-    decimal literals -> Int. Sized literals fall through to M0 Literal."""
+    decimal literals -> Int. In a value position, retain an unsized based
+    x/z literal as a source-shaped marker until canonical E supplies the
+    concrete context width (§5.7.1). Declaration initializers and symbolic
+    constant positions keep their existing loud/fixed-point paths. Sized
+    literals fall through to M0 Literal."""
     if cname == "UnbasedUnsizedIntegerLiteral":
         sv = e.value
         bits = svint_bits(sv)
@@ -30824,6 +30841,23 @@ def _sym_literal(sm, e, cname):
             "resolved_width": sv.bitWidth,
         }
     try:
+        if (cname == "IntegerLiteral"
+                and not _SYM.symctx
+                and not getattr(_SYM, "decl_init", False)
+                and _sym_family_point_dependent()
+                and e.isDeclaredUnsized
+                and e.type.isIntegral and e.type.isFourState
+                and not e.type.isSigned):
+            bits = svint_bits(e.value).lower()
+            if bits and bits[0] in "xz":
+                key = _sym_range_key(e)
+                if key is not None:
+                    # Use the same source-shaped conversion marker as the
+                    # implicit-conversion path below.  The marker denotes the
+                    # context-determined §5.7.1 operation; it need not invent
+                    # a second semantic node for the literal-only default.
+                    _SYM.unsized_xz_conversions.add(key)
+                return unsupported(sm, e, "ConversionExpression:unsized-xz", bits)
         if e.syntax is not None and \
                 e.syntax.kind == SyntaxKind.IntegerLiteralExpression:
             sv = e.value
@@ -30918,6 +30952,29 @@ def _sym_conversion(sm, e, ow, tw, state_squash):
     no symbolic references)."""
     op = e.operand
     ocname = type(op).__name__
+    # A bare unsized based x/z literal is context-determined even when the
+    # default point happens to narrow it to one bit or leaves its width equal.
+    # Keep the conversion source-shaped until canonical E supplies the point
+    # width; otherwise the default-point literal silently freezes the family.
+    # Constant positions and declaration initializers retain their existing
+    # loud/fixed-point paths.
+    if (_SYM is not None and not _SYM.symctx
+            and not getattr(_SYM, "decl_init", False)
+            and _sym_family_point_dependent()
+            and ocname == "IntegerLiteral"
+            and getattr(op, "isDeclaredUnsized", False)
+            and op.type.isIntegral and op.type.isFourState
+            and not op.type.isSigned):
+        try:
+            bits = svint_bits(op.value).lower()
+            if bits and bits[0] in "xz":
+                key = _sym_range_key(op)
+                if key is not None:
+                    _SYM.unsized_xz_conversions.add(key)
+                return unsupported(sm, e, "ConversionExpression:unsized-xz",
+                                   bits)
+        except Exception:
+            return unsupported(sm, e, "ConversionExpression:unsized-xz")
     unsized_xz = _sym_unsized_xz_widening(sm, e, op, tw)
     if unsized_xz is not None:
         return unsized_xz
@@ -31977,7 +32034,8 @@ def _sym_decl_init(sm, init, dtype):
     32 bits, its digits zero-padded) give 00000001 and 00001000. Round 4
     emitted the `Int`, a silent pick. The same literal anywhere else in the
     design is refused by `_sym_unsized_signed_scan`."""
-    node = convert_expr(sm, init)
+    with _SymDeclInit():
+        node = convert_expr(sm, init)
     if _sym_unsized_signed_based(init):
         return unsupported(sm, init, "Initializer:unsized-signed")
     kind = node.get("kind")

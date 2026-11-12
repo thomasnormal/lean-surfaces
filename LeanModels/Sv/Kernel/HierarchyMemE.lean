@@ -124,4 +124,52 @@ def MemEDesign.ofHierarchy (top : PDesign) (lib : List PDesign) (args : List Int
     | .timeout => .timeout
     | .unsupported e => .unsupported e
 
+private def genExpr (g : String) (v : Int) : PExpr → PExpr
+  | .genvarRef n => if n == g then .int v else .genvarRef n
+  | .arrayElem n xs => .arrayElem n (xs.map (genExpr g v))
+  | .binary o a b => .binary o (genExpr g v a) (genExpr g v b)
+  | .unary o a => .unary o (genExpr g v a)
+  | .ident n => .ident n
+  | e => e
+
+private def genLhs (g : String) (v : Int) : PLhs → PLhs
+  | .arrayElem n xs => .arrayElem n (xs.map (genExpr g v))
+  | .ident n => .ident n
+  | l => l
+
+private partial def genStmt (g : String) (v : Int) : PStmt → PStmt
+  | .nbaAssignL l e => .nbaAssignL (genLhs g v l) (genExpr g v e)
+  | .blockingAssignL l e => .blockingAssignL (genLhs g v l) (genExpr g v e)
+  | .block xs => .block (xs.map (genStmt g v))
+  | .ifStmt c a b => .ifStmt (genExpr g v c) (genStmt g v a) (b.map (genStmt g v))
+  | e => e
+
+private partial def genProcesses (env : IEnv) (fuel : Nat) : List GenItem → Res (List PProcess)
+  | [] => .ok []
+  | .process p :: rest => do
+      let tail ← genProcesses env fuel rest
+      .ok (p :: tail)
+  | .genFor _ g init bound step _ body :: rest => do
+      let i ← match evalInt env init with | .ok x => .ok x | .error e => .unsupported e
+      let d ← match stepDelta g step with | .ok x => .ok x | .error e => .unsupported e
+      let vs ← genvarSeq env g bound d fuel i
+      let here := vs.flatMap fun v => body.filterMap fun item =>
+        match item with
+        | .process (.alwaysFF c b) => some (.alwaysFF c (genStmt g v b))
+        | _ => none
+      let tail ← genProcesses env fuel rest
+      .ok (here ++ tail)
+  | .genIf c t e :: rest => do
+      let chosen := if (evalInt env c).toOption.getD 0 != 0 then t else e
+      let here ← genProcesses env fuel chosen
+      let tail ← genProcesses env fuel rest
+      .ok (here ++ tail)
+  | _ :: rest => genProcesses env fuel rest
+
+def MemEDesign.ofGenerated (d : PDesign) (args : List Int) : Res MemEDesign := do
+  let env ← d.paramEnv2 args
+  let ps ← genProcesses env (PDesign.surfaceFuel args) d.generates
+  let d' := { d with processes := d.processes ++ ps, generates := [] }
+  MemEDesign.ofPDesign d' args
+
 end LeanModels.Sv.Kernel

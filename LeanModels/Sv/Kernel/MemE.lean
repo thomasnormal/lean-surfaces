@@ -230,12 +230,24 @@ def MemEDesign.writeReadmemhList (d : MemEDesign) (st : MemEState) :
       d.writeReadmemhList st' rest
 
 def MemEDesign.applyInputs (d : MemEDesign) (inputs : SvState) (s : MemEState) : MemEState :=
-  { s with scalar := d.decls.foldl (fun st dc =>
+  let scalar := d.decls.foldl (fun st dc =>
       if dc.isInput then
         match SvState.lookup inputs dc.name with
         | some v => SvState.set st dc.name (if dc.twoState then v.toTwoState else v)
         | none => st
-      else st) s.scalar }
+      else st) s.scalar
+  let memory := d.memDecls.foldl (fun mem pd =>
+    if !pd.isInput then mem else
+      match pd.memShape? d.env with
+      | .ok (some shape) =>
+          let count := (Int.natAbs (shape.msb - shape.lsb)) + 1
+          (List.range count |>.map Int.ofNat).foldl (fun m k =>
+            let i := if shape.lsb >= shape.msb then shape.msb + k else shape.msb - k
+            match SvState.lookup inputs (pd.name ++ "[" ++ toString i ++ "]") with
+            | none => m
+            | some v => (m.write pd.name i (if pd.twoState then v.toTwoState else v)).getD m) mem
+      | _ => mem) s.memory
+  { scalar, memory }
 
 mutual
 

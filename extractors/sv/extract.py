@@ -13648,7 +13648,8 @@ def _convert_sym_select_expr(sm, e, cname):
             if (type(root).__name__ == "NamedValueExpression"
                     and type(root.type.canonicalType).__name__ ==
                     "FixedSizeUnpackedArrayType"
-                    and _sym_array_point_dependent(sm, root.symbol)):
+                    and (_sym_array_point_dependent(sm, root.symbol)
+                         or _RETAIN_PROC_REWRITES)):
                 with _SymPos():
                     index = _convert_expr(sm, e.selector)
                 return {
@@ -24341,7 +24342,8 @@ def _convert_assignment_expr(sm, expr, span_node=None):
                            "AssignmentExpression:" + type(expr).__name__)
     if _sym_cell_index_point_dependent(expr.left):
         return unsupported(sm, span_node or expr, "ElementSelect:default-point-index")
-    if _SYM is not None and _sym_runtime_unpacked_lhs(expr.left):
+    if (_SYM is not None and _sym_runtime_unpacked_lhs(expr.left)
+            and not _RETAIN_PROC_REWRITES):
         return unsupported(sm, span_node or expr, "AssignmentExpression:target")
     endpoint = _associative_endpoint_assignment(sm, expr)
     if endpoint is not None:
@@ -24574,11 +24576,12 @@ def _convert_assignment_expr(sm, expr, span_node=None):
         # specified no-op.  Continuous drivers stay on their own target
         # path and parameter/genvar-dependent selects are refused above.
         if _SYM is not None:
-            if not _sym_retained_unpacked_lhs(expr.left):
+            if not _sym_retained_unpacked_lhs(expr.left) and not _RETAIN_PROC_REWRITES:
                 nested_dynamic_array = _fixed_array_nested_dynamic_assignment(sm, expr)
                 if nested_dynamic_array is not None:
                     return nested_dynamic_array
-        if not (_SYM is not None and _sym_retained_unpacked_lhs(expr.left)):
+        if not (_SYM is not None and (_sym_retained_unpacked_lhs(expr.left)
+                                      or _RETAIN_PROC_REWRITES)):
             dynamic_array = _fixed_array_dynamic_assignment(sm, expr)
             if dynamic_array is not None:
                 return dynamic_array
@@ -24733,7 +24736,7 @@ def _convert_assignment_expr(sm, expr, span_node=None):
                     }
         target, ok = legacy_blocking_target(sm, expr.left)
     else:
-        if _sym_runtime_unpacked_lhs(expr.left):
+        if _sym_runtime_unpacked_lhs(expr.left) and not _RETAIN_PROC_REWRITES:
             return unsupported(sm, span_node or expr,
                                "AssignmentExpression:target")
         if type(expr.left).__name__ == "ConcatenationExpression":

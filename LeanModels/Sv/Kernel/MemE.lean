@@ -879,7 +879,27 @@ def MemEDesign.ofPDesign (d : PDesign) (args : List Int) : Res MemEDesign := do
   let ds ← decls d.decls
   let ds := ds ++ memEOtherDecls d.others
   let envD := { env with widths := ds.map (fun dc => (dc.name, dc.width)) }
-  let mems := d.decls.filter fun pd => !pd.unpackedDims.isEmpty
+  /- The symbolic frontend's fixed unpacked cells carry the source array name
+     and label as metadata.  Reconstitute that declaration node for the
+     canonical MemState shape; the cells remain the sourceDecls witness and
+     are never used as a second storage representation. -/
+  let fixedBases := d.decls.foldl (fun bases pd =>
+    match pd.flatBase with
+    | some base => if bases.any (· == base) then bases else bases ++ [base]
+    | none => bases) []
+  let fixedMemDecls := fixedBases.filterMap fun base =>
+    match d.decls.find? (fun pd => pd.flatBase == some base) with
+    | none => none
+    | some firstDecl =>
+        let cells := d.decls.filter (fun pd => pd.flatBase == some base)
+        let first := firstDecl.flatIndex.getD 0
+        let last := (cells.getLast?.bind (·.flatIndex)).getD first
+        some { firstDecl with
+          name := base
+          unpackedDims := [{ msb := PExpr.int first, lsb := PExpr.int last }]
+          flatBase := none
+          flatIndex := none }
+  let mems := d.decls.filter (fun pd => !pd.unpackedDims.isEmpty) ++ fixedMemDecls
   match d.memShapesAt envD with
   | .ok _ => pure ()
   | .error e => .unsupported e

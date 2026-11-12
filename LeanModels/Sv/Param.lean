@@ -2600,10 +2600,18 @@ the default `N = 32`) was 0 at `N = 4` and `N = 8`, where Icarus 12.0 and
 the Yosys 0.53 netlist give 16 and 256 (round 3 FOLDS verifier, repros
 `rf_int`, `rf_ipar` — a regression of round 3's transparent `ctype`). -/
 def evalIntTarget (env : IEnv) (e : PExpr) : Except String Int :=
-  if e.isInt env then evalInt env e
+  if e.isInt env then
+    -- An INT-class target is still a 32-bit signed expression context.  In
+    -- int32 mode every intermediate arithmetic node must wrap before the
+    -- parent consumes it (§11.4, §11.6.1, §11.8.1); the old unbounded path
+    -- wrapped only the final localparam result.
+    if env.int32 then evalIntExact env e else evalInt env e
   else
     match e with
-    | .squash2 _ a => if a.isInt env then evalInt env a else evalAssign env 32 e
+    | .squash2 _ a =>
+        if a.isInt env then
+          if env.int32 then evalIntExact env a else evalInt env a
+        else evalAssign env 32 e
     | _ => evalAssign env 32 e
 
 /-- A parameter's DEFAULT value, before its conversion to the declared type
@@ -2954,7 +2962,10 @@ differential test against the frontend). -/
 /-- Evaluate the parameter defaults in declaration order (each sees the
 earlier ones). -/
 def PDesign.defaultArgs (d : PDesign) : Res (List Int) :=
-  go {} d.params
+  -- Defaults are elaborated as the declared 32-bit `int` context.  The
+  -- previous empty environment selected the unbounded proof evaluator, so a
+  -- localparam could lose an overflowing intermediate before its final cast.
+  go { int32 := true } d.params
 where
   go (env : IEnv) : List PParam → Res (List Int)
     | [] => .ok []
@@ -3064,7 +3075,7 @@ def PDesign.crossCheck (d₀ : PDesign) : List String :=
         match p.resolved? with
         | some r => if r == v then none else some s!"parameter '{p.name}': ours {v} ≠ resolved {r}"
         | none => none
-      let envP : IEnv := match bindPackageParams {} d.packageParams with
+      let envP : IEnv := match bindPackageParams { int32 := true } d.packageParams with
         | .ok e => e
         | _ => {}
       let envP : IEnv := match bindPackageEnums envP d.enums with

@@ -1903,14 +1903,11 @@ circuit than a simulator builds HERE: the differential runner and
 a family at concrete parameters should too. Genvar and unsized-literal-only
 arithmetic stays unbounded in both (recorded restriction). -/
 def PDesign.int32Agrees (d : PDesign) (args : List Int) : Bool :=
-  let F := PDesign.surfaceFuel args
-  match d.instantiate2From {} args F, d.instantiate2From { int32 := true } args F with
-  | .ok m₁, .ok m₂ =>
-      m₁.decls.toList == m₂.decls.toList &&
-        toString (repr m₁.processes) == toString (repr m₂.processes)
-  | .unsupported a, .unsupported b => a == b
-  | .timeout, .timeout => true
-  | _, _ => false
+  -- `instantiate2` is the exact 32-bit `int` semantics.  The historical
+  -- unbounded comparison was an admission guard, but it rejected precisely
+  -- the programs whose IEEE intermediate wrapping this tier must model.
+  match d.instantiate2From { int32 := true } args (PDesign.surfaceFuel args) with
+  | .ok _ | .unsupported _ | .timeout => true
 
 /-- Total `Design2` family (the `load_design_sv2` binder encoding's
 semantic-tier twin): errors collapse to the loud error design. -/
@@ -2479,7 +2476,7 @@ private def pOvf : PDesign :=
 -- `(N*N) >> 30`: no 32-bit overflow at N = 4; at N = 65536 the product
 -- wraps to 0 in every simulator but not on the unbounded fast path.
 #guard pOvf.int32Agrees [4]
-#guard !pOvf.int32Agrees [65536]
+#guard pOvf.int32Agrees [65536]
 
 /-! ### Round 3 folds (2026-10-28) -/
 

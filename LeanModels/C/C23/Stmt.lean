@@ -880,7 +880,7 @@ def callFn : Nat → Program → LeanModels.C.FunctionDefn → List CVal → Exe
             -- the refusal (`libc id24`) and the oracle arm never sees it.
             match calleeName callee with
             | some nm =>
-              if nm == "__builtin_strcmp" then
+              if nm == "__builtin_strcmp" || nm == "strcmp" then
                 runStrcmp vs
               else if nm == "__builtin_strcpy" then
                 runBuiltinStrcpy vs
@@ -913,7 +913,7 @@ def callFn : Nat → Program → LeanModels.C.FunctionDefn → List CVal → Exe
             -- One of the 27 externals: cause `libc`, which retires by
             -- widening the slice and never pools with the other two.
             | none =>
-              if nm == "__builtin_strcmp" then runStrcmp vs
+              if nm == "__builtin_strcmp" || nm == "strcmp" then runStrcmp vs
               else if nm == "__builtin_strcpy" then runBuiltinStrcpy vs
               else if nm == "strlen" then runStrlen vs
               else if nm == "memset" || nm == "__builtin_memset" then runMemset vs

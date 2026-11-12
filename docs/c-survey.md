@@ -2,10 +2,10 @@
 
 Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manifest.
 
-- verdicts: 706/2214 MATCH (passed 706, failed 0, oracle 0)
+- verdicts: 708/2214 MATCH (passed 708, failed 0, oracle 0)
 - manifest SHA-256: `1de1a60c299d5bb51dae7ca001b0a008010cad0b25670cde2090c08bfc1a84ce`
-- measured commit: `7ed068069`
-- measured at: `2026-11-12T09:41:39Z`
+- measured commit: `7959598cd`
+- measured at: `2026-11-12T09:44:59Z`
 
 ## Verdict counts
 
@@ -13,8 +13,8 @@ Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manife
 | --- | ---: |
 | `not-ingested` | 25 |
 | `not-parsed` | 350 |
-| `passed` | 706 |
-| `refused-libc` | 82 |
+| `passed` | 708 |
+| `refused-libc` | 80 |
 | `refused-ub` | 36 |
 | `refused-unsupported` | 967 |
 | `timeout` | 48 |
@@ -32,8 +32,8 @@ Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manife
 | `c-testsuite/single-exec` | `timeout` | 2 |
 | `gcc.c-torture/execute` | `not-ingested` | 19 |
 | `gcc.c-torture/execute` | `not-parsed` | 321 |
-| `gcc.c-torture/execute` | `passed` | 594 |
-| `gcc.c-torture/execute` | `refused-libc` | 74 |
+| `gcc.c-torture/execute` | `passed` | 596 |
+| `gcc.c-torture/execute` | `refused-libc` | 72 |
 | `gcc.c-torture/execute` | `refused-ub` | 33 |
 | `gcc.c-torture/execute` | `refused-unsupported` | 831 |
 | `gcc.c-torture/execute` | `timeout` | 46 |
@@ -152,7 +152,6 @@ The run's first refusal, normalized by construct; `sole` counts rows whose first
 | `libc-call: f` | 2 | 2 | 20030203-1.c, 980505-1.c |
 | `libc-call: f1` | 2 | 2 | 20020227-1.c, 20020529-1.c |
 | `libc-call: open` | 2 | 2 | loop-2f.c, loop-2g.c |
-| `libc-call: strcmp` | 2 | 2 | 20011024-1.c, 20030715-1.c |
 | `unsupported:DesignatedInitUpdateExpr` | 2 | 2 | gcc/testsuite/gcc.dg/c23-empty-init-5.c, gcc/testsuite/gcc.dg/c23-empty-init-warn-17.c |
 | `unsupported:extern object 'abs_called' has no definition in the translation unit` | 2 | 2 | builtins/abs-1-lib.c, builtins/uabs-1-lib.c |
 | `unsupported:extern object 'x' has no definition in the translation unit` | 2 | 2 | 00094.c, 00110.c |

@@ -12,8 +12,8 @@
   "gcc.c-torture/execute": {
    "not-ingested": 19,
    "not-parsed": 321,
-   "passed": 594,
-   "refused-libc": 74,
+   "passed": 596,
+   "refused-libc": 72,
    "refused-ub": 33,
    "refused-unsupported": 831,
    "timeout": 46
@@ -31,8 +31,8 @@
  "counts": {
   "not-ingested": 25,
   "not-parsed": 350,
-  "passed": 706,
-  "refused-libc": 82,
+  "passed": 708,
+  "refused-libc": 80,
   "refused-ub": 36,
   "refused-unsupported": 967,
   "timeout": 48
@@ -1626,15 +1626,6 @@
    "present": 2,
    "sole": 2,
    "wall": "libc-call: open"
-  },
-  {
-   "files": [
-    "20011024-1.c",
-    "20030715-1.c"
-   ],
-   "present": 2,
-   "sole": 2,
-   "wall": "libc-call: strcmp"
   },
   {
    "files": [
@@ -4257,8 +4248,8 @@
   }
  ],
  "manifest_hash": "1de1a60c299d5bb51dae7ca001b0a008010cad0b25670cde2090c08bfc1a84ce",
- "measured_at_utc": "2026-11-12T09:41:39Z",
- "measured_commit": "7ed068069",
+ "measured_at_utc": "2026-11-12T09:44:59Z",
+ "measured_commit": "7959598cd",
  "pin": null,
  "rows": [
   {
@@ -8281,8 +8272,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "strcmp",
-   "dynamic_wall": "libc-call: strcmp",
+   "detail": "",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "20011024-1.c",
    "sha256": "318630ae7d1dd6ab618fb7ff8ebfc135c6154cc1e7479fa430e7c8196a6291e7",
@@ -8291,7 +8282,7 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -9552,8 +9543,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "strcmp",
-   "dynamic_wall": "libc-call: strcmp",
+   "detail": "",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "20030715-1.c",
    "sha256": "5237fc956973f647d62fdb0c09d77800107ac8ac95576a60aae21f519802610d",
@@ -9562,7 +9553,7 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",

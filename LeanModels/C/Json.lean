@@ -303,6 +303,7 @@ partial def parseStmt (j : Json) : Except String Stmt := do
     | "ReturnStmt" => return .ret (← optExpr "value") span
     | "BreakStmt" => return .breakS span
     | "ContinueStmt" => return .continueS span
+    | "NullStmt" => return .nullStmt span
     | "GotoStmt" => return .goto (← getStr j "label") span
     | "LabelStmt" => return .label (← getStr j "label") (← stmt "body") span
     | "Unsupported" =>

@@ -185,7 +185,7 @@ inductive Decl where
 deriving Repr, Inhabited
 
 
-/-- C statements — the 11 statement kinds. `SwitchStmt` is deliberately
+/-- C statements — the modelled statement kinds. `SwitchStmt` is deliberately
 absent (measured 0 in the corpus); it arrives with rung R1 and until then
 ingests as `unsupported`, which is what makes R1 a rung and not a hole. -/
 inductive Stmt where
@@ -199,6 +199,8 @@ inductive Stmt where
   | ret (value : Option Expr) (span : CSpan)
   | breakS (span : CSpan)
   | continueS (span : CSpan)
+  /-- §6.8.3 — the empty statement; it has no effect. -/
+  | nullStmt (span : CSpan)
   | goto (label : String) (span : CSpan)
   | label (name : String) (body : Stmt) (span : CSpan)
   /-- An expression in statement position. -/
@@ -441,6 +443,7 @@ def Stmt.ownExprs : Stmt → List Expr
   | .doS _ c _ => c.subexprs
   | .ret (some v) _ => v.subexprs
   | .expr e _ => e.subexprs
+  | .nullStmt _ => []
   | _ => []
 
 namespace TranslationUnit

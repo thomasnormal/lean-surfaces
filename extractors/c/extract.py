@@ -65,7 +65,8 @@ ROOT = os.path.abspath(os.path.join(HERE, "..", ".."))
 DECLS = {"FunctionDecl", "VarDecl", "ParmVarDecl", "FieldDecl", "RecordDecl",
          "TypedefDecl", "EnumDecl", "EnumConstantDecl"}
 STMTS = {"CompoundStmt", "DeclStmt", "IfStmt", "ForStmt", "WhileStmt", "DoStmt",
-         "ReturnStmt", "BreakStmt", "ContinueStmt", "GotoStmt", "LabelStmt"}
+         "ReturnStmt", "BreakStmt", "ContinueStmt", "GotoStmt", "LabelStmt",
+         "NullStmt"}
 EXPRS = {"IntegerLiteral", "CharacterLiteral", "StringLiteral", "FloatingLiteral",
          "DeclRefExpr", "MemberExpr", "ArraySubscriptExpr", "CallExpr",
          "BinaryOperator", "CompoundAssignOperator", "UnaryOperator",
@@ -443,6 +444,9 @@ class Extractor:
         return {}
 
     def e_ContinueStmt(self, n):
+        return {}
+
+    def e_NullStmt(self, n):
         return {}
 
     def e_GotoStmt(self, n):

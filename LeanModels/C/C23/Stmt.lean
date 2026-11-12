@@ -350,6 +350,7 @@ def execStmt : Nat → Ctx → Stmt → ExecM Flow
     -- §6.8.4 — an expression statement: evaluated for its EFFECTS, value
     -- discarded. 297 sites, the largest statement class in the corpus.
     | .expr e _ => do let _ ← evalE ctx e; pure .normal
+    | .nullStmt _ => pure .normal
     -- §6.8.5.1 — `if`. Measured: only 51 of 253 carry an `else`, so the
     -- else-less arm is the common path and is written first.
     | .ifS c t none _ => do

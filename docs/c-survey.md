@@ -2,10 +2,10 @@
 
 Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manifest.
 
-- verdicts: 703/2214 MATCH (passed 703, failed 0, oracle 0)
+- verdicts: 704/2214 MATCH (passed 704, failed 0, oracle 0)
 - manifest SHA-256: `1de1a60c299d5bb51dae7ca001b0a008010cad0b25670cde2090c08bfc1a84ce`
-- measured commit: `dc79fb15f`
-- measured at: `2026-11-12T09:33:04Z`
+- measured commit: `02dfcf654`
+- measured at: `2026-11-12T09:36:30Z`
 
 ## Verdict counts
 
@@ -13,10 +13,10 @@ Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manife
 | --- | ---: |
 | `not-ingested` | 25 |
 | `not-parsed` | 350 |
-| `passed` | 703 |
-| `refused-libc` | 86 |
+| `passed` | 704 |
+| `refused-libc` | 84 |
 | `refused-ub` | 36 |
-| `refused-unsupported` | 966 |
+| `refused-unsupported` | 967 |
 | `timeout` | 48 |
 
 ## Counts by corpus
@@ -25,17 +25,17 @@ Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manife
 | --- | --- | ---: |
 | `c-testsuite/single-exec` | `not-ingested` | 5 |
 | `c-testsuite/single-exec` | `not-parsed` | 1 |
-| `c-testsuite/single-exec` | `passed` | 110 |
-| `c-testsuite/single-exec` | `refused-libc` | 8 |
+| `c-testsuite/single-exec` | `passed` | 111 |
+| `c-testsuite/single-exec` | `refused-libc` | 7 |
 | `c-testsuite/single-exec` | `refused-ub` | 2 |
 | `c-testsuite/single-exec` | `refused-unsupported` | 92 |
 | `c-testsuite/single-exec` | `timeout` | 2 |
 | `gcc.c-torture/execute` | `not-ingested` | 19 |
 | `gcc.c-torture/execute` | `not-parsed` | 321 |
 | `gcc.c-torture/execute` | `passed` | 592 |
-| `gcc.c-torture/execute` | `refused-libc` | 77 |
+| `gcc.c-torture/execute` | `refused-libc` | 76 |
 | `gcc.c-torture/execute` | `refused-ub` | 33 |
-| `gcc.c-torture/execute` | `refused-unsupported` | 830 |
+| `gcc.c-torture/execute` | `refused-unsupported` | 831 |
 | `gcc.c-torture/execute` | `timeout` | 46 |
 | `gcc.c23-run` | `not-ingested` | 1 |
 | `gcc.c23-run` | `not-parsed` | 28 |
@@ -137,7 +137,6 @@ The run's first refusal, normalized by construct; `sole` counts rows whose first
 | `libc-call: __builtin_sprintf` | 3 | 3 | 20021120-3.c, pr78586.c, pr79327.c |
 | `libc-call: exit (an argument is not a literal 0 — which exit was reached is unknown)` | 3 | 3 | 970214-1.c, 970214-2.c, 970217-1.c |
 | `libc-call: printf` | 3 | 3 | 00176.c, 00194.c, printf-1.c |
-| `libc-call: strlen` | 3 | 3 | 00025.c, 20050218-1.c, strlen-5.c |
 | `unsupported:ExprWithCleanups` | 3 | 3 | 20041124-1.c, 950628-1.c, pr30185.c |
 | `unsupported:function-to-pointer decay (inch 5)` | 3 | 3 | 20041212-1.c, 20101011-1.c, pr42231.c |
 | `unsupported:no layout for declared type 'A'` | 3 | 3 | 20010118-1.c, restrict-1.c, strct-pack-2.c |
@@ -220,6 +219,7 @@ The run's first refusal, normalized by construct; `sole` counts rows whose first
 | `libc-call: s` | 1 | 1 | multi-ix.c |
 | `libc-call: sprintf` | 1 | 1 | 20030626-2.c |
 | `libc-call: strchr` | 1 | 1 | 20000910-2.c |
+| `libc-call: strncmp` | 1 | 1 | 20050218-1.c |
 | `libc-call: sub` | 1 | 1 | 990128-1.c |
 | `libc-call: temp` | 1 | 1 | 20030718-1.c |
 | `libc-call: yylex` | 1 | 1 | 20000818-1.c |
@@ -394,6 +394,7 @@ The run's first refusal, normalized by construct; `sole` counts rows whose first
 | `unsupported:unbound declaration 'id15' (name 'fptr')` | 1 | 1 | 00088.c |
 | `unsupported:unbound declaration 'id15' (name 'vd')` | 1 | 1 | 20120919-1.c |
 | `unsupported:unbound declaration 'id151' (name 's')` | 1 | 1 | pr91597.c |
+| `unsupported:unbound declaration 'id16139' (name 'cu')` | 1 | 1 | strlen-5.c |
 | `unsupported:unbound declaration 'id18' (name 'a')` | 1 | 1 | pr65427.c |
 | `unsupported:unbound declaration 'id18' (name 'g')` | 1 | 1 | 20031214-1.c |
 | `unsupported:unbound declaration 'id18' (name 's')` | 1 | 1 | 20051104-1.c |

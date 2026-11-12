@@ -863,6 +863,8 @@ def callFn : Nat → Program → LeanModels.C.FunctionDefn → List CVal → Exe
             | some nm =>
               if nm == "__builtin_strcmp" then
                 runStrcmp vs
+              else if nm == "strlen" then
+                runStrlen vs
               else if nm == "abort" || nm == "exit" then
                 throw (.libc nm)
               else match prog.findId? declaration with
@@ -891,6 +893,7 @@ def callFn : Nat → Program → LeanModels.C.FunctionDefn → List CVal → Exe
             -- widening the slice and never pools with the other two.
             | none =>
               if nm == "__builtin_strcmp" then runStrcmp vs
+              else if nm == "strlen" then runStrlen vs
               else if nm == "memset" || nm == "__builtin_memset" then runMemset vs
               else if nm == "memcpy" || nm == "__builtin_memcpy" then runMemcpy vs
               else if nm == "__builtin_strcmp" then runStrcmp vs

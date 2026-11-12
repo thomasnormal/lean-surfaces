@@ -99,10 +99,13 @@ not decide them.
 The older `DecisionKnown` predicate and `TypedResolution` lemmas remain as a
 compatibility scaffold for current proofs; their correlation wording is not
 the X-E authority. `Core0Resolve.execBody_if_xread` is the first consumer
-bridge, proving the known-read refinement without changing `execBody`. The
-next implementation step lifts `XReadRun` through `Core1Edge`, `MemE`, `Sva`,
-`Observe`, `Contract`, and the cycle/run bridges. No new AST constructor,
-semantic fuel, run2 meaning, or MemCycle meaning is required.
+bridge, proving the known-read refinement without changing `execBody`.
+`Core1Resolve.execFF_if_xread` provides the analogous edge-body bridge, and
+`MemEResolve.memE_if_xread` carries the same known-read equality through a
+MemE conditional without changing the derived memory evaluator. The next
+implementation step lifts `XReadRun` through `Sva`, `Observe`, `Contract`,
+and the cycle/run bridges. No new AST constructor, semantic fuel, run2
+meaning, or MemCycle meaning is required.
 
 The executable probe is `harness/sv_x_resolution.py` with the committed
 `harness/sv_x_resolution.json` battery. It checks independent reads of x/z

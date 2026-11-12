@@ -8496,15 +8496,14 @@ def _convert_integral_cast(sm, expr):
     target_width, two_state, target_reason = type_width_2s(expr.type)
     if (_SYM is not None and source_reason is None and target_reason is None
             and target_width is not None and target_width > 0
-            and expr.type.isIntegral and expr.type.isFourState
-            and not expr.type.isSigned and not expr.operand.type.isSigned):
+            and expr.type.isIntegral):
         operand = _convert_expr(sm, expr.operand)
         if width_of(operand) != source_width or not _case_expression_ok(operand):
             return unsupported(sm, expr, "ConversionExpression:Explicit")
         if source_width == target_width:
             return operand
         return {
-            "kind": "Resize",
+            "kind": "SignedResize" if expr.operand.type.isSigned else "Resize",
             "span": node_span(sm, expr),
             "width": target_width,
             "operand": operand,

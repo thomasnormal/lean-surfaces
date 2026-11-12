@@ -190,6 +190,14 @@ STUB
   # LANE-ADDED per the floor law (the corpora are per-tier), so CI gates the
   # TOOL -- including its refusal path -- while adoption stays each lane's.
   ( cd "$view" && selftest_report envelope_fresh.py python3 harness/envelope_fresh.py --self-test ) || rc=1
+  # The C lane's offline floor is shared CI infrastructure. Keep these exact
+  # command forms here so the corpus pin, scorer, survey schema, and leanc
+  # wrapper cannot silently lose their refusal-path coverage.
+  ( cd "$view" && selftest_report c_corpus_fetch.py python3 tools/c_corpus_fetch.py --selftest ) || rc=1
+  ( cd "$view" && selftest_report c_torture_score.py python3 harness/c_torture_score.py --selftest ) || rc=1
+  ( cd "$view" && selftest_report c_survey_selftest.py python3 harness/c_survey.py --self-test ) || rc=1
+  ( cd "$view" && selftest_report c_survey_check.py python3 harness/c_survey.py --check ) || rc=1
+  ( cd "$view" && selftest_report leanc.py python3 tools/leanc --self-test ) || rc=1
   rm -rf "$stub" "$view"
   return "$rc"
 }

@@ -105,6 +105,11 @@ The hierarchical alias row, `acg_alias_hier`, is refused by E as
 matches the legacy refusal boundary and adds no E verdict or migration-count
 change.
 
+The child-port alias row, `acg_alias_thru`, is refused by E as
+`AlwaysComb:alias-read` after the source-shaped port path is followed.  It
+matches the legacy refusal boundary and adds no E verdict or migration-count
+change.
+
 The receipts were produced with:
 
 ```text

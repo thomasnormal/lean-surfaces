@@ -3,7 +3,7 @@
   "language": "python",
   "frontend": {
     "name": "cpython-ast",
-    "version": "3.9.19"
+    "version": "3.9.25"
   },
   "source_file": "Examples/python/rsa_inverse/rsa_inverse.py",
   "source_sha256": "3fc1cb592a1daafb1cc4188c1f8ac06d32b67a06782c13d6e969b6506b02f932",
@@ -33,15 +33,14 @@
         }
       },
       {
-        "kind": "Unsupported",
+        "kind": "Import",
         "span": {
           "lineno": 32,
           "col_offset": 0,
           "end_lineno": 32,
           "end_col_offset": 13
         },
-        "py_kind": "Import",
-        "text": "import typing"
+        "module": "typing"
       },
       {
         "kind": "FunctionDef",

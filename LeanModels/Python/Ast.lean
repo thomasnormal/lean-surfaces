@@ -674,6 +674,18 @@ def benignImportBindsStructured (module : String) (names : Array String)
     some ("namedtuple", false)
   else Option.none
 
+/-- Modules measured by `tools/python_opaque_imports.py` under pinned CPython
+3.9.25. Their contents are deliberately unavailable: this list admits only
+the binding abstraction, while every observation of the bound value refuses.
+The generated table records the file hashes and is the evidence authority. -/
+def opaqueImportModules : List String :=
+  ["collections.abc", "contextvars", "email.base64mime", "email.charset",
+   "importlib.machinery", "reprlib", "struct", "fnmatch", "unittest.util",
+   "typing"]
+
+def opaqueImportAllowed (module : String) : Bool :=
+  opaqueImportModules.contains module
+
 /-! ## Core value / result types (DESIGN.md, normative) -/
 
 /-- The integer object retained by a public `range` value, including bool

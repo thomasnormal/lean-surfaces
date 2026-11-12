@@ -19,7 +19,7 @@ ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_MODULES = (
     "collections.abc", "contextvars", "email.base64mime", "email.charset",
     "importlib.machinery", "reprlib", "struct", "fnmatch", "unittest.util",
-    "rsa_inverse",
+    "typing", "rsa_inverse",
 )
 
 
@@ -74,6 +74,44 @@ def _hash(path):
     return digest.hexdigest()
 
 
+def _annotation_probe(python, module, directory):
+    """Record eager function-annotation values for the vendored consumer.
+
+    CPython 3.9 evaluates annotations while executing ``def``.  The opaque
+    import abstraction never claims their values, so this probe is evidence
+    for the explicit frontend refusal rather than a model of ``typing``.
+    """
+    code = r'''
+import importlib, inspect, json, sys
+if sys.argv[2]:
+    sys.path.insert(0, sys.argv[2])
+result = {"status": "ok", "functions": {}}
+try:
+    mod = importlib.import_module(sys.argv[1])
+    for name, value in sorted(vars(mod).items()):
+        if inspect.isfunction(value) and getattr(value, "__annotations__", None):
+            result["functions"][name] = {
+                key: repr(annotation)
+                for key, annotation in sorted(value.__annotations__.items())
+            }
+except BaseException as exc:
+    result = {"status": "exception", "exception": type(exc).__name__}
+print(json.dumps(result, sort_keys=True))
+'''
+    proc = subprocess.run(
+        [python, "-I", "-c", code, module, str(directory or "")],
+        capture_output=True, text=True, timeout=30,
+    )
+    if proc.returncode != 0:
+        return {"status": "runner-error", "stderr": proc.stderr,
+                "returncode": proc.returncode}
+    try:
+        return json.loads(proc.stdout)
+    except json.JSONDecodeError:
+        return {"status": "malformed", "stdout": proc.stdout,
+                "stderr": proc.stderr}
+
+
 def measure(python, modules, rsa_path=None):
     corpus = {row["module"]: row for row in json.loads(
         (ROOT / "harness/library_corpus.json").read_text(encoding="utf-8")
@@ -94,9 +132,12 @@ def measure(python, modules, rsa_path=None):
             directory = None
             source_hash = row["sha256"]
         probe = _probe(python, module, directory)
-        rows.append({"module": module, "sha256": source_hash,
-                     "file": str(path), "probe": probe,
-                     "eligible": bool(probe.get("eligible"))})
+        row = {"module": module, "sha256": source_hash,
+               "file": str(path), "probe": probe,
+               "eligible": bool(probe.get("eligible"))}
+        if module == "rsa_inverse":
+            row["annotation_probe"] = _annotation_probe(python, module, directory)
+        rows.append(row)
     return {"python": subprocess.check_output([python, "--version"],
                                                 stderr=subprocess.STDOUT,
                                                 text=True).strip(),

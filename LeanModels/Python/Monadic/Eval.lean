@@ -227,12 +227,14 @@ def callNamePlan (m : Module) (locals : Env) (globals : REnv) (fname : String) :
       -- is observable: `x(1//0)` with `x = 5` raises ZeroDivisionError.
       if funsHeapFree m.functions.toList && topLevelDefFree m then .notCallable "dict"
       else .callClosure a
-  | some (.callable _) => .firstClass
+  | some (.callable name) =>
+      if isOpaqueCallableName name then .preRefuse (opaqueObservation name) else .firstClass
   | some v => .notCallable v.typeName
   | Option.none =>
     match lookupG (moduleGlobals m).1 fname with
     | some (some (.ref _)) => .notCallable "dict"
-    | some (some (.callable _)) => .firstClass
+    | some (some (.callable name)) =>
+        if isOpaqueCallableName name then .preRefuse (opaqueObservation name) else .firstClass
     | some (some v) => .notCallable v.typeName
     | some Option.none =>
         -- The poisoned-arm LIVE view: a module-level lambda (an exec-bound
@@ -242,7 +244,8 @@ def callNamePlan (m : Module) (locals : Env) (globals : REnv) (fname : String) :
         | some (.ref a) =>
             if funsHeapFree m.functions.toList && topLevelDefFree m then .notCallable "dict"
             else .callClosure a
-        | some (.callable _) => .firstClass
+        | some (.callable name) =>
+            if isOpaqueCallableName name then .preRefuse (opaqueObservation name) else .firstClass
         | some v => .notCallable v.typeName
         | Option.none =>
             .preRefuse s!"calling module-level '{fname}' (out-of-G1-tier value) is outside the tier"
@@ -833,6 +836,12 @@ def applyBuiltin (K : Kont) (m : Module) (fname : String) (vs : List RVal) :
 
 /-- Apply a resolved plan to already-evaluated arguments. Not mutual with the
 evaluator: the arguments are values, so nothing here evaluates syntax. -/
+def opaqueArgObservation : List RVal → Option String
+  | [] => none
+  | .callable name :: _ =>
+      if isOpaqueCallableName name then some (opaqueObservation name) else none
+  | _ :: rest => opaqueArgObservation rest
+
 def applyCallPlan (K : Kont) (m : Module) : CallPlan → List RVal → SemF RVal
   | .preRefuse msg,   _  => refuse msg
   | .preNameError n,  _  => raisePy (.nameError n)
@@ -1130,7 +1139,9 @@ def evalOpen (K : Kont) (m : Module) : Expr → SemF RVal
                               | Option.none => evalOpenCallList (K, m, args.toList)
                           | _ => evalOpenCallList (K, m, args.toList)
                       | _ => evalOpenCallList (K, m, args.toList)
-                    applyCallPlan K m plan vs
+                    match opaqueArgObservation vs with
+                    | some msg => refuse msg
+                    | none => applyCallPlan K m plan vs
           | .attribute recv attr _ => do
               -- ===== THE TRACE CLOCK. Time is an INPUT: an unshadowed
               -- benign-import clock name is loud until the integer trace
@@ -1433,7 +1444,8 @@ def evalOpen (K : Kont) (m : Module) : Expr → SemF RVal
           let st ← get
           liftRunAt (attrReadResult m st a attr)
       | .ntuple tn fields xs => ntupleAttrM m tn fields xs attr
-      | .callable _ => refuse "attribute access on a callable value is outside the closed-function tier"
+      | .callable name => refuse (if isOpaqueCallableName name then opaqueObservation name else
+          "attribute access on a callable value is outside the closed-function tier")
       | r =>
           if attr == "__doc__" then
             refuse "scalar __doc__ lookup depends on CPython's builtin type documentation, outside the closed-function tier"
@@ -2061,8 +2073,12 @@ def execOpen (K : Kont) (m : Module) : Stmt → SemF RFlow
                       if cid == ci then execOpenList K m handler.toList else raisePy e
                   | e => raisePy e)
   | .importStmt mod _ =>
-      refuse s!"plain import {mod} is only admitted at module scope"
-  | .importFrom mod _ _ _ =>
+      if opaqueImportAllowed mod then do
+        let root := String.mk (mod.toList.takeWhile (· != '.'))
+        modify fun st => { st with locals := Env.set st.locals root (.callable (opaqueCallableName mod root)) }
+        pure .next
+      else refuse s!"plain import {mod} is only admitted at module scope"
+  | .importFrom mod names star _ =>
       -- Pass 0 (§import forms): the importable universe is EMPTY, so every
       -- admitted from-import RAISES — fuel-free, state unchanged, never `.ok`.
       -- The EXTRACTOR's admission is what makes the raise faithful: either the
@@ -2072,6 +2088,10 @@ def execOpen (K : Kont) (m : Module) : Stmt → SemF RFlow
       -- fallback branch then running from the RETAINED state.
       if mod == "__main__" then
         refuse "from __main__ import ... requires the runner's live __main__ module, outside the closed-function tier"
+      else if opaqueImportAllowed mod && !star then do
+        modify fun st => { st with locals := names.toList.foldl (fun env name =>
+          Env.set env name (.callable (opaqueCallableName mod name))) st.locals }
+        pure .next
       else
         raisePy (.importError mod)
   termination_by structural s => s

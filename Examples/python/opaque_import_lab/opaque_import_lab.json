@@ -1,0 +1,504 @@
+{
+  "schema_version": "0.1",
+  "language": "python",
+  "frontend": {
+    "name": "cpython-ast",
+    "version": "3.9.25"
+  },
+  "source_file": "Examples/python/opaque_import_lab/opaque_import_lab.py",
+  "source_sha256": "b239bd31c07dabe450bcb0b63fcb7171157b7f2e9600854d91a56e71707a555d",
+  "module": {
+    "kind": "Module",
+    "body": [
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 1,
+          "col_offset": 0,
+          "end_lineno": 3,
+          "end_col_offset": 12
+        },
+        "name": "unused_import",
+        "args": [],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Import",
+            "span": {
+              "lineno": 2,
+              "col_offset": 4,
+              "end_lineno": 2,
+              "end_col_offset": 17
+            },
+            "module": "typing"
+          },
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 3,
+              "col_offset": 4,
+              "end_lineno": 3,
+              "end_col_offset": 12
+            },
+            "value": {
+              "kind": "Constant",
+              "span": {
+                "lineno": 3,
+                "col_offset": 11,
+                "end_lineno": 3,
+                "end_col_offset": 12
+              },
+              "value": {
+                "type": "int",
+                "repr": "1"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 5,
+          "col_offset": 0,
+          "end_lineno": 7,
+          "end_col_offset": 12
+        },
+        "name": "unused_from_import",
+        "args": [],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "ImportFrom",
+            "span": {
+              "lineno": 6,
+              "col_offset": 4,
+              "end_lineno": 6,
+              "end_col_offset": 28
+            },
+            "module": "typing",
+            "names": [
+              "Tuple"
+            ]
+          },
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 7,
+              "col_offset": 4,
+              "end_lineno": 7,
+              "end_col_offset": 12
+            },
+            "value": {
+              "kind": "Constant",
+              "span": {
+                "lineno": 7,
+                "col_offset": 11,
+                "end_lineno": 7,
+                "end_col_offset": 12
+              },
+              "value": {
+                "type": "int",
+                "repr": "2"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 9,
+          "col_offset": 0,
+          "end_lineno": 11,
+          "end_col_offset": 23
+        },
+        "name": "opaque_attribute",
+        "args": [],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Import",
+            "span": {
+              "lineno": 10,
+              "col_offset": 4,
+              "end_lineno": 10,
+              "end_col_offset": 17
+            },
+            "module": "typing"
+          },
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 11,
+              "col_offset": 4,
+              "end_lineno": 11,
+              "end_col_offset": 23
+            },
+            "value": {
+              "kind": "Attribute",
+              "span": {
+                "lineno": 11,
+                "col_offset": 11,
+                "end_lineno": 11,
+                "end_col_offset": 23
+              },
+              "value": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 11,
+                  "col_offset": 11,
+                  "end_lineno": 11,
+                  "end_col_offset": 17
+                },
+                "id": "typing"
+              },
+              "attr": "Tuple"
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 13,
+          "col_offset": 0,
+          "end_lineno": 15,
+          "end_col_offset": 25
+        },
+        "name": "opaque_call",
+        "args": [],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Import",
+            "span": {
+              "lineno": 14,
+              "col_offset": 4,
+              "end_lineno": 14,
+              "end_col_offset": 17
+            },
+            "module": "typing"
+          },
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 15,
+              "col_offset": 4,
+              "end_lineno": 15,
+              "end_col_offset": 25
+            },
+            "value": {
+              "kind": "Call",
+              "span": {
+                "lineno": 15,
+                "col_offset": 11,
+                "end_lineno": 15,
+                "end_col_offset": 25
+              },
+              "func": {
+                "kind": "Attribute",
+                "span": {
+                  "lineno": 15,
+                  "col_offset": 11,
+                  "end_lineno": 15,
+                  "end_col_offset": 23
+                },
+                "value": {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 15,
+                    "col_offset": 11,
+                    "end_lineno": 15,
+                    "end_col_offset": 17
+                  },
+                  "id": "typing"
+                },
+                "attr": "Tuple"
+              },
+              "args": [],
+              "keywords": [],
+              "call_unsupported": null
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 17,
+          "col_offset": 0,
+          "end_lineno": 19,
+          "end_col_offset": 23
+        },
+        "name": "opaque_truth",
+        "args": [],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Import",
+            "span": {
+              "lineno": 18,
+              "col_offset": 4,
+              "end_lineno": 18,
+              "end_col_offset": 17
+            },
+            "module": "typing"
+          },
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 19,
+              "col_offset": 4,
+              "end_lineno": 19,
+              "end_col_offset": 23
+            },
+            "value": {
+              "kind": "Call",
+              "span": {
+                "lineno": 19,
+                "col_offset": 11,
+                "end_lineno": 19,
+                "end_col_offset": 23
+              },
+              "func": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 19,
+                  "col_offset": 11,
+                  "end_lineno": 19,
+                  "end_col_offset": 15
+                },
+                "id": "bool"
+              },
+              "args": [
+                {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 19,
+                    "col_offset": 16,
+                    "end_lineno": 19,
+                    "end_col_offset": 22
+                  },
+                  "id": "typing"
+                }
+              ],
+              "keywords": [],
+              "call_unsupported": null
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 21,
+          "col_offset": 0,
+          "end_lineno": 24,
+          "end_col_offset": 12
+        },
+        "name": "opaque_print",
+        "args": [],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Import",
+            "span": {
+              "lineno": 22,
+              "col_offset": 4,
+              "end_lineno": 22,
+              "end_col_offset": 17
+            },
+            "module": "typing"
+          },
+          {
+            "kind": "Expr",
+            "span": {
+              "lineno": 23,
+              "col_offset": 4,
+              "end_lineno": 23,
+              "end_col_offset": 17
+            },
+            "value": {
+              "kind": "Call",
+              "span": {
+                "lineno": 23,
+                "col_offset": 4,
+                "end_lineno": 23,
+                "end_col_offset": 17
+              },
+              "func": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 23,
+                  "col_offset": 4,
+                  "end_lineno": 23,
+                  "end_col_offset": 9
+                },
+                "id": "print"
+              },
+              "args": [
+                {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 23,
+                    "col_offset": 10,
+                    "end_lineno": 23,
+                    "end_col_offset": 16
+                  },
+                  "id": "typing"
+                }
+              ],
+              "keywords": [],
+              "call_unsupported": null
+            }
+          },
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 24,
+              "col_offset": 4,
+              "end_lineno": 24,
+              "end_col_offset": 12
+            },
+            "value": {
+              "kind": "Constant",
+              "span": {
+                "lineno": 24,
+                "col_offset": 11,
+                "end_lineno": 24,
+                "end_col_offset": 12
+              },
+              "value": {
+                "type": "int",
+                "repr": "3"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 26,
+          "col_offset": 0,
+          "end_lineno": 28,
+          "end_col_offset": 22
+        },
+        "name": "opaque_argument",
+        "args": [],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Import",
+            "span": {
+              "lineno": 27,
+              "col_offset": 4,
+              "end_lineno": 27,
+              "end_col_offset": 17
+            },
+            "module": "typing"
+          },
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 28,
+              "col_offset": 4,
+              "end_lineno": 28,
+              "end_col_offset": 22
+            },
+            "value": {
+              "kind": "Call",
+              "span": {
+                "lineno": 28,
+                "col_offset": 11,
+                "end_lineno": 28,
+                "end_col_offset": 22
+              },
+              "func": {
+                "kind": "Name",
+                "span": {
+                  "lineno": 28,
+                  "col_offset": 11,
+                  "end_lineno": 28,
+                  "end_col_offset": 14
+                },
+                "id": "len"
+              },
+              "args": [
+                {
+                  "kind": "Name",
+                  "span": {
+                    "lineno": 28,
+                    "col_offset": 15,
+                    "end_lineno": 28,
+                    "end_col_offset": 21
+                  },
+                  "id": "typing"
+                }
+              ],
+              "keywords": [],
+              "call_unsupported": null
+            }
+          }
+        ]
+      },
+      {
+        "kind": "FunctionDef",
+        "span": {
+          "lineno": 30,
+          "col_offset": 0,
+          "end_lineno": 32,
+          "end_col_offset": 12
+        },
+        "name": "unallowlisted_import",
+        "args": [],
+        "args_unsupported": null,
+        "locals_unsupported": null,
+        "body": [
+          {
+            "kind": "Unsupported",
+            "span": {
+              "lineno": 31,
+              "col_offset": 4,
+              "end_lineno": 31,
+              "end_col_offset": 13
+            },
+            "py_kind": "Import",
+            "text": "import os"
+          },
+          {
+            "kind": "Return",
+            "span": {
+              "lineno": 32,
+              "col_offset": 4,
+              "end_lineno": 32,
+              "end_col_offset": 12
+            },
+            "value": {
+              "kind": "Constant",
+              "span": {
+                "lineno": 32,
+                "col_offset": 11,
+                "end_lineno": 32,
+                "end_col_offset": 12
+              },
+              "value": {
+                "type": "int",
+                "repr": "4"
+              }
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "lean_blocks": []
+}

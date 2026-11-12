@@ -3568,18 +3568,25 @@ theorem worldInv (m : Module) (hm : m.heapFree = true) (fuel : Nat) :
       | withStmt items body tu _ =>
         simp [Stmt.heapFree] at hfree
       | importStmt mod _ =>
-        simp only [execStmt]
-        exact .unsupported
+        by_cases ha : opaqueImportAllowed mod
+        · simp [Stmt.heapFree, ha] at hfree
+        · simpa [execStmt, ha] using
+            (Run.OkW.unsupported (p := fun x : FrameState => x.world = st.world)
+              (msg := s!"plain import {mod} is only admitted at module scope"))
       | importFrom mod names star _ =>
         -- Pass 0 (§import forms): IN the fragment, vacuously — the arm
         -- never decides `.ok` (it raises, fuel-free); the `raiseStmt`
         -- argument. The future modeled-module BINDING arm must flip
         -- `Stmt.heapFree` to `false` or re-prove this — the recorded
         -- review point.
-        simp only [execStmt]
-        split
-        · exact .unsupported
-        · exact .exn
+        by_cases ha : opaqueImportAllowed mod
+        · simp [Stmt.heapFree, ha] at hfree
+        · by_cases hmain : mod == "__main__"
+          · simpa [execStmt, ha, hmain] using
+              (Run.OkW.unsupported (p := fun x : FrameState => x.world = st.world)
+                (msg := "from __main__ import ... requires the runner's live __main__ module, outside the closed-function tier"))
+          · simpa [execStmt, ha, hmain] using
+              (Run.OkW.exn (p := fun x : FrameState => x.world = st.world))
       | raiseStmt exc cause _ =>
         -- IN the fragment, vacuously: the raise arm never decides `.ok`
         simp only [execStmt]

@@ -413,9 +413,19 @@ def scriptOneAt (S : SKont) (K : Kont) (m : Module) : Stmt → SemF RFlow
       | none => refuse s!"internal: class marker {name} has no class table entry"
   | .importStmt module _ =>
       if module == "time" then pure .next
+      else if opaqueImportAllowed module then do
+        let root := String.mk (module.toList.takeWhile (· != '.'))
+        let st ← get
+        envPut (Env.set st.locals root (.callable (opaqueCallableName module root)))
+        pure .next
       else refuse s!"plain import {module} is outside the tier"
   | .importFrom module names star sp =>
       if (benignImportBindsStructured module names star).isSome then pure .next
+      else if opaqueImportAllowed module && !star then do
+        let st ← get
+        envPut (names.toList.foldl (fun env name =>
+          Env.set env name (.callable (opaqueCallableName module name))) st.locals)
+        pure .next
       else execOpen K m (.importFrom module names star sp)
   | .delStmt names sp => do
       -- THE MODULE-SCOPE `del`. The frame's locals ARE the module globals and

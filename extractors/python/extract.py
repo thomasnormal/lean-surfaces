@@ -110,6 +110,17 @@ MODULE_SAFE_ANNOTATION_NAMES = (
     "bool", "bytes", "complex", "dict", "float", "int", "list",
     "object", "set", "str", "tuple", "type")
 
+# Keep this in step with the measured Lean admission list.  The generated
+# table in docs/python-opaque-imports.json is the evidence authority; this
+# frontend copy is only used to refuse definition-time annotation observations
+# that the envelope cannot represent.
+OPAQUE_IMPORT_MODULES = frozenset({
+    "collections.abc", "contextvars", "email.base64mime", "email.charset",
+    "importlib.machinery", "reprlib", "struct", "fnmatch", "unittest.util",
+    "typing",
+})
+
+
 # Names that CPython binds as exception classes.  A parameter with an
 # ordinary name may carry a scalar into ``raise`` (the runtime then reports
 # the faithful ``TypeError``), but a parameter or local using one of these
@@ -2423,6 +2434,13 @@ def convert_stmt(node, enclosing=None, module_scope=False,
     if isinstance(node, ast.Import):
         if id(node) in _DEAD_IMPORT_NODES:
             return {"kind": "Pass", "span": span(node)}
+        if (len(node.names) == 1 and node.names[0].asname is None
+                and node.names[0].name in OPAQUE_IMPORT_MODULES):
+            return {
+                "kind": "Import",
+                "span": span(node),
+                "module": node.names[0].name,
+            }
         # Pass 0's narrow plain-import slice: an absolute, single, unaliased
         # import of a module absent from the pinned inventory has the same
         # observable behavior as the structured missing-module from-import —
@@ -2486,6 +2504,9 @@ def convert_stmt(node, enclosing=None, module_scope=False,
             # scope. The import fails before it can bind, so this narrow
             # shape does not claim a module system or any successful import.
             admitted = (((module_scope or func_scope) and absent)
+                        or ((module_scope or func_scope)
+                            and node.module in OPAQUE_IMPORT_MODULES
+                            and not star)
                         or (module_scope and
                             benign_import_from(node.module, node.names, star))
                         or (import_guard and absent))

@@ -137,6 +137,36 @@
     },
     {
       "eligible": true,
+      "file": "/usr/lib64/python3.9/typing.py",
+      "module": "typing",
+      "probe": {
+        "builtins_changed": [],
+        "eligible": true,
+        "exception": null,
+        "module": "typing",
+        "status": "ok",
+        "stderr": "",
+        "stdout": ""
+      },
+      "sha256": "c50dd34c21da7cceaebbf87df169a9b714f3c749c3505dc99dce5b53408f34bf"
+    },
+    {
+      "annotation_probe": {
+        "functions": {
+          "extended_gcd": {
+            "a": "<class 'int'>",
+            "b": "<class 'int'>",
+            "return": "typing.Tuple[int, int, int]"
+          },
+          "inverse": {
+            "n": "<class 'int'>",
+            "return": "<class 'int'>",
+            "x": "<class 'int'>"
+          }
+        },
+        "status": "ok"
+      },
+      "eligible": true,
       "file": "Examples/python/rsa_inverse/rsa_inverse.py",
       "module": "rsa_inverse",
       "probe": {

@@ -106,6 +106,18 @@ def Val.typeName : Val → String
   | .list _ => "list"
   | .tuple _ => "tuple"
 
+/-- Runtime marker for an admitted opaque imported name. It deliberately uses
+the existing callable carrier so both interpreters keep one value protocol;
+the marker is checked before every callable observation. -/
+def opaqueCallableName (module attr : String) : String :=
+  "<opaque:" ++ module ++ ":" ++ attr ++ ">"
+
+def isOpaqueCallableName (name : String) : Bool :=
+  name.startsWith "<opaque:"
+
+def opaqueObservation (name : String) : String :=
+  s!"opaque imported value '{name}' was observed; module contents and attributes are outside the tier"
+
 /-- Python type name of a runtime value. A `.ref`'s real type name lives in
 the heap (H1-proper resolves it there); the `"object"` placeholder is never
 part of a *decided* outcome — every helper refuses `.ref` operands loudly
@@ -121,7 +133,7 @@ def RVal.typeName : RVal → String
   | .str _ => "str"
   | .bytes _ => "bytes"
   | .surrogate _ => "str"
-  | .callable _ => "function"
+  | .callable name => if isOpaqueCallableName name then "opaque" else "function"
   | .listV _ => "list"
   | .tuple _ => "tuple"
   | .ntuple tn _ _ => tn
@@ -459,8 +471,9 @@ def truthy : RVal → Res Bool
   | .str s => .ok (!s.isEmpty)
   | .bytes xs => .ok (xs.size != 0)
   | .surrogate _ => .ok true
-  | .callable _ => .unsupported
-      "truthiness of a callable is outside the tier (callable observations are not modelled)"
+  | .callable name =>
+      .unsupported (if isOpaqueCallableName name then opaqueObservation name else
+        "truthiness of a callable is outside the tier (callable observations are not modelled)")
   | .listV xs => .ok (xs.size != 0)
   | .tuple xs => .ok (xs.size != 0)
   | .ntuple _ _ xs => .ok (xs.size != 0)
@@ -1302,6 +1315,9 @@ def strOfVal : RVal → Res RVal
   | .none => .ok (.str "None")
   | .ellipsis => .ok (.str "Ellipsis")
   | .notImplemented => .ok (.str "NotImplemented")
+  | .callable name =>
+      .unsupported (if isOpaqueCallableName name then opaqueObservation name else
+        "str() of 'function' is outside the tier (repr recursion is not guessed; docs/memory-model.md §the cast tier)")
   | value => .unsupported s!"str() of '{value.typeName}' is outside the tier (repr recursion is not guessed; docs/memory-model.md §the cast tier)"
 
 /-- The quote CPython picks for a string's `repr`: `'` unless the string
@@ -7461,6 +7477,22 @@ refs escape a refusal); everything out of tier goes to `globalsDirty`. -/
 def globalsStep (h : Heap) (acc : GlobalsAcc) (analysable diverged : Bool)
     (s : Stmt) : Heap × GlobalsAcc × Bool × Bool :=
   match s with
+  | .importStmt module _ =>
+    if opaqueImportAllowed module then
+      let root := String.mk (module.toList.takeWhile (· != '.'))
+      (h, (root, some (.callable (opaqueCallableName module root))) :: acc,
+        analysable, diverged)
+    else
+      match globalsDirty h acc analysable s with
+      | (h', acc', an') => (h', acc', an', diverged || g1ExecCandidate s)
+  | .importFrom module names star _ =>
+    if opaqueImportAllowed module && !star then
+      (h, names.toList.foldr (fun name acc' =>
+        (name, some (.callable (opaqueCallableName module name))) :: acc') acc,
+        analysable, diverged)
+    else
+      match globalsDirty h acc analysable s with
+      | (h', acc', an') => (h', acc', an', diverged || g1ExecCandidate s)
   | .assign tgts rhs _ =>
     match tgts.toList with
     | [.name id _] =>
@@ -8598,7 +8630,7 @@ mutual
   /-- Does executing this statement provably preserve the world? -/
   def Stmt.heapFree : Stmt → Bool
     | .annNoValue .. => true
-    | .importStmt .. => true
+    | .importStmt module _ => !opaqueImportAllowed module
     | .classDef .. => false
     | .globalDecl .. | .nonlocalDecl .. => true
     | .defStmt .. => false              -- ALLOCATES a closure (H7)
@@ -8657,7 +8689,7 @@ mutual
     -- so invariance is vacuous). REVIEW POINT for the future
     -- modeled-module arm: a binding import must flip this to `false` or
     -- re-prove — recorded so it is a review point, not a surprise.
-    | .importFrom .. => true
+    | .importFrom module _ _ _ => !opaqueImportAllowed module
     | .pass _ => true
     | .brk _ => true
     | .cont _ => true
@@ -9315,9 +9347,10 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                   -- symbolic proofs (the recorded H2 finding); the CLASS is
                   -- what the harness compares
                   .exn st (.typeError "'dict' object is not callable")
-          | some (.callable _) =>
+          | some (.callable name) =>
               flattenStarRun (evalExprs m fuel st args.toList) ⤳ fun st _ =>
-              .unsupported "calling a first-class callable value is outside the tier"
+              .unsupported (if isOpaqueCallableName name then opaqueObservation name else
+                "calling a first-class callable value is outside the tier")
           | some v =>
               flattenStarRun (evalExprs m fuel st args.toList) ⤳ fun st _ =>
               .exn st (.typeError s!"'{v.typeName}' object is not callable")
@@ -9328,9 +9361,10 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
             | some (some (.ref _)) =>
                 flattenStarRun (evalExprs m fuel st args.toList) ⤳ fun st _ =>
                 .exn st (.typeError "'dict' object is not callable")
-            | some (some (.callable _)) =>
+            | some (some (.callable name)) =>
                 flattenStarRun (evalExprs m fuel st args.toList) ⤳ fun st _ =>
-                .unsupported "calling a first-class callable value is outside the tier"
+                .unsupported (if isOpaqueCallableName name then opaqueObservation name else
+                  "calling a first-class callable value is outside the tier")
             | some (some v) =>
                 flattenStarRun (evalExprs m fuel st args.toList) ⤳ fun st _ =>
                 .exn st (.typeError s!"'{v.typeName}' object is not callable")
@@ -9351,9 +9385,10 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                         Run.withLocals st.locals
                           (callClosure m fuel st.world nm ps ao lo ig bd cap' vs.toArray)
                       | _ => .exn st (.typeError "'dict' object is not callable"))
-               | some (.callable _) =>
+               | some (.callable name) =>
                    flattenStarRun (evalExprs m fuel st args.toList) ⤳ fun st _ =>
-                   .unsupported "calling a first-class callable value is outside the tier"
+                   .unsupported (if isOpaqueCallableName name then opaqueObservation name else
+                     "calling a first-class callable value is outside the tier")
                | some v =>
                    flattenStarRun (evalExprs m fuel st args.toList) ⤳ fun st _ =>
                    .exn st (.typeError s!"'{v.typeName}' object is not callable")
@@ -11275,8 +11310,12 @@ def execStmt (m : Module) (fuel : Nat) (st : FrameState) (s : Stmt) :
                | .timeout => .timeout
                | .unsupported msg => .unsupported msg)
     | .importStmt mod _ =>
-      .unsupported s!"plain import {mod} is only admitted at module scope"
-    | .importFrom mod _ _ _ =>
+      if opaqueImportAllowed mod then
+        let root := String.mk (mod.toList.takeWhile (· != '.'))
+        .ok { st with locals := Env.set st.locals root (.callable (opaqueCallableName mod root)) } .next
+      else
+        .unsupported s!"plain import {mod} is only admitted at module scope"
+    | .importFrom mod names star _ =>
       -- Pass 0 (docs/memory-model.md §import forms): the importable
       -- universe is EMPTY — every admitted from-import RAISES,
       -- fuel-free, state unchanged, never `.ok`. The EXTRACTOR's
@@ -11290,6 +11329,10 @@ def execStmt (m : Module) (fuel : Nat) (st : FrameState) (s : Stmt) :
       -- Star changes nothing here: the raise fires before any binding.
       if mod == "__main__" then
         .unsupported "from __main__ import ... requires the runner's live __main__ module, outside the closed-function tier"
+      else if opaqueImportAllowed mod && !star then
+        let locals := names.toList.foldl (fun env name =>
+          Env.set env name (.callable (opaqueCallableName mod name))) st.locals
+        .ok { st with locals := locals } .next
       else
         .exn st (.importError mod)
     | .pass _ => .ok st .next

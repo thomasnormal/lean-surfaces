@@ -12,10 +12,10 @@
   "gcc.c-torture/execute": {
    "not-ingested": 19,
    "not-parsed": 321,
-   "passed": 499,
+   "passed": 500,
    "refused-libc": 95,
    "refused-ub": 28,
-   "refused-unsupported": 914,
+   "refused-unsupported": 913,
    "timeout": 42
   },
   "gcc.c23-run": {
@@ -30,15 +30,15 @@
  "counts": {
   "not-ingested": 25,
   "not-parsed": 350,
-  "passed": 596,
+  "passed": 597,
   "refused-libc": 99,
   "refused-ub": 31,
-  "refused-unsupported": 1069,
+  "refused-unsupported": 1068,
   "timeout": 44
  },
  "manifest_hash": "1de1a60c299d5bb51dae7ca001b0a008010cad0b25670cde2090c08bfc1a84ce",
- "measured_at_utc": "2026-11-12T04:15:00Z",
- "measured_commit": "33fe23e53",
+ "measured_at_utc": "2026-11-12T04:30:00Z",
+ "measured_commit": "d231ea6f7",
  "pin": null,
  "rows": [
   {
@@ -17406,14 +17406,12 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "GNU case range is outside the tier",
+   "detail": "",
    "manifest_status": "parsed",
    "name": "pr34154.c",
    "sha256": "edae4e9e3f74389c5fac0193e76bc3795b8aba369c7eea72ac658db62babae11",
-   "static_walls": [
-    "unsupported:CaseStmt"
-   ],
-   "verdict": "refused-unsupported"
+   "static_walls": [],
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -25690,14 +25688,6 @@
    "present": 8,
    "sole": 1,
    "wall": "unsupported:AddrLabelExpr"
-  },
-  {
-   "files": [
-    "pr34154.c"
-   ],
-   "present": 1,
-   "sole": 1,
-   "wall": "unsupported:CaseStmt"
   },
   {
    "files": [

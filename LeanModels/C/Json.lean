@@ -314,9 +314,12 @@ partial def parseStmt (j : Json) : Except String Stmt := do
     | "NullStmt" => return .nullStmt span
     | "SwitchStmt" => return .switchS (← expr "cond") (← stmt "body") span
     | "CaseStmt" =>
-        match expr "value" with
-        | .ok value => return .caseS value (← stmt "body") span
-        | .error reason => return .unsupported "CaseStmt" reason span
+        if (← getBool j "gnu_range") then
+          return .caseRange (← expr "lo") (← expr "hi") (← stmt "body") span
+        else
+          match expr "value" with
+          | .ok value => return .caseS value (← stmt "body") span
+          | .error reason => return .unsupported "CaseStmt" reason span
     | "DefaultStmt" => return .defaultS (← stmt "body") span
     | "GotoStmt" => return .goto (← getStr j "label") span
     | "LabelStmt" => return .label (← getStr j "label") (← stmt "body") span

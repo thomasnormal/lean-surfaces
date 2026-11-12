@@ -269,8 +269,6 @@ class Extractor:
         # retaining the lower endpoint would silently turn `case lo ... hi`
         # into `case lo`. Refuse the parser node loudly until the AST carries
         # both endpoints.
-        if k == "CaseStmt" and n.get("isGNURange"):
-            return self.unsupported_leaf(n, span)
         if k not in VOCAB:
             return self.unsupported_leaf(n, span)
         fn = getattr(self, "e_" + k, None)
@@ -468,6 +466,11 @@ class Extractor:
 
     def e_CaseStmt(self, n):
         c = kids(n)
+        if n.get("isGNURange"):
+            if len(c) < 3:
+                raise SystemExit("extract.py: GNU CaseStmt did not retain both endpoints")
+            return {"lo": self.node(c[0]), "hi": self.node(c[1]),
+                    "body": self.node(c[2]), "gnu_range": True}
         return {"value": self.node(c[0] if c else None),
                 "body": self.node(c[1] if len(c) > 1 else None)}
 

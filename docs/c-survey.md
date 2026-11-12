@@ -2,10 +2,10 @@
 
 Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manifest.
 
-- verdicts: 596/2214 MATCH (passed 596, failed 0, oracle 0)
+- verdicts: 597/2214 MATCH (passed 597, failed 0, oracle 0)
 - manifest SHA-256: `1de1a60c299d5bb51dae7ca001b0a008010cad0b25670cde2090c08bfc1a84ce`
-- measured commit: `33fe23e53`
-- measured at: `2026-11-12T04:15:00Z`
+- measured commit: `d231ea6f7`
+- measured at: `2026-11-12T04:30:00Z`
 
 ## Verdict counts
 
@@ -13,10 +13,10 @@ Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manife
 | --- | ---: |
 | `not-ingested` | 25 |
 | `not-parsed` | 350 |
-| `passed` | 596 |
+| `passed` | 597 |
 | `refused-libc` | 99 |
 | `refused-ub` | 31 |
-| `refused-unsupported` | 1069 |
+| `refused-unsupported` | 1068 |
 | `timeout` | 44 |
 
 ## Counts by corpus
@@ -32,10 +32,10 @@ Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manife
 | `c-testsuite/single-exec` | `timeout` | 2 |
 | `gcc.c-torture/execute` | `not-ingested` | 19 |
 | `gcc.c-torture/execute` | `not-parsed` | 321 |
-| `gcc.c-torture/execute` | `passed` | 499 |
+| `gcc.c-torture/execute` | `passed` | 500 |
 | `gcc.c-torture/execute` | `refused-libc` | 95 |
 | `gcc.c-torture/execute` | `refused-ub` | 28 |
-| `gcc.c-torture/execute` | `refused-unsupported` | 914 |
+| `gcc.c-torture/execute` | `refused-unsupported` | 913 |
 | `gcc.c-torture/execute` | `timeout` | 42 |
 | `gcc.c23-run` | `not-ingested` | 1 |
 | `gcc.c23-run` | `not-parsed` | 28 |
@@ -56,7 +56,6 @@ Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manife
 | `cast:PointerToIntegral` | 2 | 27 | 00144.c, 20000622-1.c, 20011121-1.c, 20030811-1.c, 20050215-1.c |
 | `unsupported:StmtExpr` | 1 | 10 | 00213.c, 00214.c, 20000703-1.c, 20000917-1.c, 20001203-2.c |
 | `unsupported:AddrLabelExpr` | 1 | 8 | 20040302-1.c, 20041214-1.c, 20071210-1.c, 920501-4.c, 920501-5.c |
-| `unsupported:CaseStmt` | 1 | 1 | pr34154.c |
 | `string-literal` | 0 | 262 | 00025.c, 00026.c, 00056.c, 00058.c, 00112.c |
 | `cast:IntegralToFloating` | 0 | 81 | 00113.c, 00119.c, 00123.c, 00174.c, 00175.c |
 | `unsupported:VAArgExpr` | 0 | 57 | 00204.c, 20000519-1.c, 20041113-1.c, 20041214-1.c, 20071213-1.c |

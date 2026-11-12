@@ -219,6 +219,7 @@ inductive Stmt where
   | nullStmt (span : CSpan)
   | switchS (cond : Expr) (body : Stmt) (span : CSpan)
   | caseS (value : Expr) (body : Stmt) (span : CSpan)
+  | caseRange (lo hi : Expr) (body : Stmt) (span : CSpan)
   | defaultS (body : Stmt) (span : CSpan)
   | goto (label : String) (span : CSpan)
   | label (name : String) (body : Stmt) (span : CSpan)
@@ -465,6 +466,7 @@ def Stmt.substmts : Stmt → List Stmt
   | s@(.label _ b _) => s :: b.substmts
   | s@(.switchS _ b _) => s :: b.substmts
   | s@(.caseS _ b _) => s :: b.substmts
+  | s@(.caseRange _ _ b _) => s :: b.substmts
   | s@(.defaultS b _) => s :: b.substmts
   | s => [s]
 
@@ -482,6 +484,7 @@ def Stmt.ownExprs : Stmt → List Expr
   | .nullStmt _ => []
   | .switchS c _ _ => c.subexprs
   | .caseS v _ _ => v.subexprs
+  | .caseRange lo hi _ _ => lo.subexprs ++ hi.subexprs
   | .defaultS _ _ => []
   | _ => []
 

@@ -334,35 +334,33 @@ from outside. -/
 
 inductive SwitchItem where
   | label (value : Option Expr)
+  | rangeLabel (lo hi : Expr)
   | stmt (s : Stmt)
 
 def switchCaseTail : Stmt → List SwitchItem
   | .caseS v b _ => .label (some v) :: switchCaseTail b
+  | .caseRange lo hi b _ => .rangeLabel lo hi :: switchCaseTail b
   | .defaultS b _ => .label none :: switchCaseTail b
   | s => [.stmt s]
 
 def switchItems : Stmt → List SwitchItem
   | .compound body _ => body.flatMap switchItems
   | .caseS v b _ => .label (some v) :: switchCaseTail b
+  | .caseRange lo hi b _ => .rangeLabel lo hi :: switchCaseTail b
   | .defaultS b _ => .label none :: switchCaseTail b
   | s => [.stmt s]
 
 def containsCaseLabel (s : Stmt) : Bool :=
   s.substmts.any fun t => match t with
-    | .caseS .. | .defaultS .. => true
+    | .caseS .. | .caseRange .. | .defaultS .. => true
     | _ => false
 
 def switchHasNestedLabel : Stmt → Bool
   | .compound body _ => body.any fun s =>
       match s with
-      | .caseS _ b _ | .defaultS b _ => containsCaseLabel b
+      | .caseS _ b _ | .caseRange _ _ b _ | .defaultS b _ => containsCaseLabel b
       | _ => containsCaseLabel s
   | s => containsCaseLabel s
-
-def switchHasUnsupportedRange (s : Stmt) : Bool :=
-  s.substmts.any fun t => match t with
-    | .unsupported "CaseStmt" _ _ => true
-    | _ => false
 
 def switchFindAux (ctx : Ctx) (cv : CVal) :
     List SwitchItem → Option (List Stmt) → Option (List Stmt) → EvalM (Option (List Stmt))
@@ -380,6 +378,17 @@ def switchFindAux (ctx : Ctx) (cv : CVal) :
               let (_, b) ← asInt v
               if a == b then switchFindAux ctx cv rest (some []) fallback
               else switchFindAux ctx cv rest none fallback
+  | .rangeLabel lo hi :: rest, selected, fallback =>
+      match selected with
+      | some _ => switchFindAux ctx cv rest selected fallback
+      | none => do
+          let lv ← evalExpr ctx lo
+          let hv ← evalExpr ctx hi
+          let (_, a) ← asInt cv
+          let (_, l) ← asInt lv
+          let (_, h) ← asInt hv
+          if l ≤ a && a ≤ h then switchFindAux ctx cv rest (some []) fallback
+          else switchFindAux ctx cv rest none fallback
   | .stmt s :: rest, selected, fallback =>
       match selected, fallback with
       | some acc, _ => switchFindAux ctx cv rest (some (s :: acc)) fallback
@@ -397,8 +406,6 @@ def execSwitch : Nat → Ctx → Expr → Stmt → ExecM Flow
   | fuel + 1, ctx, cond, body => do
       if switchHasNestedLabel body then
         refuseUnsupported "case label nested in a control statement"
-      if switchHasUnsupportedRange body then
-        refuseUnsupported "GNU case range is outside the tier"
       let cv ← evalE ctx cond
       let selected ← switchFind ctx cv body
       match selected with
@@ -427,7 +434,7 @@ def execStmt : Nat → Ctx → Stmt → ExecM Flow
     | .expr e _ => do let _ ← evalE ctx e; pure .normal
     | .nullStmt _ => pure .normal
     | .switchS c body _ => execSwitch fuel ctx c body
-    | .caseS _ _ _ | .defaultS _ _ =>
+    | .caseS _ _ _ | .caseRange _ _ _ _ | .defaultS _ _ =>
         refuseUnsupported "case/default escaped a switch body"
     -- §6.8.5.1 — `if`. Measured: only 51 of 253 carry an `else`, so the
     -- else-less arm is the common path and is written first.

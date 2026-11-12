@@ -1,20 +1,20 @@
 {
  "by_corpus": {
   "c-testsuite/single-exec": {
-   "passed": 155,
+   "passed": 156,
    "refused-libc": 5,
-   "refused-ub": 7,
-   "refused-unsupported": 51,
+   "refused-ub": 8,
+   "refused-unsupported": 49,
    "timeout": 2
   },
   "gcc.c-torture/execute": {
    "not-parsed": 267,
    "oracle-tests-compiler": 1,
-   "passed": 677,
+   "passed": 701,
    "refused-libc": 44,
-   "refused-ub": 57,
-   "refused-unsupported": 823,
-   "timeout": 49
+   "refused-ub": 60,
+   "refused-unsupported": 794,
+   "timeout": 51
   },
   "gcc.c23-run": {
    "not-parsed": 27,
@@ -28,11 +28,11 @@
  "counts": {
   "not-parsed": 294,
   "oracle-tests-compiler": 1,
-  "passed": 834,
+  "passed": 859,
   "refused-libc": 51,
-  "refused-ub": 65,
-  "refused-unsupported": 918,
-  "timeout": 51
+  "refused-ub": 69,
+  "refused-unsupported": 887,
+  "timeout": 53
  },
  "dynamic_wall_ranking": [
   {
@@ -447,6 +447,7 @@
   },
   {
    "files": [
+    "00032.c",
     "00115.c",
     "00141.c",
     "00144.c",
@@ -456,6 +457,7 @@
     "00217.c",
     "20000314-3.c",
     "20000801-4.c",
+    "20000910-1.c",
     "20001203-2.c",
     "20010409-1.c",
     "20010915-1.c",
@@ -465,7 +467,6 @@
     "20020508-3.c",
     "20021219-1.c",
     "20030404-1.c",
-    "20031003-1.c",
     "20031204-1.c",
     "20040409-1w.c",
     "20040409-2w.c",
@@ -479,11 +480,13 @@
     "20121108-1.c",
     "20191023-1.c",
     "920612-1.c",
+    "920922-1.c",
     "930123-1.c",
     "930529-1.c",
     "950704-1.c",
     "960317-1.c",
     "960321-1.c",
+    "960327-1.c",
     "990524-1.c",
     "builtins/memmove.c",
     "gcc/testsuite/gcc.dg/c23-complit-1.c",
@@ -496,6 +499,7 @@
     "pr33870.c",
     "pr34099-2.c",
     "pr34099.c",
+    "pr34176.c",
     "pr40386.c",
     "pr41750.c",
     "pr43629.c",
@@ -513,8 +517,8 @@
     "strlen-2.c",
     "strlen-6.c"
    ],
-   "present": 65,
-   "sole": 65,
+   "present": 69,
+   "sole": 69,
    "wall": "undefined-behavior"
   },
   {
@@ -528,10 +532,12 @@
     "20050224-1.c",
     "20060905-1.c",
     "20081218-1.c",
+    "920501-2.c",
     "951204-1.c",
     "961017-1.c",
     "961017-2.c",
     "980602-1.c",
+    "990513-1.c",
     "991201-1.c",
     "arith-rand-ll.c",
     "arith-rand.c",
@@ -571,8 +577,8 @@
     "ssad-run.c",
     "usad-run.c"
    ],
-   "present": 51,
-   "sole": 51,
+   "present": 53,
+   "sole": 53,
    "wall": "timeout"
   },
   {
@@ -621,51 +627,6 @@
    "present": 40,
    "sole": 40,
    "wall": "unsupported:extern object 'inside_main' has no definition in the translation unit"
-  },
-  {
-   "files": [
-    "00032.c",
-    "00173.c",
-    "00182.c",
-    "20000412-6.c",
-    "20000801-1.c",
-    "20000819-1.c",
-    "20000910-1.c",
-    "20011126-2.c",
-    "20020503-1.c",
-    "20030221-1.c",
-    "20030606-1.c",
-    "20030920-1.c",
-    "20050502-1.c",
-    "20060910-1.c",
-    "20070201-1.c",
-    "20100827-1.c",
-    "20111208-1.c",
-    "20120808-1.c",
-    "20140828-1.c",
-    "920501-2.c",
-    "920501-3.c",
-    "920922-1.c",
-    "930429-1.c",
-    "931110-2.c",
-    "950714-1.c",
-    "960327-1.c",
-    "961125-1.c",
-    "990222-1.c",
-    "990513-1.c",
-    "loop-12.c",
-    "pr116799.c",
-    "pr20601-1.c",
-    "pr27073.c",
-    "pr34176.c",
-    "pr34415.c",
-    "pr36038.c",
-    "pr54985.c",
-    "pr71631.c"
-   ],
-   "present": 38,
-   "sole": 38,
-   "wall": "unsupported:pointer used as an integer (no ptr\u2194int cast in tier)"
   },
   {
    "files": [
@@ -936,8 +897,10 @@
    "files": [
     "00051.c",
     "00143.c",
+    "00182.c",
     "20011109-1.c",
     "20080719-1.c",
+    "20111208-1.c",
     "920506-1.c",
     "medce-1.c",
     "pr114965.c",
@@ -945,8 +908,8 @@
     "pr91632.c",
     "switch-1.c"
    ],
-   "present": 10,
-   "sole": 10,
+   "present": 12,
+   "sole": 12,
    "wall": "unsupported:case label nested in a control statement"
   },
   {
@@ -998,21 +961,6 @@
   },
   {
    "files": [
-    "20030914-1.c",
-    "20080502-1.c",
-    "960513-1.c",
-    "gcc/testsuite/gcc.dg/c23-float-1.c",
-    "ieee/20010226-1.c",
-    "ieee/pr36332.c",
-    "pr44942.c",
-    "va-arg-6.c"
-   ],
-   "present": 8,
-   "sole": 8,
-   "wall": "unsupported:long double floating literal"
-  },
-  {
-   "files": [
     "20020406-1.c",
     "960521-1.c",
     "990628-1.c",
@@ -1024,6 +972,20 @@
    "present": 7,
    "sole": 7,
    "wall": "libc-call: malloc"
+  },
+  {
+   "files": [
+    "20030914-1.c",
+    "20080502-1.c",
+    "gcc/testsuite/gcc.dg/c23-float-1.c",
+    "ieee/20010226-1.c",
+    "ieee/pr36332.c",
+    "pr44942.c",
+    "va-arg-6.c"
+   ],
+   "present": 7,
+   "sole": 7,
+   "wall": "unsupported:long double floating literal"
   },
   {
    "files": [
@@ -1134,6 +1096,19 @@
   },
   {
    "files": [
+    "00175.c",
+    "20031003-1.c",
+    "920710-1.c",
+    "960513-1.c",
+    "pr38048-2.c",
+    "va-arg-26.c"
+   ],
+   "present": 6,
+   "sole": 6,
+   "wall": "unsupported:floating literal lacks parser-native bits"
+  },
+  {
+   "files": [
     "20071018-1.c",
     "20071120-1.c",
     "pr36765.c",
@@ -1167,18 +1142,6 @@
    "present": 5,
    "sole": 5,
    "wall": "unsupported:no layout for declared type '_Complex double'"
-  },
-  {
-   "files": [
-    "00175.c",
-    "20010325-1.c",
-    "printf-1.c",
-    "wchar_t-1.c",
-    "widechar-3.c"
-   ],
-   "present": 5,
-   "sole": 5,
-   "wall": "unsupported:string literal with escape or non-ASCII spelling"
   },
   {
    "files": [
@@ -1234,6 +1197,17 @@
    "present": 4,
    "sole": 4,
    "wall": "unsupported:no layout for declared type 'union U'"
+  },
+  {
+   "files": [
+    "20010325-1.c",
+    "printf-1.c",
+    "wchar_t-1.c",
+    "widechar-3.c"
+   ],
+   "present": 4,
+   "sole": 4,
+   "wall": "unsupported:string literal with escape or non-ASCII spelling"
   },
   {
    "files": [
@@ -1461,15 +1435,6 @@
   },
   {
    "files": [
-    "920710-1.c",
-    "va-arg-26.c"
-   ],
-   "present": 2,
-   "sole": 2,
-   "wall": "unsupported:floating literal lacks parser-native bits"
-  },
-  {
-   "files": [
     "00129.c",
     "gcc/testsuite/gcc.dg/c23-labels-1.c"
    ],
@@ -1683,6 +1648,15 @@
    "present": 2,
    "sole": 2,
    "wall": "unsupported:sizeof: no layout for operand type 'struct A'"
+  },
+  {
+   "files": [
+    "20030221-1.c",
+    "strlen-3.c"
+   ],
+   "present": 2,
+   "sole": 2,
+   "wall": "unsupported:strlen"
   },
   {
    "files": [
@@ -1959,6 +1933,14 @@
    "present": 1,
    "sole": 1,
    "wall": "unsupported:GenericSelectionExpr"
+  },
+  {
+   "files": [
+    "920501-3.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "unsupported:IndirectGotoStmt"
   },
   {
    "files": [
@@ -3418,14 +3400,6 @@
   },
   {
    "files": [
-    "strlen-3.c"
-   ],
-   "present": 1,
-   "sole": 1,
-   "wall": "unsupported:strlen"
-  },
-  {
-   "files": [
     "pr71083.c"
    ],
    "present": 1,
@@ -3783,6 +3757,14 @@
    "present": 1,
    "sole": 1,
    "wall": "unsupported:unbound declaration 'id28' (name 'arr')"
+  },
+  {
+   "files": [
+    "20120808-1.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "unsupported:unbound declaration 'id28' (name 'cp')"
   },
   {
    "files": [
@@ -4257,9 +4239,9 @@
    "wall": "unsupported:unnamed pointer parameter (array-bound effects are not retained by clang)"
   }
  ],
- "manifest_hash": "7c37aac5bda12272a4bb8978a53d85ad68cbc61fa13d32218d7bbf84bfbcaed7",
- "measured_at_utc": "2026-11-12T18:11:39Z",
- "measured_commit": "506490cfb",
+ "manifest_hash": "eb2ea162993fd287a86d680d539ca5a9bba4f09b045a6ad663aaf88cdc3f445d",
+ "measured_at_utc": "2026-11-12T18:21:45Z",
+ "measured_commit": "f8fe24cb6",
  "pin": {
   "corpora": [
    "C1",
@@ -4600,15 +4582,15 @@
   },
   {
    "corpus": "c-testsuite/single-exec",
-   "detail": "pointer used as an integer (no ptr\u2194int cast in tier)",
-   "dynamic_wall": "unsupported:pointer used as an integer (no ptr\u2194int cast in tier)",
+   "detail": "LeanModels.C.C23.MemFault.outOfBounds 0 (-4) 4 8",
+   "dynamic_wall": "undefined-behavior",
    "manifest_status": "parsed",
    "name": "00032.c",
    "sha256": "7389893870227ba0cac6a3a8aa19cadf41e9c0837f7dea8327c00b7d3dfdff2a",
    "static_walls": [
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "refused-ub"
   },
   {
    "corpus": "c-testsuite/single-exec",
@@ -6208,8 +6190,8 @@
   },
   {
    "corpus": "c-testsuite/single-exec",
-   "detail": "pointer used as an integer (no ptr\u2194int cast in tier)",
-   "dynamic_wall": "unsupported:pointer used as an integer (no ptr\u2194int cast in tier)",
+   "detail": "",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "00173.c",
    "sha256": "e762670518c9ae8a9e4cc594e51b1fe0d5a6b90b0036d2ab91ace347d5bfa446",
@@ -6218,7 +6200,7 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "c-testsuite/single-exec",
@@ -6238,8 +6220,8 @@
   },
   {
    "corpus": "c-testsuite/single-exec",
-   "detail": "string literal with escape or non-ASCII spelling",
-   "dynamic_wall": "unsupported:string literal with escape or non-ASCII spelling",
+   "detail": "floating literal lacks parser-native bits",
+   "dynamic_wall": "unsupported:floating literal lacks parser-native bits",
    "manifest_status": "parsed",
    "name": "00175.c",
    "sha256": "9140671105335599b144512673237a8ce1faf1e251840708a8c1999c9601dcee",
@@ -6339,8 +6321,8 @@
   },
   {
    "corpus": "c-testsuite/single-exec",
-   "detail": "pointer used as an integer (no ptr\u2194int cast in tier)",
-   "dynamic_wall": "unsupported:pointer used as an integer (no ptr\u2194int cast in tier)",
+   "detail": "case label nested in a control statement",
+   "dynamic_wall": "unsupported:case label nested in a control statement",
    "manifest_status": "parsed",
    "name": "00182.c",
    "sha256": "978fb36c70bcd39965a2f0a7be31495847662a496fc945024825d9e3b3c9f0de",
@@ -7116,15 +7098,15 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "pointer used as an integer (no ptr\u2194int cast in tier)",
-   "dynamic_wall": "unsupported:pointer used as an integer (no ptr\u2194int cast in tier)",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "20000412-6.c",
    "sha256": "84d87ed9515d0cd75170f04abdb31e5740f39446a3e743656cde92d18580b88e",
    "static_walls": [
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -7487,13 +7469,13 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "pointer used as an integer (no ptr\u2194int cast in tier)",
-   "dynamic_wall": "unsupported:pointer used as an integer (no ptr\u2194int cast in tier)",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "20000801-1.c",
    "sha256": "760637a9ee882c964dd86befe8671b39ef2aad060a6ed98ae6f6475ff57ac915",
    "static_walls": [],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -7569,15 +7551,15 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "pointer used as an integer (no ptr\u2194int cast in tier)",
-   "dynamic_wall": "unsupported:pointer used as an integer (no ptr\u2194int cast in tier)",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "20000819-1.c",
    "sha256": "111c68973feb0c699822694cde27f683151db7d97b5c0a97a3966e7a6f2005e0",
    "static_walls": [
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -7591,15 +7573,15 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "pointer used as an integer (no ptr\u2194int cast in tier)",
-   "dynamic_wall": "unsupported:pointer used as an integer (no ptr\u2194int cast in tier)",
+   "detail": "LeanModels.C.C23.MemFault.outOfBounds 0 (-4) 4 12",
+   "dynamic_wall": "undefined-behavior",
    "manifest_status": "parsed",
    "name": "20000910-1.c",
    "sha256": "f65453c1b825db283b34bde7d68f829e1e403b573e4f09931596171da3b35c48",
    "static_walls": [
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "refused-ub"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -8412,8 +8394,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "pointer used as an integer (no ptr\u2194int cast in tier)",
-   "dynamic_wall": "unsupported:pointer used as an integer (no ptr\u2194int cast in tier)",
+   "detail": "",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "20011126-2.c",
    "sha256": "52fc3596a01688ff5a126d07bc7b88811bed3bd82fba8bd18dc097201da6c4f9",
@@ -8421,7 +8403,7 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -8842,15 +8824,15 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "pointer used as an integer (no ptr\u2194int cast in tier)",
-   "dynamic_wall": "unsupported:pointer used as an integer (no ptr\u2194int cast in tier)",
+   "detail": "",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "20020503-1.c",
    "sha256": "faa87d6b8a37a51510f77989304f7d5fa64607b82bb8ea8a6822225d350f41bf",
    "static_walls": [
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -9380,8 +9362,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "pointer used as an integer (no ptr\u2194int cast in tier)",
-   "dynamic_wall": "unsupported:pointer used as an integer (no ptr\u2194int cast in tier)",
+   "detail": "strlen: no concrete NUL in object",
+   "dynamic_wall": "unsupported:strlen",
    "manifest_status": "parsed",
    "name": "20030221-1.c",
    "sha256": "8ef3dfbb4073e72612ff4c6bc619338cbba186897f074e71ab3d669582a62d99",
@@ -9526,8 +9508,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "pointer used as an integer (no ptr\u2194int cast in tier)",
-   "dynamic_wall": "unsupported:pointer used as an integer (no ptr\u2194int cast in tier)",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "20030606-1.c",
    "sha256": "341fec31cd56cc2cd043df3a94a0706e096fb9c6a189162ed4c324b2fd6c0124",
@@ -9535,7 +9517,7 @@
     "libc-call",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -9755,8 +9737,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "pointer used as an integer (no ptr\u2194int cast in tier)",
-   "dynamic_wall": "unsupported:pointer used as an integer (no ptr\u2194int cast in tier)",
+   "detail": "",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "20030920-1.c",
    "sha256": "c8df090a4028952f82cb0c3ce035b69bea04a4e89599feb15271b4eec1a52f0a",
@@ -9764,7 +9746,7 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -9781,8 +9763,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "LeanModels.C.C23.UB.floatingToIntegralOutOfRange { signed := true, bits := 32 }",
-   "dynamic_wall": "undefined-behavior",
+   "detail": "floating literal lacks parser-native bits",
+   "dynamic_wall": "unsupported:floating literal lacks parser-native bits",
    "manifest_status": "parsed",
    "name": "20031003-1.c",
    "sha256": "209f4e7a226a95031de13f682ae3cda1cab134fe247dac1974cdf54cfe871614",
@@ -9791,7 +9773,7 @@
     "cast:IntegralToFloating",
     "type-layout"
    ],
-   "verdict": "refused-ub"
+   "verdict": "refused-unsupported"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -10720,8 +10702,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "pointer used as an integer (no ptr\u2194int cast in tier)",
-   "dynamic_wall": "unsupported:pointer used as an integer (no ptr\u2194int cast in tier)",
+   "detail": "",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "20050502-1.c",
    "sha256": "c0193c330a5aa8d3c7d85780afc61fc5f439792ebc6d90a9f25b0a46c9665cf4",
@@ -10730,7 +10712,7 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -10997,15 +10979,15 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "pointer used as an integer (no ptr\u2194int cast in tier)",
-   "dynamic_wall": "unsupported:pointer used as an integer (no ptr\u2194int cast in tier)",
+   "detail": "",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "20060910-1.c",
    "sha256": "ee2aac3dc0f9342e2ceebf54eee3356681f7d88d41714320971b8fb7d3b27f48",
    "static_walls": [
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -11082,8 +11064,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "pointer used as an integer (no ptr\u2194int cast in tier)",
-   "dynamic_wall": "unsupported:pointer used as an integer (no ptr\u2194int cast in tier)",
+   "detail": "",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "20070201-1.c",
    "sha256": "79a6ffa40ce563a6f0b2ffb9dc77ae4738fadda63e9171fde370feb9e889b162",
@@ -11092,7 +11074,7 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -11781,8 +11763,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "pointer used as an integer (no ptr\u2194int cast in tier)",
-   "dynamic_wall": "unsupported:pointer used as an integer (no ptr\u2194int cast in tier)",
+   "detail": "",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "20100827-1.c",
    "sha256": "02d59f1d5c866906ecaa3ae45ec45753dea383ddba352250caf74df884d40d60",
@@ -11790,7 +11772,7 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -11838,8 +11820,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "pointer used as an integer (no ptr\u2194int cast in tier)",
-   "dynamic_wall": "unsupported:pointer used as an integer (no ptr\u2194int cast in tier)",
+   "detail": "case label nested in a control statement",
+   "dynamic_wall": "unsupported:case label nested in a control statement",
    "manifest_status": "parsed",
    "name": "20111208-1.c",
    "sha256": "92723158d592c7c9b386233062c8faede652bc2a9189b6af138ff322ae6fc5ce",
@@ -11944,8 +11926,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "pointer used as an integer (no ptr\u2194int cast in tier)",
-   "dynamic_wall": "unsupported:pointer used as an integer (no ptr\u2194int cast in tier)",
+   "detail": "unbound declaration 'id28' (name 'cp')",
+   "dynamic_wall": "unsupported:unbound declaration 'id28' (name 'cp')",
    "manifest_status": "parsed",
    "name": "20120808-1.c",
    "sha256": "194ffb346c27ea614c2da75618f191b556eba9ec12a2b354ca45643246495bdb",
@@ -12062,8 +12044,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "pointer used as an integer (no ptr\u2194int cast in tier)",
-   "dynamic_wall": "unsupported:pointer used as an integer (no ptr\u2194int cast in tier)",
+   "detail": "",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "20140828-1.c",
    "sha256": "244defc818f4f2efc88ea99bd5ad1353043d47b0898c3e5fd68e281d8d8e59c2",
@@ -12071,7 +12053,7 @@
     "libc-call",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -12539,20 +12521,20 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "pointer used as an integer (no ptr\u2194int cast in tier)",
-   "dynamic_wall": "unsupported:pointer used as an integer (no ptr\u2194int cast in tier)",
+   "detail": "",
+   "dynamic_wall": "timeout",
    "manifest_status": "parsed",
    "name": "920501-2.c",
    "sha256": "8c6b9532202bfeebc626121c8b10a36410385e65d338a18c297058e165fd1572",
    "static_walls": [
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "timeout"
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "pointer used as an integer (no ptr\u2194int cast in tier)",
-   "dynamic_wall": "unsupported:pointer used as an integer (no ptr\u2194int cast in tier)",
+   "detail": "out of tier: IndirectGotoStmt",
+   "dynamic_wall": "unsupported:IndirectGotoStmt",
    "manifest_status": "parsed",
    "name": "920501-3.c",
    "sha256": "4a7fba430dcb1498eb2dcef680482a27978fb54c7b3faf4e3235310be4ada66e",
@@ -12905,13 +12887,13 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "pointer used as an integer (no ptr\u2194int cast in tier)",
-   "dynamic_wall": "unsupported:pointer used as an integer (no ptr\u2194int cast in tier)",
+   "detail": "LeanModels.C.C23.MemFault.outOfBounds 0 1032 8 8",
+   "dynamic_wall": "undefined-behavior",
    "manifest_status": "parsed",
    "name": "920922-1.c",
    "sha256": "40b68280ace97b110beac6e8f018f866a90c712af1fd560f22a4fb102d826684",
    "static_walls": [],
-   "verdict": "refused-unsupported"
+   "verdict": "refused-ub"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -13290,8 +13272,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "pointer used as an integer (no ptr\u2194int cast in tier)",
-   "dynamic_wall": "unsupported:pointer used as an integer (no ptr\u2194int cast in tier)",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "930429-1.c",
    "sha256": "f4412cbe15519cd91f247f90fbc00b6c4c6de1c51243d95ff7410d6eb37c7c88",
@@ -13299,7 +13281,7 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -13907,15 +13889,15 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "pointer used as an integer (no ptr\u2194int cast in tier)",
-   "dynamic_wall": "unsupported:pointer used as an integer (no ptr\u2194int cast in tier)",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "931110-2.c",
    "sha256": "fa1f986466711b6953473cd495a051e3a0d582c9fe3e90a700b679844ae441fd",
    "static_walls": [
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -14230,15 +14212,15 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "pointer used as an integer (no ptr\u2194int cast in tier)",
-   "dynamic_wall": "unsupported:pointer used as an integer (no ptr\u2194int cast in tier)",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "950714-1.c",
    "sha256": "848ec97a95a193a7aa1c5d869b475eddcbb203615a0735bd2ebe58146df6f9d2",
    "static_walls": [
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -14485,8 +14467,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "pointer used as an integer (no ptr\u2194int cast in tier)",
-   "dynamic_wall": "unsupported:pointer used as an integer (no ptr\u2194int cast in tier)",
+   "detail": "LeanModels.C.C23.MemFault.indetAutomatic 0 11",
+   "dynamic_wall": "undefined-behavior",
    "manifest_status": "parsed",
    "name": "960327-1.c",
    "sha256": "92408d01ffcc6f11882093609e60c2321660e10bddbcae75f5b63799fa552a59",
@@ -14495,7 +14477,7 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "refused-ub"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -14568,8 +14550,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "long double floating literal",
-   "dynamic_wall": "unsupported:long double floating literal",
+   "detail": "floating literal lacks parser-native bits",
+   "dynamic_wall": "unsupported:floating literal lacks parser-native bits",
    "manifest_status": "parsed",
    "name": "960513-1.c",
    "sha256": "aec9013b5cb129ca5bc6843a31910d156e156d9dc508cf646679491e5f518e60",
@@ -14716,8 +14698,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "pointer used as an integer (no ptr\u2194int cast in tier)",
-   "dynamic_wall": "unsupported:pointer used as an integer (no ptr\u2194int cast in tier)",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "961125-1.c",
    "sha256": "43365ddefcd738cbf9a632528b4c27b43243b2d67a7060665190177e9bd7bd10",
@@ -14725,7 +14707,7 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -15246,15 +15228,15 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "pointer used as an integer (no ptr\u2194int cast in tier)",
-   "dynamic_wall": "unsupported:pointer used as an integer (no ptr\u2194int cast in tier)",
+   "detail": "",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "990222-1.c",
    "sha256": "fbe95388c780429cf5c75f29730ce6e2b2803f0fde435582d3ef236cdde06a35",
    "static_walls": [
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -15307,8 +15289,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "pointer used as an integer (no ptr\u2194int cast in tier)",
-   "dynamic_wall": "unsupported:pointer used as an integer (no ptr\u2194int cast in tier)",
+   "detail": "",
+   "dynamic_wall": "timeout",
    "manifest_status": "parsed",
    "name": "990513-1.c",
    "sha256": "efc5173b45881fa5320d70c2b39564e0f17e1f1423de6f7e5a945bc5ec690fd6",
@@ -15316,7 +15298,7 @@
     "libc-call",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "timeout"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -20442,8 +20424,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "pointer used as an integer (no ptr\u2194int cast in tier)",
-   "dynamic_wall": "unsupported:pointer used as an integer (no ptr\u2194int cast in tier)",
+   "detail": "",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "loop-12.c",
    "sha256": "635996f6b8c74d18d9d72e801ac39dfda7c3c93d4c40e2aef8c329bb5f4da644",
@@ -20451,7 +20433,7 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -21980,8 +21962,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "pointer used as an integer (no ptr\u2194int cast in tier)",
-   "dynamic_wall": "unsupported:pointer used as an integer (no ptr\u2194int cast in tier)",
+   "detail": "",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "pr116799.c",
    "sha256": "4c8b152e9be0e30fabe1ce363fddcd56e98107b8df401c0668b76260c6e7182d",
@@ -21990,7 +21972,7 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -22527,8 +22509,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "pointer used as an integer (no ptr\u2194int cast in tier)",
-   "dynamic_wall": "unsupported:pointer used as an integer (no ptr\u2194int cast in tier)",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "pr20601-1.c",
    "sha256": "2c806b4cdec5d59f743c669860262171a9a45579f3abe244332c6365b38c27c8",
@@ -22536,7 +22518,7 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -22884,15 +22866,15 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "pointer used as an integer (no ptr\u2194int cast in tier)",
-   "dynamic_wall": "unsupported:pointer used as an integer (no ptr\u2194int cast in tier)",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "pr27073.c",
    "sha256": "c9233cef0500daebf2c438e08f24b478b2ced62912ea5e0f14171581d78904a1",
    "static_walls": [
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -23400,20 +23382,20 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "pointer used as an integer (no ptr\u2194int cast in tier)",
-   "dynamic_wall": "unsupported:pointer used as an integer (no ptr\u2194int cast in tier)",
+   "detail": "LeanModels.C.C23.MemFault.nullDeref 0",
+   "dynamic_wall": "undefined-behavior",
    "manifest_status": "parsed",
    "name": "pr34176.c",
    "sha256": "9acd2bb99915c1e65a65c9feb9316947049a1e56d8a1fdd18f6e81de0bd904a0",
    "static_walls": [
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "refused-ub"
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "pointer used as an integer (no ptr\u2194int cast in tier)",
-   "dynamic_wall": "unsupported:pointer used as an integer (no ptr\u2194int cast in tier)",
+   "detail": "",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "pr34415.c",
    "sha256": "13ab9e6adebc2c6da13d7014094af60ceb5c4bdb067348ac9ab7fcbfa58b054c",
@@ -23421,7 +23403,7 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -23579,8 +23561,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "pointer used as an integer (no ptr\u2194int cast in tier)",
-   "dynamic_wall": "unsupported:pointer used as an integer (no ptr\u2194int cast in tier)",
+   "detail": "",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "pr36038.c",
    "sha256": "9dc503485913322bc0fb4dbd8fcc64f04b0522435773dfcc8faab0e200ce5a07",
@@ -23588,7 +23570,7 @@
     "libc-call",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -23756,8 +23738,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "",
-   "dynamic_wall": null,
+   "detail": "floating literal lacks parser-native bits",
+   "dynamic_wall": "unsupported:floating literal lacks parser-native bits",
    "manifest_status": "parsed",
    "name": "pr38048-2.c",
    "sha256": "1a322440174c812e8016ab7219c7ce6c805db317b4bfd66de61023bf50e3814d",
@@ -23765,7 +23747,7 @@
     "cast:FloatingToIntegral",
     "type-layout"
    ],
-   "verdict": "passed"
+   "verdict": "refused-unsupported"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -25230,15 +25212,15 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "pointer used as an integer (no ptr\u2194int cast in tier)",
-   "dynamic_wall": "unsupported:pointer used as an integer (no ptr\u2194int cast in tier)",
+   "detail": "",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "pr54985.c",
    "sha256": "3b701114a2830df13c5a3ab7bbe140a3027961b3c3bfb80b225ab2c5ddf1085c",
    "static_walls": [
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -27105,8 +27087,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "pointer used as an integer (no ptr\u2194int cast in tier)",
-   "dynamic_wall": "unsupported:pointer used as an integer (no ptr\u2194int cast in tier)",
+   "detail": "",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "pr71631.c",
    "sha256": "bbcf356ce773fb861b23822b21d24a0cff08fc5ec2a32e74fb5b044751a275bb",
@@ -27115,7 +27097,7 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",

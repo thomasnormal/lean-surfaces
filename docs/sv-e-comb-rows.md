@@ -208,3 +208,7 @@ count.
 The four-state carry-chain row, `wpg_carry`, runs from its source-shaped
 envelope and matches Icarus Verilog 13.0 and Xcelium 24.03-s004 for all 32
 cycles.  It is an E-MATCH and does not change the frozen migration count.
+
+The procedural-local temporary row, `wpg_local`, runs from its source-shaped
+envelope and matches Icarus Verilog 13.0 and Xcelium 24.03-s004 for all 18
+cycles.  It is an E-MATCH and does not change the frozen migration count.

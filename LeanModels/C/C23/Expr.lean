@@ -651,6 +651,35 @@ def mayWrite (e : Expr) : Bool :=
     | .unop op .. => op == "++" || op == "--"
     | _ => false
 
+/-! A postfix update in the right operand is not sequenced before the
+assignment store when it targets the assigned object (§6.5.17.1p3). Calls
+are deliberately absent: a call's effects complete during the right-hand
+evaluation, before the assignment store, so `x = f(y)` is defined even when
+`f` writes memory. -/
+def lvalueKey : Expr → Option String
+  | .declRef (some id) .. => some ("id:" ++ id.value)
+  | .declRef none name .. => some ("name:" ++ name)
+  | .paren sub .. => lvalueKey sub
+  | .implicitCast _ sub .. | .cast _ sub .. => lvalueKey sub
+  | .member base field .. => (lvalueKey base).map (· ++ "." ++ field)
+  | _ => none
+
+def directWriteTargets (e : Expr) : List (Option String) :=
+  e.subexprs.flatMap fun n => match n with
+    | .unop op sub .. =>
+        if op == "++" || op == "--" then [lvalueKey sub] else []
+    | .compoundAssign _ lhs .. => [lvalueKey lhs]
+    | .binop "=" lhs .. => [lvalueKey lhs]
+    | _ => []
+
+def assignmentHasUnsequencedWrite (lhs rhs : Expr) : Bool :=
+  let target := lvalueKey lhs
+  (directWriteTargets rhs).any fun written =>
+    match target, written with
+    | some a, some b => a == b
+    | none, _ => true
+    | _, none => false
+
 def hasTwoImpure : List Expr → Bool
   | [] => false
   | e :: es =>
@@ -783,6 +812,8 @@ def evalExpr (ctx : Ctx) : Expr → EvalM CVal
         -- after the right operand's value computation, which is why the
         -- sequencing census could admit 53 of its 73 multi-effect full
         -- expressions by inspection (`docs/c-semantics-design.md` §4.4).
+        if assignmentHasUnsequencedWrite l r then
+          refuseUnsupported "unsequenced side effects in assignment"
         let p ← evalLValue ctx l
         let v ← evalExpr ctx r
         storeAt p (ctx.layout.normalizeTy l.ty) v

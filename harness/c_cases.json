@@ -34,5 +34,236 @@
     "source": "int main(void) { int x = 2147483647; x += 1; return x; }",
     "expect": "refuse",
     "sanitize": true
+  },
+  {
+    "id": "charlit-ascii",
+    "source": "int main(void) { return ('a' == 97) ? 0 : 1; }",
+    "expect": "match",
+    "return_value": 0
+  },
+  {
+    "id": "charlit-high-hex",
+    "source": "int main(void) { return ('\\xff' == -1) ? 0 : 1; }",
+    "expect": "match",
+    "return_value": 0
+  },
+  {
+    "id": "charlit-high-octal",
+    "source": "int main(void) { return ('\\377' == -1) ? 0 : 1; }",
+    "expect": "match",
+    "return_value": 0
+  },
+  {
+    "id": "charlit-high-80",
+    "source": "int main(void) { return ('\\x80' == -128) ? 0 : 1; }",
+    "expect": "match",
+    "return_value": 0
+  },
+  {
+    "id": "compound-signed-char",
+    "source": "int main(void) { signed char s = 127; s += 1; return s; }",
+    "expect": "match",
+    "return_value": -128
+  },
+  {
+    "id": "compound-unsigned-char",
+    "source": "int main(void) { unsigned char u = 1; u <<= 8; return u; }",
+    "expect": "match",
+    "return_value": 0
+  },
+  {
+    "id": "compound-bool",
+    "source": "int main(void) { _Bool b = 1; b++; return b; }",
+    "expect": "match",
+    "return_value": 1
+  },
+  {
+    "id": "compound-mixed",
+    "source": "int main(void) { int i = 2147483647; i += 1u; return i; }",
+    "expect": "match",
+    "return_value": -2147483648
+  },
+  {
+    "id": "compound-ushort-overflow",
+    "source": "int main(void) { unsigned short a = 65535; a *= a; return a; }",
+    "expect": "refuse",
+    "sanitize": true,
+    "error": "signedOverflow"
+  },
+  {
+    "id": "filler-designated-gap",
+    "source": "int main(void) { int a[5] = {[3] = 7}; return a[0] + 2*a[1] + 3*a[2] + 4*a[3] + 5*a[4]; }",
+    "expect": "match",
+    "return_value": 28,
+    "envelope_checks": [
+      "array_filler"
+    ]
+  },
+  {
+    "id": "filler-mixed-gap",
+    "source": "int main(void) { int b[6] = {1, [4] = 9}; return b[0] + 2*b[1] + 3*b[2] + 4*b[3] + 5*b[4] + 6*b[5]; }",
+    "expect": "match",
+    "return_value": 46,
+    "envelope_checks": [
+      "array_filler"
+    ]
+  },
+  {
+    "id": "filler-partial-tail",
+    "source": "int main(void) { int a[5] = {1, 2, 3}; return a[0] + 2*a[1] + 3*a[2] + 4*a[3] + 5*a[4]; }",
+    "expect": "match",
+    "return_value": 14,
+    "envelope_checks": [
+      "array_filler"
+    ]
+  },
+  {
+    "id": "filler-full",
+    "source": "int main(void) { int a[3] = {2, 3, 4}; return a[0] + 2*a[1] + 3*a[2]; }",
+    "expect": "match",
+    "return_value": 20,
+    "envelope_checks": [
+      "array_filler"
+    ]
+  },
+  {
+    "id": "filler-all-zero",
+    "source": "int main(void) { int a[4] = {}; return a[0] + a[1] + a[2] + a[3]; }",
+    "expect": "match",
+    "return_value": 0,
+    "envelope_checks": [
+      "array_filler"
+    ]
+  },
+  {
+    "id": "global-tentative",
+    "source": "int x; int *p = &x; int x = 3; int main(void) { return *p; }",
+    "expect": "match",
+    "return_value": 3
+  },
+  {
+    "id": "goto-skips-decl",
+    "source": "int main(void) { int x = 1; goto L; int x2 = 2; L: x = 7; return x; }",
+    "expect": "refuse",
+    "error": "goto skips"
+  },
+  {
+    "id": "local-callee-shadow",
+    "source": "int target(void) { return 1; } int main(void) { int (*target)(void) = 0; return target(); }",
+    "expect": "refuse"
+  },
+  {
+    "id": "lifetime-block-dangling",
+    "source": "int main(void) { int *p; { int x = 5; p = &x; } return *p; }",
+    "expect": "refuse",
+    "error": "deadObject"
+  },
+  {
+    "id": "lifetime-return-dangling",
+    "source": "int *f(void) { int x = 5; return &x; } int main(void) { int *p = f(); return *p; }",
+    "expect": "refuse",
+    "error": "deadObject"
+  },
+  {
+    "id": "lifetime-live-local",
+    "source": "int main(void) { int x = 5; return x; }",
+    "expect": "match",
+    "return_value": 5
+  },
+  {
+    "id": "order-binary-write-write",
+    "source": "int main(void) { int i = 0; i++ + i++; return i; }",
+    "expect": "refuse",
+    "error": "unsequenced side effects"
+  },
+  {
+    "id": "order-assignment-write",
+    "source": "int main(void) { int i = 0; i = i++ + 1; return i; }",
+    "expect": "refuse",
+    "error": "unsequenced side effects"
+  },
+  {
+    "id": "order-index-write",
+    "source": "int main(void) { int i = 0; int a[2] = {0, 0}; a[i++] = i++; return a[0]; }",
+    "expect": "refuse",
+    "error": "unsequenced side effects"
+  },
+  {
+    "id": "order-call-write-write",
+    "source": "int f(int a, int b) { return a + b; } int main(void) { int i = 0; return f(i++, i++); }",
+    "expect": "refuse",
+    "error": "unsequenced side effects"
+  },
+  {
+    "id": "order-pure-call",
+    "source": "int f(int a, int b) { return a + b; } int main(void) { return f(1, 2); }",
+    "expect": "match",
+    "return_value": 3
+  },
+  {
+    "id": "effective-type-pun",
+    "source": "int main(void) { int i = 0x12345678; return *(short *)&i; }",
+    "expect": "refuse",
+    "error": "effective types"
+  },
+  {
+    "id": "pointer-adjacent-boundary",
+    "source": "int main(void) { int a[1] = {0}; int b[1] = {0}; return (&a[1] == &b[0]) ? 1 : 0; }",
+    "expect": "refuse",
+    "error": "unspecified adjacent boundary"
+  },
+  {
+    "id": "record-attributes",
+    "source": "#pragma pack(push, 1)\nstruct P { char c; int i; };\n#pragma pack(pop)\nstruct Q { char c; int i; } __attribute__((packed));\nstruct R { char c; _Alignas(32) int i; };\nint main(void) { return (sizeof(struct P) == 5 && sizeof(struct Q) == 5 && sizeof(struct R) == 64) ? 0 : 1; }\n",
+    "expect": "refuse",
+    "envelope_checks": [
+      "record_attributes"
+    ]
+  },
+  {
+    "id": "record-forward-size",
+    "source": "typedef struct s S; struct s { int a; int b; }; int main(void) { return sizeof(S); }",
+    "expect": "match",
+    "return_value": 8
+  },
+  {
+    "id": "union-designated",
+    "source": "union U { int i; char c; }; union U u = {.c = 5}; int main(void) { return u.c; }",
+    "expect": "match",
+    "return_value": 5
+  },
+  {
+    "id": "static-local",
+    "source": "int f(void) { static int n = 0; return ++n; } int main(void) { return f(); }",
+    "expect": "refuse",
+    "error": "storage class"
+  },
+  {
+    "id": "extern-local",
+    "source": "int g = 3; int main(void) { extern int g; return g; }",
+    "expect": "refuse",
+    "error": "storage class"
+  },
+  {
+    "id": "type-function-pointer",
+    "source": "int f(int x) { return x; } int main(void) { int (*p)(int) = f; return p(1); }",
+    "expect": "refuse"
+  },
+  {
+    "id": "type-nested-array",
+    "source": "int main(void) { int a[2][3] = {{1, 2, 3}, {4, 5, 6}}; return a[1][2]; }",
+    "expect": "match",
+    "return_value": 6
+  },
+  {
+    "id": "type-postfix-qualified-pointer",
+    "source": "int main(void) { int x = 1; int *const p = &x; return *p; }",
+    "expect": "refuse"
+  },
+  {
+    "id": "subobject-array-overrun",
+    "source": "struct S { int a[2]; int b; };\nint main(void) { struct S s = {{1, 2}, 3}; return s.a[2]; }\n",
+    "expect": "refuse",
+    "error": "outOfBounds"
   }
 ]

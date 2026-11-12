@@ -55,6 +55,46 @@ def model_env(clang):
     return env
 
 
+def walk(value):
+    if isinstance(value, dict):
+        yield value
+        for child in value.values():
+            yield from walk(child)
+    elif isinstance(value, list):
+        for child in value:
+            yield from walk(child)
+
+
+def check_envelope(payload, checks, name):
+    nodes = list(walk(payload))
+    for check in checks:
+        if check == "array_filler":
+            if not any(n.get("kind") == "InitListExpr" and
+                       "array_filler" in n for n in nodes):
+                return name + ": missing required array_filler field"
+        elif check == "compound_promotion":
+            compounds = [n for n in nodes
+                         if n.get("kind") == "CompoundAssignOperator"]
+            if not compounds or any(not n.get("compute_lhs_type") or
+                                    not n.get("compute_result_type")
+                                    for n in compounds):
+                return name + ": missing Clang compound promotion evidence"
+        elif check == "record_attributes":
+            wanted = {"P": "MaxFieldAlignmentAttr", "Q": "PackedAttr",
+                      "R": "AlignedAttr"}
+            records = {n.get("name"): n for n in nodes
+                       if n.get("kind") == "RecordDecl"}
+            for record, attr in wanted.items():
+                fields = records.get(record, {}).get("fields", [])
+                found = {f.get("c_kind") for f in fields
+                         if f.get("kind") == "Unsupported"}
+                if attr not in found:
+                    return name + ": attribute was dropped: " + record
+        else:
+            return name + ": unknown envelope check " + check
+    return None
+
+
 def classify(row, clang, work):
     source = work / (row["id"] + ".c")
     source.write_text(row["source"] + "\n", encoding="utf-8")
@@ -73,16 +113,24 @@ def classify(row, clang, work):
     if extracted.returncode:
         return "EXTRACT", extracted.stderr[-800:]
     payload = json.loads(envelope.read_text(encoding="utf-8"))
+    problem = check_envelope(payload, row.get("envelope_checks", []), row["id"])
+    if problem:
+        return "EXTRACT", problem
     version = payload.get("frontend", {}).get("version")
     if version != PINNED_VERSION:
         return "EXTRACT", "envelope frontend.version is not pinned: %r" % version
 
-    model = run(["lake", "env", "lean", "-j", "1", "--run",
-                 "harness/c_diff_runner.lean", str(envelope)],
+    runner = ROOT / ".lake" / "build" / "bin" / "c-torture-run"
+    command = [str(runner)] if runner.exists() else ["lake", "exe", "c-torture-run"]
+    model = run(command + ["--single", str(envelope), "512"],
                 env=model_env(clang), timeout=180)
     if row["expect"] == "refuse":
         if model.returncode == 3:
-            return "REFUSE", "native exit %d" % native_run.returncode
+            detail = model.stderr.strip() or "native exit %d" % native_run.returncode
+            expected_error = row.get("error")
+            if expected_error and expected_error not in detail:
+                return "DIVERGE", "expected refusal %r, got %r" % (expected_error, detail)
+            return "REFUSE", detail
         if model.returncode == 0:
             return "DIVERGE", "model returned %s for a refusal row" % model.stdout.strip()
         return "ORACLE", "model runner failed: " + (model.stderr or model.stdout)[-800:]
@@ -90,8 +138,10 @@ def classify(row, clang, work):
     if model.returncode != 0:
         return "DIVERGE", "model refused: " + (model.stderr or model.stdout)[-800:]
     try:
-        value = int(model.stdout.strip())
-    except ValueError:
+        line = next((x for x in reversed(model.stdout.splitlines())
+                     if x.startswith("ok\t")), "")
+        value = int(line.split("\t", 1)[1])
+    except (ValueError, IndexError):
         return "DIVERGE", "model did not print an integer: %r" % model.stdout
     expected = int(row["return_value"])
     native_value = native_run.returncode if native_run.returncode >= 0 else None

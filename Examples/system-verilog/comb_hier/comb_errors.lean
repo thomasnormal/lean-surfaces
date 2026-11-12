@@ -79,7 +79,7 @@ example (K : Nat) (hK : 1 ≤ K) (hR : (2 * K : Int) < 2147483648) : CombDesign 
 
 -- A whole signed input into a wider port: the connection sign-extends the actual (`SignedResize`), refused.
 /--
-error: sv_structure: outside the supported fragment — site `plain#0`: width conversion (an operand is not as wide as its context at the default parameters, so slang inserted an implicit zero-extension or truncation; the v1 fragment needs every operand exactly as wide as its target: widen or narrow it explicitly) (in the flat twin of this design: instance `leaf`, the connection of port `a`)
+error: sv_structure: outside the supported fragment — site `plain#0`: sign extension (a signed operand narrower than its context is extended with its sign bit, IEEE 1800-2023 §11.8.2, and the envelope marks it `SignedResize`; the fragment reads that marker as an operand of a signed comparison or inside the left operand of a shift, not here) (in the flat twin of this design: instance `leaf`, the connection of port `a`)
 -/
 #guard_msgs (whitespace := lax) in
 example : CombDesign signed_port_wide.sem := by

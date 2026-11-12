@@ -1223,7 +1223,19 @@ theorem scmpOpd_shape (C : Ctx σ E elems DW DG EW ns) {dw : String → Nat}
     (hacc : ∀ a ∈ ra, AccOK σ DW DG EW ns a) (he : ScmpOpdForm e ra) :
     selfWidth2 E elems e = some ((skT e ra).width σ dw) ∧
       ∀ M, (skT e ra).WidthOkC σ dw M → fitExpr2 E elems (some M) e = (skT e ra).low σ dw M := by
-  rcases he with ⟨a, rfl, rfl⟩ | ⟨v, rfl, rfl⟩ | ⟨k, rfl, rfl⟩
+  rcases he with ⟨a, rfl, rfl⟩ | ⟨v, rfl, rfl⟩ | ⟨k, rfl, rfl⟩ | ⟨m, a, rfl, rfl⟩ | ⟨m, v, hx, rfl⟩
+  rotate_left 3
+  · -- a sign-extension marker around a whole signed signal: `resizeSigned` of the signal at every context
+    have hA : E.widths.lookup a = some (dw a) := by
+      rw [C.widths]; exact hdw a (hacc (.whole a) (by simp)).1
+    refine ⟨by simp [skT, Sk.width, selfWidth2, hA, Acc.win], fun M _ => ?_⟩
+    simp [fitExpr2, rigidExpr, instExpr2, selfWidth2, hA, skT, Sk.low, Sk.width, accExpr, Acc.win]
+  · -- a sign-extension marker around a sized literal (the loader's own marker of a signed literal included)
+    rcases hx with rfl | ⟨n, rfl⟩
+    · refine ⟨by simp [skT, Sk.width, selfWidth2], fun M _ => ?_⟩
+      simp [fitExpr2, rigidExpr, instExpr2, selfWidth2, skT, Sk.low, Sk.width]
+    · refine ⟨by simp [skT, Sk.width, selfWidth2], fun M _ => ?_⟩
+      simp [fitExpr2, rigidExpr, instExpr2, selfWidth2, skT, Sk.low, Sk.width]
   · have hA : E.widths.lookup a = some (dw a) := by
       rw [C.widths]; exact hdw a (hacc (.whole a) (by simp)).1
     refine ⟨by simp [skT, Sk.width, selfWidth2, hA, Acc.win], fun M hM => ?_⟩
@@ -3290,6 +3302,13 @@ theorem low_xf_genC {m : Design2} {σ : String → Int} {dw : String → Nat} :
           refine ⟨by simp [Expr2.xfWidth, h1], fun k _ => ?_⟩
           simp only [Expr2.xfBits, h1, Option.getD_some, Sk.bitC]
           exact sext_congr b1 k
+  | .sx p, tw, hk, hw, hL, env => by
+      simp only [Sk.knownB] at hk
+      simp only [Sk.WidthOkC] at hw
+      obtain ⟨h1, b1⟩ := low_xf_genC p (p.width σ dw) hk hw (fun a ha => hL a (by simpa [Sk.leaves] using ha)) env
+      refine ⟨by simp [Sk.low, Expr2.xfWidth, h1], fun k _ => ?_⟩
+      simp only [Sk.low, Expr2.xfBits, h1, Option.getD_some, Sk.bitC]
+      exact sext_congr b1 k
   | .rsz pr p, tw, hk, hw, hL, env => by
       simp only [Sk.knownB] at hk
       have hLp : ∀ x ∈ p.leaves, LeafOk m σ dw x := fun x hx => hL x (by simpa [Sk.leaves] using hx)

@@ -6,11 +6,11 @@
     "family": "pyslang-11"
   },
   "mode": "symbolic",
-  "top": "sg_cmp_mixed",
+  "top": "sg_cmp_sext_op",
   "source_files": [
     {
-      "path": "Examples/system-verilog/comb_signed/neg/sg_cmp_mixed.sv",
-      "sha256": "61eabbe605f00a2732d00b1b3c651d1c33511335590c5f26c422f4ef576ce052"
+      "path": "Examples/system-verilog/comb_signed/neg/sg_cmp_sext_op.sv",
+      "sha256": "420d2bda5004fa333e56cf4fa1eea14e5716e500da2959728e2dbcc2401d8e3b"
     }
   ],
   "packages": [],
@@ -25,7 +25,7 @@
           "end_line": 9,
           "end_col": 10
         },
-        "name": "sg_cmp_mixed",
+        "name": "sg_cmp_sext_op",
         "imports": [],
         "params": [],
         "types": [],
@@ -34,11 +34,11 @@
             "kind": "Port",
             "span": {
               "line": 4,
-              "col": 30,
+              "col": 31,
               "end_line": 4,
-              "end_col": 31
+              "end_col": 32
             },
-            "name": "x",
+            "name": "a",
             "dir": "in",
             "width": {
               "kind": "PackedType",
@@ -48,9 +48,9 @@
                     "kind": "Int",
                     "span": {
                       "line": 4,
-                      "col": 25,
+                      "col": 26,
                       "end_line": 4,
-                      "end_col": 26
+                      "end_col": 27
                     },
                     "value": 7,
                     "resolved_width": null
@@ -59,9 +59,9 @@
                     "kind": "Int",
                     "span": {
                       "line": 4,
-                      "col": 27,
+                      "col": 28,
                       "end_line": 4,
-                      "end_col": 28
+                      "end_col": 29
                     },
                     "value": 0,
                     "resolved_width": null
@@ -80,7 +80,7 @@
               "end_line": 5,
               "end_col": 32
             },
-            "name": "w",
+            "name": "b",
             "dir": "in",
             "width": {
               "kind": "PackedType",
@@ -90,11 +90,11 @@
                     "kind": "Int",
                     "span": {
                       "line": 5,
-                      "col": 25,
+                      "col": 26,
                       "end_line": 5,
                       "end_col": 27
                     },
-                    "value": 15,
+                    "value": 7,
                     "resolved_width": null
                   },
                   "lsb": {
@@ -110,7 +110,7 @@
                   }
                 }
               ],
-              "resolved": 16
+              "resolved": 8
             },
             "signed": true
           },
@@ -118,9 +118,9 @@
             "kind": "Port",
             "span": {
               "line": 6,
-              "col": 18,
+              "col": 31,
               "end_line": 6,
-              "end_col": 19
+              "end_col": 32
             },
             "name": "y",
             "dir": "out",
@@ -139,7 +139,7 @@
               "line": 8,
               "col": 12,
               "end_line": 8,
-              "end_col": 21
+              "end_col": 28
             },
             "target": {
               "kind": "Ident",
@@ -158,32 +158,75 @@
                 "line": 8,
                 "col": 16,
                 "end_line": 8,
-                "end_col": 21
+                "end_col": 28
               },
               "width": 1,
-              "op": "s<",
+              "op": "s>=",
               "left": {
-                "kind": "Unsupported",
+                "kind": "Binary",
                 "span": {
                   "line": 8,
-                  "col": 16,
+                  "col": 17,
                   "end_line": 8,
-                  "end_col": 17
+                  "end_col": 22
                 },
-                "sv_kind": "ConversionExpression:width",
-                "text": "x"
+                "width": 32,
+                "op": "+",
+                "left": {
+                  "kind": "SignedResize",
+                  "span": {
+                    "line": 8,
+                    "col": 17,
+                    "end_line": 8,
+                    "end_col": 18
+                  },
+                  "width": 32,
+                  "operand": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 8,
+                      "col": 17,
+                      "end_line": 8,
+                      "end_col": 18
+                    },
+                    "width": 8,
+                    "name": "a",
+                    "signed": true
+                  }
+                },
+                "right": {
+                  "kind": "SignedResize",
+                  "span": {
+                    "line": 8,
+                    "col": 21,
+                    "end_line": 8,
+                    "end_col": 22
+                  },
+                  "width": 32,
+                  "operand": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 8,
+                      "col": 21,
+                      "end_line": 8,
+                      "end_col": 22
+                    },
+                    "width": 8,
+                    "name": "b",
+                    "signed": true
+                  }
+                }
               },
               "right": {
-                "kind": "Ident",
+                "kind": "Int",
                 "span": {
                   "line": 8,
-                  "col": 20,
+                  "col": 27,
                   "end_line": 8,
-                  "end_col": 21
+                  "end_col": 28
                 },
-                "width": 16,
-                "name": "w",
-                "signed": true
+                "value": 0,
+                "resolved_width": 32
               }
             }
           }

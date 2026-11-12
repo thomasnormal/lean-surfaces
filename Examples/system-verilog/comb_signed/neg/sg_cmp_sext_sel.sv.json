@@ -6,11 +6,11 @@
     "family": "pyslang-11"
   },
   "mode": "symbolic",
-  "top": "signed_decl",
+  "top": "sg_cmp_sext_sel",
   "source_files": [
     {
-      "path": "Examples/system-verilog/comb_signed/neg/sg_cmp_const.sv",
-      "sha256": "079ca4cbe2a36dfd0a15555396d053da4ea64ba3ba5f30a8120b58e49ace8f56"
+      "path": "Examples/system-verilog/comb_signed/neg/sg_cmp_sext_sel.sv",
+      "sha256": "96a52c7da8788e154ceb5e4357f67099610c6158da40dc283a598fde28bcea6d"
     }
   ],
   "packages": [],
@@ -20,12 +20,12 @@
       {
         "kind": "Module",
         "span": {
-          "line": 4,
+          "line": 3,
           "col": 1,
-          "end_line": 9,
+          "end_line": 8,
           "end_col": 10
         },
-        "name": "signed_decl",
+        "name": "sg_cmp_sext_sel",
         "imports": [],
         "params": [],
         "types": [],
@@ -33,10 +33,10 @@
           {
             "kind": "Port",
             "span": {
-              "line": 5,
-              "col": 30,
-              "end_line": 5,
-              "end_col": 31
+              "line": 4,
+              "col": 24,
+              "end_line": 4,
+              "end_col": 25
             },
             "name": "x",
             "dir": "in",
@@ -47,10 +47,10 @@
                   "msb": {
                     "kind": "Int",
                     "span": {
-                      "line": 5,
-                      "col": 25,
-                      "end_line": 5,
-                      "end_col": 26
+                      "line": 4,
+                      "col": 19,
+                      "end_line": 4,
+                      "end_col": 20
                     },
                     "value": 7,
                     "resolved_width": null
@@ -58,10 +58,10 @@
                   "lsb": {
                     "kind": "Int",
                     "span": {
-                      "line": 5,
-                      "col": 27,
-                      "end_line": 5,
-                      "end_col": 28
+                      "line": 4,
+                      "col": 21,
+                      "end_line": 4,
+                      "end_col": 22
                     },
                     "value": 0,
                     "resolved_width": null
@@ -69,16 +69,15 @@
                 }
               ],
               "resolved": 8
-            },
-            "signed": true
+            }
           },
           {
             "kind": "Port",
             "span": {
-              "line": 6,
-              "col": 18,
-              "end_line": 6,
-              "end_col": 19
+              "line": 5,
+              "col": 24,
+              "end_line": 5,
+              "end_col": 25
             },
             "name": "y",
             "dir": "out",
@@ -94,17 +93,17 @@
           {
             "kind": "Assign",
             "span": {
-              "line": 8,
+              "line": 7,
               "col": 12,
-              "end_line": 8,
-              "end_col": 22
+              "end_line": 7,
+              "end_col": 36
             },
             "target": {
               "kind": "Ident",
               "span": {
-                "line": 8,
+                "line": 7,
                 "col": 12,
-                "end_line": 8,
+                "end_line": 7,
                 "end_col": 13
               },
               "width": 1,
@@ -113,31 +112,31 @@
             "value": {
               "kind": "Binary",
               "span": {
-                "line": 8,
+                "line": 7,
                 "col": 16,
-                "end_line": 8,
-                "end_col": 22
+                "end_line": 7,
+                "end_col": 36
               },
               "width": 1,
               "op": "s>=",
               "left": {
                 "kind": "Unsupported",
                 "span": {
-                  "line": 8,
+                  "line": 7,
                   "col": 16,
-                  "end_line": 8,
-                  "end_col": 17
+                  "end_line": 7,
+                  "end_col": 31
                 },
                 "sv_kind": "ConversionExpression:width",
-                "text": "x"
+                "text": "$signed(x[3:0])"
               },
               "right": {
                 "kind": "Int",
                 "span": {
-                  "line": 8,
-                  "col": 21,
-                  "end_line": 8,
-                  "end_col": 22
+                  "line": 7,
+                  "col": 35,
+                  "end_line": 7,
+                  "end_col": 36
                 },
                 "value": 0,
                 "resolved_width": 32

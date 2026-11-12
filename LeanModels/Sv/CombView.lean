@@ -1006,7 +1006,8 @@ def leafRd? (ds : List DeclT) : PExpr → Except String Acc
   | .ternary .. => .error "conditional expression `?:` in this position (outside the v1 fragment: allowed as a whole right-hand side, an operand or a condition, not inside a concatenation part)"
   | .repl .. => .error "replication (outside the v1 fragment)"
   | .reduce .. => .error "reduction in this position (outside the v1 fragment: allowed as a whole right-hand side, an operand or a condition, not inside a concatenation part)"
-  | .resize .. | .signedResize .. => .error "width conversion (an operand is not as wide as its context at the default parameters, so slang inserted an implicit zero-extension or truncation; the v1 fragment needs every operand exactly as wide as its target: widen or narrow it explicitly)"
+  | .resize .. => .error "width conversion (an operand is not as wide as its context at the default parameters, so slang inserted an implicit zero-extension or truncation; the v1 fragment needs every operand exactly as wide as its target: widen or narrow it explicitly)"
+  | .signedResize .. => .error "sign extension (a signed operand narrower than its context is extended with its sign bit, IEEE 1800-2023 §11.8.2, and the envelope marks it `SignedResize`; the fragment reads that marker as an operand of a signed comparison or inside the left operand of a shift, not here)"
   | .fill _ => .error "unbased unsized literal `'0`/`'1` inside an expression (outside the v1 fragment; allowed as a whole right-hand side)"
   | e => .error (leafRefusal e)
 
@@ -1144,17 +1145,17 @@ def scmpOpdRefusal (l r : PExpr) : String :=
   match l, r with
   | .unsupported k _, _ | _, .unsupported k _ =>
       if k == "ConversionExpression:width" then
-        "a signed comparison whose operand the envelope marks `ConversionExpression:width`: the extractor refuses the sign extension of a signed operand narrower than the comparison (`x >= 0` with a signed `x` of fewer than 32 bits: the unsized `0` is a 32-bit signed integer, so `x` is sign-extended, IEEE 1800-2023 §11.8.1, §11.4.4; likewise two signed signals of different widths), so the semantics lowers this site to a loud node and no equation holds for it. The fix belongs to the extractor (the `SignedResize` marker it emits for the operand of a shift or a division), not to the tactics"
+        "a signed comparison whose operand the envelope marks `ConversionExpression:width`: the extractor refuses the sign extension of this operand (it marks the extension of a plain signed signal or a signed literal `SignedResize`, IEEE 1800-2023 §11.8.2, which the fragment reads, and keeps another conversion, such as an explicit `$signed(...)` call, loud), so the semantics lowers this site to a loud node and no equation holds for it"
       else
         s!"a signed comparison whose operand the envelope marks unsupported (`{k}`): the semantics lowers this site to a loud node, so no equation holds for it"
   | .cast true (.ident _), .cast true (.ident _) =>
       "a signed comparison of two signals whose declared packed dimensions differ (the narrower operand would be sign-extended at some parameter point, which the fragment does not model: it reads a signed comparison of two signed signals declared with the same dimensions)"
   | .signedResize .., _ | _, .signedResize .. =>
-      "a signed comparison of operands of different widths (sign extension: the narrower operand is extended with its sign bit, which the fragment does not model; it reads a signed comparison of two signed signals declared with the same dimensions)"
+      "a signed comparison with a sign-extended operand the fragment does not read (the narrower operand of a signed comparison is extended with its sign bit to the comparison's width, IEEE 1800-2023 §11.8.2, and the envelope marks it `SignedResize`; the fragment reads that marker around a whole signed signal or a sized literal, compared with an unsized constant, with another marked operand, or with a whole signed signal declared with constant dimensions at least as wide: here the marked operand is an operation or a select, or the unmarked signal is not declared with constant dimensions at least as wide)"
   | .unary .., _ | _, .unary .. =>
       "a signed comparison with a negated constant (`x < -5`, `x >= -8'sd3`): unary minus is outside the fragment (it reads a signed comparison of a whole signed signal with a sized literal of its width, a negative one written as its bits such as `8'sb1111_1101`, or with an unsized constant that is not negated)"
   | _, _ =>
-      "an operand of a signed comparison that is not a whole signed signal, a sized literal or an unsized constant (the fragment reads a signed comparison of two signed signals declared with the same dimensions, or of a whole signed signal with a constant; a select or an operation as an operand is outside it)"
+      "an operand of a signed comparison that is not a whole signed signal, a sized literal, an unsized constant or a sign-extension marker around a whole signed signal or a sized literal (the fragment reads a signed comparison of two signed signals declared with the same dimensions, of a whole signed signal with a constant, and of such operands extended with their sign bits, `SignedResize`, IEEE 1800-2023 §11.8.2; a select or an operation as an operand is outside it)"
 
 /-- The refusal of a signed comparison of a signed signal with a sized literal it is not declared exactly as wide as. -/
 def scmpLitRefusal (a : String) (w : Nat) : String :=
@@ -1165,11 +1166,56 @@ dimensions of at least 32 bits. -/
 def scmpIntRefusal (a : String) : String :=
   s!"a signed comparison of the signed signal `{a}` with an unsized constant, where `{a}` is not declared with constant dimensions of at least 32 bits (the unsized constant is a 32-bit signed integer, IEEE 1800-2023 §11.8.1: the comparison is at the wider of the two widths, and a narrower signal would be sign-extended, which the extractor marks `ConversionExpression:width`)"
 
+/-- A sized literal, bare or under one sign-extension marker: the loader reads a signed literal `8'sd5` as
+`SignedResize 8 (lit)` (`Ingest2.lean`). -/
+def litChain? : PExpr → Option LVec
+  | .lit v => some v
+  | .signedResize _ (.lit v) => some v
+  | _ => none
+
+/-- **The operand of a sign-extension marker in a signed comparison** (`SignedResize w e`: the comparison is at the wider
+of its operands' widths, and a narrower signed operand is extended with its sign bit to that width, IEEE 1800-2023
+§11.8.2, §11.6.1; `instExpr2` lowers the marker as `Expr2.resizeSigned` of `e` lowered at its own width): a whole signed
+signal of the design, or a sized literal (`litChain?`). Its reads, and its own width when that is a constant. -/
+def sxOpd? (ds : List DeclT) : PExpr → Option (List Acc × Option Nat)
+  | .cast true (.ident a) => if (dimsOf ds a).isSome then some ([.whole a], (dimsOf ds a).bind constW) else none
+  | e => (litChain? e).map fun v => ([], some v.width)
+
+/-- **The operands of a signed comparison with a sign-extension marker** (`scmpRd?`'s remaining shapes): a marked operand
+(`sxOpd?`) against an unsized constant or another marked operand, at any width (both are lowered to the comparison's
+width: the constant materialized there, a marked operand extended with its sign bit), and against a whole signed signal
+declared with constant dimensions at least as wide as the marked operand (the signal is the comparison's width, so it is
+not extended: an unmarked signed operand narrower than its context is loud in the semantics). The reads in textual
+order. -/
+def scmpSxRd? (ds : List DeclT) (l r : PExpr) : Except String (List Acc) :=
+  match l, r with
+  | .signedResize _ x, .int _ =>
+      match sxOpd? ds x with
+      | some (ra, _) => .ok ra
+      | none => .error (scmpOpdRefusal l r)
+  | .int _, .signedResize _ x =>
+      match sxOpd? ds x with
+      | some (ra, _) => .ok ra
+      | none => .error (scmpOpdRefusal l r)
+  | .signedResize _ x, .signedResize _ y =>
+      match sxOpd? ds x, sxOpd? ds y with
+      | some (ra, _), some (rb, _) => .ok (ra ++ rb)
+      | _, _ => .error (scmpOpdRefusal l r)
+  | .cast true (.ident a), .signedResize _ y =>
+      match sxOpd? ds y, (dimsOf ds a).bind constW with
+      | some (rb, some wy), some wa => if wy ≤ wa then .ok (.whole a :: rb) else .error (scmpOpdRefusal l r)
+      | _, _ => .error (scmpOpdRefusal l r)
+  | .signedResize _ y, .cast true (.ident a) =>
+      match sxOpd? ds y, (dimsOf ds a).bind constW with
+      | some (rb, some wy), some wa => if wy ≤ wa then .ok (rb ++ [.whole a]) else .error (scmpOpdRefusal l r)
+      | _, _ => .error (scmpOpdRefusal l r)
+  | _, _ => .error (scmpOpdRefusal l r)
+
 /-- **The operands of a signed comparison** (`s<`, `s<=`, `s>`, `s>=`, IEEE 1800-2023 §11.4.4, §11.8.1): two whole signed
 signals declared with the same dimensions, or a whole signed signal and a constant, in either order: a sized literal when
 the signal is declared with constant dimensions exactly as wide (no operand is extended), an unsized constant when the
 signal is declared with constant dimensions of at least 32 bits (the constant is materialized at the signal's width,
-`LVec.ofInt`). The reads are the signals. -/
+`LVec.ofInt`). The reads are the signals. An operand the envelope marks `SignedResize` is read by `scmpSxRd?`. -/
 def scmpRd? (ds : List DeclT) (l r : PExpr) : Except String (List Acc) :=
   match l, r with
   | .cast true (.ident a), .cast true (.ident b) =>
@@ -1182,7 +1228,7 @@ def scmpRd? (ds : List DeclT) (l r : PExpr) : Except String (List Acc) :=
       match (dimsOf ds a).bind constW with
       | some w => if 32 ≤ w then .ok [.whole a] else .error (scmpIntRefusal a)
       | none => .error (scmpIntRefusal a)
-  | _, _ => .error (scmpOpdRefusal l r)
+  | _, _ => scmpSxRd? ds l r
 
 /-- The binary operators whose operands `rdsOfW?` reads itself: the bitwise gates, `+`, `-` and `*` (operands
 context-determined at the operation's context) and the six comparisons (operands context-determined at the wider of
@@ -1519,18 +1565,41 @@ inductive ScmpReq where
   | same (a b : String)
   | width (a : String) (w : Nat)
   | wide (a : String)
+  /-- A comparison of a sign-extension marker with a constant or another marker (`scmpSxRd?`): no width fact (both
+  operands are lowered to the comparison's width at every point). -/
+  | sext
+  /-- A whole signed signal against a marked sized literal of width `w`: the signal is declared with a constant width of
+  at least `w`. -/
+  | geW (a : String) (w : Nat)
+  /-- A whole signed signal `a` against a marked whole signed signal `b`: both declared with constant widths, `b`'s no
+  wider than `a`'s. -/
+  | geS (a b : String)
 
 /-- The fact at the declared widths `DW` (what the structural soundness reads, `inst_rdW`). -/
 def ScmpReq.Holds (DW : String → Option Nat) : ScmpReq → Prop
   | .same a b => DW a = DW b
   | .width a w => DW a = some w
   | .wide a => ∃ w, DW a = some w ∧ 32 ≤ w
+  | .sext => True
+  | .geW a w => ∃ x, DW a = some x ∧ w ≤ x
+  | .geS a b => ∃ x y, DW a = some x ∧ DW b = some y ∧ y ≤ x
 
 /-- The fact at the declarations (what the recognizer checks, `scmpPairs_dims`). -/
 def ScmpReq.DimsOk (ds : List DeclT) : ScmpReq → Prop
   | .same a b => (dimsOf ds a).isSome = true ∧ dimsOf ds a = dimsOf ds b
   | .width a w => (dimsOf ds a).bind constW = some w
   | .wide a => ∃ w, (dimsOf ds a).bind constW = some w ∧ 32 ≤ w
+  | .sext => True
+  | .geW a w => ∃ x, (dimsOf ds a).bind constW = some x ∧ w ≤ x
+  | .geS a b => ∃ x y, (dimsOf ds a).bind constW = some x ∧ (dimsOf ds b).bind constW = some y ∧ y ≤ x
+
+/-- The width fact of a whole signed signal `a` compared with the marked operand `y` (`scmpSxRd?`). -/
+def _root_.LeanModels.Sv.PExpr.sxReq (a : String) : PExpr → List ScmpReq
+  | .cast true (.ident b) => [.geS a b]
+  | y =>
+      match litChain? y with
+      | some v => [.geW a v.width]
+      | none => []
 
 /-- The signed comparisons of a word-level expression, collected along the positions `rdsOfW?` reads at the word level,
 as the width facts they rest on (`ScmpReq`). -/
@@ -1542,6 +1611,9 @@ def _root_.LeanModels.Sv.PExpr.scmpPairs : PExpr → List ScmpReq
         | some _, .cast true (.ident a), .cast true (.ident b) => [.same a b]
         | some _, .cast true (.ident a), .lit v | some _, .lit v, .cast true (.ident a) => [.width a v.width]
         | some _, .cast true (.ident a), .int _ | some _, .int _, .cast true (.ident a) => [.wide a]
+        | some _, .signedResize _ _, .int _ | some _, .int _, .signedResize _ _ => [.sext]
+        | some _, .signedResize _ _, .signedResize _ _ => [.sext]
+        | some _, .cast true (.ident a), .signedResize _ y | some _, .signedResize _ y, .cast true (.ident a) => y.sxReq a
         | _, _, _ => []
   | .unary (.m0 .bnot) a => a.scmpPairs
   | .ternary _ t e => t.scmpPairs ++ e.scmpPairs

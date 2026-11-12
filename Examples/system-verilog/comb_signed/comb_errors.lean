@@ -6,7 +6,8 @@ import LeanModels.Sv.CombProcTactic
 
 The tactics read a signed signal as the same bits wherever it is a whole operand of a continuous assign, and a signed
 comparison of two signed signals declared with the same dimensions, or of a signed signal with a constant of its width,
-as the two's-complement order (`comb_proof.lean`).
+as the two's-complement order, and a signed comparison whose narrower operand, a whole signed signal or a sized literal,
+is sign-extended to the comparison's width (`SignedResize`, IEEE 1800-2023 §11.8.2; `comb_proof.lean`).
 The constructs whose meaning signedness changes and that they do not read yet are refused, each with its reason. (A part
 select of a signed signal as the left operand of a shift, and an arithmetic shift right into a target wider than its
 operand, were refused here; the left operand of a shift is now read through `instDivOperand2` at the signedness of the
@@ -28,14 +29,20 @@ shift, and both are proved in `comb_shift/comb_proof.lean`, `shift_signed_correc
 * `neg/sg_asr_amt.sv`: an arithmetic shift right by a signed amount `a >>> b`;
 * `neg/sg_asr_self.sv`: an arithmetic shift right as an operand of `&&`;
 * `neg/asr_unsigned.sv`: `>>>` of an unsigned operand;
-* `neg/sg_cmp_const.sv` (the downstream clean-room repro `signed_decl.sv`, verbatim): `x >= 0` with `x` signed and 8 bits
-  wide. The unsized `0` is a 32-bit signed integer, so the comparison is signed and `x` is sign-extended to 32 bits
-  (IEEE 1800-2023 §11.8.1, §11.4.4). The extractor marks that sign extension `ConversionExpression:width`: the envelope
-  carries an `Unsupported` node in place of `x`, `instExpr2` keeps it, and the semantics itself lowers the site to a loud
-  node, so no equation holds for any tactic to prove. The wall is the extractor's (the `SignedResize` marker it emits for
-  the operand of a shift or a division), and the message says so;
-* `neg/sg_cmp_mixed.sv`: a signed comparison of an 8-bit and a 16-bit signed signal, the same wall (the narrower operand
-  is sign-extended, §11.8.2).
+* `neg/sg_cmp_sext_param.sv`: a signal of a parameter width `W` against the sized literal `8'sd0`: at the default
+  `W = 8` the literal is as wide as the signal, which carries no marker; at `W < 8` the signal is the narrower operand and
+  is sign-extended (IEEE 1800-2023 §11.8.2), so the recognizer reads an unmarked signal against a marked operand only when
+  the signal is declared with constant dimensions at least as wide;
+* `neg/sg_cmp_sext_op.sv`: `(a + b) >= 0`, the sign-extended operands inside an operation (the sum is taken at the 32
+  bits of the constant, IEEE 1800-2023 §11.6.1): an operation as an operand of a signed comparison is outside the
+  fragment;
+* `neg/sg_cmp_sext_sel.sv`: `$signed(x[3:0]) >= 0`: the extractor keeps the extension of an explicit `$signed(...)` call
+  loud (`ConversionExpression:width`), so the semantics lowers the site to a loud node.
+
+The clean-room repro `signed_decl.sv` (`x >= 0` with an 8-bit signed `x`) and the comparison of an 8-bit and a 16-bit
+signed signal (`scmp_mixed.sv`) were pinned here, refused as "a signed comparison whose operand the envelope marks
+`ConversionExpression:width`": the extractor now marks the sign extension of a plain signed signal `SignedResize`, and the
+tactics read it (`Sk.sx`); both are proved in `comb_proof.lean`.
 -/
 
 open LeanModels.Sv LeanModels.Sv.CombView
@@ -50,8 +57,9 @@ load_design_sv2 sg_cmp_proc from "Examples/system-verilog/comb_signed/neg/sg_cmp
 load_design_sv2 sg_asr_amt from "Examples/system-verilog/comb_signed/neg/sg_asr_amt.sv.json"
 load_design_sv2 sg_asr_self from "Examples/system-verilog/comb_signed/neg/sg_asr_self.sv.json"
 load_design_sv2 asr_unsigned from "Examples/system-verilog/comb_signed/neg/asr_unsigned.sv.json"
-load_design_sv2 sg_cmp_const from "Examples/system-verilog/comb_signed/neg/sg_cmp_const.sv.json"
-load_design_sv2 sg_cmp_mixed from "Examples/system-verilog/comb_signed/neg/sg_cmp_mixed.sv.json"
+load_design_sv2 sg_cmp_sext_param from "Examples/system-verilog/comb_signed/neg/sg_cmp_sext_param.sv.json"
+load_design_sv2 sg_cmp_sext_op from "Examples/system-verilog/comb_signed/neg/sg_cmp_sext_op.sv.json"
+load_design_sv2 sg_cmp_sext_sel from "Examples/system-verilog/comb_signed/neg/sg_cmp_sext_sel.sv.json"
 load_design_sv2 sg_cmp_lit_param from "Examples/system-verilog/comb_signed/neg/sg_cmp_lit_param.sv.json"
 load_design_sv2 sg_cmp_neg from "Examples/system-verilog/comb_signed/neg/sg_cmp_neg.sv.json"
 
@@ -78,7 +86,7 @@ example (W : Nat) (hW : 1 ≤ W) (hR : (W : Int) < 2147483648) : CombDesign (sg_
   sv_structure
 
 /--
-error: sv_structure: outside the supported fragment — site `plain#0`: an operand of a signed comparison that is not a whole signed signal, a sized literal or an unsized constant (the fragment reads a signed comparison of two signed signals declared with the same dimensions, or of a whole signed signal with a constant; a select or an operation as an operand is outside it)
+error: sv_structure: outside the supported fragment — site `plain#0`: an operand of a signed comparison that is not a whole signed signal, a sized literal, an unsized constant or a sign-extension marker around a whole signed signal or a sized literal (the fragment reads a signed comparison of two signed signals declared with the same dimensions, of a whole signed signal with a constant, and of such operands extended with their sign bits, `SignedResize`, IEEE 1800-2023 §11.8.2; a select or an operation as an operand is outside it)
 -/
 #guard_msgs (whitespace := lax) in
 example (W : Nat) (hW : 1 ≤ W) (hR : (W : Int) < 2147483648) : CombDesign (sg_cmp_opd.sem W) := by
@@ -113,19 +121,28 @@ error: sv_structure: outside the supported fragment — site `plain#0`: operator
 example (W : Nat) (hW : 1 ≤ W) (hR : (W : Int) < 2147483648) : CombDesign (asr_unsigned.sem W) := by
   sv_structure
 
--- the downstream repro: the envelope itself refuses the sign extension of `x` (`ConversionExpression:width`)
+-- a signal of a parameter width against a marked literal: refused (at `W < 8` the signal would be extended)
 /--
-error: sv_structure: outside the supported fragment — site `plain#0`: a signed comparison whose operand the envelope marks `ConversionExpression:width`: the extractor refuses the sign extension of a signed operand narrower than the comparison (`x >= 0` with a signed `x` of fewer than 32 bits: the unsized `0` is a 32-bit signed integer, so `x` is sign-extended, IEEE 1800-2023 §11.8.1, §11.4.4; likewise two signed signals of different widths), so the semantics lowers this site to a loud node and no equation holds for it. The fix belongs to the extractor (the `SignedResize` marker it emits for the operand of a shift or a division), not to the tactics
+error: sv_structure: outside the supported fragment — site `plain#0`: a signed comparison with a sign-extended operand the fragment does not read (the narrower operand of a signed comparison is extended with its sign bit to the comparison's width, IEEE 1800-2023 §11.8.2, and the envelope marks it `SignedResize`; the fragment reads that marker around a whole signed signal or a sized literal, compared with an unsized constant, with another marked operand, or with a whole signed signal declared with constant dimensions at least as wide: here the marked operand is an operation or a select, or the unmarked signal is not declared with constant dimensions at least as wide)
 -/
 #guard_msgs (whitespace := lax) in
-example : CombDesign sg_cmp_const.sem := by
+example (W : Nat) (hW : 1 ≤ W) (hR : (W : Int) < 2147483648) : CombDesign (sg_cmp_sext_param.sem W) := by
   sv_structure
 
+-- the marked operands inside an operation
 /--
-error: sv_structure: outside the supported fragment — site `plain#0`: a signed comparison whose operand the envelope marks `ConversionExpression:width`: the extractor refuses the sign extension of a signed operand narrower than the comparison (`x >= 0` with a signed `x` of fewer than 32 bits: the unsized `0` is a 32-bit signed integer, so `x` is sign-extended, IEEE 1800-2023 §11.8.1, §11.4.4; likewise two signed signals of different widths), so the semantics lowers this site to a loud node and no equation holds for it. The fix belongs to the extractor (the `SignedResize` marker it emits for the operand of a shift or a division), not to the tactics
+error: sv_structure: outside the supported fragment — site `plain#0`: an operand of a signed comparison that is not a whole signed signal, a sized literal, an unsized constant or a sign-extension marker around a whole signed signal or a sized literal (the fragment reads a signed comparison of two signed signals declared with the same dimensions, of a whole signed signal with a constant, and of such operands extended with their sign bits, `SignedResize`, IEEE 1800-2023 §11.8.2; a select or an operation as an operand is outside it)
 -/
 #guard_msgs (whitespace := lax) in
-example : CombDesign sg_cmp_mixed.sem := by
+example : CombDesign sg_cmp_sext_op.sem := by
+  sv_structure
+
+-- an explicit `$signed(...)` call: the extractor keeps its extension loud
+/--
+error: sv_structure: outside the supported fragment — site `plain#0`: a signed comparison whose operand the envelope marks `ConversionExpression:width`: the extractor refuses the sign extension of this operand (it marks the extension of a plain signed signal or a signed literal `SignedResize`, IEEE 1800-2023 §11.8.2, which the fragment reads, and keeps another conversion, such as an explicit `$signed(...)` call, loud), so the semantics lowers this site to a loud node and no equation holds for it
+-/
+#guard_msgs (whitespace := lax) in
+example : CombDesign sg_cmp_sext_sel.sem := by
   sv_structure
 
 /--

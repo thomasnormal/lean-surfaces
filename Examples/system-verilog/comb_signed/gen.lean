@@ -27,6 +27,15 @@ under the width obligation of `sv_equations` (no operand is implicitly widened, 
   the left shift `<<` of a signed input, into targets of the operand's width (`comb_proof.lean`: `BitVec.sshiftRight` and
   `<<<` for every width);
 * `asr_proc.sv`: the same `>>>` inside `always_comb`, which the procedural route reads too;
+* `signed_decl.sv` (the clean-room repro, verbatim below its header), `scmp_mixed.sv`, `scmp_sext.sv`, `scmp_sext_w.sv`:
+  signed comparisons whose narrower operand is sign-extended to the comparison's width (IEEE 1800-2023 §11.8.2, §11.6.1),
+  which the envelope marks `SignedResize` (the loader reads a signed literal under a marker of its own): `x >= 0` with an
+  8-bit `x` (extended to the 32 bits of the unsized constant), `x < w` of an 8-bit and a 16-bit signal, a signal against
+  signed literals of its width, wider and narrower, and `x >= 0` with `x` of a parameter width `W` (extended where
+  `W < 32`; at `W ≥ 32` the constant is materialized at `W`). The skeleton reads the marker as `Sk.sx` (sign extension to
+  the context, `Expr2.resizeSigned`, at every width) and the recognizer reads it against an unsized constant, another
+  marked operand, or a signal declared with constant dimensions at least as wide (`scmpSxRd?`); `comb_proof.lean` proves
+  each bit as the order of the two's-complement integers;
 * `ssel.sv`: bit and part selects of signed inputs, unsigned values (IEEE 1800-2023 §11.8.1): the sign bit, the low bits,
   a bit inside `^`, and `{a[W-1], a[W-1:1]}` (`comb_proof.lean`, for every width `W ≥ 2`). The twin reads each select
   of the plain signal;
@@ -54,6 +63,10 @@ load_design_sv2 scmp_const from "Examples/system-verilog/comb_signed/scmp_const.
 load_design_sv2 asr from "Examples/system-verilog/comb_signed/asr.sv.json"
 load_design_sv2 asr_proc from "Examples/system-verilog/comb_signed/asr_proc.sv.json"
 load_design_sv2 ssel from "Examples/system-verilog/comb_signed/ssel.sv.json"
+load_design_sv2 signed_decl from "Examples/system-verilog/comb_signed/signed_decl.sv.json"
+load_design_sv2 scmp_mixed from "Examples/system-verilog/comb_signed/scmp_mixed.sv.json"
+load_design_sv2 scmp_sext from "Examples/system-verilog/comb_signed/scmp_sext.sv.json"
+load_design_sv2 scmp_sext_w from "Examples/system-verilog/comb_signed/scmp_sext_w.sv.json"
 
 -- The design as written has signed reads: the recognizer refuses them, and summarizes the unsigned twin.
 #guard sadd.pdesign.summary.toOption.isNone
@@ -110,6 +123,43 @@ load_design_sv2 ssel from "Examples/system-verilog/comb_signed/ssel.sv.json"
         (["x_ge0", "x_le0r", "x_ltm3", "x_gt100r", "z_ge0", "z_lt5", "z_le0r"].foldlM
           (fun acc n => (SvState.lookup st n).map fun v => acc ++ v.toBinString) "") == some want
     | _ => false
+
+-- Sign-extended comparisons: the summary reads them as written (no signed read is left for the twin).
+#guard signed_decl.pdesign.summary.toOption.isSome
+#guard scmp_mixed.pdesign.summary.toOption.isSome
+#guard scmp_sext.pdesign.summary.toOption.isSome
+#guard scmp_sext_w.pdesign.summary.toOption.isSome
+-- The envelope's operand of `x >= 0` is the marker around the signed read; a signed literal is read under the loader's
+-- marker too (`x >= 8'sd0`).
+#guard (signed_decl.pdesign.processes.map fun p => match p with
+  | .assign _ (.binary _ l r) => some (l, r)
+  | _ => none) == [some (.signedResize 32 (.cast true (.ident "x")), .int 0)]
+-- Runs of `scmp_sext.sv`, the bits in the order `x_ge0 x_lt5 w_ltm3 x_gt0r x_le_w`, and of `signed_decl.sv` and
+-- `scmp_mixed.sv`, each the value local Icarus Verilog 12.0 prints for the same inputs: `x = -3`, `w = -4`: `01100`,
+-- `0`, `0`; `x = 5`, `w = 5`: `10011`, `1`, `0`; `x = -128`, `w = -3`: `01001`, `0`, `1`.
+#guard [((253, 65532), "01100", "0", "0"), ((5, 5), "10011", "1", "0"), ((128, 65533), "01001", "0", "1")].all
+  fun ((x, w), want, wd, wm) =>
+    (match run2 scmp_sext.sem σ_src 1000 [[("x", .ofNat 8 x), ("w", .ofNat 16 w)]] with
+    | .ok [st] =>
+        (["x_ge0", "x_lt5", "w_ltm3", "x_gt0r", "x_le_w"].foldlM
+          (fun acc n => (SvState.lookup st n).map fun v => acc ++ v.toBinString) "") == some want
+    | _ => false) &&
+    (match run2 signed_decl.sem σ_src 1000 [[("x", .ofNat 8 x)]] with
+    | .ok [st] => (SvState.lookup st "y").map LVec.toBinString == some wd
+    | _ => false) &&
+    (match run2 scmp_mixed.sem σ_src 1000 [[("x", .ofNat 8 x), ("w", .ofNat 16 w)]] with
+    | .ok [st] => (SvState.lookup st "y").map LVec.toBinString == some wm
+    | _ => false)
+-- `scmp_sext_w.sv` at `W = 40` (`x` wider than the constant, compared at 40 bits: `0x0080000000` is positive although
+-- its low 32 bits are not) and at `W = 4` (as Icarus 12.0: `0`, `1` at `W = 40`; `1`, `0` at `W = 4`).
+#guard (match run2 (scmp_sext_w.sem 40) σ_src 1000 [[("x", .ofNat 40 0x8000000000)], [("x", .ofNat 40 0x0080000000)]] with
+  | .ok [s1, s2] => (SvState.lookup s1 "y").map LVec.toBinString == some "0" &&
+      (SvState.lookup s2 "y").map LVec.toBinString == some "1"
+  | _ => false)
+#guard (match run2 (scmp_sext_w.sem 4) σ_src 1000 [[("x", .ofNat 4 7)], [("x", .ofNat 4 8)]] with
+  | .ok [s1, s2] => (SvState.lookup s1 "y").map LVec.toBinString == some "1" &&
+      (SvState.lookup s2 "y").map LVec.toBinString == some "0"
+  | _ => false)
 
 -- A run at `W = 4`, `a = -6` (1010), `s = 1`: `y = a >>> 1 = -3` (1101), `z = 1101`, `l = a << 1 = 0100`; and at `s = 5`
 -- (an amount of the width or more): `y = 1111` (all sign bits), `l = 0000`.

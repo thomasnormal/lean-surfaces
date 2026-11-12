@@ -67,6 +67,7 @@ def Sk.decSelfOk (σ : String → Int) (dw : String → Nat) : (sk : Sk) → Dec
   | .sh _ _ _ _ => inferInstanceAs (Decidable False)
   | .scmp _ _ _ => inferInstanceAs (Decidable False)
   | .fit _ _ => inferInstanceAs (Decidable False)
+  | .sx _ => inferInstanceAs (Decidable False)
 
 instance (σ : String → Int) (dw : String → Nat) (sk : Sk) : Decidable (sk.SelfOk σ dw) :=
   Sk.decSelfOk σ dw sk
@@ -104,6 +105,7 @@ def Sk.decWidthOk (σ : String → Int) (dw : String → Nat) (tw : Nat) : (sk :
   | .sh _ _ _ _ => inferInstanceAs (Decidable False)
   | .scmp _ _ _ => inferInstanceAs (Decidable False)
   | .fit _ _ => inferInstanceAs (Decidable False)
+  | .sx _ => inferInstanceAs (Decidable False)
 
 instance (σ : String → Int) (dw : String → Nat) (tw : Nat) (sk : Sk) : Decidable (sk.WidthOk σ dw tw) :=
   Sk.decWidthOk σ dw tw sk
@@ -148,6 +150,7 @@ def Sk.decRok (σ : String → Int) (dw : String → Nat) (tw : Nat) : (sk : Sk)
   | .sh _ _ l _ => inferInstanceAs (Decidable (l.width σ dw ≤ tw))
   | .scmp _ _ _ => inferInstanceAs (Decidable True)
   | .fit _ _ => inferInstanceAs (Decidable True)
+  | .sx _ => inferInstanceAs (Decidable True)
 
 instance (σ : String → Int) (dw : String → Nat) (tw : Nat) (sk : Sk) : Decidable (sk.rok σ dw tw) :=
   Sk.decRok σ dw tw sk
@@ -215,6 +218,9 @@ def Sk.decWidthOkC (σ : String → Int) (dw : String → Nat) :
       inferInstanceAs (Decidable (tw = 1 ∧ l.WidthOkC σ dw (max (l.width σ dw) (r.width σ dw)) ∧
         r.WidthOkC σ dw (max (l.width σ dw) (r.width σ dw))))
   | .fit _ p, _ =>
+      haveI := Sk.decWidthOkC σ dw p (p.width σ dw)
+      inferInstanceAs (Decidable (p.WidthOkC σ dw (p.width σ dw)))
+  | .sx p, _ =>
       haveI := Sk.decWidthOkC σ dw p (p.width σ dw)
       inferInstanceAs (Decidable (p.WidthOkC σ dw (p.width σ dw)))
 

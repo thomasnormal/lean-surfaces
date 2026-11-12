@@ -849,10 +849,13 @@ theorem inst_idxFreeW (C : Ctx σ E elems DW DG EW ns) {dw : String → Nat}
           intro k c
           cases c <;> simp [fitExpr2, rigidExpr, instExpr2, intLit2_eq, Expr2.idxFree]
         have hopd : ∀ e ra', ScmpOpdForm e ra' → ∀ c, (fitExpr2 E elems c e).idxFree = true := by
-          rintro e ra' (⟨a, rfl, -⟩ | ⟨v, rfl, -⟩ | ⟨k, rfl, -⟩) c
+          rintro e ra' (⟨a, rfl, -⟩ | ⟨v, rfl, -⟩ | ⟨k, rfl, -⟩ | ⟨m, a, rfl, -⟩ | ⟨m, v, (rfl | ⟨n, rfl⟩), -⟩) c
           · exact hsr a c
           · exact hlit v c
           · exact hint k c
+          · cases c <;> simp [fitExpr2, rigidExpr, instExpr2, Expr2.idxFree]
+          · cases c <;> simp [fitExpr2, rigidExpr, instExpr2, Expr2.idxFree]
+          · cases c <;> simp [fitExpr2, rigidExpr, instExpr2, Expr2.idxFree]
         obtain ⟨hL, hR⟩ := scmpRd?_opds hs
         cases op <;> simp [scmpOp?] at hcm <;> subst hcm <;> cases ctx <;>
           simp [instExpr2, Expr2.idxFree, hopd l _ hL, hopd r _ hR]

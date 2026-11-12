@@ -24,6 +24,12 @@ order `evalPure2` computes through `LVec.toInt?`.
   ordered as two's-complement integers, IEEE 1800-2023 §11.4.4);
 * `scmp_const_correct`: a signed signal compared with a constant, on either side (`scmp_const.sv`): each bit is the order
   of the signal's two's-complement integer and the constant's (`x < 8'sb1111_1101` is `u.toInt < -3`).
+* `signed_decl_correct`: the clean-room repro `signed_decl.sv`, `y = x >= 0` with an 8-bit signed `x`: `x` is
+  sign-extended to the 32 bits of the unsized constant (IEEE 1800-2023 §11.8.2), and `y` is `0 ≤ u.toInt`.
+* `scmp_mixed_correct`, `scmp_sext_correct`: an 8-bit signed signal against a 16-bit one, and against signed literals
+  wider, narrower and of its width: each bit is the order of the two's-complement integers.
+* `scmp_sext_w_correct`: `y = x >= 0` with `x` of a parameter width `W`, at every `W ≥ 1` in the `int` range (the
+  comparison is at `max W 32` bits).
 -/
 
 open LeanModels.Sv LeanModels.Sv.CombView LeanModels.Sv.CombEq
@@ -297,6 +303,117 @@ theorem scmp_const_correct :
     | (intros; omega)
     | (refine inKnown_ofBitVec hX ?_; omega)
     | (refine inKnown_ofBitVec hZ ?_; omega)
+
+/-- **The clean-room repro**: `y = x >= 0` with `x` an 8-bit signed input, sign-extended to the 32 bits of the
+unsized constant. -/
+theorem signed_decl_correct :
+    signed_decl.sem ⊨₂ spec2 fun _ tr => ∀ (c : Nat) (st : SvState), tr[c]? = some st →
+      ∀ (u : BitVec 8), SvState.lookup st "x" = some (LVec.ofBitVec u) →
+        SvState.lookup st "y" = some (LVec.ofBitVec (BitVec.ofBool (decide (0 ≤ u.toInt)))) := by
+  obtain ⟨hc, ha⟩ : CombDesign signed_decl.sem ∧ Acyclic signed_decl.sem := by
+    sv_structure (rank := rippleRank (fun _ => 0) (fun _ _ _ => 0))
+  refine Models2.of_comb_pointwise hc (fun st heqs hsh => ?_)
+  intro u hX
+  sv_equations
+  · -- the width `max 8 32` and the constant are closed terms: the form below is the same term
+    have e : st.boolAt "y" 0 = (XF.bv 32 (XF.constBit 0 32)).sle (XF.bv 32 (XF.sext 8 (st.boolAt "x"))) := eq_y_1
+    rw [XF.bv_constBit, XF.bv_sext, bv_of_lookup hX] at e
+    simp only [BitVec.sle, BitVec.toInt_signExtend_of_le (show 8 ≤ 32 by omega),
+      show (BitVec.ofInt 32 0).toInt = 0 from rfl] at e
+    exact lookup_bool known_y_1 e
+  all_goals (refine inKnown_ofBitVec hX ?_; omega)
+
+/-- **Two signed signals of different widths**: the 8-bit `x` is sign-extended to the 16 bits of `w`. -/
+theorem scmp_mixed_correct :
+    scmp_mixed.sem ⊨₂ spec2 fun _ tr => ∀ (c : Nat) (st : SvState), tr[c]? = some st →
+      ∀ (u : BitVec 8) (v : BitVec 16), SvState.lookup st "x" = some (LVec.ofBitVec u) →
+        SvState.lookup st "w" = some (LVec.ofBitVec v) →
+        SvState.lookup st "y" = some (LVec.ofBitVec (BitVec.ofBool (decide (u.toInt < v.toInt)))) := by
+  obtain ⟨hc, ha⟩ : CombDesign scmp_mixed.sem ∧ Acyclic scmp_mixed.sem := by
+    sv_structure (rank := rippleRank (fun _ => 0) (fun _ _ _ => 0))
+  refine Models2.of_comb_pointwise hc (fun st heqs hsh => ?_)
+  intro u v hX hW
+  sv_equations
+  · have e : st.boolAt "y" 0 = (XF.bv 16 (XF.sext 8 (st.boolAt "x"))).slt (XF.bv 16 (st.boolAt "w")) := eq_y_1
+    rw [XF.bv_sext, bv_of_lookup hX, bv_of_lookup hW] at e
+    simp only [BitVec.slt, BitVec.toInt_signExtend_of_le (show 8 ≤ 16 by omega)] at e
+    exact lookup_bool known_y_1 e
+  all_goals first
+    | (refine inKnown_ofBitVec hX ?_; omega)
+    | (refine inKnown_ofBitVec hW ?_; omega)
+
+/-- **Sign-extended operands against signed literals and signals**: each bit is the order of the two's-complement
+integers. -/
+theorem scmp_sext_correct :
+    scmp_sext.sem ⊨₂ spec2 fun _ tr => ∀ (c : Nat) (st : SvState), tr[c]? = some st →
+      ∀ (u : BitVec 8) (v : BitVec 16), SvState.lookup st "x" = some (LVec.ofBitVec u) →
+        SvState.lookup st "w" = some (LVec.ofBitVec v) →
+        SvState.lookup st "x_ge0" = some (LVec.ofBitVec (BitVec.ofBool (decide (0 ≤ u.toInt)))) ∧
+        SvState.lookup st "x_lt5" = some (LVec.ofBitVec (BitVec.ofBool (decide (u.toInt < 5)))) ∧
+        SvState.lookup st "w_ltm3" = some (LVec.ofBitVec (BitVec.ofBool (decide (v.toInt < -3)))) ∧
+        SvState.lookup st "x_gt0r" = some (LVec.ofBitVec (BitVec.ofBool (decide (0 < u.toInt)))) ∧
+        SvState.lookup st "x_le_w" = some (LVec.ofBitVec (BitVec.ofBool (decide (u.toInt ≤ v.toInt)))) := by
+  obtain ⟨hc, ha⟩ : CombDesign scmp_sext.sem ∧ Acyclic scmp_sext.sem := by
+    sv_structure (rank := rippleRank (fun _ => 0) (fun _ _ _ => 0))
+  refine Models2.of_comb_pointwise hc (fun st heqs hsh => ?_)
+  intro u v hX hW
+  sv_equations
+  · -- the widths and the literals (each under its sign-extension markers) are closed terms: the forms below are the
+    -- same terms
+    have e1 : st.boolAt "x_ge0" 0 = (0#8).sle (XF.bv 8 (st.boolAt "x")) := eq_x_ge0_1
+    have e2 : st.boolAt "x_lt5" 0 = (XF.bv 16 (XF.sext 8 (st.boolAt "x"))).slt 5#16 := eq_x_lt5_1
+    have e3 : st.boolAt "w_ltm3" 0 = (XF.bv 16 (st.boolAt "w")).slt (BitVec.ofInt 16 (-3)) := eq_w_ltm3_1
+    have e4 : st.boolAt "x_gt0r" 0 = (XF.bv 32 (XF.constBit 0 32)).slt (XF.bv 32 (XF.sext 8 (st.boolAt "x"))) :=
+      eq_x_gt0r_1
+    have e5 : st.boolAt "x_le_w" 0 = (XF.bv 16 (XF.sext 8 (st.boolAt "x"))).sle (XF.bv 16 (st.boolAt "w")) :=
+      eq_x_le_w_1
+    rw [XF.bv_constBit] at e4
+    rw [XF.bv_sext] at e2 e4 e5
+    rw [bv_of_lookup hX] at e1 e2 e4 e5
+    rw [bv_of_lookup hW] at e3 e5
+    simp only [BitVec.sle, BitVec.slt, BitVec.toInt_zero, BitVec.toInt_signExtend_of_le (show 8 ≤ 16 by omega),
+      BitVec.toInt_signExtend_of_le (show 8 ≤ 32 by omega), show (BitVec.ofInt 32 0).toInt = 0 from rfl,
+      show (BitVec.ofInt 16 (-3)).toInt = -3 from rfl, show (5#16).toInt = 5 from rfl] at e1 e2 e3 e4 e5
+    exact ⟨lookup_bool known_x_ge0_1 e1, lookup_bool known_x_lt5_1 e2, lookup_bool known_w_ltm3_1 e3,
+      lookup_bool known_x_gt0r_1 e4, lookup_bool known_x_le_w_1 e5⟩
+  all_goals first
+    | (refine inKnown_ofBitVec hX ?_; omega)
+    | (refine inKnown_ofBitVec hW ?_; omega)
+
+/-- **`x >= 0` at every width**: `x` of a parameter width `W`, the comparison at `max W 32` bits. -/
+theorem scmp_sext_w_correct (W : Nat) (hW : 1 ≤ W) (hR : (W : Int) < 2147483648) :
+    scmp_sext_w.sem W ⊨₂ spec2 fun _ tr => ∀ (c : Nat) (st : SvState), tr[c]? = some st →
+      ∀ (u : BitVec W), SvState.lookup st "x" = some (LVec.ofBitVec u) →
+        SvState.lookup st "y" = some (LVec.ofBitVec (BitVec.ofBool (decide (0 ≤ u.toInt)))) := by
+  obtain ⟨hc, ha⟩ : CombDesign (scmp_sext_w.sem W) ∧ Acyclic (scmp_sext_w.sem W) := by
+    sv_structure (rank := rippleRank (fun _ => 0) (fun _ _ _ => 0))
+    all_goals (intros; omega)
+  refine Models2.of_comb_pointwise hc (fun st heqs hsh => ?_)
+  intro u hX
+  sv_equations
+  · have hw : (↑W + -1 : Int).natAbs + 1 = W := by omega
+    rw [hw] at eq_y_1
+    rw [XF.bv_constBit, XF.bv_sext, bv_of_lookup hX] at eq_y_1
+    have h0 : (BitVec.ofInt (max W 32) 0).toInt = 0 := by simp
+    simp only [BitVec.sle, BitVec.toInt_signExtend_of_le (Nat.le_max_left W 32), h0] at eq_y_1
+    exact lookup_bool known_y_1 eq_y_1
+  all_goals (refine inKnown_ofBitVec hX ?_; omega)
+
+/-- info: 'Examples.«system-verilog».comb_signed.comb_proof.signed_decl_correct' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms signed_decl_correct
+
+/-- info: 'Examples.«system-verilog».comb_signed.comb_proof.scmp_mixed_correct' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms scmp_mixed_correct
+
+/-- info: 'Examples.«system-verilog».comb_signed.comb_proof.scmp_sext_correct' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms scmp_sext_correct
+
+/-- info: 'Examples.«system-verilog».comb_signed.comb_proof.scmp_sext_w_correct' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms scmp_sext_w_correct
 
 /-- info: 'Examples.«system-verilog».comb_signed.comb_proof.sadd_correct' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in

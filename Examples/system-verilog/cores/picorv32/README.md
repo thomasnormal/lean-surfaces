@@ -20,8 +20,8 @@ python3 extractors/sv/extract.py --top picorv32 -D RISCV_FORMAL \
 
 The source SHA-256 is
 `0836050971b3c6cdd28ac3b1e5719a67fb645161912bef1e472e63995ceb062`.
-The resulting envelope is 3,262,705 bytes with SHA-256
-`0bb5dea7b1cc61cab05858396ec2cb5837e25793aa0291c6c89a5109380cf3e8`.
+The resulting envelope is 3,434,247 bytes with SHA-256
+`bc2b93fa14f59da84de1376a6d50b6505d281ee76d4ec4652b47651cfad9be7c`.
 It has one `picorv32` module and 26 named parameters.  The R2 statement
 records every pinned parameter value explicitly and retains the loader's
 loud refusal at the current `cpuregs` memory wall.
@@ -48,6 +48,27 @@ picorv32_current.sem defaults: hasUnsupported = true
 unsupported "Instantiate"
   "decl 'cpuregs': unpacked array storage outside E (UnpackedDecl:memory)"
 ```
+
+## 2026-11-12 re-probe on public master `17f5e3fad`
+
+The unchanged pinned source was re-extracted with `RISCV_FORMAL` using the
+approved extractor command above.  The fresh envelope is 3,434,247 bytes with
+SHA-256
+`bc2b93fa14f59da84de1376a6d50b6505d281ee76d4ec4652b47651cfad9be7c`.
+The generated `harness/rv/core_census.py` report is 348 ADMITTED, 12 REFUSED,
+4 NOT REACHED, with 16 remaining rows.  The ordinary route's first wall is
+still the unpacked `cpuregs` declaration at `picorv32.v:203`:
+
+```text
+unsupported "Instantiate"
+  "decl 'cpuregs': unpacked array storage outside E (UnpackedDecl:memory)"
+```
+
+The other current refusals are the initial process at line 206, eight
+source-shaped net-z module members at lines 257--265, the empty task at line
+214, and the sized parametric x/z conversion at line 1132.  This packet records
+the current public-master loader state; it does not adapt the pinned RTL or
+claim an E run.
 
 The default argument list, in source order, is
 `[1, 1, 1, 1, 0, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0,

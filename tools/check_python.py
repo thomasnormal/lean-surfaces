@@ -61,6 +61,7 @@ def acceptance_gates(root):
         ("py-runner-stamp", [python, "harness/runner_stamp.py"]),
         ("py-library-survey-tests", [python, "tools/test_library_survey.py"]),
         ("py-library-rank-tests", [python, "tools/test_library_rank.py"]),
+        ("py-opaque-import-tests", [python, "tools/test_python_opaque_imports.py"]),
         ("py-dependent-walker-tests", [python, "tools/test_python_dependents.py"]),
         ("py-proof-interpreter", [python, "harness/diff_test.py", "--no-build",
                                   "--runner", runner, "--proof-interpreter"]),

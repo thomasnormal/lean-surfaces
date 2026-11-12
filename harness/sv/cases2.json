@@ -73253,5 +73253,14 @@
     "stimulus": [{"x": "00000000"}, {"x": "00000001"}, {"x": "10100100"}, {"x": "11111111"}, {"x": "xxxxxxxx"}],
     "measured": "2026-11-12: the source loop is elaborated by Slang into eight parser-shaped conditional arms; canonical E matches Icarus Verilog 13.0 and Xcelium 24.03-s004 over known and unknown inputs."
   }
+  ,{
+    "name": "initial_syscall_e_boundary",
+    "example": "sem2/initial_syscall_e",
+    "top": "initial_syscall_e",
+    "signals": ["x", "y"],
+    "stimulus": [{"x": "x"}, {"x": "0"}, {"x": "1"}],
+    "refusal": "T2:Initial",
+    "measured": "2026-11-12: the parser retains the initial `$fatal` system call; ordinary E refuses the initial process as T2:Initial, while Icarus Verilog 13.0 and Xcelium 24.03-s004 accept the source-level simulation row."
+  }
   ]
 }

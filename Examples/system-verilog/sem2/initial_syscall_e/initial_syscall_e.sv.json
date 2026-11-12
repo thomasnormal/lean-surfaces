@@ -1,0 +1,188 @@
+{
+  "schema_version": "sv-0.2",
+  "language": "systemverilog",
+  "frontend": {
+    "name": "pyslang",
+    "family": "pyslang-11"
+  },
+  "mode": "symbolic",
+  "top": "initial_syscall_e",
+  "source_files": [
+    {
+      "path": "Examples/system-verilog/sem2/initial_syscall_e/initial_syscall_e.sv",
+      "sha256": "5d0e9447f45aaca20f3234dfe00c83d690bbca53c933aa321a86b484aebc297c"
+    }
+  ],
+  "packages": [],
+  "design": {
+    "kind": "Design",
+    "modules": [
+      {
+        "kind": "Module",
+        "span": {
+          "line": 1,
+          "col": 1,
+          "end_line": 4,
+          "end_col": 10
+        },
+        "name": "initial_syscall_e",
+        "imports": [],
+        "params": [],
+        "types": [],
+        "ports": [
+          {
+            "kind": "Port",
+            "span": {
+              "line": 1,
+              "col": 38,
+              "end_line": 1,
+              "end_col": 39
+            },
+            "name": "x",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 1,
+              "col": 54,
+              "end_line": 1,
+              "end_col": 55
+            },
+            "name": "y",
+            "dir": "out",
+            "width": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            }
+          }
+        ],
+        "decls": [],
+        "processes": [
+          {
+            "kind": "Assign",
+            "span": {
+              "line": 2,
+              "col": 10,
+              "end_line": 2,
+              "end_col": 15
+            },
+            "target": {
+              "kind": "Ident",
+              "span": {
+                "line": 2,
+                "col": 10,
+                "end_line": 2,
+                "end_col": 11
+              },
+              "width": 1,
+              "name": "y"
+            },
+            "value": {
+              "kind": "Ident",
+              "span": {
+                "line": 2,
+                "col": 14,
+                "end_line": 2,
+                "end_col": 15
+              },
+              "width": 1,
+              "name": "x"
+            }
+          },
+          {
+            "kind": "Initial",
+            "span": {
+              "line": 3,
+              "col": 3,
+              "end_line": 3,
+              "end_col": 36
+            },
+            "body": {
+              "kind": "If",
+              "span": {
+                "line": 3,
+                "col": 11,
+                "end_line": 3,
+                "end_col": 36
+              },
+              "cond": {
+                "kind": "Unary",
+                "span": {
+                  "line": 3,
+                  "col": 15,
+                  "end_line": 3,
+                  "end_col": 17
+                },
+                "width": 1,
+                "op": "!",
+                "operand": {
+                  "kind": "Ident",
+                  "span": {
+                    "line": 3,
+                    "col": 16,
+                    "end_line": 3,
+                    "end_col": 17
+                  },
+                  "width": 1,
+                  "name": "x"
+                }
+              },
+              "then": {
+                "kind": "SysCall",
+                "span": {
+                  "line": 3,
+                  "col": 19,
+                  "end_line": 3,
+                  "end_col": 36
+                },
+                "name": "$finish",
+                "format": null,
+                "args": [
+                  {
+                    "kind": "Int",
+                    "span": {
+                      "line": 3,
+                      "col": 26,
+                      "end_line": 3,
+                      "end_col": 27
+                    },
+                    "value": 1,
+                    "resolved_width": 32
+                  },
+                  {
+                    "kind": "Literal",
+                    "span": {
+                      "line": 3,
+                      "col": 29,
+                      "end_line": 3,
+                      "end_col": 34
+                    },
+                    "width": 24,
+                    "bits": "011000100110000101100100"
+                  }
+                ],
+                "arg_signed": [
+                  true,
+                  false
+                ],
+                "fatal_task": true
+              },
+              "else": null
+            }
+          }
+        ],
+        "generates": [],
+        "others": []
+      }
+    ],
+    "others": []
+  },
+  "lean_blocks": []
+}

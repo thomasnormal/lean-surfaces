@@ -15,8 +15,8 @@ import LeanModels.Sv.Comb2
   pattern with zeros (`-8 >> 1` is 2147483644), the instantiation divides toward zero (-4, `evalIntExact`; at the default
   point the loader's slang cross-check refuses the design for it), so the two readings part: refused for every `N ≥ 1`,
   read for `N ≥ 16`.
-* `localparam_shift` (the clean-room repro, `../localparam_shift.sv`): `sv_structure` reads `BIAS` as a value
-  (`comb_proof.lean`); `sv_equations` does not yet, and says so.
+* `localparam_shift` (the clean-room repro, `../localparam_shift.sv`): `sv_structure` and `sv_equations` read `BIAS` as a
+  value (`comb_proof.lean`, `localparam_shift_correct`); it is no longer a negative test.
 -/
 
 open LeanModels.Sv LeanModels.Sv.CombView
@@ -26,7 +26,6 @@ namespace Examples.«system-verilog».lp_shift.neg
 load_design_sv2 lp_shl_neg from "Examples/system-verilog/lp_shift/neg/lp_shl_neg.sv.json"
 load_design_sv2 lp_shl_wide from "Examples/system-verilog/lp_shift/neg/lp_shl_wide.sv.json"
 load_design_sv2 lp_shr_neg from "Examples/system-verilog/lp_shift/neg/lp_shr_neg.sv.json"
-load_design_sv2 localparam_shift from "Examples/system-verilog/lp_shift/localparam_shift.sv.json"
 
 /--
 error: sv_structure: the parameter stage (`paramEnv2`) of this design could not be evaluated at a symbolic parameter: the instantiation decides `Int.ofNat
@@ -84,15 +83,5 @@ example (N : Nat) (hN : 1 ≤ N) (hR : (N : Int) < 2147483648) : CombDesign (lp_
 example (N : Nat) (hN : 16 ≤ N) (hR : (N : Int) < 2147483648) : CombDesign (lp_shr_neg.sem N) := by
   sv_structure
   all_goals (intros; omega)
-
-/--
-error: sv_equations: a right-hand side reads the parameter or localparam `BIAS` as a value (the conversion marker `Resize` of a signed `int` in an unsigned context, IEEE 1800-2023 §11.8.2): `sv_structure` reads it, the equations do not yet (the marker's lowering depends on the constant's own width, `selfWidth2`, which the summary does not carry)
--/
-#guard_msgs (whitespace := lax) in
-example : localparam_shift.sem 8 ⊨₂ spec2 fun _ tr => ∀ (c : Nat) (st : SvState), tr[c]? = some st → True := by
-  obtain ⟨hc, ha⟩ : CombDesign (localparam_shift.sem 8) ∧ Acyclic (localparam_shift.sem 8) := by
-    sv_structure (rank := rippleRank (fun _ => 0) (fun _ _ _ => 0))
-  refine Models2.of_comb_pointwise hc (fun st heqs hsh => ?_)
-  sv_equations
 
 end Examples.«system-verilog».lp_shift.neg

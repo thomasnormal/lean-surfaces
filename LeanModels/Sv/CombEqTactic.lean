@@ -603,13 +603,24 @@ unsafe def runSvEquationsCore (hintOnly : Bool) : TacticM Unit := do
       let haI ← hyp haN
       let heqsI ← hyp heqsN
       let hshI ← hyp hshN
-      evalTactic (← `(tactic|
-        have $keyI:ident := LeanModels.Sv.CombEq.eq_view (s := ?s) (env := ?env) (hs := ?hs)
-            (harity := ?harity) (h1 := ?h1) (hag := ?hag) (hok := ?hok) (hauto := ?hauto)
-            (hin := ?hin) (hfrag := ?hfrag) (hwid := ?hwid) (hbit := ?hbit) (hcov := ?hcov)
-            (hinK := ?hinK) (hc := $hcI) (ha := $haI) (heqs := $heqsI) (hsh := $hshI)))
+      -- a flat design read as written takes the producer with constants read as values (`eq_viewV`: `EqFragV`, and the
+      -- own widths `PwObl`); a hierarchy's twin and a signed design's twin keep `eq_view`, whose bridges are stated
+      -- with `EqFrag`
+      let vrOk := hier?.isNone && !signed
+      if vrOk then
+        evalTactic (← `(tactic|
+          have $keyI:ident := LeanModels.Sv.CombEq.eq_viewV (s := ?s) (env := ?env) (hs := ?hs)
+              (harity := ?harity) (h1 := ?h1) (hag := ?hag) (hok := ?hok) (hauto := ?hauto)
+              (hin := ?hin) (hfrag := ?hfrag) (hpw := ?hpw) (hwid := ?hwid) (hbit := ?hbit) (hcov := ?hcov)
+              (hinK := ?hinK) (hc := $hcI) (ha := $haI) (heqs := $heqsI) (hsh := $hshI)))
+      else
+        evalTactic (← `(tactic|
+          have $keyI:ident := LeanModels.Sv.CombEq.eq_view (s := ?s) (env := ?env) (hs := ?hs)
+              (harity := ?harity) (h1 := ?h1) (hag := ?hag) (hok := ?hok) (hauto := ?hauto)
+              (hin := ?hin) (hfrag := ?hfrag) (hwid := ?hwid) (hbit := ?hbit) (hcov := ?hcov)
+              (hinK := ?hinK) (hc := $hcI) (ha := $haI) (heqs := $heqsI) (hsh := $hshI)))
       let goals ← getGoals
-      let named : List Name := [`s, `env, `hs, `harity, `h1, `hag, `hok, `hauto, `hin, `hfrag, `hwid,
+      let named : List Name := [`s, `env, `hs, `harity, `h1, `hag, `hok, `hauto, `hin, `hfrag, `hpw, `hwid,
         `hbit, `hcov, `hinK, `htw, `hdisj, `dsP, `hdsP, `hck, `envP, `h1P, `hagP, `hch]
       let mut bodyGoal? : Option MVarId := none
       for g in goals do
@@ -642,17 +653,26 @@ unsafe def runSvEquationsCore (hintOnly : Bool) : TacticM Unit := do
       closeParamEnv "sv_equations" (← find `h1)
       closeHag "sv_equations" (← find `hag) s args
       closeDecide `hok "the structural check failed"
-      match s.lsites.findSome? fun ls => (LeanModels.Sv.CombEq.rhsOf ls.site.proc).paramRdName? with
+      let paramRd? : Option String := if vrOk then none else
+        s.lsites.findSome? fun ls => (LeanModels.Sv.CombEq.rhsOf ls.site.proc).paramRdName?
+      match paramRd? with
       | some n =>
-          -- a parameter read as a value is outside the equation fragment (`fragW`): say so, without the kernel's report
+          -- in a hierarchy's or a signed design's twin a parameter read as a value is outside the equation fragment
+          -- (`fragW`): say so, without the kernel's report
           setGoals [← find `hfrag]
           try
             closeByDecide (← getMainGoal) "frag"
             setGoals []
           catch _ =>
-            throwError "sv_equations: a right-hand side reads the parameter or localparam `{n}` as a value (the conversion marker `Resize` of a signed `int` in an unsigned context, IEEE 1800-2023 §11.8.2): `sv_structure` reads it, the equations do not yet (the marker's lowering depends on the constant's own width, `selfWidth2`, which the summary does not carry)"
+            let where_ := if hier?.isSome then "a design that instantiates modules (its flat twin)"
+              else "a design with signed reads (its unsigned twin)"
+            throwError "sv_equations: a right-hand side reads the parameter or localparam `{n}` as a value (the conversion marker `Resize` of a signed `int` in an unsigned context, IEEE 1800-2023 §11.8.2): the equations read such a constant in a flat design read as written (`eq_viewV`), not yet in {where_}"
       | none =>
           closeDecide `hfrag "a right-hand side is outside the fragment of `sv_equations` (an expression over accesses and known literals built from `& | ^`, `~ !`, the reductions, `&& ||`, `== !=` and `?:`, a concatenation of accesses and known literals, or a fill `'0`/`'1`)"
+      if vrOk then
+        -- the own width of each constant read as a value (literals of the environment, `rfl` at a symbolic parameter)
+        let vrs := (s.lsites.flatMap fun ls => (LeanModels.Sv.CombEq.rhsOf ls.site.proc).vreads).eraseDups
+        closeWith `hpw s!"a right-hand side reads the parameter or localparam {", ".intercalate (vrs.map fun n => s!"`{n}`")} as a value (the conversion marker `Resize` of a signed `int` in an unsigned context, IEEE 1800-2023 §11.8.2), and the instantiation environment does not give it the own width 32 (`selfWidth2`: `IEnv.pwidths`, else `paramNWidth`) that the equations convert it from; a constant read as a value must be an `int`/`integer` (32-bit signed)" (← `(tactic| rfl))
       let mut out : Array MVarId := #[]
       -- a design with module instances: the twin's own goals of the bridge, and its one-driver obligation
       if let some (_, _, argsH, _, _, pnames, pl) := hier? then

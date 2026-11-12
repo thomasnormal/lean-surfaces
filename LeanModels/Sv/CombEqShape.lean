@@ -224,6 +224,31 @@ theorem unsign_eq_fill {e : PExpr} {b : Logic} (h : e.unsign = .fill b) : e = .f
   | partSel b m l => obtain ⟨b', hb⟩ := unsign_partSel b m l; rw [hb] at h; cases h
   | _ => simp [PExpr.unsign] at h
 
+theorem unsign_eq_paramRef {e : PExpr} {n : String} {k : Option String} (h : e.unsign = .paramRef n k) :
+    e = .paramRef n k := by
+  cases e with
+  | paramRef n' k' => simpa [PExpr.unsign] using h
+  | cast s x =>
+      cases s <;> cases x <;> simp [PExpr.unsign] at h
+  | binary op l r =>
+      cases hu : unsignOp op
+      · rw [unsign_binary_f hu] at h; cases h
+      · rw [unsign_binary_t hu] at h; cases h
+  | unary => simp [PExpr.unsign] at h
+  | ternary => simp [PExpr.unsign] at h
+  | reduce => simp [PExpr.unsign] at h
+  | concat => simp [PExpr.unsign] at h
+  | repl => simp [PExpr.unsign] at h
+  | resize => simp [PExpr.unsign] at h
+  | bitSel b i => obtain ⟨b', hb⟩ := unsign_bitSel b i; rw [hb] at h; cases h
+  | partSel b m l => obtain ⟨b', hb⟩ := unsign_partSel b m l; rw [hb] at h; cases h
+  | _ => simp [PExpr.unsign] at h
+
+/-- Under a marker around an operation, the constants read as values are the operation's. -/
+theorem vreads_resize_of_op {a : PExpr} (m : Nat) (h : a.isOpW = true) :
+    (PExpr.resize m a).vreads = a.vreads := by
+  cases a <;> simp_all [PExpr.isOpW, PExpr.vreads]
+
 theorem unsign_eq_concat1 {e x : PExpr} (h : e.unsign = .concat [x]) :
     ∃ e', e = .concat [e'] ∧ e'.unsign = x := by
   cases e with
@@ -1910,21 +1935,44 @@ theorem skD_shape (C : Ctx σ E elems DW DG EW ns) {dw : String → Nat}
   | .unsupported .., _, rs, h, hacc, _ | .functionCall .., _, rs, h, hacc, _ =>
       skD_ofLeaf C hdw (by simpa [rdsOfD?] using h) hacc
 
+/-- **A parameter read as a value under its conversion marker**, 32 bits wide on its own (`selfWidth2`, the obligation
+`PwObl`), at a context `tw`: zero-extended from its 32-bit value where the context is wider, the value materialized at the
+context otherwise (`instExpr2`'s resize arm; `PExpr.constLeaf`). This is `Sk.zc`'s lowering. -/
+theorem ie_resize_param_zc {n : String} {v : Int} (hv : E.intVal? n = some v)
+    (hw : selfWidth2 E elems (.paramRef n none) = some 32) (m tw : Nat) :
+    instExpr2 E elems (some tw) (.resize m (.paramRef n none)) =
+      if 32 < tw then .resize tw (.lit (LVec.ofInt 32 v)) else .lit (LVec.ofInt tw v) := by
+  have h1 : instExpr2 E elems (some tw) (.resize m (.paramRef n none)) =
+      if 32 < tw then .resize tw (instExpr2 E elems (some 32) (.paramRef n none))
+      else instExpr2 E elems (some tw) (.paramRef n none) := by
+    by_cases h : 32 < tw
+    · rw [if_pos h]
+      conv => lhs; unfold instExpr2
+      simp [hw, h, PExpr.ctxPropagates, PExpr.negGenvarWidened]
+    · rw [if_neg h]
+      conv => lhs; unfold instExpr2
+      simp [hw, h, PExpr.constLeaf]
+  rw [h1, ie_paramRef_intVal hv, ie_paramRef_intVal hv]
+  rfl
+
 /-! ## The word-level shape theorem -/
 
 /-- **`skT_shapeC` for an expression whose unsigned twin is accepted**: the recognizer and the skeleton read the twin,
-the five facts are about the expression as written. -/
-theorem skT_shapeCU (C : Ctx σ E elems DW DG EW ns) {dw : String → Nat}
+the five facts are about the expression as written. A constant read as a value under its conversion marker (`fragWV`,
+`Sk.zc`) needs its own width, 32 (`hpw`). -/
+theorem skT_shapeCV (C : Ctx σ E elems DW DG EW ns) {dw : String → Nat}
     (hdw : ∀ n, (DW n).isSome = true → DW n = some (dw n)) {ds : List DeclT} :
-    ∀ (v : PExpr) (rs : List Acc), rdsOfW? ds v.unsign = .ok rs → fragW v.unsign = true →
-      (∀ a ∈ rs, AccOK σ DW DG EW ns a) → ConstOK σ ns v.unsign → ∀ tw, (skT v.unsign rs).WidthOkC σ dw tw →
+    ∀ (v : PExpr) (rs : List Acc), rdsOfW? ds v.unsign = .ok rs → fragWV v.unsign = true →
+      (∀ a ∈ rs, AccOK σ DW DG EW ns a) → ConstOK σ ns v.unsign →
+      (∀ n ∈ v.unsign.vreads, selfWidth2 E elems (.paramRef n none) = some 32) →
+      ∀ tw, (skT v.unsign rs).WidthOkC σ dw tw →
         selfWidth2 E elems v = some ((skT v.unsign rs).width σ dw) ∧
         rigidMax2 E elems v = (skT v.unsign rs).rmax σ dw ∧
         ((skT v.unsign rs).isExt = false → (skT v.unsign rs).width σ dw ≤ tw →
           instExpr2 E elems none v = (skT v.unsign rs).low σ dw ((skT v.unsign rs).width σ dw)) ∧
         instExpr2 E elems (some tw) v = (skT v.unsign rs).low σ dw tw ∧
         fitExpr2 E elems (some tw) v = (skT v.unsign rs).low σ dw tw
-  | .lit lv, rs, h, _, _, hcn, tw, hw => by
+  | .lit lv, rs, h, _, _, hcn, hpw, tw, hw => by
       rw [unsign_lit] at h hw ⊢
       simp only [rdsOfW?, Except.ok.injEq] at h
       subst h
@@ -1933,10 +1981,10 @@ theorem skT_shapeCU (C : Ctx σ E elems DW DG EW ns) {dw : String → Nat}
         fun _ _ => by simp [skT, Sk.low, instExpr2], by simp [skT, Sk.low, instExpr2], ?_⟩
       rw [fitExpr2_lit, if_pos hw]
       simp [skT, Sk.low]
-  | .binary op l r, rs, h, hf, hacc, hcn, tw, hw => by
+  | .binary op l r, rs, h, hf, hacc, hcn, hpw, tw, hw => by
       cases hu : unsignOp op with
       | false =>
-      rw [unsign_binary_f hu] at h hf hcn hw ⊢
+      rw [unsign_binary_f hu] at h hf hcn hpw hw ⊢
       rcases rdsOfW?_binary h with ⟨hb, -⟩ | ⟨hb, -⟩ | ⟨hb, ra, rb, hl, hr, rfl⟩ | ⟨cm, hcm, hs⟩
       · rw [unsignOp_of_ctxOpW hb] at hu; cases hu
       · rw [unsignOp_of_selfOpW hb] at hu; cases hu
@@ -2014,18 +2062,22 @@ theorem skT_shapeCU (C : Ctx σ E elems DW DG EW ns) {dw : String → Nat}
         exact ⟨by simp [Sk.width, sw_scmp hcm], by simp [Sk.rmax, rm_scmp hcm],
           fun _ _ => by simpa [Sk.width] using key none, key _, by rw [fitExpr2_binary]; exact key _⟩
       | true =>
-      rw [unsign_binary_t hu] at h hf hcn hw ⊢
+      rw [unsign_binary_t hu] at h hf hcn hpw hw ⊢
       rcases rdsOfW?_binary h with ⟨hb, ra, rb, hl, hr, rfl⟩ | ⟨hb, ra, rb, hl, hr, rfl⟩ |
         ⟨hb, ra, rb, hl, hr, rfl⟩ | ⟨cm, hsc, -⟩
       · -- `& | ^ + -`: context-determined operands
-        replace hf := fragW_bin_ctx (selfOpW_false_of_ctx hb) hf
+        replace hf := fragWV_bin_ctx (selfOpW_false_of_ctx hb) hf
         have hla := rdsOfW?_len l.unsign ra hl hf.1
         have e1 : (ra ++ rb).take (cnt l.unsign) = ra := List.take_left' hla
         have e2 : (ra ++ rb).drop (cnt l.unsign) = rb := List.drop_left' hla
         have hacl : ∀ a ∈ ra, AccOK σ DW DG EW ns a := fun a ha => hacc a (List.mem_append_left _ ha)
         have hacr : ∀ a ∈ rb, AccOK σ DW DG EW ns a := fun a ha => hacc a (List.mem_append_right _ ha)
-        have ihl := skT_shapeCU C hdw l ra hl hf.1 hacl (cok_binary_l hcn)
-        have ihr := skT_shapeCU C hdw r rb hr hf.2 hacr (cok_binary_r hcn)
+        have hvl : ∀ n ∈ l.unsign.vreads, selfWidth2 E elems (.paramRef n none) = some 32 := fun n hn =>
+          hpw n (by simp [PExpr.vreads, selfOpW_false_of_ctx hb, hn])
+        have hvr : ∀ n ∈ r.unsign.vreads, selfWidth2 E elems (.paramRef n none) = some 32 := fun n hn =>
+          hpw n (by simp [PExpr.vreads, selfOpW_false_of_ctx hb, hn])
+        have ihl := skT_shapeCV C hdw l ra hl hf.1 hacl (cok_binary_l hcn) hvl
+        have ihr := skT_shapeCV C hdw r rb hr hf.2 hacr (cok_binary_r hcn) hvr
         by_cases hcm : ∃ cm : CmpOp, op = .m0 cm.ex
         · -- a comparison: one bit, the operands context-determined at the wider natural width
           obtain ⟨cm, rfl⟩ := hcm
@@ -2118,7 +2170,7 @@ theorem skT_shapeCU (C : Ctx σ E elems DW DG EW ns) {dw : String → Nat}
         rcases hbb with rfl | rfl | rfl | rfl | rfl <;>
           exact ⟨hS, hR, fun _ hwt => hI0 hwt, hI1, by rw [fitExpr2_binary]; exact hI1⟩
       · -- `&&`, `||`, `==`, `!=`: one bit, self-determined v1 operands
-        replace hf := fragW_bin_self hb hf
+        replace hf := fragWV_bin_self hb hf
         have hla := rdsOf?_len l.unsign ra hl hf.1
         have e1 : (ra ++ rb).take (cnt l.unsign) = ra := List.take_left' hla
         have e2 : (ra ++ rb).drop (cnt l.unsign) = rb := List.drop_left' hla
@@ -2153,14 +2205,14 @@ theorem skT_shapeCU (C : Ctx σ E elems DW DG EW ns) {dw : String → Nat}
           exact ⟨sw_lor l r, rm_lor l r, fun _ _ => key none, key _, by rw [fitExpr2_binary]; exact key _⟩
       · rw [unsignOp_of_shOpW (by assumption)] at hu; cases hu
       · rw [(scmpOp_ctx hsc).2.2.2] at hu; cases hu
-  | .unary op a, rs, h, hf, hacc, hcn, tw, hw => by
-      rw [unsign_unary] at h hf hcn hw ⊢
+  | .unary op a, rs, h, hf, hacc, hcn, hpw, tw, hw => by
+      rw [unsign_unary] at h hf hcn hpw hw ⊢
       rcases rdsOfW?_unary h with ⟨rfl, ha⟩ | ⟨rfl, ha⟩
-      · replace hf : fragW a.unsign = true := by simpa [fragW] using hf
+      · replace hf : fragWV a.unsign = true := by simpa [fragWV] using hf
         have hsk : skT (.unary (.m0 .bnot) a.unsign) rs = .bnot (skT a.unsign rs) := by simp [skT]
         rw [hsk] at hw ⊢
         simp only [Sk.WidthOkC] at hw
-        obtain ⟨Sa, Ra, I0a, I1a, Fa⟩ := skT_shapeCU C hdw a rs ha hf hacc (cok_unary hcn) tw hw.1
+        obtain ⟨Sa, Ra, I0a, I1a, Fa⟩ := skT_shapeCV C hdw a rs ha hf hacc (cok_unary hcn) (fun n hn => hpw n (by simpa [PExpr.vreads] using hn)) tw hw.1
         have hrm : (rigidMax2 E elems a).getD tw ≤ tw := by
           rw [Ra]; exact Sk.getD_le (Sk.rmax_le _ tw hw.1 hw.2)
         have I1 : instExpr2 E elems (some tw) (.unary (.m0 .bnot) a) =
@@ -2168,10 +2220,10 @@ theorem skT_shapeCU (C : Ctx σ E elems DW DG EW ns) {dw : String → Nat}
           rw [ie_bnot_some tw a hrm, Fa]; rfl
         refine ⟨by rw [sw_bnot]; exact Sa, by rw [rm_bnot]; exact Ra, fun _ hle => ?_, I1, ?_⟩
         · have hW := Sk.WidthOkC.mono _ _ ((skT a.unsign rs).width σ dw) hw.1 (Nat.le_refl _) hle
-          obtain ⟨-, -, -, I1aW, -⟩ := skT_shapeCU C hdw a rs ha hf hacc (cok_unary hcn) _ hW
+          obtain ⟨-, -, -, I1aW, -⟩ := skT_shapeCV C hdw a rs ha hf hacc (cok_unary hcn) (fun n hn => hpw n (by simpa [PExpr.vreads] using hn)) _ hW
           rw [ie_bnot_none, Sa, I1aW]; rfl
         · rw [fitExpr2_of_not_rigid tw (rigidExpr_unary _ _)]; exact I1
-      · replace hf : fragG a.unsign = true := by simpa [fragW] using hf
+      · replace hf : fragG a.unsign = true := by simpa [fragWV] using hf
         have hsk : skT (.unary (.m0 .lnot) a.unsign) rs = .lnot (skT a.unsign rs) := by simp [skT]
         rw [hsk] at hw ⊢
         obtain ⟨rfl, hsa⟩ := hw
@@ -2182,10 +2234,10 @@ theorem skT_shapeCU (C : Ctx σ E elems DW DG EW ns) {dw : String → Nat}
           rfl
         exact ⟨sw_lnot a, rm_lnot a, fun _ _ => key none, key _, by
           rw [fitExpr2_of_not_rigid 1 (rigidExpr_unary _ _)]; exact key _⟩
-  | .ternary c t f, rs, h, hf, hacc, hcn, tw, hw => by
-      rw [unsign_ternary] at h hf hcn hw ⊢
+  | .ternary c t f, rs, h, hf, hacc, hcn, hpw, tw, hw => by
+      rw [unsign_ternary] at h hf hcn hpw hw ⊢
       obtain ⟨rc, rt, rf, hc, ht, hfe, rfl⟩ := rdsOfW?_ternary h
-      simp only [fragW, Bool.and_eq_true] at hf
+      simp only [fragWV, Bool.and_eq_true] at hf
       have hc' := rdsOf?_len c.unsign rc hc hf.1.1
       have ht' := rdsOfW?_len t.unsign rt ht hf.1.2
       have e1 : (rc ++ rt ++ rf).take (cnt c.unsign) = rc := by
@@ -2203,12 +2255,12 @@ theorem skT_shapeCU (C : Ctx σ E elems DW DG EW ns) {dw : String → Nat}
         rwa [hwc] at this
       obtain ⟨-, -, I0c, -, -⟩ := skT_shapeU C hdw c rc hc hf.1.1
         (fun x hx => hacc x (List.mem_append_left _ (List.mem_append_left _ hx))) 1 hc1
-      obtain ⟨St, Rt, -, -, Ft⟩ := skT_shapeCU C hdw t rt ht hf.1.2
+      obtain ⟨St, Rt, -, -, Ft⟩ := skT_shapeCV C hdw t rt ht hf.1.2
         (fun x hx => hacc x (List.mem_append_left _ (List.mem_append_right _ hx)))
-        (cok_ternary_t hcn) tw hwt
-      obtain ⟨Sf, Rf, -, -, Ff⟩ := skT_shapeCU C hdw f rf hfe hf.2
+        (cok_ternary_t hcn) (fun n hn => hpw n (by simp [PExpr.vreads, hn])) tw hwt
+      obtain ⟨Sf, Rf, -, -, Ff⟩ := skT_shapeCV C hdw f rf hfe hf.2
         (fun x hx => hacc x (List.mem_append_right _ hx))
-        (cok_ternary_e hcn) tw hwf
+        (cok_ternary_e hcn) (fun n hn => hpw n (by simp [PExpr.vreads, hn])) tw hwf
       have I1 : instExpr2 E elems (some tw) (.ternary c t f) =
           Sk.low σ dw tw (.tern (skT c.unsign rc) (skT t.unsign rt) (skT f.unsign rf)) := by
         rw [ie_ternary_some, I0c, Ft, Ff]
@@ -2220,18 +2272,18 @@ theorem skT_shapeCU (C : Ctx σ E elems DW DG EW ns) {dw : String → Nat}
           (Nat.le_max_left _ _) hle'
         have hWf := Sk.WidthOkC.mono _ _ (max ((skT t.unsign rt).width σ dw) ((skT f.unsign rf).width σ dw)) hwf
           (Nat.le_max_right _ _) hle'
-        obtain ⟨-, -, -, -, FtW⟩ := skT_shapeCU C hdw t rt ht hf.1.2
+        obtain ⟨-, -, -, -, FtW⟩ := skT_shapeCV C hdw t rt ht hf.1.2
           (fun x hx => hacc x (List.mem_append_left _ (List.mem_append_right _ hx)))
-          (cok_ternary_t hcn) _ hWt
-        obtain ⟨-, -, -, -, FfW⟩ := skT_shapeCU C hdw f rf hfe hf.2
+          (cok_ternary_t hcn) (fun n hn => hpw n (by simp [PExpr.vreads, hn])) _ hWt
+        obtain ⟨-, -, -, -, FfW⟩ := skT_shapeCV C hdw f rf hfe hf.2
           (fun x hx => hacc x (List.mem_append_right _ hx))
-          (cok_ternary_e hcn) _ hWf
+          (cok_ternary_e hcn) (fun n hn => hpw n (by simp [PExpr.vreads, hn])) _ hWf
         rw [ie_ternary_none' c t f St Sf, I0c, FtW, FfW]
         simp only [Sk.low, Sk.width, Sk.low_irrel σ dw _ hsc 1 0]
       · rw [fitExpr2_of_not_rigid tw (rigidExpr_ternary _ _ _)]; exact I1
-  | .reduce op a, rs, h, hf, hacc, hcn, tw, hw => by
-      rw [unsign_reduce] at h hf hcn hw ⊢
-      simp only [fragW] at hf
+  | .reduce op a, rs, h, hf, hacc, hcn, hpw, tw, hw => by
+      rw [unsign_reduce] at h hf hcn hpw hw ⊢
+      simp only [fragWV] at hf
       have ha := rdsOfW?_reduce h
       have hsk : skT (.reduce op a.unsign) rs = .red op (skT a.unsign rs) := by simp [skT]
       rw [hsk] at hw ⊢
@@ -2243,13 +2295,25 @@ theorem skT_shapeCU (C : Ctx σ E elems DW DG EW ns) {dw : String → Nat}
         rfl
       exact ⟨sw_reduce op a, rm_reduce op a, fun _ _ => key none, key _, by
         rw [fitExpr2_of_rigid_eq (rigidExpr_reduce op a) (sw_reduce op a)]; exact key _⟩
-  | .resize m e, rs, h, hf, hacc, hcn, tw, hw => by
-      rw [unsign_resize] at h hf hcn hw ⊢
+  | .resize m e, rs, h, hf, hacc, hcn, hpw, tw, hw => by
+      rw [unsign_resize] at h hf hcn hpw hw ⊢
       rcases rdsOfW?_resize h with ⟨v, hv, rfl⟩ | ⟨hn, a, hl, rfl⟩ | ⟨hop, hr⟩ | ⟨n, hn, rfl⟩
       rotate_left 3
-      · -- a parameter under the marker: outside the equation fragment (`fragW`)
-        have hpr : e.unsign = .paramRef n none := hn
-        simp [fragW, hpr, PExpr.isParamRd] at hf
+      · -- a parameter or localparam read as a value under its marker (`Sk.zc`): its own width is 32 (`hpw`), its value
+        -- the valuation's (`Ctx.agree`)
+        have hpr : e = .paramRef n none := unsign_eq_paramRef hn
+        subst hpr
+        have hsk : skT (.resize m (PExpr.paramRef n none).unsign) [] = .zc (Aff.var n) := by
+          simp [PExpr.unsign, skT]
+        rw [hsk] at hw ⊢
+        have hsw : selfWidth2 E elems (.paramRef n none) = some 32 := hpw n (by simp [PExpr.unsign, PExpr.vreads])
+        have hv : E.intVal? n = some (σ n) := C.agree n (hcn.1 n (by simp [PExpr.unsign, PExpr.cnames]))
+        have I1 : instExpr2 E elems (some tw) (.resize m (.paramRef n none)) = (Sk.zc (Aff.var n)).low σ dw tw := by
+          rw [ie_resize_param_zc hv hsw]
+          simp only [Sk.low, Aff.eval_var]
+        refine ⟨by simpa [selfWidth2, Sk.width] using hsw, by simp [rigidMax2, Sk.rmax],
+          fun h => by simp [Sk.isExt] at h, I1, ?_⟩
+        rw [fitExpr2_of_not_rigid tw rfl]; exact I1
       · obtain rfl := unsign_eq_lit hv
         rw [unsign_lit] at hw ⊢
         simp only [skT, Sk.WidthOkC, Sk.width, Part.wid] at hw ⊢
@@ -2270,13 +2334,12 @@ theorem skT_shapeCU (C : Ctx σ E elems DW DG EW ns) {dw : String → Nat}
         rw [fitExpr2_of_not_rigid tw rfl]; exact I1
       · -- a marker around an operation
         have hop' : e.isOpW = true := by rw [← unsign_isOpW]; exact hop
-        have hf' : fragW e.unsign = true := by
-          simp only [fragW, Bool.and_eq_true] at hf
-          exact hf.1
+        have hf' : fragWV e.unsign = true := by simpa [fragWV] using hf
         have hsk : skT (.resize m e.unsign) rs = .rsz e.ctxPropagates (skT e.unsign rs) := by
           rw [skT_resize_op m rs hr hop, unsign_ctxPropagates hop']
         rw [hsk] at hw ⊢
-        have ihe := skT_shapeCU C hdw e rs hr hf' hacc (cok_resize hcn)
+        have ihe := skT_shapeCV C hdw e rs hr hf' hacc (cok_resize hcn)
+          (fun n hn => hpw n (by rw [vreads_resize_of_op m hop]; exact hn))
         have hkey : selfWidth2 E elems e = some ((skT e.unsign rs).width σ dw) ∧
             rigidMax2 E elems e = (skT e.unsign rs).rmax σ dw ∧
             instExpr2 E elems (some tw) (.resize m e) = (Sk.rsz e.ctxPropagates (skT e.unsign rs)).low σ dw tw := by
@@ -2311,7 +2374,7 @@ theorem skT_shapeCU (C : Ctx σ E elems DW DG EW ns) {dw : String → Nat}
         refine ⟨by simp [selfWidth2, Se, Sk.width], by simpa [rigidMax2, Sk.rmax] using Re,
           fun h => by simp [Sk.isExt] at h, I1, ?_⟩
         rw [fitExpr2_of_not_rigid tw rfl]; exact I1
-  | .int v, rs, h, _, _, hcn, tw, _ => by
+  | .int v, rs, h, _, _, hcn, hpw, tw, _ => by
       rw [unsign_int] at h ⊢
       simp only [rdsOfW?, Except.ok.injEq] at h
       subst h
@@ -2319,28 +2382,28 @@ theorem skT_shapeCU (C : Ctx σ E elems DW DG EW ns) {dw : String → Nat}
       · rw [ie_int]; rfl
       · rw [ie_int]; rfl
       · rw [fitExpr2_of_not_rigid tw rfl, ie_int]; rfl
-  | .ident n, rs, h, _, hacc, hcn, tw, hw =>
+  | .ident n, rs, h, _, hacc, hcn, hpw, tw, hw =>
       leaf_caseCU C hdw (by simpa [PExpr.unsign, rdsOfW?] using h) hacc tw hw
-  | .bitSel b i, rs, h, _, hacc, hcn, tw, hw => by
+  | .bitSel b i, rs, h, _, hacc, hcn, hpw, tw, hw => by
       obtain ⟨b', hb⟩ := unsign_bitSel b i
       have h' : rdsLeaf? ds (PExpr.bitSel b i).unsign = .ok rs := by
         rw [hb] at h ⊢; simpa [rdsOfW?] using h
       exact leaf_caseCU C hdw h' hacc tw hw
-  | .partSel b pm pl, rs, h, _, hacc, hcn, tw, hw => by
+  | .partSel b pm pl, rs, h, _, hacc, hcn, hpw, tw, hw => by
       obtain ⟨b', hb⟩ := unsign_partSel b pm pl
       have h' : rdsLeaf? ds (PExpr.partSel b pm pl).unsign = .ok rs := by
         rw [hb] at h ⊢; simpa [rdsOfW?] using h
       exact leaf_caseCU C hdw h' hacc tw hw
-  | .arrayElem n is, rs, h, _, hacc, hcn, tw, hw =>
+  | .arrayElem n is, rs, h, _, hacc, hcn, hpw, tw, hw =>
       leaf_caseCU C hdw (by simpa [PExpr.unsign, rdsOfW?] using h) hacc tw hw
-  | .arrayPart n is m a b, rs, h, _, hacc, hcn, tw, hw =>
+  | .arrayPart n is m a b, rs, h, _, hacc, hcn, hpw, tw, hw =>
       leaf_caseCU C hdw (by simpa [PExpr.unsign, rdsOfW?] using h) hacc tw hw
-  | .cast s x, rs, h, _, hacc, hcn, tw, hw =>
+  | .cast s x, rs, h, _, hacc, hcn, hpw, tw, hw =>
       leaf_caseCU C hdw (by
         cases s <;> cases x <;> first
           | exact (by simpa [PExpr.unsign, rdsOfW?] using h)
           | (exfalso; simp [PExpr.unsign, rdsOfW?, rdsLeaf?, leafRd?] at h)) hacc tw hw
-  | .concat ps, rs, h, _, hacc, hcn, tw, hw => by
+  | .concat ps, rs, h, _, hacc, hcn, hpw, tw, hw => by
       rw [unsign_concat] at h hcn hw ⊢
       have h' : partsRdW? ds (PExpr.unsignL ps) = .ok rs := by simpa [rdsOfW?] using h
       obtain ⟨h1, h2⟩ := parts_shapeWU C hdw ps rs h' hacc hcn
@@ -2357,21 +2420,37 @@ theorem skT_shapeCU (C : Ctx σ E elems DW DG EW ns) {dw : String → Nat}
       · rw [hRg, hS]; simp [skT, Sk.rmax, Sk.width]
       · rw [fitExpr2_concat h1, if_pos hw]
         simp only [skT, Sk.low, h2]
-  | .repl c a, rs, h, _, hacc, hcn, tw, hw => by
+  | .repl c a, rs, h, _, hacc, hcn, hpw, tw, hw => by
       rw [unsign_repl] at h hcn hw ⊢
       have h' : repRd? ds c a.unsign = .ok rs := by simpa [rdsOfW?] using h
       obtain ⟨p, hsk, hS, hI⟩ := repl_shapeU C hdw h' hacc hcn
       rw [hsk] at hw ⊢
       simp only [Sk.WidthOkC] at hw
       exact rep_bundle hS hI hw
-  | .fill _, _, _, hf, _, _, _, _ => by simp [PExpr.unsign, fragW] at hf
-  | .paramRef .., rs, h, _, _, _, _, _ | .genvarRef .., rs, h, _, _, _, _, _
-  | .enumRef .., rs, h, _, _, _, _, _
-  | .signedResize .., rs, h, _, _, _, _, _
-  | .squash2 .., rs, h, _, _, _, _, _
-  | .sysCall .., rs, h, _, _, _, _, _
-  | .unsupported .., rs, h, _, _, _, _, _ | .functionCall .., rs, h, _, _, _, _, _ => by
+  | .fill _, _, _, hf, _, _, _, _, _ => by simp [PExpr.unsign, fragWV] at hf
+  | .paramRef .., rs, h, _, _, _, _, _, _ | .genvarRef .., rs, h, _, _, _, _, _, _
+  | .enumRef .., rs, h, _, _, _, _, _, _
+  | .signedResize .., rs, h, _, _, _, _, _, _
+  | .squash2 .., rs, h, _, _, _, _, _, _
+  | .sysCall .., rs, h, _, _, _, _, _, _
+  | .unsupported .., rs, h, _, _, _, _, _, _ | .functionCall .., rs, h, _, _, _, _, _, _ => by
       simp [PExpr.unsign, rdsOfW?, rdsLeaf?, leafRd?] at h
+
+
+/-- **`skT_shapeCV` on the fragment without constants read as values** (`fragW`): no `hpw` is needed. -/
+theorem skT_shapeCU (C : Ctx σ E elems DW DG EW ns) {dw : String → Nat}
+    (hdw : ∀ n, (DW n).isSome = true → DW n = some (dw n)) {ds : List DeclT} :
+    ∀ (v : PExpr) (rs : List Acc), rdsOfW? ds v.unsign = .ok rs → fragW v.unsign = true →
+      (∀ a ∈ rs, AccOK σ DW DG EW ns a) → ConstOK σ ns v.unsign → ∀ tw, (skT v.unsign rs).WidthOkC σ dw tw →
+        selfWidth2 E elems v = some ((skT v.unsign rs).width σ dw) ∧
+        rigidMax2 E elems v = (skT v.unsign rs).rmax σ dw ∧
+        ((skT v.unsign rs).isExt = false → (skT v.unsign rs).width σ dw ≤ tw →
+          instExpr2 E elems none v = (skT v.unsign rs).low σ dw ((skT v.unsign rs).width σ dw)) ∧
+        instExpr2 E elems (some tw) v = (skT v.unsign rs).low σ dw tw ∧
+        fitExpr2 E elems (some tw) v = (skT v.unsign rs).low σ dw tw :=
+  fun v rs h hf hacc hcn tw hw =>
+    skT_shapeCV C hdw v rs h (fragWV_of_fragW _ hf).1 hacc hcn
+      (fun n hn => by rw [(fragWV_of_fragW _ hf).2] at hn; cases hn) tw hw
 
 theorem gate_shapeCU (C : Ctx σ E elems DW DG EW ns) {dw : String → Nat}
     (hdw : ∀ n, (DW n).isSome = true → DW n = some (dw n)) {ds : List DeclT} :
@@ -2455,6 +2534,66 @@ theorem rhs_shapeC (C : Ctx σ E elems DW DG EW ns) {dw : String → Nat}
   have hu := unsign_of_rhsRds h
   have := rhs_shapeCU (v := v) C hdw (by rw [hu]; exact h) (by rw [hu]; exact hf) hacc (by rw [hu]; exact hcn)
     (by rw [hu]; exact hw)
+  rwa [hu] at this
+
+/-- `fragOkV` off a fill and a concatenation is `fragWV`. -/
+theorem fragOkV_of_ne {v : PExpr} (h1 : ∀ b, v ≠ .fill b) (h2 : ∀ ps, v ≠ .concat ps) :
+    fragOkV v = fragWV v := by
+  cases v <;> first | rfl | exact absurd rfl (h1 _) | exact absurd rfl (h2 _)
+
+/-- `rhs_shapeCU` with constants read as values (`fragOkV`), at their own width 32 (`hpw`). -/
+theorem rhs_shapeCUV (C : Ctx σ E elems DW DG EW ns) {dw : String → Nat}
+    (hdw : ∀ n, (DW n).isSome = true → DW n = some (dw n)) {ds : List DeclT} {v : PExpr}
+    {rs : List Acc} (h : rhsRds? ds v.unsign = .ok rs) (hf : fragOkV v.unsign = true)
+    (hacc : ∀ a ∈ rs, AccOK σ DW DG EW ns a) (hcn : ConstOK σ ns v.unsign)
+    (hpw : ∀ n ∈ v.unsign.vreads, selfWidth2 E elems (.paramRef n none) = some 32) {tw : Nat}
+    (hw : (skRhs v.unsign rs).WidthOkC σ dw tw) :
+    fitExpr2 E elems (some tw) v = (skRhs v.unsign rs).low σ dw tw := by
+  by_cases hfill : ∃ b, v = .fill b
+  · obtain ⟨b, rfl⟩ := hfill
+    rw [fitExpr2_of_not_rigid tw rfl]
+    simp [instExpr2, PExpr.unsign, skRhs, Sk.low]
+  by_cases hcat : ∃ ps, v = .concat ps
+  · obtain ⟨ps, rfl⟩ := hcat
+    rw [unsign_concat] at h hcn hw ⊢
+    have h' : partsRdW? ds (PExpr.unsignL ps) = .ok rs := by simpa [rhsRds?, rdsOfW?] using h
+    obtain ⟨h1, h2⟩ := parts_shapeWU C hdw ps rs h' hacc hcn
+    simp only [skRhs, Sk.WidthOkC] at hw
+    rw [fitExpr2_concat h1, if_pos hw]
+    simp only [skRhs, Sk.low, h2]
+  · have hn1 : ∀ b, v.unsign ≠ .fill b := fun b h => hfill ⟨b, unsign_eq_fill h⟩
+    have hn2 : ∀ ps, v.unsign ≠ .concat ps := fun ps h => by
+      obtain ⟨qs, hq, -⟩ : ∃ qs, v = .concat qs ∧ True := by
+        cases v with
+        | concat qs => exact ⟨qs, rfl, trivial⟩
+        | cast s y => cases s <;> cases y <;> simp [PExpr.unsign] at h
+        | binary op l r =>
+            cases hu : unsignOp op
+            · rw [unsign_binary_f hu] at h; cases h
+            · rw [unsign_binary_t hu] at h; cases h
+        | bitSel b i => obtain ⟨b', hb⟩ := unsign_bitSel b i; rw [hb] at h; cases h
+        | partSel b m l => obtain ⟨b', hb⟩ := unsign_partSel b m l; rw [hb] at h; cases h
+        | _ => simp [PExpr.unsign] at h
+      exact hcat ⟨qs, hq⟩
+    have h2 : rhsRds? ds v.unsign = rdsOfW? ds v.unsign := by
+      generalize v.unsign = x at hn1
+      cases x <;> first | rfl | exact absurd rfl (hn1 _)
+    rw [h2] at h
+    rw [fragOkV_of_ne hn1 hn2] at hf
+    rw [skRhs_of_ne hn1 hn2] at hw ⊢
+    exact (skT_shapeCV C hdw v rs h hf hacc hcn hpw tw hw).2.2.2.2
+
+/-- `rhs_shapeC` with constants read as values (`fragOkV`, `hpw`). -/
+theorem rhs_shapeCV (C : Ctx σ E elems DW DG EW ns) {dw : String → Nat}
+    (hdw : ∀ n, (DW n).isSome = true → DW n = some (dw n)) {ds : List DeclT} {v : PExpr}
+    {rs : List Acc} (h : rhsRds? ds v = .ok rs) (hf : fragOkV v = true)
+    (hacc : ∀ a ∈ rs, AccOK σ DW DG EW ns a) (hcn : ConstOK σ ns v)
+    (hpw : ∀ n ∈ v.vreads, selfWidth2 E elems (.paramRef n none) = some 32) {tw : Nat}
+    (hw : (skRhs v rs).WidthOkC σ dw tw) :
+    fitExpr2 E elems (some tw) v = (skRhs v rs).low σ dw tw := by
+  have hu := unsign_of_rhsRds h
+  have := rhs_shapeCUV (v := v) C hdw (by rw [hu]; exact h) (by rw [hu]; exact hf) hacc (by rw [hu]; exact hcn)
+    (by rw [hu]; exact hpw) (by rw [hu]; exact hw)
   rwa [hu] at this
 
 end leaf
@@ -2563,6 +2702,31 @@ theorem proc_shapeC (C : Ctx σ E elems DW DG EW ns) {dw : String → Nat}
   · rw [instProcess2_assignL v (instLhs_acc_w C hdw htg (hso _ (List.mem_cons_self ..)))]
     simp only [rhsOf] at hf hw ⊢
     rw [rhs_shapeC C hdw hrds hf (hrdacc _ rfl) hcn hw]
+
+/-- `proc_shapeC` with constants read as values (`fragOkV`), at their own width 32 (`hpw`). -/
+theorem proc_shapeCV (C : Ctx σ E elems DW DG EW ns) {dw : String → Nat}
+    (hdw : ∀ n, (DW n).isSome = true → DW n = some (dw n))
+    {ds : List DeclT} {pos : Nat} {p : PProcess} {st : TSite} (hs : siteOf? ds pos p = .ok st)
+    (hso : ∀ a ∈ st.tgt :: st.rds, AccOK σ DW DG EW ns a) (hcn : st.ConstOK σ ns)
+    (hf : fragOkV (rhsOf p) = true)
+    (hpw : ∀ n ∈ (rhsOf p).vreads, selfWidth2 E elems (.paramRef n none) = some 32)
+    (hw : (skRhs (rhsOf p) st.rds).WidthOkC σ dw (st.tgt.win σ dw).2.2) :
+    instProcess2 E elems p =
+      .assign (st.tgt.lhs σ) ((skRhs (rhsOf p) st.rds).low σ dw (st.tgt.win σ dw).2.2) := by
+  have hrdacc : ∀ rds, rds = st.rds → ∀ a ∈ rds, AccOK σ DW DG EW ns a := by
+    rintro rds rfl a ha
+    exact hso a (List.mem_cons_of_mem _ ha)
+  rcases siteOf?_cases hs with ⟨t, v, rds, rfl, hrds, rfl⟩ | ⟨l, v, tg, rds, rfl, htg, hrds, rfl⟩
+  · have hdt : (DW t).isSome = true := (hso _ (List.mem_cons_self ..)).1
+    have hW : E.widths.lookup t = some (dw t) := by
+      rw [C.widths t]; exact hdw t hdt
+    rw [instProcess2_assign v hW]
+    simp only [rhsOf] at hf hw hpw ⊢
+    have := rhs_shapeCV C hdw hrds hf (hrdacc _ rfl) hcn hpw hw
+    simpa [Acc.win, Acc.lhs] using this
+  · rw [instProcess2_assignL v (instLhs_acc_w C hdw htg (hso _ (List.mem_cons_self ..)))]
+    simp only [rhsOf] at hf hw hpw ⊢
+    rw [rhs_shapeCV C hdw hrds hf (hrdacc _ rfl) hcn hpw hw]
 
 
 end lhs
@@ -3022,6 +3186,35 @@ theorem low_xfBits {m : Design2} {σ : String → Int} {dw : String → Nat} {tw
 
 /-! ### WP-B2: the word-level nodes in the x-free fragment -/
 
+/-- A constant's bit above its width is zero. -/
+theorem constBit_ge {v : Int} {w k : Nat} (h : w ≤ k) : XF.constBit v w k = false := by
+  unfold XF.constBit
+  apply Nat.testBit_lt_two_pow
+  have hp : (0 : Int) < 2 ^ w := Int.pow_pos (by decide)
+  have h1 : 0 ≤ v.emod (2 ^ w) := Int.emod_nonneg _ (by omega)
+  have h2 : v.emod (2 ^ w) < 2 ^ w := Int.emod_lt_of_pos _ hp
+  have e : ((2 ^ w : Nat) : Int) = (2 : Int) ^ w := by simp
+  have h3 : (v.emod (2 ^ w)).toNat < 2 ^ w := by omega
+  exact Nat.lt_of_lt_of_le h3 (Nat.pow_le_pow_right (by decide) h)
+
+/-- A constant's bit below a width is its bit at any wider width (two's complement). -/
+theorem constBit_low {v : Int} {w w' k : Nat} (hk : k < w) (hw : w ≤ w') :
+    XF.constBit v w k = XF.constBit v w' k := by
+  unfold XF.constBit
+  have e1 : ((2 : Int) ^ w) = ((2 ^ w : Nat) : Int) := by simp
+  have e2 : ((2 : Int) ^ w') = ((2 ^ w' : Nat) : Int) := by simp
+  have hd : ((2 : Int) ^ w) ∣ (2 : Int) ^ w' := by
+    rw [e1, e2]; exact Int.natCast_dvd_natCast.mpr (Nat.pow_dvd_pow 2 hw)
+  have hpw' : (0 : Int) < 2 ^ w' := Int.pow_pos (by decide)
+  have he : v.emod (2 ^ w) = (v.emod (2 ^ w')).emod (2 ^ w) := (Int.emod_emod_of_dvd v hd).symm
+  rw [he]
+  have hn : 0 ≤ v.emod (2 ^ w') := Int.emod_nonneg _ (by omega)
+  obtain ⟨n, hn'⟩ := Int.eq_ofNat_of_zero_le hn
+  rw [hn', e1]
+  have : ((n : Int).emod ((2 ^ w : Nat) : Int)) = ((n % 2 ^ w : Nat) : Int) := rfl
+  rw [this, Int.toNat_natCast, Int.toNat_natCast, Nat.testBit_mod_two_pow]
+  simp [hk]
+
 /-- An unsized constant lowers to an x-free literal of the context width. -/
 theorem xf_lit_ofInt (m : Design2) (tw : Nat) (v : Int) :
     (Expr2.lit (LVec.ofInt tw v)).xfWidth m = some tw ∧
@@ -3323,6 +3516,22 @@ theorem low_xf_genC {m : Design2} {σ : String → Int} {dw : String → Nat} :
       refine ⟨by simp [Sk.low, Expr2.xfWidth, h1], fun k _ => ?_⟩
       simp only [Sk.low, Expr2.xfBits, h1, Option.getD_some, Sk.bitC]
       exact sext_congr b1 k
+  | .zc a, tw, hk, hw, hL, env => by
+      by_cases hc : 32 < tw
+      · obtain ⟨h1, b1⟩ := xf_lit_ofInt m 32 (a.eval σ)
+        have hkn : (LVec.ofInt 32 (a.eval σ)).knownB = true := by
+          rw [LVec.knownB_eq_allKnown]; unfold LVec.ofInt; exact LVec.allKnown_ofNat _ _
+        have hb : ∀ k, k < 32 → (LVec.ofInt 32 (a.eval σ)).boolAt k = XF.constBit (a.eval σ) 32 k := fun k hk => by
+          simpa [Expr2.xfBits, hkn] using b1 env k hk
+        refine ⟨by simp [Sk.low, hc, Expr2.xfWidth, h1, hkn], fun k _ => ?_⟩
+        by_cases hk' : k < 32
+        · simp [Sk.low, hc, Sk.bitC, Expr2.xfBits, h1, hkn, hb k hk', hk']
+        · simp [Sk.low, hc, Sk.bitC, Expr2.xfBits, h1, hkn, hk', constBit_ge (Nat.le_of_not_lt hk')]
+      · obtain ⟨h1, b1⟩ := xf_lit_ofInt m tw (a.eval σ)
+        refine ⟨by simp [Sk.low, hc, h1], fun k hk' => ?_⟩
+        simp only [Sk.low, hc, if_false, Sk.bitC]
+        rw [b1 env k hk']
+        exact constBit_low hk' (by omega)
   | .rsz pr p, tw, hk, hw, hL, env => by
       simp only [Sk.knownB] at hk
       have hLp : ∀ x ∈ p.leaves, LeafOk m σ dw x := fun x hx => hL x (by simpa [Sk.leaves] using hx)

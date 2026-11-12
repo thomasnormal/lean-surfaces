@@ -63,9 +63,10 @@ theorem reach_of_LoopsE : ∀ (hs : List Hdr) (σ : String → Int) (P : (String
 
 /-! ## Skeleton facts -/
 
-/-- The skeleton's access leaves are exactly the reads (right-hand sides of the word-level fragment). -/
-theorem skRhs_leaves {ds : List DeclT} {v : PExpr} {rs : List Acc}
-    (h : rhsRds? ds v = .ok rs) (hf : fragOk v = true) : (skRhs v rs).leaves = rs := by
+/-- The skeleton's access leaves are exactly the reads (right-hand sides of the word-level fragment, constants read as
+values included). -/
+theorem skRhs_leavesV {ds : List DeclT} {v : PExpr} {rs : List Acc}
+    (h : rhsRds? ds v = .ok rs) (hf : fragOkV v = true) : (skRhs v rs).leaves = rs := by
   by_cases hfill : ∃ b, v = .fill b
   · obtain ⟨b, rfl⟩ := hfill
     simp only [rhsRds?, Except.ok.injEq] at h
@@ -81,16 +82,26 @@ theorem skRhs_leaves {ds : List DeclT} {v : PExpr} {rs : List Acc}
     have h2 : rhsRds? ds v = rdsOfW? ds v := by
       cases v <;> first | rfl | exact absurd rfl (hn1 _)
     rw [h2] at h
-    rw [fragOk_of_ne hn1 hn2] at hf
+    have hf' : fragWV v = true := by
+      cases v <;> first | exact hf | exact absurd rfl (hn1 _) | exact absurd rfl (hn2 _)
     rw [skRhs_of_ne hn1 hn2]
-    exact skT_leavesW v rs h hf
+    exact skT_leavesW v rs h hf'
+
+theorem skRhs_leaves {ds : List DeclT} {v : PExpr} {rs : List Acc}
+    (h : rhsRds? ds v = .ok rs) (hf : fragOk v = true) : (skRhs v rs).leaves = rs :=
+  skRhs_leavesV h (fragOkV_of_fragOk hf).1
+
+theorem site_skV {ds : List DeclT} {pos : Nat} {p : PProcess} {st : TSite}
+    (hs : siteOf? ds pos p = .ok st) (hf : fragOkV (rhsOf p) = true) :
+    (skRhs (rhsOf p) st.rds).leaves = st.rds := by
+  rcases siteOf?_cases hs with ⟨t, v, rds, rfl, hrds, rfl⟩ | ⟨l, v, tg, rds, rfl, htg, hrds, rfl⟩
+  · exact skRhs_leavesV hrds hf
+  · exact skRhs_leavesV hrds hf
 
 theorem site_sk {ds : List DeclT} {pos : Nat} {p : PProcess} {st : TSite}
     (hs : siteOf? ds pos p = .ok st) (hf : fragOk (rhsOf p) = true) :
-    (skRhs (rhsOf p) st.rds).leaves = st.rds := by
-  rcases siteOf?_cases hs with ⟨t, v, rds, rfl, hrds, rfl⟩ | ⟨l, v, tg, rds, rfl, htg, hrds, rfl⟩
-  · exact skRhs_leaves hrds hf
-  · exact skRhs_leaves hrds hf
+    (skRhs (rhsOf p) st.rds).leaves = st.rds :=
+  site_skV hs (fragOkV_of_fragOk hf).1
 
 /-- A bit read lies inside the declared vector (the lower bound is already in `AutoObl`). -/
 def accBitUpper (dwv : String → Nat) (σ' : String → Int) : Acc → Prop
@@ -113,6 +124,41 @@ def EqFrag : Prop :=
     (skRhs (rhsOf ls.site.proc) ls.site.rds).knownB = true
 
 instance : Decidable s.EqFrag := by unfold EqFrag; infer_instance
+
+/-- `EqFrag` with constants read as values (`fragOkV`, `Sk.zc`). -/
+def EqFragV : Prop :=
+  ∀ ls ∈ s.lsites, fragOkV (rhsOf ls.site.proc) = true ∧
+    (skRhs (rhsOf ls.site.proc) ls.site.rds).knownB = true
+
+instance : Decidable s.EqFragV := by unfold EqFragV; infer_instance
+
+theorem EqFragV_of_EqFrag (h : s.EqFrag) : s.EqFragV := fun ls hls =>
+  ⟨(fragOkV_of_fragOk (h ls hls).1).1, (h ls hls).2⟩
+
+/-- **The own width of every constant read as a value** (`PExpr.vreads`, `Sk.zc`) is 32 in the instantiation
+environment, `selfWidth2`'s reading of `ParamRef` (`IEnv.pwidths`, else the width `paramNWidth` keeps in `IEnv.nvals`):
+the width `instExpr2` converts it from (IEEE 1800-2023 §11.8.2). A Boolean, decided per design by `rfl` (the widths are
+literals even at a symbolic parameter): an `int`/`integer` parameter or localparam is 32 bits wide. -/
+def pwOk (env : IEnv) : Bool :=
+  s.lsites.all fun ls => (rhsOf ls.site.proc).vreads.all fun n => (env.pwidths.lookup n).getD (paramNWidth env n) == 32
+
+def PwObl (env : IEnv) : Prop := s.pwOk env = true
+
+theorem PwObl.get {env : IEnv} (h : s.PwObl env) :
+    ∀ ls ∈ s.lsites, ∀ n ∈ (rhsOf ls.site.proc).vreads, (env.pwidths.lookup n).getD (paramNWidth env n) = 32 := by
+  intro ls hls n hn
+  unfold PwObl pwOk at h
+  rw [List.all_eq_true] at h
+  have := h ls hls
+  rw [List.all_eq_true] at this
+  simpa using this n hn
+
+theorem PwObl_of_EqFrag {env : IEnv} (h : s.EqFrag) : s.PwObl env := by
+  unfold PwObl pwOk
+  rw [List.all_eq_true]
+  intro ls hls
+  rw [(fragOkV_of_fragOk (h ls hls).1).2]
+  rfl
 
 /-- Bit reads inside their vectors. -/
 def BitReadObl (σ : String → Int) : Prop :=
@@ -185,7 +231,8 @@ theorem sound_pairs {d : PDesign} {s : Summary} (hs : d.summary = .ok s) {args :
       m.processes.toList = (s.pairs σ E elems).map Prod.snd ∧
       Ctx σ E elems (s.DW σ) (s.DG σ) (s.EW σ) s.params ∧
       (∀ q ∈ s.pairs σ E elems, Desc s.declNames q.1 q.2) ∧
-      (∀ ls ∈ s.lsites, ∃ pos p, siteOf? s.decls pos p = .ok ls.site) := by
+      (∀ ls ∈ s.lsites, ∃ pos p, siteOf? s.decls pos p = .ok ls.site) ∧
+      E.pwidths = env.pwidths ∧ E.nvals = env.nvals := by
   obtain ⟨hloc, hens, hoth, hpar, hsd, hsts, hgen, hspec⟩ := summary_spec hs
   have hok' := hok
   obtain ⟨hnodup, hnames, hinput, haff, hpaths, hdecl, hacc, hkeys⟩ := hok'
@@ -211,7 +258,7 @@ theorem sound_pairs {d : PDesign} {s : Summary} (hs : d.summary = .ok s) {args :
       s.fams (fun f hf => hf)
   refine ⟨_, env.withDecls (s.decls.map (DeclT.toDecl σ)),
     s.decls.map fun dt => (dt.name, dt.elemW σ), PDesign.instantiate2_of_ok harity h1 h2 h3 h4,
-    by simp, ?_, C, pairs_desc C hok hauto hin hsites, hsites⟩
+    by simp, ?_, C, pairs_desc C hok hauto hin hsites, hsites, rfl, rfl⟩
   rw [PDesign.assemble2_processes, hoth, ← hproc]
   have hmap := Summary.enum_map s
     (fun ls σ' E' => (ls.inst σ' (s.dw σ),
@@ -221,6 +268,14 @@ theorem sound_pairs {d : PDesign} {s : Summary} (hs : d.summary = .ok s) {args :
   rw [hmap]
   simp only [Summary.enum, List.map_map, List.map_nil, List.append_nil, Function.comp_def]
   try rfl
+
+/-- A loop binds its genvar in `vals` only: the reached environment keeps the parameter widths (`pwidths`, `nvals`). -/
+theorem reachE_pw : ∀ {hs : List Hdr} {σ : String → Int} {E : IEnv} {σ' : String → Int} {E' : IEnv},
+    ReachE hs σ E σ' E' → E'.pwidths = E.pwidths ∧ E'.nvals = E.nvals
+  | [], _, _, _, _, ⟨_, h⟩ => by subst h; exact ⟨rfl, rfl⟩
+  | _ :: _, _, _, _, _, ⟨_, _, hr⟩ => by
+      obtain ⟨h1, h2⟩ := reachE_pw hr
+      exact ⟨h1, h2⟩
 
 /-- The facts about one instance a site lemma reads: the context at the reached environment, the
 in-range facts, the `AccOK` facts, and the window facts of every read. -/
@@ -306,17 +361,18 @@ theorem mem_declNames_of_input {s : Summary} {n : String} (h : n ∈ s.inputName
   · simp [hi] at h; exact h
   · simp [hi] at h
 
-/-- **The equations and knownness of a design `X.sem N` of the fragment.** -/
-theorem eq_of_summary {d : PDesign} {s : Summary} (hs : d.summary = .ok s) {args : List Int}
+/-- **The equations and knownness of a design `X.sem N` of the fragment**, constants read as values included
+(`EqFragV`, at their own width 32: `PwObl`). -/
+theorem eq_of_summaryV {d : PDesign} {s : Summary} (hs : d.summary = .ok s) {args : List Int}
     {σ : String → Int} {env : IEnv} (harity : args.length = d.params.length)
     (h1 : d.paramEnv2 args = .ok env) (hag : Agrees σ env s.params) (hok : s.StructOk)
     (hauto : s.AutoObl σ args) (hin : s.InRangeObl σ)
-    (hfrag : s.EqFrag) (hwid : s.WidthObl σ) (hbit : s.BitReadObl σ) (hcov : s.CoverObl σ)
+    (hfrag : s.EqFragV) (hpw : s.PwObl env) (hwid : s.WidthObl σ) (hbit : s.BitReadObl σ) (hcov : s.CoverObl σ)
     {st : SvState} (hinK : s.InKnown σ st)
     (hc : CombDesign (d.instantiateGD2 args)) (ha : Acyclic (d.instantiateGD2 args))
     (heqs : CombEqs (d.instantiateGD2 args) st) (hsh : StateShape (d.instantiateGD2 args) st) :
     s.Eqs σ st ∧ s.Knowns σ st := by
-  obtain ⟨m, E, elems, hm, hdecl, hproc, C, hdesc, hsites⟩ :=
+  obtain ⟨m, E, elems, hm, hdecl, hproc, C, hdesc, hsites, hEpw, hEnv⟩ :=
     sound_pairs hs harity h1 hag hok hauto hin
   have hGD := instantiateGD2_eq_of_comb hm hc
   rw [hGD] at hc ha heqs hsh
@@ -349,7 +405,14 @@ theorem eq_of_summary {d : PDesign} {s : Summary} (hs : d.summary = .ok s) {args
     have hw := (Loops.all_iff _ _ _).mp (hwid ls hls) σ' (ReachE_Reach hr)
     have hf := (hfrag ls hls).1
     subst hpp
-    exact proc_shapeC C' hdw hp hso (site_co hok hin hls (ReachE_Reach hr)) hf hw
+    -- a constant read as a value: its own width, the same in every reached environment (a loop binds `vals` only)
+    have hpwE : ∀ n ∈ (rhsOf ls.site.proc).vreads, selfWidth2 E' elems (.paramRef n none) = some 32 := by
+      intro n hn
+      obtain ⟨h1', h2'⟩ := reachE_pw hr
+      have := CombView.Summary.PwObl.get s hpw ls hls n hn
+      simp only [selfWidth2, paramNWidth, h1', h2', hEpw, hEnv] at this ⊢
+      rw [this]
+    exact proc_shapeCV C' hdw hp hso (site_co hok hin hls (ReachE_Reach hr)) hf hpwE hw
   -- index-level facts
   have hform : ∀ (i : Nat) (p : Process2), m.processes[i]? = some p →
       ∃ q ∈ s.pairs σ E elems, q.2 = p := by
@@ -401,7 +464,7 @@ theorem eq_of_summary {d : PDesign} {s : Summary} (hs : d.summary = .ok s) {args
     obtain ⟨pos, p, hp0⟩ := hsites ls hls
     have hpp := siteOf?_proc hp0
     subst hpp
-    have hleaves := site_sk hp0 (hfrag ls hls).1
+    have hleaves := site_skV hp0 (hfrag ls hls).1
     refine low_xfWidthC _ (hfrag ls hls).2
       ((Loops.all_iff _ _ _).mp (hwid ls hls) σ' (ReachE_Reach hr)) ?_
     intro a ha
@@ -475,7 +538,7 @@ theorem eq_of_summary {d : PDesign} {s : Summary} (hs : d.summary = .ok s) {args
     obtain ⟨pos, p, hp0⟩ := hsites ls hls
     have hpp := siteOf?_proc hp0
     subst hpp
-    have hleaves := site_sk hp0 (hfrag ls hls).1
+    have hleaves := site_skV hp0 (hfrag ls hls).1
     have hwidth := (Loops.all_iff _ _ _).mp (hwid ls hls) σ' (ReachE_Reach hr)
     have hwins : (ls.site.tgt.lhs σ').wins m = [ls.site.tgt.win σ' (s.dw σ)] :=
       Lhs2.wins_of_windows? (acc_windows hdecl ls.site.tgt (hfindTgt ls hls))
@@ -507,6 +570,19 @@ theorem eq_of_summary {d : PDesign} {s : Summary} (hs : d.summary = .ok s) {args
   · obtain ⟨E', hE'⟩ := Reach_ReachE E hr
     exact (hmain ls hls σ' E' hE').2
 
+/-- **The equations and knownness of a design `X.sem N` of the fragment.** -/
+theorem eq_of_summary {d : PDesign} {s : Summary} (hs : d.summary = .ok s) {args : List Int}
+    {σ : String → Int} {env : IEnv} (harity : args.length = d.params.length)
+    (h1 : d.paramEnv2 args = .ok env) (hag : Agrees σ env s.params) (hok : s.StructOk)
+    (hauto : s.AutoObl σ args) (hin : s.InRangeObl σ)
+    (hfrag : s.EqFrag) (hwid : s.WidthObl σ) (hbit : s.BitReadObl σ) (hcov : s.CoverObl σ)
+    {st : SvState} (hinK : s.InKnown σ st)
+    (hc : CombDesign (d.instantiateGD2 args)) (ha : Acyclic (d.instantiateGD2 args))
+    (heqs : CombEqs (d.instantiateGD2 args) st) (hsh : StateShape (d.instantiateGD2 args) st) :
+    s.Eqs σ st ∧ s.Knowns σ st :=
+  eq_of_summaryV hs harity h1 hag hok hauto hin (CombView.Summary.EqFragV_of_EqFrag s hfrag) (CombView.Summary.PwObl_of_EqFrag s hfrag) hwid hbit
+    hcov hinK hc ha heqs hsh
+
 /-- The tactic's form: the valuation is the parameters zipped with the arguments, then the
 localparams (`s.val args`), the environment check in a `rfl`-provable form (as `comb_view`). -/
 theorem eq_view {d : PDesign} {s : Summary} {args : List Int} {env : IEnv}
@@ -525,6 +601,23 @@ theorem eq_view {d : PDesign} {s : Summary} {args : List Int} {env : IEnv}
   eq_of_summary hs harity h1 (Agrees_of_map hag) hok hauto hin hfrag hwid hbit hcov hinK hc ha
     heqs hsh
 
+/-- `eq_view` with constants read as values (`EqFragV`, `PwObl`). -/
+theorem eq_viewV {d : PDesign} {s : Summary} {args : List Int} {env : IEnv}
+    (hs : d.summary = .ok s) (harity : args.length = d.params.length)
+    (h1 : d.paramEnv2 args = .ok env)
+    (hag : s.params.map (fun n => env.intVal? n) =
+      s.params.map (fun n => some (s.val args n)))
+    (hok : s.StructOk) (hauto : s.AutoObl (s.val args) args)
+    (hin : s.InRangeObl (s.val args))
+    (hfrag : s.EqFragV) (hpw : s.PwObl env) (hwid : s.WidthObl (s.val args))
+    (hbit : s.BitReadObl (s.val args)) (hcov : s.CoverObl (s.val args))
+    {st : SvState} (hinK : s.InKnown (s.val args) st)
+    (hc : CombDesign (d.instantiateGD2 args)) (ha : Acyclic (d.instantiateGD2 args))
+    (heqs : CombEqs (d.instantiateGD2 args) st) (hsh : StateShape (d.instantiateGD2 args) st) :
+    s.Eqs (s.val args) st ∧ s.Knowns (s.val args) st :=
+  eq_of_summaryV hs harity h1 (Agrees_of_map hag) hok hauto hin hfrag hpw hwid hbit hcov hinK hc ha
+    heqs hsh
+
 /-- An input port holding `ofBitVec x` is known, at the width `W = w` the obligation names. -/
 theorem inKnown_ofBitVec {st : SvState} {n : String} {w W : Nat} {x : BitVec w}
     (h : SvState.lookup st n = some (LVec.ofBitVec x)) (hw : w = W) :
@@ -540,6 +633,10 @@ theorem inKnown_ofBitVec {st : SvState} {n : String} {w W : Nat} {x : BitVec w}
 /-- info: 'LeanModels.Sv.CombEq.eq_view' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in
 #print axioms eq_view
+
+/-- info: 'LeanModels.Sv.CombEq.eq_viewV' depends on axioms: [propext, Classical.choice, Quot.sound] -/
+#guard_msgs (whitespace := lax) in
+#print axioms eq_viewV
 
 /-- info: 'LeanModels.Sv.CombEq.sound_pairs' depends on axioms: [propext, Classical.choice, Quot.sound] -/
 #guard_msgs (whitespace := lax) in

@@ -135,6 +135,12 @@ inductive Sk where
   (`fitDivOperand2`, which `Sk.fit` mirrors, leaves an operand already as wide as its context bare). Only `skT` builds it,
   for the operand of a signed comparison that `scmpSxRd?` reads: a whole signed signal or a sized literal. -/
   | sx (p : Sk)
+  /-- A parameter or localparam READ AS A VALUE under its conversion marker (`Resize(w, ParamRef n)`, IEEE 1800-2023
+  §11.8.2: an `int`, a signed simple operand, converted to the unsigned context): its 32-bit value, 32 bits wide on its
+  own, materialized at a context no wider than 32 bits and zero-extended from its 32 bits at a wider one, exactly as
+  `instExpr2`'s resize arm lowers a constant leaf of own width 32. Its value is `a.eval σ` (`Aff.var n`), so the skeleton
+  stays independent of the valuation, like `cref`. Only `skT` builds it, for the marker around a parameter. -/
+  | zc (a : Aff)
 
 /-- The order comparisons (`<`, `<=`, `>`, `>=`): the ones the signed comparison node evaluates (`evalPure2`'s `scmp`
 arm gives x for the others). -/
@@ -205,6 +211,7 @@ def Sk.dz (s : Bool) : Sk → Sk
   | .fill b => .fill b
   | .fit sg p => .fit sg p
   | .sx p => .fit s (.sx p)
+  | .zc a => .fit false (.cref a)
 
 mutual
 /-- Number of access leaves of an expression of the fragment. The conversion markers and the cast marker of a signed
@@ -412,6 +419,7 @@ def skT : PExpr → List Acc → Sk
           | .m0 .bnot => .rsz true (skT e as)
           | _ => .rsz false (skT e as)
       | .ternary .. => .rsz true (skT e as)
+      | .paramRef n none => .zc (Aff.var n)
       | _ => .rsz false (skT e as)
   | .signedResize _ e, as => .sx (skT e as)
   | _, as => .rd (as.headD (.whole ""))
@@ -479,11 +487,93 @@ theorem fragW_bin_self {op : SymBinOp} {l r : PExpr} (hs : selfOpW op = true)
     (h : fragW (.binary op l r) = true) : fragG l = true ∧ fragG r = true := by
   simpa [fragW, hs] using h
 
+/-- **The word-level fragment with constants read as values**: `fragW`, where a parameter or localparam under its
+conversion marker (`Resize(w, ParamRef n)`, an `int` in an unsigned context, IEEE 1800-2023 §11.8.2) is a leaf
+(`Sk.zc`). Its lowering depends on the constant's own width (`selfWidth2`, 32 for an `int`), a fact of the instantiation
+environment that the equation theorem takes as an obligation (`Summary.PwObl`, closed by `rfl` per design). -/
+def fragWV : PExpr → Bool
+  | .lit _ => true
+  | .binary op l r => if selfOpW op then fragG l && fragG r else fragWV l && fragWV r
+  | .unary op a => match op with | .m0 .lnot => fragG a | _ => fragWV a
+  | .reduce _ a => fragG a
+  | .ternary c t e => fragG c && fragWV t && fragWV e
+  | .concat _ => true
+  | .fill _ => false
+  | .resize _ a => fragWV a
+  | _ => true
+
+theorem fragWV_bin_ctx {op : SymBinOp} {l r : PExpr} (hs : selfOpW op = false)
+    (h : fragWV (.binary op l r) = true) : fragWV l = true ∧ fragWV r = true := by
+  simpa [fragWV, hs] using h
+
+theorem fragWV_bin_self {op : SymBinOp} {l r : PExpr} (hs : selfOpW op = true)
+    (h : fragWV (.binary op l r) = true) : fragG l = true ∧ fragG r = true := by
+  simpa [fragWV, hs] using h
+
+/-- The constants an expression of `fragWV` reads as values under their conversion marker (the `Sk.zc` leaves). -/
+def _root_.LeanModels.Sv.PExpr.vreads : PExpr → List String
+  | .resize _ (.paramRef n none) => [n]
+  | .binary op l r => if selfOpW op then [] else l.vreads ++ r.vreads
+  | .unary op a => match op with | .m0 .lnot => [] | _ => a.vreads
+  | .ternary _ t e => t.vreads ++ e.vreads
+  | .resize _ a => a.vreads
+  | _ => []
+
+theorem fragWV_of_fragW : ∀ v : PExpr, fragW v = true → fragWV v = true ∧ v.vreads = []
+  | .binary op l r, h => by
+      cases hs : selfOpW op
+      · obtain ⟨hl, hr⟩ := fragW_bin_ctx hs h
+        obtain ⟨hl', vl⟩ := fragWV_of_fragW l hl
+        obtain ⟨hr', vr⟩ := fragWV_of_fragW r hr
+        simp [fragWV, PExpr.vreads, hs, hl', hr', vl, vr]
+      · obtain ⟨hl, hr⟩ := fragW_bin_self hs h
+        simp [fragWV, PExpr.vreads, hs, hl, hr]
+  | .unary op a, h => by
+      by_cases ho : op = .m0 .lnot
+      · subst ho
+        simpa [fragW, fragWV, PExpr.vreads] using h
+      · have ha : fragW a = true := by
+          cases op with
+          | m0 o => cases o <;> first | exact absurd rfl ho | simpa [fragW] using h
+          | _ => simpa [fragW] using h
+        obtain ⟨ha', va⟩ := fragWV_of_fragW a ha
+        cases op with
+        | m0 o => cases o <;> first | exact absurd rfl ho | simp [fragWV, PExpr.vreads, ha', va]
+        | _ => simp [fragWV, PExpr.vreads, ha', va]
+  | .ternary c t e, h => by
+      simp only [fragW, Bool.and_eq_true] at h
+      obtain ⟨ht', vt⟩ := fragWV_of_fragW t h.1.2
+      obtain ⟨he', ve⟩ := fragWV_of_fragW e h.2
+      simp [fragWV, PExpr.vreads, h.1.1, ht', he', vt, ve]
+  | .resize m a, h => by
+      simp only [fragW, Bool.and_eq_true, Bool.not_eq_eq_eq_not, Bool.not_true] at h
+      obtain ⟨ha', va⟩ := fragWV_of_fragW a h.1
+      refine ⟨by simp [fragWV, ha'], ?_⟩
+      cases a with
+      | paramRef n k => cases k <;> simp_all [PExpr.isParamRd, PExpr.vreads]
+      | _ => simpa [PExpr.vreads] using va
+  | .lit _, _ | .reduce .., _ | .concat _, _ | .int _, _ | .ident _, _ | .bitSel .., _ | .partSel .., _
+  | .arrayElem .., _ | .arrayPart .., _ | .paramRef .., _ | .genvarRef _, _ | .enumRef .., _ | .sysCall .., _
+  | .cast .., _ | .signedResize .., _ | .squash2 .., _ | .repl .., _ | .unsupported .., _ | .functionCall .., _ => by
+      constructor <;> simp_all [fragW, fragWV, PExpr.vreads]
+  | .fill _, h => by simp [fragW] at h
+
+
 /-- The right-hand sides `sv_equations` reads: a fill, or an expression of the word-level fragment (a concatenation
 included). -/
 def fragOk : PExpr → Bool
   | .fill _ => true
   | v => fragW v
+
+/-- `fragOk` with constants read as values (`fragWV`). -/
+def fragOkV : PExpr → Bool
+  | .fill _ => true
+  | v => fragWV v
+
+theorem fragOkV_of_fragOk {v : PExpr} (h : fragOk v = true) : fragOkV v = true ∧ v.vreads = [] := by
+  cases v <;> first
+    | exact ⟨rfl, rfl⟩
+    | exact fragWV_of_fragW _ h
 
 /-- WP-B2 gates 4b and 4c: a leaf of an `always_comb` body is a right-hand side of the fragment that names no constant
 of the instance (a genvar shift amount) and replicates nothing (the count is a constant of the instance): the proc
@@ -567,6 +657,7 @@ def Sk.width (σ : String → Int) (dw : String → Nat) : Sk → Nat
   | .scmp _ _ _ => 1
   | .fit _ p => p.width σ dw
   | .sx p => p.width σ dw
+  | .zc _ => 32
 
 /-- Bit `k` of the skeleton. -/
 def Sk.bit (σ : String → Int) (dw : String → Nat) (rd : String → Nat → Bool) : Sk → Nat → Bool
@@ -604,6 +695,7 @@ def Sk.bit (σ : String → Int) (dw : String → Nat) (rd : String → Nat → 
   | .scmp _ _ _, _ => false
   | .fit _ _, _ => false
   | .sx _, _ => false
+  | .zc _, _ => false
 
 /-! ## Lowering -/
 
@@ -658,6 +750,7 @@ def Sk.low (σ : String → Int) (dw : String → Nat) (tw : Nat) : Sk → Expr2
       if max tw (l.width σ dw) ≤ tw then E else .resize tw E
   | .fit sg p => fitDivOperand2 sg (some tw) (some (p.width σ dw)) (p.low σ dw (p.width σ dw))
   | .sx p => .resizeSigned tw (p.low σ dw (p.width σ dw))
+  | .zc a => if 32 < tw then .resize tw (.lit (LVec.ofInt 32 (a.eval σ))) else .lit (LVec.ofInt tw (a.eval σ))
 
 /-- A skeleton in a self-determined position (WP-G S2): no `.fill`, and every gate, comparison and
 conditional has operands of one width (the arms of a `?:` agree, its condition is one bit). -/
@@ -687,6 +780,7 @@ def Sk.SelfOk (σ : String → Int) (dw : String → Nat) : Sk → Prop
   | .scmp _ _ _ => False
   | .fit _ _ => False
   | .sx _ => False
+  | .zc _ => False
 
 /-- Every operand is exactly as wide as the target (no `resize` is inserted); the self-determined operands
 of `!`, reductions, `&&`, `||`, `==`, `!=` and the `?:` condition are consistent among themselves, and the
@@ -717,6 +811,7 @@ def Sk.WidthOk (σ : String → Int) (dw : String → Nat) (tw : Nat) : Sk → P
   | .scmp _ _ _ => False
   | .fit _ _ => False
   | .sx _ => False
+  | .zc _ => False
 
 /-- The access leaves. -/
 def partLeaves : List Part → List Acc
@@ -751,6 +846,7 @@ def Sk.leaves : Sk → List Acc
   | .scmp _ l r => l.leaves ++ r.leaves
   | .fit _ p => p.leaves
   | .sx p => p.leaves
+  | .zc _ => []
 
 /-- A replicated access is never a whole signal (the recognizer refuses it: its width is the declared one, which
 `Part.wid` does not read), and `partKnown` checks it, so the x-free layer can use `win` for its width. -/
@@ -791,6 +887,7 @@ def Sk.knownB : Sk → Bool
   | .scmp op l r => op.ord && l.knownB && r.knownB
   | .fit _ p => p.knownB
   | .sx p => p.knownB
+  | .zc _ => true
 
 /-! ## Self-determined skeletons (WP-G S2) -/
 
@@ -823,6 +920,7 @@ theorem Sk.low_irrel (σ : String → Int) (dw : String → Nat) :
   | .scmp _ _ _, h, _, _ => by simp [Sk.SelfOk] at h
   | .fit _ _, h, _, _ => by simp [Sk.SelfOk] at h
   | .sx _, h, _, _ => by simp [Sk.SelfOk] at h
+  | .zc _, h, _, _ => by simp [Sk.SelfOk] at h
 
 /-- A self-determined skeleton is well formed at its own width. -/
 theorem Sk.selfOk_widthOk (σ : String → Int) (dw : String → Nat) :
@@ -864,6 +962,7 @@ theorem Sk.selfOk_widthOk (σ : String → Int) (dw : String → Nat) :
   | .scmp _ _ _, h => by simp [Sk.SelfOk] at h
   | .fit _ _, h => by simp [Sk.SelfOk] at h
   | .sx _, h => by simp [Sk.SelfOk] at h
+  | .zc _, h => by simp [Sk.SelfOk] at h
 
 /-! ## The word-level reading (WP-B2): `+`, `-`, the `Resize` marker
 
@@ -882,6 +981,7 @@ chain (`CombProc*.lean`) is built on them with their exact meaning, and for the 
 def Sk.isExt : Sk → Bool
   | .ext _ => true
   | .rsz _ _ => true
+  | .zc _ => true
   | _ => false
 
 /-- The widest operand that can carry `x`/`z` bits (`rigidMax2` of the expression): constants carry none. -/
@@ -917,6 +1017,7 @@ def Sk.rmax (σ : String → Int) (dw : String → Nat) : Sk → Option Nat
   -- a fitted operand lives only in the left operand of a shift, which `instDivOperand2` lowers without `rigidMax2`
   | .fit _ _ => none
   | .sx _ => none
+  | .zc _ => none
 
 /-- The rigid width of a concatenation: the sum of its parts (a rewrite rule of the tactics' normal form: the width obligation
 of a marker around a concatenation that is an operand of `+`/`-` reads `Sk.rok`). -/
@@ -991,6 +1092,7 @@ def Sk.WidthOkC (σ : String → Int) (dw : String → Nat) (tw : Nat) : Sk → 
   | .scmp _ l r => tw = 1 ∧ l.WidthOkC σ dw (max (l.width σ dw) (r.width σ dw)) ∧ r.WidthOkC σ dw (max (l.width σ dw) (r.width σ dw))
   | .fit _ p => p.WidthOkC σ dw (p.width σ dw)
   | .sx p => p.WidthOkC σ dw (p.width σ dw)
+  | .zc _ => True
 
 /-- Bit `k` of the skeleton at the context width `tw`. The self-determined operands are read at their OWN width
 (`Sk.bitC_of_selfOk`: they are v1 skeletons, whose bits do not depend on the context). -/
@@ -1047,6 +1149,7 @@ def Sk.bitC (σ : String → Int) (dw : String → Nat) (tw : Nat) (rd : String 
   | .fit false p, k => XF.zext (p.width σ dw) (p.bitC σ dw (p.width σ dw) rd) k
   | .fit true p, k => XF.sext (p.width σ dw) (p.bitC σ dw (p.width σ dw) rd) k
   | .sx p, k => XF.sext (p.width σ dw) (p.bitC σ dw (p.width σ dw) rd) k
+  | .zc a, k => XF.constBit (a.eval σ) 32 k
   -- a fitted leaf (`Sk.dz` of a signal access, a literal, a constant): its extension, unapplied (the equations print it
   -- as `XF.zext w f` / `XF.sext w f`)
   | .sh true false (.fit false p) r, k =>
@@ -1128,6 +1231,7 @@ theorem Sk.bitC_of_selfOk (σ : String → Int) (dw : String → Nat) (rd : Stri
   | .scmp _ _ _, h, _, _ => by simp [Sk.SelfOk] at h
   | .fit _ _, h, _, _ => by simp [Sk.SelfOk] at h
   | .sx _, h, _, _ => by simp [Sk.SelfOk] at h
+  | .zc _, h, _, _ => by simp [Sk.SelfOk] at h
 
 section widthC
 variable {σ : String → Int} {dw : String → Nat}
@@ -1171,6 +1275,7 @@ theorem Sk.rmax_le_width : ∀ (sk : Sk), (sk.rmax σ dw).getD 0 ≤ sk.width σ
   | .scmp _ _ _ => by simp [Sk.rmax, Sk.width]
   | .fit _ _ => by simp [Sk.rmax]
   | .sx _ => by simp [Sk.rmax]
+  | .zc _ => by simp [Sk.rmax]
 
 /-- The truncation-marker part of the contract holds at every context at least as wide as the skeleton. -/
 theorem Sk.rok_of_width : ∀ (sk : Sk) (W : Nat), sk.width σ dw ≤ W → sk.rok σ dw W
@@ -1207,6 +1312,7 @@ theorem Sk.rok_of_width : ∀ (sk : Sk) (W : Nat), sk.width σ dw ≤ W → sk.r
   | .scmp _ _ _, _, _ => trivial
   | .fit _ _, _, _ => trivial
   | .sx _, _, _ => trivial
+  | .zc _, _, _ => trivial
   | .rsz _ p, W, h => by
       have := Sk.rmax_le_width (σ := σ) (dw := dw) p
       simp only [Sk.rok, Sk.width] at h ⊢; omega
@@ -1248,6 +1354,7 @@ theorem Sk.rmax_le : ∀ (sk : Sk) (tw : Nat), sk.WidthOkC σ dw tw → sk.rok �
   | .scmp _ _ _, tw, h, _ => by simp only [Sk.WidthOkC] at h; simp [Sk.rmax, h.1]
   | .fit _ _, tw, _, _ => by simp [Sk.rmax]
   | .sx _, tw, _, _ => by simp [Sk.rmax]
+  | .zc _, tw, _, _ => by simp [Sk.rmax]
 
 /-- The natural width is as good as the context, down to the skeleton's own width. -/
 theorem Sk.WidthOkC.mono : ∀ (sk : Sk) (tw W : Nat), sk.WidthOkC σ dw tw →
@@ -1299,6 +1406,7 @@ theorem Sk.WidthOkC.mono : ∀ (sk : Sk) (tw W : Nat), sk.WidthOkC σ dw tw →
       exact ⟨Sk.WidthOkC.mono l tw W h.1 h1 h2, h.2⟩
   | .fit _ p, tw, W, h, h1, h2 => by simp only [Sk.WidthOkC] at h ⊢; exact h
   | .sx p, tw, W, h, h1, h2 => by simp only [Sk.WidthOkC] at h ⊢; exact h
+  | .zc _, _, _, _, _, _ => trivial
   | .scmp _ _ _, tw, W, h, h1, h2 => by
       simp only [Sk.WidthOkC, Sk.width] at h h1 ⊢; exact ⟨by omega, h.2⟩
   | .rsz pr p, tw, W, h, h1, h2 => by
@@ -1345,6 +1453,7 @@ theorem Sk.widthOk_width_le : ∀ (sk : Sk) (tw : Nat), sk.WidthOk σ dw tw → 
   | .scmp _ _ _, _, h => h.elim
   | .fit _ _, _, h => h.elim
   | .sx _, _, h => h.elim
+  | .zc _, _, h => h.elim
 
 /-- The v1 width contract implies the word-level one (it is the same on the v1 nodes, and false on the new ones). -/
 theorem Sk.WidthOk.toC : ∀ (sk : Sk) (tw : Nat), sk.WidthOk σ dw tw → sk.WidthOkC σ dw tw
@@ -1378,6 +1487,7 @@ theorem Sk.WidthOk.toC : ∀ (sk : Sk) (tw : Nat), sk.WidthOk σ dw tw → sk.Wi
   | .scmp _ _ _, _, h => h.elim
   | .fit _ _, _, h => h.elim
   | .sx _, _, h => h.elim
+  | .zc _, _, h => h.elim
 
 end widthC
 
@@ -1407,6 +1517,7 @@ def Sk.v1 : Sk → Bool
   | .scmp _ _ _ => false
   | .fit _ _ => false
   | .sx _ => false
+  | .zc _ => false
 
 /-- A skeleton without word-level nodes that meets the contract at `tw` is self-determined, of width `tw`. -/
 theorem Sk.selfOk_of_v1 {σ : String → Int} {dw : String → Nat} :
@@ -1447,6 +1558,7 @@ theorem Sk.selfOk_of_v1 {σ : String → Int} {dw : String → Nat} :
   | .scmp _ _ _, _, hv, _ => by simp [Sk.v1] at hv
   | .fit _ _, _, hv, _ => by simp [Sk.v1] at hv
   | .sx _, _, hv, _ => by simp [Sk.v1] at hv
+  | .zc _, _, hv, _ => by simp [Sk.v1] at hv
 
 /-- On a skeleton without word-level nodes the word-level contract is the v1 one. -/
 theorem Sk.WidthOkC.toV1 {σ : String → Int} {dw : String → Nat} :
@@ -1483,6 +1595,7 @@ theorem Sk.WidthOkC.toV1 {σ : String → Int} {dw : String → Nat} :
   | .scmp _ _ _, _, hv, _ => by simp [Sk.v1] at hv
   | .fit _ _, _, hv, _ => by simp [Sk.v1] at hv
   | .sx _, _, hv, _ => by simp [Sk.v1] at hv
+  | .zc _, _, hv, _ => by simp [Sk.v1] at hv
 
 /-- A self-determined skeleton is well formed at its own width (word-level contract). -/
 theorem Sk.selfOk_widthOkC (σ : String → Int) (dw : String → Nat) (sk : Sk) (h : sk.SelfOk σ dw) :
@@ -2295,14 +2408,14 @@ theorem scmpOpd_leaves {e : PExpr} {ra : List Acc} (h : ScmpOpdForm e ra) :
     simp [skT, Sk.leaves, cnt]
 
 theorem rdsOfW?_len {ds : List DeclT} :
-    ∀ (v : PExpr) (rs : List Acc), rdsOfW? ds v = .ok rs → fragW v = true → rs.length = cnt v
+    ∀ (v : PExpr) (rs : List Acc), rdsOfW? ds v = .ok rs → fragWV v = true → rs.length = cnt v
   | .lit _, rs, h, _ => by simp [rdsOfW?] at h; subst h; simp [cnt]
   | .binary op l r, rs, h, hf => by
       rcases rdsOfW?_binary h with ⟨hb, ra, rb, hl, hr, rfl⟩ | ⟨hb, ra, rb, hl, hr, rfl⟩ |
         ⟨hb, ra, rb, hl, hr, rfl⟩ | ⟨cm, -, hs⟩
-      · replace hf := fragW_bin_ctx (selfOpW_false_of_ctx hb) hf
+      · replace hf := fragWV_bin_ctx (selfOpW_false_of_ctx hb) hf
         simp [cnt, rdsOfW?_len l ra hl hf.1, rdsOfW?_len r rb hr hf.2]
-      · replace hf := fragW_bin_self hb hf
+      · replace hf := fragWV_bin_self hb hf
         simp [cnt, rdsOf?_len l ra hl hf.1, rdsOf?_len r rb hr hf.2]
       · simp [cnt, rdsOfD?_len l _ ra hl, shAmt_len hr]
       · obtain ⟨hL, hR⟩ := scmpRd?_opds hs
@@ -2313,25 +2426,25 @@ theorem rdsOfW?_len {ds : List DeclT} :
         omega
   | .unary op a, rs, h, hf => by
       rcases rdsOfW?_unary h with ⟨rfl, ha⟩ | ⟨rfl, ha⟩
-      · replace hf : fragW a = true := by simpa [fragW] using hf
+      · replace hf : fragWV a = true := by simpa [fragWV] using hf
         simp [cnt, rdsOfW?_len a rs ha hf]
-      · replace hf : fragG a = true := by simpa [fragW] using hf
+      · replace hf : fragG a = true := by simpa [fragWV] using hf
         simp [cnt, rdsOf?_len a rs ha hf]
   | .ternary c t e, rs, h, hf => by
       obtain ⟨rc, rt, re, hc, ht, he, rfl⟩ := rdsOfW?_ternary h
-      simp only [fragW, Bool.and_eq_true] at hf
+      simp only [fragWV, Bool.and_eq_true] at hf
       simp [cnt, rdsOf?_len c rc hc hf.1.1, rdsOfW?_len t rt ht hf.1.2, rdsOfW?_len e re he hf.2,
         Nat.add_assoc]
   | .reduce op a, rs, h, hf => by
-      simp only [fragW] at hf
+      simp only [fragWV] at hf
       simp [cnt, rdsOf?_len a rs (rdsOfW?_reduce h) hf]
   | .resize m e, rs, h, hf => by
       rcases rdsOfW?_resize h with ⟨v, rfl, rfl⟩ | ⟨hn, a, hl, rfl⟩ | ⟨hop, hr⟩ | ⟨n, rfl, rfl⟩
       · simp [cnt]
       · cases e <;> first | exact absurd rfl (hn _) | (simp [leafRd?] at hl; done) | simp [cnt]
       · rw [cnt_resize_op m hop]
-        simp only [fragW, Bool.and_eq_true] at hf
-        exact rdsOfW?_len e rs hr hf.1
+        simp only [fragWV] at hf
+        exact rdsOfW?_len e rs hr hf
       · simp [cnt]
   | .int _, rs, h, _ => by simp [rdsOfW?] at h; subst h; simp [cnt]
   | .ident n, rs, h, _ => by
@@ -2358,7 +2471,7 @@ theorem rdsOfW?_len {ds : List DeclT} :
       · simp [cnt, pcnt]
       · obtain ⟨x, hlx, rfl⟩ := rdsLeaf_cases hl
         simp [cnt, pcnt, cnt_of_leaf hlx]
-  | .fill _, _, _, hf => by simp [fragW] at hf
+  | .fill _, _, _, hf => by simp [fragWV] at hf
   | .paramRef .., rs, h, _ | .genvarRef .., rs, h, _ | .enumRef .., rs, h, _
   | .signedResize .., rs, h, _ | .squash2 .., rs, h, _
   | .sysCall .., rs, h, _
@@ -2367,13 +2480,13 @@ theorem rdsOfW?_len {ds : List DeclT} :
 
 /-- On an accepted expression the skeleton's leaves are exactly the reads. -/
 theorem skT_leavesW {ds : List DeclT} :
-    ∀ (v : PExpr) (rs : List Acc), rdsOfW? ds v = .ok rs → fragW v = true →
+    ∀ (v : PExpr) (rs : List Acc), rdsOfW? ds v = .ok rs → fragWV v = true →
       (skT v rs).leaves = rs
   | .lit _, rs, h, _ => by simp [rdsOfW?] at h; subst h; simp [skT, Sk.leaves]
   | .binary op l r, rs, h, hf => by
       rcases rdsOfW?_binary h with ⟨hb, ra, rb, hl, hr, rfl⟩ | ⟨hb, ra, rb, hl, hr, rfl⟩ |
         ⟨hb, ra, rb, hl, hr, rfl⟩ | ⟨cm, hcm, hs⟩
-      · replace hf := fragW_bin_ctx (selfOpW_false_of_ctx hb) hf
+      · replace hf := fragWV_bin_ctx (selfOpW_false_of_ctx hb) hf
         have hla := rdsOfW?_len l ra hl hf.1
         have e1 : (ra ++ rb).take (cnt l) = ra := List.take_left' hla
         have e2 : (ra ++ rb).drop (cnt l) = rb := List.drop_left' hla
@@ -2381,7 +2494,7 @@ theorem skT_leavesW {ds : List DeclT} :
         have ihr := skT_leavesW r rb hr hf.2
         rcases ctxOpW_cases hb with rfl | rfl | rfl | rfl | rfl | rfl | ⟨cm, rfl⟩ <;> (try cases cm) <;>
           simp [skT, gateOf, mkGate, CmpOp.ex, e1, e2, Sk.leaves, ihl, ihr]
-      · replace hf := fragW_bin_self hb hf
+      · replace hf := fragWV_bin_self hb hf
         have hla := rdsOf?_len l ra hl hf.1
         have e1 : (ra ++ rb).take (cnt l) = ra := List.take_left' hla
         have e2 : (ra ++ rb).drop (cnt l) = rb := List.drop_left' hla
@@ -2401,13 +2514,13 @@ theorem skT_leavesW {ds : List DeclT} :
         simp only [Sk.leaves, (scmpOpd_leaves hL).1, (scmpOpd_leaves hR).1, List.take_append_drop]
   | .unary op a, rs, h, hf => by
       rcases rdsOfW?_unary h with ⟨rfl, ha⟩ | ⟨rfl, ha⟩
-      · replace hf : fragW a = true := by simpa [fragW] using hf
+      · replace hf : fragWV a = true := by simpa [fragWV] using hf
         simp [skT, Sk.leaves, skT_leavesW a rs ha hf]
-      · replace hf : fragG a = true := by simpa [fragW] using hf
+      · replace hf : fragG a = true := by simpa [fragWV] using hf
         simp [skT, Sk.leaves, skT_leaves a rs ha hf]
   | .ternary c t e, rs, h, hf => by
       obtain ⟨rc, rt, re, hc, ht, he, rfl⟩ := rdsOfW?_ternary h
-      simp only [fragW, Bool.and_eq_true] at hf
+      simp only [fragWV, Bool.and_eq_true] at hf
       have hc' := rdsOf?_len c rc hc hf.1.1
       have ht' := rdsOfW?_len t rt ht hf.1.2
       have e1 : (rc ++ rt ++ re).take (cnt c) = rc := by
@@ -2419,15 +2532,15 @@ theorem skT_leavesW {ds : List DeclT} :
       simp only [skT, e1, e2, e3, e4, Sk.leaves, skT_leaves c rc hc hf.1.1, skT_leavesW t rt ht hf.1.2,
         skT_leavesW e re he hf.2]
   | .reduce op a, rs, h, hf => by
-      simp only [fragW] at hf
+      simp only [fragWV] at hf
       simp [skT, Sk.leaves, skT_leaves a rs (rdsOfW?_reduce h) hf]
   | .resize m e, rs, h, hf => by
       rcases rdsOfW?_resize h with ⟨v, rfl, rfl⟩ | ⟨hn, a, hl, rfl⟩ | ⟨hop, hr⟩ | ⟨n, rfl, rfl⟩
       · simp [skT, Sk.leaves, partLeaves]
       · cases e <;> first | exact absurd rfl (hn _) | (simp [leafRd?] at hl; done) | simp [skT, Sk.leaves, partLeaves]
       · rw [skT_resize_op m rs hr hop]
-        simp only [fragW, Bool.and_eq_true] at hf
-        simpa [Sk.leaves] using skT_leavesW e rs hr hf.1
+        simp only [fragWV] at hf
+        simpa [Sk.leaves] using skT_leavesW e rs hr hf
       · simp [skT, Sk.leaves]
   | .int _, rs, h, _ => by simp [rdsOfW?] at h; subst h; simp [skT, Sk.leaves]
   | .ident n, rs, h, _ => by
@@ -2456,7 +2569,7 @@ theorem skT_leavesW {ds : List DeclT} :
         have : skT (.repl c (.concat [e])) [x] = .rep (.reprd (repAff c) x) := by
           cases e <;> first | rfl | exact absurd rfl (hnl' _)
         simp [this, Sk.leaves, partLeaves]
-  | .fill _, _, _, hf => by simp [fragW] at hf
+  | .fill _, _, _, hf => by simp [fragWV] at hf
   | .paramRef .., rs, h, _ | .genvarRef .., rs, h, _ | .enumRef .., rs, h, _
   | .signedResize .., rs, h, _ | .squash2 .., rs, h, _
   | .sysCall .., rs, h, _

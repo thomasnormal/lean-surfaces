@@ -467,7 +467,7 @@ theorem rhsRds_len {ds : List DeclT} {v : PExpr} {rs : List Acc}
     have hr : rcnt v = cnt v := by
       cases v <;> first | rfl | exact absurd rfl (hn1 _) | exact absurd rfl (hn2 _)
     rw [hr]
-    exact rdsOfW?_len v rs h hf
+    exact rdsOfW?_len v rs h (fragWV_of_fragW v hf).1
 
 open CombProc in
 theorem armRcnt_plfr {ds : List DeclT} {tg : Acc} :

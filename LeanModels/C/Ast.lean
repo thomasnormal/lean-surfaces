@@ -536,13 +536,19 @@ def fileScopeObjects (u : TranslationUnit) : List Decl :=
     | .decl d@(.var ..) => some d
     | _ => none
 
-/-- Folded enum constants keyed by their frontend declaration handles. -/
+/-- Folded enum constants keyed by their frontend declaration handles,
+including enums nested in parser-native record declaration fields. -/
+def enumBindingsDecl : Decl → List (DeclarationId × Int)
+  | .enum _ constants _ => constants.filterMap fun constant =>
+      match constant with
+      | .enumConst (some id) _ (some value) _ => value.toInt?.map (fun n => (id, n))
+      | _ => none
+  | .record _ _ fields _ _ => fields.flatMap enumBindingsDecl
+  | _ => []
+
 def enumBindings (u : TranslationUnit) : List (DeclarationId × Int) :=
   u.items.flatMap fun item => match item with
-    | .decl (.enum _ constants _) => constants.filterMap fun constant =>
-        match constant with
-        | .enumConst (some id) _ (some value) _ => value.toInt?.map (fun n => (id, n))
-        | _ => none
+    | .decl d => enumBindingsDecl d
     | _ => []
 
 /-- Every statement in the unit (function bodies only — C has no

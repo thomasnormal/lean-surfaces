@@ -2,10 +2,10 @@
 
 Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manifest.
 
-- verdicts: 1032/2214 MATCH (passed 1032, failed 0, oracle 0)
-- manifest SHA-256: `1c10e69f6a57ae6d0a0e10be97444e102d648670a69b0b05823f4f4f9c39dd82`
-- measured commit: `bb6905af0`
-- measured at: `2026-11-13T15:15:00Z`
+- verdicts: 1033/2214 MATCH (passed 1033, failed 0, oracle 0)
+- manifest SHA-256: `bca94718b04e8394cdce992866637166f530978790bd1013cea4a00ae25ef764`
+- measured commit: `64fe0e002`
+- measured at: `2026-11-13T15:30:00Z`
 
 ## Verdict counts
 
@@ -13,20 +13,20 @@ Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manife
 | --- | ---: |
 | `not-parsed` | 294 |
 | `oracle-tests-compiler` | 1 |
-| `passed` | 1032 |
+| `passed` | 1033 |
 | `refused-libc` | 39 |
 | `refused-ub` | 105 |
-| `refused-unsupported` | 677 |
+| `refused-unsupported` | 676 |
 | `timeout` | 66 |
 
 ## Counts by corpus
 
 | corpus | verdict | files |
 | --- | --- | ---: |
-| `c-testsuite/single-exec` | `passed` | 171 |
+| `c-testsuite/single-exec` | `passed` | 172 |
 | `c-testsuite/single-exec` | `refused-libc` | 2 |
 | `c-testsuite/single-exec` | `refused-ub` | 8 |
-| `c-testsuite/single-exec` | `refused-unsupported` | 37 |
+| `c-testsuite/single-exec` | `refused-unsupported` | 36 |
 | `c-testsuite/single-exec` | `timeout` | 2 |
 | `gcc.c-torture/execute` | `not-parsed` | 267 |
 | `gcc.c-torture/execute` | `oracle-tests-compiler` | 1 |
@@ -606,7 +606,6 @@ The run's first refusal, normalized by construct; `sole` counts rows whose first
 | `unsupported:unbound declaration 'id66' (name 'k')` | 1 | 1 | simd-2.c |
 | `unsupported:unbound declaration 'id67' (name 'z')` | 1 | 1 | complex-5.c |
 | `unsupported:unbound declaration 'id74' (name 'p')` | 1 | 1 | pr64242.c |
-| `unsupported:unknown enum declaration 'id17' (name 'X')` | 1 | 1 | 00120.c |
 | `unsupported:unknown enum declaration 'id27' (name 'read')` | 1 | 1 | builtin-prefetch-1.c |
 | `unsupported:unknown enum declaration 'id29' (name 'BAR')` | 1 | 1 | enum-2.c |
 | `unsupported:unknown enum declaration 'id41' (name 'N')` | 1 | 1 | 20011219-1.c |

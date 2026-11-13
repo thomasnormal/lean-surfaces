@@ -10,10 +10,10 @@
   "gcc.c-torture/execute": {
    "not-parsed": 267,
    "oracle-tests-compiler": 1,
-   "passed": 903,
+   "passed": 906,
    "refused-libc": 35,
    "refused-ub": 98,
-   "refused-unsupported": 550,
+   "refused-unsupported": 547,
    "timeout": 64
   },
   "gcc.c23-run": {
@@ -28,10 +28,10 @@
  "counts": {
   "not-parsed": 294,
   "oracle-tests-compiler": 1,
-  "passed": 1078,
+  "passed": 1081,
   "refused-libc": 39,
   "refused-ub": 107,
-  "refused-unsupported": 629,
+  "refused-unsupported": 626,
   "timeout": 66
  },
  "dynamic_wall_ranking": [
@@ -681,36 +681,6 @@
   },
   {
    "files": [
-    "00174.c",
-    "00175.c",
-    "20000605-1.c",
-    "20020413-1.c",
-    "990413-2.c",
-    "align-2.c",
-    "complex-3.c",
-    "gofast.c",
-    "ieee/20010114-2.c",
-    "ieee/20030331-1.c",
-    "ieee/920518-1.c",
-    "ieee/compare-fp-1.c",
-    "ieee/compare-fp-4.c",
-    "ieee/copysign1.c",
-    "ieee/copysign2.c",
-    "ieee/fp-cmp-cond-1.c",
-    "ieee/mzero3.c",
-    "ieee/pr67218.c",
-    "ieee/pr72824.c",
-    "ieee/rbug.c",
-    "pr15262-1.c",
-    "pr23941.c",
-    "pr36343.c"
-   ],
-   "present": 23,
-   "sole": 23,
-   "wall": "cast:FloatingCast"
-  },
-  {
-   "files": [
     "00103.c",
     "20001017-2.c",
     "20050316-1.c",
@@ -736,6 +706,33 @@
    "present": 21,
    "sole": 21,
    "wall": "unsupported:pointer bit-cast across incompatible effective types"
+  },
+  {
+   "files": [
+    "00174.c",
+    "00175.c",
+    "20000605-1.c",
+    "20020413-1.c",
+    "990413-2.c",
+    "align-2.c",
+    "complex-3.c",
+    "gofast.c",
+    "ieee/20010114-2.c",
+    "ieee/20030331-1.c",
+    "ieee/compare-fp-1.c",
+    "ieee/compare-fp-4.c",
+    "ieee/copysign1.c",
+    "ieee/copysign2.c",
+    "ieee/fp-cmp-cond-1.c",
+    "ieee/mzero3.c",
+    "ieee/pr72824.c",
+    "ieee/rbug.c",
+    "pr15262-1.c",
+    "pr36343.c"
+   ],
+   "present": 20,
+   "sole": 20,
+   "wall": "cast:FloatingCast"
   },
   {
    "files": [
@@ -3265,8 +3262,8 @@
   }
  ],
  "manifest_hash": "bca94718b04e8394cdce992866637166f530978790bd1013cea4a00ae25ef764",
- "measured_at_utc": "2026-11-13T20:34:00Z",
- "measured_commit": "6ee760418",
+ "measured_at_utc": "2026-11-13T20:51:00Z",
+ "measured_commit": "004f9a6f5",
  "pin": {
   "corpora": [
    "C1",
@@ -18650,8 +18647,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "castKind 'FloatingCast'",
-   "dynamic_wall": "cast:FloatingCast",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "ieee/920518-1.c",
    "sha256": "e8323edad389fed178fc5d5fe07518b2cb414e1b16735367046f94fa6c0d169f",
@@ -18660,7 +18657,7 @@
     "cast:IntegralToFloating",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -19537,8 +19534,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "castKind 'FloatingCast'",
-   "dynamic_wall": "cast:FloatingCast",
+   "detail": "",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "ieee/pr67218.c",
    "sha256": "642deb67fcf37a615c1d2776f93e5d89f4f1131fe343c0e4cea0860e62ccf2b6",
@@ -19547,7 +19544,7 @@
     "cast:IntegralToFloating",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -22128,8 +22125,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "castKind 'FloatingCast'",
-   "dynamic_wall": "cast:FloatingCast",
+   "detail": "",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "pr23941.c",
    "sha256": "0bb15827ccdd9dd80cd6766562d040c4613cc2fcec5b5634e4354cedca5d80a4",
@@ -22137,7 +22134,7 @@
     "cast:FloatingCast",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",

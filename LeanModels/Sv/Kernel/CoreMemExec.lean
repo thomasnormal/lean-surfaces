@@ -41,6 +41,7 @@ deriving Repr, Inhabited
 inductive CoreMemProc where
   | edge (p : CoreMemEdge)
   | assign (target : PLhs) (value : PExpr)
+  | initial (body : PStmt)
   | unsupported (kind text : String)
 deriving Repr, Inhabited
 
@@ -126,7 +127,7 @@ def CoreMemProc.ofPProcess : PProcess → CoreMemProc
   | .alwaysComb _ => .unsupported "9.2.2.2" "always_comb is outside this memory edge slice"
   | .alwaysImplicit _ => .unsupported "ProceduralBlockSymbol:Always"
       "implicit event control is outside the canonical memory edge slice"
-  | .initial _ => .unsupported "T2:Initial" "initial process is outside this cycle entry"
+  | .initial body => .initial body
   | .unsupported kind text => .unsupported kind text
 
 def PDesign.instantiateCoreMemFrom (envI : IEnv) (d : PDesign) (args : List Int)
@@ -327,6 +328,93 @@ def CoreMemDesign.issueTarget (E : CoreMemDesign) (env : IEnv) (elems : List (St
 def CoreMemExec.append (a b : NbaQueue2 × MemNbaQueue) : NbaQueue2 × MemNbaQueue :=
   (a.1 ++ b.1, a.2 ++ b.2)
 
+/-! ## Time-zero source statements
+
+An `initial` block is a time-zero process (§4.7), not a cycle edge.  The first
+memory wall needs only the source-shaped initialization form used by real
+register files: conditional/blocking statements and a run-time `for` whose
+body writes one memory cell.  It updates the existing `MemState` directly;
+it does not expand cells or turn the initializer into an edge process. -/
+
+mutual
+
+def CoreMemDesign.writeInitialCell (E : CoreMemDesign) (env : IEnv)
+    (elems : List (String × Nat)) (st : CoreMemState)
+    (target : PLhs) (name : String) (md : CoreMemDecl) (value : LVec) : Res CoreMemState :=
+  match LeanModels.Sv.MemState.writeTarget env md.source target value st.memory with
+  | Except.ok (some memory) => .ok { scalar := st.scalar, memory := memory }
+  | Except.ok none => .unsupported
+      s!"11.5.1: memory initial target '{name}' is not one-rank"
+  | Except.error msg => .unsupported msg
+
+def CoreMemDesign.execInitialStmt (E : CoreMemDesign) (env : IEnv)
+    (elems : List (String × Nat)) (st : CoreMemState) : PStmt → Res CoreMemState
+  | .blockingAssign name value =>
+      match E.scalarTarget name with
+      | none => .unsupported s!"11.5.1: scalar initial target '{name}' is undeclared"
+      | some width => do
+          let v ← E.evalExpr env elems st (some width) value
+          .ok { st with scalar := E.scalar.setName st.scalar name v }
+  | .blockingAssignL target value =>
+      match target with
+      | .ident name =>
+          match E.scalarTarget name with
+          | none => .unsupported s!"11.5.1: scalar initial target '{name}' is undeclared"
+          | some width => do
+              let v ← E.evalExpr env elems st (some width) value
+              .ok { st with scalar := E.scalar.setName st.scalar name v }
+      | .arrayElem name [_] =>
+          match E.memDecl? name with
+          | none => .unsupported s!"11.5.1: memory initial target '{name}' is undeclared"
+          | some md => do
+              let v ← E.evalExpr env elems st (some md.shape.elemWidth) value
+              E.writeInitialCell env elems st target name md v
+      | .arrayElem name _ =>
+          .unsupported s!"11.5.1: memory initial target '{name}' is not one-rank"
+      | _ => .unsupported "11.5.1: packed or concatenated initial target is outside this E slice"
+  | .ifStmt cond yes no => do
+      let cv ← E.evalExpr env elems st (some 1) cond
+      if cv.condTrue then E.execInitialStmt env elems st yes
+      else match no with
+        | none => .ok st
+        | some stmt => E.execInitialStmt env elems st stmt
+  | .block body => E.execInitialStmts env elems st body
+  | .forLoop iterator init condition step body =>
+      match forValues2 env iterator init condition step with
+      | .timeout => .timeout
+      | .unsupported e => .unsupported s!"ForLoopStatement: {e}"
+      | .ok values => E.execInitialLoop env elems st values body iterator
+  | .nbaAssign .. | .nbaAssignL .. =>
+      .unsupported "10.4.2: nonblocking assignment in a time-zero initializer"
+  | .caseStmt .. => .unsupported "12.5: case in a time-zero initializer is outside this slice"
+  | .unsupported kind text => .unsupported s!"{kind}: {text}"
+
+def CoreMemDesign.execInitialStmts (E : CoreMemDesign) (env : IEnv)
+    (elems : List (String × Nat)) (st : CoreMemState) : List PStmt → Res CoreMemState
+  | [] => .ok st
+  | stmt :: rest => do
+      let st' ← E.execInitialStmt env elems st stmt
+      E.execInitialStmts env elems st' rest
+
+def CoreMemDesign.execInitialLoop (E : CoreMemDesign) (env : IEnv)
+    (elems : List (String × Nat)) (st : CoreMemState) : List Int → PStmt → String → Res CoreMemState
+  | [], _, _ => .ok st
+  | i :: rest, body, iterator => do
+      let st' ← E.execInitialStmt (env.bindVal iterator i) elems st body
+      E.execInitialLoop env elems st' rest body iterator
+
+end
+
+def CoreMemDesign.initialState (E : CoreMemDesign) : Res CoreMemState :=
+  let bodies := E.processes.toList.filterMap fun p =>
+    match p with
+    | .initial body => some body
+    | _ => none
+  match bodies with
+  | [] => .ok E.initial
+  | [body] => E.execInitialStmt E.env [] E.initial body
+  | _ => .unsupported "T2:Initial: multiple initial processes are outside this cycle entry"
+
 mutual
 
 def CoreMemDesign.execStmt (E : CoreMemDesign) (env : IEnv) (elems : List (String × Nat))
@@ -404,6 +492,7 @@ def CoreMemDesign.settleAssign (E : CoreMemDesign) (env : IEnv) (elems : List (S
       let scalar := E.scalar.setName st.scalar target.name v
       E.settleAssign env elems { st with scalar } rest
   | .edge _ :: rest => E.settleAssign env elems st rest
+  | .initial _ :: rest => E.settleAssign env elems st rest
   | .unsupported kind text :: _ =>
       .unsupported s!"{kind}: {text}"
 
@@ -416,6 +505,7 @@ def CoreMemDesign.runEdges (E : CoreMemDesign) (env : IEnv) (elems : List (Strin
         let b ← E.runEdges env elems st before after rest
         .ok (CoreMemExec.append a b)
       else E.runEdges env elems st before after rest
+  | .initial _ :: rest => E.runEdges env elems st before after rest
   | _ :: rest => E.runEdges env elems st before after rest
 
 def CoreMemDesign.step (E : CoreMemDesign) (st : CoreMemState) (entry : SvState) : Res CoreMemState := do

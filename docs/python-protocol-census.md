@@ -365,3 +365,6 @@ assignment state threading to nine successive local updates.
 
 `Monadic.finishCallM_assign_nine_existing_locals_ret_body_ok` extends the
 nine-update bridge through an early value return.
+
+`Monadic.finishCallM_assign_nine_existing_locals_pass_body_ok` extends the
+nine-update bridge through a normal `pass` continuation.

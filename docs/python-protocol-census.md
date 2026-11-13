@@ -198,3 +198,6 @@ to three normal statements followed by `break`.
 
 `Monadic.finishCallM_three_pass_continue_body_ok` extends continue-flow
 sequencing to three normal statements followed by `continue`.
+
+`Monadic.finishCallM_three_pass_ret_none_body_ok` extends bare-return
+sequencing to three normal statements followed by `return`.

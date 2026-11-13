@@ -14613,3 +14613,20 @@ statements followed by `continue`, preserving `RFlow.cont` through restoration.
 
 DECIDED: longer continue sequencing is now checked; recursive and general loop
 adequacy remain open.
+
+## 2026-11-13-pyfoundation-138 — longer bare-return sequencing
+
+`Monadic.finishCallM_three_pass_ret_none_body_ok` checks three normal
+statements followed by a bare `return`, preserving `RFlow.ret .none` through
+restoration.
+
+| Measurement | Result |
+|---|---|
+| Target | `lake build LeanModels.Python.Monadic.Eval` passed; 11/11 jobs |
+| Theorem | `Monadic.finishCallM_three_pass_ret_none_body_ok` |
+| Domain | four-statement body ending in bare return |
+| Semantic change | theorem-only sequencing and early-flow composition |
+| Remaining debt | recursive positive-fuel calls and general body adequacy |
+
+DECIDED: longer bare-return sequencing is now checked; recursive and general
+body adequacy remain open.

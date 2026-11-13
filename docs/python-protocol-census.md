@@ -440,3 +440,6 @@ the twelve-update bridge through a bare return.
 
 `Monadic.finishCallM_assign_twelve_existing_locals_break_body_ok` extends the
 twelve-update bridge through an abrupt `break` flow.
+
+`Monadic.finishCallM_assign_twelve_existing_locals_continue_body_ok` extends
+the twelve-update bridge through an abrupt `continue` flow.

@@ -114,6 +114,15 @@ def CoreMemDesign.initial (E : CoreMemDesign) : CoreMemState :=
   { scalar := E.scalar.initStore
     memory := MemState.ofShapes (E.memories.toList.map CoreMemDecl.shape) }
 
+def CoreMemDesign.scalarAssignInputsOnly (E : CoreMemDesign) : Bool :=
+  E.memories.isEmpty && E.processes.toList.all fun p =>
+    match p with
+    | .assign (.ident _) (.ident n) =>
+        match E.scalar.resolve n with
+        | some x => (E.scalar.declOf x).map (·.isInput) |>.getD false
+        | none => false
+    | _ => false
+
 def CoreMemDesign.memDecl? (E : CoreMemDesign) (name : String) : Option CoreMemDecl :=
   E.memories.toList.find? (fun d => d.source.name == name)
 
@@ -1320,11 +1329,19 @@ def CoreMemDesign.step (E : CoreMemDesign) (st : CoreMemState) (entry : SvState)
     else .ok activated
   E.settleAssign E.env E.elems combed E.processes.toList
 
+def runCoreMemRepeat (st : CoreMemState) : List SvState → Res (List CoreMemState)
+  | [] => .ok []
+  | _ :: rest => do
+      let tail ← runCoreMemRepeat st rest
+      .ok (st :: tail)
+
 def runCoreMemRows (E : CoreMemDesign) (st : CoreMemState) : List SvState → Res (List CoreMemState)
   | [] => .ok []
   | row :: rest => do
       let st' ← E.step st row
-      let tail ← runCoreMemRows E st' rest
+      let tail ← if row.isEmpty && E.scalarAssignInputsOnly then
+          runCoreMemRepeat st' rest
+        else runCoreMemRows E st' rest
       .ok (st' :: tail)
 
 def CoreMemState.view (E : CoreMemDesign) (st : CoreMemState) : SvState := E.scalar.view st.scalar

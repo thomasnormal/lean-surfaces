@@ -431,6 +431,25 @@ def withWorldRecursionUnit {α : Type} (action : SemW α) : SemW α := do
         modify fun w => { w with callDepth := w.callDepth.pred }
         raisePy e)
 
+/-- A C-level call under one CPython recursion unit.  Unlike a Python frame,
+the generic C entry checks the additional unit before dispatch
+(`Py_EnterRecursiveCall`), so the last available depth is already full.
+This is the boundary used by builtins such as `all` and `any`. -/
+def withCFrameRecursionUnit {α : Type} (action : SemF α) : SemF α := do
+  let st ← get
+  if pythonRecursionFull st.world.callDepth then
+    raisePy .recursionError
+  else
+    set { st with world := { st.world with callDepth := st.world.callDepth + 1 } }
+    tryCatch
+      (do
+        let v ← action
+        modify fun st => { st with world := { st.world with callDepth := st.world.callDepth.pred } }
+        pure v)
+      (fun e => do
+        modify fun st => { st with world := { st.world with callDepth := st.world.callDepth.pred } }
+        raisePy e)
+
 /-- The builtin table. `isBuiltinName` (Ast.lean) is the AUTHORITATIVE
 implemented set — so a name reaching here is one the tier claims, and
 a name it does not claim can never fall silently past the table. Arguments are
@@ -700,31 +719,37 @@ def applyBuiltin (K : Kont) (m : Module) (fname : String) (vs : List RVal) :
         pure (.ref a)
     | vs => raisePy (.typeError s!"set expected at most 1 argument, got {vs.length}")
   else if fname == "any" || fname == "all" then
-    withFrameRecursionUnit do
-      match vs with
-      | [v] => do
-          -- THE GENERATOR ARM IS NOT A DRAIN, and the difference is observable:
-          -- `any`/`all` step only until the answer DECIDES and leave the object
-          -- SUSPENDED, so a later `next` sees the partial consumption. Routing it
-          -- through `iterValues` would fully drain it — a wrong answer to a
-          -- question about state, not a missing feature. It gets its own arm.
-          let isGen ← (match v with
-            | .ref a => do
-                match Heap.get? (← frameHeap) a with
-                | some (.generator ..) => pure true
-                | _ => pure false
-            | _ => pure false)
-          if isGen then
+    match vs with
+    | [v] => do
+        -- THE GENERATOR ARM IS NOT A DRAIN, and the difference is observable:
+        -- `any`/`all` step only until the answer DECIDES and leave the object
+        -- SUSPENDED, so a later `next` sees the partial consumption. Routing it
+        -- through `iterValues` would fully drain it — a wrong answer to a
+        -- question about state, not a missing feature. It gets its own arm.
+        let isGen ← (match v with
+          | .ref a => do
+              match Heap.get? (← frameHeap) a with
+              | some (.generator ..) => pure true
+              | _ => pure false
+          | _ => pure false)
+        if isGen then
+          -- `stepIter` owns the generator's C/Python entry check.  Keep the
+          -- surrounding builtin at the Python-frame boundary, as CPython's
+          -- generator resume path does; otherwise the two checks double-count
+          -- the final slot.
+          (show SemF RVal from withFrameRecursionUnit do
             match v with
             | .ref a => do
                 let b ← inFrame (K.anyAllIter a (fname == "all"))
-                pure (.bool b)
-            | _ => refuse "internal: generator flag without a referent (report this)"
-          else do
+                pure (RVal.bool b)
+            | _ => refuse "internal: generator flag without a referent (report this)")
+        else
+          (show SemF RVal from withCFrameRecursionUnit do
             let xs ← iterValues K m fname true v
             let b ← liftRes (anyAllScan (← frameHeap) (fname == "all") xs)
-            pure (.bool b)
-      | vs => raisePy (.typeError s!"{fname}() takes exactly one argument ({vs.length} given)")
+            pure (RVal.bool b))
+    | vs => (show SemF RVal from withCFrameRecursionUnit
+        (raisePy (.typeError s!"{fname}() takes exactly one argument ({vs.length} given)")))
   else if fname == "next" then
     -- STEP an iterator. `next(g)` on an exhausted generator is the faithful
     -- `StopIteration`; `next(g, d)` CONSUMES exhaustion and yields `d`. A

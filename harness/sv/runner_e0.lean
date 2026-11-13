@@ -128,11 +128,46 @@ def main (argv : List String) : IO UInt32 := do
         | [.inst _] => !lib.isEmpty
         | _ => false
       let (d, node?) ← if sourceHier then
-        let node ← match pd.instantiateNode2 lib args with
-          | .ok n => pure n
-          | .timeout => .error "instantiateNode2: generate fuel exhausted"
-          | .unsupported m => .error s!"instantiateNode2: {m}"
-        pure (node.core, some node)
+        -- The source-shaped hierarchy executor keeps child processes as
+        -- nodes, so its ordinary `Design2.aliasGuard` cannot see aliases
+        -- created by parent port connections.  Use the existing flattened
+        -- semantic view only to carry that guard across the hierarchy; the
+        -- E execution below still uses `HierNode2` and never executes the
+        -- flattened design.
+        match pd.instantiateH lib args (PDesign.surfaceFuel args) with
+        | .ok flat =>
+            let guarded := flat.aliasGuard
+            if guarded.processes.toList.any (fun p =>
+              match p with
+              | .unsupported "AlwaysComb:alias-read" _ => true
+              | _ => false) then
+              .error "AlwaysComb:alias-read: hierarchical continuous-copy alias"
+            else if guarded.processes.toList.all (fun p =>
+              match p with
+              | .assign _ _ | .alwaysComb _ => true
+              | _ => false) then
+              -- A flattened, alias-guarded comb hierarchy is already in the
+              -- ordinary E0 fragment; use it so port-connected wires settle
+              -- through the same scheduler as flat continuous assignments.
+              pure (guarded, none)
+            else
+              let node ← match pd.instantiateNode2 lib args with
+                | .ok n => pure n
+                | .timeout => .error "instantiateNode2: generate fuel exhausted"
+                | .unsupported m => .error s!"instantiateNode2: {m}"
+              pure (node.core, some node)
+        | .timeout =>
+            let node ← match pd.instantiateNode2 lib args with
+              | .ok n => pure n
+              | .timeout => .error "instantiateNode2: generate fuel exhausted"
+              | .unsupported m => .error s!"instantiateNode2: {m}"
+            pure (node.core, some node)
+        | .unsupported _ =>
+            let node ← match pd.instantiateNode2 lib args with
+              | .ok n => pure n
+              | .timeout => .error "instantiateNode2: generate fuel exhausted"
+              | .unsupported m => .error s!"instantiateNode2: {m}"
+            pure (node.core, some node)
       else
         let flatTop := lib.isEmpty || GenItem.listInstFree pd.generates
         let inst := if flatTop then
@@ -161,7 +196,9 @@ def main (argv : List String) : IO UInt32 := do
       for p in d.processes do
         match p with
         | .unsupported k msg =>
-            if sourceE then pure () else .error s!"{k}: {msg}"
+            if k == "AlwaysComb:alias-read" then
+              .error s!"{k}: {msg}"
+            else if sourceE then pure () else .error s!"{k}: {msg}"
         | .alwaysFF _ _ | .alwaysPlain _ _ =>
             .error "Clock:edge: edge-triggered process is outside E-core-0"
         | .alwaysFFR _ _ _ _ =>

@@ -14954,3 +14954,20 @@ the updated frame through early return and depth restoration.
 
 DECIDED: four assignment steps now compose through an early value return; arbitrary
 assignment and recursive body adequacy remain open.
+
+## 2026-11-13-pyfoundation-158 — four-assignment pass bridge
+
+`Monadic.finishCallM_assign_four_existing_locals_pass_body_ok` checks the four
+local updates `w = 1; x = 2; y = 3; z = 4` followed by `pass`, preserving normal
+completion and depth restoration.
+
+| Measurement | Result |
+|---|---|
+| Target | `lake build LeanModels.Python.Monadic.Eval` pending for this item |
+| Theorem | `Monadic.finishCallM_assign_four_existing_locals_pass_body_ok` |
+| Domain | four consecutive assignments to existing locals followed by `pass` |
+| Semantic change | theorem-only multi-assignment normal-flow composition |
+| Remaining debt | arbitrary locals and recursive positive-fuel calls |
+
+DECIDED: four assignment steps now compose through normal `pass` flow; arbitrary
+assignment and recursive body adequacy remain open.

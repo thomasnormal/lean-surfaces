@@ -1301,6 +1301,16 @@ def callFn : Nat → Program → LeanModels.C.FunctionDefn → List CVal → Exe
                    b2 * 1099511627776 + b3 * 4294967296 + b4 * 16777216 +
                    b5 * 65536 + b6 * 256 + b7))
           | _ => refuseUnsupported "__builtin_bswap64: wrong argument count"
+        let runInf : String → List CVal → ExecM CVal := fun nm vs =>
+          match vs with
+          | [] =>
+              if nm.endsWith "f" then
+                pure (.float32 (Float32.Model.ofBits (UInt32.ofNat 0x7f800000)))
+              else if nm.endsWith "l" then
+                refuseUnsupported s!"{nm}: long double is outside the profile"
+              else
+                pure (.float64 (Float.Model.ofBits (UInt64.ofNat 0x7ff0000000000000)))
+          | _ => refuseUnsupported s!"{nm}: wrong argument count"
         let runAbs : List CVal → ExecM CVal := fun vs =>
           match vs with
           | [value] => do
@@ -1421,6 +1431,8 @@ def callFn : Nat → Program → LeanModels.C.FunctionDefn → List CVal → Exe
                 runBswap32 vs
               else if nm == "__builtin_bswap64" then
                 runBswap64 vs
+                    else if nm == "__builtin_inf" || nm == "__builtin_inff" || nm == "__builtin_infl" then
+                      runInf nm vs
               else if nm == "__builtin_abs" || nm == "abs" then
                 runAbs vs
               else if nm == "__sync_add_and_fetch_8" then
@@ -1496,6 +1508,7 @@ def callFn : Nat → Program → LeanModels.C.FunctionDefn → List CVal → Exe
               else if nm == "__builtin_bswap16" then runBswap16 vs
               else if nm == "__builtin_bswap32" then runBswap32 vs
               else if nm == "__builtin_bswap64" then runBswap64 vs
+              else if nm == "__builtin_inf" || nm == "__builtin_inff" || nm == "__builtin_infl" then runInf nm vs
               else if nm == "__builtin_abs" || nm == "abs" then runAbs vs
               else if nm == "__sync_add_and_fetch_8" then runSyncAdd8 vs
               else if nm == "__builtin_expect" then runBuiltinExpect vs

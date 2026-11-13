@@ -14886,3 +14886,20 @@ flow and depth restoration.
 
 DECIDED: three assignment updates now compose into return flow; arbitrary
 assignment and recursive body adequacy remain open.
+
+## 2026-11-13-pyfoundation-154 — three-assignment normal bridge
+
+`Monadic.finishCallM_assign_three_existing_locals_pass_body_ok` checks three
+local assignments followed by `pass`, threading all updates into normal flow
+and depth restoration.
+
+| Measurement | Result |
+|---|---|
+| Target | `lake build LeanModels.Python.Monadic.Eval` passed; 11/11 jobs |
+| Theorem | `Monadic.finishCallM_assign_three_existing_locals_pass_body_ok` |
+| Domain | four-statement assignment-assignment-assignment-pass body |
+| Semantic change | theorem-only multi-assignment normal-flow composition |
+| Remaining debt | arbitrary locals and recursive positive-fuel calls |
+
+DECIDED: three assignment updates now compose into normal flow; arbitrary
+assignment and recursive body adequacy remain open.

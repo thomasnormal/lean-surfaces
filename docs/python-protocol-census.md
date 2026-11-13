@@ -248,3 +248,6 @@ assignment return short-circuiting to two successive local updates.
 
 `Monadic.finishCallM_assign_three_existing_locals_ret_body_ok` extends it to
 three successive local updates followed by a return.
+
+`Monadic.finishCallM_assign_three_existing_locals_pass_body_ok` checks the
+normal continuation after those three updates.

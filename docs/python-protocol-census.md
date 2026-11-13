@@ -257,3 +257,6 @@ normal expression continuation after the three updates.
 
 `Monadic.finishCallM_assign_four_existing_locals_body_ok` extends normal
 assignment state threading to four successive local updates.
+
+`Monadic.finishCallM_assign_four_existing_locals_ret_body_ok` extends the same
+four-update bridge through an early value return.

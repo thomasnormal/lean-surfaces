@@ -2,10 +2,10 @@
 
 Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manifest.
 
-- verdicts: 1063/2214 MATCH (passed 1063, failed 0, oracle 0)
+- verdicts: 1065/2214 MATCH (passed 1065, failed 0, oracle 0)
 - manifest SHA-256: `bca94718b04e8394cdce992866637166f530978790bd1013cea4a00ae25ef764`
-- measured commit: `a590d3c1f`
-- measured at: `2026-11-13T17:31:54Z`
+- measured commit: `825f48190`
+- measured at: `2026-11-13T17:38:49Z`
 
 ## Verdict counts
 
@@ -13,10 +13,10 @@ Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manife
 | --- | ---: |
 | `not-parsed` | 294 |
 | `oracle-tests-compiler` | 1 |
-| `passed` | 1063 |
+| `passed` | 1065 |
 | `refused-libc` | 39 |
 | `refused-ub` | 105 |
-| `refused-unsupported` | 646 |
+| `refused-unsupported` | 644 |
 | `timeout` | 66 |
 
 ## Counts by corpus
@@ -30,10 +30,10 @@ Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manife
 | `c-testsuite/single-exec` | `timeout` | 2 |
 | `gcc.c-torture/execute` | `not-parsed` | 267 |
 | `gcc.c-torture/execute` | `oracle-tests-compiler` | 1 |
-| `gcc.c-torture/execute` | `passed` | 888 |
+| `gcc.c-torture/execute` | `passed` | 890 |
 | `gcc.c-torture/execute` | `refused-libc` | 35 |
 | `gcc.c-torture/execute` | `refused-ub` | 96 |
-| `gcc.c-torture/execute` | `refused-unsupported` | 567 |
+| `gcc.c-torture/execute` | `refused-unsupported` | 565 |
 | `gcc.c-torture/execute` | `timeout` | 64 |
 | `gcc.c23-run` | `not-parsed` | 27 |
 | `gcc.c23-run` | `passed` | 3 |
@@ -359,7 +359,6 @@ The run's first refusal, normalized by construct; `sole` counts rows whose first
 | `unsupported:long double integer-to-floating conversion` | 2 | 2 | 930622-2.c, conversion.c |
 | `unsupported:more arguments than parameters` | 2 | 2 | gcc/testsuite/gcc.dg/c23-stdarg-9.c, va-arg-2.c |
 | `unsupported:no layout for declared type 'T'` | 2 | 2 | 920908-1.c, pr98474.c |
-| `unsupported:no layout for declared type 'bitmap_iterator'` | 2 | 2 | 20090113-2.c, 20090113-3.c |
 | `unsupported:no layout for declared type 'int *volatile'` | 2 | 2 | 20101025-1.c, builtin-prefetch-3.c |
 | `unsupported:no layout for declared type 'jmp_buf'` | 2 | 2 | 20210505-1.c, pr56982.c |
 | `unsupported:no layout for declared type 'struct S[2]'` | 2 | 2 | 20050119-1.c, 20050119-2.c |

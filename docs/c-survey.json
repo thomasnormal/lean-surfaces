@@ -10,10 +10,10 @@
   "gcc.c-torture/execute": {
    "not-parsed": 267,
    "oracle-tests-compiler": 1,
-   "passed": 862,
+   "passed": 865,
    "refused-libc": 35,
    "refused-ub": 96,
-   "refused-unsupported": 593,
+   "refused-unsupported": 590,
    "timeout": 64
   },
   "gcc.c23-run": {
@@ -28,10 +28,10 @@
  "counts": {
   "not-parsed": 294,
   "oracle-tests-compiler": 1,
-  "passed": 1037,
+  "passed": 1040,
   "refused-libc": 39,
   "refused-ub": 105,
-  "refused-unsupported": 672,
+  "refused-unsupported": 669,
   "timeout": 66
  },
  "dynamic_wall_ranking": [
@@ -748,14 +748,11 @@
     "20050218-1.c",
     "20051021-1.c",
     "20060929-1.c",
-    "20230802-1.c",
     "920501-6.c",
     "920726-1.c",
     "930930-2.c",
     "builtin-bitops-1.c",
-    "ieee/pr109386.c",
     "pr17377.c",
-    "pr33142.c",
     "pr57875.c",
     "pr58943.c",
     "pr91635.c",
@@ -763,8 +760,8 @@
     "va-arg-10.c",
     "va-arg-9.c"
    ],
-   "present": 19,
-   "sole": 19,
+   "present": 16,
+   "sole": 16,
    "wall": "unsequenced-effects"
   },
   {
@@ -3446,8 +3443,8 @@
   }
  ],
  "manifest_hash": "bca94718b04e8394cdce992866637166f530978790bd1013cea4a00ae25ef764",
- "measured_at_utc": "2026-11-13T16:02:35Z",
- "measured_commit": "7d051c3d6",
+ "measured_at_utc": "2026-11-13T16:10:53Z",
+ "measured_commit": "ff10c671b",
  "pin": {
   "corpora": [
    "C1",
@@ -11642,8 +11639,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "unsequenced side effects in binary operands",
-   "dynamic_wall": "unsequenced-effects",
+   "detail": "0",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "20230802-1.c",
    "sha256": "21790d49552c3c162daea7d78c058aeebe56ab4b2f4abbe83a0455ee7b08a439",
@@ -11651,7 +11648,7 @@
     "libc-call: __builtin_abort",
     "unsequenced-effects"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -19610,8 +19607,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "unsequenced side effects in call arguments",
-   "dynamic_wall": "unsequenced-effects",
+   "detail": "0",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "ieee/pr109386.c",
    "sha256": "bd233004265f94f4e0565a548904bf827dfc6eb3692a553364cc28369ea3ff04",
@@ -19624,7 +19621,7 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -22747,8 +22744,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "unsequenced side effects in binary operands",
-   "dynamic_wall": "unsequenced-effects",
+   "detail": "0",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "pr33142.c",
    "sha256": "aa357be59d9f1e3c5625c004e99e5901c0dcc142af7db1f2c6f691ded2972b33",
@@ -22756,7 +22753,7 @@
     "libc-call: abs",
     "unsequenced-effects"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",

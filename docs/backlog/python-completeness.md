@@ -14499,3 +14499,20 @@ top-level depth restoration.
 
 DECIDED: normal sequencing and early-return sequencing are now checked;
 recursive and general body adequacy remain open.
+
+## 2026-11-13-pyfoundation-131 — break sequencing bridge
+
+`Monadic.finishCallM_pass_break_body_ok` checks `pass` followed by `break`.
+The normal first statement is discarded by the list walker and the second
+statement's `RFlow.brk` is carried through call-depth restoration.
+
+| Measurement | Result |
+|---|---|
+| Target | `lake build LeanModels.Python.Monadic.Eval` passed; 11/11 jobs |
+| Theorem | `Monadic.finishCallM_pass_break_body_ok` |
+| Domain | two-statement body ending in `break` |
+| Semantic change | theorem-only sequencing and control-flow composition |
+| Remaining debt | recursive positive-fuel calls and general loop adequacy |
+
+DECIDED: normal-to-break sequencing is now checked; recursive and general loop
+adequacy remain open.

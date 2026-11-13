@@ -177,3 +177,6 @@ left-to-right body walker and restoration boundary.
 
 `Monadic.finishCallM_pass_ret_body_ok` covers the corresponding early-return
 sequence, proving that the second statement's `RFlow.ret` stops the body walk.
+
+`Monadic.finishCallM_pass_break_body_ok` covers normal sequencing into a
+`break`, preserving `RFlow.brk` for the enclosing loop shell.

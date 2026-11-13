@@ -273,10 +273,24 @@ def stmtDecls : Stmt → List Decl
   | _ => []
 end
 
+/-! Record declarations are parser-native children of their enclosing record,
+not separate translation-unit items.  Keep the declaration itself and flatten
+its child declarations so the identity-backed layout table can index nested
+named and anonymous records without reconstructing a type spelling. -/
+mutual
+def declTree : Decl → List Decl
+  | d@(.record _ _ fields _ _) => d :: declsTree fields
+  | d => [d]
+
+def declsTree : List Decl → List Decl
+  | [] => []
+  | d :: ds => declTree d ++ declsTree ds
+end
+
 def allDecls (envl : Envelope) : List Decl :=
   envl.unit.items.flatMap fun i => match i with
-    | .decl d => [d]
-    | .fn f => f.body.map stmtDecls |>.getD []
+    | .decl d => declTree d
+    | .fn f => (f.body.map stmtDecls |>.getD []).flatMap declTree
 
 def recordsOf (envl : Envelope) : List (String × List (String × CType)) :=
   let ds := allDecls envl

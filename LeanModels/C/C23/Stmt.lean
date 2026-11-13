@@ -1085,6 +1085,28 @@ def callFn : Nat → Program → LeanModels.C.FunctionDefn → List CVal → Exe
                 set m'
                 pure (.ptr (Ptr.toObject o))
           | _ => refuseUnsupported "alloca: wrong argument count"
+        let runMalloc : List CVal → ExecM CVal := fun vs =>
+          match vs with
+          | [size] => do
+              let (_, n) ← asInt size
+              if n ≤ 0 then refuseUnsupported "malloc: non-positive size"
+              else do
+                let m ← get
+                let (m', p) := m.malloc n.toNat
+                set m'
+                pure (.ptr p)
+          | _ => refuseUnsupported "malloc: wrong argument count"
+        let runFree : List CVal → ExecM CVal := fun vs =>
+          match vs with
+          | [value] => do
+              let p ← asPtr value
+              let m ← get
+              match Mem.free m p with
+              | .ok next => do
+                  set next
+                  pure .undef
+              | .error r => throw r
+          | _ => refuseUnsupported "free: wrong argument count"
         let runFfs : List CVal → ExecM CVal := fun vs =>
           match vs with
           | [value] => do
@@ -1267,6 +1289,8 @@ def callFn : Nat → Program → LeanModels.C.FunctionDefn → List CVal → Exe
                     else if nm == "__builtin_memcmp" || nm == "memcmp" then runMemcmp vs
                     else if nm == "__builtin_strlen" then runStrlen vs
                     else if nm == "__builtin_alloca" then runAlloca vs
+                    else if nm == "malloc" || nm == "__builtin_malloc" then runMalloc vs
+                    else if nm == "free" || nm == "__builtin_free" then runFree vs
                     else if nm == "__builtin_ffs" then runFfs vs
                     else if nm == "__builtin_mul_overflow" then runArithOverflow "mul" vs
                     else if nm == "__builtin_add_overflow" then runArithOverflow "add" vs
@@ -1309,6 +1333,8 @@ def callFn : Nat → Program → LeanModels.C.FunctionDefn → List CVal → Exe
               else if nm == "strchr" then runStrchr vs
               else if nm == "strrchr" then runStrrchr vs
               else if nm == "__builtin_alloca" then runAlloca vs
+              else if nm == "malloc" || nm == "__builtin_malloc" then runMalloc vs
+              else if nm == "free" || nm == "__builtin_free" then runFree vs
               else if nm == "__builtin_ffs" then runFfs vs
               else if nm == "__builtin_mul_overflow" then runArithOverflow "mul" vs
               else if nm == "__builtin_add_overflow" then runArithOverflow "add" vs

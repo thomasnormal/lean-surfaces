@@ -46,6 +46,10 @@ stateful script control remain the next adequacy boundary. At the call entry,
 `Monadic.twinAgrees_callIn_missing_function` now closes the preflight branch:
 for a positive fuel and an absent function table entry, both interpreters
 return the same depth-normalized `NameError` without changing the world.
+`Monadic.twinAgrees_callIn_unsupported_args` closes the next ordered preflight
+branch when the function has unsupported parameter features and the generator
+capture guard is clear; both surfaces return the same loud refusal before body
+execution.
 
 ## Operator dispatch
 

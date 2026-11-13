@@ -14032,3 +14032,21 @@ obligations.
 
 DECIDED: keep the call preflight bridge explicit and depth-normalized; do not
 claim recursive call adequacy from this branch alone.
+
+## 2026-11-13-pyfoundation-104 — close unsupported-parameter call preflight
+
+`Monadic.twinAgrees_callIn_unsupported_args` closes the next ordered call
+preflight branch. For a found function with `argsOk = false`, positive fuel,
+and a clear generator-capture guard, both interpreters return the same loud
+unsupported-parameter refusal before entering the body.
+
+| Measurement | Result |
+|---|---|
+| Target | `lake build LeanModels.Python.Monadic.Eval` passed; 11/11 jobs |
+| Theorem | `Monadic.twinAgrees_callIn_unsupported_args` |
+| Domain | found functions with unsupported parameter features and no generator-cell refusal |
+| Semantic change | theorem only; no evaluator behavior change |
+| Remaining debt | local-feature preflight, arity, generator creation, recursive body calls, and scripts |
+
+DECIDED: preserve the call guard order in the refinement edge; body-call and
+script adequacy remain open.

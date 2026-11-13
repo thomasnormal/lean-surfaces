@@ -160,3 +160,6 @@ recursive expression, statement, or script adequacy theorem.
 The nonempty control-flow bridge `Monadic.finishCallM_ret_constant_body_ok`
 also covers a one-statement `return 1` body, preserving `RFlow.ret` through
 the same world and depth restoration boundary.
+
+Its bare-return counterpart, `Monadic.finishCallM_ret_none_body_ok`, preserves
+the `RFlow.ret .none` channel through the same boundary.

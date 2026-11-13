@@ -14415,3 +14415,20 @@ top-level call-depth restoration.
 
 DECIDED: return flow is now checked through the stateful call boundary for a
 concrete nonempty body; recursive and general body adequacy remain open.
+
+## 2026-11-13-pyfoundation-126 — bare-return flow bridge
+
+`Monadic.finishCallM_ret_none_body_ok` covers a one-statement bare `return`,
+retaining its `RFlow.ret .none` result while restoring the requested call
+depth.
+
+| Measurement | Result |
+|---|---|
+| Target | `lake build LeanModels.Python.Monadic.Eval` passed; 11/11 jobs |
+| Theorem | `Monadic.finishCallM_ret_none_body_ok` |
+| Domain | one bare-return statement, arbitrary frame locals/world/depth |
+| Semantic change | theorem-only return-flow composition |
+| Remaining debt | recursive positive-fuel calls and general nonempty body adequacy |
+
+DECIDED: both value-return and bare-return flow are checked through the
+stateful call boundary; recursive and general body adequacy remain open.

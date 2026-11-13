@@ -138,6 +138,7 @@ remain outside the fragment. -/
 def typeSpellingAdmitted (t : CType) : Bool :=
   ((!t.contains "(*") || LeanModels.C.isConstPointerToArray t) &&
   !t.endsWith " const" && !t.endsWith " volatile" &&
+  !t.endsWith " restrict" && !t.endsWith "*restrict" &&
   !t.contains ") [" && !t.contains "::"
 
 /-- Drop the qualifiers. Exact: `const`/`volatile` do not change a size. -/
@@ -146,6 +147,10 @@ def stripQuals : Nat → CType → CType
   | n + 1, t =>
       if t.startsWith "const " then stripQuals n ((t.drop 6).toString)
       else if t.startsWith "volatile " then stripQuals n ((t.drop 9).toString)
+      else if t.endsWith " restrict" then
+        stripQuals n ((t.dropEnd 9).toString.trimAsciiEnd.toString)
+      else if t.endsWith "*restrict" then
+        stripQuals n ((t.dropEnd 9).toString.trimAsciiEnd.toString)
       else t
 
 /-- `T[N]` → `(T, N)`. Constant nested arrays are walked from the outermost

@@ -2,10 +2,10 @@
 
 Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manifest.
 
-- verdicts: 981/2214 MATCH (passed 981, failed 0, oracle 0)
-- manifest SHA-256: `9c6f610278c05b819dd025cc1ec219a48b05820f78db8d55943d55de210fbc39`
-- measured commit: `a3f12a92e`
-- measured at: `2026-11-13T09:08:12Z`
+- verdicts: 982/2214 MATCH (passed 982, failed 0, oracle 0)
+- manifest SHA-256: `8e2976f6f1a36d47b02bfc314b0c00d2f11dbd022cc00eddf07bc9d0259ab7bb`
+- measured commit: `62b3038ba`
+- measured at: `2026-11-13T09:17:20Z`
 
 ## Verdict counts
 
@@ -13,10 +13,10 @@ Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manife
 | --- | ---: |
 | `not-parsed` | 294 |
 | `oracle-tests-compiler` | 1 |
-| `passed` | 981 |
+| `passed` | 982 |
 | `refused-libc` | 55 |
 | `refused-ub` | 105 |
-| `refused-unsupported` | 712 |
+| `refused-unsupported` | 711 |
 | `timeout` | 66 |
 
 ## Counts by corpus
@@ -30,10 +30,10 @@ Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manife
 | `c-testsuite/single-exec` | `timeout` | 2 |
 | `gcc.c-torture/execute` | `not-parsed` | 267 |
 | `gcc.c-torture/execute` | `oracle-tests-compiler` | 1 |
-| `gcc.c-torture/execute` | `passed` | 811 |
+| `gcc.c-torture/execute` | `passed` | 812 |
 | `gcc.c-torture/execute` | `refused-libc` | 51 |
 | `gcc.c-torture/execute` | `refused-ub` | 96 |
-| `gcc.c-torture/execute` | `refused-unsupported` | 628 |
+| `gcc.c-torture/execute` | `refused-unsupported` | 627 |
 | `gcc.c-torture/execute` | `timeout` | 64 |
 | `gcc.c23-run` | `not-parsed` | 27 |
 | `gcc.c23-run` | `passed` | 3 |
@@ -529,7 +529,6 @@ The run's first refusal, normalized by construct; `sole` counts rows whose first
 | `unsupported:no layout for field 'n'` | 1 | 1 | pr39100.c |
 | `unsupported:no layout for field 's'` | 1 | 1 | 20190901-1.c |
 | `unsupported:no layout for field 'y'` | 1 | 1 | 00053.c |
-| `unsupported:no layout for parameter type 'const struct b *restrict'` | 1 | 1 | 20001024-1.c |
 | `unsupported:no layout for parameter type 'const unsigned int *const'` | 1 | 1 | pr63209.c |
 | `unsupported:no layout for parameter type 'foo_t *const'` | 1 | 1 | pr33669.c |
 | `unsupported:no layout for parameter type 'int **restrict'` | 1 | 1 | 20080506-2.c |

@@ -140,6 +140,24 @@ def CoreMemProc.ofPProcess : PProcess → CoreMemProc
   | .initial body => .initial body
   | .unsupported kind text => .unsupported kind text
 
+/-! Module-level metadata that is already represented by retained source nodes.
+An empty input-only task has no runtime effect, and the two x/z markers carry
+the literal as a source `PExpr.lit`; admitting these markers therefore does not
+invent a process or a value.  An undriven net is deliberately absent: the
+loader's `PDesign.others` currently retains only its name, while its width and
+driver metadata remain in the envelope, so assigning a guessed width here
+would violate IEEE 1800-2023 §6.6. -/
+
+def coreMemAllowedOther (entry : String × String) : Bool :=
+  entry.1 == "SubroutineSymbol:empty-task" ||
+    entry.1 == "IntegerLiteral:unsized-xz-parametric" ||
+    entry.1 == "ConversionExpression:xz-literal-parametric"
+
+def coreMemFirstUnsupportedOther : List (String × String) → Option (String × String)
+  | [] => none
+  | entry :: rest => if coreMemAllowedOther entry then coreMemFirstUnsupportedOther rest
+                     else some entry
+
 /-! ## Source-shaped generate expansion
 
 Generate elaboration selects and repeats the parser's process nodes; it does
@@ -299,9 +317,10 @@ def PDesign.instantiateCoreMemFrom (envI : IEnv) (d : PDesign) (args : List Int)
     let env2 := { env2 with dims := dimTable env2 d.decls }
     let env2 := { env2 with functions := d.functions }
     let generated ← coreMemExpandList env2 iterFuel [] d.generates
-    if !d.others.isEmpty then
-      .unsupported "E memory route does not yet admit hierarchy items"
-    else
+    match coreMemFirstUnsupportedOther d.others with
+    | some (kind, text) =>
+      .unsupported s!"E memory route does not yet admit module member '{kind}' ({text})"
+    | none =>
       let decls ← buildScalarDecls1 env2 d.decls
       let elems ← buildElems env2 d.decls
       let envP := { env2 with widths := decls.map (fun dc => (dc.name, dc.width)) }

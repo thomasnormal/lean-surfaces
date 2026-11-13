@@ -1862,6 +1862,23 @@ result only: no PicoRV32 execution, retirement trace or symbolic ADDI
 invariant is claimed.  The old guard-bypassed run2/MemCycle 80-cycle result
 remains **UNVALIDATED**.
 
+## 2026-11-13 canonical-E metadata re-probe
+
+On the review branch rebased on public `github/master` `8d57b0162`, the
+canonical source-shaped memory route expands the selected generate processes
+and admits the inert empty-task and parametric x/z metadata markers.  The
+first remaining wall is the structured net marker
+`NetSymbol:net-z` for `pcpi_mul_wr` at `picorv32.v:257`.  `PDesign.others`
+currently retains only that signal name, so the route does not infer its
+width or driver resolution.  The exact branch-local refusal is:
+
+```text
+E memory route does not yet admit module member 'NetSymbol:net-z' (pcpi_mul_wr)
+```
+
+The ordinary RISCV_FORMAL census remains 348 ADMITTED, 12 REFUSED, 4 NOT
+REACHED (`remaining=16`); no whole-core E run is claimed.
+
 ## 2026-11-11 E re-probe after the implicit-event memory slice
 
 The pinned source remains YosysHQ commit

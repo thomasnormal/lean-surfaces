@@ -2,10 +2,10 @@
 
 Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manifest.
 
-- verdicts: 1031/2214 MATCH (passed 1031, failed 0, oracle 0)
-- manifest SHA-256: `264fffa60f35d52643e7642e2c597c7ef6674c968fec0ce6598aab624a4d60b2`
-- measured commit: `039a7bd80`
-- measured at: `2026-11-13T15:10:00Z`
+- verdicts: 1032/2214 MATCH (passed 1032, failed 0, oracle 0)
+- manifest SHA-256: `1c10e69f6a57ae6d0a0e10be97444e102d648670a69b0b05823f4f4f9c39dd82`
+- measured commit: `bb6905af0`
+- measured at: `2026-11-13T15:15:00Z`
 
 ## Verdict counts
 
@@ -13,20 +13,20 @@ Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manife
 | --- | ---: |
 | `not-parsed` | 294 |
 | `oracle-tests-compiler` | 1 |
-| `passed` | 1031 |
+| `passed` | 1032 |
 | `refused-libc` | 39 |
 | `refused-ub` | 105 |
-| `refused-unsupported` | 678 |
+| `refused-unsupported` | 677 |
 | `timeout` | 66 |
 
 ## Counts by corpus
 
 | corpus | verdict | files |
 | --- | --- | ---: |
-| `c-testsuite/single-exec` | `passed` | 170 |
+| `c-testsuite/single-exec` | `passed` | 171 |
 | `c-testsuite/single-exec` | `refused-libc` | 2 |
 | `c-testsuite/single-exec` | `refused-ub` | 8 |
-| `c-testsuite/single-exec` | `refused-unsupported` | 38 |
+| `c-testsuite/single-exec` | `refused-unsupported` | 37 |
 | `c-testsuite/single-exec` | `timeout` | 2 |
 | `gcc.c-torture/execute` | `not-parsed` | 267 |
 | `gcc.c-torture/execute` | `oracle-tests-compiler` | 1 |
@@ -462,7 +462,6 @@ The run's first refusal, normalized by construct; `sole` counts rows whose first
 | `unsupported:no layout for declared type 'int (*(*)(int, int))(int, int)'` | 1 | 1 | 00124.c |
 | `unsupported:no layout for declared type 'int (*)(int, int)'` | 1 | 1 | 991112-1.c |
 | `unsupported:no layout for declared type 'int (*)[++i]'` | 1 | 1 | gcc/testsuite/gcc.dg/c23-auto-2.c |
-| `unsupported:no layout for declared type 'int32_t'` | 1 | 1 | 00104.c |
 | `unsupported:no layout for declared type 'int[len][len]'` | 1 | 1 | 20221006-1.c |
 | `unsupported:no layout for declared type 'neon_s8'` | 1 | 1 | pr42833.c |
 | `unsupported:no layout for declared type 's'` | 1 | 1 | 00046.c |

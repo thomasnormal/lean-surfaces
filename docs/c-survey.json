@@ -1,10 +1,10 @@
 {
  "by_corpus": {
   "c-testsuite/single-exec": {
-   "passed": 170,
+   "passed": 171,
    "refused-libc": 2,
    "refused-ub": 8,
-   "refused-unsupported": 38,
+   "refused-unsupported": 37,
    "timeout": 2
   },
   "gcc.c-torture/execute": {
@@ -28,10 +28,10 @@
  "counts": {
   "not-parsed": 294,
   "oracle-tests-compiler": 1,
-  "passed": 1031,
+  "passed": 1032,
   "refused-libc": 39,
   "refused-ub": 105,
-  "refused-unsupported": 678,
+  "refused-unsupported": 677,
   "timeout": 66
  },
  "dynamic_wall_ranking": [
@@ -2183,14 +2183,6 @@
   },
   {
    "files": [
-    "00104.c"
-   ],
-   "present": 1,
-   "sole": 1,
-   "wall": "unsupported:no layout for declared type 'int32_t'"
-  },
-  {
-   "files": [
     "20221006-1.c"
    ],
    "present": 1,
@@ -3486,9 +3478,9 @@
    "wall": "unsupported:va_arg requested unsupported value type 'struct s'"
   }
  ],
- "manifest_hash": "264fffa60f35d52643e7642e2c597c7ef6674c968fec0ce6598aab624a4d60b2",
- "measured_at_utc": "2026-11-13T15:10:00Z",
- "measured_commit": "039a7bd80",
+ "manifest_hash": "1c10e69f6a57ae6d0a0e10be97444e102d648670a69b0b05823f4f4f9c39dd82",
+ "measured_at_utc": "2026-11-13T15:15:00Z",
+ "measured_commit": "bb6905af0",
  "pin": {
   "corpora": [
    "C1",
@@ -4610,13 +4602,13 @@
   },
   {
    "corpus": "c-testsuite/single-exec",
-   "detail": "no layout for declared type 'int32_t'",
-   "dynamic_wall": "unsupported:no layout for declared type 'int32_t'",
+   "detail": "",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "00104.c",
    "sha256": "d9150e45905ebbb3ba02a3fc5dff3e0789fc83fdaa8fcfcfbb6d5cfd92bb9350",
    "static_walls": [],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "c-testsuite/single-exec",

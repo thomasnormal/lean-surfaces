@@ -340,9 +340,11 @@ def observedRecordFacts (envl : Envelope) :
   let ds := allDecls envl
   let nestedFacts := fun fields : List Decl =>
     fields.filterMap fun child => match child with
-      | .record _ none nested (some layout) _ =>
+      | .record _ none nested (some layout) childSpan =>
           match fields.find? (fun f => match f with
-            | .field _ ty _ _ => ty.startsWith "struct (unnamed" || ty.startsWith "union (unnamed"
+            | .field _ ty _ fspan =>
+                fspan.line == childSpan.line &&
+                  (ty.startsWith "struct (unnamed" || ty.startsWith "union (unnamed")
             | _ => false) with
           | some (.field _ ty _ _) =>
               match checkedRecordLayout? nested layout with

@@ -244,19 +244,6 @@ def floatLiteralValue (bitsHex : Option String) (bitWidth : Option Nat) : EvalM 
   | some _, some _ => refuseUnsupported "unsupported floating literal width"
   | _, _ => refuseUnsupported "floating literal lacks parser-native bits"
 
-def floatingCast (target : CType) (v : CVal) : EvalM CVal :=
-  if target == "double" then
-    match v with
-    | .float32 f => pure (.float64 (Float.Model.pack f.unpack))
-    | .float64 f => pure (.float64 f)
-    | _ => refuseUnsupported "FloatingCast source is not binary floating"
-  else if target == "float" then
-    match v with
-    | .float64 f => pure (.float32 (Float32.Model.pack f.unpack))
-    | .float32 f => pure (.float32 f)
-    | _ => refuseUnsupported "FloatingCast source is not binary floating"
-  else refuseUnsupported "FloatingCast to long double or non-binary type"
-
 /-! ## §6.2.5 — resolving a type spelling to an integer type
 
 **The census found a real problem here.** `CType` is clang's unparsed
@@ -1080,9 +1067,6 @@ def evalExpr (ctx : Ctx) : Expr → EvalM CVal
           pure (.float64 (Float.Model.ofInt n))
         else
           refuseUnsupported "long double integer-to-floating conversion"
-      else if ck == "FloatingCast" then do
-        let v ← evalExpr ctx sub
-        floatingCast ty v
       else if ck == "FloatingToIntegral" then
         do
         let v ← evalExpr ctx sub
@@ -1943,12 +1927,6 @@ theorem floatLiteralValue' (bitsHex : Option String) (bitWidth : Option Nat) :
     | exact pure' _
     | exact refuseUnsupported' _
 
-theorem floatingCast' (target : CType) (v : CVal) :
-    MemInvariant (floatingCast target v) := by
-  cases v <;> simp only [floatingCast]
-  all_goals repeat (any_goals split)
-  all_goals first | exact pure' _ | exact refuseUnsupported' _
-
 theorem evalArith' (ctx : Ctx) (op : String) (lv rv : CVal) (ty : CType)
     (elemTy : Option CType := none) :
     MemInvariant (evalArith ctx op lv rv ty elemTy) := by
@@ -2022,7 +2000,6 @@ macro "mem_inv" : tactic => `(tactic|
     | (with_reducible apply MemInvariant.float32ToInt')
     | (with_reducible apply MemInvariant.float64ToInt')
     | (with_reducible apply MemInvariant.evalArith')
-    | (with_reducible apply MemInvariant.floatingCast')
     | (with_reducible apply MemInvariant.ite')
     | (with_reducible apply MemInvariant.bif')
     | (with_reducible apply MemInvariant.bind)

@@ -463,6 +463,7 @@ def drift := 1'
   out="$(bash "$self" --dependents LeanModels/Sv/Param.lean)"; rc=$?
   check "the real tree: Param.lean reaches CombProc" "$(printf '%s\n' "$out" | grep -cx 'LeanModels.Sv.CombProc')" 1
   check "the real tree: Param.lean reaches Hier2Gen" "$(printf '%s\n' "$out" | grep -cx 'LeanModels.Sv.Hier2Gen')" 1
+  check "the real tree: Param.lean reaches the partsel Example" "$(printf '%s\n' "$out" | grep -cx 'Examples.«system-verilog».partsel.gen')" 1
   check "  ...and every name is a source-tree module or Example" "$(printf '%s\n' "$out" | grep -vxF -f <(all_sv_modules; example_modules) | grep -c .)" 0
 
   # The E closure gate is text-only and must reject both a forbidden authority

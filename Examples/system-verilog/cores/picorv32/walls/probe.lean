@@ -42,6 +42,23 @@ RISCV_FORMAL point. -/
     | _ => false
   | _ => false
 
+/-! A full loaded PicoRV32 E step with every scalar input driven low (the
+reset-held-low bound) now returns through the same exact `CoreMemDesign.step`
+route. -/
+set_option maxRecDepth 100000 in
+load_design_sv2 picorv32_step_wall
+  from "Examples/system-verilog/cores/picorv32/picorv32_r2.sv.json"
+def resetHeldLowEntry (d : CoreMemDesign) : SvState :=
+  d.scalar.decls.toList.filterMap fun dc =>
+    if dc.isInput then some (dc.name, LVec.ofNat dc.width 0) else none
+#guard match picorv32_step_wall.e 1 1 1 1 0 1 0 0 0 0 1 1 0 0 0 0 0 1 1 0 0 0 4294967295 0 16 4294967295 with
+  | .ok d => match d.initialState with
+    | .ok st => match d.step st (resetHeldLowEntry d) with
+      | .ok _ => true
+      | _ => false
+    | _ => false
+  | _ => false
+
 set_option maxRecDepth 100000 in
 load_design_sv2 net_z_memory_wall
   from "Examples/system-verilog/cores/picorv32/walls/net_z_memory.sv.json"

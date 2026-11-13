@@ -330,6 +330,7 @@ def checkedRecordLayout? (fields : List Decl) (layout : RecordLayout) :
    { name := "b", offsetBits := 32, bitfield := false }]
 #guard ("union (unnamed at x)".startsWith "union (unnamed")
 #guard ("struct (unnamed struct at x:41:17)".startsWith "struct (unnamed")
+#guard ("union (unnamed union at x:27:9)".startsWith "union (unnamed")
 
 /-! A checked, identity-backed aggregate fact.  The type key is only the
 spelling Clang itself attached to the declaration (`struct S`/`union U`);

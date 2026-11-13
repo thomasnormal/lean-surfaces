@@ -76033,7 +76033,20 @@
               "end_col": 25
             },
             "sv_kind": "NetSymbol:net-z",
-            "text": "pcpi_mul_wr"
+            "text": "pcpi_mul_wr",
+            "metadata": {
+              "name": "pcpi_mul_wr",
+              "width": {
+                "kind": "PackedType",
+                "packed": [],
+                "resolved": 1
+              },
+              "net_kind": "Wire",
+              "signed": false,
+              "four_state": true,
+              "is_net": true,
+              "driver_reason": "drivers select windows by an expression"
+            }
           },
           {
             "kind": "Unsupported",
@@ -76044,7 +76057,45 @@
               "end_col": 25
             },
             "sv_kind": "NetSymbol:net-z",
-            "text": "pcpi_mul_rd"
+            "text": "pcpi_mul_rd",
+            "metadata": {
+              "name": "pcpi_mul_rd",
+              "width": {
+                "kind": "PackedType",
+                "packed": [
+                  {
+                    "msb": {
+                      "kind": "Int",
+                      "span": {
+                        "line": 258,
+                        "col": 8,
+                        "end_line": 258,
+                        "end_col": 10
+                      },
+                      "value": 31,
+                      "resolved_width": null
+                    },
+                    "lsb": {
+                      "kind": "Int",
+                      "span": {
+                        "line": 258,
+                        "col": 11,
+                        "end_line": 258,
+                        "end_col": 12
+                      },
+                      "value": 0,
+                      "resolved_width": null
+                    }
+                  }
+                ],
+                "resolved": 32
+              },
+              "net_kind": "Wire",
+              "signed": false,
+              "four_state": true,
+              "is_net": true,
+              "driver_reason": "drivers select windows by an expression"
+            }
           },
           {
             "kind": "Unsupported",
@@ -76055,7 +76106,20 @@
               "end_col": 27
             },
             "sv_kind": "NetSymbol:net-z",
-            "text": "pcpi_mul_wait"
+            "text": "pcpi_mul_wait",
+            "metadata": {
+              "name": "pcpi_mul_wait",
+              "width": {
+                "kind": "PackedType",
+                "packed": [],
+                "resolved": 1
+              },
+              "net_kind": "Wire",
+              "signed": false,
+              "four_state": true,
+              "is_net": true,
+              "driver_reason": "drivers select windows by an expression"
+            }
           },
           {
             "kind": "Unsupported",
@@ -76066,7 +76130,20 @@
               "end_col": 28
             },
             "sv_kind": "NetSymbol:net-z",
-            "text": "pcpi_mul_ready"
+            "text": "pcpi_mul_ready",
+            "metadata": {
+              "name": "pcpi_mul_ready",
+              "width": {
+                "kind": "PackedType",
+                "packed": [],
+                "resolved": 1
+              },
+              "net_kind": "Wire",
+              "signed": false,
+              "four_state": true,
+              "is_net": true,
+              "driver_reason": "drivers select windows by an expression"
+            }
           },
           {
             "kind": "Unsupported",
@@ -76077,7 +76154,20 @@
               "end_col": 25
             },
             "sv_kind": "NetSymbol:net-z",
-            "text": "pcpi_div_wr"
+            "text": "pcpi_div_wr",
+            "metadata": {
+              "name": "pcpi_div_wr",
+              "width": {
+                "kind": "PackedType",
+                "packed": [],
+                "resolved": 1
+              },
+              "net_kind": "Wire",
+              "signed": false,
+              "four_state": true,
+              "is_net": true,
+              "driver_reason": "drivers select windows by an expression"
+            }
           },
           {
             "kind": "Unsupported",
@@ -76088,7 +76178,45 @@
               "end_col": 25
             },
             "sv_kind": "NetSymbol:net-z",
-            "text": "pcpi_div_rd"
+            "text": "pcpi_div_rd",
+            "metadata": {
+              "name": "pcpi_div_rd",
+              "width": {
+                "kind": "PackedType",
+                "packed": [
+                  {
+                    "msb": {
+                      "kind": "Int",
+                      "span": {
+                        "line": 263,
+                        "col": 8,
+                        "end_line": 263,
+                        "end_col": 10
+                      },
+                      "value": 31,
+                      "resolved_width": null
+                    },
+                    "lsb": {
+                      "kind": "Int",
+                      "span": {
+                        "line": 263,
+                        "col": 11,
+                        "end_line": 263,
+                        "end_col": 12
+                      },
+                      "value": 0,
+                      "resolved_width": null
+                    }
+                  }
+                ],
+                "resolved": 32
+              },
+              "net_kind": "Wire",
+              "signed": false,
+              "four_state": true,
+              "is_net": true,
+              "driver_reason": "drivers select windows by an expression"
+            }
           },
           {
             "kind": "Unsupported",
@@ -76099,7 +76227,20 @@
               "end_col": 27
             },
             "sv_kind": "NetSymbol:net-z",
-            "text": "pcpi_div_wait"
+            "text": "pcpi_div_wait",
+            "metadata": {
+              "name": "pcpi_div_wait",
+              "width": {
+                "kind": "PackedType",
+                "packed": [],
+                "resolved": 1
+              },
+              "net_kind": "Wire",
+              "signed": false,
+              "four_state": true,
+              "is_net": true,
+              "driver_reason": "drivers select windows by an expression"
+            }
           },
           {
             "kind": "Unsupported",
@@ -76110,7 +76251,20 @@
               "end_col": 28
             },
             "sv_kind": "NetSymbol:net-z",
-            "text": "pcpi_div_ready"
+            "text": "pcpi_div_ready",
+            "metadata": {
+              "name": "pcpi_div_ready",
+              "width": {
+                "kind": "PackedType",
+                "packed": [],
+                "resolved": 1
+              },
+              "net_kind": "Wire",
+              "signed": false,
+              "four_state": true,
+              "is_net": true,
+              "driver_reason": "drivers select windows by an expression"
+            }
           },
           {
             "kind": "Unsupported",

@@ -20,8 +20,9 @@ python3 extractors/sv/extract.py --top picorv32 -D RISCV_FORMAL \
 
 The source SHA-256 is
 `0836050971b3c6cdd28ac3b1e5719a67fb645161912bef1e472e63995ceb062`.
-The resulting envelope is 3,434,247 bytes with SHA-256
-`bc2b93fa14f59da84de1376a6d50b6505d281ee76d4ec4652b47651cfad9be7c`.
+The resulting envelope at the current public-master loader is 3,439,235 bytes
+with SHA-256
+`cf572ede8f64186c495b59075f0a9bb7a45751ac15bda58265560411caadde1a`.
 It has one `picorv32` module and 26 named parameters.  The R2 statement
 records every pinned parameter value explicitly and retains the loader's
 loud refusal at the current `cpuregs` memory wall.
@@ -86,6 +87,30 @@ memory cycle route does not yet admit generate members
 
 This packet therefore did not claim an R1 refinement theorem for PicoRV32.
 The historical memory wall was requested through the owner lane's shared inbox.
+
+## 2026-11-13 re-probe on public master `4c1b1ba51017d7352f7cb76b09ca3e27fc2d93f1`
+
+The unchanged pinned source was re-extracted with `RISCV_FORMAL` after the
+loader changes at this public revision.  The source SHA-256 is unchanged.  The
+fresh envelope is 3,439,235 bytes with SHA-256
+`cf572ede8f64186c495b59075f0a9bb7a45751ac15bda58265560411caadde1a`.
+
+The loader now retains structured width, net-kind, signedness, four-state,
+and driver metadata for the eight `NetSymbol:net-z` module members at lines
+257--265.  This changes the envelope payload, but the generated
+`harness/rv/core_census.py` result is unchanged: 348 ADMITTED, 12 REFUSED,
+4 NOT REACHED, with 16 remaining rows.  The ordinary route's first wall is
+still `cpuregs` at `picorv32.v:203`:
+
+```text
+unsupported "Instantiate"
+  "decl 'cpuregs': unpacked array storage outside E (UnpackedDecl:memory)"
+```
+
+A direct `Design2` probe at the pinned 26-parameter point likewise reports
+`hasUnsupported = true` with that same first refusal.  No RTL was changed, no
+simulator row was needed for this loader-only refresh, and no E run or core
+theorem is claimed.
 
 ## Re-probe after the generic memory route
 

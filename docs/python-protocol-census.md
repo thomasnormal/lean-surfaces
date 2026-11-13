@@ -203,6 +203,10 @@ updates its local binding and still returns normal after projection to `World`.
 `Monadic.finishCallM_assign_existing_local_body_ok` covers assignment to an
 already-bound local, preserving the same normal-flow and depth result.
 
+`Monadic.finishCallM_assign_existing_local_ret_body_ok` composes that local
+update with a following constant return, checking assignment state threading
+into early flow.
+
 `Monadic.finishCallM_three_pass_ret_body_ok` extends early-return sequencing
 to three normal statements followed by a return.
 

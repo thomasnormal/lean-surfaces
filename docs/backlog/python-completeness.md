@@ -14633,6 +14633,23 @@ while the projected world returns normal flow and restores depth.
 DECIDED: existing-local assignment is now checked; arbitrary assignment and
 recursive body adequacy remain open.
 
+## 2026-11-13-pyfoundation-143 — assignment-to-return bridge
+
+`Monadic.finishCallM_assign_existing_local_ret_body_ok` checks an assignment
+to an existing local followed by `return 2`. The local update is threaded into
+the body walker before `RFlow.ret` short-circuits and depth is restored.
+
+| Measurement | Result |
+|---|---|
+| Target | `lake build LeanModels.Python.Monadic.Eval` passed; 11/11 jobs |
+| Theorem | `Monadic.finishCallM_assign_existing_local_ret_body_ok` |
+| Domain | two-statement assignment-plus-return body with existing local |
+| Semantic change | theorem-only assignment and early-flow composition |
+| Remaining debt | arbitrary locals and recursive positive-fuel calls |
+
+DECIDED: assignment state now composes into early return for an existing local;
+arbitrary assignment and recursive body adequacy remain open.
+
 ## 2026-11-13-pyfoundation-135 — four-statement early-return bridge
 
 `Monadic.finishCallM_three_pass_ret_body_ok` checks three normal statements

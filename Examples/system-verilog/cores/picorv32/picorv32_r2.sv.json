@@ -76045,7 +76045,19 @@
               "signed": false,
               "four_state": true,
               "is_net": true,
-              "driver_reason": "drivers select windows by an expression"
+              "driver_reason": "drivers select windows by an expression",
+              "driver_records": [
+                {
+                  "bounds": [
+                    0,
+                    0
+                  ],
+                  "owner_kind": "ContinuousAssignSymbol",
+                  "owner_name": "",
+                  "generated": true,
+                  "source": "pcpi_mul_wr"
+                }
+              ]
             }
           },
           {
@@ -76094,7 +76106,19 @@
               "signed": false,
               "four_state": true,
               "is_net": true,
-              "driver_reason": "drivers select windows by an expression"
+              "driver_reason": "drivers select windows by an expression",
+              "driver_records": [
+                {
+                  "bounds": [
+                    0,
+                    31
+                  ],
+                  "owner_kind": "ContinuousAssignSymbol",
+                  "owner_name": "",
+                  "generated": true,
+                  "source": "pcpi_mul_rd"
+                }
+              ]
             }
           },
           {
@@ -76118,7 +76142,19 @@
               "signed": false,
               "four_state": true,
               "is_net": true,
-              "driver_reason": "drivers select windows by an expression"
+              "driver_reason": "drivers select windows by an expression",
+              "driver_records": [
+                {
+                  "bounds": [
+                    0,
+                    0
+                  ],
+                  "owner_kind": "ContinuousAssignSymbol",
+                  "owner_name": "",
+                  "generated": true,
+                  "source": "pcpi_mul_wait"
+                }
+              ]
             }
           },
           {
@@ -76142,7 +76178,19 @@
               "signed": false,
               "four_state": true,
               "is_net": true,
-              "driver_reason": "drivers select windows by an expression"
+              "driver_reason": "drivers select windows by an expression",
+              "driver_records": [
+                {
+                  "bounds": [
+                    0,
+                    0
+                  ],
+                  "owner_kind": "ContinuousAssignSymbol",
+                  "owner_name": "",
+                  "generated": true,
+                  "source": "pcpi_mul_ready"
+                }
+              ]
             }
           },
           {
@@ -76166,7 +76214,19 @@
               "signed": false,
               "four_state": true,
               "is_net": true,
-              "driver_reason": "drivers select windows by an expression"
+              "driver_reason": "drivers select windows by an expression",
+              "driver_records": [
+                {
+                  "bounds": [
+                    0,
+                    0
+                  ],
+                  "owner_kind": "ContinuousAssignSymbol",
+                  "owner_name": "",
+                  "generated": true,
+                  "source": "pcpi_div_wr"
+                }
+              ]
             }
           },
           {
@@ -76215,7 +76275,19 @@
               "signed": false,
               "four_state": true,
               "is_net": true,
-              "driver_reason": "drivers select windows by an expression"
+              "driver_reason": "drivers select windows by an expression",
+              "driver_records": [
+                {
+                  "bounds": [
+                    0,
+                    31
+                  ],
+                  "owner_kind": "ContinuousAssignSymbol",
+                  "owner_name": "",
+                  "generated": true,
+                  "source": "pcpi_div_rd"
+                }
+              ]
             }
           },
           {
@@ -76239,7 +76311,19 @@
               "signed": false,
               "four_state": true,
               "is_net": true,
-              "driver_reason": "drivers select windows by an expression"
+              "driver_reason": "drivers select windows by an expression",
+              "driver_records": [
+                {
+                  "bounds": [
+                    0,
+                    0
+                  ],
+                  "owner_kind": "ContinuousAssignSymbol",
+                  "owner_name": "",
+                  "generated": true,
+                  "source": "pcpi_div_wait"
+                }
+              ]
             }
           },
           {
@@ -76263,7 +76347,19 @@
               "signed": false,
               "four_state": true,
               "is_net": true,
-              "driver_reason": "drivers select windows by an expression"
+              "driver_reason": "drivers select windows by an expression",
+              "driver_records": [
+                {
+                  "bounds": [
+                    0,
+                    0
+                  ],
+                  "owner_kind": "ContinuousAssignSymbol",
+                  "owner_name": "",
+                  "generated": true,
+                  "source": "pcpi_div_ready"
+                }
+              ]
             }
           },
           {

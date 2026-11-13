@@ -158,25 +158,37 @@ def coreMemNetMetadataAllowed (md : PNetMetadata) : Bool :=
   md.netKind == "Wire" && md.isNet && md.fourState && !md.signed &&
     md.driverReason == some "no driver: the net reads z" && md.driverRecords.isEmpty && md.width == 1
 
-def coreMemNetAllowed (d : PDesign) (kind name : String) : Bool :=
+def coreMemNetDriverAllowed (md : PNetMetadata) (generated : List PProcess) : Bool :=
+  match md.driverRecords with
+  | [r] =>
+      r.bounds == (0, Int.ofNat md.width - 1) &&
+        r.ownerKind == "ContinuousAssignSymbol" && r.generated && r.source == md.name &&
+        generated.any (fun p => match p with
+          | .assign target _ => target == md.name
+          | .assignL (.ident target) _ => target == md.name
+          | _ => false)
+  | _ => false
+
+def coreMemNetAllowed (d : PDesign) (generated : List PProcess) (kind name : String) : Bool :=
   d.others.any (fun entry => entry.1 == kind && entry.2 == name) &&
-    d.netMetadata.any (fun md => md.name == name && coreMemNetMetadataAllowed md)
+    d.netMetadata.any (fun md => md.name == name &&
+      (coreMemNetMetadataAllowed md || coreMemNetDriverAllowed md generated))
 
 def coreMemMetadataIsOutput (d : PDesign) (name : String) : Bool :=
   d.others.any fun entry => entry.1 == "PortSymbol:net-z" && entry.2 == name
 
-def coreMemFirstUnsupportedOther (d : PDesign) : List (String × String) → Option (String × String)
+def coreMemFirstUnsupportedOther (d : PDesign) (generated : List PProcess) : List (String × String) → Option (String × String)
   | [] => none
   | entry :: rest =>
       if coreMemAllowedOther entry ||
           ((entry.1 == "NetSymbol:net-z" || entry.1 == "PortSymbol:net-z") &&
-            coreMemNetAllowed d entry.1 entry.2) then
-        coreMemFirstUnsupportedOther d rest
+            coreMemNetAllowed d generated entry.1 entry.2) then
+        coreMemFirstUnsupportedOther d generated rest
       else some entry
 
-def coreMemNetDecls (d : PDesign) : List Decl :=
+def coreMemNetDecls (d : PDesign) (generated : List PProcess) : List Decl :=
   d.netMetadata.filterMap fun md =>
-    if coreMemNetMetadataAllowed md then
+    if coreMemNetMetadataAllowed md || coreMemNetDriverAllowed md generated then
       let dc : Decl := { name := md.name, width := md.width, isOutput := coreMemMetadataIsOutput d md.name, isNet := true, init := some (LVec.replicate md.width .lz) }
       some dc
     else none
@@ -352,13 +364,13 @@ def PDesign.instantiateCoreMemFrom (envI : IEnv) (d : PDesign) (args : List Int)
     let env2 := { env2 with dims := dimTable env2 d.decls }
     let env2 := { env2 with functions := d.functions }
     let generated ← coreMemExpandList env2 iterFuel [] d.generates
-    match coreMemFirstUnsupportedOther d d.others with
+    match coreMemFirstUnsupportedOther d generated d.others with
     | some (kind, text) =>
       .unsupported s!"E memory route does not yet admit module member '{kind}' ({text})"
     | none =>
       let sourceDecls := d.decls ++ coreMemMetadataDecls d.netMetadata
       let decls0 ← buildScalarDecls1 env2 d.decls
-      let decls := decls0 ++ coreMemNetDecls d
+      let decls := decls0 ++ coreMemNetDecls d generated
       let elems ← buildElems env2 sourceDecls
       let envP := { env2 with widths := decls.map (fun dc => (dc.name, dc.width)) }
       let memories ← buildMemDecls1 envP d.decls 0

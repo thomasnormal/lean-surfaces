@@ -1879,6 +1879,20 @@ E memory route does not yet admit module member 'NetSymbol:net-z' (pcpi_mul_wr)
 The ordinary RISCV_FORMAL census remains 348 ADMITTED, 12 REFUSED, 4 NOT
 REACHED (`remaining=16`); no whole-core E run is claimed.
 
+## 2026-11-13 canonical-E generated net-driver re-probe
+
+The unchanged pinned source was regenerated with the current approved
+extractor.  The envelope SHA-256 is
+`17ea7b66ab8ea9b6844c317928f0430cff8b8a5b53f658f7a929bf1aa6cdc236`.
+Each of the eight disabled-PCPI `NetSymbol:net-z` records now retains its
+structured full-driver evidence.  At the pinned parameter point, canonical E
+admits the source-shaped generated full-driver case through the existing
+scalar net store, and its time-zero state initializes successfully.  The next
+exact wall is the nine retained `always_comb` processes, refused as
+`9.2.2.2: always_comb is outside this memory edge slice`.  No whole-core E
+execution or retirement theorem is claimed; the ordinary flat route still
+reports the `cpuregs` unpacked-memory wall.
+
 ## 2026-11-11 E re-probe after the implicit-event memory slice
 
 The pinned source remains YosysHQ commit

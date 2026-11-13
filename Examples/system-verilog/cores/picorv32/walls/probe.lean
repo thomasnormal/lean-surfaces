@@ -46,6 +46,9 @@ private def cpuregsMem : LeanModels.Sv.Kernel.MemDesign2 :=
   | _ => false
 
 #guard net_z_memory_wall.pdesign.others == [("NetSymbol:net-z", "pcpi_mul_wr")]
+#guard net_z_memory_wall.pdesign.netMetadata ==
+  [{ name := "pcpi_mul_wr", width := 1, netKind := "Wire", signed := false,
+     fourState := true, isNet := true, driverReason := some "no driver: the net reads z" }]
 
 #guard task_memory_wall.pdesign.others ==
   [("SubroutineSymbol:empty-task", "task empty_statement;\n    begin end\n  endtask")]

@@ -102,6 +102,7 @@ deriving instance Lean.ToExpr for PSvaKind
 deriving instance Lean.ToExpr for PSvaEdge
 deriving instance Lean.ToExpr for PSvaCheck
 deriving instance Lean.ToExpr for PProperty
+deriving instance Lean.ToExpr for PNetMetadata
 deriving instance Lean.ToExpr for PPathSeg
 deriving instance Lean.ToExpr for PConn
 deriving instance Lean.ToExpr for PInst
@@ -154,6 +155,22 @@ private def parseUnsupportedFields (j : Json) : Except String (String × String)
   let svKind ← getStrField j "sv_kind"
   let text := (getOptField j "text").bind (·.getStr?.toOption) |>.getD ""
   return (svKind, text)
+
+private def parseNetMetadata? (j : Json) : Except String (Option PNetMetadata) := do
+  let svKind ← getStrField j "sv_kind"
+  if svKind != "NetSymbol:net-z" then pure none else
+    match getOptField j "metadata" with
+    | none => pure none
+    | some md =>
+        let name ← getStrField md "name"
+        let widthObj ← getField md "width"
+        let width ← getNatField widthObj "resolved"
+        let netKind ← getStrField md "net_kind"
+        let signed := (getOptField md "signed").bind (·.getBool?.toOption) |>.getD false
+        let fourState := (getOptField md "four_state").bind (·.getBool?.toOption) |>.getD true
+        let isNet := (getOptField md "is_net").bind (·.getBool?.toOption) |>.getD true
+        let driverReason := getOptStr md "driver_reason"
+        pure (some { name := name, width := width, netKind := netKind, signed := signed, fourState := fourState, isNet := isNet, driverReason := driverReason })
 
 /-! ## Operator tables -/
 
@@ -842,6 +859,7 @@ def parseModule2 (j : Json) : Except String PDesign :=
     let mut functions : List PFunction := []
     let mut generates : List GenItem := []
     let mut others : List (String × String) := []
+    let mut netMetadata : List PNetMetadata := []
     let mut properties : List PProperty := []
     let mut readmemh : List PReadmemh := []
     let mut cellRefs : List PCellRef := []
@@ -900,7 +918,9 @@ def parseModule2 (j : Json) : Except String PDesign :=
       | other => throw s!"unknown type kind {other.quote}"
     for dj in (← (← getField j "ports").getArr?) ++ (← (← getField j "decls").getArr?) do
       match ← getKind dj with
-      | "Unsupported" => others := others ++ [← parseUnsupportedFields dj]
+      | "Unsupported" =>
+          others := others ++ [← parseUnsupportedFields dj]
+          match ← parseNetMetadata? dj with | some md => netMetadata := netMetadata ++ [md] | none => pure ()
       | _ => decls := decls ++ [← parsePDecl dj]
     for fj in (← match getOptField j "functions" with
       | none => pure #[]
@@ -954,9 +974,11 @@ def parseModule2 (j : Json) : Except String PDesign :=
       cellRefs := cellRefs ++ [{ name := name, base := base, index := index }]
     for oj in (← (← getField j "others").getArr?) do
       match ← getKind oj with
-      | "Unsupported" => others := others ++ [← parseUnsupportedFields oj]
+      | "Unsupported" =>
+          others := others ++ [← parseUnsupportedFields oj]
+          match ← parseNetMetadata? oj with | some md => netMetadata := netMetadata ++ [md] | none => pure ()
       | other => throw s!"unknown module member kind {other.quote}"
-    return { name := name, params := params, localParams := localParams, packageParams := packageParams, enums := enums, decls := decls, functions := functions, processes := processes, generates := generates, others := others, properties := properties, readmemh := readmemh, cellRefs := cellRefs }
+    return { name := name, params := params, localParams := localParams, packageParams := packageParams, enums := enums, decls := decls, functions := functions, processes := processes, generates := generates, others := others, netMetadata := netMetadata, properties := properties, readmemh := readmemh, cellRefs := cellRefs }
 
 /-- An sv-0.2 envelope: parametric design + provenance metadata. -/
 structure Envelope2 where

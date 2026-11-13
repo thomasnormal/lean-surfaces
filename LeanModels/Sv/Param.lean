@@ -656,6 +656,19 @@ structure PProperty where
   path : List String := []
 deriving Repr, BEq, Inhabited
 
+/-- Parser-native metadata retained for a refused net declaration.  This is
+not a resolution rule: it records the evidence needed to decide one later
+without recovering fields from an error string (IEEE 1800-2023 §6.6/§28.12). -/
+structure PNetMetadata where
+  name : String
+  width : Nat
+  netKind : String
+  signed : Bool
+  fourState : Bool
+  isNet : Bool
+  driverReason : Option String := none
+deriving Repr, BEq, Inhabited
+
 /-- A parametric design — the sv-0.2 module payload. `params` order is
 the **binder order** of the design family. `others` are out-of-tier
 module members (kept as loud unsupported processes at instantiation). -/
@@ -672,6 +685,7 @@ structure PDesign where
   processes : List PProcess
   generates : List GenItem
   others : List (String × String) := []
+  netMetadata : List PNetMetadata := []
   /-- Concurrent assertions retained from the source envelope. -/
   properties : List PProperty := []
   /-- Structured literal-file memory tasks (the process marker remains in

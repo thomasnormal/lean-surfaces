@@ -1345,7 +1345,14 @@ def CoreMemDesign.settleAssign (E : CoreMemDesign) (env : IEnv) (elems : List (S
             | some w => .ok w
             | none => .unsupported s!"10.3: continuous target '{name}' is undeclared"
           let v ← E.evalExpr env elems st (some width) value
-          let scalar := E.scalar.setName st.scalar name v
+          -- Preserve the existing function-valued store when a settled
+          -- continuous assignment already has its converted value.  This is
+          -- definitionally the same write, but avoids rebuilding a closure
+          -- on every empty-input cycle of a source-shaped hierarchy.
+          let unchanged := match E.scalar.resolve name with
+            | some x => (st.scalar x).bits == v
+            | none => false
+          let scalar := if unchanged then st.scalar else E.scalar.setName st.scalar name v
           E.settleAssign env elems { st with scalar } rest
       | .arrayElem name [_] =>
           match E.memDecl? name with
@@ -1434,11 +1441,68 @@ def runCoreMemRepeat (st : CoreMemState) : List SvState → Res (List CoreMemSta
       let tail ← runCoreMemRepeat st rest
       .ok (st :: tail)
 
+/-! An empty input slot cannot wake a clocked-only design once its continuous
+assignments are settled.  The fast path is admitted only for the syntactic
+case where every continuous RHS is a single external identifier or literal,
+every edge clock/reset is not continuously driven, and edge bodies do not
+write those event signals.  This source-shaped dependency check makes the
+no-op conclusion exact without comparing function-valued stores. -/
+def coreMemStmtWrites (names : List String) : PStmt → Bool
+  | .blockingAssign n _ | .nbaAssign n _ => names.contains n
+  | .blockingAssignL (.ident n) _ | .nbaAssignL (.ident n) _ => names.contains n
+  | .blockingAssignL _ _ | .nbaAssignL _ _ => true
+  -- Compound and nested procedural bodies are conservatively kept off the
+  -- fast path; the direct assignment cases above cover the hierarchy wall.
+  | .ifStmt .. | .block .. | .forLoop .. | .caseStmt .. => true
+  | .unsupported .. => true
+
+def coreMemAssignEdges : List CoreMemProc → List (String × String)
+  | [] => []
+  | .assign (.ident target) (.ident source) :: rest => (target, source) :: coreMemAssignEdges rest
+  | _ :: rest => coreMemAssignEdges rest
+
+def coreMemReachable (edges : List (String × String)) (fuel : Nat)
+    (seen : List String) (current goal : String) : Bool :=
+  match fuel with
+  | 0 => false
+  | fuel + 1 =>
+      if current == goal then true
+      else if seen.contains current then false
+      else match edges.find? (fun e => e.1 == current) with
+        | none => false
+        | some (_, next) => coreMemReachable edges fuel (current :: seen) next goal
+
+def coreMemAssignAcyclic (edges : List (String × String)) : Bool :=
+  edges.foldl (fun ok (target, source) =>
+    ok && !coreMemReachable edges (edges.length + 1) [] source target) true
+
+def CoreMemDesign.emptyInputRepeatable (E : CoreMemDesign) : Bool :=
+  let targets := E.processes.toList.filterMap fun p =>
+    match p with | .assign (.ident n) _ => some n | _ => none
+  let rec go : List CoreMemProc → Bool
+    | [] => true
+    | .assign (.ident _) (.ident _) :: rest => go rest
+    | .assign (.ident _) (.lit _) :: rest => go rest
+    | .assign (.ident _) (.int _) :: rest => go rest
+    | .assign (.ident _) (.fill _) :: rest => go rest
+    | .assign _ _ :: _ => false
+    | .edge p :: rest =>
+        !targets.contains p.clock &&
+          (match p.reset with | none => true | some r => !targets.contains r) &&
+          !coreMemStmtWrites (p.clock :: p.reset.toList) p.body && go rest
+    | .initial _ :: _ => false
+    | .comb _ :: _ => false
+    | .implicit _ :: _ => false
+    | .unsupported .. :: _ => false
+  let edges := coreMemAssignEdges E.processes.toList
+  E.memories.isEmpty && go E.processes.toList && coreMemAssignAcyclic edges
+
 def runCoreMemRows (E : CoreMemDesign) (st : CoreMemState) : List SvState → Res (List CoreMemState)
   | [] => .ok []
   | row :: rest => do
       let st' ← E.step st row
-      let tail ← if row.isEmpty && E.scalarAssignInputsOnly then
+      let tail ← if row.isEmpty &&
+          (E.scalarAssignInputsOnly || E.emptyInputRepeatable) then
           runCoreMemRepeat st' rest
         else runCoreMemRows E st' rest
       .ok (st' :: tail)

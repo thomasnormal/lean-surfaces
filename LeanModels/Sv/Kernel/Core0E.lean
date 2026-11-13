@@ -587,14 +587,15 @@ def Config.init (E : Elab) (s : Store) : Config :=
 entry binds takes the bound value, converted to the port's type (width and
 2- or 4-state: LRM 6.11, 10.7); every other variable holds its value. -/
 def Elab.applyInputs (E : Elab) (s : Store) (entry : SvState) : Store := fun x =>
-  match E.declOf x with
-  | some dc =>
-      if dc.isInput then
-        match SvState.lookup entry dc.name with
-        | some v => Val.ofLVec (s x).ty v
-        | none => s x
-      else s x
-  | none => s x
+  if entry.isEmpty then s x else
+    match E.declOf x with
+    | some dc =>
+        if dc.isInput then
+          match SvState.lookup entry dc.name with
+          | some v => Val.ofLVec (s x).ty v
+          | none => s x
+        else s x
+    | none => s x
 
 /-- **A new slot** after a closed one: the input events update the store, and
 every process sensitive to an element that changed becomes ready (LRM 4.3: an

@@ -1,9 +1,9 @@
-# Flat edge-child hierarchy wall
+# Edge-child hierarchy through ordinary canonical E
 
-The parent retains an `Instance` node whose child contains an edge process.
-Canonical E refuses the instance at its flat memory entry point with the
-source-shaped `Instance:` boundary; hierarchy is handled by the separate
-canonical hierarchy route and does not silently flatten an edge child.
+The ordinary `load_design_sv2` route follows the parser-native child instance
+through the canonical hierarchy merge. The child edge process remains
+source-shaped and its connected clock, data, and output names are retained in
+the native E design.
 
 Icarus Verilog 13.0 and Xcelium 24.03-s004 execute the two source rows
-(`y=x`, then `y=0`), so the refusal is a measured E boundary.
+(`y=x`, then `y=0`), matching ordinary canonical E.

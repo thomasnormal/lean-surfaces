@@ -777,6 +777,18 @@ def callFn : Nat → Program → LeanModels.C.FunctionDefn → List CVal → Exe
                 liftEval (writeMem (fun m => m.storeBytes dp bs))
                 pure (.ptr dp)
           | _ => refuseUnsupported "memcpy: wrong argument count"
+        let runMempcpy : List CVal → ExecM CVal := fun vs =>
+          match vs with
+          | [dst, src, count] => do
+              let dp ← asPtr dst
+              let sp ← asPtr src
+              let (_, n) ← asInt count
+              if n < 0 then refuseUnsupported "mempcpy: negative size"
+              else do
+                let bs ← liftEval (readMem (fun m => m.loadBytes sp n.toNat))
+                liftEval (writeMem (fun m => m.storeBytes dp bs))
+                pure (.ptr { dp with off := dp.off + n })
+          | _ => refuseUnsupported "mempcpy: wrong argument count"
         let runStrncpy : List CVal → ExecM CVal := fun vs =>
           match vs with
           | [dst, src, count] => do
@@ -918,19 +930,22 @@ def callFn : Nat → Program → LeanModels.C.FunctionDefn → List CVal → Exe
           | [dst, src] => do
               let dp ← asPtr dst
               let sp ← asPtr src
-              let m ← get
-              let (_, source, off) ← liftEval (m.resolve sp 0)
-              let rec takeString : List CByte → Option (List CByte)
-                | [] => none
-                | .conc x :: rest =>
-                    if x == 0 then some [CByte.conc 0]
-                    else (takeString rest).map (fun tail => CByte.conc x :: tail)
-                | _ => none
-              match takeString (source.bytes.drop off) with
-              | some bytes =>
-                  liftEval (writeMem (fun mem => mem.storeBytes dp bytes))
-                  pure (.ptr dp)
-              | none => refuseUnsupported "__builtin_strcpy: non-concrete or unterminated string"
+              if dp.obj == sp.obj && dp.off == sp.off then
+                refuseUnsupported "strcpy: overlapping source and destination"
+              else do
+                let m ← get
+                let (_, source, off) ← liftEval (m.resolve sp 0)
+                let rec takeString : List CByte → Option (List CByte)
+                  | [] => none
+                  | .conc x :: rest =>
+                      if x == 0 then some [CByte.conc 0]
+                      else (takeString rest).map (fun tail => CByte.conc x :: tail)
+                  | _ => none
+                match takeString (source.bytes.drop off) with
+                | some bytes =>
+                    liftEval (writeMem (fun mem => mem.storeBytes dp bytes))
+                    pure (.ptr dp)
+                | none => refuseUnsupported "__builtin_strcpy: non-concrete or unterminated string"
           | _ => refuseUnsupported "__builtin_strcpy: wrong argument count"
         let runStrcat : List CVal → ExecM CVal := fun vs =>
           match vs with
@@ -1309,6 +1324,7 @@ def callFn : Nat → Program → LeanModels.C.FunctionDefn → List CVal → Exe
                 | none =>
                     if nm == "memset" || nm == "__builtin_memset" then runMemset vs
                     else if nm == "memcpy" || nm == "__builtin_memcpy" then runMemcpy vs
+                    else if nm == "mempcpy" || nm == "__builtin_mempcpy" then runMempcpy vs
                     else if nm == "__builtin_strcmp" then runStrcmp vs
                     else if nm == "__builtin_memcmp" || nm == "memcmp" then runMemcmp vs
                     else if nm == "__builtin_strlen" then runStrlen vs
@@ -1347,6 +1363,7 @@ def callFn : Nat → Program → LeanModels.C.FunctionDefn → List CVal → Exe
               else if nm == "vprintf" || nm == "__builtin_vprintf" then runVprintf vs
               else if nm == "memset" || nm == "__builtin_memset" then runMemset vs
               else if nm == "memcpy" || nm == "__builtin_memcpy" then runMemcpy vs
+              else if nm == "mempcpy" || nm == "__builtin_mempcpy" then runMempcpy vs
               else if nm == "__builtin_strcmp" then runStrcmp vs
               else if nm == "__builtin_memcmp" || nm == "memcmp" then runMemcmp vs
               else if nm == "__builtin_strlen" then runStrlen vs

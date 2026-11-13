@@ -139,6 +139,13 @@ def compare(clang, source, model, timeout):
     if o0["stdout"] != o2["stdout"] or o0["returncode"] != o2["returncode"]:
         return "NONDET", {"o0": o0, "o2": o2, "sanitizer": san}
     if san["returncode"] != o0["returncode"] or san["stdout"] != o0["stdout"]:
+        # ASan's parameter-overlap diagnostics are the pinned UB oracle for
+        # library calls such as strcpy. A matching loud refusal is REFUSE,
+        # even though the sanitizer process exits nonzero.
+        if (model.get("verdict") == "REFUSE" and
+                "param-overlap" in san.get("stderr", "")):
+            return "REFUSE", {"o0": o0, "o2": o2, "sanitizer": san,
+                               "model": model}
         # LeakSanitizer reports the GCC torture file's intentionally
         # unfreed va_list allocations after the program has produced the
         # same defined output. This is not a language UB finding and cannot

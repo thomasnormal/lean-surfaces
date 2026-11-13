@@ -427,6 +427,8 @@ structure Layout where
   The pair is `(offset_bits, width_bits)`; `none` means an ordinary member.
   These are frontend facts, never reconstructed from a type spelling. -/
   fieldBits : CType → String → Option (Nat × Nat) := fun _ _ => none
+  /-- Parser-native flexible-array member marker from the record layout. -/
+  flexibleField : CType → String → Bool := fun _ _ => false
   /-- An array type's element type and extent, for `T[N]`.
 
   Needed because **aggregate initialization WRITES through the layout**
@@ -464,6 +466,7 @@ missing layout fact is a loud refusal rather than a guessed offset. -/
 def Layout.unknown : Layout :=
   { size := fun _ => none, fieldOff := fun _ _ => none
     fieldBits := fun _ _ => none
+    flexibleField := fun _ _ => false
     elem := fun _ => none, members := fun _ => none
     normalizeTy := id }
 

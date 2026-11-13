@@ -49,7 +49,8 @@ public:
       llvm::json::Object item{
           {"name", field->getNameAsString()},
           {"offset_bits", static_cast<int64_t>(layout.getFieldOffset(index))},
-          {"bitfield", field->isBitField()}};
+          {"bitfield", field->isBitField()},
+          {"incomplete_array", field->getType()->isIncompleteArrayType()}};
       if (field->isBitField()) {
         if (const auto *width = field->getBitWidth()) {
           const llvm::APSInt value = width->EvaluateKnownConstInt(*context);

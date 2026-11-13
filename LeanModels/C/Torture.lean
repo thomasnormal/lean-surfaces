@@ -541,6 +541,16 @@ def layoutFor (envl : Envelope) : Layout :=
             |>.filter (·.bitfield)
             |>.bind (fun field => field.widthBits.map (fun width => (field.offsetBits, width)))
       | none => none
+    flexibleField := fun t f =>
+      let find := fun row : CType × List (String × CType) × RecordLayout =>
+        row.2.2.fields.find? (fun field => field.name == f)
+          |>.map (·.incompleteArray) |>.getD false
+      let result := match observedFor t with
+        | some row => find row
+        | none => match observedPointeeFor t with
+          | some row => find row
+          | none => false
+      result
     members := fun t =>
       match observedFor t with
       | some (_, members, _) => some members

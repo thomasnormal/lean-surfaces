@@ -113,6 +113,8 @@ structure RecordLayoutField where
   name : String
   offsetBits : Nat
   bitfield : Bool
+  /-- Clang's parser-native marker for a flexible (incomplete) array member. -/
+  incompleteArray : Bool := false
   widthBits : Option Nat := none
 deriving Repr, Inhabited, BEq, Lean.ToExpr
 

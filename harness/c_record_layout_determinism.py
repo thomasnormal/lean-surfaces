@@ -53,6 +53,7 @@ def run(clang, plugin, source):
 def self_test(clang, plugin):
     fixture = ("struct S { char c; int i; unsigned b : 3; };\n"
                "union U { int i; char c; };\n"
+               "struct F { int n; int tail[]; };\n"
                "int main(void) { struct S s; return (int)sizeof(s); }\n")
     with tempfile.NamedTemporaryFile("w", suffix=".c", delete=False) as handle:
         handle.write(fixture)
@@ -61,10 +62,13 @@ def self_test(clang, plugin):
         _, records = run(clang, plugin, source)
     finally:
         source.unlink(missing_ok=True)
-    if len(records) != 2 or records[0]["tag_kind"] != "struct" or records[1]["tag_kind"] != "union":
+    if (len(records) != 3 or records[0]["tag_kind"] != "struct" or
+            records[1]["tag_kind"] != "union" or records[2]["tag_kind"] != "struct"):
         raise RuntimeError(f"self-test expected struct and union records: {records!r}")
     if records[0]["size_bytes"] != 12 or records[0]["fields"][2].get("width_bits") != 3:
         raise RuntimeError(f"self-test layout values were not parser-native: {records!r}")
+    if records[2]["fields"][1].get("incomplete_array") is not True:
+        raise RuntimeError(f"self-test flexible-array marker was not parser-native: {records!r}")
     print("c_record_layout_determinism: self-test ok")
     return 0
 

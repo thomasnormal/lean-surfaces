@@ -119,6 +119,7 @@ def getRecordLayoutField (j : Json) : Except String RecordLayoutField := do
     return ({ name := ← getStr j "name"
               offsetBits := ← getNat j "offset_bits"
               bitfield := ← getBool j "bitfield"
+              incompleteArray := ← getBool j "incomplete_array"
               widthBits := ← getOptNat j "width_bits" } : RecordLayoutField)
 
 def getRecordLayout (j : Json) : Except String RecordLayout := do

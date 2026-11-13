@@ -16498,3 +16498,21 @@ and depth restoration.
 
 DECIDED: sixteen assignment steps now compose through a bare return; arbitrary
 assignment and recursive body adequacy remain open.
+
+## 2026-11-13-pyfoundation-245 — sixteen-assignment break bridge
+
+`Monadic.finishCallM_assign_sixteen_existing_locals_break_body_ok` checks sixteen
+successive assignments `k = 0; l = 1; m = 2; n = 3; o = 4; p = 5; q = 6; r = 7; s = 8; t = 9; u = 10; v = 11; w = 12; x = 13; y = 14; z = 15`
+followed by `break`, preserving the updated frame through abrupt flow and
+depth restoration.
+
+| Measurement | Result |
+|---|---|
+| Target | `lake build LeanModels.Python.Monadic.Eval` passed; 11/11 jobs |
+| Theorem | `Monadic.finishCallM_assign_sixteen_existing_locals_break_body_ok` |
+| Domain | sixteen consecutive assignments to existing locals followed by break |
+| Semantic change | theorem-only sixteen-assignment break-flow composition |
+| Remaining debt | arbitrary locals and recursive positive-fuel calls |
+
+DECIDED: sixteen assignment steps now compose through break flow; arbitrary
+assignment and recursive body adequacy remain open.

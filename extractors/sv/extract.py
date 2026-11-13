@@ -31769,8 +31769,21 @@ def convert_port_sym(sm, m):
         return unsupported(sm, m, "PortSymbol:" + reason)
     net_port = False
     if direction == "out" and _sym_net_z(isym, dtype):
-        if _SYM is None or lower_proc.net_driver_reason(sys.modules[__name__], sm, isym, dtype) is not None:
+        if _SYM is None:
             return unsupported(sm, m, "PortSymbol:net-z")
+        net_reason = lower_proc.net_driver_reason(sys.modules[__name__], sm, isym, dtype)
+        if net_reason is not None:
+            net_metadata = {
+                "name": m.name,
+                "width": dtype,
+                "net_kind": str(isym.netType.netKind).split(".")[-1],
+                "signed": bool(m.type.isSigned),
+                "four_state": bool(m.type.isFourState),
+                "is_net": True,
+                "driver_reason": net_reason,
+                "driver_records": lower_proc.net_driver_records(sys.modules[__name__], sm, isym),
+            }
+            return unsupported(sm, m, "PortSymbol:net-z", metadata=net_metadata)
         net_port = True       # WP-PROC N2: an output wire with exactly one continuous driver on every bit
     result = {
         "kind": "Port",

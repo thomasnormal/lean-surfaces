@@ -1043,6 +1043,12 @@ class NetsAsVariables(Base):
     def test_output_net_port_without_driver_stays_refused(self):
         m = self.top("", ports="input [3:0] a, output [3:0] y")
         self.assertIn("PortSymbol:net-z", sv_kinds(m))
+        y = [p for p in m["ports"] if p.get("sv_kind") == "PortSymbol:net-z"][0]
+        self.assertEqual(y["metadata"]["name"], "y")
+        self.assertEqual(y["metadata"]["width"]["resolved"], 4)
+        self.assertEqual(y["metadata"]["net_kind"], "Wire")
+        self.assertEqual(y["metadata"]["driver_reason"], "no driver: the net reads z")
+        self.assertEqual(y["metadata"]["driver_records"], [])
 
     def test_output_net_port_driven_twice_stays_refused(self):
         m = self.top("assign y = a; assign y = b;", ports="input [3:0] a, b, output [3:0] y")

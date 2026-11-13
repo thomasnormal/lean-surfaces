@@ -159,7 +159,7 @@ private def parseUnsupportedFields (j : Json) : Except String (String × String)
 
 private def parseNetMetadata? (j : Json) : Except String (Option PNetMetadata) := do
   let svKind ← getStrField j "sv_kind"
-  if svKind != "NetSymbol:net-z" then pure none else
+  if svKind != "NetSymbol:net-z" && svKind != "PortSymbol:net-z" then pure none else
     match getOptField j "metadata" with
     | none => pure none
     | some md =>

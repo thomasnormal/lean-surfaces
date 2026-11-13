@@ -158,21 +158,26 @@ def coreMemNetMetadataAllowed (md : PNetMetadata) : Bool :=
   md.netKind == "Wire" && md.isNet && md.fourState && !md.signed &&
     md.driverReason == some "no driver: the net reads z" && md.driverRecords.isEmpty && md.width == 1
 
-def coreMemNetAllowed (d : PDesign) (name : String) : Bool :=
-  d.netMetadata.any fun md => md.name == name && coreMemNetMetadataAllowed md
+def coreMemNetAllowed (d : PDesign) (kind name : String) : Bool :=
+  d.others.any (fun entry => entry.1 == kind && entry.2 == name) &&
+    d.netMetadata.any (fun md => md.name == name && coreMemNetMetadataAllowed md)
+
+def coreMemMetadataIsOutput (d : PDesign) (name : String) : Bool :=
+  d.others.any fun entry => entry.1 == "PortSymbol:net-z" && entry.2 == name
 
 def coreMemFirstUnsupportedOther (d : PDesign) : List (String × String) → Option (String × String)
   | [] => none
   | entry :: rest =>
       if coreMemAllowedOther entry ||
-          (entry.1 == "NetSymbol:net-z" && coreMemNetAllowed d entry.2) then
+          ((entry.1 == "NetSymbol:net-z" || entry.1 == "PortSymbol:net-z") &&
+            coreMemNetAllowed d entry.1 entry.2) then
         coreMemFirstUnsupportedOther d rest
       else some entry
 
 def coreMemNetDecls (d : PDesign) : List Decl :=
   d.netMetadata.filterMap fun md =>
     if coreMemNetMetadataAllowed md then
-      let dc : Decl := { name := md.name, width := md.width, init := some (LVec.replicate md.width .lz), isNet := true }
+      let dc : Decl := { name := md.name, width := md.width, isOutput := coreMemMetadataIsOutput d md.name, isNet := true, init := some (LVec.replicate md.width .lz) }
       some dc
     else none
 

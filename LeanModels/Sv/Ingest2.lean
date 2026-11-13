@@ -102,6 +102,7 @@ deriving instance Lean.ToExpr for PSvaKind
 deriving instance Lean.ToExpr for PSvaEdge
 deriving instance Lean.ToExpr for PSvaCheck
 deriving instance Lean.ToExpr for PProperty
+deriving instance Lean.ToExpr for PNetDriver
 deriving instance Lean.ToExpr for PNetMetadata
 deriving instance Lean.ToExpr for PPathSeg
 deriving instance Lean.ToExpr for PConn
@@ -170,7 +171,21 @@ private def parseNetMetadata? (j : Json) : Except String (Option PNetMetadata) :
         let fourState := (getOptField md "four_state").bind (·.getBool?.toOption) |>.getD true
         let isNet := (getOptField md "is_net").bind (·.getBool?.toOption) |>.getD true
         let driverReason := getOptStr md "driver_reason"
-        pure (some { name := name, width := width, netKind := netKind, signed := signed, fourState := fourState, isNet := isNet, driverReason := driverReason })
+        let driverRecords ← match getOptField md "driver_records" with
+          | none => pure []
+          | some records => (← records.getArr?).toList.mapM fun r => do
+              let bs ← (← getField r "bounds").getArr?
+              let (loJ, hiJ) ← match bs.toList with
+                | loJ :: hiJ :: _ => pure (loJ, hiJ)
+                | _ => throw "driver bounds must contain two integers"
+              let lo ← loJ.getInt?.mapError (fun _ => "driver lower bound is not an integer")
+              let hi ← hiJ.getInt?.mapError (fun _ => "driver upper bound is not an integer")
+              let ownerKind ← getStrField r "owner_kind"
+              let ownerName ← getStrField r "owner_name"
+              let generated := (getOptField r "generated").bind (·.getBool?.toOption) |>.getD false
+              let source ← getStrField r "source"
+              pure { bounds := (lo, hi), ownerKind, ownerName, generated, source }
+        pure (some { name := name, width := width, netKind := netKind, signed := signed, fourState := fourState, isNet := isNet, driverReason := driverReason, driverRecords := driverRecords })
 
 /-! ## Operator tables -/
 

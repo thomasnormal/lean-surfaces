@@ -659,6 +659,14 @@ deriving Repr, BEq, Inhabited
 /-- Parser-native metadata retained for a refused net declaration.  This is
 not a resolution rule: it records the evidence needed to decide one later
 without recovering fields from an error string (IEEE 1800-2023 §6.6/§28.12). -/
+structure PNetDriver where
+  bounds : Int × Int
+  ownerKind : String
+  ownerName : String
+  generated : Bool
+  source : String
+deriving Repr, BEq, Inhabited
+
 structure PNetMetadata where
   name : String
   width : Nat
@@ -667,6 +675,7 @@ structure PNetMetadata where
   fourState : Bool
   isNet : Bool
   driverReason : Option String := none
+  driverRecords : List PNetDriver := []
 deriving Repr, BEq, Inhabited
 
 /-- A parametric design — the sv-0.2 module payload. `params` order is

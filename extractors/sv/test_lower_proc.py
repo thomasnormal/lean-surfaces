@@ -988,6 +988,16 @@ class NetsAsVariables(Base):
         self.assertTrue(metadata["is_net"])
         self.assertIn("no driver", metadata["driver_reason"])
 
+    def test_net_metadata_retains_driver_records(self):
+        module = self.top("wire [3:0] w; assign w[2:0] = a[2:0]; assign y = w;")
+        unsupported = [n for n in module.get("others", [])
+                       if isinstance(n, dict) and n.get("sv_kind") == "NetSymbol:net-z"]
+        self.assertEqual(len(unsupported), 1)
+        metadata = unsupported[0]["metadata"]
+        self.assertEqual(metadata["driver_records"], [{
+            "bounds": [0, 2], "owner_kind": "ContinuousAssignSymbol",
+            "owner_name": "", "generated": True, "source": "w[2:0]"}])
+
     def test_two_drivers_are_a_resolution(self):
         self.refused_net("wire [3:0] w; assign w = a; assign w = b; assign y = w;")
         self.refused_net("wire [3:0] w; assign w[2:0] = a[2:0]; assign w[3:1] = b[3:1]; assign y = w;")

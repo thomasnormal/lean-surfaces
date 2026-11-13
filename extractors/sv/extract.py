@@ -33181,6 +33181,7 @@ def convert_net_sym(sm, m):
             "four_state": bool(m.type.isFourState),
             "is_net": True,
             "driver_reason": net_reason,
+            "driver_records": lower_proc.net_driver_records(sys.modules[__name__], sm, m),
         }
         if net_reason is not None:
             if m.type.isSigned:

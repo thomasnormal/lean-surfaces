@@ -1084,6 +1084,33 @@ def net_driver_reason(ex, sm, symbol, dtype):
     except Exception as exc:        # noqa: BLE001  (fail closed)
         return "the drivers could not be decided (%s: %s)" % (type(exc).__name__, str(exc)[:100])
 
+def net_driver_records(ex, sm, symbol):
+    """Structured Slang driver records for a refused net.
+
+    This is evidence only: the semantic tier still decides whether a net is
+    admissible.  Ranges and source spellings come from Slang's driver table
+    and source ranges, never from re-parsing source text.
+    """
+    if ex._SYM is None:
+        return []
+    try:
+        members = list(ex._SYM.scope)
+        driver_locs = {m.location for m in members
+                       if str(m.kind).split(".")[-1] in _NET_OWNERS}
+        out = []
+        for d in _drivers(ex, symbol):
+            owner = d.containingSymbol
+            out.append({
+                "bounds": [int(d.bounds[0]), int(d.bounds[1])],
+                "owner_kind": type(owner).__name__,
+                "owner_name": getattr(owner, "name", ""),
+                "generated": owner.location not in driver_locs,
+                "source": _driver_source_text(ex, sm, d.sourceRange),
+            })
+        return out
+    except Exception:
+        return []
+
 
 def net_variable(ex, sm, symbol, dtype):
     """N2. The `Var` declaration of a net accepted by `net_driver_reason`; a declaration assignment is queued as the

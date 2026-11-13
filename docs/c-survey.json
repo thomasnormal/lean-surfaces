@@ -10,10 +10,10 @@
   "gcc.c-torture/execute": {
    "not-parsed": 267,
    "oracle-tests-compiler": 1,
-   "passed": 909,
+   "passed": 917,
    "refused-libc": 35,
    "refused-ub": 98,
-   "refused-unsupported": 544,
+   "refused-unsupported": 536,
    "timeout": 64
   },
   "gcc.c23-run": {
@@ -28,10 +28,10 @@
  "counts": {
   "not-parsed": 294,
   "oracle-tests-compiler": 1,
-  "passed": 1084,
+  "passed": 1092,
   "refused-libc": 39,
   "refused-ub": 107,
-  "refused-unsupported": 623,
+  "refused-unsupported": 615,
   "timeout": 66
  },
  "dynamic_wall_ranking": [
@@ -859,21 +859,6 @@
    "present": 8,
    "sole": 8,
    "wall": "unsupported:long double floating literal"
-  },
-  {
-   "files": [
-    "931004-10.c",
-    "931004-12.c",
-    "931004-14.c",
-    "931004-2.c",
-    "931004-4.c",
-    "931004-6.c",
-    "931004-8.c",
-    "strct-stdarg-1.c"
-   ],
-   "present": 8,
-   "sole": 8,
-   "wall": "unsupported:va_arg requested unsupported value type 'struct tiny'"
   },
   {
    "files": [
@@ -3253,7 +3238,7 @@
  ],
  "manifest_hash": "bca94718b04e8394cdce992866637166f530978790bd1013cea4a00ae25ef764",
  "measured_at_utc": "2026-11-13T23:06:51Z",
- "measured_commit": "84db5e9856277a4e46b4fe88743cf86f27e50c3c",
+ "measured_commit": "cfd1415e6",
  "pin": {
   "corpora": [
    "C1",
@@ -12701,8 +12686,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "va_arg requested unsupported value type 'struct tiny'",
-   "dynamic_wall": "unsupported:va_arg requested unsupported value type 'struct tiny'",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "931004-10.c",
    "sha256": "e309602b58651c94a95591af48d56495187a0ecaef392cc9d6dbaf0c96c674df",
@@ -12711,7 +12696,7 @@
     "libc-call: __builtin_va_end",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -12727,8 +12712,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "va_arg requested unsupported value type 'struct tiny'",
-   "dynamic_wall": "unsupported:va_arg requested unsupported value type 'struct tiny'",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "931004-12.c",
    "sha256": "2e8eb60038e1cebb1439745893fcd9c285639180177dcc2b9de0f818c6814099",
@@ -12737,7 +12722,7 @@
     "libc-call: __builtin_va_end",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -12753,8 +12738,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "va_arg requested unsupported value type 'struct tiny'",
-   "dynamic_wall": "unsupported:va_arg requested unsupported value type 'struct tiny'",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "931004-14.c",
    "sha256": "690c04d80d7a571ca5e94777e2939f0e7c20004a7e328397b9f692b20e167673",
@@ -12763,12 +12748,12 @@
     "libc-call: __builtin_va_end",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "va_arg requested unsupported value type 'struct tiny'",
-   "dynamic_wall": "unsupported:va_arg requested unsupported value type 'struct tiny'",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "931004-2.c",
    "sha256": "f00e81760f99222bac9d543f2868031bbc5cd7fc5a539eaf674c66e2a3cfad95",
@@ -12777,7 +12762,7 @@
     "libc-call: __builtin_va_end",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -12793,8 +12778,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "va_arg requested unsupported value type 'struct tiny'",
-   "dynamic_wall": "unsupported:va_arg requested unsupported value type 'struct tiny'",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "931004-4.c",
    "sha256": "bf6f0ae1dd87118dcfc921f5faff4ff122f041f9ec0ed04b8f7c2ff3496f8be3",
@@ -12803,7 +12788,7 @@
     "libc-call: __builtin_va_end",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -12819,8 +12804,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "va_arg requested unsupported value type 'struct tiny'",
-   "dynamic_wall": "unsupported:va_arg requested unsupported value type 'struct tiny'",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "931004-6.c",
    "sha256": "7299d2123bddad05c27e6147221863db907004007218f97ac78d36caa57e3973",
@@ -12829,7 +12814,7 @@
     "libc-call: __builtin_va_end",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -12845,8 +12830,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "va_arg requested unsupported value type 'struct tiny'",
-   "dynamic_wall": "unsupported:va_arg requested unsupported value type 'struct tiny'",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "931004-8.c",
    "sha256": "ee628a68257bb72e28c09060828905f40a21d55aba748cf7e7d45f05a2fc3bf9",
@@ -12855,7 +12840,7 @@
     "libc-call: __builtin_va_end",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -28767,8 +28752,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "va_arg requested unsupported value type 'struct tiny'",
-   "dynamic_wall": "unsupported:va_arg requested unsupported value type 'struct tiny'",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "strct-stdarg-1.c",
    "sha256": "ec51bc0af8c8f24d46dbac8bdd811e120c7e5fd3b81648a48c7163d4280a4d78",
@@ -28777,7 +28762,7 @@
     "libc-call: __builtin_va_end",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",

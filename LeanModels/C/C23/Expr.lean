@@ -990,6 +990,18 @@ def assignmentHasUnsequencedWrite (lhs rhs : Expr) : Bool :=
         | some b => (readKeys lhs).any (· == b)
         | none => false
 
+def compoundAssignmentHasUnsequencedWrite (lhs rhs : Expr) : Bool :=
+  let target := lvalueKey lhs
+  let writes := directWriteTargets rhs
+  match target with
+  | some a => writes.any fun written => written == some a
+  | none =>
+      if (directWriteTargets lhs).any (·.isNone) then true
+      else writes.any fun written =>
+        match written with
+        | some b => (readKeys lhs).any (· == b)
+        | none => false
+
 def hasTwoImpure (ctx : Ctx) : List Expr → Bool
   | [] => false
   | e :: es =>
@@ -1374,7 +1386,7 @@ def evalExpr (ctx : Ctx) : Expr → EvalM CVal
   -- §6.5.17.3 — compound assignment: `a op= b` is `a = a op b` with the
   -- lvalue evaluated ONCE. 24 sites (`+=` 10, `|=` 6, `^=` 3, `-=` 3, `*=` 2).
   | .compoundAssign op l r computeLHSType computeResultType ty _ => do
-      if mayWrite ctx r then
+      if compoundAssignmentHasUnsequencedWrite l r then
         refuseUnsupported "unsequenced side effects in compound assignment"
       let p ← evalLValue ctx l
       let old ← match l with

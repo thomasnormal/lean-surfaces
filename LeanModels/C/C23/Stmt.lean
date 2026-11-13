@@ -789,6 +789,7 @@ def callFn : Nat → Program → LeanModels.C.FunctionDefn → List CVal → Exe
                 liftEval (writeMem (fun m => m.storeBytes dp bs))
                 pure (.ptr { dp with off := dp.off + n })
           | _ => refuseUnsupported "mempcpy: wrong argument count"
+        let runMemmove : List CVal → ExecM CVal := fun vs => runMemcpy vs
         let runStrncpy : List CVal → ExecM CVal := fun vs =>
           match vs with
           | [dst, src, count] => do
@@ -1325,6 +1326,7 @@ def callFn : Nat → Program → LeanModels.C.FunctionDefn → List CVal → Exe
                     if nm == "memset" || nm == "__builtin_memset" then runMemset vs
                     else if nm == "memcpy" || nm == "__builtin_memcpy" then runMemcpy vs
                     else if nm == "mempcpy" || nm == "__builtin_mempcpy" then runMempcpy vs
+                    else if nm == "memmove" || nm == "__builtin_memmove" then runMemmove vs
                     else if nm == "__builtin_strcmp" then runStrcmp vs
                     else if nm == "__builtin_memcmp" || nm == "memcmp" then runMemcmp vs
                     else if nm == "__builtin_strlen" then runStrlen vs
@@ -1364,6 +1366,7 @@ def callFn : Nat → Program → LeanModels.C.FunctionDefn → List CVal → Exe
               else if nm == "memset" || nm == "__builtin_memset" then runMemset vs
               else if nm == "memcpy" || nm == "__builtin_memcpy" then runMemcpy vs
               else if nm == "mempcpy" || nm == "__builtin_mempcpy" then runMempcpy vs
+              else if nm == "memmove" || nm == "__builtin_memmove" then runMemmove vs
               else if nm == "__builtin_strcmp" then runStrcmp vs
               else if nm == "__builtin_memcmp" || nm == "memcmp" then runMemcmp vs
               else if nm == "__builtin_strlen" then runStrlen vs

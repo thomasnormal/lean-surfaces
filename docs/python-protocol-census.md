@@ -359,3 +359,6 @@ eight-update bridge through an abrupt `break` flow.
 
 `Monadic.finishCallM_assign_eight_existing_locals_continue_body_ok` extends the
 eight-update bridge through an abrupt `continue` flow.
+
+`Monadic.finishCallM_assign_nine_existing_locals_body_ok` extends normal
+assignment state threading to nine successive local updates.

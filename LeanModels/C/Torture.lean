@@ -329,6 +329,7 @@ def checkedRecordLayout? (fields : List Decl) (layout : RecordLayout) :
   [{ name := "a", offsetBits := 0, bitfield := false },
    { name := "b", offsetBits := 32, bitfield := false }]
 #guard ("union (unnamed at x)".startsWith "union (unnamed")
+#guard ("struct (unnamed struct at x:41:17)".startsWith "struct (unnamed")
 
 /-! A checked, identity-backed aggregate fact.  The type key is only the
 spelling Clang itself attached to the declaration (`struct S`/`union U`);
@@ -338,7 +339,7 @@ reconstructed from that spelling. -/
 def observedRecordFacts (envl : Envelope) :
     List (CType × List (String × CType) × RecordLayout) :=
   let ds := allDecls envl
-  let rec nestedFacts (fields : List Decl) : List (CType × List (String × CType) × RecordLayout) :=
+  let nestedFacts := fun fields : List Decl =>
     fields.flatMap fun child => match child with
       | .record _ none nested (some layout) childSpan =>
           match fields.find? (fun f => match f with
@@ -352,7 +353,7 @@ def observedRecordFacts (envl : Envelope) :
                   let members := nested.filterMap fun field => match field with
                     | .field name mty _ _ => some (name.getD "", mty)
                     | _ => none
-                  [(ty, members, checked)] ++ nestedFacts nested
+                  [(ty, members, checked)]
               | none => []
           | _ => []
       | _ => []

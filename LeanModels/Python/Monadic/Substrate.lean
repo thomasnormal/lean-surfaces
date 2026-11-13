@@ -260,6 +260,28 @@ theorem toRun_set {σ : Type} (s s' : σ) :
 theorem toRun_modify {σ : Type} (f : σ → σ) (s : σ) :
     toRun (modify f : PyM σ PUnit) s = .ok (f s) () := rfl
 
+/-! `liftM` is the transparent StateT-to-ExceptT lift used by the nested
+frame boundary. This equation keeps the same `Run` projection available when
+the call proof crosses from a world computation into a frame computation. -/
+theorem toRun_liftState {σ α : Type} (x : StateT σ (HaltWith Unit Unit) α) (s : σ) :
+    toRun (liftM x : PyM σ α) s =
+      match x s with
+      | .error l => match l with
+        | .timeout => .timeout
+        | .unsupported _ msg _ => .unsupported msg
+      | .ok (a, s') => .ok s' a := by
+  change (match ((fun a : α => Except.ok a) <$> x) s with
+    | .ok (.ok a, s') => Run.ok s' a
+    | .ok (.error e, s') => Run.exn s' e
+    | .error .timeout => Run.timeout
+    | .error (.unsupported _ msg _) => Run.unsupported msg) = _
+  cases hx : x s with
+  | error l =>
+      cases l <;> simp [Functor.map, StateT.map, Except.map, hx]
+  | ok p =>
+      obtain ⟨a, s'⟩ := p
+      simp [Functor.map, StateT.map, Except.map, hx]
+
 theorem toRun_bind {σ α β : Type} (x : PyM σ α) (f : α → PyM σ β) (s : σ) :
     toRun (x >>= f) s = Run.bind (toRun x s) (fun s' a => toRun (f a) s') := by
   simp only [toRun, bind_apply]
@@ -282,6 +304,7 @@ theorem toRun_map {σ α β : Type} (g : α → β) (x : PyM σ α) (s : σ) :
 #print axioms toRun_bind
 #print axioms toRun_set
 #print axioms toRun_modify
+#print axioms toRun_liftState
 #print axioms toRun_map
 
 end LeanModels.Python.Monadic

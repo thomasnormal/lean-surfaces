@@ -14125,3 +14125,22 @@ stateful script adequacy; they do not duplicate evaluator semantics.
 
 DECIDED: keep state-wrapper equations in the shared substrate so call and
 script proofs use one boundary definition.
+
+## 2026-11-13-pyfoundation-109 — bridge the nested frame lift
+
+`Monadic.toRun_liftState` closes the remaining generic state-wrapper seam at the
+nested frame boundary. It relates `liftM` from `StateT σ (HaltWith Unit Unit)`
+to `PyM σ α`, preserving all four `Run` outcomes: timeout, refusal message,
+raised exception, and successful value/state. The proof handles the mapped
+`StateT` result explicitly rather than unfolding the monad stack in call sites.
+
+| Measurement | Result |
+|---|---|
+| Target | `lake build LeanModels.Python.Monadic.Substrate` passed; 9/9 jobs |
+| Theorem | `Monadic.toRun_liftState` |
+| Domain | every frame state, result type, and lifted state computation |
+| Semantic change | theorem-only substrate extension |
+| Remaining debt | apply lift and try/catch bridges to positive-fuel body calls |
+
+DECIDED: retain the lift equation beside the get/set/modify equations as the
+single reusable nested-frame boundary.

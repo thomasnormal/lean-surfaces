@@ -58,6 +58,8 @@ every call shape.
 The substrate now exposes kernel-checked `Monadic.toRun_set` and
 `Monadic.toRun_modify` equations beside `toRun_get`/`toRun_bind`, so positive
 fuel calls and scripts share one state-wrapper boundary.
+`Monadic.toRun_liftState` extends that boundary across the `StateT`-to-`ExceptT`
+frame lift, preserving timeout, refusal, exception, and success projections.
 
 ## Operator dispatch
 

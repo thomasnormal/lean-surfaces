@@ -610,6 +610,34 @@ def evalMemExprList (E : CoreMemDesign) (env : IEnv) (elems : List (String × Na
 
 end
 
+/-! ## Source-shaped case selection
+
+Case selection stays on the retained `PStmt.caseStmt` node.  Patterns are
+evaluated in the current state, compared with the parser's IEEE case matcher,
+and the first matching arm is returned without rewriting the arm into an
+`if` chain.  Qualified-case claims inspect every arm before the selected arm
+runs; `casez`/`casex` retain the E-core-0 loud boundary. -/
+
+def coreMemCaseHits (E : CoreMemDesign) (env : IEnv) (elems : List (String × Nat))
+    (st : CoreMemState) (subject : LVec) (mode : CaseMode) :
+    List (List PExpr × PStmt) → Res Nat
+  | [] => .ok 0
+  | (patterns, _) :: rest => do
+      let values ← evalMemExprList E env elems st patterns
+      let n ← coreMemCaseHits E env elems st subject mode rest
+      .ok (if values.any (fun value => caseHit mode subject value) then n + 1 else n)
+
+def coreMemSelectCase (E : CoreMemDesign) (env : IEnv) (elems : List (String × Nat))
+    (st : CoreMemState) (subject : LVec) (mode : CaseMode) :
+    List (List PExpr × PStmt) → Option PStmt → Res (Option PStmt)
+  | [], default? => .ok default?
+  | (patterns, body) :: rest, default? => do
+      let values ← evalMemExprList E env elems st patterns
+      if values.any (fun value => caseHit mode subject value) then
+        .ok (some body)
+      else
+        coreMemSelectCase E env elems st subject mode rest default?
+
 /-! ## Source-shaped edge bodies -/
 
 abbrev CoreMemExec := Res (NbaQueue2 × MemNbaQueue)
@@ -795,20 +823,22 @@ end
 once at time zero (§9.2.2.2), then wakes on changes to the expressions read by
 the retained body (§9.2.2.2.1).  The body fragment here is deliberately the
 same source-shaped blocking/conditional/blocking subset as the implicit-event
-route.  NBA, loop, case, and unsupported statements remain loud at their own
-node; no statement is lowered into a second AST. -/
+route, with the parser-native plain/inside `case` node handled by the case
+matcher below.  `casez`/`casex`, NBA, loops, and unsupported statements remain
+loud at their own node; no statement is lowered into a second AST. -/
 
 mutual
 
-def CoreMemDesign.execCombStmt (E : CoreMemDesign) (env : IEnv)
-    (elems : List (String × Nat)) (st : CoreMemState) : PStmt → Res CoreMemState
-  | .blockingAssign name value =>
+def CoreMemDesign.execCombStmtFuel (E : CoreMemDesign) (env : IEnv)
+    (elems : List (String × Nat)) (st : CoreMemState) : Nat → PStmt → Res CoreMemState
+  | 0, _ => .timeout
+  | fuel + 1, .blockingAssign name value =>
       match E.scalarTarget name with
       | none => .unsupported s!"9.2.2.2: scalar always_comb target '{name}' is undeclared"
       | some width => do
           let v ← E.evalExpr env elems st (some width) value
           .ok { st with scalar := E.scalar.setName st.scalar name v }
-  | .blockingAssignL target value =>
+  | fuel + 1, .blockingAssignL target value =>
       match target with
       | .ident name =>
           match E.scalarTarget name with
@@ -825,29 +855,53 @@ def CoreMemDesign.execCombStmt (E : CoreMemDesign) (env : IEnv)
       | .arrayElem name _ =>
           .unsupported s!"9.2.2.2: memory always_comb target '{name}' is not one-rank"
       | _ => .unsupported "9.2.2.2: packed or concatenated always_comb target is outside this slice"
-  | .ifStmt cond yes no => do
+  | fuel + 1, .ifStmt cond yes no => do
       let cv ← E.evalExpr env elems st (some 1) cond
-      if cv.condTrue then E.execCombStmt env elems st yes
+      if cv.condTrue then E.execCombStmtFuel env elems st fuel yes
       else match no with
         | none => .ok st
-        | some stmt => E.execCombStmt env elems st stmt
-  | .block body => E.execCombStmts env elems st body
-  | .forLoop .. =>
+        | some stmt => E.execCombStmtFuel env elems st fuel stmt
+  | fuel + 1, .block body => E.execCombStmtsFuel env elems st fuel body
+  | fuel + 1, .forLoop .. =>
       .unsupported "9.2.2.2: procedural loop in always_comb body is outside this slice"
-  | .caseStmt .. =>
-      .unsupported "12.5: case in always_comb body is outside this slice"
-  | .nbaAssign .. | .nbaAssignL .. =>
+  | fuel + 1, .caseStmt subject items default? mode check => do
+      if !caseModeInE0 mode then
+        .unsupported s!"12.5.1: {caseModeRefusal mode}"
+      else
+        let sv ← E.evalExpr env elems st none subject
+        match check with
+        | .none =>
+            let selected ← coreMemSelectCase E env elems st sv mode items default?
+            match selected with
+            | none => .ok st
+            | some body => E.execCombStmtFuel env elems st fuel body
+        | qualifier =>
+            let n ← coreMemCaseHits E env elems st sv mode items
+            if caseClaimOk qualifier default?.isSome n then
+              let selected ← coreMemSelectCase E env elems st sv mode items default?
+              match selected with
+              | none => .ok st
+              | some body => E.execCombStmtFuel env elems st fuel body
+            else
+              .unsupported s!"12.5.3: {caseCheckName qualifier}"
+  | fuel + 1, .nbaAssign .. | fuel + 1, .nbaAssignL .. =>
       .unsupported "10.4.2: nonblocking assignment in always_comb body"
-  | .unsupported kind text => .unsupported s!"{kind}: {text}"
+  | fuel + 1, .unsupported kind text => .unsupported s!"{kind}: {text}"
 
-def CoreMemDesign.execCombStmts (E : CoreMemDesign) (env : IEnv)
-    (elems : List (String × Nat)) (st : CoreMemState) : List PStmt → Res CoreMemState
-  | [] => .ok st
-  | stmt :: rest => do
-      let st' ← E.execCombStmt env elems st stmt
-      E.execCombStmts env elems st' rest
+def CoreMemDesign.execCombStmtsFuel (E : CoreMemDesign) (env : IEnv)
+    (elems : List (String × Nat)) (st : CoreMemState) : Nat → List PStmt → Res CoreMemState
+  | 0, _ => .timeout
+  | fuel + 1, [] => .ok st
+  | fuel + 1, stmt :: rest => do
+      let st' ← E.execCombStmtFuel env elems st fuel stmt
+      E.execCombStmtsFuel env elems st' fuel rest
 
 end
+
+def CoreMemDesign.execCombStmt (E : CoreMemDesign) (env : IEnv)
+    (elems : List (String × Nat)) (st : CoreMemState) (stmt : PStmt) : Res CoreMemState :=
+  E.execCombStmtFuel env elems st 4096 stmt
+
 
 def CoreMemDesign.runImplicit (E : CoreMemDesign) (before current : CoreMemState) :
     List CoreMemProc → Res CoreMemState

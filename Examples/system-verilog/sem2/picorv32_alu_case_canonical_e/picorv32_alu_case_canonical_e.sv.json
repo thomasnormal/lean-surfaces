@@ -1,0 +1,1542 @@
+{
+  "schema_version": "sv-0.2",
+  "language": "systemverilog",
+  "frontend": {
+    "name": "pyslang",
+    "family": "pyslang-11"
+  },
+  "mode": "symbolic",
+  "top": "picorv32_alu_case_canonical_e",
+  "source_files": [
+    {
+      "path": "Examples/system-verilog/sem2/picorv32_alu_case_canonical_e/picorv32_alu_case_canonical_e.sv",
+      "sha256": "d0fedb7a535b803014945a3f50ac1bac93ffd4b304eb39321135c2bece4ef5a9"
+    }
+  ],
+  "packages": [],
+  "design": {
+    "kind": "Design",
+    "modules": [
+      {
+        "kind": "Module",
+        "span": {
+          "line": 1,
+          "col": 1,
+          "end_line": 36,
+          "end_col": 10
+        },
+        "name": "picorv32_alu_case_canonical_e",
+        "imports": [],
+        "params": [
+          {
+            "kind": "ParameterDecl",
+            "span": {
+              "line": 2,
+              "col": 19,
+              "end_line": 2,
+              "end_col": 43
+            },
+            "name": "TWO_CYCLE_COMPARE",
+            "type": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            },
+            "default": {
+              "kind": "Literal",
+              "span": {
+                "line": 2,
+                "col": 39,
+                "end_line": 2,
+                "end_col": 43
+              },
+              "width": 1,
+              "bits": "0"
+            },
+            "resolved": 0
+          }
+        ],
+        "types": [],
+        "ports": [
+          {
+            "kind": "Port",
+            "span": {
+              "line": 4,
+              "col": 24,
+              "end_line": 4,
+              "end_col": 31
+            },
+            "name": "reg_op1",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 4,
+                      "col": 18,
+                      "end_line": 4,
+                      "end_col": 20
+                    },
+                    "value": 31,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 4,
+                      "col": 21,
+                      "end_line": 4,
+                      "end_col": 22
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 32
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 5,
+              "col": 24,
+              "end_line": 5,
+              "end_col": 31
+            },
+            "name": "reg_op2",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 5,
+                      "col": 18,
+                      "end_line": 5,
+                      "end_col": 20
+                    },
+                    "value": 31,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 5,
+                      "col": 21,
+                      "end_line": 5,
+                      "end_col": 22
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 32
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 6,
+              "col": 17,
+              "end_line": 6,
+              "end_col": 26
+            },
+            "name": "instr_beq",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 6,
+              "col": 28,
+              "end_line": 6,
+              "end_col": 37
+            },
+            "name": "instr_bne",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 6,
+              "col": 39,
+              "end_line": 6,
+              "end_col": 48
+            },
+            "name": "instr_bge",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 6,
+              "col": 50,
+              "end_line": 6,
+              "end_col": 60
+            },
+            "name": "instr_bgeu",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 7,
+              "col": 17,
+              "end_line": 7,
+              "end_col": 26
+            },
+            "name": "instr_xor",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 7,
+              "col": 28,
+              "end_line": 7,
+              "end_col": 36
+            },
+            "name": "instr_or",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 7,
+              "col": 38,
+              "end_line": 7,
+              "end_col": 47
+            },
+            "name": "instr_and",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 8,
+              "col": 17,
+              "end_line": 8,
+              "end_col": 32
+            },
+            "name": "is_slti_blt_slt",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 8,
+              "col": 34,
+              "end_line": 8,
+              "end_col": 52
+            },
+            "name": "is_sltiu_bltu_sltu",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 9,
+              "col": 17,
+              "end_line": 9,
+              "end_col": 23
+            },
+            "name": "is_alu",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 9,
+              "col": 25,
+              "end_line": 9,
+              "end_col": 35
+            },
+            "name": "is_compare",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 10,
+              "col": 17,
+              "end_line": 10,
+              "end_col": 23
+            },
+            "name": "alu_eq",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 10,
+              "col": 25,
+              "end_line": 10,
+              "end_col": 32
+            },
+            "name": "alu_lts",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 10,
+              "col": 34,
+              "end_line": 10,
+              "end_col": 41
+            },
+            "name": "alu_ltu",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 11,
+              "col": 24,
+              "end_line": 11,
+              "end_col": 35
+            },
+            "name": "alu_add_sub",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 11,
+                      "col": 18,
+                      "end_line": 11,
+                      "end_col": 20
+                    },
+                    "value": 31,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 11,
+                      "col": 21,
+                      "end_line": 11,
+                      "end_col": 22
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 32
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 12,
+              "col": 18,
+              "end_line": 12,
+              "end_col": 27
+            },
+            "name": "alu_out_0",
+            "dir": "out",
+            "width": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 13,
+              "col": 25,
+              "end_line": 13,
+              "end_col": 32
+            },
+            "name": "alu_out",
+            "dir": "out",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 13,
+                      "col": 19,
+                      "end_line": 13,
+                      "end_col": 21
+                    },
+                    "value": 31,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 13,
+                      "col": 22,
+                      "end_line": 13,
+                      "end_col": 23
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 32
+            }
+          }
+        ],
+        "decls": [],
+        "processes": [
+          {
+            "kind": "AlwaysComb",
+            "span": {
+              "line": 15,
+              "col": 3,
+              "end_line": 35,
+              "end_col": 6
+            },
+            "body": {
+              "kind": "Block",
+              "span": {
+                "line": 15,
+                "col": 15,
+                "end_line": 35,
+                "end_col": 6
+              },
+              "stmts": [
+                {
+                  "kind": "BlockingAssign",
+                  "span": {
+                    "line": 16,
+                    "col": 5,
+                    "end_line": 16,
+                    "end_col": 20
+                  },
+                  "target": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 16,
+                      "col": 5,
+                      "end_line": 16,
+                      "end_col": 14
+                    },
+                    "width": 1,
+                    "name": "alu_out_0"
+                  },
+                  "value": {
+                    "kind": "Fill",
+                    "span": {
+                      "line": 16,
+                      "col": 17,
+                      "end_line": 16,
+                      "end_col": 19
+                    },
+                    "bit": "x",
+                    "resolved_width": 1
+                  }
+                },
+                {
+                  "kind": "Case",
+                  "span": {
+                    "line": 17,
+                    "col": 5,
+                    "end_line": 26,
+                    "end_col": 12
+                  },
+                  "check": "none",
+                  "match": "normal",
+                  "subject": {
+                    "kind": "Literal",
+                    "span": {
+                      "line": 17,
+                      "col": 11,
+                      "end_line": 17,
+                      "end_col": 15
+                    },
+                    "width": 1,
+                    "bits": "1"
+                  },
+                  "items": [
+                    {
+                      "kind": "CaseItem",
+                      "patterns": [
+                        {
+                          "kind": "Ident",
+                          "span": {
+                            "line": 18,
+                            "col": 7,
+                            "end_line": 18,
+                            "end_col": 16
+                          },
+                          "width": 1,
+                          "name": "instr_beq"
+                        }
+                      ],
+                      "body": {
+                        "kind": "BlockingAssign",
+                        "span": {
+                          "line": 18,
+                          "col": 18,
+                          "end_line": 18,
+                          "end_col": 37
+                        },
+                        "target": {
+                          "kind": "Ident",
+                          "span": {
+                            "line": 18,
+                            "col": 18,
+                            "end_line": 18,
+                            "end_col": 27
+                          },
+                          "width": 1,
+                          "name": "alu_out_0"
+                        },
+                        "value": {
+                          "kind": "Ident",
+                          "span": {
+                            "line": 18,
+                            "col": 30,
+                            "end_line": 18,
+                            "end_col": 36
+                          },
+                          "width": 1,
+                          "name": "alu_eq"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "CaseItem",
+                      "patterns": [
+                        {
+                          "kind": "Ident",
+                          "span": {
+                            "line": 19,
+                            "col": 7,
+                            "end_line": 19,
+                            "end_col": 16
+                          },
+                          "width": 1,
+                          "name": "instr_bne"
+                        }
+                      ],
+                      "body": {
+                        "kind": "BlockingAssign",
+                        "span": {
+                          "line": 19,
+                          "col": 18,
+                          "end_line": 19,
+                          "end_col": 38
+                        },
+                        "target": {
+                          "kind": "Ident",
+                          "span": {
+                            "line": 19,
+                            "col": 18,
+                            "end_line": 19,
+                            "end_col": 27
+                          },
+                          "width": 1,
+                          "name": "alu_out_0"
+                        },
+                        "value": {
+                          "kind": "Unary",
+                          "span": {
+                            "line": 19,
+                            "col": 30,
+                            "end_line": 19,
+                            "end_col": 37
+                          },
+                          "width": 1,
+                          "op": "!",
+                          "operand": {
+                            "kind": "Ident",
+                            "span": {
+                              "line": 19,
+                              "col": 31,
+                              "end_line": 19,
+                              "end_col": 37
+                            },
+                            "width": 1,
+                            "name": "alu_eq"
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "kind": "CaseItem",
+                      "patterns": [
+                        {
+                          "kind": "Ident",
+                          "span": {
+                            "line": 20,
+                            "col": 7,
+                            "end_line": 20,
+                            "end_col": 16
+                          },
+                          "width": 1,
+                          "name": "instr_bge"
+                        }
+                      ],
+                      "body": {
+                        "kind": "BlockingAssign",
+                        "span": {
+                          "line": 20,
+                          "col": 18,
+                          "end_line": 20,
+                          "end_col": 39
+                        },
+                        "target": {
+                          "kind": "Ident",
+                          "span": {
+                            "line": 20,
+                            "col": 18,
+                            "end_line": 20,
+                            "end_col": 27
+                          },
+                          "width": 1,
+                          "name": "alu_out_0"
+                        },
+                        "value": {
+                          "kind": "Unary",
+                          "span": {
+                            "line": 20,
+                            "col": 30,
+                            "end_line": 20,
+                            "end_col": 38
+                          },
+                          "width": 1,
+                          "op": "!",
+                          "operand": {
+                            "kind": "Ident",
+                            "span": {
+                              "line": 20,
+                              "col": 31,
+                              "end_line": 20,
+                              "end_col": 38
+                            },
+                            "width": 1,
+                            "name": "alu_lts"
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "kind": "CaseItem",
+                      "patterns": [
+                        {
+                          "kind": "Ident",
+                          "span": {
+                            "line": 21,
+                            "col": 7,
+                            "end_line": 21,
+                            "end_col": 17
+                          },
+                          "width": 1,
+                          "name": "instr_bgeu"
+                        }
+                      ],
+                      "body": {
+                        "kind": "BlockingAssign",
+                        "span": {
+                          "line": 21,
+                          "col": 19,
+                          "end_line": 21,
+                          "end_col": 40
+                        },
+                        "target": {
+                          "kind": "Ident",
+                          "span": {
+                            "line": 21,
+                            "col": 19,
+                            "end_line": 21,
+                            "end_col": 28
+                          },
+                          "width": 1,
+                          "name": "alu_out_0"
+                        },
+                        "value": {
+                          "kind": "Unary",
+                          "span": {
+                            "line": 21,
+                            "col": 31,
+                            "end_line": 21,
+                            "end_col": 39
+                          },
+                          "width": 1,
+                          "op": "!",
+                          "operand": {
+                            "kind": "Ident",
+                            "span": {
+                              "line": 21,
+                              "col": 32,
+                              "end_line": 21,
+                              "end_col": 39
+                            },
+                            "width": 1,
+                            "name": "alu_ltu"
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "kind": "CaseItem",
+                      "patterns": [
+                        {
+                          "kind": "Binary",
+                          "span": {
+                            "line": 22,
+                            "col": 7,
+                            "end_line": 22,
+                            "end_col": 102
+                          },
+                          "width": 1,
+                          "op": "&&",
+                          "left": {
+                            "kind": "Ident",
+                            "span": {
+                              "line": 22,
+                              "col": 7,
+                              "end_line": 22,
+                              "end_col": 22
+                            },
+                            "width": 1,
+                            "name": "is_slti_blt_slt"
+                          },
+                          "right": {
+                            "kind": "Binary",
+                            "span": {
+                              "line": 22,
+                              "col": 27,
+                              "end_line": 22,
+                              "end_col": 101
+                            },
+                            "width": 1,
+                            "op": "||",
+                            "left": {
+                              "kind": "Unary",
+                              "span": {
+                                "line": 22,
+                                "col": 27,
+                                "end_line": 22,
+                                "end_col": 45
+                              },
+                              "width": 1,
+                              "op": "!",
+                              "operand": {
+                                "kind": "ParamRef",
+                                "span": {
+                                  "line": 22,
+                                  "col": 28,
+                                  "end_line": 22,
+                                  "end_col": 45
+                                },
+                                "name": "TWO_CYCLE_COMPARE"
+                              }
+                            },
+                            "right": {
+                              "kind": "Unary",
+                              "span": {
+                                "line": 22,
+                                "col": 49,
+                                "end_line": 22,
+                                "end_col": 101
+                              },
+                              "width": 1,
+                              "op": "!",
+                              "operand": {
+                                "kind": "Binary",
+                                "span": {
+                                  "line": 22,
+                                  "col": 51,
+                                  "end_line": 22,
+                                  "end_col": 100
+                                },
+                                "width": 1,
+                                "op": "||",
+                                "left": {
+                                  "kind": "Binary",
+                                  "span": {
+                                    "line": 22,
+                                    "col": 51,
+                                    "end_line": 22,
+                                    "end_col": 86
+                                  },
+                                  "width": 1,
+                                  "op": "||",
+                                  "left": {
+                                    "kind": "Binary",
+                                    "span": {
+                                      "line": 22,
+                                      "col": 51,
+                                      "end_line": 22,
+                                      "end_col": 73
+                                    },
+                                    "width": 1,
+                                    "op": "||",
+                                    "left": {
+                                      "kind": "Ident",
+                                      "span": {
+                                        "line": 22,
+                                        "col": 51,
+                                        "end_line": 22,
+                                        "end_col": 60
+                                      },
+                                      "width": 1,
+                                      "name": "instr_beq"
+                                    },
+                                    "right": {
+                                      "kind": "Ident",
+                                      "span": {
+                                        "line": 22,
+                                        "col": 64,
+                                        "end_line": 22,
+                                        "end_col": 73
+                                      },
+                                      "width": 1,
+                                      "name": "instr_bne"
+                                    }
+                                  },
+                                  "right": {
+                                    "kind": "Ident",
+                                    "span": {
+                                      "line": 22,
+                                      "col": 77,
+                                      "end_line": 22,
+                                      "end_col": 86
+                                    },
+                                    "width": 1,
+                                    "name": "instr_bge"
+                                  }
+                                },
+                                "right": {
+                                  "kind": "Ident",
+                                  "span": {
+                                    "line": 22,
+                                    "col": 90,
+                                    "end_line": 22,
+                                    "end_col": 100
+                                  },
+                                  "width": 1,
+                                  "name": "instr_bgeu"
+                                }
+                              }
+                            }
+                          }
+                        }
+                      ],
+                      "body": {
+                        "kind": "BlockingAssign",
+                        "span": {
+                          "line": 23,
+                          "col": 9,
+                          "end_line": 23,
+                          "end_col": 29
+                        },
+                        "target": {
+                          "kind": "Ident",
+                          "span": {
+                            "line": 23,
+                            "col": 9,
+                            "end_line": 23,
+                            "end_col": 18
+                          },
+                          "width": 1,
+                          "name": "alu_out_0"
+                        },
+                        "value": {
+                          "kind": "Ident",
+                          "span": {
+                            "line": 23,
+                            "col": 21,
+                            "end_line": 23,
+                            "end_col": 28
+                          },
+                          "width": 1,
+                          "name": "alu_lts"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "CaseItem",
+                      "patterns": [
+                        {
+                          "kind": "Binary",
+                          "span": {
+                            "line": 24,
+                            "col": 7,
+                            "end_line": 24,
+                            "end_col": 105
+                          },
+                          "width": 1,
+                          "op": "&&",
+                          "left": {
+                            "kind": "Ident",
+                            "span": {
+                              "line": 24,
+                              "col": 7,
+                              "end_line": 24,
+                              "end_col": 25
+                            },
+                            "width": 1,
+                            "name": "is_sltiu_bltu_sltu"
+                          },
+                          "right": {
+                            "kind": "Binary",
+                            "span": {
+                              "line": 24,
+                              "col": 30,
+                              "end_line": 24,
+                              "end_col": 104
+                            },
+                            "width": 1,
+                            "op": "||",
+                            "left": {
+                              "kind": "Unary",
+                              "span": {
+                                "line": 24,
+                                "col": 30,
+                                "end_line": 24,
+                                "end_col": 48
+                              },
+                              "width": 1,
+                              "op": "!",
+                              "operand": {
+                                "kind": "ParamRef",
+                                "span": {
+                                  "line": 24,
+                                  "col": 31,
+                                  "end_line": 24,
+                                  "end_col": 48
+                                },
+                                "name": "TWO_CYCLE_COMPARE"
+                              }
+                            },
+                            "right": {
+                              "kind": "Unary",
+                              "span": {
+                                "line": 24,
+                                "col": 52,
+                                "end_line": 24,
+                                "end_col": 104
+                              },
+                              "width": 1,
+                              "op": "!",
+                              "operand": {
+                                "kind": "Binary",
+                                "span": {
+                                  "line": 24,
+                                  "col": 54,
+                                  "end_line": 24,
+                                  "end_col": 103
+                                },
+                                "width": 1,
+                                "op": "||",
+                                "left": {
+                                  "kind": "Binary",
+                                  "span": {
+                                    "line": 24,
+                                    "col": 54,
+                                    "end_line": 24,
+                                    "end_col": 89
+                                  },
+                                  "width": 1,
+                                  "op": "||",
+                                  "left": {
+                                    "kind": "Binary",
+                                    "span": {
+                                      "line": 24,
+                                      "col": 54,
+                                      "end_line": 24,
+                                      "end_col": 76
+                                    },
+                                    "width": 1,
+                                    "op": "||",
+                                    "left": {
+                                      "kind": "Ident",
+                                      "span": {
+                                        "line": 24,
+                                        "col": 54,
+                                        "end_line": 24,
+                                        "end_col": 63
+                                      },
+                                      "width": 1,
+                                      "name": "instr_beq"
+                                    },
+                                    "right": {
+                                      "kind": "Ident",
+                                      "span": {
+                                        "line": 24,
+                                        "col": 67,
+                                        "end_line": 24,
+                                        "end_col": 76
+                                      },
+                                      "width": 1,
+                                      "name": "instr_bne"
+                                    }
+                                  },
+                                  "right": {
+                                    "kind": "Ident",
+                                    "span": {
+                                      "line": 24,
+                                      "col": 80,
+                                      "end_line": 24,
+                                      "end_col": 89
+                                    },
+                                    "width": 1,
+                                    "name": "instr_bge"
+                                  }
+                                },
+                                "right": {
+                                  "kind": "Ident",
+                                  "span": {
+                                    "line": 24,
+                                    "col": 93,
+                                    "end_line": 24,
+                                    "end_col": 103
+                                  },
+                                  "width": 1,
+                                  "name": "instr_bgeu"
+                                }
+                              }
+                            }
+                          }
+                        }
+                      ],
+                      "body": {
+                        "kind": "BlockingAssign",
+                        "span": {
+                          "line": 25,
+                          "col": 9,
+                          "end_line": 25,
+                          "end_col": 29
+                        },
+                        "target": {
+                          "kind": "Ident",
+                          "span": {
+                            "line": 25,
+                            "col": 9,
+                            "end_line": 25,
+                            "end_col": 18
+                          },
+                          "width": 1,
+                          "name": "alu_out_0"
+                        },
+                        "value": {
+                          "kind": "Ident",
+                          "span": {
+                            "line": 25,
+                            "col": 21,
+                            "end_line": 25,
+                            "end_col": 28
+                          },
+                          "width": 1,
+                          "name": "alu_ltu"
+                        }
+                      }
+                    }
+                  ],
+                  "default": null
+                },
+                {
+                  "kind": "BlockingAssign",
+                  "span": {
+                    "line": 27,
+                    "col": 5,
+                    "end_line": 27,
+                    "end_col": 18
+                  },
+                  "target": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 27,
+                      "col": 5,
+                      "end_line": 27,
+                      "end_col": 12
+                    },
+                    "width": 32,
+                    "name": "alu_out"
+                  },
+                  "value": {
+                    "kind": "Fill",
+                    "span": {
+                      "line": 27,
+                      "col": 15,
+                      "end_line": 27,
+                      "end_col": 17
+                    },
+                    "bit": "x",
+                    "resolved_width": 32
+                  }
+                },
+                {
+                  "kind": "Case",
+                  "span": {
+                    "line": 28,
+                    "col": 5,
+                    "end_line": 34,
+                    "end_col": 12
+                  },
+                  "check": "none",
+                  "match": "normal",
+                  "subject": {
+                    "kind": "Literal",
+                    "span": {
+                      "line": 28,
+                      "col": 11,
+                      "end_line": 28,
+                      "end_col": 15
+                    },
+                    "width": 1,
+                    "bits": "1"
+                  },
+                  "items": [
+                    {
+                      "kind": "CaseItem",
+                      "patterns": [
+                        {
+                          "kind": "Ident",
+                          "span": {
+                            "line": 29,
+                            "col": 7,
+                            "end_line": 29,
+                            "end_col": 13
+                          },
+                          "width": 1,
+                          "name": "is_alu"
+                        }
+                      ],
+                      "body": {
+                        "kind": "BlockingAssign",
+                        "span": {
+                          "line": 29,
+                          "col": 15,
+                          "end_line": 29,
+                          "end_col": 37
+                        },
+                        "target": {
+                          "kind": "Ident",
+                          "span": {
+                            "line": 29,
+                            "col": 15,
+                            "end_line": 29,
+                            "end_col": 22
+                          },
+                          "width": 32,
+                          "name": "alu_out"
+                        },
+                        "value": {
+                          "kind": "Ident",
+                          "span": {
+                            "line": 29,
+                            "col": 25,
+                            "end_line": 29,
+                            "end_col": 36
+                          },
+                          "width": 32,
+                          "name": "alu_add_sub"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "CaseItem",
+                      "patterns": [
+                        {
+                          "kind": "Ident",
+                          "span": {
+                            "line": 30,
+                            "col": 7,
+                            "end_line": 30,
+                            "end_col": 17
+                          },
+                          "width": 1,
+                          "name": "is_compare"
+                        }
+                      ],
+                      "body": {
+                        "kind": "BlockingAssign",
+                        "span": {
+                          "line": 30,
+                          "col": 19,
+                          "end_line": 30,
+                          "end_col": 53
+                        },
+                        "target": {
+                          "kind": "Ident",
+                          "span": {
+                            "line": 30,
+                            "col": 19,
+                            "end_line": 30,
+                            "end_col": 26
+                          },
+                          "width": 32,
+                          "name": "alu_out"
+                        },
+                        "value": {
+                          "kind": "Concat",
+                          "span": {
+                            "line": 30,
+                            "col": 29,
+                            "end_line": 30,
+                            "end_col": 52
+                          },
+                          "width": 32,
+                          "parts": [
+                            {
+                              "kind": "Repl",
+                              "span": {
+                                "line": 30,
+                                "col": 30,
+                                "end_line": 30,
+                                "end_col": 40
+                              },
+                              "width": 31,
+                              "count": {
+                                "kind": "Int",
+                                "span": {
+                                  "line": 30,
+                                  "col": 31,
+                                  "end_line": 30,
+                                  "end_col": 33
+                                },
+                                "value": 31,
+                                "resolved_width": 32
+                              },
+                              "operand": {
+                                "kind": "Concat",
+                                "span": {
+                                  "line": 30,
+                                  "col": 33,
+                                  "end_line": 30,
+                                  "end_col": 39
+                                },
+                                "width": 1,
+                                "parts": [
+                                  {
+                                    "kind": "Literal",
+                                    "span": {
+                                      "line": 30,
+                                      "col": 34,
+                                      "end_line": 30,
+                                      "end_col": 38
+                                    },
+                                    "width": 1,
+                                    "bits": "0"
+                                  }
+                                ]
+                              }
+                            },
+                            {
+                              "kind": "Ident",
+                              "span": {
+                                "line": 30,
+                                "col": 42,
+                                "end_line": 30,
+                                "end_col": 51
+                              },
+                              "width": 1,
+                              "name": "alu_out_0"
+                            }
+                          ]
+                        }
+                      }
+                    },
+                    {
+                      "kind": "CaseItem",
+                      "patterns": [
+                        {
+                          "kind": "Ident",
+                          "span": {
+                            "line": 31,
+                            "col": 7,
+                            "end_line": 31,
+                            "end_col": 16
+                          },
+                          "width": 1,
+                          "name": "instr_xor"
+                        }
+                      ],
+                      "body": {
+                        "kind": "BlockingAssign",
+                        "span": {
+                          "line": 31,
+                          "col": 18,
+                          "end_line": 31,
+                          "end_col": 46
+                        },
+                        "target": {
+                          "kind": "Ident",
+                          "span": {
+                            "line": 31,
+                            "col": 18,
+                            "end_line": 31,
+                            "end_col": 25
+                          },
+                          "width": 32,
+                          "name": "alu_out"
+                        },
+                        "value": {
+                          "kind": "Binary",
+                          "span": {
+                            "line": 31,
+                            "col": 28,
+                            "end_line": 31,
+                            "end_col": 45
+                          },
+                          "width": 32,
+                          "op": "^",
+                          "left": {
+                            "kind": "Ident",
+                            "span": {
+                              "line": 31,
+                              "col": 28,
+                              "end_line": 31,
+                              "end_col": 35
+                            },
+                            "width": 32,
+                            "name": "reg_op1"
+                          },
+                          "right": {
+                            "kind": "Ident",
+                            "span": {
+                              "line": 31,
+                              "col": 38,
+                              "end_line": 31,
+                              "end_col": 45
+                            },
+                            "width": 32,
+                            "name": "reg_op2"
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "kind": "CaseItem",
+                      "patterns": [
+                        {
+                          "kind": "Ident",
+                          "span": {
+                            "line": 32,
+                            "col": 7,
+                            "end_line": 32,
+                            "end_col": 15
+                          },
+                          "width": 1,
+                          "name": "instr_or"
+                        }
+                      ],
+                      "body": {
+                        "kind": "BlockingAssign",
+                        "span": {
+                          "line": 32,
+                          "col": 17,
+                          "end_line": 32,
+                          "end_col": 45
+                        },
+                        "target": {
+                          "kind": "Ident",
+                          "span": {
+                            "line": 32,
+                            "col": 17,
+                            "end_line": 32,
+                            "end_col": 24
+                          },
+                          "width": 32,
+                          "name": "alu_out"
+                        },
+                        "value": {
+                          "kind": "Binary",
+                          "span": {
+                            "line": 32,
+                            "col": 27,
+                            "end_line": 32,
+                            "end_col": 44
+                          },
+                          "width": 32,
+                          "op": "|",
+                          "left": {
+                            "kind": "Ident",
+                            "span": {
+                              "line": 32,
+                              "col": 27,
+                              "end_line": 32,
+                              "end_col": 34
+                            },
+                            "width": 32,
+                            "name": "reg_op1"
+                          },
+                          "right": {
+                            "kind": "Ident",
+                            "span": {
+                              "line": 32,
+                              "col": 37,
+                              "end_line": 32,
+                              "end_col": 44
+                            },
+                            "width": 32,
+                            "name": "reg_op2"
+                          }
+                        }
+                      }
+                    },
+                    {
+                      "kind": "CaseItem",
+                      "patterns": [
+                        {
+                          "kind": "Ident",
+                          "span": {
+                            "line": 33,
+                            "col": 7,
+                            "end_line": 33,
+                            "end_col": 16
+                          },
+                          "width": 1,
+                          "name": "instr_and"
+                        }
+                      ],
+                      "body": {
+                        "kind": "BlockingAssign",
+                        "span": {
+                          "line": 33,
+                          "col": 18,
+                          "end_line": 33,
+                          "end_col": 46
+                        },
+                        "target": {
+                          "kind": "Ident",
+                          "span": {
+                            "line": 33,
+                            "col": 18,
+                            "end_line": 33,
+                            "end_col": 25
+                          },
+                          "width": 32,
+                          "name": "alu_out"
+                        },
+                        "value": {
+                          "kind": "Binary",
+                          "span": {
+                            "line": 33,
+                            "col": 28,
+                            "end_line": 33,
+                            "end_col": 45
+                          },
+                          "width": 32,
+                          "op": "&",
+                          "left": {
+                            "kind": "Ident",
+                            "span": {
+                              "line": 33,
+                              "col": 28,
+                              "end_line": 33,
+                              "end_col": 35
+                            },
+                            "width": 32,
+                            "name": "reg_op1"
+                          },
+                          "right": {
+                            "kind": "Ident",
+                            "span": {
+                              "line": 33,
+                              "col": 38,
+                              "end_line": 33,
+                              "end_col": 45
+                            },
+                            "width": 32,
+                            "name": "reg_op2"
+                          }
+                        }
+                      }
+                    }
+                  ],
+                  "default": null
+                }
+              ]
+            }
+          }
+        ],
+        "generates": [],
+        "others": []
+      }
+    ],
+    "others": []
+  },
+  "lean_blocks": []
+}

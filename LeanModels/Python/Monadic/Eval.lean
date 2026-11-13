@@ -3801,6 +3801,16 @@ theorem twinAgrees_execOpenList_of_each (K : Kont) (m : Module) :
                   | cont => simp [hres, execStmts, toRun_pure, Run.bind]
                   | ret v => simp [hres, execStmts, toRun_pure, Run.bind]
 
+theorem twinAgrees_execOpenList_nil (K : Kont) (m : Module) (st : FrameState) :
+    toRun (execOpenList K m []) st = .ok st .next := by
+  rfl
+
+theorem twinAgrees_execOpenList_nil_world (K : Kont) (m : Module)
+    (locals : REnv) (w : World) :
+    toRun (inWorld locals (execOpenList K m [])) w = .ok w .next := by
+  rw [inWorld_toRun, twinAgrees_execOpenList_nil]
+  rfl
+
 #print axioms evalOpen
 #print axioms execOpen
 #print axioms kont
@@ -3821,5 +3831,7 @@ theorem twinAgrees_execOpenList_of_each (K : Kont) (m : Module) :
 #print axioms twinAgrees_evalOpenList_constants
 #print axioms twinAgrees_evalOpenList_of_each
 #print axioms twinAgrees_execOpenList_of_each
+#print axioms twinAgrees_execOpenList_nil
+#print axioms twinAgrees_execOpenList_nil_world
 
 end LeanModels.Python.Monadic

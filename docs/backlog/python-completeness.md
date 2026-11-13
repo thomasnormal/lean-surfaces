@@ -14181,3 +14181,22 @@ ordinary empty-body call path without unfolding `ExceptT` at every site.
 
 DECIDED: retain try/catch success as a shared boundary theorem; exception paths
 remain separately governed by the existing state-retaining semantics.
+
+## 2026-11-13-pyfoundation-112 — close the empty-body call base case
+
+`Monadic.twinAgrees_execOpenList_nil` proves the fuel-free statement walker
+returns `.next` with unchanged frame state on an empty body. Its world-level
+projection, `twinAgrees_execOpenList_nil_world`, carries that result across the
+nested frame boundary. This is the exact body base case required by ordinary
+call entry before `tryCatch` and call-depth restoration are composed.
+
+| Measurement | Result |
+|---|---|
+| Target | `lake build LeanModels.Python.Monadic.Eval` passed; 11/11 jobs |
+| Theorems | `twinAgrees_execOpenList_nil`, `twinAgrees_execOpenList_nil_world` |
+| Domain | empty statement bodies, arbitrary frame/world state |
+| Semantic change | theorem-only control base case |
+| Remaining debt | compose empty-body base with try/catch and call-depth restoration |
+
+DECIDED: retain the empty-body frame/world equations as the call induction base;
+nonempty body and recursive-call cases remain open.

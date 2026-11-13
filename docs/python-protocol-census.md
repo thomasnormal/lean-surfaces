@@ -65,6 +65,8 @@ frame lift, preserving timeout, refusal, exception, and success projections.
 `Monadic.toRun_tryCatch_ok` specializes the same projection to a successful
 protected action, preserving its returned state and value through the handler
 layer.
+`Monadic.twinAgrees_execOpenList_nil` and its world projection close the empty
+statement-body base case consumed by ordinary call entry.
 
 ## Operator dispatch
 

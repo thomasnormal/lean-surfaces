@@ -980,15 +980,16 @@ def CoreMemDesign.runComb (E : CoreMemDesign) (before current : CoreMemState) :
 
 mutual
 
-def CoreMemDesign.execStmt (E : CoreMemDesign) (env : IEnv) (elems : List (String × Nat))
-    (st : CoreMemState) : PStmt → CoreMemExec
-  | .nbaAssign target value =>
+def CoreMemDesign.execStmtFuel (E : CoreMemDesign) (env : IEnv) (elems : List (String × Nat))
+    (st : CoreMemState) : Nat → PStmt → CoreMemExec
+  | 0, _ => .timeout
+  | fuel + 1, .nbaAssign target value =>
       match E.scalarTarget target with
       | none => .unsupported s!"11.5.1: scalar NBA target '{target}' is undeclared"
       | some width => do
           let v ← E.evalExpr env elems st (some width) value
           E.issueTarget env elems st (.ident target) v
-  | .nbaAssignL target value =>
+  | fuel + 1, .nbaAssignL target value =>
       match target with
       | .ident name =>
           match E.scalarTarget name with
@@ -1003,38 +1004,71 @@ def CoreMemDesign.execStmt (E : CoreMemDesign) (env : IEnv) (elems : List (Strin
               let v ← E.evalExpr env elems st (some md.shape.elemWidth) value
               E.issueTarget env elems st target v
       | _ => .unsupported "11.5.1: memory target is outside the one-rank element tier"
-  | .blockingAssign _ _ | .blockingAssignL _ _ =>
+  | fuel + 1, .blockingAssign _ _ | fuel + 1, .blockingAssignL _ _ =>
       .unsupported "9.2.2.1: blocking assignment in a canonical E edge body"
-  | .ifStmt cond yes no => do
+  | fuel + 1, .ifStmt cond yes no => do
       let cv ← E.evalExpr env elems st (some 1) cond
-      if cv.condTrue then E.execStmt env elems st yes
-      else match no with | none => .ok ([], []) | some s => E.execStmt env elems st s
-  | .block body => E.execStmts env elems st body
-  | .forLoop iterator init condition step body =>
+      if cv.condTrue then E.execStmtFuel env elems st fuel yes
+      else match no with | none => .ok ([], []) | some s => E.execStmtFuel env elems st fuel s
+  | fuel + 1, .block body => E.execStmtsFuel env elems st fuel body
+  | fuel + 1, .forLoop iterator init condition step body =>
       match forValues2 env iterator init condition step with
       | .timeout => .timeout
       | .unsupported e => .unsupported s!"ForLoopStatement: {e}"
-      | .ok values => E.execLoopValues env elems st values body iterator
-  | .caseStmt .. => .unsupported "12.5: case in a canonical memory loop body is outside this slice"
-  | .unsupported kind text => .unsupported s!"{kind}: {text}"
+      | .ok values => E.execLoopValuesFuel env elems st fuel values body iterator
+  | fuel + 1, .caseStmt subject items default? mode check => do
+      if !caseModeInE0 mode then
+        .unsupported s!"12.5.1: {caseModeRefusal mode}"
+      else
+        let sv ← E.evalExpr env elems st none subject
+        match check with
+        | .none =>
+            let selected ← coreMemSelectCase E env elems st sv mode items default?
+            match selected with
+            | none => .ok ([], [])
+            | some body => E.execStmtFuel env elems st fuel body
+        | qualifier =>
+            let n ← coreMemCaseHits E env elems st sv mode items
+            if caseClaimOk qualifier default?.isSome n then
+              let selected ← coreMemSelectCase E env elems st sv mode items default?
+              match selected with
+              | none => .ok ([], [])
+              | some body => E.execStmtFuel env elems st fuel body
+            else
+              .unsupported s!"12.5.3: {caseCheckName qualifier}"
+  | fuel + 1, .unsupported kind text => .unsupported s!"{kind}: {text}"
 
-def CoreMemDesign.execStmts (E : CoreMemDesign) (env : IEnv) (elems : List (String × Nat))
-    (st : CoreMemState) : List PStmt → CoreMemExec
-  | [] => .ok ([], [])
-  | stmt :: rest => do
-      let a ← E.execStmt env elems st stmt
-      let b ← E.execStmts env elems st rest
+def CoreMemDesign.execStmtsFuel (E : CoreMemDesign) (env : IEnv) (elems : List (String × Nat))
+    (st : CoreMemState) : Nat → List PStmt → CoreMemExec
+  | 0, _ => .timeout
+  | fuel + 1, [] => .ok ([], [])
+  | fuel + 1, stmt :: rest => do
+      let a ← E.execStmtFuel env elems st fuel stmt
+      let b ← E.execStmtsFuel env elems st fuel rest
       .ok (CoreMemExec.append a b)
 
-def CoreMemDesign.execLoopValues (E : CoreMemDesign) (env : IEnv) (elems : List (String × Nat))
-    (st : CoreMemState) : List Int → PStmt → String → CoreMemExec
-  | [], _, _ => .ok ([], [])
-  | i :: rest, body, iterator => do
-      let a ← E.execStmt (env.bindVal iterator i) elems st body
-      let b ← E.execLoopValues env elems st rest body iterator
+def CoreMemDesign.execLoopValuesFuel (E : CoreMemDesign) (env : IEnv) (elems : List (String × Nat))
+    (st : CoreMemState) : Nat → List Int → PStmt → String → CoreMemExec
+  | 0, _, _, _ => .timeout
+  | fuel + 1, [], _, _ => .ok ([], [])
+  | fuel + 1, i :: rest, body, iterator => do
+      let a ← E.execStmtFuel (env.bindVal iterator i) elems st fuel body
+      let b ← E.execLoopValuesFuel env elems st fuel rest body iterator
       .ok (CoreMemExec.append a b)
 
 end
+
+def CoreMemDesign.execStmt (E : CoreMemDesign) (env : IEnv) (elems : List (String × Nat))
+    (st : CoreMemState) (stmt : PStmt) : CoreMemExec :=
+  E.execStmtFuel env elems st 4096 stmt
+
+def CoreMemDesign.execStmts (E : CoreMemDesign) (env : IEnv) (elems : List (String × Nat))
+    (st : CoreMemState) (stmts : List PStmt) : CoreMemExec :=
+  E.execStmtsFuel env elems st 4096 stmts
+
+def CoreMemDesign.execLoopValues (E : CoreMemDesign) (env : IEnv) (elems : List (String × Nat))
+    (st : CoreMemState) (values : List Int) (body : PStmt) (iterator : String) : CoreMemExec :=
+  E.execLoopValuesFuel env elems st 4096 values body iterator
 
 /-! ## Slots, scalar E commit, and memory commit -/
 

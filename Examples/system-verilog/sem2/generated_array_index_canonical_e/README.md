@@ -1,9 +1,18 @@
 # Generated fixed-array index wall
 
-The parser retains the generate-for source and refuses the element select
-whose index is a genvar at the symbolic default point:
-`ElementSelect:default-point-index: slot[i] = x`.
+The approved source-preserving extractor retains the generate-for assignment
+as an `ArraySel` whose `GenvarRef` index is substituted by canonical E during
+generate expansion. This keeps the parser's fixed unpacked array source shape
+and applies IEEE 1800-2023 §§7.4.6 and 27.4 at the concrete generated point.
 
-Icarus Verilog 13.0 and Xcelium 24.03-s004 execute the two source rows
-(`y=00000000`, then `y=10100101`), so this is a measured E refusal rather than
-a simulator mismatch.
+The receipt is regenerated with:
+
+```text
+python3 extractors/sv/extract.py --top generated_array_index_canonical_e \
+  --retain-proc-rewrites \
+  -o Examples/system-verilog/sem2/generated_array_index_canonical_e/generated_array_index_canonical_e.sv.json \
+  Examples/system-verilog/sem2/generated_array_index_canonical_e/generated_array_index_canonical_e.sv
+```
+
+Icarus Verilog 13.0 and Xcelium 24.03-s004 execute the same nine rows as E,
+including the first uninitialized value, defaults, and x/z inputs.

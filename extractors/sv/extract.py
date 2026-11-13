@@ -24379,7 +24379,12 @@ def _convert_assignment_expr(sm, expr, span_node=None):
     if type(expr).__name__ != "AssignmentExpression":
         return unsupported(sm, span_node or expr,
                            "AssignmentExpression:" + type(expr).__name__)
-    if _sym_cell_index_point_dependent(expr.left):
+    # Retained procedural assignments keep the parser's source-shaped
+    # ArraySel, so a genvar/parameter index is bound by canonical E at the
+    # generated point (§§7.4.6, 27.4).  The default symbolic path continues
+    # to reject a select folded to slang's default cell.
+    if (_sym_cell_index_point_dependent(expr.left)
+            and not _RETAIN_PROC_REWRITES):
         return unsupported(sm, span_node or expr, "ElementSelect:default-point-index")
     if (_SYM is not None and _sym_runtime_unpacked_lhs(expr.left)
             and not _RETAIN_PROC_REWRITES):
@@ -28194,7 +28199,12 @@ def convert_continuous_assign(sm, m):
     explicit_strength = _continuous_assignment_has_strength(m)
     if type(e).__name__ != "AssignmentExpression":
         return unsupported(sm, m, "ContinuousAssignSymbol:" + type(e).__name__)
-    if _sym_cell_index_point_dependent(e.left):
+    # In the source-preserving canonical-E mode, keep a genvar/parameter
+    # element select as an ArraySel node so the generated expansion can bind
+    # its index at the concrete point.  The established symbolic path still
+    # rejects a default-point-folded fixed-array cell.
+    if (_sym_cell_index_point_dependent(e.left)
+            and not _RETAIN_PROC_REWRITES):
         return unsupported(sm, m, "ElementSelect:default-point-index")
     initialized = _sym_initialized_target_info(e.left) if _SYM is not None else None
     if initialized is not None:

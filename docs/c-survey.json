@@ -10,8 +10,8 @@
   "gcc.c-torture/execute": {
    "not-parsed": 267,
    "oracle-tests-compiler": 1,
-   "passed": 835,
-   "refused-libc": 39,
+   "passed": 836,
+   "refused-libc": 38,
    "refused-ub": 96,
    "refused-unsupported": 616,
    "timeout": 64
@@ -28,8 +28,8 @@
  "counts": {
   "not-parsed": 294,
   "oracle-tests-compiler": 1,
-  "passed": 1006,
-  "refused-libc": 43,
+  "passed": 1007,
+  "refused-libc": 42,
   "refused-ub": 105,
   "refused-unsupported": 699,
   "timeout": 66
@@ -1658,14 +1658,6 @@
    "present": 1,
    "sole": 1,
    "wall": "libc-call: __builtin_isunordered"
-  },
-  {
-   "files": [
-    "ieee/pr119002.c"
-   ],
-   "present": 1,
-   "sole": 1,
-   "wall": "libc-call: __builtin_nanf"
   },
   {
    "files": [
@@ -3644,9 +3636,9 @@
    "wall": "unsupported:va_arg requested unsupported value type 'struct s'"
   }
  ],
- "manifest_hash": "f0160a6cf9f5ad37d9071f2039bd5b346d94c06486e0469bccdfe900bd53e449",
- "measured_at_utc": "2026-11-13T10:22:47Z",
- "measured_commit": "b77a9df21",
+ "manifest_hash": "3a314a4ecf9f4b660f1a64001f535ad338c5706e30ed417ae0bd51ee8d6990f9",
+ "measured_at_utc": "2026-11-13T10:26:36Z",
+ "measured_commit": "db69e48e5",
  "pin": {
   "corpora": [
    "C1",
@@ -19827,8 +19819,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "__builtin_nanf",
-   "dynamic_wall": "libc-call: __builtin_nanf",
+   "detail": "",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "ieee/pr119002.c",
    "sha256": "c400cfaef8076dbb1897ec7572ea228033c053134cf5ec0448429fb3d6ebaeb6",
@@ -19838,7 +19830,7 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",

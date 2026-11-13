@@ -15419,7 +15419,7 @@ restoration.
 
 | Measurement | Result |
 |---|---|
-| Target | `lake build LeanModels.Python.Monadic.Eval` pending for this item |
+| Target | `lake build LeanModels.Python.Monadic.Eval` passed; 11/11 jobs |
 | Theorem | `Monadic.finishCallM_assign_eight_existing_locals_body_ok` |
 | Domain | eight consecutive assignments to existing locals |
 | Semantic change | theorem-only eight-assignment state composition |
@@ -15497,4 +15497,22 @@ and depth restoration.
 | Remaining debt | arbitrary locals and recursive positive-fuel calls |
 
 DECIDED: eight assignment steps now compose through a bare return; arbitrary
+assignment and recursive body adequacy remain open.
+
+## 2026-11-13-pyfoundation-189 — eight-assignment break bridge
+
+`Monadic.finishCallM_assign_eight_existing_locals_break_body_ok` checks eight
+successive assignments `s = 0; t = 1; u = 2; v = 3; w = 4; x = 5; y = 6; z = 7`
+followed by `break`, preserving the updated frame through abrupt flow and depth
+restoration.
+
+| Measurement | Result |
+|---|---|
+| Target | `lake build LeanModels.Python.Monadic.Eval` pending for this item |
+| Theorem | `Monadic.finishCallM_assign_eight_existing_locals_break_body_ok` |
+| Domain | eight consecutive assignments to existing locals followed by break |
+| Semantic change | theorem-only eight-assignment break-flow composition |
+| Remaining debt | arbitrary locals and recursive positive-fuel calls |
+
+DECIDED: eight assignment steps now compose through break flow; arbitrary
 assignment and recursive body adequacy remain open.

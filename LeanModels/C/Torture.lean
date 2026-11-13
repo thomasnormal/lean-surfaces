@@ -322,6 +322,13 @@ def checkedRecordLayout? (fields : List Decl) (layout : RecordLayout) :
   if recordLayoutWellFormed layout &&
       recordLayoutMatchesFields fields layout.fields then some layout else none
 
+#guard recordLayoutMatchesFields
+  [.field (some "a") "int" none default,
+   .record none none [] none default,
+   .field (some "b") "int" none default]
+  [{ name := "a", offsetBits := 0, bitfield := false },
+   { name := "b", offsetBits := 32, bitfield := false }]
+
 /-! A checked, identity-backed aggregate fact.  The type key is only the
 spelling Clang itself attached to the declaration (`struct S`/`union U`);
 the fact is admitted only after the declaration id and every field have

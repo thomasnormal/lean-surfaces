@@ -6,9 +6,9 @@ This table is generated from the pinned public-design census receipts. It measur
 
 | design | pinned source | unsupported nodes | loads into E | first E wall |
 | --- | --- | ---: | --- | --- |
-| `prim_fifo_sync` | OpenTitan 0a6ff685 | 37 | no | `GenerateIf:Initial (ASSERT_INIT, line 45)` |
+| `prim_fifo_sync` | OpenTitan 0a6ff685 | 37 | no | `Constant: CallExpression (DepthW, line 22)` |
 | `prim_arbiter_ppc` | OpenTitan 0a6ff685 | 11 | no | `T2:Initial (CheckNGreaterZero_A, line 57)` |
-| `prim_packer` | OpenTitan 0a6ff685 | 20 | no | `GenerateIf:Initial (ASSERT_INIT, line 356)` |
+| `prim_packer` | OpenTitan 0a6ff685 | 20 | no | `Constant: CallExpression (IdxW, line 44)` |
 | `CV32E40P` | openhwgroup v1.0.1 / 6148cf5 | 574 | no | `AlwaysPosedge:edge` |
 | `Ibex` | lowRISC d513671d | 396 | no | `AlwaysLatch:unknown process kind` |
 | `PicoRV32` | YosysHQ ef203c2b | 70 | loader yes; E no | `Instantiate: cpuregs unpacked memory` |

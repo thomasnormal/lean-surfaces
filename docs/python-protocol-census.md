@@ -42,7 +42,10 @@ the continuation state and positive remaining fuel, lifts to the whole list.
 `Monadic.twinAgrees_execOpenList_of_each` supplies the matching statement
 sequencing theorem, preserving the updated state after `.next` and the early
 `.brk`, `.cont`, `.ret`, exception, timeout, and refusal flows. Calls and
-stateful script control remain the next adequacy boundary.
+stateful script control remain the next adequacy boundary. At the call entry,
+`Monadic.twinAgrees_callIn_missing_function` now closes the preflight branch:
+for a positive fuel and an absent function table entry, both interpreters
+return the same depth-normalized `NameError` without changing the world.
 
 ## Operator dispatch
 

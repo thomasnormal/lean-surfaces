@@ -2916,6 +2916,24 @@ theorem callInMono_eq_ofHalt (m : Module) (fuel : Nat) (w : World)
   · cases l <;> rfl
   · cases r <;> rfl
 
+/-! ### A CALL-BOUNDARY ADEQUACY SLICE
+
+Before body execution, both interpreters perform the same missing-function
+check. This branch is useful independently of the still-open recursive call
+bridge: it fixes the entry depth and preserves the complete world while
+returning CPython's `NameError`. -/
+theorem twinAgrees_callIn_missing_function (m : Module) (fuel : Nat) (w : World)
+    (fname : String) (args : Array RVal) (hfuel : 0 < fuel)
+    (hfind : findFunction m fname = none) :
+    callInMono m fuel w fname args =
+      .exn { w with callDepth := pythonTopCallDepth } (.nameError fname) := by
+  cases fuel with
+  | zero => omega
+  | succ fuel =>
+    simp [callInMono, callInM, kont, hfind, toRun, pythonTopCallDepth,
+      raisePy, raiseIn, throw, throwThe, MonadExceptOf.throw, ExceptT.mk,
+      StateT.pure, Except.pure, pure]
+
 /-- The §5.2 CLASS, present exactly when the run REFUSED. `none` is not a
 default: it is the statement that this run did not refuse. -/
 def refusalClass {α : Type} :
@@ -3731,6 +3749,7 @@ theorem twinAgrees_execOpenList_of_each (K : Kont) (m : Module) :
 #print axioms kont
 #print axioms callInMono
 #print axioms callInMono_eq_ofHalt
+#print axioms twinAgrees_callIn_missing_function
 #print axioms refusalClass_isSome_iff
 #print axioms toRun_ofRun
 #print axioms ofRun_toRun_normalises

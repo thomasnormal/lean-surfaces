@@ -14012,3 +14012,23 @@ stateful script control remain explicit obligations.
 
 DECIDED: retain statement sequencing as one shared control theorem; no claim of
 whole-interpreter adequacy is made until calls and scripts are related.
+
+## 2026-11-13-pyfoundation-103 — close the missing-function call preflight
+
+`Monadic.twinAgrees_callIn_missing_function` relates the runner's call entry to
+the trunk on the first call branch. With positive fuel and
+`findFunction m fname = none`, both surfaces normalize the entry depth and
+return the same `NameError` while retaining the complete world. Body execution,
+recursive frame entry, and stateful script calls remain separate adequacy
+obligations.
+
+| Measurement | Result |
+|---|---|
+| Target | `lake build LeanModels.Python.Monadic.Eval` passed; 11/11 jobs |
+| Theorem | `Monadic.twinAgrees_callIn_missing_function` |
+| Domain | absent function table entries and positive fuel |
+| Semantic change | theorem only; no evaluator behavior change |
+| Remaining debt | function preflight errors beyond missing names, body calls, and scripts |
+
+DECIDED: keep the call preflight bridge explicit and depth-normalized; do not
+claim recursive call adequacy from this branch alone.

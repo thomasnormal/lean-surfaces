@@ -14616,6 +14616,23 @@ world projection returns normal flow and restores depth.
 DECIDED: assignment sequencing is now checked for empty locals; arbitrary
 locals and recursive body adequacy remain open.
 
+## 2026-11-13-pyfoundation-142 — existing-local assignment bridge
+
+`Monadic.finishCallM_assign_existing_local_body_ok` checks `x = 1` when `x`
+already exists in the frame locals. The local update remains within the frame
+while the projected world returns normal flow and restores depth.
+
+| Measurement | Result |
+|---|---|
+| Target | `lake build LeanModels.Python.Monadic.Eval` passed; 11/11 jobs |
+| Theorem | `Monadic.finishCallM_assign_existing_local_body_ok` |
+| Domain | one name assignment with an existing local binding |
+| Semantic change | theorem-only assignment-state composition |
+| Remaining debt | arbitrary locals and recursive positive-fuel calls |
+
+DECIDED: existing-local assignment is now checked; arbitrary assignment and
+recursive body adequacy remain open.
+
 ## 2026-11-13-pyfoundation-135 — four-statement early-return bridge
 
 `Monadic.finishCallM_three_pass_ret_body_ok` checks three normal statements

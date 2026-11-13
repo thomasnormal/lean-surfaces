@@ -200,6 +200,9 @@ to four normal statements followed by a return.
 sequencing bridge with an explicit empty frame-local environment; the body
 updates its local binding and still returns normal after projection to `World`.
 
+`Monadic.finishCallM_assign_existing_local_body_ok` covers assignment to an
+already-bound local, preserving the same normal-flow and depth result.
+
 `Monadic.finishCallM_three_pass_ret_body_ok` extends early-return sequencing
 to three normal statements followed by a return.
 

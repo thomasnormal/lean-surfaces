@@ -746,7 +746,27 @@ def functionCallFree (f : LeanModels.C.FunctionDefn) : Bool :=
   | none => false
   | some body =>
       let allowed := (f.params.filterMap Decl.identity?) ++ Stmt.localIds body
-      (body.substmts.flatMap Stmt.ownExprs).all (Expr.localOnly allowed)
+      let pureBuiltin : Expr → Bool
+        | .call callee args .. =>
+            match calleeName callee with
+            | some nm =>
+                (nm == "__builtin_fabs" || nm == "__builtin_fabsf" ||
+                 nm == "__builtin_fabsl" || nm == "__builtin_isinf" ||
+                 nm == "__builtin_isnan" || nm == "__builtin_isfinite" ||
+                 nm == "__builtin_signbit") &&
+                args.all (Expr.localOnly allowed)
+            | none => false
+        | _ => false
+      let localPure : Expr → Bool := fun e =>
+        e.subexprs.all fun node =>
+          match node with
+          | .call .. => pureBuiltin node
+          | .member .. | .index .. => false
+          | .unop op .. => op != "*" && op != "&"
+          | .declRef (some id) .. => allowed.contains id
+          | .declRef none .. => false
+          | _ => true
+      (body.substmts.flatMap Stmt.ownExprs).all localPure
 
 /-- §6.5.3.3 — call a defined function with already-evaluated arguments.
 
@@ -1346,6 +1366,25 @@ def callFn : Nat → Program → LeanModels.C.FunctionDefn → List CVal → Exe
               | .float32 _ | .float64 _ => pure (.int IntTy.int_ (if result then 1 else 0))
               | _ => refuseUnsupported s!"{nm}: expected a binary floating argument"
           | _ => refuseUnsupported s!"{nm}: wrong argument count"
+        let runFloatAbs : String → List CVal → ExecM CVal := fun nm vs =>
+          match vs with
+          | [.float32 f] =>
+              if nm == "__builtin_fabsf" then pure (.float32 f.abs)
+              else refuseUnsupported s!"{nm}: expected binary64 argument"
+          | [.float64 f] =>
+              if nm == "__builtin_fabs" then pure (.float64 f.abs)
+              else refuseUnsupported s!"{nm}: expected binary32 argument"
+          | [_] => refuseUnsupported s!"{nm}: unsupported floating argument"
+          | _ => refuseUnsupported s!"{nm}: wrong argument count"
+        let runFloatNan : String → List CVal → ExecM CVal := fun nm vs =>
+          match vs with
+          | [_] =>
+              if nm == "__builtin_nanf" then
+                pure (.float32 (Float32.Model.ofBits (UInt32.ofNat 0x7fc00000)))
+              else if nm == "__builtin_nan" then
+                pure (.float64 (Float.Model.ofBits (UInt64.ofNat 0x7ff8000000000000)))
+              else refuseUnsupported s!"{nm}: long double NaN is outside the profile"
+          | _ => refuseUnsupported s!"{nm}: wrong argument count"
         let runAbs : List CVal → ExecM CVal := fun vs =>
           match vs with
           | [value] => do
@@ -1466,6 +1505,8 @@ def callFn : Nat → Program → LeanModels.C.FunctionDefn → List CVal → Exe
                 runBswap32 vs
               else if nm == "__builtin_bswap64" then
                 runBswap64 vs
+                    else if nm == "__builtin_fabs" || nm == "__builtin_fabsf" || nm == "__builtin_fabsl" then runFloatAbs nm vs
+                    else if nm == "__builtin_nanf" || nm == "__builtin_nan" || nm == "__builtin_nanl" then runFloatNan nm vs
                     else if nm == "__builtin_isfinite" || nm == "__builtin_isnan" || nm == "__builtin_isinf" || nm == "__builtin_signbit" then runFloatClass nm vs
                     else if nm == "__builtin_inf" || nm == "__builtin_inff" || nm == "__builtin_infl" || nm == "__builtin_huge_val" || nm == "__builtin_huge_valf" || nm == "__builtin_huge_vall" then
                       runInf nm vs
@@ -1544,6 +1585,8 @@ def callFn : Nat → Program → LeanModels.C.FunctionDefn → List CVal → Exe
               else if nm == "__builtin_bswap16" then runBswap16 vs
               else if nm == "__builtin_bswap32" then runBswap32 vs
               else if nm == "__builtin_bswap64" then runBswap64 vs
+              else if nm == "__builtin_fabs" || nm == "__builtin_fabsf" || nm == "__builtin_fabsl" then runFloatAbs nm vs
+              else if nm == "__builtin_nanf" || nm == "__builtin_nan" || nm == "__builtin_nanl" then runFloatNan nm vs
               else if nm == "__builtin_isfinite" || nm == "__builtin_isnan" || nm == "__builtin_isinf" || nm == "__builtin_signbit" then runFloatClass nm vs
               else if nm == "__builtin_inf" || nm == "__builtin_inff" || nm == "__builtin_infl" || nm == "__builtin_huge_val" || nm == "__builtin_huge_valf" || nm == "__builtin_huge_vall" then runInf nm vs
               else if nm == "__builtin_abs" || nm == "abs" then runAbs vs

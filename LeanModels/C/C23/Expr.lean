@@ -887,7 +887,16 @@ first (1837 + 405 sites), then the short-circuits whose rule is not
 The check is conservative and happens before either argument runs. -/
 def mayWrite (ctx : Ctx) (e : Expr) : Bool :=
   e.subexprs.any fun n => match n with
-    | .call callee .. => !ctx.callPure callee
+    | .call callee .. =>
+        let builtinPure := match calleeName callee with
+          | some nm => nm == "__builtin_fabs" || nm == "__builtin_fabsf" ||
+              nm == "__builtin_isinf" || nm == "__builtin_isnan" ||
+              nm == "__builtin_isfinite" || nm == "__builtin_signbit" ||
+              nm == "__builtin_inf" || nm == "__builtin_inff" ||
+              nm == "__builtin_huge_val" || nm == "__builtin_huge_valf" ||
+              nm == "__builtin_nanf" || nm == "__builtin_nan"
+          | none => false
+        !ctx.callPure callee && !builtinPure
     | .compoundAssign .. => true
     | .unop op .. => op == "++" || op == "--"
     | _ => false

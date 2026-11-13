@@ -14988,3 +14988,20 @@ statement, preserving normal completion and depth restoration.
 
 DECIDED: four assignment steps now compose through a normal expression flow;
 arbitrary assignment and recursive body adequacy remain open.
+
+## 2026-11-13-pyfoundation-160 — four-assignment bare-return bridge
+
+`Monadic.finishCallM_assign_four_existing_locals_ret_none_body_ok` checks the
+four local updates `w = 1; x = 2; y = 3; z = 4` followed by a bare `return`,
+preserving normal frame state and depth restoration.
+
+| Measurement | Result |
+|---|---|
+| Target | `lake build LeanModels.Python.Monadic.Eval` pending for this item |
+| Theorem | `Monadic.finishCallM_assign_four_existing_locals_ret_none_body_ok` |
+| Domain | four consecutive assignments to existing locals followed by bare return |
+| Semantic change | theorem-only multi-assignment bare-return composition |
+| Remaining debt | arbitrary locals and recursive positive-fuel calls |
+
+DECIDED: four assignment steps now compose through a bare return; arbitrary
+assignment and recursive body adequacy remain open.

@@ -2,10 +2,10 @@
 
 Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manifest.
 
-- verdicts: 989/2214 MATCH (passed 989, failed 0, oracle 0)
-- manifest SHA-256: `ea67cde09c94ace937630e1029f9b8ac54b884ae03bfc43f05e1ebc75d445643`
-- measured commit: `e24af2a90`
-- measured at: `2026-11-13T09:33:39Z`
+- verdicts: 992/2214 MATCH (passed 992, failed 0, oracle 0)
+- manifest SHA-256: `87f487fcb8cc131926a3216c7cd55a5ba5d7cc561e55e9fd046b717a082822e7`
+- measured commit: `087227a4d`
+- measured at: `2026-11-13T09:37:22Z`
 
 ## Verdict counts
 
@@ -13,10 +13,10 @@ Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manife
 | --- | ---: |
 | `not-parsed` | 294 |
 | `oracle-tests-compiler` | 1 |
-| `passed` | 989 |
+| `passed` | 992 |
 | `refused-libc` | 55 |
 | `refused-ub` | 105 |
-| `refused-unsupported` | 704 |
+| `refused-unsupported` | 701 |
 | `timeout` | 66 |
 
 ## Counts by corpus
@@ -30,10 +30,10 @@ Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manife
 | `c-testsuite/single-exec` | `timeout` | 2 |
 | `gcc.c-torture/execute` | `not-parsed` | 267 |
 | `gcc.c-torture/execute` | `oracle-tests-compiler` | 1 |
-| `gcc.c-torture/execute` | `passed` | 819 |
+| `gcc.c-torture/execute` | `passed` | 822 |
 | `gcc.c-torture/execute` | `refused-libc` | 51 |
 | `gcc.c-torture/execute` | `refused-ub` | 96 |
-| `gcc.c-torture/execute` | `refused-unsupported` | 620 |
+| `gcc.c-torture/execute` | `refused-unsupported` | 617 |
 | `gcc.c-torture/execute` | `timeout` | 64 |
 | `gcc.c23-run` | `not-parsed` | 27 |
 | `gcc.c23-run` | `passed` | 3 |
@@ -472,7 +472,6 @@ The run's first refusal, normalized by construct; `sole` counts rows whose first
 | `unsupported:no layout for declared type 'enum fred'` | 1 | 1 | 00170.c |
 | `unsupported:no layout for declared type 'gfc_array_i4'` | 1 | 1 | 20090113-1.c |
 | `unsupported:no layout for declared type 'hexdouble'` | 1 | 1 | ieee/unsafe-fp-assoc-1.c |
-| `unsupported:no layout for declared type 'i386_operand_type'` | 1 | 1 | pr40493.c |
 | `unsupported:no layout for declared type 'info_t'` | 1 | 1 | 20100430-1.c |
 | `unsupported:no layout for declared type 'int (*(*)(int, int))(int, int)'` | 1 | 1 | 00124.c |
 | `unsupported:no layout for declared type 'int (*)(int, int)'` | 1 | 1 | 991112-1.c |
@@ -481,10 +480,8 @@ The run's first refusal, normalized by construct; `sole` counts rows whose first
 | `unsupported:no layout for declared type 'int32_t'` | 1 | 1 | 00104.c |
 | `unsupported:no layout for declared type 'int[len][len]'` | 1 | 1 | 20221006-1.c |
 | `unsupported:no layout for declared type 'io'` | 1 | 1 | 20031201-1.c |
-| `unsupported:no layout for declared type 'material_type'` | 1 | 1 | 991019-1.c |
 | `unsupported:no layout for declared type 'mp_int'` | 1 | 1 | 20180226-1.c |
 | `unsupported:no layout for declared type 'neon_s8'` | 1 | 1 | pr42833.c |
-| `unsupported:no layout for declared type 'object'` | 1 | 1 | 980223.c |
 | `unsupported:no layout for declared type 's'` | 1 | 1 | 00046.c |
 | `unsupported:no layout for declared type 'spinlock_t'` | 1 | 1 | zero-struct-2.c |
 | `unsupported:no layout for declared type 'struc'` | 1 | 1 | 20001101.c |

@@ -10,10 +10,10 @@
   "gcc.c-torture/execute": {
    "not-parsed": 267,
    "oracle-tests-compiler": 1,
-   "passed": 819,
+   "passed": 822,
    "refused-libc": 51,
    "refused-ub": 96,
-   "refused-unsupported": 620,
+   "refused-unsupported": 617,
    "timeout": 64
   },
   "gcc.c23-run": {
@@ -28,10 +28,10 @@
  "counts": {
   "not-parsed": 294,
   "oracle-tests-compiler": 1,
-  "passed": 989,
+  "passed": 992,
   "refused-libc": 55,
   "refused-ub": 105,
-  "refused-unsupported": 704,
+  "refused-unsupported": 701,
   "timeout": 66
  },
  "dynamic_wall_ranking": [
@@ -2279,14 +2279,6 @@
   },
   {
    "files": [
-    "pr40493.c"
-   ],
-   "present": 1,
-   "sole": 1,
-   "wall": "unsupported:no layout for declared type 'i386_operand_type'"
-  },
-  {
-   "files": [
     "20100430-1.c"
    ],
    "present": 1,
@@ -2351,14 +2343,6 @@
   },
   {
    "files": [
-    "991019-1.c"
-   ],
-   "present": 1,
-   "sole": 1,
-   "wall": "unsupported:no layout for declared type 'material_type'"
-  },
-  {
-   "files": [
     "20180226-1.c"
    ],
    "present": 1,
@@ -2372,14 +2356,6 @@
    "present": 1,
    "sole": 1,
    "wall": "unsupported:no layout for declared type 'neon_s8'"
-  },
-  {
-   "files": [
-    "980223.c"
-   ],
-   "present": 1,
-   "sole": 1,
-   "wall": "unsupported:no layout for declared type 'object'"
   },
   {
    "files": [
@@ -3710,9 +3686,9 @@
    "wall": "unsupported:va_arg requested unsupported value type 'struct s'"
   }
  ],
- "manifest_hash": "ea67cde09c94ace937630e1029f9b8ac54b884ae03bfc43f05e1ebc75d445643",
- "measured_at_utc": "2026-11-13T09:33:39Z",
- "measured_commit": "e24af2a90",
+ "manifest_hash": "87f487fcb8cc131926a3216c7cd55a5ba5d7cc561e55e9fd046b717a082822e7",
+ "measured_at_utc": "2026-11-13T09:37:22Z",
+ "measured_commit": "087227a4d",
  "pin": {
   "corpora": [
    "C1",
@@ -14337,15 +14313,15 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "no layout for declared type 'object'",
-   "dynamic_wall": "unsupported:no layout for declared type 'object'",
+   "detail": "",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "980223.c",
    "sha256": "976fe57f96fd37a3cf9d4bb94bb3b1cde8a05b8a6892799c576c795e99eb915f",
    "static_walls": [
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -15010,15 +14986,15 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "no layout for declared type 'material_type'",
-   "dynamic_wall": "unsupported:no layout for declared type 'material_type'",
+   "detail": "",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "991019-1.c",
    "sha256": "2d2eb0c511572590b8dafc4df6a841ebcdde0919f6d8129cf439b58813752df7",
    "static_walls": [
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -23781,15 +23757,15 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "no layout for declared type 'i386_operand_type'",
-   "dynamic_wall": "unsupported:no layout for declared type 'i386_operand_type'",
+   "detail": "",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "pr40493.c",
    "sha256": "546c75933657d9c8a094368737c144440b1dabb5e9bd1b33489093949569760a",
    "static_walls": [
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",

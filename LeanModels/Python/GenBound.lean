@@ -529,12 +529,14 @@ equational form (the guards are the interpreter's own, in its own order);
 `callIn_genCall`'s twin for the nested-def half of the tier. -/
 theorem callClosure_genCall {m : Module} {fuel : Nat} {w : World} {name : String}
     {params : Array Param} {body : Array Stmt} {captured : REnv}
-    {args : Array RVal} (harity : arityOk params args.size = true) :
+    {args : Array RVal} (harity : arityOk params args.size = true)
+    (hdepth : ¬ pythonFrameFull w.callDepth) :
     callClosure m (fuel + 1) w name params true true true body captured args
       = .ok { w with heap := w.heap.push (closureGenObj name params body captured args) }
           (.ref w.heap.size) := by
   rw [callClosure]
-  simp [harity, closureGenObj]
+  simp [harity, closureGenObj, pythonFrameFull]
+  simpa [pythonFrameFull] using hdepth
 
 /-- **A generator-closure call is a value with a specification** —
 `EvalsIn.genCall`'s closure twin. The callee name resolves in the frame's
@@ -552,6 +554,7 @@ theorem EvalsIn.closureGenCall {m : Module} {st : FrameState} {fname : String}
     -- H7 cells: a capture list with no CELL keys resolves to itself
     (hnc : cellsFor st.world.heap st.locals cap = .ok cap)
     (harity : arityOk ps vs.length = true)
+    (hdepth : ¬ pythonFrameFull st.world.callDepth)
     (hargs : EvalsToList m st argEs.toList vs)
     (hstar : fname ≠ starArgBuiltinName := by decide)
     (hflat : flattenStarCallArgs vs = vs := by rfl) :
@@ -565,7 +568,7 @@ theorem EvalsIn.closureGenCall {m : Module} {st : FrameState} {fname : String}
   obtain ⟨F'', rfl, hF''⟩ := succ_le_dest hF'
   have hcall := callClosure_genCall (m := m) (fuel := F'') (w := st.world) (name := nm)
     (params := ps) (body := bd) (captured := cap) (args := vs.toArray)
-    (by simpa using harity)
+    (by simpa using harity) hdepth
   rw [evalExpr]
   simp only [Array.isEmpty, Array.size_empty, hlocal, ha (F'' + 1) (by omega),
     Run.ok_bind, hnotfree, if_neg, Bool.false_eq_true, not_false_eq_true, hobj,

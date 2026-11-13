@@ -380,6 +380,18 @@ theorem ite {c : Prop} [Decidable c] {x y z u : Run World α}
   · rw [if_pos hc, if_pos hc]; exact ht hc
   · rw [if_neg hc, if_neg hc]; exact he hc
 
+theorem ite₂ {c d : Prop} [Decidable c] [Decidable d]
+    {x y z u : Run World α} (hcd : c ↔ d)
+    (ht : c → PBW a o₀ o x y) (he : ¬c → PBW a o₀ o z u) :
+    PBW a o₀ o (if c then x else z) (if d then y else u) := by
+  by_cases hc : c
+  · have hd : d := hcd.mp hc
+    rw [if_pos hc, if_pos hd]
+    exact ht hc
+  · have hd : ¬d := fun h => hc (hcd.mpr h)
+    rw [if_neg hc, if_neg hd]
+    exact he hc
+
 theorem finishCallAt (depth : Nat) {x y : Run World α}
     (h : PBW a o₀ o x y) :
     PBW a o₀ o (Run.finishCallAt depth x) (Run.finishCallAt depth y) := by
@@ -677,6 +689,23 @@ theorem Heap.get?_swapAt_twin {h : Heap} {pa b : Addr} {o₀ o : Obj}
     exact Or.inr ⟨q, l₀, c₀, l₁, c₁, hslot,
       Heap.get?_swapAt_self (Heap.lt_size_of_get? hslot) _⟩
   · exact Or.inl (Heap.get?_swapAt_ne hba)
+
+theorem envHasGenerator_swapAt {h : Heap} {pa : Addr} {o₀ o : Obj}
+    (hslot : Heap.get? h pa = some o₀) (htwin : PayloadTwin o₀ o)
+    (env : REnv) :
+    envHasGenerator (Heap.swapAt h pa o) env = envHasGenerator h env := by
+  induction env with
+  | nil => rfl
+  | cons kv rest ih =>
+      cases kv with
+      | mk name v =>
+          cases v with
+          | ref b =>
+              rcases Heap.get?_swapAt_twin (b := b) hslot htwin with heq |
+                ⟨q, l₀, c₀, l₁, c₁, h₀, h₁⟩
+              · simp [envHasGenerator, heq, ih]
+              · simp [envHasGenerator, h₀, h₁, ih]
+          | _ => simp [envHasGenerator, ih]
 
 /-- Genexp creation observes the receiver's kind, not a generator payload. -/
 theorem genExpCreationRun_swapAt {h : Heap} {pa : Addr} {o₀ o : Obj}
@@ -3785,25 +3814,33 @@ theorem pbExecForList_succ (htwin : PayloadTwin o₀ o) (ih : PBAll pa o₀ o fu
   · rw [h1, h2]
     exact PBF.ite (fun _ => PBF.unsupported) (fun _ => ihForGen m st target b body hslot)
 
-theorem pbCallClosure_succ (ih : PBAll pa o₀ o fuel) : PBCallClosure pa o₀ o (fuel + 1) := by
+theorem pbCallClosure_succ (htwin : PayloadTwin o₀ o)
+    (ih : PBAll pa o₀ o fuel) : PBCallClosure pa o₀ o (fuel + 1) := by
   obtain ⟨-, -, -, -, -, ihSs, -⟩ := ih
   intro m w name params ao lo ig body cap args hslot
   simp only [callClosure]
   refine PBW.ite (fun _ => PBW.unsupported) fun _ => ?_
   refine PBW.ite (fun _ => PBW.unsupported) fun _ => ?_
   refine PBW.ite (fun _ => PBW.exn hslot _) fun _ => ?_
-  refine PBW.ite (fun _ => PBW.push hslot) fun _ => ?_
-  refine PBW.ite (fun _ => PBW.exn hslot _) fun _ => ?_
-  refine PBW.leaveCallDepth ?_
-  refine PBF.toWorld ?_
-  refine PBF.bind (ihSs m ⟨{ w with callDepth := w.callDepth + 1 },
-    mkCallEnv params args ++ cap⟩ body.toList hslot)
-    fun s flow _ hs => ?_
-  cases flow with
-  | ret v => exact PBF.ok hs _
-  | next => exact PBF.ok hs _
-  | brk => exact PBF.unsupported
-  | cont => exact PBF.unsupported
+  refine PBW.ite (fun _ => ?_) fun _ => ?_
+  · refine PBW.ite (fun _ => PBW.exn hslot _) (fun _ => PBW.push hslot)
+  · refine PBW.ite (fun _ => PBW.exn (o := o) hslot _) fun _ => ?_
+    refine PBW.ite₂ (c := (envHasGenerator w.heap cap &&
+      decide (pythonRecursionFull (w.callDepth + 1))) = true)
+      (d := (envHasGenerator (Heap.swapAt w.heap pa o) cap &&
+      decide (pythonRecursionFull (w.callDepth + 1))) = true) ?_
+      (fun _ => PBW.exn (o := o) hslot .recursionError) fun _ => ?_
+    · simp [envHasGenerator_swapAt hslot htwin]
+    refine PBW.leaveCallDepth ?_
+    refine PBF.toWorld ?_
+    refine PBF.bind (ihSs m ⟨{ w with callDepth := w.callDepth + 1 },
+      mkCallEnv params args ++ cap⟩ body.toList hslot)
+      fun s flow _ hs => ?_
+    cases flow with
+    | ret v => exact PBF.ok hs _
+    | next => exact PBF.ok hs _
+    | brk => exact PBF.unsupported
+    | cont => exact PBF.unsupported
 
 theorem pbCallIn_succ (htwin : PayloadTwin o₀ o) (ih : PBAll pa o₀ o fuel) : PBCallIn pa o₀ o (fuel + 1) := by
   obtain ⟨-, -, -, -, -, ihSs, -⟩ := ih
@@ -5113,7 +5150,11 @@ theorem pbEvalExpr_succ (htwin : PayloadTwin o₀ o) (ih : PBAll pa o₀ o fuel)
                     refine PBF.ite (fun _ => PBF.ok hslot RVal.notImplemented) (fun _ => ?_)
                     exact PBF.ite (fun _ => PBF.ok hslot (RVal.callable id)) (fun _ =>
                       PBF.ite (fun _ => PBF.unsupported) (fun _ =>
-                        PBF.ite (fun _ => PBF.exn hslot _) (fun _ => PBF.unsupported)))
+                      PBF.ite (c := (moduleGlobals m).2 = true)
+                        (fun _ => PBF.bind (PBF.liftRes hslot
+                          (nameErrorRecursionCheck st.world.callDepth))
+                          (fun s _ _ hs => PBF.exn hs _))
+                        (fun _ => PBF.unsupported)))
   | binOp l op r sp =>
       simp only [evalExpr]
       refine PBF.bind (ihE m st l hslot) fun s1 a _ hs1 => ?_
@@ -6793,7 +6834,7 @@ theorem pbAll (htwin : PayloadTwin o₀ o) : ∀ (fuel : Nat), PBAll pa o₀ o f
         pbExecForList_succ htwin ihn, pbExecAttrCall_succ htwin ihn,
         pbStepIter_succ htwin ihn, pbExecGen_succ htwin ihn,
         pbExecForGen_succ htwin ihn, pbDrainIter_succ ihn,
-        pbAnyAllIter_succ htwin ihn, pbCallClosure_succ ihn,
+        pbAnyAllIter_succ htwin ihn, pbCallClosure_succ htwin ihn,
         pbListCompIfs_succ htwin ihn, pbListCompStep_succ htwin ihn⟩
 
 end Arms

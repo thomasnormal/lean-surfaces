@@ -9277,7 +9277,8 @@ def evalExpr (m : Module) (fuel : Nat) (st : FrameState) (e : Expr) :
                else if isLoweredBuiltinName id then
                  .unsupported (unmodelledBuiltinMsg id)
                else if (moduleGlobals m).2 then
-                 .exn st (.nameError id)
+                 Run.liftRes st (nameErrorRecursionCheck st.world.callDepth) ⤳ fun st _ =>
+                   .exn st (.nameError id)
                else
                  .unsupported s!"name '{id}' may be bound by an out-of-tier module-level statement")
     | .binOp l op r _ =>

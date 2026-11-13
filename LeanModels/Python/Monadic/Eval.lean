@@ -1114,7 +1114,9 @@ def evalOpen (K : Kont) (m : Module) : Expr → SemF RVal
               if id == "Ellipsis" then pure .ellipsis
               else if id == "NotImplemented" then pure .notImplemented
               else if isPyBuiltinName id then pure (.callable id)
-              else if (moduleGlobals m).2 then raisePy (.nameError id)
+              else if (moduleGlobals m).2 then do
+                let _ ← liftRes (nameErrorRecursionCheck (← get).world.callDepth)
+                raisePy (.nameError id)
               else refuse s!"name '{id}' may be bound by an out-of-tier module-level statement"
   | .binOp l op r _ => do
       let a ← evalOpen K m l

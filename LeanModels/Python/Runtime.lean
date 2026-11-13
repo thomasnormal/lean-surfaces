@@ -336,6 +336,12 @@ checked before dispatch; frame entry fails only when the current count is
 already at the limit. -/
 abbrev pythonFrameFull (depth : Nat) : Prop := depth >= pythonRecursionLimit
 
+/-- Constructing the diagnostic for an unbound name reaches CPython's C error
+path. At this boundary the active Python frame is already full, so the
+diagnostic must raise `RecursionError` rather than fabricate `NameError`. -/
+def nameErrorRecursionCheck (depth : Nat) : Res Unit :=
+  if pythonFrameFull depth then .exn .recursionError else .ok ()
+
 /-! At the pinned boundary a Python frame may still enter while the nested
 C-call unit is already full. This is the small arithmetic fact behind the
 separate recursive-entry workers used by both interpreters. -/

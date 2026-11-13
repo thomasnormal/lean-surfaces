@@ -37,3 +37,9 @@ typed generate guards at their own widths, so the current E count is
 **549/684**.  `dyn32` now follows the unsigned 32-bit base rule and its only
 remaining difference is the declared Xcelium partial-overhang behavior; it is
 not counted as an E-MATCH.
+
+The three historical measured-divergence rows are now covered by
+`harness/sv/check_e_divergences.py`: `fold_cgrow_n33` and `fold_cgrow_n40`
+are ordinary E/simulator matches, while `dyn32` is an E/Icarus match with the
+registered Xcelium partial-overhang departure.  The gate treats any new E
+disagreement or refusal as a failure.

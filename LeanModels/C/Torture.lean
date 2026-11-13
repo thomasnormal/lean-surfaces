@@ -124,7 +124,7 @@ def torScalarSize : CType → Option Nat
   | "long" | "unsigned long" | "long long" | "unsigned long long"
   | "long int" | "unsigned long int" => some 8
   | "int64_t" | "uint64_t" => some 8
-  | "__int128" | "unsigned __int128" => some 16
+  | "__int128" | "unsigned __int128" | "__uint128_t" => some 16
   | t => if t.startsWith "enum " then some 4
          else if t.endsWith "*" || LeanModels.C.isConstPointerToArray t
          then some 8 else none

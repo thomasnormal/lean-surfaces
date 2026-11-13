@@ -228,17 +228,6 @@
                 }
               }
             ]
-          },
-          {
-            "kind": "Unsupported",
-            "span": {
-              "line": 7,
-              "col": 8,
-              "end_line": 7,
-              "end_col": 19
-            },
-            "sv_kind": "NetSymbol:net-z",
-            "text": "pcpi_mul_wr"
           }
         ],
         "processes": [
@@ -290,7 +279,32 @@
           }
         ],
         "generates": [],
-        "others": []
+        "others": [
+          {
+            "kind": "Unsupported",
+            "span": {
+              "line": 7,
+              "col": 8,
+              "end_line": 7,
+              "end_col": 19
+            },
+            "sv_kind": "NetSymbol:net-z",
+            "text": "pcpi_mul_wr",
+            "metadata": {
+              "name": "pcpi_mul_wr",
+              "width": {
+                "kind": "PackedType",
+                "packed": [],
+                "resolved": 1
+              },
+              "net_kind": "Wire",
+              "signed": false,
+              "four_state": true,
+              "is_net": true,
+              "driver_reason": "no driver: the net reads z"
+            }
+          }
+        ]
       }
     ],
     "others": []

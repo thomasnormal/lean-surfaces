@@ -975,6 +975,19 @@ class NetsAsVariables(Base):
         self.refused_net("wire [3:0] w; assign w[2:0] = a[2:0]; assign y = w;")
         self.refused_net("wire [3:0] w; assign w[0] = a[0]; assign w[2] = a[2]; assign y = w;")
 
+    def test_undriven_net_refusal_keeps_structured_parser_metadata(self):
+        module = self.top("wire w; assign y = w;")
+        unsupported = [n for n in module["decls"] + module.get("others", [])
+                       if isinstance(n, dict) and n.get("sv_kind") == "NetSymbol:net-z"]
+        self.assertEqual(len(unsupported), 1)
+        metadata = unsupported[0].get("metadata")
+        self.assertEqual(metadata["name"], "w")
+        self.assertEqual(metadata["net_kind"], "Wire")
+        self.assertEqual(metadata["width"]["resolved"], 1)
+        self.assertTrue(metadata["four_state"])
+        self.assertTrue(metadata["is_net"])
+        self.assertIn("no driver", metadata["driver_reason"])
+
     def test_two_drivers_are_a_resolution(self):
         self.refused_net("wire [3:0] w; assign w = a; assign w = b; assign y = w;")
         self.refused_net("wire [3:0] w; assign w[2:0] = a[2:0]; assign w[3:1] = b[3:1]; assign y = w;")

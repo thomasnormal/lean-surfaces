@@ -375,13 +375,16 @@ def source_text(node):
     return ""
 
 
-def unsupported(sm, node, sv_kind=None, text=None):
-    return {
+def unsupported(sm, node, sv_kind=None, text=None, metadata=None):
+    result = {
         "kind": "Unsupported",
         "span": sym_span(sm, node) if _is_symbol(node) else node_span(sm, node),
         "sv_kind": sv_kind if sv_kind is not None else type(node).__name__,
         "text": text if text is not None else source_text(node),
     }
+    if metadata is not None:
+        result["metadata"] = metadata
+    return result
 
 
 def _is_symbol(node):
@@ -33170,10 +33173,19 @@ def convert_net_sym(sm, m):
         if _SYM is None:
             return unsupported(sm, m, "NetSymbol:signed" if m.type.isSigned else "NetSymbol:net-z")
         net_reason = lower_proc.net_driver_reason(sys.modules[__name__], sm, m, dtype)
+        net_metadata = {
+            "name": m.name,
+            "width": dtype,
+            "net_kind": nk,
+            "signed": bool(m.type.isSigned),
+            "four_state": bool(m.type.isFourState),
+            "is_net": True,
+            "driver_reason": net_reason,
+        }
         if net_reason is not None:
             if m.type.isSigned:
-                return unsupported(sm, m, "NetSymbol:signed")
-            return unsupported(sm, m, "NetSymbol:net-z")
+                return unsupported(sm, m, "NetSymbol:signed", metadata=net_metadata)
+            return unsupported(sm, m, "NetSymbol:net-z", metadata=net_metadata)
         if _RETAIN_PROC_REWRITES:
             # Preserve a source net that the default N2 path would turn into
             # a variable.  The semantic declaration parser keeps `isNet`, but

@@ -340,6 +340,26 @@ def observedRecordFacts (envl : Envelope) :
                 | .field name ty _ _ => some (name.getD "", ty)
                 | _ => none
               some (tag ++ nm, members, checked)
+    | .record (some _) none fields (some layout) sp =>
+        -- Clang gives an anonymous record its declaration identity and
+        -- parser-native layout, while the typedef on the same source line
+        -- supplies the language-visible type name.  Join those two AST
+        -- declarations by their frontend span; never infer a name from
+        -- source text or ABI spelling.
+        match ds.find? (fun q => match q with
+          | .typedef nm ty _ tsp => tsp.line == sp.line && ty == "struct " ++ nm
+          | _ => false) with
+        | some (.typedef nm _ _ _) =>
+            match checkedRecordLayout? fields layout with
+            | none => none
+            | some checked =>
+                if recordHasUnsupported fields then none
+                else
+                  let members := fields.filterMap fun field => match field with
+                    | .field name ty _ _ => some (name.getD "", ty)
+                    | _ => none
+                  some ("struct " ++ nm, members, checked)
+        | _ => none
     | _ => none
 
 
@@ -444,14 +464,15 @@ def layoutFor (envl : Envelope) : Layout :=
   let recs := recordsOf envl
   let observed := observedRecordFacts envl
   let observedFor := fun t : CType =>
-    let t0 := stripQuals 8 t
+    let t0 := resolve tds 8 (stripQuals 8 t)
     observed.find? (fun row => row.1 == t0)
   let observedPointeeFor := fun t : CType =>
     let t0 := stripQuals 8 t
     let t1 := if t0.endsWith "*" then
       stripQuals 8 (t0.dropEnd 1).toString.trimAsciiEnd.toString
       else t0
-    observed.find? (fun row => row.1 == t1)
+    let t2 := resolve tds 8 t1
+    observed.find? (fun row => row.1 == t2)
   { size := fun t => match observedFor t with
       | some (_, _, layout) => some layout.sizeBytes
       | none => (sizeAlign tds recs 16 t).map (·.1)

@@ -15276,7 +15276,7 @@ restoration.
 
 | Measurement | Result |
 |---|---|
-| Target | `lake build LeanModels.Python.Monadic.Eval` pending for this item |
+| Target | `lake build LeanModels.Python.Monadic.Eval` passed; 11/11 jobs |
 | Theorem | `Monadic.finishCallM_assign_six_existing_locals_continue_body_ok` |
 | Domain | six consecutive assignments to existing locals followed by continue |
 | Semantic change | theorem-only six-assignment continue-flow composition |
@@ -15355,3 +15355,21 @@ depth restoration.
 
 DECIDED: seven assignment steps now compose through a normal expression flow;
 arbitrary assignment and recursive body adequacy remain open.
+
+## 2026-11-13-pyfoundation-181 — seven-assignment bare-return bridge
+
+`Monadic.finishCallM_assign_seven_existing_locals_ret_none_body_ok` checks seven
+successive assignments `t = 0; u = 1; v = 2; w = 3; x = 4; y = 5; z = 6`
+followed by a bare `return`, preserving the updated frame through early flow
+and depth restoration.
+
+| Measurement | Result |
+|---|---|
+| Target | `lake build LeanModels.Python.Monadic.Eval` pending for this item |
+| Theorem | `Monadic.finishCallM_assign_seven_existing_locals_ret_none_body_ok` |
+| Domain | seven consecutive assignments to existing locals followed by bare return |
+| Semantic change | theorem-only seven-assignment bare-return composition |
+| Remaining debt | arbitrary locals and recursive positive-fuel calls |
+
+DECIDED: seven assignment steps now compose through a bare return; arbitrary
+assignment and recursive body adequacy remain open.

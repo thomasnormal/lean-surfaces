@@ -15056,3 +15056,21 @@ threading all updates through normal completion and depth restoration.
 
 DECIDED: five assignment steps now compose through the body walker; arbitrary
 assignment and recursive body adequacy remain open.
+
+## 2026-11-13-pyfoundation-164 — five-assignment return bridge
+
+`Monadic.finishCallM_assign_five_existing_locals_ret_body_ok` checks five
+successive assignments `v = 0; w = 1; x = 2; y = 3; z = 4` followed by
+`return 5`, preserving the updated frame through early flow and depth
+restoration.
+
+| Measurement | Result |
+|---|---|
+| Target | `lake build LeanModels.Python.Monadic.Eval` passed; 11/11 jobs |
+| Theorem | `Monadic.finishCallM_assign_five_existing_locals_ret_body_ok` |
+| Domain | five consecutive assignments to existing locals followed by value return |
+| Semantic change | theorem-only five-assignment early-flow composition |
+| Remaining debt | arbitrary locals and recursive positive-fuel calls |
+
+DECIDED: five assignment steps now compose through value return; arbitrary
+assignment and recursive body adequacy remain open.

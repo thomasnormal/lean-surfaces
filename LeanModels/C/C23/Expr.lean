@@ -892,6 +892,7 @@ def mayWrite (ctx : Ctx) (e : Expr) : Bool :=
           | some nm => nm == "__builtin_fabs" || nm == "__builtin_fabsf" ||
               nm == "__builtin_isinf" || nm == "__builtin_isnan" ||
               nm == "__builtin_isfinite" || nm == "__builtin_signbit" ||
+              nm == "__builtin_isunordered" ||
               nm == "__builtin_inf" || nm == "__builtin_inff" ||
               nm == "__builtin_huge_val" || nm == "__builtin_huge_valf" ||
               nm == "__builtin_nanf" || nm == "__builtin_nan" ||

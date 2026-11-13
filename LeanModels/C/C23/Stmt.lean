@@ -753,6 +753,7 @@ def functionCallFree (f : LeanModels.C.FunctionDefn) : Bool :=
                 (nm == "__builtin_fabs" || nm == "__builtin_fabsf" ||
                  nm == "__builtin_fabsl" || nm == "__builtin_isinf" ||
                  nm == "__builtin_isnan" || nm == "__builtin_isfinite" ||
+                 nm == "__builtin_isunordered" ||
                  nm == "__builtin_signbit" || nm == "__builtin_bswap16" ||
                  nm == "__builtin_copysign" || nm == "__builtin_copysignf" || nm == "fabs" ||
                  nm == "floor" || nm == "floorf" ||
@@ -1373,6 +1374,18 @@ def callFn : Nat → Program → LeanModels.C.FunctionDefn → List CVal → Exe
               | .float32 _ | .float64 _ => pure (.int IntTy.int_ (if result then 1 else 0))
               | _ => refuseUnsupported s!"{nm}: expected a binary floating argument"
           | _ => refuseUnsupported s!"{nm}: wrong argument count"
+        let runFloatUnordered : List CVal → ExecM CVal := fun vs =>
+          match vs with
+          | [a, b] =>
+              let nan : CVal → Bool
+                | .float32 f => f.isNaN
+                | .float64 f => f.isNaN
+                | _ => false
+              match a, b with
+              | .float32 _, .float32 _ | .float64 _, .float64 _ =>
+                  pure (.int IntTy.int_ (if nan a || nan b then 1 else 0))
+              | _, _ => refuseUnsupported "__builtin_isunordered: incompatible floating types"
+          | _ => refuseUnsupported "__builtin_isunordered: wrong argument count"
         let runFloatAbs : String → List CVal → ExecM CVal := fun nm vs =>
           match vs with
           | [.float32 f] =>
@@ -1549,6 +1562,7 @@ def callFn : Nat → Program → LeanModels.C.FunctionDefn → List CVal → Exe
                     else if nm == "__builtin_nanf" || nm == "__builtin_nan" || nm == "__builtin_nanl" then runFloatNan nm vs
                     else if nm == "__builtin_copysign" || nm == "__builtin_copysignf" then runCopySign nm vs
                     else if nm == "__builtin_isfinite" || nm == "__builtin_isnan" || nm == "__builtin_isinf" || nm == "__builtin_signbit" then runFloatClass nm vs
+                    else if nm == "__builtin_isunordered" then runFloatUnordered vs
                     else if nm == "__builtin_inf" || nm == "__builtin_inff" || nm == "__builtin_infl" || nm == "__builtin_huge_val" || nm == "__builtin_huge_valf" || nm == "__builtin_huge_vall" then
                       runInf nm vs
               else if nm == "__builtin_abs" || nm == "abs" then
@@ -1631,6 +1645,7 @@ def callFn : Nat → Program → LeanModels.C.FunctionDefn → List CVal → Exe
               else if nm == "__builtin_nanf" || nm == "__builtin_nan" || nm == "__builtin_nanl" then runFloatNan nm vs
               else if nm == "__builtin_copysign" || nm == "__builtin_copysignf" then runCopySign nm vs
               else if nm == "__builtin_isfinite" || nm == "__builtin_isnan" || nm == "__builtin_isinf" || nm == "__builtin_signbit" then runFloatClass nm vs
+              else if nm == "__builtin_isunordered" then runFloatUnordered vs
               else if nm == "__builtin_inf" || nm == "__builtin_inff" || nm == "__builtin_infl" || nm == "__builtin_huge_val" || nm == "__builtin_huge_valf" || nm == "__builtin_huge_vall" then runInf nm vs
               else if nm == "__builtin_abs" || nm == "abs" then runAbs vs
               else if nm == "__sync_add_and_fetch_8" then runSyncAdd8 vs

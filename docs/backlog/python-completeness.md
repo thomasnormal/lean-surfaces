@@ -14597,3 +14597,19 @@ followed by `break`, preserving `RFlow.brk` through restoration.
 
 DECIDED: longer break sequencing is now checked; recursive and general loop
 adequacy remain open.
+
+## 2026-11-13-pyfoundation-137 — longer continue sequencing bridge
+
+`Monadic.finishCallM_three_pass_continue_body_ok` checks three normal
+statements followed by `continue`, preserving `RFlow.cont` through restoration.
+
+| Measurement | Result |
+|---|---|
+| Target | `lake build LeanModels.Python.Monadic.Eval` passed; 11/11 jobs |
+| Theorem | `Monadic.finishCallM_three_pass_continue_body_ok` |
+| Domain | four-statement body ending in continue |
+| Semantic change | theorem-only sequencing and control-flow composition |
+| Remaining debt | recursive positive-fuel calls and general loop adequacy |
+
+DECIDED: longer continue sequencing is now checked; recursive and general loop
+adequacy remain open.

@@ -10,10 +10,10 @@
   "gcc.c-torture/execute": {
    "not-parsed": 267,
    "oracle-tests-compiler": 1,
-   "passed": 890,
+   "passed": 892,
    "refused-libc": 35,
-   "refused-ub": 96,
-   "refused-unsupported": 565,
+   "refused-ub": 97,
+   "refused-unsupported": 562,
    "timeout": 64
   },
   "gcc.c23-run": {
@@ -28,10 +28,10 @@
  "counts": {
   "not-parsed": 294,
   "oracle-tests-compiler": 1,
-  "passed": 1065,
+  "passed": 1067,
   "refused-libc": 39,
-  "refused-ub": 105,
-  "refused-unsupported": 644,
+  "refused-ub": 106,
+  "refused-unsupported": 641,
   "timeout": 66
  },
  "dynamic_wall_ranking": [
@@ -378,6 +378,7 @@
     "20070212-1.c",
     "20070724-1.c",
     "20080222-1.c",
+    "20090527-1.c",
     "20121108-1.c",
     "20191023-1.c",
     "920612-1.c",
@@ -444,8 +445,8 @@
     "va-arg-20.c",
     "zerolen-1.c"
    ],
-   "present": 105,
-   "sole": 105,
+   "present": 106,
+   "sole": 106,
    "wall": "undefined-behavior"
   },
   {
@@ -1252,15 +1253,6 @@
    "present": 2,
    "sole": 2,
    "wall": "unsupported:call to '__builtin_nanf' in a context with no program \u2014 call it through 'callByName'"
-  },
-  {
-   "files": [
-    "pr22141-1.c",
-    "pr22141-2.c"
-   ],
-   "present": 2,
-   "sole": 2,
-   "wall": "unsupported:cannot initialize aggregate 'struct T'"
   },
   {
    "files": [
@@ -2269,14 +2261,6 @@
    "present": 1,
    "sole": 1,
    "wall": "unsupported:no layout for declared type 'uint32_t[16]'"
-  },
-  {
-   "files": [
-    "20090527-1.c"
-   ],
-   "present": 1,
-   "sole": 1,
-   "wall": "unsupported:no layout for declared type 'unit_flags'"
   },
   {
    "files": [
@@ -3320,8 +3304,8 @@
   }
  ],
  "manifest_hash": "bca94718b04e8394cdce992866637166f530978790bd1013cea4a00ae25ef764",
- "measured_at_utc": "2026-11-13T17:38:49Z",
- "measured_commit": "825f48190",
+ "measured_at_utc": "2026-11-13T18:24:00Z",
+ "measured_commit": "7af3d3a1f",
  "pin": {
   "corpora": [
    "C1",
@@ -10768,15 +10752,15 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "no layout for declared type 'unit_flags'",
-   "dynamic_wall": "unsupported:no layout for declared type 'unit_flags'",
+   "detail": "LeanModels.C.C23.MemFault.indetAutomatic 0 0",
+   "dynamic_wall": "undefined-behavior",
    "manifest_status": "parsed",
    "name": "20090527-1.c",
    "sha256": "f63fd94d342df801f9bec7a19e900c5766d043eef8ebded778b654075f499969",
    "static_walls": [
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "refused-ub"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -22057,8 +22041,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "cannot initialize aggregate 'struct T'",
-   "dynamic_wall": "unsupported:cannot initialize aggregate 'struct T'",
+   "detail": "",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "pr22141-1.c",
    "sha256": "f24ba2ca68045af9d52caa176275f023f37ea9e1854528ba0302df52e39653cb",
@@ -22066,12 +22050,12 @@
     "libc-call: __builtin_memset",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "cannot initialize aggregate 'struct T'",
-   "dynamic_wall": "unsupported:cannot initialize aggregate 'struct T'",
+   "detail": "",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "pr22141-2.c",
    "sha256": "caef794b8da055fe44c2c362ada02f45f495a10b394b3f22168e1802b5d65cce",
@@ -22079,7 +22063,7 @@
     "libc-call: __builtin_memset",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",

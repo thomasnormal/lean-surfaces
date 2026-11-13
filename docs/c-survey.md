@@ -4,8 +4,8 @@ Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manife
 
 - verdicts: 1012/2214 MATCH (passed 1012, failed 0, oracle 0)
 - manifest SHA-256: `55e7366504fecfee6c955cb3aa406fd908f92f0baa275e94717d1f04dec982b2`
-- measured commit: `7526562fa`
-- measured at: `2026-11-13T10:50:00Z`
+- measured commit: `78d70f407`
+- measured at: `2026-11-13T11:05:00Z`
 
 ## Verdict counts
 

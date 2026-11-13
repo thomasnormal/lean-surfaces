@@ -10,10 +10,10 @@
   "gcc.c-torture/execute": {
    "not-parsed": 267,
    "oracle-tests-compiler": 1,
-   "passed": 883,
+   "passed": 888,
    "refused-libc": 35,
    "refused-ub": 96,
-   "refused-unsupported": 572,
+   "refused-unsupported": 567,
    "timeout": 64
   },
   "gcc.c23-run": {
@@ -28,10 +28,10 @@
  "counts": {
   "not-parsed": 294,
   "oracle-tests-compiler": 1,
-  "passed": 1058,
+  "passed": 1063,
   "refused-libc": 39,
   "refused-ub": 105,
-  "refused-unsupported": 651,
+  "refused-unsupported": 646,
   "timeout": 66
  },
  "dynamic_wall_ranking": [
@@ -1133,16 +1133,6 @@
   },
   {
    "files": [
-    "20050119-1.c",
-    "20050119-2.c",
-    "pr71700.c"
-   ],
-   "present": 3,
-   "sole": 3,
-   "wall": "unsupported:no layout for declared type 'struct S[2]'"
-  },
-  {
-   "files": [
     "builtins/pr22237-1.c",
     "builtins/pr22237.c",
     "pr43784.c"
@@ -1364,12 +1354,12 @@
   },
   {
    "files": [
-    "pr31448-2.c",
-    "pr31448.c"
+    "20050119-1.c",
+    "20050119-2.c"
    ],
    "present": 2,
    "sole": 2,
-   "wall": "unsupported:no layout for declared type 'st'"
+   "wall": "unsupported:no layout for declared type 'struct S[2]'"
   },
   {
    "files": [
@@ -1406,15 +1396,6 @@
    "present": 2,
    "sole": 2,
    "wall": "unsupported:no layout for declared type 'struct s'"
-  },
-  {
-   "files": [
-    "pr86659-1.c",
-    "pr86659-2.c"
-   ],
-   "present": 2,
-   "sole": 2,
-   "wall": "unsupported:no layout for declared type 'struct1'"
   },
   {
    "files": [
@@ -3348,8 +3329,8 @@
   }
  ],
  "manifest_hash": "bca94718b04e8394cdce992866637166f530978790bd1013cea4a00ae25ef764",
- "measured_at_utc": "2026-11-13T17:25:45Z",
- "measured_commit": "8dd2b5f96",
+ "measured_at_utc": "2026-11-13T17:31:54Z",
+ "measured_commit": "a590d3c1f",
  "pin": {
   "corpora": [
    "C1",
@@ -22589,8 +22570,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "no layout for declared type 'st'",
-   "dynamic_wall": "unsupported:no layout for declared type 'st'",
+   "detail": "0",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "pr31448-2.c",
    "sha256": "f82edd474dc8881ef13be1ff096859ede174fe3fdda3c5ed4bb2208947b9615d",
@@ -22598,12 +22579,12 @@
     "libc-call: __builtin_abort",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "no layout for declared type 'st'",
-   "dynamic_wall": "unsupported:no layout for declared type 'st'",
+   "detail": "0",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "pr31448.c",
    "sha256": "bf8ef014bfb7759820baaeaa2540051f4ff5cdfa1a9ced0f1a56eb17e9cb78d9",
@@ -22611,7 +22592,7 @@
     "libc-call: __builtin_abort",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -26577,8 +26558,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "no layout for declared type 'struct S[2]'",
-   "dynamic_wall": "unsupported:no layout for declared type 'struct S[2]'",
+   "detail": "0",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "pr71700.c",
    "sha256": "2c73560c6890d92f8b2e0715c7d0951859d1861c8d38660870fc163c635204cc",
@@ -26586,7 +26567,7 @@
     "libc-call: __builtin_abort",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -27423,8 +27404,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "no layout for declared type 'struct1'",
-   "dynamic_wall": "unsupported:no layout for declared type 'struct1'",
+   "detail": "0",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "pr86659-1.c",
    "sha256": "18f01430fad2ecf32cd90db2ad9e9a39d8410d04a36673ef387872987d804820",
@@ -27432,12 +27413,12 @@
     "libc-call: __builtin_abort",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "no layout for declared type 'struct1'",
-   "dynamic_wall": "unsupported:no layout for declared type 'struct1'",
+   "detail": "0",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "pr86659-2.c",
    "sha256": "b7c34b3c2b5c426680dd9737a3625dc0bfeca2e953e7bf8c7cabc09500988b8c",
@@ -27445,7 +27426,7 @@
     "libc-call: __builtin_abort",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",

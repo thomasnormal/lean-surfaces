@@ -65,6 +65,14 @@ structure CoreMemDesign where
   scalarEdge : Elab1
   memories : Array CoreMemDecl
   processes : Array CoreMemProc
+  /--
+  Instantiated scalar continuous-assignment expressions, aligned with
+  `processes`.  These are a derived cache only: the source `PExpr` remains in
+  every `CoreMemProc`, and expressions which read native memory continue
+  through `evalExpr` below.  Keeping this cache on the design avoids running
+  the parameter-width elaborator once per time-zero settle pass.
+  -/
+  compiledAssigns : Array (Option Expr2) := #[]
 deriving Inhabited
 
 /-! A structural admission predicate for the canonical memory family.  This is
@@ -110,6 +118,22 @@ structure CoreMemState where
   scalar : Store
   memory : MemState
 
+/-! A threaded view is the authoritative name-facing image while one source
+body settles.  Materializing it back into a flat `Store` at process
+boundaries preserves the E store meaning but avoids an ever-growing chain of
+`Store.set` closures after many scalar assignments. -/
+def CoreMemDesign.storeFromView (E : CoreMemDesign) (view : SvState) : Store :=
+  fun x =>
+    match E.scalar.declOf x with
+    | some dc =>
+        let fallback := if dc.isNet then LVec.replicate dc.width .lz else LVec.xVec dc.width
+        Val.ofLVec (VType.ofDecl dc) ((SvState.lookup view dc.name).getD fallback)
+    | none => default
+
+def CoreMemDesign.compactScalar (E : CoreMemDesign) (st : CoreMemState) (view : SvState) :
+    CoreMemState :=
+  { st with scalar := E.storeFromView view }
+
 def CoreMemDesign.initial (E : CoreMemDesign) : CoreMemState :=
   { scalar := E.scalar.initStore
     memory := MemState.ofShapes (E.memories.toList.map CoreMemDecl.shape) }
@@ -144,6 +168,15 @@ def CoreMemDesign.hasComb (E : CoreMemDesign) : Bool :=
     match p with
     | .comb _ => true
     | _ => false
+
+def CoreMemDesign.compileAssigns (E : CoreMemDesign) : Array (Option Expr2) :=
+  E.processes.map fun p =>
+    match p with
+    | .assign (.ident name) value =>
+        match E.scalarWidth? name with
+        | some width => some (instExpr2 E.env E.elems (some width) value)
+        | none => none
+    | _ => none
 
 def instScalarDecl1 (env : IEnv) (pd : PDecl) : Res (Option Decl) :=
   if !pd.unpackedDims.isEmpty then
@@ -523,7 +556,7 @@ def PDesign.instantiateCoreMemFrom (envI : IEnv) (d : PDesign) (args : List Int)
         let result : CoreMemDesign :=
           { name := d.name, env := envP, elems, scalar := scalar, scalarEdge := scalarEdge,
             memories := memories.toArray, processes := processes.toArray }
-        .ok result
+        .ok { result with compiledAssigns := result.compileAssigns }
 
 def PDesign.instantiateCoreMem (d : PDesign) (args : List Int)
     (iterFuel : Nat := 4096) : Res CoreMemDesign :=
@@ -563,6 +596,30 @@ def LeanModels.Sv.PExpr.hasMemoryReadList : List PExpr → Bool
   | [] => false
   | x :: xs => LeanModels.Sv.PExpr.hasMemoryRead x ||
       LeanModels.Sv.PExpr.hasMemoryReadList xs
+
+def LeanModels.Sv.PExpr.hasFunctionCall : PExpr → Bool
+  | .functionCall _ _ => true
+  | .unary _ a | .resize _ a | .signedResize _ a | .squash2 _ a
+  | .sysCall _ a | .reduce _ a | .cast _ a => LeanModels.Sv.PExpr.hasFunctionCall a
+  | .binary _ a b => LeanModels.Sv.PExpr.hasFunctionCall a ||
+      LeanModels.Sv.PExpr.hasFunctionCall b
+  | .ternary c a b => LeanModels.Sv.PExpr.hasFunctionCall c ||
+      LeanModels.Sv.PExpr.hasFunctionCall a || LeanModels.Sv.PExpr.hasFunctionCall b
+  | .concat xs => PExpr.hasFunctionCallList xs
+  | .bitSel a b | .repl a b => LeanModels.Sv.PExpr.hasFunctionCall a ||
+      LeanModels.Sv.PExpr.hasFunctionCall b
+  | .partSel a b c => LeanModels.Sv.PExpr.hasFunctionCall a ||
+      LeanModels.Sv.PExpr.hasFunctionCall b || LeanModels.Sv.PExpr.hasFunctionCall c
+  | .arrayElem _ indices => PExpr.hasFunctionCallList indices
+  | .arrayPart _ indices _ a b => PExpr.hasFunctionCallList indices ||
+      LeanModels.Sv.PExpr.hasFunctionCall a || LeanModels.Sv.PExpr.hasFunctionCall b
+  | .lit _ | .ident _ | .paramRef .. | .genvarRef _ | .enumRef .. | .int _
+  | .fill _ | .unsupported .. => false
+
+def LeanModels.Sv.PExpr.hasFunctionCallList : List PExpr → Bool
+  | [] => false
+  | x :: xs => LeanModels.Sv.PExpr.hasFunctionCall x ||
+      LeanModels.Sv.PExpr.hasFunctionCallList xs
 
 end
 
@@ -795,6 +852,26 @@ def CoreMemDesign.evalIndex (E : CoreMemDesign) (env : IEnv) (elems : List (Stri
 def CoreMemDesign.evalExpr (E : CoreMemDesign) (env : IEnv) (elems : List (String × Nat))
     (st : CoreMemState) (ctx : Option Nat) (e : PExpr) : Res LVec :=
   E.evalExprLocals env elems st ctx [] e
+
+/-! A continuous scalar assignment has no local bindings.  Once the source
+expression has no native-memory read, its `Expr2` lowering is independent of
+the state and can be reused from `CoreMemDesign.compiledAssigns`; a memory
+read must stay on `evalExpr`, whose source-shaped evaluator threads
+`MemState`. -/
+def CoreMemDesign.evalScalarAssignAtView (E : CoreMemDesign) (env : IEnv)
+    (elems : List (String × Nat)) (st : CoreMemState) (view : SvState)
+    (ctx : Option Nat) (index : Nat) (value : PExpr) : Res LVec :=
+  if LeanModels.Sv.PExpr.hasMemoryRead value || LeanModels.Sv.PExpr.hasFunctionCall value then
+    E.evalExpr env elems st ctx value
+  else
+    match E.compiledAssigns[index]? with
+    | some (some compiled) => evalPure2 view compiled
+    | _ => E.evalExpr env elems st ctx value
+
+def CoreMemDesign.evalScalarAssignAt (E : CoreMemDesign) (env : IEnv)
+    (elems : List (String × Nat)) (st : CoreMemState) (ctx : Option Nat)
+    (index : Nat) (value : PExpr) : Res LVec :=
+  E.evalScalarAssignAtView env elems st (E.scalar.view st.scalar) ctx index value
 
 def evalMemExprList (E : CoreMemDesign) (env : IEnv) (elems : List (String × Nat))
     (st : CoreMemState) : List PExpr → Res (List LVec)
@@ -1089,47 +1166,53 @@ route, with the parser-native plain/inside `case` node handled by the case
 matcher below.  `casez`/`casex`, NBA, loops, and unsupported statements remain
 loud at their own node; no statement is lowered into a second AST. -/
 
+def CoreMemDesign.evalCombExpr (E : CoreMemDesign) (env : IEnv)
+    (elems : List (String × Nat)) (st : CoreMemState) (view : SvState)
+    (ctx : Option Nat) (e : PExpr) : Res LVec :=
+  if !LeanModels.Sv.PExpr.hasMemoryRead e && !LeanModels.Sv.PExpr.hasFunctionCall e then
+    evalPure2 view (instExpr2 env elems ctx e)
+  else
+    E.evalExpr env elems st ctx e
+
 mutual
 
 def CoreMemDesign.execCombStmtFuel (E : CoreMemDesign) (env : IEnv)
-    (elems : List (String × Nat)) (st : CoreMemState) : Nat → PStmt → Res CoreMemState
+    (elems : List (String × Nat)) (st : CoreMemState) (view : SvState) : Nat → PStmt →
+    Res (CoreMemState × SvState)
   | 0, _ => .timeout
   | fuel + 1, .blockingAssign name value =>
       match E.scalarTarget name with
       | none => .unsupported s!"9.2.2.2: scalar always_comb target '{name}' is undeclared"
       | some width => do
-          let v ← E.evalExpr env elems st (some width) value
-          let scalar := match E.scalar.resolve name with
-            | some x => if (st.scalar x).bits == v then st.scalar else E.scalar.setName st.scalar name v
-            | none => E.scalar.setName st.scalar name v
-          .ok { st with scalar }
+          let v ← E.evalCombExpr env elems st view (some width) value
+          let scalar := E.scalar.setName st.scalar name v
+          .ok ({ st with scalar }, SvState.set view name v)
   | fuel + 1, .blockingAssignL target value =>
       match target with
       | .ident name =>
           match E.scalarTarget name with
           | none => .unsupported s!"9.2.2.2: scalar always_comb target '{name}' is undeclared"
           | some width => do
-              let v ← E.evalExpr env elems st (some width) value
-              let scalar := match E.scalar.resolve name with
-                | some x => if (st.scalar x).bits == v then st.scalar else E.scalar.setName st.scalar name v
-                | none => E.scalar.setName st.scalar name v
-              .ok { st with scalar }
+              let v ← E.evalCombExpr env elems st view (some width) value
+              let scalar := E.scalar.setName st.scalar name v
+              .ok ({ st with scalar }, SvState.set view name v)
       | .arrayElem name [_] =>
           match E.memDecl? name with
           | none => .unsupported s!"9.2.2.2: memory always_comb target '{name}' is undeclared"
           | some md => do
               let v ← E.evalExpr env elems st (some md.shape.elemWidth) value
-              E.writeInitialCell env elems st target name md v
+              let st' ← E.writeInitialCell env elems st target name md v
+              .ok (st', view)
       | .arrayElem name _ =>
           .unsupported s!"9.2.2.2: memory always_comb target '{name}' is not one-rank"
       | _ => .unsupported "9.2.2.2: packed or concatenated always_comb target is outside this slice"
   | fuel + 1, .ifStmt cond yes no => do
-      let cv ← E.evalExpr env elems st (some 1) cond
-      if cv.condTrue then E.execCombStmtFuel env elems st fuel yes
+      let cv ← E.evalCombExpr env elems st view (some 1) cond
+      if cv.condTrue then E.execCombStmtFuel env elems st view fuel yes
       else match no with
-        | none => .ok st
-        | some stmt => E.execCombStmtFuel env elems st fuel stmt
-  | fuel + 1, .block body => E.execCombStmtsFuel env elems st fuel body
+        | none => .ok (st, view)
+        | some stmt => E.execCombStmtFuel env elems st view fuel stmt
+  | fuel + 1, .block body => E.execCombStmtsFuel env elems st view fuel body
   | fuel + 1, .forLoop .. =>
       .unsupported "9.2.2.2: procedural loop in always_comb body is outside this slice"
   | fuel + 1, .caseStmt subject items default? mode check => do
@@ -1138,15 +1221,15 @@ def CoreMemDesign.execCombStmtFuel (E : CoreMemDesign) (env : IEnv)
       | .none =>
           let selected ← coreMemSelectCase E env elems st sv mode items default?
           match selected with
-          | none => .ok st
-          | some body => E.execCombStmtFuel env elems st fuel body
+          | none => .ok (st, view)
+          | some body => E.execCombStmtFuel env elems st view fuel body
       | qualifier =>
           let n ← coreMemCaseHits E env elems st sv mode items
           if caseClaimOk qualifier default?.isSome n then
             let selected ← coreMemSelectCase E env elems st sv mode items default?
             match selected with
-            | none => .ok st
-            | some body => E.execCombStmtFuel env elems st fuel body
+            | none => .ok (st, view)
+            | some body => E.execCombStmtFuel env elems st view fuel body
           else
             .unsupported s!"12.5.3: {caseCheckName qualifier}"
   | fuel + 1, .nbaAssign .. | fuel + 1, .nbaAssignL .. =>
@@ -1154,18 +1237,26 @@ def CoreMemDesign.execCombStmtFuel (E : CoreMemDesign) (env : IEnv)
   | fuel + 1, .unsupported kind text => .unsupported s!"{kind}: {text}"
 
 def CoreMemDesign.execCombStmtsFuel (E : CoreMemDesign) (env : IEnv)
-    (elems : List (String × Nat)) (st : CoreMemState) : Nat → List PStmt → Res CoreMemState
+    (elems : List (String × Nat)) (st : CoreMemState) (view : SvState) : Nat → List PStmt →
+    Res (CoreMemState × SvState)
   | 0, _ => .timeout
-  | fuel + 1, [] => .ok st
+  | fuel + 1, [] => .ok (st, view)
   | fuel + 1, stmt :: rest => do
-      let st' ← E.execCombStmtFuel env elems st fuel stmt
-      E.execCombStmtsFuel env elems st' fuel rest
+      let (st', view') ← E.execCombStmtFuel env elems st view fuel stmt
+      E.execCombStmtsFuel env elems st' view' fuel rest
 
 end
 
+def CoreMemDesign.execCombStmtAtView (E : CoreMemDesign) (env : IEnv)
+    (elems : List (String × Nat)) (st : CoreMemState) (view : SvState) (stmt : PStmt) :
+    Res (CoreMemState × SvState) :=
+  E.execCombStmtFuel env elems st view 4096 stmt
+
 def CoreMemDesign.execCombStmt (E : CoreMemDesign) (env : IEnv)
     (elems : List (String × Nat)) (st : CoreMemState) (stmt : PStmt) : Res CoreMemState :=
-  E.execCombStmtFuel env elems st 4096 stmt
+  do
+    let (st', view') ← E.execCombStmtAtView env elems st (E.scalar.view st.scalar) stmt
+    .ok (E.compactScalar st' view')
 
 
 def CoreMemDesign.runImplicit (E : CoreMemDesign) (before current : CoreMemState) :
@@ -1190,13 +1281,18 @@ def CoreMemDesign.runImplicit (E : CoreMemDesign) (before current : CoreMemState
   | .comb _ :: rest => E.runImplicit before current rest
   | .unsupported kind text :: _ => .unsupported s!"{kind}: {text}"
 
-def CoreMemDesign.runCombInitial (E : CoreMemDesign) (current : CoreMemState) :
-    List CoreMemProc → Res CoreMemState
-  | [] => .ok current
+def CoreMemDesign.runCombInitialWithView (E : CoreMemDesign) (current : CoreMemState)
+    (view : SvState) : List CoreMemProc → Res (CoreMemState × SvState)
+  | [] => .ok (current, view)
   | .comb body :: rest => do
-      let after ← E.execCombStmt E.env E.elems current body
-      E.runCombInitial after rest
-  | _ :: rest => E.runCombInitial current rest
+      let (after, view') ← E.execCombStmtAtView E.env E.elems current view body
+      E.runCombInitialWithView (E.compactScalar after view') view' rest
+  | _ :: rest => E.runCombInitialWithView current view rest
+
+def CoreMemDesign.runCombInitial (E : CoreMemDesign) (current : CoreMemState) :
+    List CoreMemProc → Res CoreMemState := fun procs => do
+  let (after, _) ← E.runCombInitialWithView current (E.scalar.view current.scalar) procs
+  .ok after
 
 def CoreMemDesign.runComb (E : CoreMemDesign) (before current : CoreMemState) :
     List CoreMemProc → Res CoreMemState
@@ -1341,157 +1437,47 @@ def CoreMemEdge.fires (p : CoreMemEdge) (before after : SvState) : Bool :=
     | none => false
     | some r => isNegedge (before.bit0 r) (after.bit0 r)
 
-def CoreMemDesign.settleAssignSlow (E : CoreMemDesign) (env : IEnv) (elems : List (String × Nat))
-    (st : CoreMemState) : List CoreMemProc → Res CoreMemState
-  | [] => .ok st
+def CoreMemDesign.settleAssignAt (E : CoreMemDesign) (env : IEnv) (elems : List (String × Nat))
+    (st : CoreMemState) (view : SvState) (index : Nat) : List CoreMemProc →
+    Res (CoreMemState × SvState)
+  | [] => .ok (st, view)
   | .assign target value :: rest => do
       match target with
       | .ident name =>
           let width ← match E.scalarWidth? name with
             | some w => .ok w
             | none => .unsupported s!"10.3: continuous target '{name}' is undeclared"
-          let v ← E.evalExpr env elems st (some width) value
-          -- Preserve the existing function-valued store when a settled
-          -- continuous assignment already has its converted value.  This is
-          -- definitionally the same write, but avoids rebuilding a closure
-          -- on every empty-input cycle of a source-shaped hierarchy.
-          let unchanged := match E.scalar.resolve name with
-            | some x => (st.scalar x).bits == v
-            | none => false
-          let scalar := if unchanged then st.scalar else E.scalar.setName st.scalar name v
-          E.settleAssignSlow env elems { st with scalar } rest
+          let v ← E.evalScalarAssignAtView env elems st view (some width) index value
+          let scalar := E.scalar.setName st.scalar name v
+          E.settleAssignAt env elems { st with scalar } (SvState.set view name v) (index + 1) rest
       | .arrayElem name [_] =>
           match E.memDecl? name with
           | none => .unsupported s!"10.3: continuous memory target '{name}' is undeclared"
           | some md =>
               let v ← E.evalExpr env elems st (some md.shape.elemWidth) value
               let st' ← E.writeMemoryAssign env elems st target md v
-              E.settleAssignSlow env elems st' rest
+              E.settleAssignAt env elems st' view (index + 1) rest
       | _ => .unsupported "10.3: packed or multi-rank continuous memory target is outside this slice"
-  | .edge _ :: rest => E.settleAssignSlow env elems st rest
-  | .initial _ :: rest => E.settleAssignSlow env elems st rest
-  | .comb _ :: rest => E.settleAssignSlow env elems st rest
-  | .implicit _ :: rest => E.settleAssignSlow env elems st rest
+  | .edge _ :: rest => E.settleAssignAt env elems st view (index + 1) rest
+  | .initial _ :: rest => E.settleAssignAt env elems st view (index + 1) rest
+  | .comb _ :: rest => E.settleAssignAt env elems st view (index + 1) rest
+  | .implicit _ :: rest => E.settleAssignAt env elems st view (index + 1) rest
   | .unsupported kind text :: _ =>
       .unsupported s!"{kind}: {text}"
 
-/-! The scalar continuous-assignment pass above is the direct reference
-implementation.  For a design with only scalar assigns plus skipped edge and
-initial processes, use an overlay of the original store and the assignments
-already issued in this pass.  The overlay preserves source order and exactly
-the same `evalExpr` calls, while avoiding a nested `Store.set` closure for
-every net in a large source-shaped design. -/
+def CoreMemDesign.settleAssign (E : CoreMemDesign) (env : IEnv) (elems : List (String × Nat))
+    (st : CoreMemState) (procs : List CoreMemProc) : Res CoreMemState :=
+  do
+    let (st', view') ← E.settleAssignAt env elems st (E.scalar.view st.scalar) 0 procs
+    .ok (E.compactScalar st' view')
 
-def CoreMemDesign.scalarAssignProfile (E : CoreMemDesign) : Bool :=
-  E.processes.toList.all fun p =>
-    match p with
-    | .assign (.ident _) _ | .edge _ | .initial _ | .comb _ | .implicit _ => true
-    | _ => false
-
-def coreMemOverlayStore (base : Store) (updates : List (VarId × Val)) : Store :=
-  fun x => match updates.find? (fun u => u.1 == x) with
-    | some u => u.2
-    | none => base x
-
-def coreMemCombScalarStmt : Nat → PStmt → Bool
-  | 0, _ => false
-  | fuel + 1, .blockingAssign _ _ | fuel + 1, .blockingAssignL (.ident _) _ => true
-  | _, .blockingAssignL _ _ | _, .nbaAssign .. | _, .nbaAssignL .. | _, .forLoop .. | _, .unsupported .. => false
-  | fuel + 1, .ifStmt _ a b => coreMemCombScalarStmt fuel a && match b with | none => true | some s => coreMemCombScalarStmt fuel s
-  | fuel + 1, .block xs => xs.all (coreMemCombScalarStmt fuel)
-  | fuel + 1, .caseStmt _ items default? _ _ =>
-      items.all (fun (_, s) => coreMemCombScalarStmt fuel s) &&
-        match default? with | none => true | some s => coreMemCombScalarStmt fuel s
-mutual
-
-def CoreMemDesign.execCombOverlayFuel (E : CoreMemDesign) (env : IEnv) (elems : List (String × Nat))
-    (base : CoreMemState) (updates : List (VarId × Val)) : Nat → PStmt → Res CoreMemState
-  | 0, _ => .timeout
-  | fuel + 1, .blockingAssign name value => do
-      let x ← match E.scalar.resolve name with
-        | some x => .ok x
-        | none => .unsupported s!"9.2.2.2: scalar always_comb target '{name}' is undeclared"
-      let current := { base with scalar := coreMemOverlayStore base.scalar updates }
-      let width ← match E.scalarWidth? name with
-        | some w => .ok w
-        | none => .unsupported s!"9.2.2.2: scalar always_comb target '{name}' is undeclared"
-      let v ← E.evalExpr env elems current (some width) value
-      let value' := Val.ofLVec (current.scalar x).ty v
-      .ok { base with scalar := coreMemOverlayStore base.scalar ((x, value') :: updates) }
-  | fuel + 1, .blockingAssignL (.ident name) value =>
-      E.execCombOverlayFuel env elems base updates fuel (.blockingAssign name value)
-  | fuel + 1, .ifStmt cond yes no => do
-      let current := { base with scalar := coreMemOverlayStore base.scalar updates }
-      let cv ← E.evalExpr env elems current (some 1) cond
-      if cv.condTrue then E.execCombOverlayFuel env elems base updates fuel yes
-      else match no with | none => .ok current | some stmt => E.execCombOverlayFuel env elems base updates fuel stmt
-  | fuel + 1, .block body => E.execCombOverlayStmtsFuel env elems base updates fuel body
-  | fuel + 1, .caseStmt subject items default? mode check => do
-      let current := { base with scalar := coreMemOverlayStore base.scalar updates }
-      let sv ← E.evalExpr env elems current none subject
-      let selected ← coreMemSelectCase E env elems current sv mode items default?
-      match selected with
-      | none => .ok current
-      | some body => E.execCombOverlayFuel env elems base updates fuel body
-  | _, _ => .unsupported "10.4.2: scalar always_comb overlay refused this statement"
-termination_by fuel stmt => fuel
-decreasing_by all_goals exact Nat.lt_succ_self _
-
-def CoreMemDesign.execCombOverlayStmtsFuel (E : CoreMemDesign) (env : IEnv) (elems : List (String × Nat))
-    (base : CoreMemState) (updates : List (VarId × Val)) : Nat → List PStmt → Res CoreMemState
-  | 0, _ => .timeout
-  | fuel + 1, [] => .ok { base with scalar := coreMemOverlayStore base.scalar updates }
-  | fuel + 1, stmt :: rest => do
-      let after ← E.execCombOverlayFuel env elems base updates fuel stmt
-      E.execCombOverlayStmtsFuel env elems after [] fuel rest
-
-termination_by fuel stmts => fuel
-decreasing_by all_goals exact Nat.lt_succ_self _
-
-end
-
-def CoreMemDesign.runCombInitialFast (E : CoreMemDesign) (current : CoreMemState) :
-    List CoreMemProc → Res CoreMemState
-  | [] => .ok current
-  | .comb body :: rest => do
-      let fast := E.execCombOverlayFuel E.env E.elems current [] 4096 body
-      let after ← match fast with
-        | .unsupported m => .unsupported m
-        | _ => fast
-      E.runCombInitialFast after rest
-  | _ :: rest => E.runCombInitialFast current rest
-
-def CoreMemDesign.settleAssignFastLoop (E : CoreMemDesign)
-    (env : IEnv) (elems : List (String × Nat)) (base : CoreMemState)
-    (updates : List (VarId × Val)) : List CoreMemProc → Res CoreMemState
-  | [] => .ok { base with scalar := coreMemOverlayStore base.scalar updates }
-  | .assign (.ident name) value :: rest => do
-      let x ← match E.scalar.resolve name with
-        | some x => .ok x
-        | none => .unsupported s!"10.3: continuous target '{name}' is undeclared"
-      let scalar := coreMemOverlayStore base.scalar updates
-      let current := { base with scalar }
-      let width ← match E.scalarWidth? name with
-        | some w => .ok w
-        | none => .unsupported s!"10.3: continuous target '{name}' is undeclared"
-      let v ← E.evalExpr env elems current (some width) value
-      let value' := Val.ofLVec (scalar x).ty v
-      E.settleAssignFastLoop env elems base ((x, value') :: updates) rest
-  | .assign _ _ :: _ =>
-      .unsupported "10.3: packed or multi-rank continuous memory target is outside this slice"
-  | .edge _ :: rest => E.settleAssignFastLoop env elems base updates rest
-  | .initial _ :: rest => E.settleAssignFastLoop env elems base updates rest
-  | .comb _ :: rest => E.settleAssignFastLoop env elems base updates rest
-  | .implicit _ :: rest => E.settleAssignFastLoop env elems base updates rest
-  | .unsupported .. :: _ =>
-      .unsupported "10.3: scalar overlay profile does not admit this process"
-
-def CoreMemDesign.settleAssign (E : CoreMemDesign) (env : IEnv)
-    (elems : List (String × Nat)) (st : CoreMemState) : List CoreMemProc → Res CoreMemState :=
-  if E.scalarAssignProfile then
-    E.settleAssignFastLoop env elems st []
-  else
-    E.settleAssignSlow env elems st
+def CoreMemDesign.settleAssignWithView (E : CoreMemDesign) (env : IEnv)
+    (elems : List (String × Nat)) (st : CoreMemState) (view : SvState)
+    (procs : List CoreMemProc) :
+    Res (CoreMemState × SvState) :=
+  do
+    let (st', view') ← E.settleAssignAt env elems st view 0 procs
+    .ok (E.compactScalar st' view', view')
 
 def CoreMemDesign.initialState (E : CoreMemDesign) : Res CoreMemState := do
   let bodies := E.processes.toList.filterMap fun p =>
@@ -1505,9 +1491,12 @@ def CoreMemDesign.initialState (E : CoreMemDesign) : Res CoreMemState := do
   if !E.hasComb then
     .ok base
   else
-    let settled ← E.settleAssign E.env E.elems base E.processes.toList
-    let combed ← E.runCombInitialFast settled E.processes.toList
-    E.settleAssign E.env E.elems combed E.processes.toList
+    let (settled, settledView) ←
+      E.settleAssignWithView E.env E.elems base (E.scalar.view base.scalar) E.processes.toList
+    let (combed, combedView) ←
+      E.runCombInitialWithView settled settledView E.processes.toList
+    let (final, _) ← E.settleAssignWithView E.env E.elems combed combedView E.processes.toList
+    .ok final
 
 def CoreMemDesign.runEdges (E : CoreMemDesign) (env : IEnv) (elems : List (String × Nat))
     (st : CoreMemState) (before after : SvState) : List CoreMemProc → CoreMemExec
@@ -1565,68 +1554,11 @@ def runCoreMemRepeat (st : CoreMemState) : List SvState → Res (List CoreMemSta
       let tail ← runCoreMemRepeat st rest
       .ok (st :: tail)
 
-/-! An empty input slot cannot wake a clocked-only design once its continuous
-assignments are settled.  The fast path is admitted only for the syntactic
-case where every continuous RHS is a single external identifier or literal,
-every edge clock/reset is not continuously driven, and edge bodies do not
-write those event signals.  This source-shaped dependency check makes the
-no-op conclusion exact without comparing function-valued stores. -/
-def coreMemStmtWrites (names : List String) : PStmt → Bool
-  | .blockingAssign n _ | .nbaAssign n _ => names.contains n
-  | .blockingAssignL (.ident n) _ | .nbaAssignL (.ident n) _ => names.contains n
-  | .blockingAssignL _ _ | .nbaAssignL _ _ => true
-  -- Compound and nested procedural bodies are conservatively kept off the
-  -- fast path; the direct assignment cases above cover the hierarchy wall.
-  | .ifStmt .. | .block .. | .forLoop .. | .caseStmt .. => true
-  | .unsupported .. => true
-
-def coreMemAssignEdges : List CoreMemProc → List (String × String)
-  | [] => []
-  | .assign (.ident target) (.ident source) :: rest => (target, source) :: coreMemAssignEdges rest
-  | _ :: rest => coreMemAssignEdges rest
-
-def coreMemReachable (edges : List (String × String)) (fuel : Nat)
-    (seen : List String) (current goal : String) : Bool :=
-  match fuel with
-  | 0 => false
-  | fuel + 1 =>
-      if current == goal then true
-      else if seen.contains current then false
-      else match edges.find? (fun e => e.1 == current) with
-        | none => false
-        | some (_, next) => coreMemReachable edges fuel (current :: seen) next goal
-
-def coreMemAssignAcyclic (edges : List (String × String)) : Bool :=
-  edges.foldl (fun ok (target, source) =>
-    ok && !coreMemReachable edges (edges.length + 1) [] source target) true
-
-def CoreMemDesign.emptyInputRepeatable (E : CoreMemDesign) : Bool :=
-  let targets := E.processes.toList.filterMap fun p =>
-    match p with | .assign (.ident n) _ => some n | _ => none
-  let rec go : List CoreMemProc → Bool
-    | [] => true
-    | .assign (.ident _) (.ident _) :: rest => go rest
-    | .assign (.ident _) (.lit _) :: rest => go rest
-    | .assign (.ident _) (.int _) :: rest => go rest
-    | .assign (.ident _) (.fill _) :: rest => go rest
-    | .assign _ _ :: _ => false
-    | .edge p :: rest =>
-        !targets.contains p.clock &&
-          (match p.reset with | none => true | some r => !targets.contains r) &&
-          !coreMemStmtWrites (p.clock :: p.reset.toList) p.body && go rest
-    | .initial _ :: _ => false
-    | .comb _ :: _ => false
-    | .implicit _ :: _ => false
-    | .unsupported .. :: _ => false
-  let edges := coreMemAssignEdges E.processes.toList
-  E.memories.isEmpty && go E.processes.toList && coreMemAssignAcyclic edges
-
 def runCoreMemRows (E : CoreMemDesign) (st : CoreMemState) : List SvState → Res (List CoreMemState)
   | [] => .ok []
   | row :: rest => do
       let st' ← E.step st row
-      let tail ← if row.isEmpty &&
-          (E.scalarAssignInputsOnly || E.emptyInputRepeatable) then
+      let tail ← if row.isEmpty && E.scalarAssignInputsOnly then
           runCoreMemRepeat st' rest
         else runCoreMemRows E st' rest
       .ok (st' :: tail)

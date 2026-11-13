@@ -2971,6 +2971,21 @@ theorem twinAgrees_callIn_arity_error (m : Module) (fuel : Nat) (w : World)
       ExceptT.instMonadLift, StateT.instMonad, StateT.get, StateT.bind,
       ExceptT.bind, ExceptT.bindCont, Except.bind, bind, Except.pure, pure]
 
+theorem twinAgrees_callIn_static_locals (m : Module) (fuel : Nat) (w : World)
+    (fname : String) (args : Array RVal) (f : FunctionDefn) (hfuel : 0 < fuel)
+    (hfind : findFunction m fname = some f) (hargs : f.argsOk = true)
+    (hlocal : f.localsOk = false) (hgen : proofCellGeneratorUnsafe m fname = false) :
+    callInMono m fuel w fname args =
+      .unsupported
+        (s!"function '{fname}' calls a name it also assigns (CPython static-locals rule) — outside the v0 tier") := by
+  cases fuel with
+  | zero => omega
+  | succ fuel =>
+    simp [callInMono, callInM, kont, hfind, hargs, hlocal, hgen, toRun,
+      pythonTopCallDepth, Monadic.refuse, LeanModels.refuse, raisePy,
+      raiseIn, throw, throwThe, MonadExceptOf.throw, ExceptT.mk,
+      StateT.pure, Except.pure, pure]
+
 /-- The §5.2 CLASS, present exactly when the run REFUSED. `none` is not a
 default: it is the statement that this run did not refuse. -/
 def refusalClass {α : Type} :
@@ -3789,6 +3804,7 @@ theorem twinAgrees_execOpenList_of_each (K : Kont) (m : Module) :
 #print axioms twinAgrees_callIn_missing_function
 #print axioms twinAgrees_callIn_unsupported_args
 #print axioms twinAgrees_callIn_arity_error
+#print axioms twinAgrees_callIn_static_locals
 #print axioms refusalClass_isSome_iff
 #print axioms toRun_ofRun
 #print axioms ofRun_toRun_normalises

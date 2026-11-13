@@ -51,6 +51,8 @@ branch when the function has unsupported parameter features and the generator
 capture guard is clear; both surfaces return the same loud refusal before body
 execution. `Monadic.twinAgrees_callIn_arity_error` now closes the arity branch
 as well, including the depth-sensitive CPython diagnostic and retained world.
+`Monadic.twinAgrees_callIn_static_locals` closes the following static-locals
+refusal branch before body execution.
 
 ## Operator dispatch
 

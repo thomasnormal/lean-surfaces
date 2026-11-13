@@ -14069,3 +14069,22 @@ retaining the world.
 
 DECIDED: the call preflight bridge now covers missing names, unsupported
 parameters, and arity diagnostics; recursive body adequacy remains open.
+
+## 2026-11-13-pyfoundation-106 — bridge the static-locals call preflight
+
+`Monadic.twinAgrees_callIn_static_locals` closes the static-local analysis
+branch of call entry. For a found function with supported parameter features,
+`localsOk = false`, positive fuel, and a clear generator-cell guard, both
+interpreters return the same loud CPython static-locals refusal before body
+execution.
+
+| Measurement | Result |
+|---|---|
+| Target | `lake build LeanModels.Python.Monadic.Eval` passed; 11/11 jobs |
+| Theorem | `Monadic.twinAgrees_callIn_static_locals` |
+| Domain | found functions rejected by the static-locals analysis |
+| Semantic change | theorem only; no evaluator behavior change |
+| Remaining debt | generator creation, recursive body calls, and scripts |
+
+DECIDED: call preflight guard order is now covered through the static-locals
+branch; recursive body adequacy remains open.

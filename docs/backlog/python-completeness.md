@@ -16230,3 +16230,21 @@ depth restoration.
 
 DECIDED: fourteen assignment steps now compose through a normal expression flow;
 arbitrary assignment and recursive body adequacy remain open.
+
+## 2026-11-13-pyfoundation-230 — fourteen-assignment bare-return bridge
+
+`Monadic.finishCallM_assign_fourteen_existing_locals_ret_none_body_ok` checks fourteen
+successive assignments `m = 0; n = 1; o = 2; p = 3; q = 4; r = 5; s = 6; t = 7; u = 8; v = 9; w = 10; x = 11; y = 12; z = 13`
+followed by a bare `return`, preserving the updated frame through early flow
+and depth restoration.
+
+| Measurement | Result |
+|---|---|
+| Target | `lake build LeanModels.Python.Monadic.Eval` passed; 11/11 jobs |
+| Theorem | `Monadic.finishCallM_assign_fourteen_existing_locals_ret_none_body_ok` |
+| Domain | fourteen consecutive assignments to existing locals followed by bare return |
+| Semantic change | theorem-only fourteen-assignment bare-return composition |
+| Remaining debt | arbitrary locals and recursive positive-fuel calls |
+
+DECIDED: fourteen assignment steps now compose through a bare return; arbitrary
+assignment and recursive body adequacy remain open.

@@ -476,3 +476,6 @@ fourteen-update bridge through a normal `pass` continuation.
 
 `Monadic.finishCallM_assign_fourteen_existing_locals_expr_body_ok` extends the
 fourteen-update bridge through a normal integer expression statement.
+
+`Monadic.finishCallM_assign_fourteen_existing_locals_ret_none_body_ok` extends
+the fourteen-update bridge through a bare return.

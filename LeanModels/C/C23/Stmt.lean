@@ -1186,6 +1186,29 @@ def callFn : Nat → Program → LeanModels.C.FunctionDefn → List CVal → Exe
                   pure .undef
               | .error r => throw r
           | _ => refuseUnsupported "free: wrong argument count"
+        let runBitCount : String → List CVal → ExecM CVal := fun nm vs =>
+          match vs with
+          | [value] => do
+              let (ty, n) ← asInt value
+              let modulus := ty.modulus
+              let residue := (n % modulus + modulus) % modulus
+              if residue == 0 && (nm.contains "ctz" || nm.contains "clz") then
+                refuseUnsupported s!"{nm}: zero argument"
+              else
+                let indexes := List.range ty.bits
+                let ones := indexes.foldl
+                  (fun acc i => acc + ((residue / ((2 : Int) ^ i)) % 2).toNat) 0
+                let trailing := indexes.takeWhile
+                  (fun i => ((residue / ((2 : Int) ^ i)) % 2) == 0) |>.length
+                let leading := indexes.reverse.takeWhile
+                  (fun i => ((residue / ((2 : Int) ^ i)) % 2) == 0) |>.length
+                let result :=
+                  if nm.contains "popcount" then ones
+                  else if nm.contains "parity" then ones % 2
+                  else if nm.contains "ctz" then trailing
+                  else leading
+                pure (.int IntTy.int_ result)
+          | _ => refuseUnsupported s!"{nm}: wrong argument count"
         let runFfs : List CVal → ExecM CVal := fun vs =>
           match vs with
           | [value] => do
@@ -1381,6 +1404,7 @@ def callFn : Nat → Program → LeanModels.C.FunctionDefn → List CVal → Exe
                     else if nm == "malloc" || nm == "__builtin_malloc" then runMalloc vs
                     else if nm == "calloc" || nm == "__builtin_calloc" then runCalloc vs
                     else if nm == "free" || nm == "__builtin_free" then runFree vs
+                    else if nm.contains "ctz" || nm.contains "clz" || nm.contains "popcount" || nm.contains "parity" then runBitCount nm vs
                     else if nm == "__builtin_ffs" then runFfs vs
                     else if nm == "__builtin_mul_overflow" then runArithOverflow "mul" vs
                     else if nm == "__builtin_add_overflow" then runArithOverflow "add" vs
@@ -1431,6 +1455,7 @@ def callFn : Nat → Program → LeanModels.C.FunctionDefn → List CVal → Exe
               else if nm == "malloc" || nm == "__builtin_malloc" then runMalloc vs
               else if nm == "calloc" || nm == "__builtin_calloc" then runCalloc vs
               else if nm == "free" || nm == "__builtin_free" then runFree vs
+              else if nm.contains "ctz" || nm.contains "clz" || nm.contains "popcount" || nm.contains "parity" then runBitCount nm vs
               else if nm == "__builtin_ffs" then runFfs vs
               else if nm == "__builtin_mul_overflow" then runArithOverflow "mul" vs
               else if nm == "__builtin_add_overflow" then runArithOverflow "add" vs

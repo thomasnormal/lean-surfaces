@@ -306,7 +306,16 @@ class Loc:
     def absorb(self, slot):
         if not isinstance(slot, dict):
             return None
-        inner = slot.get("expansionLoc") or slot.get("spellingLoc") or slot
+        expansion = slot.get("expansionLoc") or {}
+        spelling = slot.get("spellingLoc") or {}
+        inner = expansion or spelling or slot
+        # Clang omits `file` from an expansionLoc when a macro is invoked
+        # from the main file, while spellingLoc still carries the source file.
+        # Keep the expansion line/offset, but recover file identity from the
+        # parser's spelling location so macro-generated top-level declarations
+        # are not silently dropped by the main-file admission check.
+        if not inner.get("file") and spelling.get("file"):
+            self.file = spelling["file"]
         if inner.get("file"):
             self.file = inner["file"]
         if inner.get("line"):

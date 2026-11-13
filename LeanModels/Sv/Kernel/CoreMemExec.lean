@@ -831,25 +831,22 @@ def CoreMemDesign.execImplicitStmtFuel (E : CoreMemDesign) (env : IEnv)
   | fuel + 1, .forLoop .. =>
       .unsupported "9.2.2.2: procedural loop in implicit memory body is outside this slice"
   | fuel + 1, .caseStmt subject items default? mode check => do
-      if !caseModeInE0 mode then
-        .unsupported s!"12.5.1: {caseModeRefusal mode}"
-      else
-        let sv ← E.evalExpr env elems st none subject
-        match check with
-        | .none =>
+      let sv ← E.evalExpr env elems st none subject
+      match check with
+      | .none =>
+          let selected ← coreMemSelectCase E env elems st sv mode items default?
+          match selected with
+          | none => .ok st
+          | some body => E.execImplicitStmtFuel env elems st fuel body
+      | qualifier =>
+          let n ← coreMemCaseHits E env elems st sv mode items
+          if caseClaimOk qualifier default?.isSome n then
             let selected ← coreMemSelectCase E env elems st sv mode items default?
             match selected with
             | none => .ok st
             | some body => E.execImplicitStmtFuel env elems st fuel body
-        | qualifier =>
-            let n ← coreMemCaseHits E env elems st sv mode items
-            if caseClaimOk qualifier default?.isSome n then
-              let selected ← coreMemSelectCase E env elems st sv mode items default?
-              match selected with
-              | none => .ok st
-              | some body => E.execImplicitStmtFuel env elems st fuel body
-            else
-              .unsupported s!"12.5.3: {caseCheckName qualifier}"
+          else
+            .unsupported s!"12.5.3: {caseCheckName qualifier}"
   | fuel + 1, .nbaAssign .. | fuel + 1, .nbaAssignL .. =>
       .unsupported "10.4.2: nonblocking assignment in implicit memory body"
   | fuel + 1, .unsupported kind text => .unsupported s!"{kind}: {text}"
@@ -920,25 +917,22 @@ def CoreMemDesign.execCombStmtFuel (E : CoreMemDesign) (env : IEnv)
   | fuel + 1, .forLoop .. =>
       .unsupported "9.2.2.2: procedural loop in always_comb body is outside this slice"
   | fuel + 1, .caseStmt subject items default? mode check => do
-      if !caseModeInE0 mode then
-        .unsupported s!"12.5.1: {caseModeRefusal mode}"
-      else
-        let sv ← E.evalExpr env elems st none subject
-        match check with
-        | .none =>
+      let sv ← E.evalExpr env elems st none subject
+      match check with
+      | .none =>
+          let selected ← coreMemSelectCase E env elems st sv mode items default?
+          match selected with
+          | none => .ok st
+          | some body => E.execCombStmtFuel env elems st fuel body
+      | qualifier =>
+          let n ← coreMemCaseHits E env elems st sv mode items
+          if caseClaimOk qualifier default?.isSome n then
             let selected ← coreMemSelectCase E env elems st sv mode items default?
             match selected with
             | none => .ok st
             | some body => E.execCombStmtFuel env elems st fuel body
-        | qualifier =>
-            let n ← coreMemCaseHits E env elems st sv mode items
-            if caseClaimOk qualifier default?.isSome n then
-              let selected ← coreMemSelectCase E env elems st sv mode items default?
-              match selected with
-              | none => .ok st
-              | some body => E.execCombStmtFuel env elems st fuel body
-            else
-              .unsupported s!"12.5.3: {caseCheckName qualifier}"
+          else
+            .unsupported s!"12.5.3: {caseCheckName qualifier}"
   | fuel + 1, .nbaAssign .. | fuel + 1, .nbaAssignL .. =>
       .unsupported "10.4.2: nonblocking assignment in always_comb body"
   | fuel + 1, .unsupported kind text => .unsupported s!"{kind}: {text}"
@@ -1073,25 +1067,22 @@ def CoreMemDesign.execStmtFuel (E : CoreMemDesign) (env : IEnv) (elems : List (S
       | .unsupported e => .unsupported s!"ForLoopStatement: {e}"
       | .ok values => E.execLoopValuesFuel env elems st fuel values body iterator
   | fuel + 1, .caseStmt subject items default? mode check => do
-      if !caseModeInE0 mode then
-        .unsupported s!"12.5.1: {caseModeRefusal mode}"
-      else
-        let sv ← E.evalExpr env elems st none subject
-        match check with
-        | .none =>
+      let sv ← E.evalExpr env elems st none subject
+      match check with
+      | .none =>
+          let selected ← coreMemSelectCase E env elems st sv mode items default?
+          match selected with
+          | none => .ok { state := st, scalarQ := [], memoryQ := [] }
+          | some body => E.execStmtFuel env elems st fuel body
+      | qualifier =>
+          let n ← coreMemCaseHits E env elems st sv mode items
+          if caseClaimOk qualifier default?.isSome n then
             let selected ← coreMemSelectCase E env elems st sv mode items default?
             match selected with
             | none => .ok { state := st, scalarQ := [], memoryQ := [] }
             | some body => E.execStmtFuel env elems st fuel body
-        | qualifier =>
-            let n ← coreMemCaseHits E env elems st sv mode items
-            if caseClaimOk qualifier default?.isSome n then
-              let selected ← coreMemSelectCase E env elems st sv mode items default?
-              match selected with
-              | none => .ok { state := st, scalarQ := [], memoryQ := [] }
-              | some body => E.execStmtFuel env elems st fuel body
-            else
-              .unsupported s!"12.5.3: {caseCheckName qualifier}"
+          else
+            .unsupported s!"12.5.3: {caseCheckName qualifier}"
   | fuel + 1, .unsupported kind text => .unsupported s!"{kind}: {text}"
 
 def CoreMemDesign.execStmtsFuel (E : CoreMemDesign) (env : IEnv) (elems : List (String × Nat))

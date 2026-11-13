@@ -13,10 +13,18 @@ module memory_edge_loop_e_tb;
     $display("ROW 1 q=%b", q);
     clk = 1'b1; #1;
     $display("ROW 2 q=%b", q);
-    clk = 1'b0; d = 8'h22; #1;
+    clk = 1'b0; rstn = 1'bx; d = 8'h22; #1;
     $display("ROW 3 q=%b", q);
-    clk = 1'b1; #1;
+    clk = 1'b1; rstn = 1'b1; #1;
     $display("ROW 4 q=%b", q);
+    clk = 1'bx; d = 8'hxx; #1;
+    $display("ROW 5 q=%b", q);
+    clk = 1'b1; #1;
+    $display("ROW 6 q=%b", q);
+    clk = 1'b0; d = 8'hzz; #1;
+    $display("ROW 7 q=%b", q);
+    clk = 1'b1; #1;
+    $display("ROW 8 q=%b", q);
     $finish;
   end
 endmodule

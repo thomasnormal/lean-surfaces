@@ -41,9 +41,9 @@ def rows(output):
 def main():
     lean = run(["lake", "env", "lean", "--run", str(HERE / "oracle.lean")])
     expected = rows(lean)
-    if len(expected) != 5:
+    if len(expected) != 9:
         raise RuntimeError(f"E produced {len(expected)} rows:\n{lean}")
-    print("E: 5 rows")
+    print("E: 9 rows (initial, reset, x/z clock/reset/data cases)")
 
     if not shutil.which("iverilog") or not shutil.which("vvp"):
         raise RuntimeError("Icarus is required for this differential check")

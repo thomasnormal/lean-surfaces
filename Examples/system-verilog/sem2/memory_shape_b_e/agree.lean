@@ -8,4 +8,7 @@ load_design_sv2 memoryShapeB from
   | .ok d => d.processes.toList.any (fun p =>
       match p with | .unsupported k _ => k == "Instance" | _ => false)
   | _ => false
+#guard match LeanModels.Sv.Kernel.PDesign.instantiateCoreMem memoryShapeB.pdesign [4, 3] with
+  | .unsupported msg => msg.contains "generate items"
+  | _ => false
 end Examples.«system-verilog».sem2.memory_shape_b_e

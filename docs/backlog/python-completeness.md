@@ -16141,3 +16141,21 @@ depth restoration.
 
 DECIDED: thirteen assignment steps now compose through break flow; arbitrary
 assignment and recursive body adequacy remain open.
+
+## 2026-11-13-pyfoundation-225 — thirteen-assignment continue bridge
+
+`Monadic.finishCallM_assign_thirteen_existing_locals_continue_body_ok` checks thirteen
+successive assignments `n = 0; o = 1; p = 2; q = 3; r = 4; s = 5; t = 6; u = 7; v = 8; w = 9; x = 10; y = 11; z = 12`
+followed by `continue`, preserving the updated frame through abrupt flow and
+depth restoration.
+
+| Measurement | Result |
+|---|---|
+| Target | `lake build LeanModels.Python.Monadic.Eval` passed; 11/11 jobs |
+| Theorem | `Monadic.finishCallM_assign_thirteen_existing_locals_continue_body_ok` |
+| Domain | thirteen consecutive assignments to existing locals followed by continue |
+| Semantic change | theorem-only thirteen-assignment continue-flow composition |
+| Remaining debt | arbitrary locals and recursive positive-fuel calls |
+
+DECIDED: thirteen assignment steps now compose through continue flow; arbitrary
+assignment and recursive body adequacy remain open.

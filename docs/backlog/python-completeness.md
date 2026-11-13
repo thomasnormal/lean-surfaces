@@ -15962,3 +15962,21 @@ followed by `pass`, preserving normal completion and depth restoration.
 
 DECIDED: twelve assignment steps now compose through normal pass flow; arbitrary
 assignment and recursive body adequacy remain open.
+
+## 2026-11-13-pyfoundation-215 — twelve-assignment expression bridge
+
+`Monadic.finishCallM_assign_twelve_existing_locals_expr_body_ok` checks twelve
+successive assignments `o = 0; p = 1; q = 2; r = 3; s = 4; t = 5; u = 6; v = 7; w = 8; x = 9; y = 10; z = 11`
+followed by an integer expression statement, preserving normal completion and
+depth restoration.
+
+| Measurement | Result |
+|---|---|
+| Target | `lake build LeanModels.Python.Monadic.Eval` passed; 11/11 jobs |
+| Theorem | `Monadic.finishCallM_assign_twelve_existing_locals_expr_body_ok` |
+| Domain | twelve consecutive assignments to existing locals followed by an expression statement |
+| Semantic change | theorem-only twelve-assignment expression-flow composition |
+| Remaining debt | arbitrary locals and recursive positive-fuel calls |
+
+DECIDED: twelve assignment steps now compose through a normal expression flow;
+arbitrary assignment and recursive body adequacy remain open.

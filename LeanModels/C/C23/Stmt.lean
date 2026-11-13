@@ -1281,6 +1281,26 @@ def callFn : Nat → Program → LeanModels.C.FunctionDefn → List CVal → Exe
                 pure (.int IntTy.uint
                   (b0 * 16777216 + b1 * 65536 + b2 * 256 + b3))
           | _ => refuseUnsupported "__builtin_bswap32: wrong argument count"
+        let runBswap64 : List CVal → ExecM CVal := fun vs =>
+          match vs with
+          | [value] => do
+              let (t, n) ← asInt value
+              if t != IntTy.ulong then
+                refuseUnsupported "__builtin_bswap64: argument is not unsigned long long"
+              else
+                let b0 := n % 256
+                let b1 := (n / 256) % 256
+                let b2 := (n / 65536) % 256
+                let b3 := (n / 16777216) % 256
+                let b4 := (n / 4294967296) % 256
+                let b5 := (n / 1099511627776) % 256
+                let b6 := (n / 281474976710656) % 256
+                let b7 := (n / 72057594037927936) % 256
+                pure (.int IntTy.ulong
+                  (b0 * 72057594037927936 + b1 * 281474976710656 +
+                   b2 * 1099511627776 + b3 * 4294967296 + b4 * 16777216 +
+                   b5 * 65536 + b6 * 256 + b7))
+          | _ => refuseUnsupported "__builtin_bswap64: wrong argument count"
         let runAbs : List CVal → ExecM CVal := fun vs =>
           match vs with
           | [value] => do
@@ -1399,6 +1419,8 @@ def callFn : Nat → Program → LeanModels.C.FunctionDefn → List CVal → Exe
                 runBswap16 vs
               else if nm == "__builtin_bswap32" then
                 runBswap32 vs
+              else if nm == "__builtin_bswap64" then
+                runBswap64 vs
               else if nm == "__builtin_abs" || nm == "abs" then
                 runAbs vs
               else if nm == "__sync_add_and_fetch_8" then
@@ -1473,6 +1495,7 @@ def callFn : Nat → Program → LeanModels.C.FunctionDefn → List CVal → Exe
               else if nm == "memchr" || nm == "__builtin_memchr" then runMemchr vs
               else if nm == "__builtin_bswap16" then runBswap16 vs
               else if nm == "__builtin_bswap32" then runBswap32 vs
+              else if nm == "__builtin_bswap64" then runBswap64 vs
               else if nm == "__builtin_abs" || nm == "abs" then runAbs vs
               else if nm == "__sync_add_and_fetch_8" then runSyncAdd8 vs
               else if nm == "__builtin_expect" then runBuiltinExpect vs

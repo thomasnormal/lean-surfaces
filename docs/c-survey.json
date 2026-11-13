@@ -10,8 +10,8 @@
   "gcc.c-torture/execute": {
    "not-parsed": 267,
    "oracle-tests-compiler": 1,
-   "passed": 832,
-   "refused-libc": 42,
+   "passed": 833,
+   "refused-libc": 41,
    "refused-ub": 96,
    "refused-unsupported": 616,
    "timeout": 64
@@ -28,8 +28,8 @@
  "counts": {
   "not-parsed": 294,
   "oracle-tests-compiler": 1,
-  "passed": 1003,
-  "refused-libc": 46,
+  "passed": 1004,
+  "refused-libc": 45,
   "refused-ub": 105,
   "refused-unsupported": 699,
   "timeout": 66
@@ -1240,15 +1240,6 @@
   },
   {
    "files": [
-    "00040.c",
-    "ipa-sra-2.c"
-   ],
-   "present": 2,
-   "sole": 2,
-   "wall": "libc-call: calloc"
-  },
-  {
-   "files": [
     "970217-1.c",
     "loop-8.c"
    ],
@@ -1708,6 +1699,14 @@
    "present": 1,
    "sole": 1,
    "wall": "libc-call: __builtin_snprintf"
+  },
+  {
+   "files": [
+    "00040.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "libc-call: calloc"
   },
   {
    "files": [
@@ -3654,9 +3653,9 @@
    "wall": "unsupported:va_arg requested unsupported value type 'struct s'"
   }
  ],
- "manifest_hash": "48db2059fac028febf02971bcf24aef43bf40b50d5041853a68c80279720cd01",
- "measured_at_utc": "2026-11-13T10:10:49Z",
- "measured_commit": "58a0e811a",
+ "manifest_hash": "5a503c2244cfd07ed069844c6b2b67bdd90cbf6aa1d21e8fb11b8f83d82bfd26",
+ "measured_at_utc": "2026-11-13T10:14:52Z",
+ "measured_commit": "a601792cd",
  "pin": {
   "corpora": [
    "C1",
@@ -20079,8 +20078,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "calloc",
-   "dynamic_wall": "libc-call: calloc",
+   "detail": "",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "ipa-sra-2.c",
    "sha256": "ec09602287bd83ad97146911d37f177f4249422073304778523e3fd17e6d93b7",
@@ -20089,7 +20088,7 @@
     "libc-call: free",
     "type-layout"
    ],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",

@@ -2,10 +2,10 @@
 
 Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manifest.
 
-- verdicts: 1026/2214 MATCH (passed 1026, failed 0, oracle 0)
-- manifest SHA-256: `4990f6167252e8bbd4994c5a37c3b1270cea9688d7722164026bfab193fb9a76`
-- measured commit: `865659cdb`
-- measured at: `2026-11-13T14:40:00Z`
+- verdicts: 1027/2214 MATCH (passed 1027, failed 0, oracle 0)
+- manifest SHA-256: `9e708a59a29899150ebbc37d6cab9c2f2484cab19964af2a0a43215ba229ebca`
+- measured commit: `39e5b7def`
+- measured at: `2026-11-13T14:45:00Z`
 
 ## Verdict counts
 
@@ -13,10 +13,10 @@ Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manife
 | --- | ---: |
 | `not-parsed` | 294 |
 | `oracle-tests-compiler` | 1 |
-| `passed` | 1026 |
+| `passed` | 1027 |
 | `refused-libc` | 39 |
 | `refused-ub` | 105 |
-| `refused-unsupported` | 683 |
+| `refused-unsupported` | 682 |
 | `timeout` | 66 |
 
 ## Counts by corpus
@@ -30,10 +30,10 @@ Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manife
 | `c-testsuite/single-exec` | `timeout` | 2 |
 | `gcc.c-torture/execute` | `not-parsed` | 267 |
 | `gcc.c-torture/execute` | `oracle-tests-compiler` | 1 |
-| `gcc.c-torture/execute` | `passed` | 855 |
+| `gcc.c-torture/execute` | `passed` | 856 |
 | `gcc.c-torture/execute` | `refused-libc` | 35 |
 | `gcc.c-torture/execute` | `refused-ub` | 96 |
-| `gcc.c-torture/execute` | `refused-unsupported` | 600 |
+| `gcc.c-torture/execute` | `refused-unsupported` | 599 |
 | `gcc.c-torture/execute` | `timeout` | 64 |
 | `gcc.c23-run` | `not-parsed` | 27 |
 | `gcc.c23-run` | `passed` | 3 |
@@ -382,7 +382,6 @@ The run's first refusal, normalized by construct; `sole` counts rows whose first
 | `unsupported:unbound declaration 'id30' (name 'u')` | 2 | 2 | 20050604-1.c, 991228-1.c |
 | `unsupported:unbound declaration 'id39' (name 'X')` | 2 | 2 | 960215-1.c, regstack-1.c |
 | `unsupported:unsupported bit-field width 40 for 'unsigned long long'` | 2 | 2 | pr32244-1.c, pr34971.c |
-| `unsupported:unsupported bit-field width 52 for 'long long'` | 2 | 2 | 991118-1.c, bf64-1.c |
 | `cast:FloatingComplexCast` | 1 | 1 | 20070614-1.c |
 | `cast:FloatingRealToComplex` | 1 | 1 | complex-4.c |
 | `cast:IntegralComplexCast` | 1 | 1 | 20041124-1.c |
@@ -624,6 +623,7 @@ The run's first refusal, normalized by construct; `sole` counts rows whose first
 | `unsupported:unsupported bit-field width 4 for 'const int'` | 1 | 1 | pr100453.c |
 | `unsupported:unsupported bit-field width 48 for 'unsigned long long'` | 1 | 1 | pr65215-4.c |
 | `unsupported:unsupported bit-field width 5 for 'int'` | 1 | 1 | pr58984.c |
+| `unsupported:unsupported bit-field width 52 for 'long long'` | 1 | 1 | 991118-1.c |
 | `unsupported:unsupported bit-field width 8 for 'signed char'` | 1 | 1 | pr78436.c |
 | `unsupported:va_arg requested unsupported value type 'struct S'` | 1 | 1 | pr92904.c |
 | `unsupported:va_arg requested unsupported value type 'struct S1'` | 1 | 1 | stdarg-3.c |

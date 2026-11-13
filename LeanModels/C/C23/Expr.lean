@@ -1004,7 +1004,7 @@ def loadBitFieldAt (ctx : Ctx) (recordTy : CType) (field : String)
   match ctx.layout.fieldBits recordTy field, ctx.layout.size storageTy,
       intTyOf? (ctx.layout.normalizeTy fieldTy) with
   | some (offsetBits, width), some recordSize, some storageTy =>
-      if width > 48 || (storageTy.signed && width > 32) then
+      if width > 52 || (storageTy.signed && width > 52) then
         refuseUnsupported s!"unsupported bit-field width {width} for '{fieldTy}'"
       else
       let basePtr := { fieldPtr with off := fieldPtr.off - (offsetBits / 8 : Int), bound := none }

@@ -886,6 +886,17 @@ def extract(path, source_name=None, standard="c23"):
             ex.loc.file, ex.loc.line = loc.file, loc.line
             top.append(ex.node(d))
 
+    # File-scope anonymous records are emitted as a RecordDecl immediately
+    # before the VarDecl that owns their storage.  Preserve that parser
+    # declaration identity just as block-scope declarations do; otherwise
+    # an aggregate's dumped layout cannot be joined to its object without
+    # parsing the anonymous type spelling.
+    for i, decl in enumerate(top):
+        if decl.get("kind") == "VarDecl" and i > 0:
+            prev = top[i - 1]
+            if prev.get("kind") == "RecordDecl" and prev.get("decl_id"):
+                decl["record_decl_id"] = prev["decl_id"]
+
     # Clang emits separate declaration IDs for a prototype and its later
     # definition.  In C those declarations denote one function; retaining the
     # prototype ID at a call makes the evaluator refuse a real defined call as

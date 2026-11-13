@@ -340,13 +340,29 @@ def observedRecordFacts (envl : Envelope) :
                 | .field name ty _ _ => some (name.getD "", ty)
                 | _ => none
               some (tag ++ nm, members, checked)
-    | .record (some _) none fields (some layout) sp =>
+    | .record (some recordId) none fields (some layout) sp =>
         -- Clang gives an anonymous record its declaration identity and
         -- parser-native layout, while the typedef on the same source line
         -- supplies the language-visible type name.  Join those two AST
         -- declarations by their frontend span; never infer a name from
         -- source text or ABI spelling.
-        match ds.find? (fun q => match q with
+        let varTy? := ds.find? (fun q => match q with
+          | .var _ _ _ _ _ (some rid) _ _ => rid == recordId
+          | _ => false) |>.bind (fun q => match q with
+            | .var _ _ ty _ _ _ _ _ => some ty
+            | _ => none)
+        match varTy? with
+        | some ty =>
+            match checkedRecordLayout? fields layout with
+            | none => none
+            | some checked =>
+                if recordHasUnsupported fields then none
+                else
+                  let members := fields.filterMap fun field => match field with
+                    | .field name ty _ _ => some (name.getD "", ty)
+                    | _ => none
+                  some (ty, members, checked)
+        | none => match ds.find? (fun q => match q with
           | .typedef nm ty _ tsp => tsp.line == sp.line && ty == "struct " ++ nm
           | _ => false) with
         | some (.typedef nm _ _ _) =>

@@ -55,6 +55,9 @@ as well, including the depth-sensitive CPython diagnostic and retained world.
 refusal branch before body execution.
 `Monadic.twinAgrees_callIn_zero_fuel` also pins the shared timeout boundary for
 every call shape.
+The substrate now exposes kernel-checked `Monadic.toRun_set` and
+`Monadic.toRun_modify` equations beside `toRun_get`/`toRun_bind`, so positive
+fuel calls and scripts share one state-wrapper boundary.
 
 ## Operator dispatch
 

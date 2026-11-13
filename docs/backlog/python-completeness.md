@@ -14106,3 +14106,22 @@ call induction and is independent of function lookup or body shape.
 
 DECIDED: keep the zero-fuel timeout as the call induction base case; positive
 fuel remains the active adequacy boundary.
+
+## 2026-11-13-pyfoundation-108 — add state-wrapper adequacy bridges
+
+The positive-fuel call proof reaches the shared `StateT`/`ExceptT` boundary
+repeatedly. `Monadic.toRun_set` and `Monadic.toRun_modify` now join the existing
+`toRun_get` and `toRun_bind` equations, each proved by kernel reduction. These
+are general substrate bridges used by ordinary calls, recursion unwind, and
+stateful script adequacy; they do not duplicate evaluator semantics.
+
+| Measurement | Result |
+|---|---|
+| Target | `lake build LeanModels.Python.Monadic.Substrate` passed; 9/9 jobs |
+| Theorems | `Monadic.toRun_set`, `Monadic.toRun_modify` |
+| Domain | every state type and setter/modifier |
+| Semantic change | theorem-only substrate extension |
+| Remaining debt | apply the bridges to positive-fuel body calls and scripts |
+
+DECIDED: keep state-wrapper equations in the shared substrate so call and
+script proofs use one boundary definition.

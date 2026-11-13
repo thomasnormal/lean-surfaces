@@ -254,6 +254,12 @@ theorem toRun_pure {σ α : Type} (a : α) (s : σ) :
 theorem toRun_get {σ : Type} (s : σ) :
     toRun (get : PyM σ σ) s = .ok s s := rfl
 
+theorem toRun_set {σ : Type} (s s' : σ) :
+    toRun (set s' : PyM σ PUnit) s = .ok s' () := rfl
+
+theorem toRun_modify {σ : Type} (f : σ → σ) (s : σ) :
+    toRun (modify f : PyM σ PUnit) s = .ok (f s) () := rfl
+
 theorem toRun_bind {σ α β : Type} (x : PyM σ α) (f : α → PyM σ β) (s : σ) :
     toRun (x >>= f) s = Run.bind (toRun x s) (fun s' a => toRun (f a) s') := by
   simp only [toRun, bind_apply]
@@ -274,6 +280,8 @@ theorem toRun_map {σ α β : Type} (g : α → β) (x : PyM σ α) (s : σ) :
 #print axioms bind_apply
 #print axioms toRun_pure
 #print axioms toRun_bind
+#print axioms toRun_set
+#print axioms toRun_modify
 #print axioms toRun_map
 
 end LeanModels.Python.Monadic

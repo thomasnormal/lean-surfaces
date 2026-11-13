@@ -945,10 +945,13 @@ def parseModule2 (j : Json) : Except String PDesign :=
       let automatic := match getOptField fj "automatic" with
         | some (Json.bool b) => b
         | _ => true
+      let isSigned := match getOptField fj "signed" with
+        | some (Json.bool b) => b
+        | _ => false
       let returnType ← withCtx s!"function '{fname}' return type" (parsePType (← getField fj "return_type"))
       let formals ← (← (← getField fj "formals").getArr?).toList.mapM parsePDecl
       let body ← withCtx s!"function '{fname}' body" (parsePExpr (← getField fj "body"))
-      functions := functions ++ [{ name := fname, formals, returnType, body, automatic }]
+      functions := functions ++ [{ name := fname, formals, returnType, body, isSigned, automatic }]
     for pj in (← (← getField j "processes").getArr?) do
       processes := processes ++ [← parsePProcess pj]
     for gj in (← (← getField j "generates").getArr?) do

@@ -442,6 +442,8 @@ structure PFunction where
   formals : List PDecl
   returnType : PType
   body : PExpr
+  /-- Signedness of the function's integral return type. -/
+  isSigned : Bool := false
   automatic : Bool := true
 deriving Repr, BEq, Inhabited
 
@@ -720,6 +722,8 @@ structure IEnv where
   enums : List (String × Nat) := []
   members : List ((String × String) × LVec) := []
   functions : List PFunction := []
+  /-- Typed constant bindings for source-shaped pure function formals. -/
+  locals : List (String × (Int × Nat × Bool)) := []
   /-- Declared widths of TYPED parameters/localparams (semantic tier;
   untyped parameters are 32-bit ints and are absent here). -/
   pwidths : List (String × Nat) := []
@@ -770,6 +774,9 @@ deriving Repr, Inhabited
 /-- Bind a constant (prepend — shadows outer bindings of the name). -/
 def IEnv.bindVal (env : IEnv) (n : String) (v : Int) : IEnv :=
   { env with vals := (n, v) :: env.vals }
+
+def IEnv.bindLocal (env : IEnv) (n : String) (v : Int) (w : Nat) (s : Bool) : IEnv :=
+  { env with locals := (n, (v, w, s)) :: env.locals }
 
 def IEnv.bindPackageVal (env : IEnv) (pkg n : String) (v : Int) : IEnv :=
   { env with packageVals := ((pkg, n), v) :: env.packageVals }
@@ -949,6 +956,10 @@ exactly when the name is bound in `IEnv.vals` (non-INT typed parameters
 live in `IEnv.nvals`). -/
 def PExpr.isInt (env : IEnv) : PExpr → Bool
   | .int _ | .genvarRef _ | .sysCall .. => true
+  | .ident n =>
+      match env.locals.lookup n with
+      | some (_, 32, true) => true
+      | _ => false
   | .paramRef n none =>
       (env.vals.lookup n).isSome ||
         match env.nvals.lookup n with
@@ -1225,6 +1236,10 @@ unsigned; shifts and `**` the left operand's type. -/
 def ctype (env : IEnv) : PExpr → Except String (Nat × Bool)
   | .int _ | .genvarRef _ | .sysCall .. => .ok (32, true)
   | .lit v => .ok (v.width, false)
+  | .ident n =>
+      match env.locals.lookup n with
+      | some (_, w, s) => .ok (w, s)
+      | none => .error s!"signal '{n}' in a constant context"
   | .paramRef n none =>
       match env.vals.lookup n with
       | some _ => .ok (32, true)
@@ -1236,6 +1251,7 @@ def ctype (env : IEnv) : PExpr → Except String (Nat × Bool)
       match env.packageConstType p n with
       | some ty => .ok ty
       | none => .error s!"package-scoped parameter '{p}::{n}'"
+  | .functionCall n _ => .error s!"function '{n}' in a constant context"
   | .enumRef ty _ pkg =>
       match env.enumWidth ty pkg with
       | some w => .ok (w, false)
@@ -1289,8 +1305,6 @@ def ctype (env : IEnv) : PExpr → Except String (Nat × Bool)
       let mv ← evalAt env (← ctype env m) m
       let lv ← evalAt env (← ctype env l) l
       if lv ≤ mv then .ok ((mv - lv).toNat + 1, false) else .error "bad part-select bounds"
-  | .ident n => .error s!"signal '{n}' in a constant context"
-  | .functionCall n _ => .error s!"function '{n}' in a constant context"
   | .arrayElem n _ | .arrayPart n .. => .error s!"signal '{n}' in a constant context"
   | .fill _ => .error "unbased-unsized literal in a constant context (no context width)"
   | .concat ps => do
@@ -1327,6 +1341,10 @@ def evalAt (env : IEnv) (ty : Nat × Bool) : PExpr → Except String Int
       match v.toNat? with
       | some n => .ok (convertConst v.width ty.1 ty.2 n)
       | none => .error "x/z literal in a constant context"
+  | .ident n =>
+      match env.locals.lookup n with
+      | some (v, w, _) => .ok (convertConst w ty.1 ty.2 v)
+      | none => .error s!"signal '{n}' in a constant context"
   | .paramRef n none =>
       match env.vals.lookup n with
       | some v => .ok (convertConst 32 ty.1 ty.2 v)
@@ -1488,7 +1506,6 @@ def evalAt (env : IEnv) (ty : Nat × Bool) : PExpr → Except String Int
         let fw := (mv - lv).toNat + 1
         .ok (convertConst fw ty.1 ty.2
           (Int.ofNat (((bv.emod ((2 : Int) ^ wb)).toNat >>> lv.toNat) % 2 ^ fw)))
-  | .ident n => .error s!"signal '{n}' in a constant context"
   | .functionCall n _ => .error s!"function '{n}' in a constant context"
   | .arrayElem n _ | .arrayPart n .. => .error s!"signal '{n}' in a constant context"
   | .fill _ => .error "unbased-unsized literal in a constant context (no context width)"
@@ -1588,6 +1605,32 @@ that target's signed `integer` would change (`evalSized`). -/
 def assignFitMsg (w f : Nat) (v : Int) : String :=
   s!"Constant:assignment-context — a constant assigned to a {f}-bit target (a genvar initializer) is {w} bits wide at these parameters and its value {v} is not a 32-bit signed integer: IEEE 1800-2023 §27.4 and slang convert a genvar initializer to its `integer` (truncated and read signed), Icarus 12.0 and Yosys 0.53 keep the value whole (measured) — refused"
 
+/-! Pure source-shaped constant functions are evaluated after their input
+formals have been bound with the formal's declared width and signedness.
+The body is then sent through the same `ctype`/`evalAt` evaluator; nested
+calls remain loud until their own declaration is admitted. -/
+def evalConstFunctionCall (env : IEnv) (name : String) (args : List PExpr) : Except String Int :=
+  match env.functions.find? (fun f => f.name == name) with
+  | none => .error s!"function '{name}' in a constant context"
+  | some f =>
+      if !f.automatic then
+        .error s!"function '{name}' has static storage in a constant context"
+      else if f.formals.length != args.length then
+        .error s!"function '{name}' argument count mismatch"
+      else do
+        let env' ← f.formals.zip args |>.foldlM (init := env) fun e (formal, actual) => do
+          let (aw, as) ← ctype e actual
+          let av ← evalAt e (aw, as) actual
+          let fw := match formal.type with
+            | .packed _ (some w) | .typeRef _ _ (some w) => w
+            | .packed _ none | .typeRef _ _ none | .unrecoverable _ => 32
+          .ok (e.bindLocal formal.name (convertConst aw fw formal.isSigned av)
+            fw formal.isSigned)
+        let rw := match f.returnType with
+          | .packed _ (some w) | .typeRef _ _ (some w) => w
+          | .packed _ none | .typeRef _ _ none | .unrecoverable _ => 32
+        evalAt env' (rw, f.isSigned) f.body
+
 /-- **Width-exact constant evaluation** (round 4 folds): the value of `e`
 at its OWN type at THESE parameters (`ctype` then `evalAt`) — `evalInt`'s
 regime for every expression outside the INT class, the reading of every
@@ -1641,6 +1684,9 @@ def evalAssign (env : IEnv) (w : Nat) (e : PExpr) : Except String Int :=
       | .l0 => .ok (canonInt w false 0)
       | .l1 => .ok (canonInt w false ((2 : Int) ^ w - 1))
       | .lx | .lz => .error "x/z literal in a constant context"
+  | .functionCall n args => do
+      let v ← evalConstFunctionCall env n args
+      .ok (canonInt w true v)
   | _ => do
       let (we, se) ← ctype env e
       evalAt env (max w we, se) e
@@ -1659,8 +1705,11 @@ def evalInt (env : IEnv) : PExpr → Except String Int
       match v.toNat? with
       | some n => .ok (n : Int)
       | none => .error "x/z literal in a constant context"
-  | .ident n => .error s!"signal '{n}' in a constant context"
-  | .functionCall n _ => .error s!"function '{n}' in a constant context"
+  | .ident n =>
+      match env.locals.lookup n with
+      | some (v, w, s) => if w == 32 && s then .ok v else .error s!"typed formal '{n}' outside INT class"
+      | none => .error s!"signal '{n}' in a constant context"
+  | .functionCall n args => evalConstFunctionCall env n args
   | .paramRef n none =>
       match env.vals.lookup n with
       | some v => .ok v
@@ -2648,6 +2697,9 @@ generate bounds: the cv32e40p `register_file_ff` row's `NUM_TOT_WORDS`),
 a recorded over-refusal. The value check stays behind it for the
 expressions it admits. -/
 def evalUntyped (env : IEnv) (e : PExpr) : Except String Int := do
+  match e with
+  | .functionCall n args => return ← evalConstFunctionCall env n args
+  | _ => pure ()
   -- Round 6 folds: the WIDTH splits before the value does (`untypedWidthMsg`).
   if e.icarusWidens env then throw untypedWidthMsg
   let v ← evalInt env e
@@ -2779,7 +2831,7 @@ the default's type (`PParam.defaultConstType`) and the argument list for
 elaborated the envelope's `resolved` metadata at. -/
 def PDesign.atPoint (d : PDesign) («given» : List (Option Int)) :
     Except String (PDesign × List Int) := do
-  let envP ← match bindPackageParams {} d.packageParams with
+  let envP ← match bindPackageParams { functions := d.functions } d.packageParams with
     | .ok e => .ok e
     | .unsupported e => .error e
     | .timeout => .error "package parameter binding timed out"
@@ -2995,7 +3047,7 @@ def PDesign.instantiate (d : PDesign) (args : List Int) (iterFuel : Nat := 4096)
   if args.length != d.params.length then
     .unsupported s!"parameter arity: got {args.length}, want {d.params.length}"
   else do
-    let envPkgParams ← bindPackageParams {} d.packageParams
+    let envPkgParams ← bindPackageParams { functions := d.functions } d.packageParams
     let envPkg ← bindPackageEnums envPkgParams d.enums
     let env0 ← bindParamsRes envPkg d.params args
     let env1 ← bindLocals env0 d.localParams
@@ -3154,7 +3206,7 @@ def PDesign.crossCheck (d₀ : PDesign) : List String :=
         match p.resolved? with
         | some r => if r == v then none else some s!"parameter '{p.name}': ours {v} ≠ resolved {r}"
         | none => none
-      let envP : IEnv := match bindPackageParams { int32 := true } d.packageParams with
+      let envP : IEnv := match bindPackageParams { int32 := true, functions := d.functions } d.packageParams with
         | .ok e => e
         | _ => {}
       let envP : IEnv := match bindPackageEnums envP d.enums with

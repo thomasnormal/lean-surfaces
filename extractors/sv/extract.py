@@ -31466,9 +31466,9 @@ def _syntax_expr_inner(sm, sn):
         return _syntax_unsupported(sm, sn)
     if k == SyntaxKind.InvocationExpression:
         kids = _syntax_children(sn)
-        if len(kids) == 2 and kids[0].kind == SyntaxKind.SystemName:
+        if len(kids) == 2:
             name = str(kids[0]).strip()
-            if name in SYM_SYSCALLS:
+            if kids[0].kind == SyntaxKind.SystemName or name not in SYM_SYSCALLS:
                 args = []
                 for a in _syntax_children(kids[1]):
                     if a.kind == SyntaxKind.OrderedArgument:
@@ -31485,6 +31485,11 @@ def _syntax_expr_inner(sm, sn):
                             args.append(_syntax_unsupported(sm, a))
                     else:
                         args.append(_syntax_unsupported(sm, a))
+                if kids[0].kind != SyntaxKind.SystemName:
+                    return {"kind": "FunctionCall", "span": _syntax_span(sm, sn),
+                            "name": name.split("::")[-1], "args": args,
+                            "width": None}
+            if name in SYM_SYSCALLS:
                 return {
                     "kind": "SysCall",
                     "span": _syntax_span(sm, sn),
@@ -31643,7 +31648,7 @@ def _dtype_sym(sm, t, type_syntax, allow_signed=False):
             if cname in ("PackedStructType", "PackedUnionType"):
                 if getattr(t.canonicalType, "isTagged", False) or _sym_aggregate_point_dependent(t.canonicalType):
                     return None, "signed"
-            elif cname not in ("ScalarType", "PackedArrayType"):
+            elif cname not in ("ScalarType", "PackedArrayType", "PredefinedIntegerType"):
                 return None, "signed"
         cname = type(ct).__name__
         if cname == "ScalarType":
@@ -34967,7 +34972,8 @@ def _sym_function_node(sm, subroutine):
                 return unsupported(sm, subroutine, "SubroutineSymbol:formal-" + (freason or "type"))
             formal_node = {"kind": "Var", "span": sym_span(sm, formal),
                                  "name": formal.name, "width": fdtype,
-                                 "dir": "in", "init": None}
+                                 "dir": "in", "init": None,
+                                 "signed": bool(getattr(formal.type, "isSigned", False))}
             formal_nodes.append(formal_node)
             formal_bindings.append((formal, {"kind": "Ident", "span": sym_span(sm, formal),
                                              "width": fdtype.get("resolved", formal.type.bitWidth),
@@ -35022,7 +35028,8 @@ def _sym_function_node(sm, subroutine):
             return unsupported(sm, subroutine, "SubroutineSymbol:body")
         return {"kind": "Function", "span": sym_span(sm, subroutine),
                 "name": subroutine.name, "automatic": True,
-                "return_type": dtype, "formals": formal_nodes, "body": body}
+                "return_type": dtype, "signed": bool(getattr(subroutine.returnType, "isSigned", False)),
+                "formals": formal_nodes, "body": body}
     except Exception as exc:
         return internal_error(exc)
 
@@ -35084,6 +35091,35 @@ def _sym_package_params(sm):
                     node = dict(node)
                     node["package"] = package.name
                     result.append(node)
+    except Exception:
+        return []
+    return result
+
+
+def _sym_package_functions(sm):
+    """Retain referenced pure package functions for constant contexts.
+
+    Package functions are parser declarations just like module functions.  A
+    package call in a parameter/localparam must carry that declaration into
+    the envelope; dropping it turns an exact constant expression into a
+    misleading generic CallExpression refusal.
+    """
+    result = []
+    try:
+        root = _SYM.comp.getRoot()
+        for unit in _SYM.comp.getCompilationUnits():
+            for package in unit:
+                if str(getattr(package, "kind", "")).split(".")[-1] != "Package":
+                    continue
+                for member in package:
+                    if (str(getattr(member, "kind", "")).split(".")[-1]
+                            != "Subroutine"):
+                        continue
+                    if not _subroutine_is_referenced(root, member):
+                        continue
+                    retained = _sym_function_node(sm, member)
+                    if isinstance(retained, dict) and retained.get("kind") == "Function":
+                        result.append(retained)
     except Exception:
         return []
     return result
@@ -35221,6 +35257,7 @@ def convert_module_sym(sm, inst):
     decls.extend(lower_proc.hoisted_decls())                  # WP-PROC L1
 
     package_params = _sym_package_params(sm)
+    package_functions = _sym_package_functions(sm)
     properties.extend(_SYM_PROPERTIES)
     cell_refs = []
     def collect_cell_refs(node):
@@ -35254,7 +35291,8 @@ def convert_module_sym(sm, inst):
         "types": _SYM.enum_nodes,
         "ports": ports,
         "decls": decls,
-        **({"functions": functions} if functions else {}),
+        **({"functions": package_functions + functions}
+           if package_functions or functions else {}),
         "processes": processes,
         "generates": generates,
         "others": others,

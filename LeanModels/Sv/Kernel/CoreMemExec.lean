@@ -768,15 +768,16 @@ def CoreMemDesign.readChanged (E : CoreMemDesign) (before after : CoreMemState)
 
 mutual
 
-def CoreMemDesign.execImplicitStmt (E : CoreMemDesign) (env : IEnv)
-    (elems : List (String × Nat)) (st : CoreMemState) : PStmt → Res CoreMemState
-  | .blockingAssign name value =>
+def CoreMemDesign.execImplicitStmtFuel (E : CoreMemDesign) (env : IEnv)
+    (elems : List (String × Nat)) (st : CoreMemState) : Nat → PStmt → Res CoreMemState
+  | 0, _ => .timeout
+  | fuel + 1, .blockingAssign name value =>
       match E.scalarTarget name with
       | none => .unsupported s!"9.2.2.2: scalar implicit target '{name}' is undeclared"
       | some width => do
           let v ← E.evalExpr env elems st (some width) value
           .ok { st with scalar := E.scalar.setName st.scalar name v }
-  | .blockingAssignL target value =>
+  | fuel + 1, .blockingAssignL target value =>
       match target with
       | .ident name =>
           match E.scalarTarget name with
@@ -793,29 +794,56 @@ def CoreMemDesign.execImplicitStmt (E : CoreMemDesign) (env : IEnv)
       | .arrayElem name _ =>
           .unsupported s!"9.2.2.2: memory implicit target '{name}' is not one-rank"
       | _ => .unsupported "9.2.2.2: packed or concatenated implicit target is outside this slice"
-  | .ifStmt cond yes no => do
+  | fuel + 1, .ifStmt cond yes no => do
       let cv ← E.evalExpr env elems st (some 1) cond
-      if cv.condTrue then E.execImplicitStmt env elems st yes
+      if cv.condTrue then E.execImplicitStmtFuel env elems st fuel yes
       else match no with
         | none => .ok st
-        | some stmt => E.execImplicitStmt env elems st stmt
-  | .block body => E.execImplicitStmts env elems st body
-  | .forLoop .. =>
+        | some stmt => E.execImplicitStmtFuel env elems st fuel stmt
+  | fuel + 1, .block body => E.execImplicitStmtsFuel env elems st fuel body
+  | fuel + 1, .forLoop .. =>
       .unsupported "9.2.2.2: procedural loop in implicit memory body is outside this slice"
-  | .caseStmt .. =>
-      .unsupported "12.5: case in implicit memory body is outside this slice"
-  | .nbaAssign .. | .nbaAssignL .. =>
+  | fuel + 1, .caseStmt subject items default? mode check => do
+      if !caseModeInE0 mode then
+        .unsupported s!"12.5.1: {caseModeRefusal mode}"
+      else
+        let sv ← E.evalExpr env elems st none subject
+        match check with
+        | .none =>
+            let selected ← coreMemSelectCase E env elems st sv mode items default?
+            match selected with
+            | none => .ok st
+            | some body => E.execImplicitStmtFuel env elems st fuel body
+        | qualifier =>
+            let n ← coreMemCaseHits E env elems st sv mode items
+            if caseClaimOk qualifier default?.isSome n then
+              let selected ← coreMemSelectCase E env elems st sv mode items default?
+              match selected with
+              | none => .ok st
+              | some body => E.execImplicitStmtFuel env elems st fuel body
+            else
+              .unsupported s!"12.5.3: {caseCheckName qualifier}"
+  | fuel + 1, .nbaAssign .. | fuel + 1, .nbaAssignL .. =>
       .unsupported "10.4.2: nonblocking assignment in implicit memory body"
-  | .unsupported kind text => .unsupported s!"{kind}: {text}"
+  | fuel + 1, .unsupported kind text => .unsupported s!"{kind}: {text}"
 
-def CoreMemDesign.execImplicitStmts (E : CoreMemDesign) (env : IEnv)
-    (elems : List (String × Nat)) (st : CoreMemState) : List PStmt → Res CoreMemState
-  | [] => .ok st
-  | stmt :: rest => do
-      let st' ← E.execImplicitStmt env elems st stmt
-      E.execImplicitStmts env elems st' rest
+def CoreMemDesign.execImplicitStmtsFuel (E : CoreMemDesign) (env : IEnv)
+    (elems : List (String × Nat)) (st : CoreMemState) : Nat → List PStmt → Res CoreMemState
+  | 0, _ => .timeout
+  | fuel + 1, [] => .ok st
+  | fuel + 1, stmt :: rest => do
+      let st' ← E.execImplicitStmtFuel env elems st fuel stmt
+      E.execImplicitStmtsFuel env elems st' fuel rest
 
 end
+
+def CoreMemDesign.execImplicitStmt (E : CoreMemDesign) (env : IEnv)
+    (elems : List (String × Nat)) (st : CoreMemState) (stmt : PStmt) : Res CoreMemState :=
+  E.execImplicitStmtFuel env elems st 4096 stmt
+
+def CoreMemDesign.execImplicitStmts (E : CoreMemDesign) (env : IEnv)
+    (elems : List (String × Nat)) (st : CoreMemState) (stmts : List PStmt) : Res CoreMemState :=
+  E.execImplicitStmtsFuel env elems st 4096 stmts
 
 /-! ## `always_comb` activations
 

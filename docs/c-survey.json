@@ -10,10 +10,10 @@
   "gcc.c-torture/execute": {
    "not-parsed": 267,
    "oracle-tests-compiler": 1,
-   "passed": 852,
+   "passed": 853,
    "refused-libc": 35,
    "refused-ub": 96,
-   "refused-unsupported": 603,
+   "refused-unsupported": 602,
    "timeout": 64
   },
   "gcc.c23-run": {
@@ -28,10 +28,10 @@
  "counts": {
   "not-parsed": 294,
   "oracle-tests-compiler": 1,
-  "passed": 1023,
+  "passed": 1024,
   "refused-libc": 39,
   "refused-ub": 105,
-  "refused-unsupported": 686,
+  "refused-unsupported": 685,
   "timeout": 66
  },
  "dynamic_wall_ranking": [
@@ -3497,14 +3497,6 @@
   },
   {
    "files": [
-    "bitfld-1.c"
-   ],
-   "present": 1,
-   "sole": 1,
-   "wall": "unsupported:unsupported bit-field width 7 for 'int'"
-  },
-  {
-   "files": [
     "pr78436.c"
    ],
    "present": 1,
@@ -3536,9 +3528,9 @@
    "wall": "unsupported:va_arg requested unsupported value type 'struct s'"
   }
  ],
- "manifest_hash": "7a8e529d81097a590a1a798e45316abbfd0ea6c10b3935aff4f3c6f88a0fd7fd",
- "measured_at_utc": "2026-11-13T14:10:00Z",
- "measured_commit": "3c3e40f0f",
+ "manifest_hash": "83e3a777af25fd63b419ee9763bf65f6e6ea3f189624032a20221b6ad19ea5f0",
+ "measured_at_utc": "2026-11-13T14:25:00Z",
+ "measured_commit": "b5e8aaa35",
  "pin": {
   "corpora": [
    "C1",
@@ -15286,15 +15278,15 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "unsupported bit-field width 7 for 'int'",
-   "dynamic_wall": "unsupported:unsupported bit-field width 7 for 'int'",
+   "detail": "",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "bitfld-1.c",
    "sha256": "8c1e292e2bd0177a25f13545a1c4b873f701d20be8b4de8a2cb205921f6e688e",
    "static_walls": [
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",

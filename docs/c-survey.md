@@ -2,10 +2,10 @@
 
 Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manifest.
 
-- verdicts: 1023/2214 MATCH (passed 1023, failed 0, oracle 0)
-- manifest SHA-256: `7a8e529d81097a590a1a798e45316abbfd0ea6c10b3935aff4f3c6f88a0fd7fd`
-- measured commit: `3c3e40f0f`
-- measured at: `2026-11-13T14:10:00Z`
+- verdicts: 1024/2214 MATCH (passed 1024, failed 0, oracle 0)
+- manifest SHA-256: `83e3a777af25fd63b419ee9763bf65f6e6ea3f189624032a20221b6ad19ea5f0`
+- measured commit: `b5e8aaa35`
+- measured at: `2026-11-13T14:25:00Z`
 
 ## Verdict counts
 
@@ -13,10 +13,10 @@ Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manife
 | --- | ---: |
 | `not-parsed` | 294 |
 | `oracle-tests-compiler` | 1 |
-| `passed` | 1023 |
+| `passed` | 1024 |
 | `refused-libc` | 39 |
 | `refused-ub` | 105 |
-| `refused-unsupported` | 686 |
+| `refused-unsupported` | 685 |
 | `timeout` | 66 |
 
 ## Counts by corpus
@@ -30,10 +30,10 @@ Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manife
 | `c-testsuite/single-exec` | `timeout` | 2 |
 | `gcc.c-torture/execute` | `not-parsed` | 267 |
 | `gcc.c-torture/execute` | `oracle-tests-compiler` | 1 |
-| `gcc.c-torture/execute` | `passed` | 852 |
+| `gcc.c-torture/execute` | `passed` | 853 |
 | `gcc.c-torture/execute` | `refused-libc` | 35 |
 | `gcc.c-torture/execute` | `refused-ub` | 96 |
-| `gcc.c-torture/execute` | `refused-unsupported` | 603 |
+| `gcc.c-torture/execute` | `refused-unsupported` | 602 |
 | `gcc.c-torture/execute` | `timeout` | 64 |
 | `gcc.c23-run` | `not-parsed` | 27 |
 | `gcc.c23-run` | `passed` | 3 |
@@ -626,7 +626,6 @@ The run's first refusal, normalized by construct; `sole` counts rows whose first
 | `unsupported:unsupported bit-field width 4 for 'const int'` | 1 | 1 | pr100453.c |
 | `unsupported:unsupported bit-field width 48 for 'unsigned long long'` | 1 | 1 | pr65215-4.c |
 | `unsupported:unsupported bit-field width 5 for 'int'` | 1 | 1 | pr58984.c |
-| `unsupported:unsupported bit-field width 7 for 'int'` | 1 | 1 | bitfld-1.c |
 | `unsupported:unsupported bit-field width 8 for 'signed char'` | 1 | 1 | pr78436.c |
 | `unsupported:va_arg requested unsupported value type 'struct S'` | 1 | 1 | pr92904.c |
 | `unsupported:va_arg requested unsupported value type 'struct S1'` | 1 | 1 | stdarg-3.c |

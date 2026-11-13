@@ -10,8 +10,8 @@
   "gcc.c-torture/execute": {
    "not-parsed": 267,
    "oracle-tests-compiler": 1,
-   "passed": 823,
-   "refused-libc": 51,
+   "passed": 824,
+   "refused-libc": 50,
    "refused-ub": 96,
    "refused-unsupported": 616,
    "timeout": 64
@@ -28,8 +28,8 @@
  "counts": {
   "not-parsed": 294,
   "oracle-tests-compiler": 1,
-  "passed": 994,
-  "refused-libc": 55,
+  "passed": 995,
+  "refused-libc": 54,
   "refused-ub": 105,
   "refused-unsupported": 699,
   "timeout": 66
@@ -933,19 +933,6 @@
   },
   {
    "files": [
-    "20181120-1.c",
-    "20230630-2.c",
-    "20230630-4.c",
-    "gcc/testsuite/gcc.dg/c23-nullptr-5.c",
-    "pr77767.c",
-    "pr97325.c"
-   ],
-   "present": 6,
-   "sole": 6,
-   "wall": "libc-call: __builtin_abort"
-  },
-  {
-   "files": [
     "20071018-1.c",
     "20071120-1.c",
     "pr36765.c",
@@ -982,6 +969,18 @@
    "present": 6,
    "sole": 6,
    "wall": "unsupported:break, continue or goto escaped a function body"
+  },
+  {
+   "files": [
+    "20181120-1.c",
+    "20230630-2.c",
+    "20230630-4.c",
+    "gcc/testsuite/gcc.dg/c23-nullptr-5.c",
+    "pr77767.c"
+   ],
+   "present": 5,
+   "sole": 5,
+   "wall": "libc-call: __builtin_abort"
   },
   {
    "files": [
@@ -3670,9 +3669,9 @@
    "wall": "unsupported:va_arg requested unsupported value type 'struct s'"
   }
  ],
- "manifest_hash": "e284f1ab02d894ce47edac10d10dc08d0847477b73ca6eb801bc5e68f46ef2f5",
- "measured_at_utc": "2026-11-13T09:49:07Z",
- "measured_commit": "60ee2ce57",
+ "manifest_hash": "24f74fc98366937b83d8416f3f7d34ebb97b2c7fbd60518747495bda6f3189ce",
+ "measured_at_utc": "2026-11-13T10:00:54Z",
+ "measured_commit": "ebc6211ec",
  "pin": {
   "corpora": [
    "C1",
@@ -28432,8 +28431,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "__builtin_abort",
-   "dynamic_wall": "libc-call: __builtin_abort",
+   "detail": "",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "pr97325.c",
    "sha256": "74fff5b0fb483bde47106bccecd0869788a8e70e70abdba953d50de51d9ab4fc",
@@ -28441,7 +28440,7 @@
     "libc-call: __builtin_abort",
     "libc-call: __builtin_ffs"
    ],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",

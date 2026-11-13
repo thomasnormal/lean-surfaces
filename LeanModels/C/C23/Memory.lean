@@ -282,6 +282,17 @@ private def vaGet (xs : List (ObjId × List CVal)) (o : ObjId) : Option (List CV
   | [] => none
   | (q, vs) :: rest => if q == o then some vs else vaGet rest o
 
+/-- The abstract argument sequence of a live `va_list`.  This accessor keeps
+the ABI-free cursor representation private while allowing library consumers
+such as `vprintf` to walk the parser-provided promoted values. -/
+def vaValues (m : Mem) (p : Ptr) : MRes (List CVal) :=
+  match p.obj with
+  | none => .error (.memUB (.nullDeref p.off))
+  | some o =>
+      match vaGet m.vaCursors o with
+      | some vs => .ok vs
+      | none => .error (.memUB (.nonValueRepresentation o 0))
+
 private def vaDrop (xs : List (ObjId × List CVal)) (o : ObjId) : List (ObjId × List CVal) :=
   match xs with
   | [] => []

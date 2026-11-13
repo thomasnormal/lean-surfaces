@@ -903,6 +903,16 @@ def callFn : Nat → Program → LeanModels.C.FunctionDefn → List CVal → Exe
               modify (fun mem => mem.emitStdout bytes)
               pure (.int IntTy.int_ bytes.length)
           | _ => refuseUnsupported "printf: missing format argument"
+        let runVprintf : List CVal → ExecM CVal := fun vs =>
+          match vs with
+          | [fmt, ap] => do
+              let p ← asPtr ap
+              let m ← get
+              let args ← match Mem.vaValues m p with
+                | .ok xs => pure xs
+                | .error r => throw r
+              runPrintf (fmt :: args)
+          | _ => refuseUnsupported "vprintf: wrong argument count"
         let runBuiltinStrcpy : List CVal → ExecM CVal := fun vs =>
           match vs with
           | [dst, src] => do
@@ -1291,6 +1301,8 @@ def callFn : Nat → Program → LeanModels.C.FunctionDefn → List CVal → Exe
                 runStrrchr vs
               else if nm == "printf" || nm == "__builtin_printf" then
                 runPrintf vs
+              else if nm == "vprintf" || nm == "__builtin_vprintf" then
+                runVprintf vs
               else if nm == "abort" || nm == "exit" then
                 throw (.libc nm)
               else match prog.findId? declaration with
@@ -1332,6 +1344,7 @@ def callFn : Nat → Program → LeanModels.C.FunctionDefn → List CVal → Exe
               else if nm == "strcat" || nm == "__builtin_strcat" then runStrcat vs
               else if nm == "strlen" then runStrlen vs
               else if nm == "printf" || nm == "__builtin_printf" then runPrintf vs
+              else if nm == "vprintf" || nm == "__builtin_vprintf" then runVprintf vs
               else if nm == "memset" || nm == "__builtin_memset" then runMemset vs
               else if nm == "memcpy" || nm == "__builtin_memcpy" then runMemcpy vs
               else if nm == "__builtin_strcmp" then runStrcmp vs

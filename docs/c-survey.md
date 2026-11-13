@@ -2,10 +2,10 @@
 
 Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manifest.
 
-- verdicts: 983/2214 MATCH (passed 983, failed 0, oracle 0)
-- manifest SHA-256: `053645ef07b8695d9ceec8a2791c73c73d6d429c60d4466b128a21c796c6a3d8`
-- measured commit: `e87fd9415`
-- measured at: `2026-11-13T09:26:02Z`
+- verdicts: 984/2214 MATCH (passed 984, failed 0, oracle 0)
+- manifest SHA-256: `888ef497928a1ec596e691cf617173518afed9de812ca58f7298c8fa33cb618f`
+- measured commit: `c28d6088d`
+- measured at: `2026-11-13T09:30:37Z`
 
 ## Verdict counts
 
@@ -13,10 +13,10 @@ Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manife
 | --- | ---: |
 | `not-parsed` | 294 |
 | `oracle-tests-compiler` | 1 |
-| `passed` | 983 |
+| `passed` | 984 |
 | `refused-libc` | 55 |
 | `refused-ub` | 105 |
-| `refused-unsupported` | 710 |
+| `refused-unsupported` | 709 |
 | `timeout` | 66 |
 
 ## Counts by corpus
@@ -30,10 +30,10 @@ Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manife
 | `c-testsuite/single-exec` | `timeout` | 2 |
 | `gcc.c-torture/execute` | `not-parsed` | 267 |
 | `gcc.c-torture/execute` | `oracle-tests-compiler` | 1 |
-| `gcc.c-torture/execute` | `passed` | 813 |
+| `gcc.c-torture/execute` | `passed` | 814 |
 | `gcc.c-torture/execute` | `refused-libc` | 51 |
 | `gcc.c-torture/execute` | `refused-ub` | 96 |
-| `gcc.c-torture/execute` | `refused-unsupported` | 626 |
+| `gcc.c-torture/execute` | `refused-unsupported` | 625 |
 | `gcc.c-torture/execute` | `timeout` | 64 |
 | `gcc.c23-run` | `not-parsed` | 27 |
 | `gcc.c23-run` | `passed` | 3 |
@@ -519,7 +519,6 @@ The run's first refusal, normalized by construct; `sole` counts rows whose first
 | `unsupported:no layout for declared type 'volatile enum X'` | 1 | 1 | 20030903-1.c |
 | `unsupported:no layout for declared type 'volatile long double'` | 1 | 1 | gcc/testsuite/gcc.dg/c23-float-12.c |
 | `unsupported:no layout for declared type 'wchar_t[21]'` | 1 | 1 | 00220.c |
-| `unsupported:no layout for field 'a'` | 1 | 1 | 20100708-1.c |
 | `unsupported:no layout for field 'c'` | 1 | 1 | pr47538.c |
 | `unsupported:no layout for field 'code'` | 1 | 1 | 00218.c |
 | `unsupported:no layout for field 'f2'` | 1 | 1 | pr101188.c |

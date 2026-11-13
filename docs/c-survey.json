@@ -10,10 +10,10 @@
   "gcc.c-torture/execute": {
    "not-parsed": 267,
    "oracle-tests-compiler": 1,
-   "passed": 813,
+   "passed": 814,
    "refused-libc": 51,
    "refused-ub": 96,
-   "refused-unsupported": 626,
+   "refused-unsupported": 625,
    "timeout": 64
   },
   "gcc.c23-run": {
@@ -28,10 +28,10 @@
  "counts": {
   "not-parsed": 294,
   "oracle-tests-compiler": 1,
-  "passed": 983,
+  "passed": 984,
   "refused-libc": 55,
   "refused-ub": 105,
-  "refused-unsupported": 710,
+  "refused-unsupported": 709,
   "timeout": 66
  },
  "dynamic_wall_ranking": [
@@ -2656,14 +2656,6 @@
   },
   {
    "files": [
-    "20100708-1.c"
-   ],
-   "present": 1,
-   "sole": 1,
-   "wall": "unsupported:no layout for field 'a'"
-  },
-  {
-   "files": [
     "pr47538.c"
    ],
    "present": 1,
@@ -3751,9 +3743,9 @@
    "wall": "unsupported:va_arg requested unsupported value type 'struct s'"
   }
  ],
- "manifest_hash": "053645ef07b8695d9ceec8a2791c73c73d6d429c60d4466b128a21c796c6a3d8",
- "measured_at_utc": "2026-11-13T09:26:02Z",
- "measured_commit": "e87fd9415",
+ "manifest_hash": "888ef497928a1ec596e691cf617173518afed9de812ca58f7298c8fa33cb618f",
+ "measured_at_utc": "2026-11-13T09:30:37Z",
+ "measured_commit": "c28d6088d",
  "pin": {
   "corpora": [
    "C1",
@@ -11301,15 +11293,15 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "no layout for field 'a'",
-   "dynamic_wall": "unsupported:no layout for field 'a'",
+   "detail": "",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "20100708-1.c",
    "sha256": "a949aa778785662ea096ac57301a7e73713b757d864682199ba60145d8d735a1",
    "static_walls": [
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",

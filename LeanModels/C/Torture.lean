@@ -139,7 +139,7 @@ def typeSpellingAdmitted (t : CType) : Bool :=
   ((!t.contains "(*") || LeanModels.C.isConstPointerToArray t) &&
   !t.endsWith " const" && !t.endsWith " volatile" &&
   !t.endsWith " restrict" && !t.endsWith "*restrict" &&
-  !t.contains ") [" && !t.contains "::"
+  !t.contains "::"
 
 /-- Drop the qualifiers. Exact: `const`/`volatile` do not change a size. -/
 def stripQuals : Nat → CType → CType
@@ -359,7 +359,8 @@ def observedRecordFacts (envl : Envelope) :
                   let members := nested.filterMap fun field => match field with
                     | .field name mty _ _ => some (name.getD "", mty)
                     | _ => none
-                  [(ty, members, checked)]
+                  let keyTy := (arrayOf ty).map (·.1) |>.getD ty
+                  [(keyTy, members, checked)]
               | none => []
           | _ => []
       | _ => []

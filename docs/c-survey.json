@@ -10,10 +10,10 @@
   "gcc.c-torture/execute": {
    "not-parsed": 267,
    "oracle-tests-compiler": 1,
-   "passed": 814,
+   "passed": 819,
    "refused-libc": 51,
    "refused-ub": 96,
-   "refused-unsupported": 625,
+   "refused-unsupported": 620,
    "timeout": 64
   },
   "gcc.c23-run": {
@@ -28,10 +28,10 @@
  "counts": {
   "not-parsed": 294,
   "oracle-tests-compiler": 1,
-  "passed": 984,
+  "passed": 989,
   "refused-libc": 55,
   "refused-ub": 105,
-  "refused-unsupported": 709,
+  "refused-unsupported": 704,
   "timeout": 66
  },
  "dynamic_wall_ranking": [
@@ -1400,15 +1400,6 @@
   },
   {
    "files": [
-    "20000808-1.c",
-    "950607-2.c"
-   ],
-   "present": 2,
-   "sole": 2,
-   "wall": "unsupported:no layout for declared type 'Point'"
-  },
-  {
-   "files": [
     "20011113-1.c",
     "20180131-1.c"
    ],
@@ -1992,19 +1983,19 @@
   },
   {
    "files": [
+    "20000808-1.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "unsupported:no layout for declared type 'Point'"
+  },
+  {
+   "files": [
     "simd-5.c"
    ],
    "present": 1,
    "sole": 1,
    "wall": "unsupported:no layout for declared type 'Q'"
-  },
-  {
-   "files": [
-    "pr56799.c"
-   ],
-   "present": 1,
-   "sole": 1,
-   "wall": "unsupported:no layout for declared type 'S'"
   },
   {
    "files": [
@@ -2029,14 +2020,6 @@
    "present": 1,
    "sole": 1,
    "wall": "unsupported:no layout for declared type 'TRIAL'"
-  },
-  {
-   "files": [
-    "990525-2.c"
-   ],
-   "present": 1,
-   "sole": 1,
-   "wall": "unsupported:no layout for declared type 'Test1'"
   },
   {
    "files": [
@@ -2277,14 +2260,6 @@
    "present": 1,
    "sole": 1,
    "wall": "unsupported:no layout for declared type 'enum fred'"
-  },
-  {
-   "files": [
-    "921123-2.c"
-   ],
-   "present": 1,
-   "sole": 1,
-   "wall": "unsupported:no layout for declared type 'four_quarters'"
   },
   {
    "files": [
@@ -2533,14 +2508,6 @@
    "present": 1,
    "sole": 1,
    "wall": "unsupported:no layout for declared type 't'"
-  },
-  {
-   "files": [
-    "divconst-1.c"
-   ],
-   "present": 1,
-   "sole": 1,
-   "wall": "unsupported:no layout for declared type 't1'"
   },
   {
    "files": [
@@ -3743,9 +3710,9 @@
    "wall": "unsupported:va_arg requested unsupported value type 'struct s'"
   }
  ],
- "manifest_hash": "888ef497928a1ec596e691cf617173518afed9de812ca58f7298c8fa33cb618f",
- "measured_at_utc": "2026-11-13T09:30:37Z",
- "measured_commit": "c28d6088d",
+ "manifest_hash": "ea67cde09c94ace937630e1029f9b8ac54b884ae03bfc43f05e1ebc75d445643",
+ "measured_at_utc": "2026-11-13T09:33:39Z",
+ "measured_commit": "e24af2a90",
  "pin": {
   "corpora": [
    "C1",
@@ -12643,15 +12610,15 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "no layout for declared type 'four_quarters'",
-   "dynamic_wall": "unsupported:no layout for declared type 'four_quarters'",
+   "detail": "",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "921123-2.c",
    "sha256": "828676e8734291950b55b40e49181175887e35e2e3925a331f11b665f8c5ea57",
    "static_walls": [
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -13704,15 +13671,15 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "no layout for declared type 'Point'",
-   "dynamic_wall": "unsupported:no layout for declared type 'Point'",
+   "detail": "",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "950607-2.c",
    "sha256": "cfcc65810cb604c53487db48f1cc7c8948205030c1522b121612e27058e7d4c3",
    "static_walls": [
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -14898,15 +14865,15 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "no layout for declared type 'Test1'",
-   "dynamic_wall": "unsupported:no layout for declared type 'Test1'",
+   "detail": "",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "990525-2.c",
    "sha256": "962d799e85c2a6f43a0027098cf338d3b1c15ee90af3b7c456083a0c6a3985c1",
    "static_walls": [
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -17896,15 +17863,15 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "no layout for declared type 't1'",
-   "dynamic_wall": "unsupported:no layout for declared type 't1'",
+   "detail": "",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "divconst-1.c",
    "sha256": "3fff002e131de3efb47dcf22d383111f4f474fb5bf444b4d8f2eb4ebef51b836",
    "static_walls": [
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -25137,15 +25104,15 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "no layout for declared type 'S'",
-   "dynamic_wall": "unsupported:no layout for declared type 'S'",
+   "detail": "",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "pr56799.c",
    "sha256": "165056aa546d0ec05b2992f359e233a38f011d1ba46af5d08bfd74183964c14c",
    "static_walls": [
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",

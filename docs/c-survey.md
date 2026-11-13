@@ -2,10 +2,10 @@
 
 Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manifest.
 
-- verdicts: 984/2214 MATCH (passed 984, failed 0, oracle 0)
-- manifest SHA-256: `888ef497928a1ec596e691cf617173518afed9de812ca58f7298c8fa33cb618f`
-- measured commit: `c28d6088d`
-- measured at: `2026-11-13T09:30:37Z`
+- verdicts: 989/2214 MATCH (passed 989, failed 0, oracle 0)
+- manifest SHA-256: `ea67cde09c94ace937630e1029f9b8ac54b884ae03bfc43f05e1ebc75d445643`
+- measured commit: `e24af2a90`
+- measured at: `2026-11-13T09:33:39Z`
 
 ## Verdict counts
 
@@ -13,10 +13,10 @@ Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manife
 | --- | ---: |
 | `not-parsed` | 294 |
 | `oracle-tests-compiler` | 1 |
-| `passed` | 984 |
+| `passed` | 989 |
 | `refused-libc` | 55 |
 | `refused-ub` | 105 |
-| `refused-unsupported` | 709 |
+| `refused-unsupported` | 704 |
 | `timeout` | 66 |
 
 ## Counts by corpus
@@ -30,10 +30,10 @@ Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manife
 | `c-testsuite/single-exec` | `timeout` | 2 |
 | `gcc.c-torture/execute` | `not-parsed` | 267 |
 | `gcc.c-torture/execute` | `oracle-tests-compiler` | 1 |
-| `gcc.c-torture/execute` | `passed` | 814 |
+| `gcc.c-torture/execute` | `passed` | 819 |
 | `gcc.c-torture/execute` | `refused-libc` | 51 |
 | `gcc.c-torture/execute` | `refused-ub` | 96 |
-| `gcc.c-torture/execute` | `refused-unsupported` | 625 |
+| `gcc.c-torture/execute` | `refused-unsupported` | 620 |
 | `gcc.c-torture/execute` | `timeout` | 64 |
 | `gcc.c23-run` | `not-parsed` | 27 |
 | `gcc.c23-run` | `passed` | 3 |
@@ -365,7 +365,6 @@ The run's first refusal, normalized by construct; `sole` counts rows whose first
 | `unsupported:goto skips a block declaration` | 2 | 2 | 00129.c, gcc/testsuite/gcc.dg/c23-labels-1.c |
 | `unsupported:long double integer-to-floating conversion` | 2 | 2 | 930622-2.c, conversion.c |
 | `unsupported:more arguments than parameters` | 2 | 2 | gcc/testsuite/gcc.dg/c23-stdarg-9.c, va-arg-2.c |
-| `unsupported:no layout for declared type 'Point'` | 2 | 2 | 20000808-1.c, 950607-2.c |
 | `unsupported:no layout for declared type 'U'` | 2 | 2 | 20011113-1.c, 20180131-1.c |
 | `unsupported:no layout for declared type 'bitmap_iterator'` | 2 | 2 | 20090113-2.c, 20090113-3.c |
 | `unsupported:no layout for declared type 'enum E'` | 2 | 2 | 00054.c, 00055.c |
@@ -436,12 +435,11 @@ The run's first refusal, normalized by construct; `sole` counts rows whose first
 | `unsupported:no layout for declared type 'A0'` | 1 | 1 | va-arg-22.c |
 | `unsupported:no layout for declared type 'DB_TXNLIST'` | 1 | 1 | 20011008-3.c |
 | `unsupported:no layout for declared type 'PgHdr[5]'` | 1 | 1 | pr33870-1.c |
+| `unsupported:no layout for declared type 'Point'` | 1 | 1 | 20000808-1.c |
 | `unsupported:no layout for declared type 'Q'` | 1 | 1 | simd-5.c |
-| `unsupported:no layout for declared type 'S'` | 1 | 1 | pr56799.c |
 | `unsupported:no layout for declared type 'ScanfState'` | 1 | 1 | va-arg-13.c |
 | `unsupported:no layout for declared type 'T0 *const'` | 1 | 1 | 991016-1.c |
 | `unsupported:no layout for declared type 'TRIAL'` | 1 | 1 | strct-pack-1.c |
-| `unsupported:no layout for declared type 'Test1'` | 1 | 1 | 990525-2.c |
 | `unsupported:no layout for declared type 'V2SF'` | 1 | 1 | 20050316-2.c |
 | `unsupported:no layout for declared type 'V32'` | 1 | 1 | pr70903.c |
 | `unsupported:no layout for declared type 'V[32]'` | 1 | 1 | ieee/pr72824-2.c |
@@ -472,7 +470,6 @@ The run's first refusal, normalized by construct; `sole` counts rows whose first
 | `unsupported:no layout for declared type 'double[n]'` | 1 | 1 | 920929-1.c |
 | `unsupported:no layout for declared type 'enum e'` | 1 | 1 | enum-3.c |
 | `unsupported:no layout for declared type 'enum fred'` | 1 | 1 | 00170.c |
-| `unsupported:no layout for declared type 'four_quarters'` | 1 | 1 | 921123-2.c |
 | `unsupported:no layout for declared type 'gfc_array_i4'` | 1 | 1 | 20090113-1.c |
 | `unsupported:no layout for declared type 'hexdouble'` | 1 | 1 | ieee/unsafe-fp-assoc-1.c |
 | `unsupported:no layout for declared type 'i386_operand_type'` | 1 | 1 | pr40493.c |
@@ -504,7 +501,6 @@ The run's first refusal, normalized by construct; `sole` counts rows whose first
 | `unsupported:no layout for declared type 'struct x'` | 1 | 1 | 20020227-1.c |
 | `unsupported:no layout for declared type 'struct_list'` | 1 | 1 | 921113-1.c |
 | `unsupported:no layout for declared type 't'` | 1 | 1 | 920810-1.c |
-| `unsupported:no layout for declared type 't1'` | 1 | 1 | divconst-1.c |
 | `unsupported:no layout for declared type 't_be'` | 1 | 1 | 960416-1.c |
 | `unsupported:no layout for declared type 'three_byte_t'` | 1 | 1 | struct-ret-2.c |
 | `unsupported:no layout for declared type 'three_char_t'` | 1 | 1 | strct-pack-4.c |

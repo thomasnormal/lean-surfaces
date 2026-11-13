@@ -1,0 +1,240 @@
+{
+  "schema_version": "sv-0.2",
+  "language": "systemverilog",
+  "frontend": {
+    "name": "pyslang",
+    "family": "pyslang-11"
+  },
+  "mode": "symbolic",
+  "top": "generate_if_initial_canonical_e",
+  "source_files": [
+    {
+      "path": "Examples/system-verilog/sem2/generate_if_initial_canonical_e/generate_if_initial_canonical_e.sv",
+      "sha256": "d2b50c4d4fb96947b0012d7a8d06c8685e2295d247cb1c523474253236f03497"
+    }
+  ],
+  "packages": [],
+  "design": {
+    "kind": "Design",
+    "modules": [
+      {
+        "kind": "Module",
+        "span": {
+          "line": 3,
+          "col": 1,
+          "end_line": 13,
+          "end_col": 10
+        },
+        "name": "generate_if_initial_canonical_e",
+        "imports": [],
+        "params": [
+          {
+            "kind": "ParameterDecl",
+            "span": {
+              "line": 3,
+              "col": 60,
+              "end_line": 3,
+              "end_col": 65
+            },
+            "name": "N",
+            "type": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 3,
+                      "col": 60,
+                      "end_line": 3,
+                      "end_col": 65
+                    },
+                    "value": 31,
+                    "resolved_width": 32
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 3,
+                      "col": 60,
+                      "end_line": 3,
+                      "end_col": 65
+                    },
+                    "value": 0,
+                    "resolved_width": 32
+                  }
+                }
+              ],
+              "resolved": 32
+            },
+            "default": {
+              "kind": "Int",
+              "span": {
+                "line": 3,
+                "col": 64,
+                "end_line": 3,
+                "end_col": 65
+              },
+              "value": 1,
+              "resolved_width": 32
+            },
+            "resolved": 1
+          }
+        ],
+        "types": [],
+        "ports": [
+          {
+            "kind": "Port",
+            "span": {
+              "line": 4,
+              "col": 16,
+              "end_line": 4,
+              "end_col": 17
+            },
+            "name": "q",
+            "dir": "out",
+            "width": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            }
+          }
+        ],
+        "decls": [],
+        "processes": [],
+        "generates": [
+          {
+            "kind": "GenerateIf",
+            "span": {
+              "line": 7,
+              "col": 5,
+              "end_line": 11,
+              "end_col": 8
+            },
+            "label": "g_yes",
+            "else_label": "g_no",
+            "cond": {
+              "kind": "ParamRef",
+              "span": {
+                "line": 7,
+                "col": 9,
+                "end_line": 7,
+                "end_col": 10
+              },
+              "name": "N"
+            },
+            "then": [
+              {
+                "kind": "Initial",
+                "span": {
+                  "line": 8,
+                  "col": 7,
+                  "end_line": 8,
+                  "end_col": 34
+                },
+                "body": {
+                  "kind": "Block",
+                  "span": {
+                    "line": 8,
+                    "col": 21,
+                    "end_line": 8,
+                    "end_col": 30
+                  },
+                  "stmts": [
+                    {
+                      "kind": "BlockingAssign",
+                      "span": {
+                        "line": 8,
+                        "col": 21,
+                        "end_line": 8,
+                        "end_col": 30
+                      },
+                      "target": {
+                        "kind": "Ident",
+                        "span": {
+                          "line": 8,
+                          "col": 21,
+                          "end_line": 8,
+                          "end_col": 22
+                        },
+                        "width": 1,
+                        "name": "q"
+                      },
+                      "value": {
+                        "kind": "Literal",
+                        "span": {
+                          "line": 8,
+                          "col": 25,
+                          "end_line": 8,
+                          "end_col": 29
+                        },
+                        "width": 1,
+                        "bits": "0"
+                      }
+                    }
+                  ]
+                }
+              }
+            ],
+            "else": [
+              {
+                "kind": "Initial",
+                "span": {
+                  "line": 10,
+                  "col": 7,
+                  "end_line": 10,
+                  "end_col": 34
+                },
+                "body": {
+                  "kind": "Block",
+                  "span": {
+                    "line": 10,
+                    "col": 21,
+                    "end_line": 10,
+                    "end_col": 30
+                  },
+                  "stmts": [
+                    {
+                      "kind": "BlockingAssign",
+                      "span": {
+                        "line": 10,
+                        "col": 21,
+                        "end_line": 10,
+                        "end_col": 30
+                      },
+                      "target": {
+                        "kind": "Ident",
+                        "span": {
+                          "line": 10,
+                          "col": 21,
+                          "end_line": 10,
+                          "end_col": 22
+                        },
+                        "width": 1,
+                        "name": "q"
+                      },
+                      "value": {
+                        "kind": "Literal",
+                        "span": {
+                          "line": 10,
+                          "col": 25,
+                          "end_line": 10,
+                          "end_col": 29
+                        },
+                        "width": 1,
+                        "bits": "1"
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        ],
+        "others": []
+      }
+    ],
+    "others": []
+  },
+  "lean_blocks": []
+}

@@ -2,10 +2,10 @@
 
 Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manifest.
 
-- verdicts: 1043/2214 MATCH (passed 1043, failed 0, oracle 0)
+- verdicts: 1044/2214 MATCH (passed 1044, failed 0, oracle 0)
 - manifest SHA-256: `bca94718b04e8394cdce992866637166f530978790bd1013cea4a00ae25ef764`
-- measured commit: `3a6bd3688`
-- measured at: `2026-11-13T16:30:37Z`
+- measured commit: `517bd7739`
+- measured at: `2026-11-13T16:57:26Z`
 
 ## Verdict counts
 
@@ -13,10 +13,10 @@ Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manife
 | --- | ---: |
 | `not-parsed` | 294 |
 | `oracle-tests-compiler` | 1 |
-| `passed` | 1043 |
+| `passed` | 1044 |
 | `refused-libc` | 39 |
 | `refused-ub` | 105 |
-| `refused-unsupported` | 666 |
+| `refused-unsupported` | 665 |
 | `timeout` | 66 |
 
 ## Counts by corpus
@@ -30,10 +30,10 @@ Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manife
 | `c-testsuite/single-exec` | `timeout` | 2 |
 | `gcc.c-torture/execute` | `not-parsed` | 267 |
 | `gcc.c-torture/execute` | `oracle-tests-compiler` | 1 |
-| `gcc.c-torture/execute` | `passed` | 868 |
+| `gcc.c-torture/execute` | `passed` | 869 |
 | `gcc.c-torture/execute` | `refused-libc` | 35 |
 | `gcc.c-torture/execute` | `refused-ub` | 96 |
-| `gcc.c-torture/execute` | `refused-unsupported` | 587 |
+| `gcc.c-torture/execute` | `refused-unsupported` | 586 |
 | `gcc.c-torture/execute` | `timeout` | 64 |
 | `gcc.c23-run` | `not-parsed` | 27 |
 | `gcc.c23-run` | `passed` | 3 |
@@ -607,7 +607,6 @@ The run's first refusal, normalized by construct; `sole` counts rows whose first
 | `unsupported:unknown enum declaration 'id513' (name 'a')` | 1 | 1 | 00198.c |
 | `unsupported:unnamed pointer parameter (array-bound effects are not retained by clang)` | 1 | 1 | gcc/testsuite/gcc.dg/c23-parm-omit-3.c |
 | `unsupported:unsupported bit-field width 2 for 'int'` | 1 | 1 | pr78170.c |
-| `unsupported:unsupported bit-field width 30 for 'int'` | 1 | 1 | pr38422.c |
 | `unsupported:unsupported bit-field width 32 for 'unsigned long long'` | 1 | 1 | pr65215-3.c |
 | `unsupported:unsupported bit-field width 33 for 'unsigned long long'` | 1 | 1 | bitfld-3.c |
 | `unsupported:unsupported bit-field width 4 for 'const int'` | 1 | 1 | pr100453.c |

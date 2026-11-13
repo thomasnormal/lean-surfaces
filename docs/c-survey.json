@@ -10,10 +10,10 @@
   "gcc.c-torture/execute": {
    "not-parsed": 267,
    "oracle-tests-compiler": 1,
-   "passed": 868,
+   "passed": 869,
    "refused-libc": 35,
    "refused-ub": 96,
-   "refused-unsupported": 587,
+   "refused-unsupported": 586,
    "timeout": 64
   },
   "gcc.c23-run": {
@@ -28,10 +28,10 @@
  "counts": {
   "not-parsed": 294,
   "oracle-tests-compiler": 1,
-  "passed": 1043,
+  "passed": 1044,
   "refused-libc": 39,
   "refused-ub": 105,
-  "refused-unsupported": 666,
+  "refused-unsupported": 665,
   "timeout": 66
  },
  "dynamic_wall_ranking": [
@@ -3338,14 +3338,6 @@
   },
   {
    "files": [
-    "pr38422.c"
-   ],
-   "present": 1,
-   "sole": 1,
-   "wall": "unsupported:unsupported bit-field width 30 for 'int'"
-  },
-  {
-   "files": [
     "pr65215-3.c"
    ],
    "present": 1,
@@ -3426,8 +3418,8 @@
   }
  ],
  "manifest_hash": "bca94718b04e8394cdce992866637166f530978790bd1013cea4a00ae25ef764",
- "measured_at_utc": "2026-11-13T16:30:37Z",
- "measured_commit": "3a6bd3688",
+ "measured_at_utc": "2026-11-13T16:57:26Z",
+ "measured_commit": "517bd7739",
  "pin": {
   "corpora": [
    "C1",
@@ -23324,15 +23316,15 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "unsupported bit-field width 30 for 'int'",
-   "dynamic_wall": "unsupported:unsupported bit-field width 30 for 'int'",
+   "detail": "0",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "pr38422.c",
    "sha256": "c51bc2a778c6b90557e5ccec347d723ea5016b0b9403ceb746e28f1f34d1df0b",
    "static_walls": [
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",

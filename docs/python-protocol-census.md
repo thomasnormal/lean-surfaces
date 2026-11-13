@@ -180,3 +180,6 @@ sequence, proving that the second statement's `RFlow.ret` stops the body walk.
 
 `Monadic.finishCallM_pass_break_body_ok` covers normal sequencing into a
 `break`, preserving `RFlow.brk` for the enclosing loop shell.
+
+`Monadic.finishCallM_pass_continue_body_ok` covers the matching normal-to-
+`continue` sequence and preserves `RFlow.cont`.

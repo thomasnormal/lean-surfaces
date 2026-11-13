@@ -14516,3 +14516,20 @@ statement's `RFlow.brk` is carried through call-depth restoration.
 
 DECIDED: normal-to-break sequencing is now checked; recursive and general loop
 adequacy remain open.
+
+## 2026-11-13-pyfoundation-132 — continue sequencing bridge
+
+`Monadic.finishCallM_pass_continue_body_ok` checks `pass` followed by
+`continue`, carrying `RFlow.cont` through the statement list and call-depth
+restoration.
+
+| Measurement | Result |
+|---|---|
+| Target | `lake build LeanModels.Python.Monadic.Eval` passed; 11/11 jobs |
+| Theorem | `Monadic.finishCallM_pass_continue_body_ok` |
+| Domain | two-statement body ending in `continue` |
+| Semantic change | theorem-only sequencing and control-flow composition |
+| Remaining debt | recursive positive-fuel calls and general loop adequacy |
+
+DECIDED: normal-to-continue sequencing is now checked; recursive and general
+loop adequacy remain open.

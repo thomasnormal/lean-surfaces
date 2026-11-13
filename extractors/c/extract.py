@@ -993,6 +993,18 @@ def selftest():
                 "spellingLoc": {"file": "/src/macro.c", "line": 3}})
     check("macro expansion recovers spelling file identity", loc.mine(), True)
 
+    # 4. File-scope anonymous records retain the parser declaration identity
+    # on their owning object, exactly like block-scope anonymous records.
+    top = [{"kind": "RecordDecl", "decl_id": "id-record"},
+           {"kind": "VarDecl", "decl_id": "id-object"}]
+    for i, decl in enumerate(top):
+        if decl.get("kind") == "VarDecl" and i > 0:
+            prev = top[i - 1]
+            if prev.get("kind") == "RecordDecl" and prev.get("decl_id"):
+                decl["record_decl_id"] = prev["decl_id"]
+    check("file-scope anonymous record identity is retained",
+          top[1].get("record_decl_id"), "id-record")
+
     print("extract --selftest:", "ok" if ok else "FAILED")
     return 0 if ok else 1
 

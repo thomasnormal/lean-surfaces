@@ -143,20 +143,37 @@ def CoreMemProc.ofPProcess : PProcess → CoreMemProc
 /-! Module-level metadata that is already represented by retained source nodes.
 An empty input-only task has no runtime effect, and the two x/z markers carry
 the literal as a source `PExpr.lit`; admitting these markers therefore does not
-invent a process or a value.  An undriven net is deliberately absent: the
-loader's `PDesign.others` currently retains only its name, while its width and
-driver metadata remain in the envelope, so assigning a guessed width here
-would violate IEEE 1800-2023 §6.6. -/
+invent a process or a value.  A scalar undriven four-state wire is admitted
+only from the structured Slang metadata: IEEE 1800-2023 §6.6 gives it a z
+startup value, while the absence of driver records means no resolution rule is
+being inferred.  Other net shapes remain loud. -/
 
 def coreMemAllowedOther (entry : String × String) : Bool :=
   entry.1 == "SubroutineSymbol:empty-task" ||
     entry.1 == "IntegerLiteral:unsized-xz-parametric" ||
     entry.1 == "ConversionExpression:xz-literal-parametric"
 
-def coreMemFirstUnsupportedOther : List (String × String) → Option (String × String)
+def coreMemNetMetadataAllowed (md : PNetMetadata) : Bool :=
+  md.netKind == "Wire" && md.isNet && md.fourState && !md.signed &&
+    md.driverReason == some "no driver: the net reads z" && md.width == 1
+
+def coreMemNetAllowed (d : PDesign) (name : String) : Bool :=
+  d.netMetadata.any fun md => md.name == name && coreMemNetMetadataAllowed md
+
+def coreMemFirstUnsupportedOther (d : PDesign) : List (String × String) → Option (String × String)
   | [] => none
-  | entry :: rest => if coreMemAllowedOther entry then coreMemFirstUnsupportedOther rest
-                     else some entry
+  | entry :: rest =>
+      if coreMemAllowedOther entry ||
+          (entry.1 == "NetSymbol:net-z" && coreMemNetAllowed d entry.2) then
+        coreMemFirstUnsupportedOther d rest
+      else some entry
+
+def coreMemNetDecls (d : PDesign) : List Decl :=
+  d.netMetadata.filterMap fun md =>
+    if coreMemNetMetadataAllowed md then
+      let dc : Decl := { name := md.name, width := md.width, init := some (LVec.replicate md.width .lz), isNet := true }
+      some dc
+    else none
 
 /-! ## Source-shaped generate expansion
 
@@ -317,11 +334,12 @@ def PDesign.instantiateCoreMemFrom (envI : IEnv) (d : PDesign) (args : List Int)
     let env2 := { env2 with dims := dimTable env2 d.decls }
     let env2 := { env2 with functions := d.functions }
     let generated ← coreMemExpandList env2 iterFuel [] d.generates
-    match coreMemFirstUnsupportedOther d.others with
+    match coreMemFirstUnsupportedOther d d.others with
     | some (kind, text) =>
       .unsupported s!"E memory route does not yet admit module member '{kind}' ({text})"
     | none =>
-      let decls ← buildScalarDecls1 env2 d.decls
+      let decls0 ← buildScalarDecls1 env2 d.decls
+      let decls := decls0 ++ coreMemNetDecls d
       let elems ← buildElems env2 d.decls
       let envP := { env2 with widths := decls.map (fun dc => (dc.name, dc.width)) }
       let memories ← buildMemDecls1 envP d.decls 0

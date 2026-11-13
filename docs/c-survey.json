@@ -10,10 +10,10 @@
   "gcc.c-torture/execute": {
    "not-parsed": 267,
    "oracle-tests-compiler": 1,
-   "passed": 844,
+   "passed": 845,
    "refused-libc": 35,
    "refused-ub": 96,
-   "refused-unsupported": 611,
+   "refused-unsupported": 610,
    "timeout": 64
   },
   "gcc.c23-run": {
@@ -28,10 +28,10 @@
  "counts": {
   "not-parsed": 294,
   "oracle-tests-compiler": 1,
-  "passed": 1015,
+  "passed": 1016,
   "refused-libc": 39,
   "refused-ub": 105,
-  "refused-unsupported": 694,
+  "refused-unsupported": 693,
   "timeout": 66
  },
  "dynamic_wall_ranking": [
@@ -1111,16 +1111,6 @@
   },
   {
    "files": [
-    "920908-1.c",
-    "931005-1.c",
-    "pr98474.c"
-   ],
-   "present": 3,
-   "sole": 3,
-   "wall": "unsupported:no layout for declared type 'T'"
-  },
-  {
-   "files": [
     "complex-6.c",
     "ieee/cdivchkf.c",
     "pr38969.c"
@@ -1363,6 +1353,15 @@
    "present": 2,
    "sole": 2,
    "wall": "unsupported:more arguments than parameters"
+  },
+  {
+   "files": [
+    "920908-1.c",
+    "pr98474.c"
+   ],
+   "present": 2,
+   "sole": 2,
+   "wall": "unsupported:no layout for declared type 'T'"
   },
   {
    "files": [
@@ -3572,9 +3571,9 @@
    "wall": "unsupported:va_arg requested unsupported value type 'struct s'"
   }
  ],
- "manifest_hash": "55e7366504fecfee6c955cb3aa406fd908f92f0baa275e94717d1f04dec982b2",
- "measured_at_utc": "2026-11-13T11:35:00Z",
- "measured_commit": "de8b26e58",
+ "manifest_hash": "d2d1db8bb48b86c40f5a4e7fd9816bdf3644dc6ea3b6e26da0b05a56e92baea3",
+ "measured_at_utc": "2026-11-13T12:10:00Z",
+ "measured_commit": "dc089276b",
  "pin": {
   "corpora": [
    "C1",
@@ -13192,15 +13191,15 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "no layout for declared type 'T'",
-   "dynamic_wall": "unsupported:no layout for declared type 'T'",
+   "detail": "",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "931005-1.c",
    "sha256": "0b6ee7e6b9324fe4473f522b2338bf6a45ce1ec9bb58cf269c711d1c3aeedc92",
    "static_walls": [
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",

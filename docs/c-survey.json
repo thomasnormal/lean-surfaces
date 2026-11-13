@@ -10,10 +10,10 @@
   "gcc.c-torture/execute": {
    "not-parsed": 267,
    "oracle-tests-compiler": 1,
-   "passed": 892,
+   "passed": 891,
    "refused-libc": 35,
-   "refused-ub": 97,
-   "refused-unsupported": 562,
+   "refused-ub": 96,
+   "refused-unsupported": 564,
    "timeout": 64
   },
   "gcc.c23-run": {
@@ -28,10 +28,10 @@
  "counts": {
   "not-parsed": 294,
   "oracle-tests-compiler": 1,
-  "passed": 1067,
+  "passed": 1066,
   "refused-libc": 39,
-  "refused-ub": 106,
-  "refused-unsupported": 641,
+  "refused-ub": 105,
+  "refused-unsupported": 643,
   "timeout": 66
  },
  "dynamic_wall_ranking": [
@@ -378,7 +378,6 @@
     "20070212-1.c",
     "20070724-1.c",
     "20080222-1.c",
-    "20090527-1.c",
     "20121108-1.c",
     "20191023-1.c",
     "920612-1.c",
@@ -445,8 +444,8 @@
     "va-arg-20.c",
     "zerolen-1.c"
    ],
-   "present": 106,
-   "sole": 106,
+   "present": 105,
+   "sole": 105,
    "wall": "undefined-behavior"
   },
   {
@@ -1253,6 +1252,15 @@
    "present": 2,
    "sole": 2,
    "wall": "unsupported:call to '__builtin_nanf' in a context with no program \u2014 call it through 'callByName'"
+  },
+  {
+   "files": [
+    "pr22141-1.c",
+    "pr22141-2.c"
+   ],
+   "present": 2,
+   "sole": 2,
+   "wall": "unsupported:cannot initialize aggregate 'struct T'"
   },
   {
    "files": [
@@ -2264,6 +2272,14 @@
   },
   {
    "files": [
+    "20090527-1.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "unsupported:no layout for declared type 'unit_flags'"
+  },
+  {
+   "files": [
     "pr60960.c"
    ],
    "present": 1,
@@ -2357,14 +2373,6 @@
    "present": 1,
    "sole": 1,
    "wall": "unsupported:no layout for field 'fptr'"
-  },
-  {
-   "files": [
-    "pr97073.c"
-   ],
-   "present": 1,
-   "sole": 1,
-   "wall": "unsupported:no layout for field 'j'"
   },
   {
    "files": [
@@ -3304,8 +3312,8 @@
   }
  ],
  "manifest_hash": "bca94718b04e8394cdce992866637166f530978790bd1013cea4a00ae25ef764",
- "measured_at_utc": "2026-11-13T18:24:00Z",
- "measured_commit": "7af3d3a1f",
+ "measured_at_utc": "2026-11-13T18:39:00Z",
+ "measured_commit": "1286a9a7d",
  "pin": {
   "corpora": [
    "C1",
@@ -10752,15 +10760,15 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "LeanModels.C.C23.MemFault.indetAutomatic 0 0",
-   "dynamic_wall": "undefined-behavior",
+   "detail": "no layout for declared type 'unit_flags'",
+   "dynamic_wall": "unsupported:no layout for declared type 'unit_flags'",
    "manifest_status": "parsed",
    "name": "20090527-1.c",
    "sha256": "f63fd94d342df801f9bec7a19e900c5766d043eef8ebded778b654075f499969",
    "static_walls": [
     "type-layout"
    ],
-   "verdict": "refused-ub"
+   "verdict": "refused-unsupported"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -22041,8 +22049,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "",
-   "dynamic_wall": null,
+   "detail": "cannot initialize aggregate 'struct T'",
+   "dynamic_wall": "unsupported:cannot initialize aggregate 'struct T'",
    "manifest_status": "parsed",
    "name": "pr22141-1.c",
    "sha256": "f24ba2ca68045af9d52caa176275f023f37ea9e1854528ba0302df52e39653cb",
@@ -22050,12 +22058,12 @@
     "libc-call: __builtin_memset",
     "type-layout"
    ],
-   "verdict": "passed"
+   "verdict": "refused-unsupported"
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "",
-   "dynamic_wall": null,
+   "detail": "cannot initialize aggregate 'struct T'",
+   "dynamic_wall": "unsupported:cannot initialize aggregate 'struct T'",
    "manifest_status": "parsed",
    "name": "pr22141-2.c",
    "sha256": "caef794b8da055fe44c2c362ada02f45f495a10b394b3f22168e1802b5d65cce",
@@ -22063,7 +22071,7 @@
     "libc-call: __builtin_memset",
     "type-layout"
    ],
-   "verdict": "passed"
+   "verdict": "refused-unsupported"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -28052,8 +28060,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "no layout for field 'j'",
-   "dynamic_wall": "unsupported:no layout for field 'j'",
+   "detail": "",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "pr97073.c",
    "sha256": "761480f0594796b01d469231c87c0b3adae7e013b61a4688c2529a2c1b9be47c",
@@ -28061,7 +28069,7 @@
     "libc-call: __builtin_abort",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",

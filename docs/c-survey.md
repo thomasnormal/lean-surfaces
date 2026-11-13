@@ -2,10 +2,10 @@
 
 Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manifest.
 
-- verdicts: 1067/2214 MATCH (passed 1067, failed 0, oracle 0)
+- verdicts: 1066/2214 MATCH (passed 1066, failed 0, oracle 0)
 - manifest SHA-256: `bca94718b04e8394cdce992866637166f530978790bd1013cea4a00ae25ef764`
-- measured commit: `7af3d3a1f`
-- measured at: `2026-11-13T18:24:00Z`
+- measured commit: `1286a9a7d`
+- measured at: `2026-11-13T18:39:00Z`
 
 ## Verdict counts
 
@@ -13,10 +13,10 @@ Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manife
 | --- | ---: |
 | `not-parsed` | 294 |
 | `oracle-tests-compiler` | 1 |
-| `passed` | 1067 |
+| `passed` | 1066 |
 | `refused-libc` | 39 |
-| `refused-ub` | 106 |
-| `refused-unsupported` | 641 |
+| `refused-ub` | 105 |
+| `refused-unsupported` | 643 |
 | `timeout` | 66 |
 
 ## Counts by corpus
@@ -30,10 +30,10 @@ Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manife
 | `c-testsuite/single-exec` | `timeout` | 2 |
 | `gcc.c-torture/execute` | `not-parsed` | 267 |
 | `gcc.c-torture/execute` | `oracle-tests-compiler` | 1 |
-| `gcc.c-torture/execute` | `passed` | 892 |
+| `gcc.c-torture/execute` | `passed` | 891 |
 | `gcc.c-torture/execute` | `refused-libc` | 35 |
-| `gcc.c-torture/execute` | `refused-ub` | 97 |
-| `gcc.c-torture/execute` | `refused-unsupported` | 562 |
+| `gcc.c-torture/execute` | `refused-ub` | 96 |
+| `gcc.c-torture/execute` | `refused-unsupported` | 564 |
 | `gcc.c-torture/execute` | `timeout` | 64 |
 | `gcc.c23-run` | `not-parsed` | 27 |
 | `gcc.c23-run` | `passed` | 3 |
@@ -302,7 +302,7 @@ The run's first refusal, normalized by construct; `sole` counts rows whose first
 | wall | sole | present | example files |
 | --- | ---: | ---: | --- |
 | `frontend` | 294 | 294 | 20000227-1.c, 20000412-3.c, 20000717-3.c, 20000822-1.c, 20001009-2.c |
-| `undefined-behavior` | 106 | 106 | 00032.c, 00115.c, 00141.c, 00144.c, 00200.c |
+| `undefined-behavior` | 105 | 105 | 00032.c, 00115.c, 00141.c, 00144.c, 00200.c |
 | `unsupported:no definition for 'main'` | 102 | 102 | 20040705-1.c, 20040705-2.c, 20040709-3.c, builtins/20010124-1.c, builtins/abs-1.c |
 | `timeout` | 66 | 66 | 00041.c, 00128.c, 20000412-2.c, 20020108-1.c, 20030916-1.c |
 | `unsupported:extern object 'inside_main' has no definition in the translation unit` | 40 | 40 | builtins/20010124-1-lib.c, builtins/complex-1-lib.c, builtins/fputs-lib.c, builtins/lib/abs.c, builtins/lib/bfill.c |
@@ -351,6 +351,7 @@ The run's first refusal, normalized by construct; `sole` counts rows whose first
 | `unsupported:GenericSelectionExpr` | 2 | 2 | gcc/testsuite/gcc.dg/c23-bool-1.c, gcc/testsuite/gcc.dg/c23-float-2.c |
 | `unsupported:OffsetOfExpr` | 2 | 2 | pr30778.c, pr44468.c |
 | `unsupported:call to '__builtin_nanf' in a context with no program — call it through 'callByName'` | 2 | 2 | gcc/testsuite/gcc.dg/c23-float-4.c, gcc/testsuite/gcc.dg/c23-float-5.c |
+| `unsupported:cannot initialize aggregate 'struct T'` | 2 | 2 | pr22141-1.c, pr22141-2.c |
 | `unsupported:extern object 'abs_called' has no definition in the translation unit` | 2 | 2 | builtins/abs-1-lib.c, builtins/uabs-1-lib.c |
 | `unsupported:extern object 'x' has no definition in the translation unit` | 2 | 2 | 00094.c, 00110.c |
 | `unsupported:floating value used as an integer` | 2 | 2 | 20000731-1.c, 20011217-1.c |
@@ -474,6 +475,7 @@ The run's first refusal, normalized by construct; `sole` counts rows whose first
 | `unsupported:no layout for declared type 'three_byte_t'` | 1 | 1 | struct-ret-2.c |
 | `unsupported:no layout for declared type 'three_char_t'` | 1 | 1 | strct-pack-4.c |
 | `unsupported:no layout for declared type 'uint32_t[16]'` | 1 | 1 | pr65369.c |
+| `unsupported:no layout for declared type 'unit_flags'` | 1 | 1 | 20090527-1.c |
 | `unsupported:no layout for declared type 'v4qi'` | 1 | 1 | pr60960.c |
 | `unsupported:no layout for declared type 'v8qi'` | 1 | 1 | simd-6.c |
 | `unsupported:no layout for declared type 'void *volatile'` | 1 | 1 | pr84521.c |
@@ -486,7 +488,6 @@ The run's first refusal, normalized by construct; `sole` counts rows whose first
 | `unsupported:no layout for field 'code'` | 1 | 1 | 00218.c |
 | `unsupported:no layout for field 'f2'` | 1 | 1 | pr101188.c |
 | `unsupported:no layout for field 'fptr'` | 1 | 1 | 00087.c |
-| `unsupported:no layout for field 'j'` | 1 | 1 | pr97073.c |
 | `unsupported:no layout for field 's'` | 1 | 1 | 20190901-1.c |
 | `unsupported:no layout for parameter type 'const unsigned int *const'` | 1 | 1 | pr63209.c |
 | `unsupported:no layout for parameter type 'int **restrict'` | 1 | 1 | 20080506-2.c |

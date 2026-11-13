@@ -14482,3 +14482,20 @@ body reaches normal `RFlow.next` and restores the requested call depth.
 
 DECIDED: a multi-statement normal body now composes through the stateful call
 boundary; recursive and general body adequacy remain open.
+
+## 2026-11-13-pyfoundation-130 — early-return sequencing bridge
+
+`Monadic.finishCallM_pass_ret_body_ok` checks `pass` followed by `return 1`.
+The return flow short-circuits the statement list and is then carried through
+top-level depth restoration.
+
+| Measurement | Result |
+|---|---|
+| Target | `lake build LeanModels.Python.Monadic.Eval` passed; 11/11 jobs |
+| Theorem | `Monadic.finishCallM_pass_ret_body_ok` |
+| Domain | two-statement body with early integer return |
+| Semantic change | theorem-only sequencing and flow composition |
+| Remaining debt | recursive positive-fuel calls and general body adequacy |
+
+DECIDED: normal sequencing and early-return sequencing are now checked;
+recursive and general body adequacy remain open.

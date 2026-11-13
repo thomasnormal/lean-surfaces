@@ -174,3 +174,6 @@ The corresponding `Monadic.finishCallM_continue_body_ok` bridge preserves
 The two-statement sequencing bridge `Monadic.finishCallM_pass_expr_body_ok`
 composes `pass` followed by an integer expression statement through the same
 left-to-right body walker and restoration boundary.
+
+`Monadic.finishCallM_pass_ret_body_ok` covers the corresponding early-return
+sequence, proving that the second statement's `RFlow.ret` stops the body walk.

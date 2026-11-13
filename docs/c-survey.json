@@ -10,10 +10,10 @@
   "gcc.c-torture/execute": {
    "not-parsed": 267,
    "oracle-tests-compiler": 1,
-   "passed": 906,
+   "passed": 907,
    "refused-libc": 35,
    "refused-ub": 98,
-   "refused-unsupported": 547,
+   "refused-unsupported": 546,
    "timeout": 64
   },
   "gcc.c23-run": {
@@ -28,10 +28,10 @@
  "counts": {
   "not-parsed": 294,
   "oracle-tests-compiler": 1,
-  "passed": 1081,
+  "passed": 1082,
   "refused-libc": 39,
   "refused-ub": 107,
-  "refused-unsupported": 626,
+  "refused-unsupported": 625,
   "timeout": 66
  },
  "dynamic_wall_ranking": [
@@ -740,7 +740,6 @@
     "20021120-1.c",
     "20050218-1.c",
     "20051021-1.c",
-    "20060929-1.c",
     "920501-6.c",
     "920726-1.c",
     "930930-2.c",
@@ -753,8 +752,8 @@
     "va-arg-10.c",
     "va-arg-9.c"
    ],
-   "present": 16,
-   "sole": 16,
+   "present": 15,
+   "sole": 15,
    "wall": "unsequenced-effects"
   },
   {
@@ -3262,8 +3261,8 @@
   }
  ],
  "manifest_hash": "bca94718b04e8394cdce992866637166f530978790bd1013cea4a00ae25ef764",
- "measured_at_utc": "2026-11-13T20:51:00Z",
- "measured_commit": "004f9a6f5",
+ "measured_at_utc": "2026-11-13T21:20:00Z",
+ "measured_commit": "bed664ad8",
  "pin": {
   "corpora": [
    "C1",
@@ -10058,13 +10057,13 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "unsequenced side effects in assignment",
-   "dynamic_wall": "unsequenced-effects",
+   "detail": "",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "20060929-1.c",
    "sha256": "cd7394485efb1f6254e960afdafaa7a00241adf070bd680adff47d76b854f4b3",
    "static_walls": [],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",

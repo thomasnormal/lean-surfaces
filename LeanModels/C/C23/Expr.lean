@@ -950,6 +950,10 @@ def lvalueKey : Expr → Option String
   | .declRef none name .. => some ("name:" ++ name)
   | .paren sub .. => lvalueKey sub
   | .implicitCast _ sub .. | .cast _ sub .. => lvalueKey sub
+  | .unop op sub .. =>
+      if op == "*" then (lvalueKey sub).map ("*" ++ ·)
+      else if op == "++" || op == "--" then lvalueKey sub
+      else none
   | .member base field .. => (lvalueKey base).map (· ++ "." ++ field)
   | _ => none
 

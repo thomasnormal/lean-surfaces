@@ -196,6 +196,10 @@ statements.
 `Monadic.finishCallM_four_pass_ret_body_ok` extends early-return sequencing
 to four normal statements followed by a return.
 
+`Monadic.finishCallM_pass_assign_empty_locals_body_ok` is the first assignment
+sequencing bridge with an explicit empty frame-local environment; the body
+updates its local binding and still returns normal after projection to `World`.
+
 `Monadic.finishCallM_three_pass_ret_body_ok` extends early-return sequencing
 to three normal statements followed by a return.
 

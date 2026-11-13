@@ -14598,6 +14598,24 @@ followed by `return 1`, preserving the early return through restoration.
 DECIDED: longer early-return sequencing is now checked; recursive and general
 body adequacy remain open.
 
+## 2026-11-13-pyfoundation-141 — assignment sequencing with empty locals
+
+`Monadic.finishCallM_pass_assign_empty_locals_body_ok` checks `pass` followed
+by a name assignment of an integer constant with an empty initial local
+environment. The assignment updates the frame-local environment, while the
+world projection returns normal flow and restores depth.
+
+| Measurement | Result |
+|---|---|
+| Target | `lake build LeanModels.Python.Monadic.Eval` passed; 11/11 jobs |
+| Theorem | `Monadic.finishCallM_pass_assign_empty_locals_body_ok` |
+| Domain | two-statement body, empty locals, name assignment |
+| Semantic change | theorem-only assignment sequencing composition |
+| Remaining debt | arbitrary locals and recursive positive-fuel calls |
+
+DECIDED: assignment sequencing is now checked for empty locals; arbitrary
+locals and recursive body adequacy remain open.
+
 ## 2026-11-13-pyfoundation-135 — four-statement early-return bridge
 
 `Monadic.finishCallM_three_pass_ret_body_ok` checks three normal statements

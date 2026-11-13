@@ -974,6 +974,14 @@ def selftest():
         except SystemExit:
             check("a handler returning %r is refused" % label, "refused", "refused")
 
+    # 3. Macro expansions can omit `file` on expansionLoc while spellingLoc
+    # still identifies the main source. The admission gate must retain that
+    # parser-provided identity rather than dropping a real top-level node.
+    loc = Loc("macro.c")
+    loc.absorb({"expansionLoc": {"line": 9, "offset": 10},
+                "spellingLoc": {"file": "/src/macro.c", "line": 3}})
+    check("macro expansion recovers spelling file identity", loc.mine(), True)
+
     print("extract --selftest:", "ok" if ok else "FAILED")
     return 0 if ok else 1
 

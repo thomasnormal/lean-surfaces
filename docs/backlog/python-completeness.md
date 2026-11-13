@@ -13970,3 +13970,25 @@ per-operator literal refinement lemma.
 DECIDED: retain both interpreter surfaces while extending adequacy through
 shared control structures; the remaining F9 debt is explicit and is not
 claimed closed by differential agreement alone.
+
+## 2026-11-13-pyfoundation-101 — factor list adequacy into a reusable control theorem
+
+The constant-list proof now has a general composition form,
+`Monadic.twinAgrees_evalOpenList_of_each`. Given a pointwise refinement for each
+expression in an arbitrary list, quantified over every continuation state and
+positive remaining fuel, induction on the list lifts it to the complete
+left-to-right `evalOpenList`/`evalExprs` control path. This is the reusable
+control lemma needed before expression cases are added; it does not add another
+operator-specific literal theorem.
+
+| Measurement | Result |
+|---|---|
+| Target | `lake build LeanModels.Python.Monadic.Eval` passed; 11/11 jobs |
+| Theorem | `Monadic.twinAgrees_evalOpenList_of_each`, induction on list structure |
+| Domain | arbitrary expression lists with pointwise bridges and `xs.length < fuel` |
+| Semantic change | theorem only; no evaluator behavior change |
+| Remaining debt | establish pointwise bridges for calls/statements and connect stateful script control |
+
+DECIDED: keep the list walker as one shared control theorem and extend the
+pointwise bridge domain in later F9 slices; no claim of whole-interpreter
+adequacy is made.

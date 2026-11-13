@@ -35,8 +35,12 @@ edge: `Monadic.twinAgrees_evalOpenList_constants` proves by induction on an
 arbitrary-length expression list that the fuel-free monadic list walker and the
 trunk's fuelled `evalExprs` agree for constant lists whenever the strict list
 length fuel bound holds. This composes the literal bridge with left-to-right
-list control without adding another per-operator refinement lemma. Calls,
-statements, and stateful script control remain the next adequacy boundary.
+list control without adding another per-operator refinement lemma.
+`Monadic.twinAgrees_evalOpenList_of_each` factors that induction into a
+reusable composition theorem: any pointwise expression bridge, quantified over
+the continuation state and positive remaining fuel, lifts to the whole list.
+Calls, statements, and stateful script control remain the next adequacy
+boundary.
 
 ## Operator dispatch
 

@@ -3631,6 +3631,51 @@ theorem twinAgrees_evalOpenList_constants (K : Kont) (m : Module) (st : FrameSta
               rw [hi]
               simp [evalExprs, evalExpr, toRun_pure, Run.bind, Run.liftRes]
 
+/- The reusable composition form: callers supply one pointwise expression
+   bridge, and this theorem supplies the arbitrary-length left-to-right list
+   control.  The bridge is quantified over every continuation state because
+   the first expression may update locals or the heap before the tail starts. -/
+theorem twinAgrees_evalOpenList_of_each (K : Kont) (m : Module) :
+    ∀ (es : List Expr) (fuel : Nat) (st : FrameState), es.length < fuel →
+      (∀ e ∈ es, ∀ st' g, 0 < g →
+        toRun (evalOpen K m e) st' = evalExpr m g st' e) →
+      toRun (evalOpenList K m es) st = evalExprs m fuel st es := by
+  intro es
+  induction es with
+  | nil =>
+      intro fuel st hlen hEach
+      cases fuel with
+      | zero => simp at hlen
+      | succ fuel => rfl
+  | cons e es ih =>
+      intro fuel st hlen hEach
+      cases fuel with
+      | zero => simp at hlen
+      | succ fuel =>
+          cases fuel with
+          | zero => simp [List.length_cons] at hlen
+          | succ fuel =>
+              have htail : es.length < fuel + 1 := by
+                simp_all [List.length_cons]
+              have hfirst := hEach e (by simp) st (fuel + 1) (by omega)
+              have htailEach : ∀ e' ∈ es, ∀ st' g, 0 < g →
+                  toRun (evalOpen K m e') st' = evalExpr m g st' e' := by
+                intro e' he' st' g hg
+                exact hEach e' (by simp [he']) st' g hg
+              have hi : ∀ st', toRun (evalOpenList K m es) st' =
+                  evalExprs m (fuel + 1) st' es := by
+                intro st'
+                exact ih (fuel + 1) st' htail htailEach
+              simp only [evalOpenList, toRun_bind]
+              rw [hfirst]
+              simp only [Run.bind]
+              generalize hres : evalExpr m (fuel + 1) st e = r
+              cases r with
+              | timeout => simp [hres, evalExprs, Run.bind]
+              | unsupported msg => simp [hres, evalExprs, Run.bind]
+              | exn st' err => simp [hres, evalExprs, Run.bind]
+              | ok st' v => simp [hres, hi st', evalExprs, toRun_pure, Run.bind]
+
 #print axioms evalOpen
 #print axioms execOpen
 #print axioms kont
@@ -3644,5 +3689,6 @@ theorem twinAgrees_evalOpenList_constants (K : Kont) (m : Module) (st : FrameSta
 #print axioms inWorld_toRun
 #print axioms twinAgrees_binOpHM_intBitAnd
 #print axioms twinAgrees_evalOpenList_constants
+#print axioms twinAgrees_evalOpenList_of_each
 
 end LeanModels.Python.Monadic

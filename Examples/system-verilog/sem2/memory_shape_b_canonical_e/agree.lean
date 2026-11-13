@@ -12,6 +12,8 @@ set_option maxRecDepth 100000 in
 load_design_sv2 memoryShapeB
   from "Examples/system-verilog/sem2/memory_shape_b_canonical_e/memory_shape_b_canonical_e.sv.json"
 
+#check memoryShapeB.e
+
 def stimulus : List SvState :=
   [[("clk", LVec.ofNat 1 0), ("d", LVec.ofNat 4 0)]]
 

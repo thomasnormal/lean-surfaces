@@ -7,6 +7,7 @@ import LeanModels.Sv.RangeGuard2
 import LeanModels.Sv.CombAlias2
 import LeanModels.Sv.ClockGuard2
 import LeanModels.Sv.Kernel.CoreMemExec
+import LeanModels.Sv.Kernel.HierarchyCoreMem
 
 /-!
 # SV symbolic-envelope ingestion — schema sv-0.2 (`LeanModels.Sv`)
@@ -1404,8 +1405,9 @@ elab "load_design_sv2 " name:ident " from " path:str : command => do
   let funName := (← getCurrNamespace) ++ name.getId
   let pdName := funName ++ `pdesign
   let semName := funName ++ `sem
+  let eName := funName ++ `e
   let libName := funName ++ `plib
-  for n in [funName, pdName, semName] ++ (if lib.isEmpty then [] else [libName]) do
+  for n in [funName, pdName, semName, eName] ++ (if lib.isEmpty then [] else [libName]) do
     if (← getEnv).contains n then
       throwErrorAt name "load_design_sv2: '{n}' has already been declared"
   let paramNames := pd.params.map (·.name)
@@ -1494,6 +1496,32 @@ elab "load_design_sv2 " name:ident " from " path:str : command => do
         s!"Semantic-tier design family `{envl.top}` (`Design2`, via `PDesign.instantiateGDAlias2 {pdName}` — `instantiateD2` plus the per-parameter-point always_comb alias guard, Hier2.lean): one `Nat` binder per SV parameter, declaration order — {paramNames}. Runs under `run2` (selects, case, async active-low reset in-tier)."
       else
         s!"Semantic-tier design family `{envl.top}` (`Design2`, via `PDesign.instantiateHDAlias2 {pdName} {libName}` — the module hierarchy flattened with the per-parameter-point always_comb alias guard, Hier2.lean): one `Nat` binder per SV parameter, declaration order — {paramNames}. Runs under `run2`.")
+    -- Canonical E memory entry.  This is deliberately a separate result
+    -- family: `name.sem` remains the scalar Design2 proof surface, while
+    -- `name.e` is the ordinary user-facing route for unpacked storage.
+    let eBody :=
+      if flatTop then
+        Lean.mkApp2 (Lean.mkConst ``LeanModels.Sv.Kernel.PDesign.instantiateE2)
+          (Lean.mkConst pdName) argsList
+      else
+        Lean.mkApp3 (Lean.mkConst ``LeanModels.Sv.Kernel.PDesign.instantiateE2H)
+          (Lean.mkConst pdName) (Lean.mkConst libName) argsList
+    let eValue := paramNames.foldr
+      (fun p acc => Lean.mkLambda (Name.mkSimple p) .default natTy acc) eBody
+    let eResultTy := Lean.mkApp (Lean.mkConst ``LeanModels.Sv.Res)
+      (Lean.mkConst ``LeanModels.Sv.Kernel.CoreMemDesign)
+    let eType := paramNames.foldr
+      (fun p acc => Lean.mkForall (Name.mkSimple p) .default natTy acc) eResultTy
+    addAndCompile <| .defnDecl {
+      name := eName
+      levelParams := []
+      type := eType
+      value := eValue
+      hints := .abbrev
+      safety := .safe }
+    enableRealizationsForConst eName
+    addDocStringCore eName
+      s!"Canonical E memory family `{envl.top}` (`CoreMemDesign`, via `PDesign.instantiateE2`/`instantiateE2H`): source-shaped one-rank unpacked storage remains native `MemState`; no cell expansion or scalar fallback."
   liftTermElabM do
     Term.addTermInfo' name (Lean.mkConst funName) (isBinder := true)
 

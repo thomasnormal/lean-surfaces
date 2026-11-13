@@ -14218,3 +14218,21 @@ monadic `finishCallM` body must refine for successful ordinary calls.
 
 DECIDED: keep call-depth restoration as an explicit observer theorem before
 attempting the full positive-fuel call induction.
+
+## 2026-11-13-pyfoundation-114 — pin raised-exception call restoration
+
+`Run.finishCallAt_exn` complements the successful restoration observer. A
+raised exception preserves the world observables and restores exactly the
+requested call depth, matching the state-retaining unwind required by Python's
+call semantics.
+
+| Measurement | Result |
+|---|---|
+| Target | `lake build LeanModels.Python.Runtime` passed; 5/5 jobs |
+| Theorem | `Run.finishCallAt_exn` |
+| Domain | every world, `PyErr`, and restoration depth |
+| Semantic change | theorem-only runtime boundary fact |
+| Remaining debt | monadic `finishCallM` success/exception equations and body calls |
+
+DECIDED: require both successful and raised call-depth restoration observers
+before claiming ordinary call adequacy.

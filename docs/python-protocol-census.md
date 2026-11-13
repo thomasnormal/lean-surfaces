@@ -69,6 +69,8 @@ layer.
 statement-body base case consumed by ordinary call entry.
 `Run.finishCallAt_ok` pins the successful trunk-side call-depth restoration
 that the monadic `finishCallM` must match.
+`Run.finishCallAt_exn` pins the corresponding raised-exception unwind, keeping
+the world observable while restoring the requested depth.
 
 ## Operator dispatch
 

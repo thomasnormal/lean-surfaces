@@ -544,6 +544,10 @@ raises. -/
 theorem finishCallAt_ok (depth : Nat) (w : World) (v : α) :
     finishCallAt depth (.ok w v) = .ok { w with callDepth := depth } v := rfl
 
+theorem finishCallAt_exn (depth : Nat) (w : World) (e : PyErr) :
+    finishCallAt depth (.exn w e : Run World Unit) =
+      .exn { w with callDepth := depth } e := rfl
+
 @[inline] def finishTopCall : Run World α → Run World α :=
   finishCallAt pythonTopCallDepth
 

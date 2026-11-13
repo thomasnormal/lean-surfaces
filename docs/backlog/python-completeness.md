@@ -16070,3 +16070,20 @@ depth restoration.
 
 DECIDED: thirteen assignment steps now compose through value return; arbitrary
 assignment and recursive body adequacy remain open.
+
+## 2026-11-13-pyfoundation-221 — thirteen-assignment pass bridge
+
+`Monadic.finishCallM_assign_thirteen_existing_locals_pass_body_ok` checks thirteen
+successive assignments `n = 0; o = 1; p = 2; q = 3; r = 4; s = 5; t = 6; u = 7; v = 8; w = 9; x = 10; y = 11; z = 12`
+followed by `pass`, preserving normal completion and depth restoration.
+
+| Measurement | Result |
+|---|---|
+| Target | `lake build LeanModels.Python.Monadic.Eval` passed; 11/11 jobs |
+| Theorem | `Monadic.finishCallM_assign_thirteen_existing_locals_pass_body_ok` |
+| Domain | thirteen consecutive assignments to existing locals followed by pass |
+| Semantic change | theorem-only thirteen-assignment normal-flow composition |
+| Remaining debt | arbitrary locals and recursive positive-fuel calls |
+
+DECIDED: thirteen assignment steps now compose through normal pass flow; arbitrary
+assignment and recursive body adequacy remain open.

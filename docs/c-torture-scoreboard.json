@@ -6,10 +6,10 @@
   "not-ingested": 0,
   "not-parsed": 30,
   "oracle-tests-compiler": 1,
-  "passed": 174,
+  "passed": 175,
   "refused-libc": 0,
   "refused-ub": 15,
-  "refused-unsupported": 76,
+  "refused-unsupported": 75,
   "runner-error": 0,
   "timeout": 4
  },
@@ -83,11 +83,11 @@
   "refused-unsupported: no layout for declared type 'struct s'": 1,
   "refused-unsupported: no layout for declared type 'struct x'": 2,
   "refused-unsupported: no layout for declared type 'volatile a_struct'": 1,
-  "refused-unsupported: no layout for declared type 'volatile enum X'": 1,
   "refused-unsupported: no layout for field 'coeffs'": 1,
   "refused-unsupported: no layout for parameter type 'const struct b *restrict'": 1,
   "refused-unsupported: not an lvalue: PredefinedExpr": 1,
   "refused-unsupported: out of tier: AddrLabelExpr": 1,
+  "refused-unsupported: out of tier: ConstantExpr": 1,
   "refused-unsupported: out of tier: StmtExpr": 4,
   "refused-unsupported: pointer bit-cast across incompatible effective types": 1,
   "refused-unsupported: pointer-to-integer conversion outside uintptr_t/intptr_t": 1,
@@ -96,9 +96,8 @@
   "refused-unsupported: strlen: no concrete NUL in object": 1,
   "refused-unsupported: type trait '__alignof'": 1,
   "refused-unsupported: unbound declaration 'id197' (name 't')": 1,
+  "refused-unsupported: unbound declaration 'id22' (name 'ao')": 1,
   "refused-unsupported: unbound declaration 'id25' (name 'x')": 1,
-  "refused-unsupported: unbound declaration 'id27' (name 'a')": 1,
-  "refused-unsupported: unbound declaration 'id31' (name 'wordlist')": 1,
   "refused-unsupported: unbound declaration 'id32' (name 'node')": 1,
   "refused-unsupported: unbound declaration 'id37' (name 'b')": 1,
   "refused-unsupported: unbound declaration 'id38' (name 's')": 1,
@@ -110,12 +109,12 @@
   "refused-unsupported: unsequenced side effects in compound assignment": 1,
   "timeout": 4
  },
- "measured_at_utc": "2026-11-13T08:20:13Z",
- "measured_commit": "eecb8fbab741f57964ee27ebe85399a91a8ee8b7",
+ "measured_at_utc": "2026-11-13T15:21:42Z",
+ "measured_commit": "f136489bb6f56009223744cad1366bd832337d91",
  "note": "Written by harness/c_torture_score.py --emit, from a `lake exe c-torture-run` log.  The pin is docs/c-torture-pin.json.  This file is the tier's \u00a79.0 number as a second artifact: correcting the instrument corrects the next run, and the published figure is corrected where it was published.",
  "oracle_tests_compiler_tests": [
   "20021127-1.c"
  ],
- "scored": 174,
+ "scored": 175,
  "total": 300
 }

@@ -2,10 +2,10 @@
 
 Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manifest.
 
-- verdicts: 1024/2214 MATCH (passed 1024, failed 0, oracle 0)
-- manifest SHA-256: `83e3a777af25fd63b419ee9763bf65f6e6ea3f189624032a20221b6ad19ea5f0`
-- measured commit: `b5e8aaa35`
-- measured at: `2026-11-13T14:25:00Z`
+- verdicts: 1025/2214 MATCH (passed 1025, failed 0, oracle 0)
+- manifest SHA-256: `5a44a334cb9abb984354033946543518b40a2b53f8e9b34a50c480d2f180322e`
+- measured commit: `d62896f90`
+- measured at: `2026-11-13T14:30:00Z`
 
 ## Verdict counts
 
@@ -13,10 +13,10 @@ Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manife
 | --- | ---: |
 | `not-parsed` | 294 |
 | `oracle-tests-compiler` | 1 |
-| `passed` | 1024 |
+| `passed` | 1025 |
 | `refused-libc` | 39 |
 | `refused-ub` | 105 |
-| `refused-unsupported` | 685 |
+| `refused-unsupported` | 684 |
 | `timeout` | 66 |
 
 ## Counts by corpus
@@ -30,10 +30,10 @@ Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manife
 | `c-testsuite/single-exec` | `timeout` | 2 |
 | `gcc.c-torture/execute` | `not-parsed` | 267 |
 | `gcc.c-torture/execute` | `oracle-tests-compiler` | 1 |
-| `gcc.c-torture/execute` | `passed` | 853 |
+| `gcc.c-torture/execute` | `passed` | 854 |
 | `gcc.c-torture/execute` | `refused-libc` | 35 |
 | `gcc.c-torture/execute` | `refused-ub` | 96 |
-| `gcc.c-torture/execute` | `refused-unsupported` | 602 |
+| `gcc.c-torture/execute` | `refused-unsupported` | 601 |
 | `gcc.c-torture/execute` | `timeout` | 64 |
 | `gcc.c23-run` | `not-parsed` | 27 |
 | `gcc.c23-run` | `passed` | 3 |
@@ -617,7 +617,6 @@ The run's first refusal, normalized by construct; `sole` counts rows whose first
 | `unsupported:unknown enum declaration 'id41' (name 'N')` | 1 | 1 | 20011219-1.c |
 | `unsupported:unknown enum declaration 'id513' (name 'a')` | 1 | 1 | 00198.c |
 | `unsupported:unnamed pointer parameter (array-bound effects are not retained by clang)` | 1 | 1 | gcc/testsuite/gcc.dg/c23-parm-omit-3.c |
-| `unsupported:unsupported bit-field width 12 for 'int'` | 1 | 1 | bitfld-4.c |
 | `unsupported:unsupported bit-field width 2 for 'int'` | 1 | 1 | pr78170.c |
 | `unsupported:unsupported bit-field width 30 for 'int'` | 1 | 1 | pr38422.c |
 | `unsupported:unsupported bit-field width 31 for 'long'` | 1 | 1 | bf-sign-2.c |

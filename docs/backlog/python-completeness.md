@@ -14533,3 +14533,19 @@ restoration.
 
 DECIDED: normal-to-continue sequencing is now checked; recursive and general
 loop adequacy remain open.
+
+## 2026-11-13-pyfoundation-133 — three-statement sequencing bridge
+
+`Monadic.finishCallM_three_pass_body_ok` checks three consecutive `pass`
+statements through the left-to-right body walker before normal `RFlow.next`.
+
+| Measurement | Result |
+|---|---|
+| Target | `lake build LeanModels.Python.Monadic.Eval` passed; 11/11 jobs |
+| Theorem | `Monadic.finishCallM_three_pass_body_ok` |
+| Domain | three-statement normal body |
+| Semantic change | theorem-only multi-statement sequencing composition |
+| Remaining debt | recursive positive-fuel calls and general assignment adequacy |
+
+DECIDED: three-statement normal sequencing is now checked; recursive and
+general assignment adequacy remain open.

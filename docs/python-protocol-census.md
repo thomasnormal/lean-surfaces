@@ -183,3 +183,6 @@ sequence, proving that the second statement's `RFlow.ret` stops the body walk.
 
 `Monadic.finishCallM_pass_continue_body_ok` covers the matching normal-to-
 `continue` sequence and preserves `RFlow.cont`.
+
+`Monadic.finishCallM_three_pass_body_ok` checks a three-statement normal body,
+showing that the sequence walker composes beyond the two-statement cases.

@@ -25,3 +25,4 @@ import LeanModels.SoftFloat.RoundAlg
 import LeanModels.SoftFloat.Mul
 import LeanModels.SoftFloat.Theorems
 import LeanModels.SoftFloat.Transfer
+import LeanModels.SoftFloat.Binary

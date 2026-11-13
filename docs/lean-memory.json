@@ -12,9 +12,9 @@
     "exit_code": 0,
     "module": "LeanModels/Python/Monadic/Eval.lean",
     "over_budget": false,
-    "peak_bytes": 649150464,
-    "peak_gib": 0.605,
-    "seconds": 28.115,
+    "peak_bytes": 695787520,
+    "peak_gib": 0.648,
+    "seconds": 27.418,
     "warning": false
   },
   "LeanModels/Python/PayloadBlind.lean": {

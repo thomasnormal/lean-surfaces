@@ -15927,3 +15927,21 @@ restoration.
 
 DECIDED: twelve assignment steps now compose through the body walker; arbitrary
 assignment and recursive body adequacy remain open.
+
+## 2026-11-13-pyfoundation-213 — twelve-assignment return bridge
+
+`Monadic.finishCallM_assign_twelve_existing_locals_ret_body_ok` checks twelve
+successive assignments `o = 0; p = 1; q = 2; r = 3; s = 4; t = 5; u = 6; v = 7; w = 8; x = 9; y = 10; z = 11`
+followed by `return 12`, preserving the updated frame through early flow and
+depth restoration.
+
+| Measurement | Result |
+|---|---|
+| Target | `lake build LeanModels.Python.Monadic.Eval` passed; 11/11 jobs |
+| Theorem | `Monadic.finishCallM_assign_twelve_existing_locals_ret_body_ok` |
+| Domain | twelve consecutive assignments to existing locals followed by value return |
+| Semantic change | theorem-only twelve-assignment early-flow composition |
+| Remaining debt | arbitrary locals and recursive positive-fuel calls |
+
+DECIDED: twelve assignment steps now compose through value return; arbitrary
+assignment and recursive body adequacy remain open.

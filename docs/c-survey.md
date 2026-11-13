@@ -2,10 +2,10 @@
 
 Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manifest.
 
-- verdicts: 1044/2214 MATCH (passed 1044, failed 0, oracle 0)
+- verdicts: 1049/2214 MATCH (passed 1049, failed 0, oracle 0)
 - manifest SHA-256: `bca94718b04e8394cdce992866637166f530978790bd1013cea4a00ae25ef764`
-- measured commit: `517bd7739`
-- measured at: `2026-11-13T16:57:26Z`
+- measured commit: `387a1bc09`
+- measured at: `2026-11-13T17:03:30Z`
 
 ## Verdict counts
 
@@ -13,10 +13,10 @@ Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manife
 | --- | ---: |
 | `not-parsed` | 294 |
 | `oracle-tests-compiler` | 1 |
-| `passed` | 1044 |
+| `passed` | 1049 |
 | `refused-libc` | 39 |
 | `refused-ub` | 105 |
-| `refused-unsupported` | 665 |
+| `refused-unsupported` | 660 |
 | `timeout` | 66 |
 
 ## Counts by corpus
@@ -30,10 +30,10 @@ Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manife
 | `c-testsuite/single-exec` | `timeout` | 2 |
 | `gcc.c-torture/execute` | `not-parsed` | 267 |
 | `gcc.c-torture/execute` | `oracle-tests-compiler` | 1 |
-| `gcc.c-torture/execute` | `passed` | 869 |
+| `gcc.c-torture/execute` | `passed` | 874 |
 | `gcc.c-torture/execute` | `refused-libc` | 35 |
 | `gcc.c-torture/execute` | `refused-ub` | 96 |
-| `gcc.c-torture/execute` | `refused-unsupported` | 586 |
+| `gcc.c-torture/execute` | `refused-unsupported` | 581 |
 | `gcc.c-torture/execute` | `timeout` | 64 |
 | `gcc.c23-run` | `not-parsed` | 27 |
 | `gcc.c23-run` | `passed` | 3 |
@@ -317,7 +317,6 @@ The run's first refusal, normalized by construct; `sole` counts rows whose first
 | `unsupported:long double floating literal` | 8 | 8 | 20030914-1.c, 20080502-1.c, gcc/testsuite/gcc.dg/c23-float-1.c, ieee/20010226-1.c, ieee/pr36332.c |
 | `unsupported:va_arg requested unsupported value type 'struct tiny'` | 8 | 8 | 931004-10.c, 931004-12.c, 931004-14.c, 931004-2.c, 931004-4.c |
 | `unsupported:StmtExpr` | 7 | 7 | 20000703-1.c, 20000917-1.c, 20020206-1.c, 20020320-1.c, 930406-1.c |
-| `unsupported:unsupported bit-field width 1 for 'int'` | 7 | 7 | pr110165-1.c, pr110166-1.c, pr48973-1.c, pr48973-2.c, pr49123.c |
 | `libc-call: malloc` | 6 | 6 | 20020406-1.c, 960521-1.c, pr41395-1.c, pr41395-2.c, pr41463.c |
 | `unsupported:DesignatedInitUpdateExpr` | 6 | 6 | gcc/testsuite/gcc.dg/c23-empty-init-5.c, gcc/testsuite/gcc.dg/c23-empty-init-warn-1.c, gcc/testsuite/gcc.dg/c23-empty-init-warn-17.c, gcc/testsuite/gcc.dg/c23-empty-init-warn-2.c, gcc/testsuite/gcc.dg/c23-empty-init-warn-4.c |
 | `unsupported:break, continue or goto escaped a function body` | 6 | 6 | 00010.c, 00199.c, 20030909-1.c, 20040704-1.c, pr119291.c |
@@ -379,6 +378,7 @@ The run's first refusal, normalized by construct; `sole` counts rows whose first
 | `unsupported:unbound declaration 'id29' (name 'gap')` | 2 | 2 | stdarg-1.c, stdarg-2.c |
 | `unsupported:unbound declaration 'id30' (name 'u')` | 2 | 2 | 20050604-1.c, 991228-1.c |
 | `unsupported:unbound declaration 'id39' (name 'X')` | 2 | 2 | 960215-1.c, regstack-1.c |
+| `unsupported:unsupported bit-field width 1 for 'int'` | 2 | 2 | pr110165-1.c, pr110166-1.c |
 | `unsupported:unsupported bit-field width 40 for 'unsigned long long'` | 2 | 2 | pr32244-1.c, pr34971.c |
 | `cast:FloatingComplexCast` | 1 | 1 | 20070614-1.c |
 | `cast:FloatingRealToComplex` | 1 | 1 | complex-4.c |

@@ -10,10 +10,10 @@
   "gcc.c-torture/execute": {
    "not-parsed": 267,
    "oracle-tests-compiler": 1,
-   "passed": 869,
+   "passed": 874,
    "refused-libc": 35,
    "refused-ub": 96,
-   "refused-unsupported": 586,
+   "refused-unsupported": 581,
    "timeout": 64
   },
   "gcc.c23-run": {
@@ -28,10 +28,10 @@
  "counts": {
   "not-parsed": 294,
   "oracle-tests-compiler": 1,
-  "passed": 1044,
+  "passed": 1049,
   "refused-libc": 39,
   "refused-ub": 105,
-  "refused-unsupported": 665,
+  "refused-unsupported": 660,
   "timeout": 66
  },
  "dynamic_wall_ranking": [
@@ -899,20 +899,6 @@
   },
   {
    "files": [
-    "pr110165-1.c",
-    "pr110166-1.c",
-    "pr48973-1.c",
-    "pr48973-2.c",
-    "pr49123.c",
-    "pr52209.c",
-    "vrp-7.c"
-   ],
-   "present": 7,
-   "sole": 7,
-   "wall": "unsupported:unsupported bit-field width 1 for 'int'"
-  },
-  {
-   "files": [
     "20020406-1.c",
     "960521-1.c",
     "pr41395-1.c",
@@ -1510,6 +1496,15 @@
    "present": 2,
    "sole": 2,
    "wall": "unsupported:unbound declaration 'id39' (name 'X')"
+  },
+  {
+   "files": [
+    "pr110165-1.c",
+    "pr110166-1.c"
+   ],
+   "present": 2,
+   "sole": 2,
+   "wall": "unsupported:unsupported bit-field width 1 for 'int'"
   },
   {
    "files": [
@@ -3418,8 +3413,8 @@
   }
  ],
  "manifest_hash": "bca94718b04e8394cdce992866637166f530978790bd1013cea4a00ae25ef764",
- "measured_at_utc": "2026-11-13T16:57:26Z",
- "measured_commit": "517bd7739",
+ "measured_at_utc": "2026-11-13T17:03:30Z",
+ "measured_commit": "387a1bc09",
  "pin": {
   "corpora": [
    "C1",
@@ -24292,27 +24287,27 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "unsupported bit-field width 1 for 'int'",
-   "dynamic_wall": "unsupported:unsupported bit-field width 1 for 'int'",
+   "detail": "0",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "pr48973-1.c",
    "sha256": "ff655a8e387ed3f4be796bc633d32a5fbd24c4735fb6fe030098380b3f0af45a",
    "static_walls": [
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "unsupported bit-field width 1 for 'int'",
-   "dynamic_wall": "unsupported:unsupported bit-field width 1 for 'int'",
+   "detail": "0",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "pr48973-2.c",
    "sha256": "bc06b27e2885600480c3ff698811e8627c5ef1c9653e1f6015bb3fefaaf71698",
    "static_walls": [
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -24338,15 +24333,15 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "unsupported bit-field width 1 for 'int'",
-   "dynamic_wall": "unsupported:unsupported bit-field width 1 for 'int'",
+   "detail": "0",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "pr49123.c",
    "sha256": "61d760f108b2bfa9d65354ec4ad80f11b92e66943a1186ded3bbb6a90073fb78",
    "static_walls": [
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -24580,15 +24575,15 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "unsupported bit-field width 1 for 'int'",
-   "dynamic_wall": "unsupported:unsupported bit-field width 1 for 'int'",
+   "detail": "0",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "pr52209.c",
    "sha256": "26852c8007b68f94efc5a1c36c893f836cdd74f924a82ee0d4bd7177dc26fa9a",
    "static_walls": [
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -29832,15 +29827,15 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "unsupported bit-field width 1 for 'int'",
-   "dynamic_wall": "unsupported:unsupported bit-field width 1 for 'int'",
+   "detail": "0",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "vrp-7.c",
    "sha256": "0ba1c5299568f51db6ed852984c79a22cd663c10f265efe2a8467954684797b7",
    "static_walls": [
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",

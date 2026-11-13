@@ -2,10 +2,10 @@
 
 Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manifest.
 
-- verdicts: 1000/2214 MATCH (passed 1000, failed 0, oracle 0)
-- manifest SHA-256: `2c46223d202255d1a14f8e696c8127b599978335a057195b98fb5f569f01a014`
-- measured commit: `8ed7ade05`
-- measured at: `2026-11-13T10:07:33Z`
+- verdicts: 1003/2214 MATCH (passed 1003, failed 0, oracle 0)
+- manifest SHA-256: `48db2059fac028febf02971bcf24aef43bf40b50d5041853a68c80279720cd01`
+- measured commit: `58a0e811a`
+- measured at: `2026-11-13T10:10:49Z`
 
 ## Verdict counts
 
@@ -13,8 +13,8 @@ Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manife
 | --- | ---: |
 | `not-parsed` | 294 |
 | `oracle-tests-compiler` | 1 |
-| `passed` | 1000 |
-| `refused-libc` | 49 |
+| `passed` | 1003 |
+| `refused-libc` | 46 |
 | `refused-ub` | 105 |
 | `refused-unsupported` | 699 |
 | `timeout` | 66 |
@@ -30,8 +30,8 @@ Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manife
 | `c-testsuite/single-exec` | `timeout` | 2 |
 | `gcc.c-torture/execute` | `not-parsed` | 267 |
 | `gcc.c-torture/execute` | `oracle-tests-compiler` | 1 |
-| `gcc.c-torture/execute` | `passed` | 829 |
-| `gcc.c-torture/execute` | `refused-libc` | 45 |
+| `gcc.c-torture/execute` | `passed` | 832 |
+| `gcc.c-torture/execute` | `refused-libc` | 42 |
 | `gcc.c-torture/execute` | `refused-ub` | 96 |
 | `gcc.c-torture/execute` | `refused-unsupported` | 616 |
 | `gcc.c-torture/execute` | `timeout` | 64 |
@@ -331,7 +331,6 @@ The run's first refusal, normalized by construct; `sole` counts rows whose first
 | `unsupported:indirect call through a non-FunctionDecl reference` | 4 | 4 | 20010122-1.c, pr28289.c, pr34768-1.c, pr34768-2.c |
 | `unsupported:not an integer type: 'double'` | 4 | 4 | 961223-1.c, ieee/pr28634.c, pr29798.c, stdarg-4.c |
 | `unsupported:string literal with escape or non-ASCII spelling` | 4 | 4 | 20010325-1.c, printf-1.c, wchar_t-1.c, widechar-3.c |
-| `libc-call: __builtin_inf` | 3 | 3 | ieee/fp-cmp-7.c, ieee/inf-2.c, ieee/inf-4.c |
 | `libc-call: vprintf` | 3 | 3 | printf-chk-1.c, vprintf-1.c, vprintf-chk-1.c |
 | `unsupported:floating literal lacks parser-native bits` | 3 | 3 | 960513-1.c, ieee/fp-cmp-1.c, ieee/fp-cmp-2.c |
 | `unsupported:implicit value initialization in value position` | 3 | 3 | pr108498-2.c, pr88739.c, pr97764.c |
@@ -348,7 +347,7 @@ The run's first refusal, normalized by construct; `sole` counts rows whose first
 | `unsupported:type trait '__alignof'` | 3 | 3 | 20000223-1.c, align-3.c, zerolen-2.c |
 | `unsupported:union initializer has no member` | 3 | 3 | pr15296.c, pr19687.c, pr23324.c |
 | `unsupported:unsupported bit-field width 32 for 'unsigned long long'` | 3 | 3 | 20081117-1.c, 930126-1.c, pr65215-3.c |
-| `libc-call: __builtin_copysign` | 2 | 2 | ieee/mzero6.c, pr44683.c |
+| `libc-call: __builtin_inf` | 2 | 2 | ieee/fp-cmp-7.c, ieee/inf-2.c |
 | `libc-call: calloc` | 2 | 2 | 00040.c, ipa-sra-2.c |
 | `libc-call: exit (an argument is not a literal 0 — which exit was reached is unknown)` | 2 | 2 | 970217-1.c, loop-8.c |
 | `libc-call: floor` | 2 | 2 | 990826-0.c, float-floor.c |

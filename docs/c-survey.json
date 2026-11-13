@@ -10,8 +10,8 @@
   "gcc.c-torture/execute": {
    "not-parsed": 267,
    "oracle-tests-compiler": 1,
-   "passed": 829,
-   "refused-libc": 45,
+   "passed": 832,
+   "refused-libc": 42,
    "refused-ub": 96,
    "refused-unsupported": 616,
    "timeout": 64
@@ -28,8 +28,8 @@
  "counts": {
   "not-parsed": 294,
   "oracle-tests-compiler": 1,
-  "passed": 1000,
-  "refused-libc": 49,
+  "passed": 1003,
+  "refused-libc": 46,
   "refused-ub": 105,
   "refused-unsupported": 699,
   "timeout": 66
@@ -1071,16 +1071,6 @@
   },
   {
    "files": [
-    "ieee/fp-cmp-7.c",
-    "ieee/inf-2.c",
-    "ieee/inf-4.c"
-   ],
-   "present": 3,
-   "sole": 3,
-   "wall": "libc-call: __builtin_inf"
-  },
-  {
-   "files": [
     "printf-chk-1.c",
     "vprintf-1.c",
     "vprintf-chk-1.c"
@@ -1241,12 +1231,12 @@
   },
   {
    "files": [
-    "ieee/mzero6.c",
-    "pr44683.c"
+    "ieee/fp-cmp-7.c",
+    "ieee/inf-2.c"
    ],
    "present": 2,
    "sole": 2,
-   "wall": "libc-call: __builtin_copysign"
+   "wall": "libc-call: __builtin_inf"
   },
   {
    "files": [
@@ -3664,9 +3654,9 @@
    "wall": "unsupported:va_arg requested unsupported value type 'struct s'"
   }
  ],
- "manifest_hash": "2c46223d202255d1a14f8e696c8127b599978335a057195b98fb5f569f01a014",
- "measured_at_utc": "2026-11-13T10:07:33Z",
- "measured_commit": "8ed7ade05",
+ "manifest_hash": "48db2059fac028febf02971bcf24aef43bf40b50d5041853a68c80279720cd01",
+ "measured_at_utc": "2026-11-13T10:10:49Z",
+ "measured_commit": "58a0e811a",
  "pin": {
   "corpora": [
    "C1",
@@ -19669,8 +19659,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "__builtin_inf",
-   "dynamic_wall": "libc-call: __builtin_inf",
+   "detail": "",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "ieee/inf-4.c",
    "sha256": "76765d088eb8c2d3a8ad82a8844d98a8d64b871ab6f144c077be493c06615b50",
@@ -19682,7 +19672,7 @@
     "libc-call: __builtin_isnan",
     "type-layout"
    ],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -19771,8 +19761,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "__builtin_copysign",
-   "dynamic_wall": "libc-call: __builtin_copysign",
+   "detail": "",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "ieee/mzero6.c",
    "sha256": "45b8dcb2138a1adb7dd09143de4f340feb9df5d3dea08d5b0f74e3be295c5ab7",
@@ -19780,7 +19770,7 @@
     "libc-call: __builtin_copysign",
     "type-layout"
    ],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -24237,8 +24227,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "__builtin_copysign",
-   "dynamic_wall": "libc-call: __builtin_copysign",
+   "detail": "",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "pr44683.c",
    "sha256": "016c5bd32e7d9885030a194c02c0742ae1a2bca5a0d9af761f8150ae1f4b312a",
@@ -24247,7 +24237,7 @@
     "libc-call: __builtin_copysign",
     "type-layout"
    ],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",

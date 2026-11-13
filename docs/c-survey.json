@@ -10,10 +10,10 @@
   "gcc.c-torture/execute": {
    "not-parsed": 267,
    "oracle-tests-compiler": 1,
-   "passed": 846,
+   "passed": 847,
    "refused-libc": 35,
    "refused-ub": 96,
-   "refused-unsupported": 609,
+   "refused-unsupported": 608,
    "timeout": 64
   },
   "gcc.c23-run": {
@@ -28,10 +28,10 @@
  "counts": {
   "not-parsed": 294,
   "oracle-tests-compiler": 1,
-  "passed": 1017,
+  "passed": 1018,
   "refused-libc": 39,
   "refused-ub": 105,
-  "refused-unsupported": 692,
+  "refused-unsupported": 691,
   "timeout": 66
  },
  "dynamic_wall_ranking": [
@@ -2051,14 +2051,6 @@
   },
   {
    "files": [
-    "pr19515.c"
-   ],
-   "present": 1,
-   "sole": 1,
-   "wall": "unsupported:no layout for declared type 'aun'"
-  },
-  {
-   "files": [
     "va-arg-4.c"
    ],
    "present": 1,
@@ -3570,9 +3562,9 @@
    "wall": "unsupported:va_arg requested unsupported value type 'struct s'"
   }
  ],
- "manifest_hash": "fd0f833d7f1ce4c8dfb1db5361628cad1f6acb104993bdee7300afb1a91a2acc",
- "measured_at_utc": "2026-11-13T13:00:00Z",
- "measured_commit": "d51e9d23b",
+ "manifest_hash": "a10a3e2066cb79ce8f7ff2fa57ed4709451c8dd50ce3ef4e28c6a43402524102",
+ "measured_at_utc": "2026-11-13T13:15:00Z",
+ "measured_commit": "0d4266e74",
  "pin": {
   "corpora": [
    "C1",
@@ -22078,15 +22070,15 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "no layout for declared type 'aun'",
-   "dynamic_wall": "unsupported:no layout for declared type 'aun'",
+   "detail": "",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "pr19515.c",
    "sha256": "3c8a966c3fea1d4814061c49fc8d95a87659d4b77a938f77ce16bbbc9c697600",
    "static_walls": [
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",

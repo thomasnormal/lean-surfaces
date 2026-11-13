@@ -2,10 +2,10 @@
 
 Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manifest.
 
-- verdicts: 1017/2214 MATCH (passed 1017, failed 0, oracle 0)
-- manifest SHA-256: `fd0f833d7f1ce4c8dfb1db5361628cad1f6acb104993bdee7300afb1a91a2acc`
-- measured commit: `d51e9d23b`
-- measured at: `2026-11-13T13:00:00Z`
+- verdicts: 1018/2214 MATCH (passed 1018, failed 0, oracle 0)
+- manifest SHA-256: `a10a3e2066cb79ce8f7ff2fa57ed4709451c8dd50ce3ef4e28c6a43402524102`
+- measured commit: `0d4266e74`
+- measured at: `2026-11-13T13:15:00Z`
 
 ## Verdict counts
 
@@ -13,10 +13,10 @@ Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manife
 | --- | ---: |
 | `not-parsed` | 294 |
 | `oracle-tests-compiler` | 1 |
-| `passed` | 1017 |
+| `passed` | 1018 |
 | `refused-libc` | 39 |
 | `refused-ub` | 105 |
-| `refused-unsupported` | 692 |
+| `refused-unsupported` | 691 |
 | `timeout` | 66 |
 
 ## Counts by corpus
@@ -30,10 +30,10 @@ Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manife
 | `c-testsuite/single-exec` | `timeout` | 2 |
 | `gcc.c-torture/execute` | `not-parsed` | 267 |
 | `gcc.c-torture/execute` | `oracle-tests-compiler` | 1 |
-| `gcc.c-torture/execute` | `passed` | 846 |
+| `gcc.c-torture/execute` | `passed` | 847 |
 | `gcc.c-torture/execute` | `refused-libc` | 35 |
 | `gcc.c-torture/execute` | `refused-ub` | 96 |
-| `gcc.c-torture/execute` | `refused-unsupported` | 609 |
+| `gcc.c-torture/execute` | `refused-unsupported` | 608 |
 | `gcc.c-torture/execute` | `timeout` | 64 |
 | `gcc.c23-run` | `not-parsed` | 27 |
 | `gcc.c23-run` | `passed` | 3 |
@@ -445,7 +445,6 @@ The run's first refusal, normalized by construct; `sole` counts rows whose first
 | `unsupported:no layout for declared type '__attribute__((__vector_size__(4 * sizeof(float)))) float'` | 1 | 1 | scal-to-vec3.c |
 | `unsupported:no layout for declared type '__attribute__((__vector_size__(8 * sizeof(short)))) short'` | 1 | 1 | scal-to-vec1.c |
 | `unsupported:no layout for declared type '__m128i'` | 1 | 1 | pr92618.c |
-| `unsupported:no layout for declared type 'aun'` | 1 | 1 | pr19515.c |
 | `unsupported:no layout for declared type 'big'` | 1 | 1 | va-arg-4.c |
 | `unsupported:no layout for declared type 'big_t'` | 1 | 1 | pr23135.c |
 | `unsupported:no layout for declared type 'bu'` | 1 | 1 | 921204-1.c |

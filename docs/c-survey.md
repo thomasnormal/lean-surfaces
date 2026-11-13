@@ -2,10 +2,10 @@
 
 Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manifest.
 
-- verdicts: 1040/2214 MATCH (passed 1040, failed 0, oracle 0)
+- verdicts: 1041/2214 MATCH (passed 1041, failed 0, oracle 0)
 - manifest SHA-256: `bca94718b04e8394cdce992866637166f530978790bd1013cea4a00ae25ef764`
-- measured commit: `ff10c671b`
-- measured at: `2026-11-13T16:10:53Z`
+- measured commit: `1a80b0475`
+- measured at: `2026-11-13T16:19:58Z`
 
 ## Verdict counts
 
@@ -13,10 +13,10 @@ Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manife
 | --- | ---: |
 | `not-parsed` | 294 |
 | `oracle-tests-compiler` | 1 |
-| `passed` | 1040 |
+| `passed` | 1041 |
 | `refused-libc` | 39 |
 | `refused-ub` | 105 |
-| `refused-unsupported` | 669 |
+| `refused-unsupported` | 668 |
 | `timeout` | 66 |
 
 ## Counts by corpus
@@ -30,10 +30,10 @@ Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manife
 | `c-testsuite/single-exec` | `timeout` | 2 |
 | `gcc.c-torture/execute` | `not-parsed` | 267 |
 | `gcc.c-torture/execute` | `oracle-tests-compiler` | 1 |
-| `gcc.c-torture/execute` | `passed` | 865 |
+| `gcc.c-torture/execute` | `passed` | 866 |
 | `gcc.c-torture/execute` | `refused-libc` | 35 |
 | `gcc.c-torture/execute` | `refused-ub` | 96 |
-| `gcc.c-torture/execute` | `refused-unsupported` | 590 |
+| `gcc.c-torture/execute` | `refused-unsupported` | 589 |
 | `gcc.c-torture/execute` | `timeout` | 64 |
 | `gcc.c23-run` | `not-parsed` | 27 |
 | `gcc.c23-run` | `passed` | 3 |
@@ -519,7 +519,6 @@ The run's first refusal, normalized by construct; `sole` counts rows whose first
 | `unsupported:src/20050316-3.c` | 1 | 1 | 20050316-3.c |
 | `unsupported:src/921016-1.c` | 1 | 1 | 921016-1.c |
 | `unsupported:src/930628-1.c` | 1 | 1 | 930628-1.c |
-| `unsupported:src/bf-layout-1.c` | 1 | 1 | bf-layout-1.c |
 | `unsupported:src/bf-sign-1.c` | 1 | 1 | bf-sign-1.c |
 | `unsupported:src/cbrt.c` | 1 | 1 | cbrt.c |
 | `unsupported:src/ffs-2.c` | 1 | 1 | ffs-2.c |

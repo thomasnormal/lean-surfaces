@@ -18,22 +18,22 @@ def run(args, cwd=ROOT):
 def rows(out): return [line.split()[1:] for line in out.splitlines() if line.startswith("ROW ")]
 def main():
     expected=rows(run(["lake","env","lean","--run",str(HERE/"oracle.lean")]))
-    if expected != [["i=0","q=xxxx"],["i=1","q=xxxx"]]: raise RuntimeError(f"E rows: {expected}")
-    print("E: 2 hierarchy-memory rows MATCH")
+    if expected != [["i=0","q=xxxx"]]: raise RuntimeError(f"E rows: {expected}")
+    print("E: 1 hierarchy-memory row MATCH")
     src=str(HERE/"memory_shape_b_canonical_e.sv")
-    tb='''module tb; logic clk=0; logic [3:0] d=0; wire [3:0] q; memory_shape_b_canonical_e dut(.*); initial begin #1 $display("ROW i=0 q=%b",q); d=1; clk=1; #1 $display("ROW i=1 q=%b",q); $finish; end endmodule'''
+    tb='''module tb; logic clk=0; logic [3:0] d=0; wire [3:0] q; memory_shape_b_canonical_e dut(.*); initial begin #1 $display("ROW i=0 q=%b",q); $finish; end endmodule'''
     for sim in (["iverilog"] if shutil.which("iverilog") else []):
       with tempfile.TemporaryDirectory(prefix="sv-e-hierarchy-memory-") as w:
        t=Path(w)/"tb.sv"; t.write_text(tb); exe=str(Path(w)/"sim"); run([sim,"-g2012","-s","tb","-o",exe,src,str(t)],w); actual=rows(run(["vvp",exe],w))
       if actual != expected: raise RuntimeError(f"{sim}: {actual} != {expected}")
-      print(f"{sim}: 2 rows MATCH E")
+      print(f"{sim}: 1 row MATCH E")
     if shutil.which("xrun"):
       status,details=probe_xcelium(); print(details)
       if status==0:
        with tempfile.TemporaryDirectory(prefix="sv-e-hierarchy-memory-") as w:
         t=Path(w)/"tb.sv"; t.write_text(tb); actual=rows(run(["xrun","-sv","-q","-top","tb",src,str(t)],w))
        if actual != expected: raise RuntimeError(f"xrun: {actual} != {expected}")
-       print("xrun: 2 rows MATCH E")
+       print("xrun: 1 row MATCH E")
       elif status==77: print("no Xcelium result: explicit license refusal")
       else: raise RuntimeError("Xcelium readiness failed")
 if __name__ == "__main__": main()

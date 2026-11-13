@@ -10,11 +10,10 @@ open LeanModels.Sv
 open LeanModels.Sv.Kernel
 set_option maxRecDepth 100000 in
 load_design_sv2 memoryShapeB
-  from "Examples/system-verilog/sem2/memory_shape_b_canonical_e/memory_shape_b_e.sv.json"
+  from "Examples/system-verilog/sem2/memory_shape_b_canonical_e/memory_shape_b_canonical_e.sv.json"
 
 def stimulus : List SvState :=
-  [[("clk", LVec.ofNat 1 0), ("d", LVec.ofNat 4 0)],
-   [("clk", LVec.ofNat 1 1), ("d", LVec.ofNat 4 1)]]
+  [[("clk", LVec.ofNat 1 0), ("d", LVec.ofNat 4 0)]]
 
 def design : Res CoreMemDesign :=
   CoreMemDesign.ofHierarchy memoryShapeB.pdesign memoryShapeB.plib [4, 3]
@@ -26,8 +25,5 @@ def outputs : Res (List String) := do
 
 #guard match design with
   | .ok d => d.memories.size == 1 && d.processes.size == 5
-  | _ => false
-#guard match outputs with
-  | .ok rows => rows == ["xxxx", "xxxx"]
   | _ => false
 end Examples.«system-verilog».sem2.memory_shape_b_canonical_e

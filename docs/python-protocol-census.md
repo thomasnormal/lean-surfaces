@@ -193,6 +193,9 @@ normal sequencing to four statements.
 `Monadic.finishCallM_five_pass_body_ok` extends normal sequencing to five
 statements.
 
+`Monadic.finishCallM_four_pass_ret_body_ok` extends early-return sequencing
+to four normal statements followed by a return.
+
 `Monadic.finishCallM_three_pass_ret_body_ok` extends early-return sequencing
 to three normal statements followed by a return.
 

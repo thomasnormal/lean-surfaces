@@ -4023,6 +4023,24 @@ theorem finishCallM_five_pass_body_ok (K : Kont) (m : Module)
   rw [bind_apply, hraw]
   rfl
 
+theorem finishCallM_four_pass_ret_body_ok (K : Kont) (m : Module)
+    (locals : REnv) (w : World) (depth : Nat) :
+    toRun (finishCallM depth
+      (inWorld locals (execOpenList K m
+        [.pass adequacySpan, .pass adequacySpan, .pass adequacySpan,
+         .pass adequacySpan,
+         .ret (some (.constant (.int 1) adequacySpan)) adequacySpan]))) w =
+      .ok { w with callDepth := depth } (.ret (.int 1)) := by
+  have hraw : (inWorld locals (execOpenList K m
+      [.pass adequacySpan, .pass adequacySpan, .pass adequacySpan,
+       .pass adequacySpan,
+       .ret (some (.constant (.int 1) adequacySpan)) adequacySpan])) w =
+      .ok (.ok (.ret (.int 1)), w) := by rfl
+  unfold finishCallM
+  apply toRun_tryCatch_ok
+  rw [bind_apply, hraw]
+  rfl
+
 theorem finishCallM_three_pass_ret_body_ok (K : Kont) (m : Module)
     (locals : REnv) (w : World) (depth : Nat) :
     toRun (finishCallM depth
@@ -4196,6 +4214,7 @@ theorem leaveCallM_modify_exn {α : Type} (w : World) (e : PyErr)
 #print axioms finishCallM_three_pass_continue_body_ok
 #print axioms finishCallM_three_pass_ret_none_body_ok
 #print axioms finishCallM_five_pass_body_ok
+#print axioms finishCallM_four_pass_ret_body_ok
 #print axioms finishCallM_assign_constant_body_ok
 #print axioms finishCallM_modify_ok
 #print axioms finishCallM_modify_exn

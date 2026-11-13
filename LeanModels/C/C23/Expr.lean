@@ -605,6 +605,29 @@ def float64Binop (op : String) (a b : Float.Model) : EvalM CVal :=
   | ">=" => pure (ofBool (Float.Model.le b a))
   | _ => refuseUnsupported s!"binary operator '{op}' on binary64"
 
+/-! C23 §6.3.1.5: binary32/binary64 conversions use the exact IEEE value
+and round to the destination format.  The shared `UnpackedFloat.round`
+operation performs round-to-nearest-even; widening is exact because the same
+operation is used with the wider format.  NaN, infinities and signed zero
+retain their special value and sign. -/
+
+def floatCast (v : CVal) (ty : CType) : EvalM CVal :=
+  let roundTo (spec : Float.Model.Format) (u : Float.Model.UnpackedFloat) :
+      Float.Model.UnpackedFloat :=
+    match u with
+    | .infinity s => .infinity s
+    | .notANumber => .notANumber
+    | .zero s => .zero s
+    | .finite s m e h => .round spec s m e
+  match v, ty with
+  | .float32 f, "double" =>
+      pure (.float64 (Float.Model.pack (roundTo Float.Model.Format.binary64
+        (Float32.Model.unpack f))))
+  | .float64 f, "float" =>
+      pure (.float32 (Float32.Model.pack (roundTo Float.Model.Format.binary32
+        (Float.Model.unpack f))))
+  | _, _ => refuseUnsupported "floating cast has incompatible source and destination"
+
 /-! C23 §6.3.1.4: conversion from a floating type to an integer type
 discards the fractional part toward zero. An infinite/NaN source, or an
 integral part outside the destination range, is undefined (`J.2(16)`).
@@ -1180,6 +1203,10 @@ def evalExpr (ctx : Ctx) : Expr → EvalM CVal
           pure (.float64 (Float.Model.ofInt n))
         else
           refuseUnsupported "long double integer-to-floating conversion"
+      else if ck == "FloatingCast" then
+        do
+          let v ← evalExpr ctx sub
+          floatCast v ty
       else if ck == "FloatingToIntegral" then
         do
         let v ← evalExpr ctx sub
@@ -2095,6 +2122,14 @@ theorem floatLiteralValue' (bitsHex : Option String) (bitWidth : Option Nat) :
     | exact pure' _
     | exact refuseUnsupported' _
 
+theorem floatCast' (v : CVal) (ty : CType) :
+    MemInvariant (floatCast v ty) := by
+  simp only [floatCast]
+  repeat (any_goals split)
+  all_goals first
+    | exact pure' _
+    | exact refuseUnsupported' _
+
 theorem evalArith' (ctx : Ctx) (op : String) (lv rv : CVal) (ty : CType)
     (elemTy : Option CType := none) :
     MemInvariant (evalArith ctx op lv rv ty elemTy) := by
@@ -2265,13 +2300,15 @@ private theorem memInvariant_core (ctx : Ctx) : ∀ (n : Nat) (e : Expr), e.size
           obtain ⟨i1, i2⟩ := ih s (by simp only [Expr.size_implicitCast] at he; omega)
             (Expr.isPure_implicitCast hp)
           exact ⟨by open_eval; apply MemInvariant.ite' <;>
-              first | (simp [loadBitFieldAt]; mem_inv) | mem_inv,
+              all_goals first | (simp [floatCast]; mem_inv) | exact MemInvariant.floatCast' _ _ |
+                (simp [loadBitFieldAt]; mem_inv) | mem_inv,
             by open_lvalue; mem_inv⟩
       | cast _ s _ _ =>
           obtain ⟨i1, i2⟩ := ih s (by simp only [Expr.size_cast] at he; omega)
             (Expr.isPure_cast hp)
           exact ⟨by open_eval; apply MemInvariant.ite' <;>
-              first | (simp [loadBitFieldAt]; mem_inv) | mem_inv,
+              all_goals first | (simp [floatCast]; mem_inv) | exact MemInvariant.floatCast' _ _ |
+                (simp [loadBitFieldAt]; mem_inv) | mem_inv,
             by open_lvalue; mem_inv⟩
       | member b f a fieldTy _ =>
           obtain ⟨i1, i2⟩ := ih b (by simp only [Expr.size_member] at he; omega)

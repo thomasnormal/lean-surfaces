@@ -167,6 +167,127 @@ def _literal_initializer(node: Any) -> bool:
     return node.get("kind") in {"Int", "Literal", "Fill"}
 
 
+# Canonical E's memory entry keeps a one-rank unpacked declaration as one
+# native MemState.  The old census classified every unpacked declaration as a
+# scalar-route refusal; retain that refusal only for ranks the source-shaped
+# memory node does not admit.
+def _one_rank_unpacked(node: Any) -> bool:
+    if not isinstance(node, dict):
+        return False
+    dims = node.get("unpacked", node.get("unpacked_dims", []))
+    return isinstance(dims, list) and len(dims) == 1
+
+
+_INITIAL_STMT_KINDS = {
+    "Block", "If", "For", "BlockingAssign", "BlockingAssignL",
+}
+_INITIAL_EXPR_KINDS = {
+    "Ident", "ParamRef", "GenvarRef", "EnumRef", "Int", "Literal",
+    "Binary", "Unary", "Ternary", "Resize", "SignedResize", "Cast",
+    "Squash", "Squash2", "Concat", "ArraySel", "ArrayElem", "PartSel",
+    "PartSelect", "BitSel", "Reduce", "Fill",
+}
+
+
+def _initial_supported(node: Any) -> bool:
+    """Mirror the source-shaped canonical-E time-zero statement slice.
+
+    The check is intentionally conservative.  In particular, a delay, system
+    task, case, NBA, or other retained node remains a loud initial-process
+    wall; a supported node is admitted only when every source child is also in
+    this finite grammar.  Parametric x/z leaves are the one explicit
+    expression exception, matching ``CoreMemExec``'s canonical marker.
+    """
+
+    if isinstance(node, list):
+        return all(_initial_supported(value) for value in node)
+    if not isinstance(node, dict):
+        return True
+    kind = node.get("kind", "")
+    if kind in {"span", "text", "sourceRange", "resolved_width", "metadata"}:
+        return True
+    if kind == "Unsupported":
+        return node.get("sv_kind") in ADMITTED_EXPRESSION_MARKERS
+    if kind not in _INITIAL_STMT_KINDS and kind not in _INITIAL_EXPR_KINDS:
+        return False
+    return all(
+        _initial_supported(value)
+        for key, value in node.items()
+        if key not in {"span", "text", "sourceRange", "metadata"}
+    )
+
+
+def _generated_assign_targets(module: dict[str, Any]) -> set[str]:
+    targets: set[str] = set()
+    env: dict[str, int] = {}
+    for key in ("params", "local_params", "localParams"):
+        for item in module.get(key, []) or []:
+            if isinstance(item, dict) and isinstance(item.get("name"), str) and isinstance(item.get("resolved"), int):
+                env[item["name"]] = item["resolved"]
+
+    def walk(node: Any, active: bool = True) -> None:
+        if isinstance(node, dict):
+            kind = node.get("kind")
+            if kind == "GenerateIf":
+                value = _const_value(node.get("cond"), env)
+                walk(node.get("then", []), active and (value is None or value != 0))
+                walk(node.get("else", []), active and (value is None or value == 0))
+                return
+            if kind == "GenerateFor":
+                count = node.get("resolved_count")
+                walk(node.get("body", []), active and (count is None or count > 0))
+                return
+            if node.get("kind") == "Assign":
+                target = node.get("target")
+                if active and isinstance(target, dict) and target.get("kind") == "Ident":
+                    name = target.get("name")
+                    if isinstance(name, str):
+                        targets.add(name)
+            for key, value in node.items():
+                if key not in {"span", "text", "sourceRange"}:
+                    walk(value, active)
+        elif isinstance(node, list):
+            for value in node:
+                walk(value, active)
+
+    walk(module.get("generates", []))
+    walk(module.get("processes", []))
+    return targets
+
+
+def _canonical_net_member_allowed(module: dict[str, Any], node: dict[str, Any]) -> bool:
+    """Recognize the metadata-backed net members admitted by canonical E."""
+
+    metadata = node.get("metadata")
+    if not isinstance(metadata, dict):
+        return False
+    width_info = metadata.get("width")
+    width = width_info.get("resolved") if isinstance(width_info, dict) else None
+    if not isinstance(width, int) or metadata.get("net_kind") != "Wire":
+        return False
+    if not metadata.get("is_net") or not metadata.get("four_state") or metadata.get("signed"):
+        return False
+    records = metadata.get("driver_records")
+    if records == []:
+        return width == 1 and metadata.get("driver_reason") == "no driver: the net reads z"
+    if not isinstance(records, list) or len(records) != 1:
+        return False
+    record = records[0]
+    if not isinstance(record, dict):
+        return False
+    bounds = record.get("bounds")
+    name = metadata.get("name", node.get("text", ""))
+    return (
+        isinstance(bounds, list)
+        and bounds == [0, width - 1]
+        and record.get("owner_kind") == "ContinuousAssignSymbol"
+        and record.get("generated") is True
+        and record.get("source") == name
+        and isinstance(name, str)
+        and name in _generated_assign_targets(module)
+    )
+
+
 def _const_value(node: Any, env: dict[str, int]) -> Optional[int]:
     """Small evaluator for generate reachability metadata only."""
 
@@ -341,8 +462,18 @@ class Census:
             return
         name = _name(node)
         if node.get("kind") == "UnpackedDecl" or node.get("unpacked"):
-            req = f"decl '{name}': unpacked array storage outside E (UnpackedDecl:memory)"
-            self._row(module, "declaration", node, "REFUSED", req, path)
+            if _one_rank_unpacked(node):
+                self._row(
+                    module,
+                    "declaration",
+                    node,
+                    "ADMITTED",
+                    "CoreMem: one-rank unpacked storage in native MemState (IEEE 1800-2023 §7.4.2)",
+                    path,
+                )
+            else:
+                req = f"decl '{name}': unpacked array storage outside E (UnpackedDecl:memory)"
+                self._row(module, "declaration", node, "REFUSED", req, path)
             return
         init = node.get("init")
         if init is not None and not _literal_initializer(init):
@@ -398,7 +529,17 @@ class Census:
             rule = "Core0: implicit event process with raw-read sensitivity"
         elif kind == "Initial":
             category = "process"
-            self._row(module, category, node, "REFUSED", _refusal("T2:Initial"), path)
+            if _initial_supported(node.get("body")):
+                self._row(
+                    module,
+                    category,
+                    node,
+                    "ADMITTED",
+                    "CoreMem: source-shaped time-zero initializer (IEEE 1800-2023 §4.7/§11.5.1)",
+                    path,
+                )
+            else:
+                self._row(module, category, node, "REFUSED", _refusal("T2:Initial"), path)
             return
         elif kind == "Unsupported":
             category = "process"
@@ -436,7 +577,31 @@ class Census:
             self._row(module, "module_member", node, "NOT REACHED", reason, path)
             return
         if _kind(node) == "Unsupported":
-            self._row(module, "module_member", node, "REFUSED", _refusal(node.get("sv_kind", "Unsupported")), path)
+            sv_kind = node.get("sv_kind", "Unsupported")
+            if sv_kind in {
+                "SubroutineSymbol:empty-task",
+                "IntegerLiteral:unsized-xz-parametric",
+                "ConversionExpression:xz-literal-parametric",
+            }:
+                self._row(
+                    module,
+                    "module_member",
+                    node,
+                    "ADMITTED",
+                    "CoreMem: inert source marker retained by canonical E",
+                    path,
+                )
+            elif sv_kind in {"NetSymbol:net-z", "PortSymbol:net-z"} and _canonical_net_member_allowed(module, node):
+                self._row(
+                    module,
+                    "module_member",
+                    node,
+                    "ADMITTED",
+                    "CoreMem: metadata-backed four-state net in native scalar store",
+                    path,
+                )
+            else:
+                self._row(module, "module_member", node, "REFUSED", _refusal(sv_kind), path)
         else:
             self._row(module, "module_member", node, "ADMITTED", f"{_kind(node)}: structural module member", path)
 
@@ -591,6 +756,7 @@ def _fixture() -> dict[str, Any]:
                         {"kind": "Assign", "span": {"line": 4}, "target": {"kind": "Ident", "name": "a"}, "value": {"kind": "Int", "value": 0}},
                         {"kind": "AlwaysPosedge", "span": {"line": 5}, "body": {"kind": "Block", "stmts": []}},
                         {"kind": "Assign", "span": {"line": 9}, "target": {"kind": "Ident", "name": "a"}, "value": {"kind": "Unsupported", "sv_kind": "ConversionExpression:unsized-xz", "text": "x"}},
+                        {"kind": "Initial", "span": {"line": 10}, "body": {"kind": "Block", "stmts": [{"kind": "BlockingAssign", "target": {"kind": "Ident", "name": "a"}, "value": {"kind": "Int", "value": 1}}]}},
                     ],
                     "generates": [{"kind": "GenerateIf", "span": {"line": 6}, "cond": {"kind": "Int", "value": 0}, "then": [{"kind": "Assign", "span": {"line": 7}}], "else": []}],
                     "others": [{"kind": "Unsupported", "sv_kind": "NetSymbol:net-z", "text": "z", "span": {"line": 8}}],
@@ -606,18 +772,49 @@ def self_test() -> None:
     expected = [
         (1, "declaration", "ADMITTED"),
         (2, "declaration", "ADMITTED"),
-        (3, "declaration", "REFUSED"),
+        (3, "declaration", "ADMITTED"),
         (4, "continuous_assign", "ADMITTED"),
         (5, "process", "ADMITTED"),
         (9, "continuous_assign", "ADMITTED"),
+        (10, "process", "ADMITTED"),
         (6, "module_member", "ADMITTED"),
         (7, "continuous_assign", "NOT REACHED"),
         (8, "module_member", "REFUSED"),
     ]
     if statuses != expected:
         raise AssertionError(f"self-test rows differ:\nexpected={expected!r}\nactual={statuses!r}")
-    if result["counts"] != {"ADMITTED": 6, "REFUSED": 2, "NOT REACHED": 1}:
+    if result["counts"] != {"ADMITTED": 8, "REFUSED": 1, "NOT REACHED": 1}:
         raise AssertionError(result["counts"])
+    generated_module = {
+        "params": [],
+        "generates": [{
+            "kind": "GenerateIf",
+            "cond": {"kind": "Int", "value": 1},
+            "then": [{"kind": "Assign", "target": {"kind": "Ident", "name": "z"}}],
+            "else": [],
+        }],
+    }
+    generated_net = {
+        "kind": "Unsupported",
+        "sv_kind": "NetSymbol:net-z",
+        "text": "z",
+        "metadata": {
+            "name": "z",
+            "width": {"resolved": 1},
+            "net_kind": "Wire",
+            "signed": False,
+            "four_state": True,
+            "is_net": True,
+            "driver_records": [{
+                "bounds": [0, 0],
+                "owner_kind": "ContinuousAssignSymbol",
+                "generated": True,
+                "source": "z",
+            }],
+        },
+    }
+    if not _canonical_net_member_allowed(generated_module, generated_net):
+        raise AssertionError("canonical generated net self-test failed")
     print("core_census --self-test ok")
 
 

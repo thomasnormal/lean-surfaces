@@ -992,7 +992,9 @@ def bitFieldStoreBytes (bs : List CByte) (offset width value : Nat) : List CByte
 
 def loadBitFieldAt (ctx : Ctx) (recordTy : CType) (field : String)
     (fieldTy : CType) (fieldPtr : Ptr) : EvalM CVal := do
-  match ctx.layout.fieldBits recordTy field, ctx.layout.size recordTy,
+  let storageTy := if recordTy.endsWith "*" then
+      (recordTy.dropEnd 1).toString.trimAsciiEnd.toString else recordTy
+  match ctx.layout.fieldBits recordTy field, ctx.layout.size storageTy,
       intTyOf? (ctx.layout.normalizeTy fieldTy) with
   | some (offsetBits, width), some recordSize, some storageTy =>
       if width > 24 then
@@ -1012,7 +1014,9 @@ def loadBitFieldAt (ctx : Ctx) (recordTy : CType) (field : String)
 
 def storeBitFieldAt (ctx : Ctx) (recordTy : CType) (field : String)
     (fieldTy : CType) (fieldPtr : Ptr) (v : CVal) : EvalM Unit := do
-  match ctx.layout.fieldBits recordTy field, ctx.layout.size recordTy,
+  let storageRecordTy := if recordTy.endsWith "*" then
+      (recordTy.dropEnd 1).toString.trimAsciiEnd.toString else recordTy
+  match ctx.layout.fieldBits recordTy field, ctx.layout.size storageRecordTy,
       intTyOf? (ctx.layout.normalizeTy fieldTy), v with
   | some (offsetBits, width), some recordSize, some storageTy, .int _ n =>
       let basePtr := { fieldPtr with off := fieldPtr.off - (offsetBits / 8 : Int), bound := none }

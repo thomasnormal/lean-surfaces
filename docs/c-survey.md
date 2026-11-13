@@ -2,10 +2,10 @@
 
 Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manifest.
 
-- verdicts: 1077/2214 MATCH (passed 1077, failed 0, oracle 0)
+- verdicts: 1078/2214 MATCH (passed 1078, failed 0, oracle 0)
 - manifest SHA-256: `bca94718b04e8394cdce992866637166f530978790bd1013cea4a00ae25ef764`
-- measured commit: `d2af1bd78`
-- measured at: `2026-11-13T20:27:00Z`
+- measured commit: `6ee760418`
+- measured at: `2026-11-13T20:34:00Z`
 
 ## Verdict counts
 
@@ -13,10 +13,10 @@ Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manife
 | --- | ---: |
 | `not-parsed` | 294 |
 | `oracle-tests-compiler` | 1 |
-| `passed` | 1077 |
+| `passed` | 1078 |
 | `refused-libc` | 39 |
 | `refused-ub` | 107 |
-| `refused-unsupported` | 630 |
+| `refused-unsupported` | 629 |
 | `timeout` | 66 |
 
 ## Counts by corpus
@@ -30,10 +30,10 @@ Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manife
 | `c-testsuite/single-exec` | `timeout` | 2 |
 | `gcc.c-torture/execute` | `not-parsed` | 267 |
 | `gcc.c-torture/execute` | `oracle-tests-compiler` | 1 |
-| `gcc.c-torture/execute` | `passed` | 902 |
+| `gcc.c-torture/execute` | `passed` | 903 |
 | `gcc.c-torture/execute` | `refused-libc` | 35 |
 | `gcc.c-torture/execute` | `refused-ub` | 98 |
-| `gcc.c-torture/execute` | `refused-unsupported` | 551 |
+| `gcc.c-torture/execute` | `refused-unsupported` | 550 |
 | `gcc.c-torture/execute` | `timeout` | 64 |
 | `gcc.c23-run` | `not-parsed` | 27 |
 | `gcc.c23-run` | `passed` | 3 |
@@ -306,7 +306,7 @@ The run's first refusal, normalized by construct; `sole` counts rows whose first
 | `unsupported:no definition for 'main'` | 102 | 102 | 20040705-1.c, 20040705-2.c, 20040709-3.c, builtins/20010124-1.c, builtins/abs-1.c |
 | `timeout` | 66 | 66 | 00041.c, 00128.c, 20000412-2.c, 20020108-1.c, 20030916-1.c |
 | `unsupported:extern object 'inside_main' has no definition in the translation unit` | 40 | 40 | builtins/20010124-1-lib.c, builtins/complex-1-lib.c, builtins/fputs-lib.c, builtins/lib/abs.c, builtins/lib/bfill.c |
-| `cast:FloatingCast` | 24 | 24 | 00174.c, 00175.c, 20000605-1.c, 20020413-1.c, 930614-2.c |
+| `cast:FloatingCast` | 23 | 23 | 00174.c, 00175.c, 20000605-1.c, 20020413-1.c, 990413-2.c |
 | `unsupported:pointer bit-cast across incompatible effective types` | 21 | 21 | 00103.c, 20001017-2.c, 20050316-1.c, 20050607-1.c, 20060412-1.c |
 | `unsequenced-effects` | 16 | 16 | 20001228-1.c, 20021120-1.c, 20050218-1.c, 20051021-1.c, 20060929-1.c |
 | `unsupported:case label nested in a control statement` | 13 | 13 | 00051.c, 00143.c, 00182.c, 20011109-1.c, 20080719-1.c |

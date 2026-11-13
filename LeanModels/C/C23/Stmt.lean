@@ -1309,9 +1309,9 @@ def callFn : Nat → Program → LeanModels.C.FunctionDefn → List CVal → Exe
               -- `__builtin_inf` as binary32.  The C builtin family has
               -- exact names: `inf` is binary64, `inff` is binary32, and
               -- `infl` is long double (§7.12.3).
-              if nm == "__builtin_inff" then
+              if nm == "__builtin_inff" || nm == "__builtin_huge_valf" then
                 pure (.float32 (Float32.Model.ofBits (UInt32.ofNat 0x7f800000)))
-              else if nm == "__builtin_infl" then
+              else if nm == "__builtin_infl" || nm == "__builtin_huge_vall" then
                 refuseUnsupported s!"{nm}: long double is outside the profile"
               else
                 pure (.float64 (Float.Model.ofBits (UInt64.ofNat 0x7ff0000000000000)))
@@ -1467,7 +1467,7 @@ def callFn : Nat → Program → LeanModels.C.FunctionDefn → List CVal → Exe
               else if nm == "__builtin_bswap64" then
                 runBswap64 vs
                     else if nm == "__builtin_isfinite" || nm == "__builtin_isnan" || nm == "__builtin_isinf" || nm == "__builtin_signbit" then runFloatClass nm vs
-                    else if nm == "__builtin_inf" || nm == "__builtin_inff" || nm == "__builtin_infl" then
+                    else if nm == "__builtin_inf" || nm == "__builtin_inff" || nm == "__builtin_infl" || nm == "__builtin_huge_val" || nm == "__builtin_huge_valf" || nm == "__builtin_huge_vall" then
                       runInf nm vs
               else if nm == "__builtin_abs" || nm == "abs" then
                 runAbs vs
@@ -1545,7 +1545,7 @@ def callFn : Nat → Program → LeanModels.C.FunctionDefn → List CVal → Exe
               else if nm == "__builtin_bswap32" then runBswap32 vs
               else if nm == "__builtin_bswap64" then runBswap64 vs
               else if nm == "__builtin_isfinite" || nm == "__builtin_isnan" || nm == "__builtin_isinf" || nm == "__builtin_signbit" then runFloatClass nm vs
-              else if nm == "__builtin_inf" || nm == "__builtin_inff" || nm == "__builtin_infl" then runInf nm vs
+              else if nm == "__builtin_inf" || nm == "__builtin_inff" || nm == "__builtin_infl" || nm == "__builtin_huge_val" || nm == "__builtin_huge_valf" || nm == "__builtin_huge_vall" then runInf nm vs
               else if nm == "__builtin_abs" || nm == "abs" then runAbs vs
               else if nm == "__sync_add_and_fetch_8" then runSyncAdd8 vs
               else if nm == "__builtin_expect" then runBuiltinExpect vs

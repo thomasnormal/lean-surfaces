@@ -163,3 +163,7 @@ the same world and depth restoration boundary.
 
 Its bare-return counterpart, `Monadic.finishCallM_ret_none_body_ok`, preserves
 the `RFlow.ret .none` channel through the same boundary.
+
+The loop-control bridge `Monadic.finishCallM_break_body_ok` preserves
+`RFlow.brk` through the boundary as well; enclosing-loop handling remains in
+the continuation layer.

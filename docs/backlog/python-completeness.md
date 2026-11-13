@@ -14432,3 +14432,20 @@ depth.
 
 DECIDED: both value-return and bare-return flow are checked through the
 stateful call boundary; recursive and general body adequacy remain open.
+
+## 2026-11-13-pyfoundation-127 — break-flow body bridge
+
+`Monadic.finishCallM_break_body_ok` composes a concrete `break` statement
+through the fuel-free statement walker and top-level call-depth restoration,
+retaining `RFlow.brk` for the enclosing control shell.
+
+| Measurement | Result |
+|---|---|
+| Target | `lake build LeanModels.Python.Monadic.Eval` passed; 11/11 jobs |
+| Theorem | `Monadic.finishCallM_break_body_ok` |
+| Domain | one `break` statement, arbitrary frame locals/world/depth |
+| Semantic change | theorem-only control-flow composition |
+| Remaining debt | recursive positive-fuel calls and general loop adequacy |
+
+DECIDED: `break` flow now composes through call restoration; enclosing-loop
+continuation and recursive body adequacy remain open.

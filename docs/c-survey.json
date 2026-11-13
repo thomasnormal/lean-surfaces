@@ -10,10 +10,10 @@
   "gcc.c-torture/execute": {
    "not-parsed": 267,
    "oracle-tests-compiler": 1,
-   "passed": 849,
+   "passed": 850,
    "refused-libc": 35,
    "refused-ub": 96,
-   "refused-unsupported": 606,
+   "refused-unsupported": 605,
    "timeout": 64
   },
   "gcc.c23-run": {
@@ -28,10 +28,10 @@
  "counts": {
   "not-parsed": 294,
   "oracle-tests-compiler": 1,
-  "passed": 1020,
+  "passed": 1021,
   "refused-libc": 39,
   "refused-ub": 105,
-  "refused-unsupported": 689,
+  "refused-unsupported": 688,
   "timeout": 66
  },
  "dynamic_wall_ranking": [
@@ -2059,14 +2059,6 @@
   },
   {
    "files": [
-    "921204-1.c"
-   ],
-   "present": 1,
-   "sole": 1,
-   "wall": "unsupported:no layout for declared type 'bu'"
-  },
-  {
-   "files": [
     "pr36321.c"
    ],
    "present": 1,
@@ -3546,9 +3538,9 @@
    "wall": "unsupported:va_arg requested unsupported value type 'struct s'"
   }
  ],
- "manifest_hash": "aa5e7f049bcc42b8a2183ba2e74699fb713f84a75fbd0944f4b8b8961e285286",
- "measured_at_utc": "2026-11-13T13:30:00Z",
- "measured_commit": "1b896c1f4",
+ "manifest_hash": "41ff0b2368ef7d85ea66ae2a30130acfadde1e616dbf525909589408ab5a2569",
+ "measured_at_utc": "2026-11-13T13:40:00Z",
+ "measured_commit": "662261f9f",
  "pin": {
   "corpora": [
    "C1",
@@ -12488,15 +12480,15 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "no layout for declared type 'bu'",
-   "dynamic_wall": "unsupported:no layout for declared type 'bu'",
+   "detail": "",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "921204-1.c",
    "sha256": "9563fd40b1fff297b9b28837bb5c1fb649271632a23a89abd6a7926de702a17a",
    "static_walls": [
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",

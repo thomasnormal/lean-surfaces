@@ -2,10 +2,10 @@
 
 Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manifest.
 
-- verdicts: 1020/2214 MATCH (passed 1020, failed 0, oracle 0)
-- manifest SHA-256: `aa5e7f049bcc42b8a2183ba2e74699fb713f84a75fbd0944f4b8b8961e285286`
-- measured commit: `1b896c1f4`
-- measured at: `2026-11-13T13:30:00Z`
+- verdicts: 1021/2214 MATCH (passed 1021, failed 0, oracle 0)
+- manifest SHA-256: `41ff0b2368ef7d85ea66ae2a30130acfadde1e616dbf525909589408ab5a2569`
+- measured commit: `662261f9f`
+- measured at: `2026-11-13T13:40:00Z`
 
 ## Verdict counts
 
@@ -13,10 +13,10 @@ Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manife
 | --- | ---: |
 | `not-parsed` | 294 |
 | `oracle-tests-compiler` | 1 |
-| `passed` | 1020 |
+| `passed` | 1021 |
 | `refused-libc` | 39 |
 | `refused-ub` | 105 |
-| `refused-unsupported` | 689 |
+| `refused-unsupported` | 688 |
 | `timeout` | 66 |
 
 ## Counts by corpus
@@ -30,10 +30,10 @@ Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manife
 | `c-testsuite/single-exec` | `timeout` | 2 |
 | `gcc.c-torture/execute` | `not-parsed` | 267 |
 | `gcc.c-torture/execute` | `oracle-tests-compiler` | 1 |
-| `gcc.c-torture/execute` | `passed` | 849 |
+| `gcc.c-torture/execute` | `passed` | 850 |
 | `gcc.c-torture/execute` | `refused-libc` | 35 |
 | `gcc.c-torture/execute` | `refused-ub` | 96 |
-| `gcc.c-torture/execute` | `refused-unsupported` | 606 |
+| `gcc.c-torture/execute` | `refused-unsupported` | 605 |
 | `gcc.c-torture/execute` | `timeout` | 64 |
 | `gcc.c23-run` | `not-parsed` | 27 |
 | `gcc.c23-run` | `passed` | 3 |
@@ -446,7 +446,6 @@ The run's first refusal, normalized by construct; `sole` counts rows whose first
 | `unsupported:no layout for declared type '__m128i'` | 1 | 1 | pr92618.c |
 | `unsupported:no layout for declared type 'big'` | 1 | 1 | va-arg-4.c |
 | `unsupported:no layout for declared type 'big_t'` | 1 | 1 | pr23135.c |
-| `unsupported:no layout for declared type 'bu'` | 1 | 1 | 921204-1.c |
 | `unsupported:no layout for declared type 'char *volatile'` | 1 | 1 | pr36321.c |
 | `unsupported:no layout for declared type 'char[argc]'` | 1 | 1 | 00207.c |
 | `unsupported:no layout for declared type 'client_t'` | 1 | 1 | 20071030-1.c |

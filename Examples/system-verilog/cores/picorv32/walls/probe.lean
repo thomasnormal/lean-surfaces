@@ -32,6 +32,16 @@ point; the remaining performance wall is in later empty-input cycles. -/
   | .ok d => match d.initialState with | .ok _ => true | _ => false
   | _ => false
 
+/-! Eight empty-input ordinary E cycles now complete at the pinned
+RISCV_FORMAL point. -/
+#guard match unpacked_cpuregs_wall.e 32 with
+  | .ok d => match d.initialState with
+    | .ok st => match runCoreMemRows d st [[], [], [], [], [], [], [], []] with
+      | .ok rows => rows.length == 8
+      | _ => false
+    | _ => false
+  | _ => false
+
 set_option maxRecDepth 100000 in
 load_design_sv2 net_z_memory_wall
   from "Examples/system-verilog/cores/picorv32/walls/net_z_memory.sv.json"

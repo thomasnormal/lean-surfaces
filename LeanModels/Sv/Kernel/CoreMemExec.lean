@@ -548,8 +548,11 @@ def CoreMemDesign.evalExpr (E : CoreMemDesign) (env : IEnv) (elems : List (Strin
       if E.memDecl? name |>.isSome then
         .unsupported s!"ArraySel:rank: memory '{name}' is not a one-rank element select"
       else E.evalScalar env elems st ctx e
-  | .arrayPart name _ _ _ _ =>
-      .unsupported s!"ArraySel:part: memory '{name}' part select is outside this E slice"
+  | e@(.arrayPart name _ _ _ _) =>
+      match E.memDecl? name with
+      | some _ =>
+          .unsupported s!"ArraySel:part: memory '{name}' part select is outside this E slice"
+      | none => E.evalScalar env elems st ctx e
   | e@(.unary op a) =>
       if LeanModels.Sv.PExpr.hasMemoryRead e then do
         evalMemUnary op (← E.evalExpr env elems st ctx a)

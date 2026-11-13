@@ -3851,6 +3851,20 @@ theorem finishCallM_pass_body_ok (K : Kont) (m : Module) (locals : REnv)
   rw [bind_apply, hraw]
   rfl
 
+theorem finishCallM_expr_constant_body_ok (K : Kont) (m : Module)
+    (locals : REnv) (w : World) (depth : Nat) :
+    toRun (finishCallM depth
+      (inWorld locals (execOpenList K m
+        [.exprStmt (.constant (.int 1) adequacySpan) adequacySpan]))) w =
+      .ok { w with callDepth := depth } .next := by
+  have hraw : (inWorld locals (execOpenList K m
+      [.exprStmt (.constant (.int 1) adequacySpan) adequacySpan])) w =
+      .ok (.ok RFlow.next, w) := by rfl
+  unfold finishCallM
+  apply toRun_tryCatch_ok
+  rw [bind_apply, hraw]
+  rfl
+
 #print axioms evalOpen
 #print axioms execOpen
 #print axioms kont
@@ -3876,5 +3890,6 @@ theorem finishCallM_pass_body_ok (K : Kont) (m : Module) (locals : REnv)
 #print axioms finishCallM_pure_ok
 #print axioms finishCallM_empty_body_ok
 #print axioms finishCallM_pass_body_ok
+#print axioms finishCallM_expr_constant_body_ok
 
 end LeanModels.Python.Monadic

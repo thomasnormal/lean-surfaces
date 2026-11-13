@@ -78,6 +78,8 @@ surface as well.
 actual empty `execOpenList` body and its `inWorld` projection.
 `Monadic.finishCallM_pass_body_ok` extends this composition to the first
 nonempty statement body, a one-statement `pass` sequence.
+`Monadic.finishCallM_expr_constant_body_ok` covers the first effectful body:
+an expression statement evaluating an integer constant before completion.
 
 ## Operator dispatch
 

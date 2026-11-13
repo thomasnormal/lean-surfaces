@@ -14290,3 +14290,21 @@ observables as the trunk shape.
 
 DECIDED: the call restoration composition now covers empty and first nonempty
 statement bodies; proceed to effectful statement sequencing.
+
+## 2026-11-13-pyfoundation-118 — first effectful expression body
+
+`Monadic.finishCallM_expr_constant_body_ok` composes an expression statement
+that evaluates an integer constant through the actual body walker, frame/world
+projection, try/catch, and call-depth restoration. It is the first effectful
+(non-`pass`) body case and preserves the same `.next` result and world state.
+
+| Measurement | Result |
+|---|---|
+| Target | `lake build LeanModels.Python.Monadic.Eval` passed; 11/11 jobs |
+| Theorem | `Monadic.finishCallM_expr_constant_body_ok` |
+| Domain | one integer-constant expression statement body |
+| Semantic change | theorem-only effectful control case |
+| Remaining debt | state-mutating statements and recursive positive-fuel calls |
+
+DECIDED: expression evaluation now composes through call restoration; stateful
+assignment and recursive body cases remain open.

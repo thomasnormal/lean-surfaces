@@ -1304,12 +1304,37 @@ def callFn : Nat → Program → LeanModels.C.FunctionDefn → List CVal → Exe
         let runInf : String → List CVal → ExecM CVal := fun nm vs =>
           match vs with
           | [] =>
-              if nm.endsWith "f" then
+              -- The unsuffixed spelling itself ends in the letter `f`
+              -- (`inf`), so suffix testing would misclassify
+              -- `__builtin_inf` as binary32.  The C builtin family has
+              -- exact names: `inf` is binary64, `inff` is binary32, and
+              -- `infl` is long double (§7.12.3).
+              if nm == "__builtin_inff" then
                 pure (.float32 (Float32.Model.ofBits (UInt32.ofNat 0x7f800000)))
-              else if nm.endsWith "l" then
+              else if nm == "__builtin_infl" then
                 refuseUnsupported s!"{nm}: long double is outside the profile"
               else
                 pure (.float64 (Float.Model.ofBits (UInt64.ofNat 0x7ff0000000000000)))
+          | _ => refuseUnsupported s!"{nm}: wrong argument count"
+        -- C23 §7.12.3 classification macros, represented by Clang as
+        -- builtin calls.  The predicates inspect the exact parser-backed
+        -- IEEE value; no host floating-point behavior is consulted.
+        let runFloatClass : String → List CVal → ExecM CVal := fun nm vs =>
+          match vs with
+          | [value] =>
+              let finite : Bool := match value with
+                | .float32 f => !f.isNaN && !f.isInf
+                | .float64 f => !f.isNaN && !f.isInf
+                | _ => false
+              let result := if nm == "__builtin_isnan" then
+                  match value with
+                  | .float32 f => f.isNaN
+                  | .float64 f => f.isNaN
+                  | _ => false
+                else finite
+              match value with
+              | .float32 _ | .float64 _ => pure (.int IntTy.int_ (if result then 1 else 0))
+              | _ => refuseUnsupported s!"{nm}: expected a binary floating argument"
           | _ => refuseUnsupported s!"{nm}: wrong argument count"
         let runAbs : List CVal → ExecM CVal := fun vs =>
           match vs with
@@ -1431,6 +1456,7 @@ def callFn : Nat → Program → LeanModels.C.FunctionDefn → List CVal → Exe
                 runBswap32 vs
               else if nm == "__builtin_bswap64" then
                 runBswap64 vs
+                    else if nm == "__builtin_isfinite" || nm == "__builtin_isnan" then runFloatClass nm vs
                     else if nm == "__builtin_inf" || nm == "__builtin_inff" || nm == "__builtin_infl" then
                       runInf nm vs
               else if nm == "__builtin_abs" || nm == "abs" then
@@ -1508,6 +1534,7 @@ def callFn : Nat → Program → LeanModels.C.FunctionDefn → List CVal → Exe
               else if nm == "__builtin_bswap16" then runBswap16 vs
               else if nm == "__builtin_bswap32" then runBswap32 vs
               else if nm == "__builtin_bswap64" then runBswap64 vs
+              else if nm == "__builtin_isfinite" || nm == "__builtin_isnan" then runFloatClass nm vs
               else if nm == "__builtin_inf" || nm == "__builtin_inff" || nm == "__builtin_infl" then runInf nm vs
               else if nm == "__builtin_abs" || nm == "abs" then runAbs vs
               else if nm == "__sync_add_and_fetch_8" then runSyncAdd8 vs

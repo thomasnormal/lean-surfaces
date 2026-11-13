@@ -14144,3 +14144,21 @@ raised exception, and successful value/state. The proof handles the mapped
 
 DECIDED: retain the lift equation beside the get/set/modify equations as the
 single reusable nested-frame boundary.
+
+## 2026-11-13-pyfoundation-110 — factor successful bind adequacy
+
+`Monadic.toRun_bind_ok` factors the common successful-bind projection: if an
+inner computation's `Run` result is `.ok s' a`, the `Run` result of its monadic
+bind is exactly the continuation's result at `s'` and `a`. This is the direct
+boundary equation needed by `tryCatch`, call unwinding, and script sequencing.
+
+| Measurement | Result |
+|---|---|
+| Target | `lake build LeanModels.Python.Monadic.Substrate` passed; 9/9 jobs |
+| Theorem | `Monadic.toRun_bind_ok` |
+| Domain | every successful `PyM` computation and continuation |
+| Semantic change | theorem-only substrate extension |
+| Remaining debt | apply the bind equation to `tryCatch` and positive-fuel body calls |
+
+DECIDED: use the successful-bind projection instead of unfolding the monad
+stack in each call-boundary proof.

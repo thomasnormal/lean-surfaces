@@ -60,6 +60,8 @@ The substrate now exposes kernel-checked `Monadic.toRun_set` and
 fuel calls and scripts share one state-wrapper boundary.
 `Monadic.toRun_liftState` extends that boundary across the `StateT`-to-`ExceptT`
 frame lift, preserving timeout, refusal, exception, and success projections.
+`Monadic.toRun_bind_ok` factors the successful bind projection used by
+`tryCatch` and call unwinding, so those proofs can stay at the `Run` boundary.
 
 ## Operator dispatch
 

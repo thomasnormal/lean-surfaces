@@ -289,6 +289,12 @@ theorem toRun_bind {σ α β : Type} (x : PyM σ α) (f : α → PyM σ β) (s :
   · rcases l with _ | ⟨c, m, sn⟩ <;> rfl
   · cases r <;> rfl
 
+theorem toRun_bind_ok {σ α β : Type} (x : PyM σ α) (f : α → PyM σ β)
+    (s s' : σ) (a : α) (h : toRun x s = .ok s' a) :
+    toRun (x >>= f) s = toRun (f a) s' := by
+  rw [toRun_bind, h]
+  rfl
+
 /-- **`Functor.map` IS NOT UNFOLDED HERE, and that is the proof shape rather
 than a preference.** Unfolding it drops below `bind_apply`'s reach and the goal
 stops being about this stack at all; going through `map_eq_pure_bind` keeps the
@@ -302,6 +308,7 @@ theorem toRun_map {σ α β : Type} (g : α → β) (x : PyM σ α) (s : σ) :
 #print axioms bind_apply
 #print axioms toRun_pure
 #print axioms toRun_bind
+#print axioms toRun_bind_ok
 #print axioms toRun_set
 #print axioms toRun_modify
 #print axioms toRun_liftState

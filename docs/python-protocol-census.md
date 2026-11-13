@@ -398,3 +398,6 @@ ten-update bridge through a bare return.
 
 `Monadic.finishCallM_assign_ten_existing_locals_break_body_ok` extends the
 ten-update bridge through an abrupt `break` flow.
+
+`Monadic.finishCallM_assign_ten_existing_locals_continue_body_ok` extends the
+ten-update bridge through an abrupt `continue` flow.

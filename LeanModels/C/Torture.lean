@@ -757,6 +757,11 @@ def singleMain (path : String) (fuel : Nat) : IO UInt32 := do
           IO.print (stdoutString mem.stdout); IO.println "ok\t0"; return 0
       | .ok (.ok value, mem) =>
           IO.print (stdoutString mem.stdout); IO.println s!"ok\t{repr value}"; return 0
+      | .ok (.error (.libc "exit"), _) =>
+          if exitIsAlwaysZero envl then
+            IO.println "ok\t0"; return 0
+          else
+            IO.eprintln "refused\tLeanModels.C.C23.Refusal.libc \"exit\""; return 3
       | .ok (.error reason, _) => IO.eprintln s!"refused\t{repr reason}"; return 3
       | .error .timeout => IO.eprintln "timeout"; return 4
       | .error (.unsupported _ reason _) => IO.eprintln s!"unsupported\t{reason}"; return 3

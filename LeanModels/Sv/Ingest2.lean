@@ -1501,8 +1501,9 @@ elab "load_design_sv2 " name:ident " from " path:str : command => do
     -- `name.e` is the ordinary user-facing route for unpacked storage.
     let eBody :=
       if flatTop then
-        Lean.mkApp2 (Lean.mkConst ``LeanModels.Sv.Kernel.PDesign.instantiateE2)
+        Lean.mkApp3 (Lean.mkConst ``LeanModels.Sv.Kernel.PDesign.instantiateE2)
           (Lean.mkConst pdName) argsList
+          (Lean.mkApp (Lean.mkConst ``LeanModels.Sv.PDesign.surfaceFuel) argsList)
       else
         Lean.mkApp3 (Lean.mkConst ``LeanModels.Sv.Kernel.PDesign.instantiateE2H)
           (Lean.mkConst pdName) (Lean.mkConst libName) argsList

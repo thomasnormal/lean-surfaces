@@ -338,8 +338,8 @@ reconstructed from that spelling. -/
 def observedRecordFacts (envl : Envelope) :
     List (CType × List (String × CType) × RecordLayout) :=
   let ds := allDecls envl
-  let nestedFacts := fun fields : List Decl =>
-    fields.filterMap fun child => match child with
+  let rec nestedFacts (fields : List Decl) : List (CType × List (String × CType) × RecordLayout) :=
+    fields.flatMap fun child => match child with
       | .record _ none nested (some layout) childSpan =>
           match fields.find? (fun f => match f with
             | .field _ ty _ fspan =>
@@ -352,10 +352,10 @@ def observedRecordFacts (envl : Envelope) :
                   let members := nested.filterMap fun field => match field with
                     | .field name mty _ _ => some (name.getD "", mty)
                     | _ => none
-                  some (ty, members, checked)
-              | none => none
-          | _ => none
-      | _ => none
+                  [(ty, members, checked)] ++ nestedFacts nested
+              | none => []
+          | _ => []
+      | _ => []
   let facts := ds.filterMap fun d => match d with
     | .record (some _) (some nm) fields (some layout) _ =>
         match checkedRecordLayout? fields layout with

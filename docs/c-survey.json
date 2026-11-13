@@ -10,10 +10,10 @@
   "gcc.c-torture/execute": {
    "not-parsed": 267,
    "oracle-tests-compiler": 1,
-   "passed": 851,
+   "passed": 852,
    "refused-libc": 35,
    "refused-ub": 96,
-   "refused-unsupported": 604,
+   "refused-unsupported": 603,
    "timeout": 64
   },
   "gcc.c23-run": {
@@ -28,10 +28,10 @@
  "counts": {
   "not-parsed": 294,
   "oracle-tests-compiler": 1,
-  "passed": 1022,
+  "passed": 1023,
   "refused-libc": 39,
   "refused-ub": 105,
-  "refused-unsupported": 687,
+  "refused-unsupported": 686,
   "timeout": 66
  },
  "dynamic_wall_ranking": [
@@ -1532,15 +1532,6 @@
    "present": 2,
    "sole": 2,
    "wall": "unsupported:unbound declaration 'id39' (name 'X')"
-  },
-  {
-   "files": [
-    "930126-1.c",
-    "pr65215-3.c"
-   ],
-   "present": 2,
-   "sole": 2,
-   "wall": "unsupported:unsupported bit-field width 32 for 'unsigned long long'"
   },
   {
    "files": [
@@ -3466,6 +3457,14 @@
   },
   {
    "files": [
+    "pr65215-3.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "unsupported:unsupported bit-field width 32 for 'unsigned long long'"
+  },
+  {
+   "files": [
     "bitfld-3.c"
    ],
    "present": 1,
@@ -3537,9 +3536,9 @@
    "wall": "unsupported:va_arg requested unsupported value type 'struct s'"
   }
  ],
- "manifest_hash": "0ea5aea1ed7fb681927d1e9f006b54bb47c242c8bba3630db1ddc00aeac61bc3",
- "measured_at_utc": "2026-11-13T14:00:00Z",
- "measured_commit": "827ba0e55",
+ "manifest_hash": "7a8e529d81097a590a1a798e45316abbfd0ea6c10b3935aff4f3c6f88a0fd7fd",
+ "measured_at_utc": "2026-11-13T14:10:00Z",
+ "measured_commit": "3c3e40f0f",
  "pin": {
   "corpora": [
    "C1",
@@ -12587,15 +12586,15 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "unsupported bit-field width 32 for 'unsigned long long'",
-   "dynamic_wall": "unsupported:unsupported bit-field width 32 for 'unsigned long long'",
+   "detail": "",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "930126-1.c",
    "sha256": "d8975e0960e19c2273a8a5239f1ce73e76842711a1e6d2113da9f8c13fc786fc",
    "static_walls": [
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",

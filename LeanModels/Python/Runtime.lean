@@ -541,6 +541,9 @@ raises. -/
   | .timeout => .timeout
   | .unsupported msg => .unsupported msg
 
+theorem finishCallAt_ok (depth : Nat) (w : World) (v : α) :
+    finishCallAt depth (.ok w v) = .ok { w with callDepth := depth } v := rfl
+
 @[inline] def finishTopCall : Run World α → Run World α :=
   finishCallAt pythonTopCallDepth
 

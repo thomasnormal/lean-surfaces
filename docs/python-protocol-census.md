@@ -67,6 +67,8 @@ protected action, preserving its returned state and value through the handler
 layer.
 `Monadic.twinAgrees_execOpenList_nil` and its world projection close the empty
 statement-body base case consumed by ordinary call entry.
+`Run.finishCallAt_ok` pins the successful trunk-side call-depth restoration
+that the monadic `finishCallM` must match.
 
 ## Operator dispatch
 

@@ -14200,3 +14200,21 @@ call entry before `tryCatch` and call-depth restoration are composed.
 
 DECIDED: retain the empty-body frame/world equations as the call induction base;
 nonempty body and recursive-call cases remain open.
+
+## 2026-11-13-pyfoundation-113 — pin successful call-depth restoration
+
+`Run.finishCallAt_ok` states the successful trunk-side restoration explicitly:
+`finishCallAt depth (.ok w v)` is `.ok` with the same heap, globals, stdout,
+and clock and `callDepth := depth`. This is the final observer equation the
+monadic `finishCallM` body must refine for successful ordinary calls.
+
+| Measurement | Result |
+|---|---|
+| Target | `lake build LeanModels.Python.Runtime` passed; 5/5 jobs |
+| Theorem | `Run.finishCallAt_ok` |
+| Domain | every world, result value, and restoration depth |
+| Semantic change | theorem-only runtime boundary fact |
+| Remaining debt | prove monadic `finishCallM` success against this observer |
+
+DECIDED: keep call-depth restoration as an explicit observer theorem before
+attempting the full positive-fuel call induction.

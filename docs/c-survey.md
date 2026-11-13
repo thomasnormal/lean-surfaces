@@ -2,10 +2,10 @@
 
 Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manifest.
 
-- verdicts: 1034/2214 MATCH (passed 1034, failed 0, oracle 0)
+- verdicts: 1036/2214 MATCH (passed 1036, failed 0, oracle 0)
 - manifest SHA-256: `bca94718b04e8394cdce992866637166f530978790bd1013cea4a00ae25ef764`
-- measured commit: `b93335555`
-- measured at: `2026-11-13T15:35:17Z`
+- measured commit: `9b52acf5f`
+- measured at: `2026-11-13T15:43:23Z`
 
 ## Verdict counts
 
@@ -13,10 +13,10 @@ Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manife
 | --- | ---: |
 | `not-parsed` | 294 |
 | `oracle-tests-compiler` | 1 |
-| `passed` | 1034 |
+| `passed` | 1036 |
 | `refused-libc` | 39 |
 | `refused-ub` | 105 |
-| `refused-unsupported` | 675 |
+| `refused-unsupported` | 673 |
 | `timeout` | 66 |
 
 ## Counts by corpus
@@ -30,10 +30,10 @@ Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manife
 | `c-testsuite/single-exec` | `timeout` | 2 |
 | `gcc.c-torture/execute` | `not-parsed` | 267 |
 | `gcc.c-torture/execute` | `oracle-tests-compiler` | 1 |
-| `gcc.c-torture/execute` | `passed` | 859 |
+| `gcc.c-torture/execute` | `passed` | 861 |
 | `gcc.c-torture/execute` | `refused-libc` | 35 |
 | `gcc.c-torture/execute` | `refused-ub` | 96 |
-| `gcc.c-torture/execute` | `refused-unsupported` | 596 |
+| `gcc.c-torture/execute` | `refused-unsupported` | 594 |
 | `gcc.c-torture/execute` | `timeout` | 64 |
 | `gcc.c23-run` | `not-parsed` | 27 |
 | `gcc.c23-run` | `passed` | 3 |
@@ -463,7 +463,6 @@ The run's first refusal, normalized by construct; `sole` counts rows whose first
 | `unsupported:no layout for declared type 'int (*)(int, int)'` | 1 | 1 | 991112-1.c |
 | `unsupported:no layout for declared type 'int (*)[++i]'` | 1 | 1 | gcc/testsuite/gcc.dg/c23-auto-2.c |
 | `unsupported:no layout for declared type 'int[len][len]'` | 1 | 1 | 20221006-1.c |
-| `unsupported:no layout for declared type 'neon_s8'` | 1 | 1 | pr42833.c |
 | `unsupported:no layout for declared type 's'` | 1 | 1 | 00046.c |
 | `unsupported:no layout for declared type 'struc'` | 1 | 1 | 20001101.c |
 | `unsupported:no layout for declared type 'struct A'` | 1 | 1 | 20040709-2.c |
@@ -479,7 +478,6 @@ The run's first refusal, normalized by construct; `sole` counts rows whose first
 | `unsupported:no layout for declared type 'struct x'` | 1 | 1 | 20020227-1.c |
 | `unsupported:no layout for declared type 'struct_list'` | 1 | 1 | 921113-1.c |
 | `unsupported:no layout for declared type 't'` | 1 | 1 | 920810-1.c |
-| `unsupported:no layout for declared type 't_be'` | 1 | 1 | 960416-1.c |
 | `unsupported:no layout for declared type 'three_byte_t'` | 1 | 1 | struct-ret-2.c |
 | `unsupported:no layout for declared type 'three_char_t'` | 1 | 1 | strct-pack-4.c |
 | `unsupported:no layout for declared type 'uint32_t[16]'` | 1 | 1 | pr65369.c |

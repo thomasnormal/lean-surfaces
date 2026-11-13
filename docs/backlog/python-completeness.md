@@ -14398,3 +14398,20 @@ requested call depth is restored, and the same `PyErr` is exposed through the
 
 DECIDED: both successful and exceptional top-level mutation restorations are
 kernel-checked; recursive call and nonempty body adequacy remain open.
+
+## 2026-11-13-pyfoundation-125 — return-flow body bridge
+
+`Monadic.finishCallM_ret_constant_body_ok` composes a concrete `return 1`
+statement through expression evaluation, the `RFlow.ret` channel, and
+top-level call-depth restoration.
+
+| Measurement | Result |
+|---|---|
+| Target | `lake build LeanModels.Python.Monadic.Eval` passed; 11/11 jobs |
+| Theorem | `Monadic.finishCallM_ret_constant_body_ok` |
+| Domain | one integer return statement, arbitrary frame locals/world/depth |
+| Semantic change | theorem-only return-flow composition |
+| Remaining debt | recursive positive-fuel calls and general nonempty body adequacy |
+
+DECIDED: return flow is now checked through the stateful call boundary for a
+concrete nonempty body; recursive and general body adequacy remain open.

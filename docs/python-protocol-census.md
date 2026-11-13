@@ -156,3 +156,7 @@ and clamping conversions; the float conversion worker is shared, but platform
 rendering beyond `reprFuel` still outside the decided domain. The runner and
 trunk control/transport wrappers remain separate and do not yet have a full
 recursive expression, statement, or script adequacy theorem.
+
+The nonempty control-flow bridge `Monadic.finishCallM_ret_constant_body_ok`
+also covers a one-statement `return 1` body, preserving `RFlow.ret` through
+the same world and depth restoration boundary.

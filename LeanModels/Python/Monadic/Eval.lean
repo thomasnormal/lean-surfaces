@@ -3865,6 +3865,20 @@ theorem finishCallM_expr_constant_body_ok (K : Kont) (m : Module)
   rw [bind_apply, hraw]
   rfl
 
+theorem finishCallM_ret_constant_body_ok (K : Kont) (m : Module)
+    (locals : REnv) (w : World) (depth : Nat) :
+    toRun (finishCallM depth
+      (inWorld locals (execOpenList K m
+        [.ret (some (.constant (.int 1) adequacySpan)) adequacySpan]))) w =
+      .ok { w with callDepth := depth } (.ret (.int 1)) := by
+  have hraw : (inWorld locals (execOpenList K m
+      [.ret (some (.constant (.int 1) adequacySpan)) adequacySpan])) w =
+      .ok (.ok (.ret (.int 1)), w) := by rfl
+  unfold finishCallM
+  apply toRun_tryCatch_ok
+  rw [bind_apply, hraw]
+  rfl
+
 theorem finishCallM_assign_constant_body_ok (K : Kont) (m : Module)
     (w : World) (depth : Nat) :
     toRun (finishCallM depth
@@ -3957,6 +3971,7 @@ theorem leaveCallM_modify_exn {α : Type} (w : World) (e : PyErr)
 #print axioms finishCallM_empty_body_ok
 #print axioms finishCallM_pass_body_ok
 #print axioms finishCallM_expr_constant_body_ok
+#print axioms finishCallM_ret_constant_body_ok
 #print axioms finishCallM_assign_constant_body_ok
 #print axioms finishCallM_modify_ok
 #print axioms finishCallM_modify_exn

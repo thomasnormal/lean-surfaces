@@ -5,9 +5,10 @@ import LeanModels.Sv.Comb2
 /-!
 # Localparams defined by shifts, read by `sv_structure` (and, read as a value, by `sv_equations`)
 
-At a symbolic parameter the instantiation computes a shift of an `int` localparam by deciding the sign of the amount
-(`evalInt` refuses a negative one) and multiplies by a power of two; `sv_structure` decides the sign by `omega` from the
-premises, and places the value in the 32-bit range with the bounds of the power (`2 ^ (K - 1) ≤ 2 ^ 31` from `K ≤ 32`).
+At a symbolic parameter the instantiation computes a shift of an `int` localparam by deciding the sign of the amount (a
+negative one shifts every bit out, 0: IEEE 1800-2023 §11.4.10, `evalIntExactRec`) and multiplies by a power of two, or,
+for `>>`, divides the 32-bit pattern of the operand by one; `sv_structure` decides the sign by `omega` from the premises,
+and places the value in the 32-bit range with the bounds of the power (`2 ^ (K - 1) ≤ 2 ^ 31` from `K ≤ 32`).
 A premise that the value is an `int` is part of every statement: `S = N << 1` is `2 * N` only while `2 * N < 2^31`.
 -/
 
@@ -33,8 +34,8 @@ theorem lp_shifts_comb (N K : Nat) (hN : 1 ≤ N) (hR : (N : Int) < 536870912) (
 
 /-- **The clean-room repro**: `BIAS = (1 << (E - 1)) - 1` read as a value in `y = x + BIAS` (its conversion marker, a
 signed `int` in the unsigned context of `x`, IEEE 1800-2023 §11.8.2): a combinational design for every `1 ≤ E ≤ 32` (at
-`E = 0` the instantiation refuses the negative amount; from `E = 33` on, `1 << (E - 1)` shifts every bit out, and the
-summary's value `2^(E-1) - 1` is not an `int`). -/
+`E = 0` the negative amount and from `E = 33` on the amount 32 or more shift every bit out, where `BIAS` is -1 and the
+summary's value `2^(E-1) - 1`, unbounded, is not an `int`). -/
 theorem localparam_shift_comb (E : Nat) (hE : 1 ≤ E) (hE' : E ≤ 32) : CombDesign (localparam_shift.sem E) := by
   sv_structure
   all_goals (intros; omega)

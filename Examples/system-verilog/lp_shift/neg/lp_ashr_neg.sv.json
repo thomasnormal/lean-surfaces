@@ -1,0 +1,368 @@
+{
+  "schema_version": "sv-0.2",
+  "language": "systemverilog",
+  "frontend": {
+    "name": "pyslang",
+    "family": "pyslang-11"
+  },
+  "mode": "symbolic",
+  "top": "lp_ashr_neg",
+  "source_files": [
+    {
+      "path": "Examples/system-verilog/lp_shift/neg/lp_ashr_neg.sv",
+      "sha256": "07077498d5bccdbcdf5b68b34614c5b3c61e2d5c1ad18627b1da150a3ae44bab"
+    }
+  ],
+  "packages": [],
+  "design": {
+    "kind": "Design",
+    "modules": [
+      {
+        "kind": "Module",
+        "span": {
+          "line": 6,
+          "col": 1,
+          "end_line": 9,
+          "end_col": 10
+        },
+        "name": "lp_ashr_neg",
+        "imports": [],
+        "params": [
+          {
+            "kind": "ParameterDecl",
+            "span": {
+              "line": 6,
+              "col": 36,
+              "end_line": 6,
+              "end_col": 42
+            },
+            "name": "N",
+            "type": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 6,
+                      "col": 36,
+                      "end_line": 6,
+                      "end_col": 42
+                    },
+                    "value": 31,
+                    "resolved_width": 32
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 6,
+                      "col": 36,
+                      "end_line": 6,
+                      "end_col": 42
+                    },
+                    "value": 0,
+                    "resolved_width": 32
+                  }
+                }
+              ],
+              "resolved": 32
+            },
+            "default": {
+              "kind": "Int",
+              "span": {
+                "line": 6,
+                "col": 40,
+                "end_line": 6,
+                "end_col": 42
+              },
+              "value": 32,
+              "resolved_width": 32
+            },
+            "resolved": 32
+          },
+          {
+            "kind": "LocalParam",
+            "span": {
+              "line": 7,
+              "col": 22,
+              "end_line": 7,
+              "end_col": 46
+            },
+            "name": "S",
+            "type": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 7,
+                      "col": 22,
+                      "end_line": 7,
+                      "end_col": 46
+                    },
+                    "value": 31,
+                    "resolved_width": 32
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 7,
+                      "col": 22,
+                      "end_line": 7,
+                      "end_col": 46
+                    },
+                    "value": 0,
+                    "resolved_width": 32
+                  }
+                }
+              ],
+              "resolved": 32
+            },
+            "expr": {
+              "kind": "Binary",
+              "span": {
+                "line": 7,
+                "col": 26,
+                "end_line": 7,
+                "end_col": 46
+              },
+              "width": 32,
+              "op": ">>>",
+              "left": {
+                "kind": "Binary",
+                "span": {
+                  "line": 7,
+                  "col": 27,
+                  "end_line": 7,
+                  "end_col": 33
+                },
+                "width": 32,
+                "op": "-",
+                "left": {
+                  "kind": "ParamRef",
+                  "span": {
+                    "line": 7,
+                    "col": 27,
+                    "end_line": 7,
+                    "end_col": 28
+                  },
+                  "name": "N"
+                },
+                "right": {
+                  "kind": "Int",
+                  "span": {
+                    "line": 7,
+                    "col": 31,
+                    "end_line": 7,
+                    "end_col": 33
+                  },
+                  "value": 16,
+                  "resolved_width": 32
+                }
+              },
+              "right": {
+                "kind": "Binary",
+                "span": {
+                  "line": 7,
+                  "col": 40,
+                  "end_line": 7,
+                  "end_col": 45
+                },
+                "width": 32,
+                "op": "-",
+                "left": {
+                  "kind": "ParamRef",
+                  "span": {
+                    "line": 7,
+                    "col": 40,
+                    "end_line": 7,
+                    "end_col": 41
+                  },
+                  "name": "N"
+                },
+                "right": {
+                  "kind": "Int",
+                  "span": {
+                    "line": 7,
+                    "col": 44,
+                    "end_line": 7,
+                    "end_col": 45
+                  },
+                  "value": 9,
+                  "resolved_width": 32
+                }
+              }
+            },
+            "resolved": 0
+          }
+        ],
+        "types": [],
+        "ports": [
+          {
+            "kind": "Port",
+            "span": {
+              "line": 6,
+              "col": 65,
+              "end_line": 6,
+              "end_col": 66
+            },
+            "name": "a",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Binary",
+                    "span": {
+                      "line": 6,
+                      "col": 58,
+                      "end_line": 6,
+                      "end_col": 61
+                    },
+                    "width": null,
+                    "op": "-",
+                    "left": {
+                      "kind": "ParamRef",
+                      "span": {
+                        "line": 6,
+                        "col": 58,
+                        "end_line": 6,
+                        "end_col": 59
+                      },
+                      "name": "N"
+                    },
+                    "right": {
+                      "kind": "Int",
+                      "span": {
+                        "line": 6,
+                        "col": 60,
+                        "end_line": 6,
+                        "end_col": 61
+                      },
+                      "value": 1,
+                      "resolved_width": null
+                    }
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 6,
+                      "col": 62,
+                      "end_line": 6,
+                      "end_col": 63
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 32
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 6,
+              "col": 89,
+              "end_line": 6,
+              "end_col": 90
+            },
+            "name": "y",
+            "dir": "out",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Binary",
+                    "span": {
+                      "line": 6,
+                      "col": 82,
+                      "end_line": 6,
+                      "end_col": 85
+                    },
+                    "width": null,
+                    "op": "-",
+                    "left": {
+                      "kind": "ParamRef",
+                      "span": {
+                        "line": 6,
+                        "col": 82,
+                        "end_line": 6,
+                        "end_col": 83
+                      },
+                      "name": "N"
+                    },
+                    "right": {
+                      "kind": "Int",
+                      "span": {
+                        "line": 6,
+                        "col": 84,
+                        "end_line": 6,
+                        "end_col": 85
+                      },
+                      "value": 1,
+                      "resolved_width": null
+                    }
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 6,
+                      "col": 86,
+                      "end_line": 6,
+                      "end_col": 87
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 32
+            }
+          }
+        ],
+        "decls": [],
+        "processes": [
+          {
+            "kind": "Assign",
+            "span": {
+              "line": 8,
+              "col": 10,
+              "end_line": 8,
+              "end_col": 15
+            },
+            "target": {
+              "kind": "Ident",
+              "span": {
+                "line": 8,
+                "col": 10,
+                "end_line": 8,
+                "end_col": 11
+              },
+              "width": 32,
+              "name": "y"
+            },
+            "value": {
+              "kind": "Ident",
+              "span": {
+                "line": 8,
+                "col": 14,
+                "end_line": 8,
+                "end_col": 15
+              },
+              "width": 32,
+              "name": "a"
+            }
+          }
+        ],
+        "generates": [],
+        "others": []
+      }
+    ],
+    "others": []
+  },
+  "lean_blocks": []
+}

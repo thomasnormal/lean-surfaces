@@ -2179,7 +2179,8 @@ is an unbounded value of the same tree whose low 32 bits are the IEEE result's: 
 operands for that (the low bits of a sum, difference, product or left shift depend only on the low bits of the operands,
 §11.4.3), `>>` reads its operand's 32-bit pattern and `>>>` its 32-bit value, while `/`, `%` and `$clog2` read their
 operand's unbounded value (`Int.tdiv`/`Int.tmod`). So `hag` holds exactly where the definition's value is in [-2^31, 2^31)
-(the instantiation's value is its 32-bit wrap) and every operand of `/`, `%` and `$clog2` is too: `(1 << (E - 1)) - 1` is
+(the instantiation's value is its 32-bit wrap) and every operand of `/`, `%` and `$clog2` is too (and no `>>>` shifts a
+negative `int` by a negative amount: `CE.eval`, below): `(1 << (E - 1)) - 1` is
 read at `E = 32`, where `1 << 31` wraps to `-2^31` and the difference back to `2^31 - 1`; `(N * 1000000) / 1000000` is not
 read where the product leaves the range. At concrete arguments `rfl` decides it; at a symbolic one the tactics bring the
 instantiation's value to one wrap around the summary's tree and remove the wraps from the hypotheses in context
@@ -2204,7 +2205,7 @@ inductive CE where
   /-- `a >> b`: the logical shift of the 32-bit pattern of `a` (§11.4.10: the vacated bits are zeros). -/
   | shr (a b : CE)
   /-- `a >>> b` of an `int` (signed): the arithmetic shift of the 32-bit value of `a` (§11.4.10: the vacated bits take
-  the sign bit). -/
+  the sign bit; an amount of 32 or more, a negative one included, leaves the sign bit in every position). -/
   | ashr (a b : CE)
 deriving Repr, BEq, DecidableEq, Inhabited
 
@@ -2221,12 +2222,15 @@ more shifts every bit out). `<<` is `a * 2^amount`: its low 32 bits, the result,
 its two's-complement reading) with its sign, a division by `2^amount` rounded down. So the value's 32-bit
 reading is the IEEE result for EVERY value of the operands' readings, and the agreement `hag` (the value equals the
 instantiation's 32-bit `int` value, which is in the 32-bit range) holds only where the summary's value IS that
-result. The instantiation computes `<<` by `a * 2^b`, `>>` by `Int.tdiv` and `>>>` by `Int.fdiv`, each wrapped to 32
-bits, all of them refusing a negative `b` (`evalIntExact`; the unbounded `evalInt` of an untyped localparam also refuses
-`>>` of a negative `a`); where its operands are in the 32-bit range and the left operand of `>>` is not negative these
-are the same numbers, which is what the tactics show at a symbolic parameter. At a negative left operand of `>>` the
-32-bit instantiation's `Int.tdiv` is not the logical shift of §11.4.10 (`-8 >> 1` is 2147483644, the instantiation
-gives -4): the two differ and the tactics refuse there, naming it (`CE.wrapDiag`). -/
+result. The instantiation (`evalIntExactRec`, since master 853147a63) computes `<<` by `a * 2^b`, `>>` by `Int.tdiv` of
+the 32-bit pattern of `a` (`a + 2^32` for a negative `a`) and `>>>` by `Int.fdiv`, each wrapped to 32 bits, and a negative
+amount `b` gives 0 for all three (the unbounded `evalInt` of an untyped localparam still refuses a negative amount and
+`>>` of a negative `a`). Those are the IEEE results, so the two readings are the same numbers wherever the summary's
+value is in the 32-bit range (`-8 >> 1` is 2147483644 in both), which is what the tactics show at a symbolic parameter
+(`shr_pattern_of_bounds`: the instantiation's pattern `if a < 0 then a + 2^32 else a` is the summary's `a % 2^32`), with
+ONE exception: a `>>>` of a negative `int` by a negative amount is -1 under §11.4.10 (every bit shifted out, the sign
+bit filled in) and 0 in the instantiation (the semantics owners have the finding). The two differ there and the tactics
+refuse, naming it (`CE.wrapDiag`). -/
 def CE.eval (σ : String → Int) : CE → Int
   | .lit v => v
   | .ref n => σ n

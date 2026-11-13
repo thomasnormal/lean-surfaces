@@ -55,23 +55,45 @@ def CE.operandDiag (σ : String → Int) (c a : CE) : Option String :=
   if inInt32 v then none
   else some s!"the operand `{a.show}` of `{c.show}` is {v} at these parameters, outside the signed 32-bit range [-2147483648, 2147483647]: the instantiation wraps it to {canonInt 32 true v} first (IEEE 1800-2023 §11.4, §11.6.1, §11.8.1: every operand and result of an `int` expression is 32 bits wide) and the summary reads the unbounded value, so a definition that divides, takes a remainder of or the `$clog2` of a value outside the range is outside the fragment"
 
-/-- (Refusal text only.) The operations of a definition whose operand the summary reads unbounded and the instantiation
-at its 32-bit value, innermost first (`CE.wrapDiag`): an operand of `/`, `%` or `$clog2` outside the 32-bit range, or a `>>`
-of a value whose 32-bit reading is negative. `+ - *` and the shifts `<<`, `>>>` read their operands as 32-bit patterns or
-values already (`CE.eval`), so only their RESULT's range matters, at the root. -/
+/-- (Refusal text only.) The operations of a definition where the summary and the instantiation read an operand or a
+result differently, innermost first (`CE.wrapDiag`): an operand of `/`, `%` or `$clog2` outside the 32-bit range (the
+summary reads it unbounded, the instantiation at its 32-bit value), and a `>>>` of a negative `int` by a negative amount
+(below). `+ - *` and the shifts read their operands as 32-bit patterns or values already (`CE.eval`), and the
+instantiation's `<<` and `>>` agree with IEEE 1800-2023 §11.4.10 on every amount (a negative one, an unsigned amount of
+2^31 or more, shifts every bit out: 0), so for them only the RESULT's range matters, at the root.
+
+The `>>>` case: §11.4.10 reads the amount as an unsigned number, so a negative 32-bit amount shifts every bit out and the
+arithmetic shift of a negative `int` fills the result with its sign bit, -1 (`CE.eval`; local Icarus Verilog 12.0 and
+Verilator 5.042 print -1 for `-8 >>> -1`, provisional rows), while the instantiation gives 0 for every negative amount
+(`evalIntExactRec`'s `.ashr`; the semantics owners have the finding). Only the operands' 32-bit values are evaluated here,
+not the shift itself. -/
 def CE.opDiag (σ : String → Int) : CE → Option String
   | .lit _ | .ref _ => none
-  | .add a b | .sub a b | .mul a b | .shl a b | .ashr a b => a.opDiag σ <|> b.opDiag σ
+  | .add a b | .sub a b | .mul a b | .shl a b | .shr a b => a.opDiag σ <|> b.opDiag σ
   | .divK a k => a.opDiag σ <|> CE.operandDiag σ (.divK a k) a
   | .modK a k => a.opDiag σ <|> CE.operandDiag σ (.modK a k) a
   | .clog2 a => a.opDiag σ <|> CE.operandDiag σ (.clog2 a) a
   | .clog2S a => a.opDiag σ <|> CE.operandDiag σ (.clog2S a) a
-  | .shr a b =>
+  | .ashr a b =>
       a.opDiag σ <|> b.opDiag σ <|>
-        (let v := canonInt 32 true (a.eval σ)
-         if v < 0 then
-           some s!"`{(CE.shr a b).show}` shifts the negative `int` {v} right: IEEE 1800-2023 §11.4.10 fills the vacated bits of its 32-bit pattern with zeros (the value {(CE.shr a b).eval σ}), and the instantiation divides it by a power of two toward zero (`Int.tdiv` in `evalIntExact`; the semantics owners have the finding); a `>>` of a negative `int` is outside the fragment"
+        (let va := canonInt 32 true (a.eval σ)
+         let vb := canonInt 32 true (b.eval σ)
+         if va < 0 ∧ vb < 0 then
+           some s!"`{(CE.ashr a b).show}` shifts the negative `int` {va} right by the negative amount {vb}: IEEE 1800-2023 §11.4.10 reads the amount as the unsigned {vb % 4294967296}, which shifts every bit out and fills the result with the sign bit (the value -1), and the instantiation gives 0 for every negative amount (`evalIntExactRec`; the semantics owners have the finding); an arithmetic shift of a negative `int` by a negative amount is outside the fragment"
          else none)
+
+/-- A `>>>` occurs in the definition. -/
+def CE.hasAshr : CE → Bool
+  | .ashr _ _ => true
+  | .add a b | .sub a b | .mul a b | .shl a b | .shr a b => a.hasAshr || b.hasAshr
+  | .divK a _ | .modK a _ | .clog2 a | .clog2S a => a.hasAshr
+  | _ => false
+
+/-- (Refusal text only.) What a statement at a symbolic parameter needs for a definition with a `>>>` (`CE.opDiag`'s
+case, which a symbolic point cannot evaluate). -/
+def CE.ashrHint (c : CE) : String :=
+  if c.hasAshr then " (the definition has a `>>>`: of a negative `int` by a negative amount it is -1 under IEEE 1800-2023 §11.4.10, every bit shifted out and the sign bit filled in, and 0 in the instantiation, `evalIntExactRec`; a statement needs premises that keep its amount or its operand non-negative; the semantics owners have the finding)"
+  else ""
 
 /-- (Refusal text only; no theorem reads it.) **Where a localparam's definition leaves its reading** at the valuation
 `σ`: an operation whose operand the two readings take differently (`CE.opDiag`), else the definition's value itself outside
@@ -83,12 +105,21 @@ def CE.wrapDiag (σ : String → Int) (c : CE) : Option String :=
      else some s!"the value of the definition `{c.show}` is {v} at these parameters, outside the signed 32-bit range [-2147483648, 2147483647]: the instantiation's value is its 32-bit wrap {canonInt 32 true v} (IEEE 1800-2023 §11.4, §11.6.1, §11.8.1: every result of an `int` expression is 32 bits wide), and the summary reads the unbounded value, so a localparam whose value leaves the range is outside the fragment")
 
 /-! Where the readings part (`(N * 1000000) / 1000000` at `N = 10000`: the product is 10000000000, which the
-instantiation wraps to 1410065408 before it divides, so the quotient is 1410; `(N - 16) >> 1` at `N = 8`; and
-`(1 << 31) - 1`, which does NOT part: `1 << 31` wraps to `-2^31` and the difference back to `2^31 - 1`): -/
+instantiation wraps to 1410065408 before it divides, so the quotient is 1410; and `(1 << 31) - 1`, which does NOT part:
+`1 << 31` wraps to `-2^31` and the difference back to `2^31 - 1`). `(N - 16) >> 1` does not part either: at `N = 8` both
+read the pattern of -8 shifted with a zero, 2147483644 (the instantiation's reading since master 853147a63); `(N - 16) >> 0`
+there is the pattern itself, 4294967288 in the summary and -8 in the instantiation, a value out of range: -/
 #guard (CE.wrapDiag (fun _ => 10000) (.divK (.mul (.ref "N") (.lit 1000000)) 1000000)).isSome
 #guard (CE.wrapDiag (fun _ => 1000) (.divK (.mul (.ref "N") (.lit 1000000)) 1000000)).isNone
-#guard (CE.wrapDiag (fun _ => 8) (.shr (.sub (.ref "N") (.lit 16)) (.lit 1))).isSome
+#guard (CE.wrapDiag (fun _ => 8) (.shr (.sub (.ref "N") (.lit 16)) (.lit 1))).isNone
 #guard (CE.wrapDiag (fun _ => 20) (.shr (.sub (.ref "N") (.lit 16)) (.lit 1))).isNone
+#guard (CE.wrapDiag (fun _ => 8) (.shr (.sub (.ref "N") (.lit 16)) (.lit 0))).isSome
+/-! `(N - 16) >>> (N - 9)` at `N = 8`, -8 by -1: IEEE -1, the instantiation 0 (`opDiag`, which evaluates the operands
+only: the shift by the unsigned amount 2^32 - 1 is never computed); at `N = 20` (4 by 11) the readings agree, and so they
+do for a non-negative operand by a negative amount (`N = 16`: 0 by -7): -/
+#guard (CE.opDiag (fun _ => 8) (.ashr (.sub (.ref "N") (.lit 16)) (.sub (.ref "N") (.lit 9)))).isSome
+#guard (CE.opDiag (fun _ => 20) (.ashr (.sub (.ref "N") (.lit 16)) (.sub (.ref "N") (.lit 9)))).isNone
+#guard (CE.opDiag (fun _ => 16) (.ashr (.sub (.ref "N") (.lit 16)) (.sub (.ref "N") (.lit 9)))).isNone
 #guard (CE.wrapDiag (fun _ => 32) (.sub (.shl (.lit 1) (.sub (.ref "E") (.lit 1))) (.lit 1))).isNone
 #guard (CE.wrapDiag (fun _ => 33) (.sub (.shl (.lit 1) (.sub (.ref "E") (.lit 1))) (.lit 1))).isSome
 

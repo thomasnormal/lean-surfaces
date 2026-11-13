@@ -245,6 +245,14 @@ theorem ediv_two_pow_neg {x : Int} (t : Nat) (h : x < 0) : x ≤ x / 2 ^ t ∧ x
     omega
   · exact Int.ediv_neg_of_neg_of_pos h (by omega)
 
+/-- … and, whatever the sign of the dividend, it lies between the dividend and zero. -/
+theorem ediv_two_pow_between (x : Int) (t : Nat) : min x 0 ≤ x / 2 ^ t ∧ x / 2 ^ t ≤ max x 0 := by
+  by_cases h : 0 ≤ x
+  · have := ediv_two_pow_nonneg t h
+    omega
+  · have := ediv_two_pow_neg t (show x < 0 by omega)
+    omega
+
 /-- The instantiation's `>>>` of an `int` (`Int.fdiv` by a power of two) is the floor division `/`. -/
 theorem fdiv_two_pow (a : Int) (t : Nat) : a.fdiv (2 ^ t) = a / 2 ^ t := by
   rw [Int.fdiv_eq_ediv]
@@ -257,6 +265,37 @@ theorem fdiv_two_pow (a : Int) (t : Nat) : a.fdiv (2 ^ t) = a / 2 ^ t := by
 theorem fdiv_of_nonneg (a : Int) {b : Int} (h : 0 ≤ b) : a.fdiv b = a / b := by
   rw [Int.fdiv_eq_ediv]
   simp [h]
+
+/-- A division by `2 ^ t` is no larger than the division by a smaller power `m = 2 ^ c` (`c ≤ t`) of a non-negative
+dividend: what puts a right shift by at least one bit of a 32-bit pattern (below `2^32`) in the signed range. -/
+theorem ediv_two_pow_le_lit {x : Int} {t c : Nat} (m : Int) (hx : 0 ≤ x) (h : c ≤ t) (hm : (2 : Int) ^ c = m) :
+    x / 2 ^ t ≤ x / m := by
+  subst hm
+  obtain ⟨n, rfl⟩ := Int.eq_ofNat_of_zero_le hx
+  have e1 : (2 : Int) ^ t = ((2 ^ t : Nat) : Int) := by simp
+  have e2 : (2 : Int) ^ c = ((2 ^ c : Nat) : Int) := by simp
+  rw [e1, e2, ← Int.natCast_ediv, ← Int.natCast_ediv]
+  exact Int.ofNat_le.mpr (Nat.div_le_div_left (Nat.pow_le_pow_right (by decide) h) (Nat.two_pow_pos c))
+
+/-- The 32-bit range of a wrapped value. -/
+theorem canonInt32_bounds (x : Int) : -2147483648 ≤ canonInt 32 true x ∧ canonInt 32 true x < 2147483648 :=
+  Loop2.int32_inInt32 x
+
+/-! **`>>` reads the 32-bit pattern** (IEEE 1800-2023 §11.4.10: the vacated bits of the logical shift are zeros). The
+instantiation computes the pattern of the 32-bit value `a` of its left operand as `if a < 0 then a + 2^32 else a`
+(`evalIntExactRec`), the summary as `a % 2^32` (`CE.eval`): the same number, for a value in the signed range
+(`shr_pattern_of_bounds`, its hypotheses `omega`'s) and for every wrapped value (`shr_pattern_canon`). The instance is a
+variable of both, so they rewrite the `if` whatever instance the evaluation left in it. -/
+
+theorem shr_pattern_of_bounds {a : Int} [Decidable (a < 0)] (h1 : -2147483648 ≤ a) (h2 : a < 2147483648) :
+    (if a < 0 then a + 4294967296 else a) = a % 4294967296 := by
+  split <;> omega
+
+theorem shr_pattern_canon (x : Int) [Decidable (canonInt 32 true x < 0)] :
+    (if canonInt 32 true x < 0 then canonInt 32 true x + 4294967296 else canonInt 32 true x) = x % 4294967296 := by
+  have h1 := canonInt32_emod x
+  have h2 := canonInt32_bounds x
+  split <;> omega
 
 /-- `hag` one name at a time (the head of the parameter list). -/
 theorem hag_cons {f g : String → Option Int} {n : String} {ns : List String}
@@ -289,7 +328,8 @@ def int32Bound : Lean.Elab.Tactic.TacticM Unit := do
       LeanModels.Sv.CombView.canonInt32_add_l, LeanModels.Sv.CombView.canonInt32_add_r,
       LeanModels.Sv.CombView.canonInt32_sub_l, LeanModels.Sv.CombView.canonInt32_sub_r, LeanModels.Sv.CombView.canonInt32_mul_l,
       LeanModels.Sv.CombView.canonInt32_mul_r, LeanModels.Sv.CombView.canonInt32_neg, LeanModels.Sv.CombView.canonInt32_idem,
-      LeanModels.Sv.CombView.emod_eq_hmod, LeanModels.Sv.CombView.canonInt32_of_bounds]) <;> omega)))
+      LeanModels.Sv.CombView.emod_eq_hmod, LeanModels.Sv.CombView.shr_pattern_of_bounds,
+      LeanModels.Sv.CombView.shr_pattern_canon, LeanModels.Sv.CombView.canonInt32_of_bounds]) <;> omega)))
 
 /-- **A decision of the parameter stage** (`p` or `¬ p`, the proposition of a stuck `Decidable` instance: the sign test of
 `$clog2`'s argument or of a shift amount) from the hypotheses in context: `int32Bound` with the conversion of a constant to
@@ -302,7 +342,8 @@ def int32Decide : Lean.Elab.Tactic.TacticM Unit := do
       LeanModels.Sv.CombView.canonInt32_add_l, LeanModels.Sv.CombView.canonInt32_add_r,
       LeanModels.Sv.CombView.canonInt32_sub_l, LeanModels.Sv.CombView.canonInt32_sub_r, LeanModels.Sv.CombView.canonInt32_mul_l,
       LeanModels.Sv.CombView.canonInt32_mul_r, LeanModels.Sv.CombView.canonInt32_neg, LeanModels.Sv.CombView.canonInt32_idem,
-      LeanModels.Sv.CombView.emod_eq_hmod, LeanModels.Sv.CombView.canonInt32_of_bounds]) <;> omega)))
+      LeanModels.Sv.CombView.emod_eq_hmod, LeanModels.Sv.CombView.shr_pattern_of_bounds,
+      LeanModels.Sv.CombView.shr_pattern_canon, LeanModels.Sv.CombView.canonInt32_of_bounds]) <;> omega)))
 
 end LeanModels.Sv.CombView
 
@@ -666,11 +707,15 @@ def assertMain (n : Name) (pf : Lean.Expr) : TacticM Unit := do
 shifts of a localparam, `CE.shl`/`shr`/`ashr`, and the instantiation's own): for every `(2 : Int) ^ t` of the terms `es`,
 `2 ^ c ≤ 2 ^ t`, and `2 ^ t ≤ 2 ^ d` (both as literals), for the greatest `c` and the least `d` in `[0, 64]` with
 `c ≤ t ≤ d` provable by `omega` from the hypotheses in context; for every `x / 2 ^ t` whose sign `omega` decides, the
-quotient has that sign and is no further from zero than `x` (`ediv_two_pow_nonneg`, `ediv_two_pow_neg`). Every fact is
-proved; none is assumed. -/
+quotient has that sign and is no further from zero than `x` (`ediv_two_pow_nonneg`, `ediv_two_pow_neg`; where the sign is
+not decided, between `x` and zero, `ediv_two_pow_between`), and, for a
+non-negative `x` and `c ≥ 1`, no larger than `x / 2 ^ c` (`ediv_two_pow_le_lit`: a right shift by at least one bit of a
+32-bit pattern is in the signed range). Every fact is proved; none is assumed. -/
 def addPowFacts (es : Array Lean.Expr) : TacticM Unit := do
   let mut seenP : Array Lean.Expr := #[]
-  let mut seenD : Array Lean.Expr := #[]
+  let mut seenD : Array (Lean.Expr × Lean.Expr) := #[]
+  -- the greatest lower bound found for each exponent, with its proof
+  let mut lows : Array (Lean.Expr × Nat × Lean.Expr) := #[]
   let le (a b : Lean.Expr) : MetaM Lean.Expr := mkAppM ``LE.le #[a, b]
   let powLit (c : Nat) : MetaM (Lean.Expr × Lean.Expr) := do
     let m : Int := 2 ^ c
@@ -703,13 +748,21 @@ def addPowFacts (es : Array Lean.Expr) : TacticM Unit := do
         | none => mkAppM ``Nat.zero_le #[t]
       let (m, hm) ← powLit lo
       assertMain `hpow_ge (← mkAppOptM ``LeanModels.Sv.CombView.lit_le_two_pow #[t, toExpr lo, m, h, hm])
+      lows := lows.push (t, lo, h)
     for (x, t) in ds do
-      if seenD.contains x then continue
-      seenD := seenD.push x
+      if seenD.any (fun (x', t') => x' == x && t' == t) then continue
+      seenD := seenD.push (x, t)
       if let some h ← omegaProves (← mkAppM ``LE.le #[toExpr (0 : Int), x]) then
         assertMain `hdiv_pow (← mkAppM ``LeanModels.Sv.CombView.ediv_two_pow_nonneg #[t, h])
+        if let some (_, c, hc) := lows.find? (fun (t', _, _) => t' == t) then
+          if 1 ≤ c then
+            let (m, hm) ← powLit c
+            assertMain `hdiv_pow_le
+              (← mkAppOptM ``LeanModels.Sv.CombView.ediv_two_pow_le_lit #[x, t, toExpr c, m, h, hc, hm])
       else if let some h ← omegaProves (← mkAppM ``LT.lt #[x, toExpr (0 : Int)]) then
         assertMain `hdiv_pow (← mkAppM ``LeanModels.Sv.CombView.ediv_two_pow_neg #[t, h])
+      else
+        assertMain `hdiv_pow (← mkAppM ``LeanModels.Sv.CombView.ediv_two_pow_between #[x, t])
 
 /-- The arguments `x` of the `canonInt 32 true x` subterms of `e` that mention a free variable, innermost first (refusal
 text only). -/
@@ -764,7 +817,7 @@ unsafe def valTerms (sv : Summary) (args : Lean.Expr) : MetaM (List (String × L
 /-- **Close an agreement goal** `names.map (fun n => env.intVal? n) = names.map g`: for each name, the environment's
 value (by unification) against the term `val n` (definitionally `g n`), with the `canonInt` removal of `closeHag`. -/
 unsafe def closeHagWith (tac : String) (g : MVarId) (names : List String) (val : String → Lean.Expr)
-    (diag : String → Option String := fun _ => none) : TacticM Unit := do
+    (diag : String → Option String := fun _ => none) (hint : String → String := fun _ => "") : TacticM Unit := do
   let what := "the parameter values could not be read off the instantiation environment"
   g.withContext do
     let ty ← instantiateMVars (← g.getType)
@@ -820,7 +873,7 @@ unsafe def closeHagWith (tac : String) (g : MVarId) (names : List String) (val :
           let whereS := match shown? with
             | some x => m!", and `omega` could not place `{x}` (each step of it wrapped) in that range from the hypotheses in context"
             | none => m!", and `omega` could not show that from the hypotheses in context"
-          throwError "{tac}: {what}: at a symbolic parameter the instantiation holds `{n}` at its exact 32-bit `int` value, `{← unwrapShow v}` wrapped to 32 bits at every step, which is the summary's `{r}` only where every value is in the signed 32-bit range [-2147483648, 2147483647] (the instantiation wraps every literal, constant read and intermediate result of an `int` expression to 32 bits, IEEE 1800-2023 §11.4, §11.6.1, §11.8.1){whereS} (a theorem at a symbolic `int` parameter needs a range premise such as `(hR : (N : Int) < 2147483648)` that keeps every intermediate value of a definition in range, e.g. `N + 1` needs `N < 2147483647`)"
+          throwError "{tac}: {what}: at a symbolic parameter the instantiation holds `{n}` at its exact 32-bit `int` value, `{← unwrapShow v}` wrapped to 32 bits at every step, which is the summary's `{r}` only where every value is in the signed 32-bit range [-2147483648, 2147483647] (the instantiation wraps every literal, constant read and intermediate result of an `int` expression to 32 bits, IEEE 1800-2023 §11.4, §11.6.1, §11.8.1){whereS} (a theorem at a symbolic `int` parameter needs a range premise such as `(hR : (N : Int) < 2147483648)` that keeps every intermediate value of a definition in range, e.g. `N + 1` needs `N < 2147483647`){hint n}"
         -- a shift: the summary reads its operands as 32-bit patterns (`% 2^32`), the instantiation as the integers;
         -- where `omega` places them in range the two are the same, and the powers `2 ^ t` are atoms that need their
         -- bounds (`addPowFacts`)
@@ -833,13 +886,15 @@ unsafe def closeHagWith (tac : String) (g : MVarId) (names : List String) (val :
               Int.reduceToNat, LeanModels.Sv.CombView.canonInt32_add_l, LeanModels.Sv.CombView.canonInt32_add_r,
               LeanModels.Sv.CombView.canonInt32_sub_l, LeanModels.Sv.CombView.canonInt32_sub_r, LeanModels.Sv.CombView.canonInt32_mul_l,
               LeanModels.Sv.CombView.canonInt32_mul_r, LeanModels.Sv.CombView.canonInt32_neg, LeanModels.Sv.CombView.canonInt32_idem,
-              LeanModels.Sv.CombView.canonInt32_of_bounds])))
+              LeanModels.Sv.CombView.shr_pattern_of_bounds, LeanModels.Sv.CombView.shr_pattern_canon,
+              Int.tdiv_eq_ediv_of_nonneg, LeanModels.Sv.CombView.canonInt32_of_bounds])))
           unless (← getGoals).isEmpty do
             addPowFacts #[← getMainTarget]
             evalTactic (← `(tactic| ((try simp (disch := omega) only [LeanModels.Sv.CombView.canonInt32_of_bounds,
               LeanModels.Sv.CombView.canonInt32_add_l, LeanModels.Sv.CombView.canonInt32_add_r,
               LeanModels.Sv.CombView.canonInt32_sub_l, LeanModels.Sv.CombView.canonInt32_sub_r, LeanModels.Sv.CombView.canonInt32_mul_l,
               LeanModels.Sv.CombView.canonInt32_mul_r, LeanModels.Sv.CombView.canonInt32_neg, LeanModels.Sv.CombView.canonInt32_idem,
+              LeanModels.Sv.CombView.shr_pattern_of_bounds, LeanModels.Sv.CombView.shr_pattern_canon,
               Int.tdiv_eq_ediv_of_nonneg, Int.tmod_eq_emod_of_nonneg]) <;> first | omega | with_reducible rfl)))
         catch _ =>
           -- a closed value (a definition that names no parameter): both sides are numbers, say which
@@ -855,7 +910,7 @@ unsafe def closeHagWith (tac : String) (g : MVarId) (names : List String) (val :
             if let (some vv, some rv) := (vv?, rv?) then
               let why := (diag n).getD "the two readings differ at no operation the tactics can name"
               throwError "{tac}: {what}: the constant `{n}` is the 32-bit `int` {vv} in the instantiation, and the summary's value of its definition is {rv}: {why}"
-          throwError "{tac}: {what}: at a symbolic parameter the instantiation holds `{n}` at its exact 32-bit `int` value, `{← unwrapShow v}` wrapped to 32 bits at every step, which is the summary's `{r}` only where every value is in the signed 32-bit range [-2147483648, 2147483647] (the instantiation wraps every literal, constant read and intermediate result of an `int` expression to 32 bits, IEEE 1800-2023 §11.4, §11.6.1, §11.8.1), and `omega` could not show that from the hypotheses in context (a theorem at a symbolic `int` parameter needs a range premise such as `(hR : (N : Int) < 2147483648)`; a shift `a << b` is in range where `a * 2^b` is, §11.4.10, and the left operand of `>>` must not be negative, where the instantiation's reading is not the logical shift)"
+          throwError "{tac}: {what}: at a symbolic parameter the instantiation holds `{n}` at its exact 32-bit `int` value, `{← unwrapShow v}` wrapped to 32 bits at every step, which is the summary's `{r}` only where every value is in the signed 32-bit range [-2147483648, 2147483647] (the instantiation wraps every literal, constant read and intermediate result of an `int` expression to 32 bits, IEEE 1800-2023 §11.4, §11.6.1, §11.8.1), and `omega` could not show that from the hypotheses in context (a theorem at a symbolic `int` parameter needs a range premise such as `(hR : (N : Int) < 2147483648)`; a shift `a << b` is in range where `a * 2^b` is, §11.4.10){hint n}"
       unless (← getGoals).isEmpty do throwError "{tac}: {what} (`{n}`)"
       let h ← mkExpectedTypeHint (← instantiateMVars pg) (← mkEq (mkApp f nE) (mkApp gf nE))
       acc := mkAppN (mkConst ``LeanModels.Sv.CombView.hag_cons) #[f, gf, nE, toExpr suffix, h, acc]
@@ -922,6 +977,7 @@ unsafe def closeHag (tac : String) (g : MVarId) (sv : Summary) (args : Lean.Expr
   -- a definition that names no parameter has its value at any arguments: `sv.val []` names the operation that wraps
   closeHagWith tac g sv.params (fun n => (m.lookup n).getD (toExpr (0 : Int)))
     (fun n => (sv.lps.lookup n).bind (·.wrapDiag (sv.val [])))
+    (fun n => ((sv.lps.lookup n).map CE.ashrHint).getD "")
 
 /-! ### The parameter stage at a symbolic point (`h1`)
 
@@ -1012,29 +1068,69 @@ partial def exposeCanon (e : Lean.Expr) (fuel : Nat) : MetaM (Option (Lean.Expr 
   | some (e'', t) => return some (if (e.find? (· == t)).isSome then e else e'', t)
   | none => return none
 
+/-- The term whose occurrence keeps a subterm unreduced (`exposeStuck`): a stuck DECISION is the projection `inst.1` of
+its instance, and a subterm holds the instance itself (the `[Decidable p]` argument of an `if`), so the instance is what
+is looked for; a stuck `canonInt` is itself. -/
+def stuckKey (t : Lean.Expr) : Lean.Expr :=
+  match t with
+  | .proj ``Decidable 0 b => b
+  | _ => t
+
+/-- `a` holds the stuck step `t` (`stuckKey`) as a syntactic subterm. -/
+def holdsStuck (a t : Lean.Expr) : Bool := (a.find? (· == stuckKey t)).isSome
+
+/-- The instance of `@ite α p inst x y` (or `dite`) when it is not decided yet (its head normal form is not
+`Decidable.intro` of a literal). -/
+def undecidedIteInst? (e : Lean.Expr) : MetaM (Option Lean.Expr) := do
+  unless e.isAppOfArity ``ite 5 || e.isAppOfArity ``dite 5 do return none
+  let inst := e.getArg! 2
+  unless inst.hasFVar do return none
+  let iw ← whnfCanonC inst
+  if iw.isAppOfArity ``Decidable.intro 2 then
+    let b ← whnf (iw.getArg! 1)
+    if b.isConstOf ``Bool.true || b.isConstOf ``Bool.false then return none
+  return some inst
+
 /-- **The first stuck step of an evaluation**, as `exposeCanon`, where the step is either a `canonInt w s x` with `x`
 mentioning a free variable, or a DECISION: the `Decidable.decide` projection of an instance whose proposition mentions a
 free variable (the sign test of a shift amount at a symbolic parameter, `if b < 0 then … else …` in `evalInt`). A
 decision's own instance is reduced first, so a `canonInt` it needs is found before the decision; with `inDec = false` the
-decision itself is found first (`closeParamEnv` decides it from its proposition where it can). -/
-partial def exposeStuck (e : Lean.Expr) (fuel : Nat) (inDec : Bool := true) :
+decision itself is found first (`closeParamEnv` decides it from its proposition where it can).
+
+An `if` that is an argument (not the head, which the evaluation reduces) is a decision INSIDE a value, `if a < 0 then
+a + 2^32 else a` in the instantiation's `>>` of an `int` (`evalIntExactRec`, IEEE 1800-2023 §11.4.10: the shift reads the
+32-bit pattern of `a`): it is found with its own instance and kept folded (and every subterm that holds the instance with
+it, `Int.tdiv` included), so the value the environment holds is the definition's own term, which `omega` reads (an `if`
+of an `Int` is a case split for it). The decisions in `skip` (instances `closeParamEnv` could not decide) are not stuck
+steps: their `if` is left as it is. -/
+partial def exposeStuck (e : Lean.Expr) (fuel : Nat) (inDec : Bool := true) (skip : Array Lean.Expr := #[]) :
     MetaM (Option (Lean.Expr × Lean.Expr)) := do
   if fuel == 0 || !e.hasFVar then return none
+  -- a decision inside a value: the `if` itself, folded
+  if let some inst ← undecidedIteInst? e then
+    if skip.contains inst then return none
+    let t := Lean.Expr.proj ``Decidable 0 inst
+    if !inDec then return some (e, t)
+    match ← exposeStuck inst (fuel - 1) inDec skip with
+    | some (inst', t') =>
+        return some (if holdsStuck e t' then e else mkAppN e.getAppFn (e.getAppArgs.set! 2 inst'), t')
+    | none => return some (e, t)
   let e' ← whnfCanonC e
   let found? : Option (Lean.Expr × Lean.Expr) ← do
     if e'.isAppOfArity ``LeanModels.Sv.canonInt 3 then
       let x := e'.appArg!
-      match ← exposeStuck x (fuel - 1) inDec with
+      match ← exposeStuck x (fuel - 1) inDec skip with
       | some (x', t) =>
-          pure (some (mkApp e'.appFn! (if (x.find? (· == t)).isSome then x else x'), t))
+          pure (some (mkApp e'.appFn! (if holdsStuck x t then x else x'), t))
       | none => pure (if x.hasFVar then some (e', e') else none)
     else if let .proj ``Decidable 0 b := e' then
+      if skip.contains b then pure none
       -- `inDec = false`: the decision itself, before the wrapped values inside it (its proposition may mention them in
       -- another form, `convertConst`, where a rewrite of the value alone would leave the instance's type behind)
-      if !inDec && e'.hasFVar then pure (some (e', e'))
+      else if !inDec && e'.hasFVar then pure (some (e', e'))
       else
-      match ← exposeStuck b (fuel - 1) inDec with
-      | some (b', t) => pure (some (.proj ``Decidable 0 (if (b.find? (· == t)).isSome then b else b'), t))
+      match ← exposeStuck b (fuel - 1) inDec skip with
+      | some (b', t) => pure (some (.proj ``Decidable 0 (if holdsStuck b t then b else b'), t))
       | none => pure (if e'.hasFVar then some (e', e') else none)
     else if e'.isApp then
       let fn := e'.getAppFn
@@ -1044,17 +1140,17 @@ partial def exposeStuck (e : Lean.Expr) (fuel : Nat) (inDec : Bool := true) :
         let a := args[i]!
         if a.isLambda || a.isSort || a.hasLooseBVars then continue
         if (← isType a) || (← isProof a) then continue
-        if let some (a', t) ← exposeStuck a (fuel - 1) inDec then
-          res := some (mkAppN fn (args.set! i (if (a.find? (· == t)).isSome then a else a')), t)
+        if let some (a', t) ← exposeStuck a (fuel - 1) inDec skip then
+          res := some (mkAppN fn (args.set! i (if holdsStuck a t then a else a')), t)
           break
       pure res
     else if let .proj sn i b := e' then
-      match ← exposeStuck b (fuel - 1) inDec with
-      | some (b', t) => pure (some (.proj sn i (if (b.find? (· == t)).isSome then b else b'), t))
+      match ← exposeStuck b (fuel - 1) inDec skip with
+      | some (b', t) => pure (some (.proj sn i (if holdsStuck b t then b else b'), t))
       | none => pure none
     else pure none
   match found? with
-  | some (e'', t) => return some (if (e.find? (· == t)).isSome then e else e'', t)
+  | some (e'', t) => return some (if holdsStuck e t then e else e'', t)
   | none => return none
 
 /-- **Close `h1`** (`pd.paramEnv2 args = .ok ?env`): `rfl`, or, where the computation stops at an exact 32-bit
@@ -1072,12 +1168,17 @@ unsafe def closeParamEnv (tac : String) (g : MVarId) : TacticM Unit := do
       st.restore; return false
   if ← tryRfl g then return
   let mut g := g
+  -- the decisions `omega` could not settle, set aside (`exposeStuck`'s `skip`): such a decision may sit inside a value the
+  -- evaluation never needs (the `if` of `>>`'s 32-bit pattern, `evalIntExactRec`), so the search goes on past it; where
+  -- nothing else is left, the refusal is the first one set aside
+  let mut skip : Array Lean.Expr := #[]
+  let mut pending? : Option MessageData := none
   -- every wrapped literal, constant read and intermediate result the evaluation decides on is one step
   for _ in [0:256] do
     let expose (inDec : Bool) : TacticM (Option (MVarId × Lean.Expr)) := g.withContext do
         let ty ← instantiateMVars (← g.getType)
         let some (_, lhs, rhs) := ty.eq? | throwError "{tac}: internal error: `h1` is not an equation"
-        let some (lhs', t) ← exposeStuck lhs 400 inDec | return none
+        let some (lhs', t) ← exposeStuck lhs 400 inDec skip | return none
         if t.isAppOfArity ``LeanModels.Sv.canonInt 3 then
           let ws := t.appFn!.appFn!.appArg!
           let sg := t.appFn!.appArg!
@@ -1116,7 +1217,7 @@ unsafe def closeParamEnv (tac : String) (g : MVarId) : TacticM Unit := do
     let st0 ← saveState
     let first? ← expose false
     -- the proposition of a decision `int32Decide` could not settle (for the refusal text below)
-    let mut undecided? : Option Lean.Expr := none
+    let mut undecided? : Option (Lean.Expr × Lean.Expr) := none
     let early? : Option (MVarId × Lean.Expr) ← match first? with
       | some (gN, t) =>
           if t.isAppOfArity ``LeanModels.Sv.canonInt 3 then pure none
@@ -1129,7 +1230,7 @@ unsafe def closeParamEnv (tac : String) (g : MVarId) : TacticM Unit := do
         undecided? ← gN.withContext do
           try
             let ity ← whnf (← inferType inst)
-            pure (if ity.isAppOfArity ``Decidable 1 then some ity.appArg! else none)
+            pure (if ity.isAppOfArity ``Decidable 1 then some (ity.appArg!, inst) else none)
           catch _ => pure none
     if let some (gN, eq) := early? then
       g ← gN.withContext do rewriteDesign gN eq
@@ -1161,8 +1262,12 @@ unsafe def closeParamEnv (tac : String) (g : MVarId) : TacticM Unit := do
           catch _ => pure none
         match msg? with
         | some m => throwError "{tac}: {what}: the instantiation refuses this design at these parameters: {m}"
-        | none => throwError "{tac}: {what}"
-    let eq ← if t.isAppOfArity ``LeanModels.Sv.canonInt 3 then
+        | none =>
+          match pending? with
+          | some m => throwError m
+          | none => throwError "{tac}: {what}"
+    let mut eq? : Option Lean.Expr := none
+    if t.isAppOfArity ``LeanModels.Sv.canonInt 3 then
       -- `x` in the signed 32-bit range, from the hypotheses in context (the hypotheses of `canonInt32_of_bounds`)
       let x := t.appArg!
       let pfFn := mkApp (mkConst ``LeanModels.Sv.CombView.canonInt32_of_bounds) x
@@ -1176,10 +1281,10 @@ unsafe def closeParamEnv (tac : String) (g : MVarId) : TacticM Unit := do
         catch _ =>
           throwError "{tac}: {what}: the instantiation decides on `{t}`, the exact 32-bit `int` value of `{x}`, which is `{x}` only in the signed 32-bit range [-2147483648, 2147483647] (the instantiation wraps every literal, constant read and intermediate result of an `int` expression to 32 bits, IEEE 1800-2023 §11.4, §11.6.1, §11.8.1), and `omega` could not show that from the hypotheses in context (a theorem at a symbolic `int` parameter needs a range premise such as `(hR : (N : Int) < 2147483648)` that keeps every intermediate value of a definition in range, e.g. `N + 1` needs `N < 2147483647`)"
         unless (← getGoals).isEmpty do throwError "{tac}: {what} (`{x}` in range)"
-      instantiateMVars (mkAppN pfFn bs)
+      eq? := some (← instantiateMVars (mkAppN pfFn bs))
     else
-      -- a decision `decide p` of the evaluation (the sign test of a shift amount or of `>>`'s operand, a divisor's
-      -- test for zero): `omega` proves `p` or `¬ p` from the hypotheses in context, and the decision is that value
+      -- a decision `decide p` of the evaluation (the sign test of a shift amount, of `>>`'s operand, a divisor's test for
+      -- zero): `omega` proves `p` or `¬ p` from the hypotheses in context, and the decision is that value
       let .proj _ _ inst := t | throwError "{tac}: internal error: an unexpected stuck term `{t}`"
       let p ← gN.withContext do
         let ity ← whnf (← inferType inst)
@@ -1205,19 +1310,31 @@ unsafe def closeParamEnv (tac : String) (g : MVarId) : TacticM Unit := do
       -- the INSTANCE is rewritten (to `isTrue h`/`isFalse h`, equal by `Subsingleton.elim`), not its projection: the
       -- evaluation also carries the instance's proof field, whose type mentions the projection
       if let some hp ← proveBy p then
-        gN.withContext do mkAppOptM ``Subsingleton.elim #[none, none, inst, ← mkAppOptM ``isTrue #[p, hp]]
+        eq? := some (← gN.withContext do mkAppOptM ``Subsingleton.elim #[none, none, inst, ← mkAppOptM ``isTrue #[p, hp]])
       else if let some hn ← proveBy (mkNot p) then
-        gN.withContext do mkAppOptM ``Subsingleton.elim #[none, none, inst, ← mkAppOptM ``isFalse #[p, hn]]
+        eq? := some (← gN.withContext do mkAppOptM ``Subsingleton.elim #[none, none, inst, ← mkAppOptM ``isFalse #[p, hn]])
       else
-        throwError "{tac}: {what}: the instantiation decides `{p}` at a symbolic parameter (the sign test of a shift amount or of the left operand of `>>`, a divisor's test for zero, ...), and `omega` could not decide it from the hypotheses in context (a theorem at a symbolic parameter needs premises that fix the decision, e.g. `(h : 1 ≤ E)` for a shift by `E - 1`)"
-    g ← try gN.withContext do rewriteDesign gN eq
-      catch e =>
-        -- a wrapped value inside a decision the hypotheses do not settle: the decision is what to report
-        match undecided? with
-        | some p => throwError "{tac}: {what}: the instantiation decides `{← unwrapShow p}` at a symbolic parameter (the sign test of `$clog2`'s argument or of a shift amount, a divisor's test for zero, ...; every value in it is wrapped to 32 bits, IEEE 1800-2023 §11.4, §11.6.1, §11.8.1), and `omega` could not decide it from the hypotheses in context (a theorem at a symbolic parameter needs premises that fix the decision and keep the values in it in range, e.g. `N < 2147483647` for `$clog2(N + 1)`)"
-        | none => throw e
+        if pending?.isNone then
+          pending? := some m!"{tac}: {what}: the instantiation decides `{p}` at a symbolic parameter (the sign test of a shift amount, a divisor's test for zero, ...), and `omega` could not decide it from the hypotheses in context (a theorem at a symbolic parameter needs premises that fix the decision, e.g. `(h : 1 ≤ E)` for a shift by `E - 1`)"
+        skip := skip.push inst
+        g := gN
+        continue
+    let some eq := eq? | continue
+    try
+      g ← gN.withContext do rewriteDesign gN eq
+    catch e =>
+      -- a wrapped value inside a decision the hypotheses do not settle: the decision is what to report, where nothing
+      -- else is left
+      match undecided? with
+      | some (p, inst) =>
+          if pending?.isNone then
+            pending? := some m!"{tac}: {what}: the instantiation decides `{← unwrapShow p}` at a symbolic parameter (the sign test of `$clog2`'s argument or of a shift amount, a divisor's test for zero, ...; every value in it is wrapped to 32 bits, IEEE 1800-2023 §11.4, §11.6.1, §11.8.1), and `omega` could not decide it from the hypotheses in context (a theorem at a symbolic parameter needs premises that fix the decision and keep the values in it in range, e.g. `N < 2147483647` for `$clog2(N + 1)`)"
+          skip := skip.push inst
+          g := gN
+          continue
+      | none => throw e
     if ← tryRfl g then return
-  throwError "{tac}: {what}"
+  throwError (pending?.getD m!"{tac}: {what}")
 
 end LeanModels.Sv.CombView
 

@@ -4129,6 +4129,24 @@ theorem finishCallM_assign_existing_local_break_body_ok (K : Kont) (m : Module)
   rw [bind_apply, hraw]
   rfl
 
+theorem finishCallM_assign_existing_local_continue_body_ok (K : Kont) (m : Module)
+    (w : World) (depth : Nat) :
+    toRun (finishCallM depth
+      (inWorld [("x", .int 0)] (execOpenList K m
+        [.assign #[.name "x" adequacySpan]
+           (.constant (.int 1) adequacySpan) adequacySpan,
+         .cont adequacySpan]))) w =
+      .ok { w with callDepth := depth } RFlow.cont := by
+  have hraw : (inWorld [("x", .int 0)] (execOpenList K m
+      [.assign #[.name "x" adequacySpan]
+         (.constant (.int 1) adequacySpan) adequacySpan,
+       .cont adequacySpan])) w =
+      .ok (.ok RFlow.cont, w) := by rfl
+  unfold finishCallM
+  apply toRun_tryCatch_ok
+  rw [bind_apply, hraw]
+  rfl
+
 theorem finishCallM_three_pass_ret_body_ok (K : Kont) (m : Module)
     (locals : REnv) (w : World) (depth : Nat) :
     toRun (finishCallM depth
@@ -4308,6 +4326,7 @@ theorem leaveCallM_modify_exn {α : Type} (w : World) (e : PyErr)
 #print axioms finishCallM_assign_existing_local_ret_body_ok
 #print axioms finishCallM_assign_existing_local_pass_body_ok
 #print axioms finishCallM_assign_existing_local_break_body_ok
+#print axioms finishCallM_assign_existing_local_continue_body_ok
 #print axioms finishCallM_assign_constant_body_ok
 #print axioms finishCallM_modify_ok
 #print axioms finishCallM_modify_exn

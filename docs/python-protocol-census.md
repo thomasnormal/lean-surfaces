@@ -213,6 +213,9 @@ normal continuation after the local assignment.
 `Monadic.finishCallM_assign_existing_local_break_body_ok` composes the local
 assignment into `RFlow.brk` for the enclosing loop shell.
 
+`Monadic.finishCallM_assign_existing_local_continue_body_ok` composes the
+same local assignment into `RFlow.cont`.
+
 `Monadic.finishCallM_three_pass_ret_body_ok` extends early-return sequencing
 to three normal statements followed by a return.
 

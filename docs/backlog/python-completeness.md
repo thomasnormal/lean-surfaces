@@ -14701,6 +14701,23 @@ into `RFlow.cont` and depth restoration.
 DECIDED: assignment state now composes into continue flow for an existing
 local; arbitrary assignment and recursive body adequacy remain open.
 
+## 2026-11-13-pyfoundation-147 — assignment-to-bare-return bridge
+
+`Monadic.finishCallM_assign_existing_local_ret_none_body_ok` checks an
+assignment to an existing local followed by bare `return`, threading local
+state into `RFlow.ret .none` and depth restoration.
+
+| Measurement | Result |
+|---|---|
+| Target | `lake build LeanModels.Python.Monadic.Eval` passed; 11/11 jobs |
+| Theorem | `Monadic.finishCallM_assign_existing_local_ret_none_body_ok` |
+| Domain | two-statement assignment-plus-bare-return body with existing local |
+| Semantic change | theorem-only assignment and early-flow composition |
+| Remaining debt | arbitrary locals and recursive positive-fuel calls |
+
+DECIDED: assignment state now composes into bare-return flow for an existing
+local; arbitrary assignment and recursive body adequacy remain open.
+
 ## 2026-11-13-pyfoundation-135 — four-statement early-return bridge
 
 `Monadic.finishCallM_three_pass_ret_body_ok` checks three normal statements

@@ -521,6 +521,11 @@ def layoutFor (envl : Envelope) : Layout :=
   let tds := typedefsOf envl
   let recs := recordsOf envl
   let observed := observedRecordFacts envl
+  -- Feed checked parser-native records into the structural array/typedef
+  -- fallback too.  An anonymous typedef such as `Data` has no named
+  -- RecordDecl in `recordsOf`, but its observed declaration identity still
+  -- supplies the element size for `Data[4]` (§6.7.6.2).
+  let recsWithObserved := recs ++ observed.map (fun row => (row.1, row.2.1))
   let observedFor := fun t : CType =>
     let t0 := resolve tds 8 (stripQuals 8 t)
     observed.find? (fun row => row.1 == t0)
@@ -533,13 +538,13 @@ def layoutFor (envl : Envelope) : Layout :=
     observed.find? (fun row => row.1 == t2)
   { size := fun t => match observedFor t with
       | some (_, _, layout) => some layout.sizeBytes
-      | none => (sizeAlign tds recs 16 t).map (·.1)
+      | none => (sizeAlign tds recsWithObserved 16 t).map (·.1)
     elem := fun t => arrayOf (resolve tds 8 t)
     fieldOff := fun t f => match observedPointeeFor t with
       | some (_, _, layout) =>
           layout.fields.find? (fun field => field.name == f)
             |>.map (fun field => field.offsetBits / 8)
-      | none => fieldOffIn tds recs 16 t f
+      | none => fieldOffIn tds recsWithObserved 16 t f
     fieldBits := fun t f => match observedPointeeFor t with
       | some (_, _, layout) =>
           layout.fields.find? (fun field => field.name == f)

@@ -10,10 +10,10 @@
   "gcc.c-torture/execute": {
    "not-parsed": 267,
    "oracle-tests-compiler": 1,
-   "passed": 822,
+   "passed": 823,
    "refused-libc": 51,
    "refused-ub": 96,
-   "refused-unsupported": 617,
+   "refused-unsupported": 616,
    "timeout": 64
   },
   "gcc.c23-run": {
@@ -28,10 +28,10 @@
  "counts": {
   "not-parsed": 294,
   "oracle-tests-compiler": 1,
-  "passed": 992,
+  "passed": 993,
   "refused-libc": 55,
   "refused-ub": 105,
-  "refused-unsupported": 701,
+  "refused-unsupported": 700,
   "timeout": 66
  },
  "dynamic_wall_ranking": [
@@ -2367,14 +2367,6 @@
   },
   {
    "files": [
-    "zero-struct-2.c"
-   ],
-   "present": 1,
-   "sole": 1,
-   "wall": "unsupported:no layout for declared type 'spinlock_t'"
-  },
-  {
-   "files": [
     "20001101.c"
    ],
    "present": 1,
@@ -3686,9 +3678,9 @@
    "wall": "unsupported:va_arg requested unsupported value type 'struct s'"
   }
  ],
- "manifest_hash": "87f487fcb8cc131926a3216c7cd55a5ba5d7cc561e55e9fd046b717a082822e7",
- "measured_at_utc": "2026-11-13T09:37:22Z",
- "measured_commit": "087227a4d",
+ "manifest_hash": "4d8afe61eef80e3375b075675de6e69c9ce458e67ceccb058324689347c1449d",
+ "measured_at_utc": "2026-11-13T09:40:50Z",
+ "measured_commit": "ae892f81e",
  "pin": {
   "corpora": [
    "C1",
@@ -30175,15 +30167,15 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "no layout for declared type 'spinlock_t'",
-   "dynamic_wall": "unsupported:no layout for declared type 'spinlock_t'",
+   "detail": "",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "zero-struct-2.c",
    "sha256": "1f5b59ed57538c986bb30ecf04739d586986e3075f13180fc4ee1cfa002052c8",
    "static_walls": [
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",

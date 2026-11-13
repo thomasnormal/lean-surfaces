@@ -1331,6 +1331,16 @@ def callFn : Nat → Program → LeanModels.C.FunctionDefn → List CVal → Exe
                   | .float32 f => f.isNaN
                   | .float64 f => f.isNaN
                   | _ => false
+                else if nm == "__builtin_isinf" then
+                  match value with
+                  | .float32 f => f.isInf
+                  | .float64 f => f.isInf
+                  | _ => false
+                else if nm == "__builtin_signbit" then
+                  match value with
+                  | .float32 f => (f.toBits &&& (UInt32.ofNat 0x80000000)) != 0
+                  | .float64 f => (f.toBits &&& (UInt64.ofNat 0x8000000000000000)) != 0
+                  | _ => false
                 else finite
               match value with
               | .float32 _ | .float64 _ => pure (.int IntTy.int_ (if result then 1 else 0))
@@ -1456,7 +1466,7 @@ def callFn : Nat → Program → LeanModels.C.FunctionDefn → List CVal → Exe
                 runBswap32 vs
               else if nm == "__builtin_bswap64" then
                 runBswap64 vs
-                    else if nm == "__builtin_isfinite" || nm == "__builtin_isnan" then runFloatClass nm vs
+                    else if nm == "__builtin_isfinite" || nm == "__builtin_isnan" || nm == "__builtin_isinf" || nm == "__builtin_signbit" then runFloatClass nm vs
                     else if nm == "__builtin_inf" || nm == "__builtin_inff" || nm == "__builtin_infl" then
                       runInf nm vs
               else if nm == "__builtin_abs" || nm == "abs" then
@@ -1534,7 +1544,7 @@ def callFn : Nat → Program → LeanModels.C.FunctionDefn → List CVal → Exe
               else if nm == "__builtin_bswap16" then runBswap16 vs
               else if nm == "__builtin_bswap32" then runBswap32 vs
               else if nm == "__builtin_bswap64" then runBswap64 vs
-              else if nm == "__builtin_isfinite" || nm == "__builtin_isnan" then runFloatClass nm vs
+              else if nm == "__builtin_isfinite" || nm == "__builtin_isnan" || nm == "__builtin_isinf" || nm == "__builtin_signbit" then runFloatClass nm vs
               else if nm == "__builtin_inf" || nm == "__builtin_inff" || nm == "__builtin_infl" then runInf nm vs
               else if nm == "__builtin_abs" || nm == "abs" then runAbs vs
               else if nm == "__sync_add_and_fetch_8" then runSyncAdd8 vs

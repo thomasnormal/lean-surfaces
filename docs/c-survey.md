@@ -2,10 +2,10 @@
 
 Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manifest.
 
-- verdicts: 1007/2214 MATCH (passed 1007, failed 0, oracle 0)
-- manifest SHA-256: `3a314a4ecf9f4b660f1a64001f535ad338c5706e30ed417ae0bd51ee8d6990f9`
-- measured commit: `db69e48e5`
-- measured at: `2026-11-13T10:26:36Z`
+- verdicts: 1010/2214 MATCH (passed 1010, failed 0, oracle 0)
+- manifest SHA-256: `55e7366504fecfee6c955cb3aa406fd908f92f0baa275e94717d1f04dec982b2`
+- measured commit: `1d5ce79d2`
+- measured at: `2026-11-13T10:29:45Z`
 
 ## Verdict counts
 
@@ -13,8 +13,8 @@ Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manife
 | --- | ---: |
 | `not-parsed` | 294 |
 | `oracle-tests-compiler` | 1 |
-| `passed` | 1007 |
-| `refused-libc` | 42 |
+| `passed` | 1010 |
+| `refused-libc` | 39 |
 | `refused-ub` | 105 |
 | `refused-unsupported` | 699 |
 | `timeout` | 66 |
@@ -30,8 +30,8 @@ Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manife
 | `c-testsuite/single-exec` | `timeout` | 2 |
 | `gcc.c-torture/execute` | `not-parsed` | 267 |
 | `gcc.c-torture/execute` | `oracle-tests-compiler` | 1 |
-| `gcc.c-torture/execute` | `passed` | 836 |
-| `gcc.c-torture/execute` | `refused-libc` | 38 |
+| `gcc.c-torture/execute` | `passed` | 839 |
+| `gcc.c-torture/execute` | `refused-libc` | 35 |
 | `gcc.c-torture/execute` | `refused-ub` | 96 |
 | `gcc.c-torture/execute` | `refused-unsupported` | 616 |
 | `gcc.c-torture/execute` | `timeout` | 64 |
@@ -394,10 +394,7 @@ The run's first refusal, normalized by construct; `sole` counts rows whose first
 | `libc-call: __builtin_frame_address` | 1 | 1 | frame-address.c |
 | `libc-call: __builtin_huge_val` | 1 | 1 | ieee/inf-3.c |
 | `libc-call: __builtin_inff` | 1 | 1 | ieee/inf-1.c |
-| `libc-call: __builtin_isinf` | 1 | 1 | ieee/pr108540-1.c |
-| `libc-call: __builtin_isunordered` | 1 | 1 | ieee/compare-fp-3.c |
 | `libc-call: __builtin_setjmp` | 1 | 1 | built-in-setjmp.c |
-| `libc-call: __builtin_signbit` | 1 | 1 | pr35456.c |
 | `libc-call: __builtin_snprintf` | 1 | 1 | pr78622.c |
 | `libc-call: calloc` | 1 | 1 | 00040.c |
 | `libc-call: f` | 1 | 1 | gcc/testsuite/gcc.dg/torture/c23-stdarg-split-1a.c |

@@ -10,8 +10,8 @@
   "gcc.c-torture/execute": {
    "not-parsed": 267,
    "oracle-tests-compiler": 1,
-   "passed": 836,
-   "refused-libc": 38,
+   "passed": 839,
+   "refused-libc": 35,
    "refused-ub": 96,
    "refused-unsupported": 616,
    "timeout": 64
@@ -28,8 +28,8 @@
  "counts": {
   "not-parsed": 294,
   "oracle-tests-compiler": 1,
-  "passed": 1007,
-  "refused-libc": 42,
+  "passed": 1010,
+  "refused-libc": 39,
   "refused-ub": 105,
   "refused-unsupported": 699,
   "timeout": 66
@@ -1645,35 +1645,11 @@
   },
   {
    "files": [
-    "ieee/pr108540-1.c"
-   ],
-   "present": 1,
-   "sole": 1,
-   "wall": "libc-call: __builtin_isinf"
-  },
-  {
-   "files": [
-    "ieee/compare-fp-3.c"
-   ],
-   "present": 1,
-   "sole": 1,
-   "wall": "libc-call: __builtin_isunordered"
-  },
-  {
-   "files": [
     "built-in-setjmp.c"
    ],
    "present": 1,
    "sole": 1,
    "wall": "libc-call: __builtin_setjmp"
-  },
-  {
-   "files": [
-    "pr35456.c"
-   ],
-   "present": 1,
-   "sole": 1,
-   "wall": "libc-call: __builtin_signbit"
   },
   {
    "files": [
@@ -3636,9 +3612,9 @@
    "wall": "unsupported:va_arg requested unsupported value type 'struct s'"
   }
  ],
- "manifest_hash": "3a314a4ecf9f4b660f1a64001f535ad338c5706e30ed417ae0bd51ee8d6990f9",
- "measured_at_utc": "2026-11-13T10:26:36Z",
- "measured_commit": "db69e48e5",
+ "manifest_hash": "55e7366504fecfee6c955cb3aa406fd908f92f0baa275e94717d1f04dec982b2",
+ "measured_at_utc": "2026-11-13T10:29:45Z",
+ "measured_commit": "1d5ce79d2",
  "pin": {
   "corpora": [
    "C1",
@@ -19217,8 +19193,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "__builtin_isunordered",
-   "dynamic_wall": "libc-call: __builtin_isunordered",
+   "detail": "",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "ieee/compare-fp-3.c",
    "sha256": "0365e0cd9e0720d086b9ac13416572c4f748b1da5687779adeecd127106f2bf1",
@@ -19227,7 +19203,7 @@
     "libc-call: __builtin_isunordered",
     "type-layout"
    ],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -19756,8 +19732,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "__builtin_isinf",
-   "dynamic_wall": "libc-call: __builtin_isinf",
+   "detail": "",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "ieee/pr108540-1.c",
    "sha256": "c3a36f26713ef8442f46e4536dba02335743f21093a375da5cac2c1fa8f5c0c0",
@@ -19771,7 +19747,7 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -23220,8 +23196,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "__builtin_signbit",
-   "dynamic_wall": "libc-call: __builtin_signbit",
+   "detail": "",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "pr35456.c",
    "sha256": "439a70fd3b4e169b9fa8e152cbfefa747f1d1fed58e6e7f96c59b244df6baf5d",
@@ -23229,7 +23205,7 @@
     "libc-call: __builtin_signbit",
     "type-layout"
    ],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",

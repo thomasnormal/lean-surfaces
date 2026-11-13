@@ -2,10 +2,10 @@
 
 Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manifest.
 
-- verdicts: 1071/2214 MATCH (passed 1071, failed 0, oracle 0)
+- verdicts: 1072/2214 MATCH (passed 1072, failed 0, oracle 0)
 - manifest SHA-256: `bca94718b04e8394cdce992866637166f530978790bd1013cea4a00ae25ef764`
-- measured commit: `25170494d`
-- measured at: `2026-11-13T19:23:00Z`
+- measured commit: `d3988fd4c`
+- measured at: `2026-11-13T19:34:00Z`
 
 ## Verdict counts
 
@@ -13,10 +13,10 @@ Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manife
 | --- | ---: |
 | `not-parsed` | 294 |
 | `oracle-tests-compiler` | 1 |
-| `passed` | 1071 |
+| `passed` | 1072 |
 | `refused-libc` | 39 |
 | `refused-ub` | 107 |
-| `refused-unsupported` | 636 |
+| `refused-unsupported` | 635 |
 | `timeout` | 66 |
 
 ## Counts by corpus
@@ -30,10 +30,10 @@ Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manife
 | `c-testsuite/single-exec` | `timeout` | 2 |
 | `gcc.c-torture/execute` | `not-parsed` | 267 |
 | `gcc.c-torture/execute` | `oracle-tests-compiler` | 1 |
-| `gcc.c-torture/execute` | `passed` | 896 |
+| `gcc.c-torture/execute` | `passed` | 897 |
 | `gcc.c-torture/execute` | `refused-libc` | 35 |
 | `gcc.c-torture/execute` | `refused-ub` | 98 |
-| `gcc.c-torture/execute` | `refused-unsupported` | 557 |
+| `gcc.c-torture/execute` | `refused-unsupported` | 556 |
 | `gcc.c-torture/execute` | `timeout` | 64 |
 | `gcc.c23-run` | `not-parsed` | 27 |
 | `gcc.c23-run` | `passed` | 3 |
@@ -485,7 +485,6 @@ The run's first refusal, normalized by construct; `sole` counts rows whose first
 | `unsupported:no layout for field 'f2'` | 1 | 1 | pr101188.c |
 | `unsupported:no layout for field 'fptr'` | 1 | 1 | 00087.c |
 | `unsupported:no layout for field 's'` | 1 | 1 | 20190901-1.c |
-| `unsupported:no layout for parameter type 'const unsigned int *const'` | 1 | 1 | pr63209.c |
 | `unsupported:no layout for parameter type 'int **restrict'` | 1 | 1 | 20080506-2.c |
 | `unsupported:no layout for parameter type 'int *restrict'` | 1 | 1 | pr38212.c |
 | `unsupported:no size for pointee of 'int (*)[4]'` | 1 | 1 | pr124358.c |

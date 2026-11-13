@@ -25,9 +25,10 @@ def walk(value):
             yield from walk(child)
 
 
-def record_nodes(envelope, name):
+def record_nodes(envelope, name=None):
     return [node for node in walk(envelope)
-            if node.get("kind") == "RecordDecl" and node.get("name") == name]
+            if node.get("kind") == "RecordDecl" and
+            (name is None or node.get("name") == name)]
 
 
 def classify(node):
@@ -64,7 +65,7 @@ def layout_summary(node):
 
 def run(args):
     manifest = json.loads(Path(args.manifest).read_text())
-    cache = Path(manifest["cache"])
+    cache = Path(args.cache_root or manifest["cache"])
     source_name_prefix = manifest["pin"]["subdir"]
     out_dir = Path(args.out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -98,7 +99,7 @@ def run(args):
                      "layouts": [summary for node in nodes
                                  if (summary := layout_summary(node)) is not None],
                      "joined": bool(nodes) and all(c == "joined" for c in classes)})
-    report = {"schema": "c-record-layout-join-price-0.1",
+    report = {"schema": "c-record-layout-join-price-0.2",
               "record_name": args.record_name, "rows": rows,
               "files": len(rows),
               "files_with_record": sum(row["records"] > 0 for row in rows),
@@ -123,6 +124,10 @@ def self_test():
         raise RuntimeError("record-layout join self-test failed")
     if record_nodes({"translation_unit": {"decls": []}}, "S"):
         raise RuntimeError("record-layout missing-record self-test failed")
+    if len(record_nodes({"translation_unit": {"decls": [
+            {"kind": "RecordDecl", "name": "A"},
+            {"kind": "RecordDecl", "name": "B"}]}}, None)) != 2:
+        raise RuntimeError("record-layout all-record self-test failed")
     if "bit-fields" not in render({"files": 0, "files_fully_joined": 0,
                                     "files_with_bitfields": 0, "rows": []}):
         raise RuntimeError("record-layout price rendering self-test failed")
@@ -158,7 +163,10 @@ def main():
     parser.add_argument("--manifest")
     parser.add_argument("--plugin")
     parser.add_argument("--clang", default=os.environ.get("LEAN_C_CLANG", "clang"))
-    parser.add_argument("--record-name", default="S")
+    parser.add_argument("--record-name", default=None,
+                        help="restrict the price to one record name (default: all records)")
+    parser.add_argument("--cache-root",
+                        help="source cache root, overriding the manifest's recorded path")
     parser.add_argument("--name", action="append",
                         help="restrict the price to this manifest name (repeatable)")
     parser.add_argument("--out-dir")

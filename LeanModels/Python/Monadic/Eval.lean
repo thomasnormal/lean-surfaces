@@ -3897,6 +3897,15 @@ theorem finishCallM_modify_ok {α : Type} (depth : Nat) (w : World)
     rfl
   exact hraw
 
+theorem finishCallM_modify_exn {α : Type} (depth : Nat) (w : World)
+    (e : PyErr) (f : World → World) :
+    toRun (finishCallM depth (do modify f; raisePy e : SemW α)) w =
+      .exn { f w with callDepth := depth } e := by
+  unfold finishCallM
+  apply toRun_tryCatch_exn
+  · rfl
+  · rfl
+
 theorem leaveCallM_modify_ok {α : Type} (w : World) (v : α)
     (f : World → World) :
     toRun (leaveCallM (do modify f; pure v : SemW α)) w =
@@ -3950,6 +3959,7 @@ theorem leaveCallM_modify_exn {α : Type} (w : World) (e : PyErr)
 #print axioms finishCallM_expr_constant_body_ok
 #print axioms finishCallM_assign_constant_body_ok
 #print axioms finishCallM_modify_ok
+#print axioms finishCallM_modify_exn
 #print axioms leaveCallM_modify_ok
 #print axioms leaveCallM_modify_exn
 

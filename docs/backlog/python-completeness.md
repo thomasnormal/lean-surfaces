@@ -14380,3 +14380,21 @@ re-raises the same `PyErr`.
 
 DECIDED: successful and exceptional nested-call mutation unwinds are now
 kernel-checked; recursive control remains open.
+
+## 2026-11-13-pyfoundation-124 — top-level exception restoration
+
+`Monadic.finishCallM_modify_exn` completes the exception half of the
+top-level call-boundary law. An arbitrary world mutation is retained, the
+requested call depth is restored, and the same `PyErr` is exposed through the
+`Run` projection.
+
+| Measurement | Result |
+|---|---|
+| Target | `lake build LeanModels.Python.Monadic.Eval` passed; 11/11 jobs |
+| Theorem | `Monadic.finishCallM_modify_exn` |
+| Domain | arbitrary world mutation, boundary depth, and raised Python exception |
+| Semantic change | theorem-only exception-state composition |
+| Remaining debt | positive-fuel recursive calls and nonempty body adequacy |
+
+DECIDED: both successful and exceptional top-level mutation restorations are
+kernel-checked; recursive call and nonempty body adequacy remain open.

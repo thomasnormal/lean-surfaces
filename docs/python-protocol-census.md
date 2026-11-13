@@ -18,6 +18,10 @@ using the generic `toRun_tryCatch_exn` substrate equation. A raised Python
 error retains the mutated world and receives the same nested-frame depth
 decrement as a successful return.
 
+The top-level restoration half is now symmetric: `Monadic.finishCallM_modify_exn`
+proves that an exception after an arbitrary world mutation restores the
+requested boundary depth while retaining the mutated world.
+
 ## Protocol families
 
 | CPython 3.9 entry and call order | Trunk (`Semantics.lean`) | Runner (`Monadic/`) | Current observation / gap |

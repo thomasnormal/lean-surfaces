@@ -1,3 +1,4 @@
 import Examples.«system-verilog».sem2.parameterized_unpacked_storage_ordinary_e.agree
 open Examples.«system-verilog».sem2.parameterized_unpacked_storage_ordinary_e
-#eval outputs
+#eval outputs 1
+#eval outputs 2

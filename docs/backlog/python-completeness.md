@@ -14869,3 +14869,20 @@ depth restoration.
 
 DECIDED: two assignment updates now compose into return flow; arbitrary
 assignment and recursive body adequacy remain open.
+
+## 2026-11-13-pyfoundation-153 — three-assignment return bridge
+
+`Monadic.finishCallM_assign_three_existing_locals_ret_body_ok` checks three
+local assignments followed by `return 4`, threading all updates into early
+flow and depth restoration.
+
+| Measurement | Result |
+|---|---|
+| Target | `lake build LeanModels.Python.Monadic.Eval` passed; 11/11 jobs |
+| Theorem | `Monadic.finishCallM_assign_three_existing_locals_ret_body_ok` |
+| Domain | four-statement assignment-assignment-assignment-return body |
+| Semantic change | theorem-only multi-assignment early-flow composition |
+| Remaining debt | arbitrary locals and recursive positive-fuel calls |
+
+DECIDED: three assignment updates now compose into return flow; arbitrary
+assignment and recursive body adequacy remain open.

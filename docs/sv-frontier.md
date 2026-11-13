@@ -4,8 +4,9 @@ This page sets the public path from the current source-shaped SystemVerilog
 tier to properties over complicated blocks and, eventually, a small complete
 chip. The exact SystemVerilog profile remains the authority. E is the
 semantics route; cycle views and contracts must refine it. The scheduler and
-event rules belong to `ls-spec`, so an SVA sampling rule that is not present in
-the kernel is recorded as a request rather than reimplemented here.
+event rules are owned by this lane's E kernel, so an SVA sampling rule that is
+not present in the kernel is recorded as a request rather than reimplemented
+here.
 
 The scale target is Harmonic's public Tensordyne case study: a 12.2M-gate
 equivalent partition, 1.24M flops, 45 Mbit of SRAM, hundreds of concurrent

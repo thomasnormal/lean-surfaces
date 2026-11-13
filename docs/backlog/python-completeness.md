@@ -15597,7 +15597,7 @@ depth restoration.
 
 | Measurement | Result |
 |---|---|
-| Target | `lake build LeanModels.Python.Monadic.Eval` pending for this item |
+| Target | `lake build LeanModels.Python.Monadic.Eval` passed; 11/11 jobs |
 | Theorem | `Monadic.finishCallM_assign_nine_existing_locals_expr_body_ok` |
 | Domain | nine consecutive assignments to existing locals followed by an expression statement |
 | Semantic change | theorem-only nine-assignment expression-flow composition |
@@ -15676,4 +15676,22 @@ restoration.
 | Remaining debt | arbitrary locals and recursive positive-fuel calls |
 
 DECIDED: ten assignment steps now compose through the body walker; arbitrary
+assignment and recursive body adequacy remain open.
+
+## 2026-11-13-pyfoundation-199 — ten-assignment return bridge
+
+`Monadic.finishCallM_assign_ten_existing_locals_ret_body_ok` checks ten
+successive assignments `q = 0; r = 1; s = 2; t = 3; u = 4; v = 5; w = 6; x = 7; y = 8; z = 9`
+followed by `return 10`, preserving the updated frame through early flow and
+depth restoration.
+
+| Measurement | Result |
+|---|---|
+| Target | `lake build LeanModels.Python.Monadic.Eval` pending for this item |
+| Theorem | `Monadic.finishCallM_assign_ten_existing_locals_ret_body_ok` |
+| Domain | ten consecutive assignments to existing locals followed by value return |
+| Semantic change | theorem-only ten-assignment early-flow composition |
+| Remaining debt | arbitrary locals and recursive positive-fuel calls |
+
+DECIDED: ten assignment steps now compose through value return; arbitrary
 assignment and recursive body adequacy remain open.

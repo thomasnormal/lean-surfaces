@@ -2,10 +2,10 @@
 
 Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manifest.
 
-- verdicts: 1070/2214 MATCH (passed 1070, failed 0, oracle 0)
+- verdicts: 1071/2214 MATCH (passed 1071, failed 0, oracle 0)
 - manifest SHA-256: `bca94718b04e8394cdce992866637166f530978790bd1013cea4a00ae25ef764`
-- measured commit: `670fbf8d1`
-- measured at: `2026-11-13T19:08:00Z`
+- measured commit: `25170494d`
+- measured at: `2026-11-13T19:23:00Z`
 
 ## Verdict counts
 
@@ -13,10 +13,10 @@ Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manife
 | --- | ---: |
 | `not-parsed` | 294 |
 | `oracle-tests-compiler` | 1 |
-| `passed` | 1070 |
+| `passed` | 1071 |
 | `refused-libc` | 39 |
-| `refused-ub` | 106 |
-| `refused-unsupported` | 638 |
+| `refused-ub` | 107 |
+| `refused-unsupported` | 636 |
 | `timeout` | 66 |
 
 ## Counts by corpus
@@ -30,10 +30,10 @@ Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manife
 | `c-testsuite/single-exec` | `timeout` | 2 |
 | `gcc.c-torture/execute` | `not-parsed` | 267 |
 | `gcc.c-torture/execute` | `oracle-tests-compiler` | 1 |
-| `gcc.c-torture/execute` | `passed` | 895 |
+| `gcc.c-torture/execute` | `passed` | 896 |
 | `gcc.c-torture/execute` | `refused-libc` | 35 |
-| `gcc.c-torture/execute` | `refused-ub` | 97 |
-| `gcc.c-torture/execute` | `refused-unsupported` | 559 |
+| `gcc.c-torture/execute` | `refused-ub` | 98 |
+| `gcc.c-torture/execute` | `refused-unsupported` | 557 |
 | `gcc.c-torture/execute` | `timeout` | 64 |
 | `gcc.c23-run` | `not-parsed` | 27 |
 | `gcc.c23-run` | `passed` | 3 |
@@ -302,7 +302,7 @@ The run's first refusal, normalized by construct; `sole` counts rows whose first
 | wall | sole | present | example files |
 | --- | ---: | ---: | --- |
 | `frontend` | 294 | 294 | 20000227-1.c, 20000412-3.c, 20000717-3.c, 20000822-1.c, 20001009-2.c |
-| `undefined-behavior` | 106 | 106 | 00032.c, 00115.c, 00141.c, 00144.c, 00200.c |
+| `undefined-behavior` | 107 | 107 | 00032.c, 00115.c, 00141.c, 00144.c, 00200.c |
 | `unsupported:no definition for 'main'` | 102 | 102 | 20040705-1.c, 20040705-2.c, 20040709-3.c, builtins/20010124-1.c, builtins/abs-1.c |
 | `timeout` | 66 | 66 | 00041.c, 00128.c, 20000412-2.c, 20020108-1.c, 20030916-1.c |
 | `unsupported:extern object 'inside_main' has no definition in the translation unit` | 40 | 40 | builtins/20010124-1-lib.c, builtins/complex-1-lib.c, builtins/fputs-lib.c, builtins/lib/abs.c, builtins/lib/bfill.c |
@@ -323,11 +323,11 @@ The run's first refusal, normalized by construct; `sole` counts rows whose first
 | `libc-call: __builtin_abort` | 5 | 5 | 20181120-1.c, 20230630-2.c, 20230630-4.c, gcc/testsuite/gcc.dg/c23-nullptr-5.c, pr77767.c |
 | `unsupported:function-to-pointer decay (inch 5)` | 5 | 5 | 20021118-2.c, 20041212-1.c, 20101011-1.c, pr42231.c, pr68390.c |
 | `unsupported:no layout for declared type '_Complex double'` | 5 | 5 | 20030910-1.c, 960512-1.c, complex-1.c, complex-2.c, ieee/cdivchkd.c |
-| `unsupported:no layout for declared type 'struct S'` | 5 | 5 | 20050107-1.c, 20171008-1.c, pr52979-1.c, pr52979-2.c, pr79737-1.c |
 | `unsupported:unbound declaration 'id180' (name 'stdout')` | 5 | 5 | 00189.c, fprintf-1.c, fprintf-chk-1.c, vfprintf-1.c, vfprintf-chk-1.c |
 | `libc-call: __builtin_malloc` | 4 | 4 | 20071120-1.c, pr43008.c, pr84339.c, strlen-7.c |
 | `unsupported:extern object 'b' has no definition in the translation unit` | 4 | 4 | alias-2.c, alias-3.c, alias-4.c, gcc/testsuite/gcc.dg/c23-bool-2.c |
 | `unsupported:indirect call through a non-FunctionDecl reference` | 4 | 4 | 20010122-1.c, pr28289.c, pr34768-1.c, pr34768-2.c |
+| `unsupported:no layout for declared type 'struct S'` | 4 | 4 | 20050107-1.c, pr52979-1.c, pr52979-2.c, pr79737-1.c |
 | `unsupported:not an integer type: 'double'` | 4 | 4 | 961223-1.c, ieee/pr28634.c, pr29798.c, stdarg-4.c |
 | `unsupported:string literal with escape or non-ASCII spelling` | 4 | 4 | 20010325-1.c, printf-1.c, wchar_t-1.c, widechar-3.c |
 | `libc-call: vprintf` | 3 | 3 | printf-chk-1.c, vprintf-1.c, vprintf-chk-1.c |
@@ -361,7 +361,6 @@ The run's first refusal, normalized by construct; `sole` counts rows whose first
 | `unsupported:no layout for declared type 'int *volatile'` | 2 | 2 | 20101025-1.c, builtin-prefetch-3.c |
 | `unsupported:no layout for declared type 'jmp_buf'` | 2 | 2 | 20210505-1.c, pr56982.c |
 | `unsupported:no layout for declared type 'struct S[2]'` | 2 | 2 | 20050119-1.c, 20050119-2.c |
-| `unsupported:no layout for declared type 'struct c'` | 2 | 2 | 990326-1.c, packed-aligned.c |
 | `unsupported:no layout for declared type 'struct foo'` | 2 | 2 | bf-pack-1.c, gcc/testsuite/gcc.dg/c23-tag-alias-7.c |
 | `unsupported:no layout for declared type 'struct packed_ushort'` | 2 | 2 | 20170401-1.c, pr45070.c |
 | `unsupported:no layout for declared type 'struct s'` | 2 | 2 | 20040625-1.c, pr29006.c |
@@ -462,6 +461,7 @@ The run's first refusal, normalized by construct; `sole` counts rows whose first
 | `unsupported:no layout for declared type 'struct S[6]'` | 1 | 1 | pr58570.c |
 | `unsupported:no layout for declared type 'struct bar'` | 1 | 1 | gcc/testsuite/gcc.dg/c23-tag-alias-4.c |
 | `unsupported:no layout for declared type 'struct brfic_args'` | 1 | 1 | 20001026-1.c |
+| `unsupported:no layout for declared type 'struct c'` | 1 | 1 | packed-aligned.c |
 | `unsupported:no layout for declared type 'struct event'` | 1 | 1 | 20111212-1.c |
 | `unsupported:no layout for declared type 'struct printf_spec'` | 1 | 1 | 20190820-1.c |
 | `unsupported:no layout for declared type 'struct product_iSfd_'` | 1 | 1 | gcc/testsuite/gcc.dg/c23-tag-5.c |

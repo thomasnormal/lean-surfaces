@@ -10,10 +10,10 @@
   "gcc.c-torture/execute": {
    "not-parsed": 267,
    "oracle-tests-compiler": 1,
-   "passed": 895,
+   "passed": 896,
    "refused-libc": 35,
-   "refused-ub": 97,
-   "refused-unsupported": 559,
+   "refused-ub": 98,
+   "refused-unsupported": 557,
    "timeout": 64
   },
   "gcc.c23-run": {
@@ -28,10 +28,10 @@
  "counts": {
   "not-parsed": 294,
   "oracle-tests-compiler": 1,
-  "passed": 1070,
+  "passed": 1071,
   "refused-libc": 39,
-  "refused-ub": 106,
-  "refused-unsupported": 638,
+  "refused-ub": 107,
+  "refused-unsupported": 636,
   "timeout": 66
  },
  "dynamic_wall_ranking": [
@@ -380,6 +380,7 @@
     "20080222-1.c",
     "20090527-1.c",
     "20121108-1.c",
+    "20171008-1.c",
     "20191023-1.c",
     "920612-1.c",
     "920922-1.c",
@@ -445,8 +446,8 @@
     "va-arg-20.c",
     "zerolen-1.c"
    ],
-   "present": 106,
-   "sole": 106,
+   "present": 107,
+   "sole": 107,
    "wall": "undefined-behavior"
   },
   {
@@ -975,18 +976,6 @@
   },
   {
    "files": [
-    "20050107-1.c",
-    "20171008-1.c",
-    "pr52979-1.c",
-    "pr52979-2.c",
-    "pr79737-1.c"
-   ],
-   "present": 5,
-   "sole": 5,
-   "wall": "unsupported:no layout for declared type 'struct S'"
-  },
-  {
-   "files": [
     "00189.c",
     "fprintf-1.c",
     "fprintf-chk-1.c",
@@ -1029,6 +1018,17 @@
    "present": 4,
    "sole": 4,
    "wall": "unsupported:indirect call through a non-FunctionDecl reference"
+  },
+  {
+   "files": [
+    "20050107-1.c",
+    "pr52979-1.c",
+    "pr52979-2.c",
+    "pr79737-1.c"
+   ],
+   "present": 4,
+   "sole": 4,
+   "wall": "unsupported:no layout for declared type 'struct S'"
   },
   {
    "files": [
@@ -1343,15 +1343,6 @@
    "present": 2,
    "sole": 2,
    "wall": "unsupported:no layout for declared type 'struct S[2]'"
-  },
-  {
-   "files": [
-    "990326-1.c",
-    "packed-aligned.c"
-   ],
-   "present": 2,
-   "sole": 2,
-   "wall": "unsupported:no layout for declared type 'struct c'"
   },
   {
    "files": [
@@ -2165,6 +2156,14 @@
    "present": 1,
    "sole": 1,
    "wall": "unsupported:no layout for declared type 'struct brfic_args'"
+  },
+  {
+   "files": [
+    "packed-aligned.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "unsupported:no layout for declared type 'struct c'"
   },
   {
    "files": [
@@ -3280,8 +3279,8 @@
   }
  ],
  "manifest_hash": "bca94718b04e8394cdce992866637166f530978790bd1013cea4a00ae25ef764",
- "measured_at_utc": "2026-11-13T19:08:00Z",
- "measured_commit": "670fbf8d1",
+ "measured_at_utc": "2026-11-13T19:23:00Z",
+ "measured_commit": "25170494d",
  "pin": {
   "corpora": [
    "C1",
@@ -11250,8 +11249,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "no layout for declared type 'struct S'",
-   "dynamic_wall": "unsupported:no layout for declared type 'struct S'",
+   "detail": "LeanModels.C.C23.MemFault.indetAutomatic 6 0",
+   "dynamic_wall": "undefined-behavior",
    "manifest_status": "parsed",
    "name": "20171008-1.c",
    "sha256": "9ead3cbf5a1c234f638b8175a6cedf392b3d547763079f41d440cf3f0f63c849",
@@ -11260,7 +11259,7 @@
     "type-layout",
     "unsupported:AlignedAttr"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "refused-ub"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -14357,8 +14356,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "no layout for declared type 'struct c'",
-   "dynamic_wall": "unsupported:no layout for declared type 'struct c'",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "990326-1.c",
    "sha256": "2f7244e7ade4cda9b5db57f8a07d3ccd9669f647062c96ee954df30d3780c7a4",
@@ -14366,7 +14365,7 @@
     "type-layout",
     "unsupported:AlignedAttr"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",

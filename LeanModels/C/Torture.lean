@@ -248,6 +248,16 @@ def recordHasUnsupported (fields : List Decl) : Bool :=
     | .unsupported .. => true
     | _ => false
 
+/- The parser's `AlignedAttr` is a layout fact already carried by the
+   identity-joined `RecordLayout` observation.  It must not poison that
+   observed path: the frontend has supplied the exact size and alignment.
+   The spelling-based fallback keeps treating every unsupported child as a
+   refusal, so no ABI rule is inferred when the observation is absent. -/
+def recordHasBlockingUnsupported (fields : List Decl) : Bool :=
+  fields.any fun d => match d with
+    | .unsupported kind _ _ => kind != "AlignedAttr"
+    | _ => false
+
 def fieldsOf (fields : List Decl) : Option (List (String × CType)) :=
   if recordHasBitfield fields || recordHasUnsupported fields || fields.isEmpty then none
   else some (fields.filterMap fun d => match d with
@@ -396,7 +406,7 @@ def observedRecordFacts (envl : Envelope) :
         match checkedRecordLayout? fields layout with
         | none => none
         | some checked =>
-            if recordHasUnsupported fields then none
+            if recordHasBlockingUnsupported fields then none
             else
               let tag := if checked.tagKind == "union" then "union " else "struct "
               let members := fields.filterMap fun field => match field with
@@ -419,7 +429,7 @@ def observedRecordFacts (envl : Envelope) :
             match checkedRecordLayout? fields layout with
             | none => none
             | some checked =>
-                if recordHasUnsupported fields then none
+                if recordHasBlockingUnsupported fields then none
                 else
                   let members := fields.filterMap fun field => match field with
                     | .field name ty _ _ => some (name.getD "", ty)
@@ -433,7 +443,7 @@ def observedRecordFacts (envl : Envelope) :
             match checkedRecordLayout? fields layout with
             | none => none
             | some checked =>
-                if recordHasUnsupported fields then none
+                if recordHasBlockingUnsupported fields then none
                 else
                   let members := fields.filterMap fun field => match field with
                     | .field name ty _ _ => some (name.getD "", ty)

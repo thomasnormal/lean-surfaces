@@ -41,7 +41,7 @@
   },
   {
    "id": "P-NO-HOST-ACCESS",
-   "text": "(decided 2026-10-31 for the READING of files; confirmed 2026-11-01 for the rest of the family: \"Yes, don't allow this. It's not safe.\") The SystemVerilog text of a submission cannot read or write host files, run programs, read the environment or call native code: the checker runs untrusted text on the organizer's machine (Yosys's read_verilog itself opens the file of a $readmemh). The Lean file of a submission is not scanned for it: it is CONTAINED, by the checker's sandbox around every process that runs submitted text (WP-S, 2026-10-31; known hole \"Host access from the Lean file of a submission\", mitigated)."
+   "text": "(decided 2026-10-31 for the READING of files; confirmed 2026-11-01 for the rest of the family: \"Yes, don't allow this. It's not safe.\") The SystemVerilog text of a submission cannot read or write host files, run programs, read the environment or call native code: the checker runs untrusted text on the maintainers' machine (Yosys's read_verilog itself opens the file of a $readmemh). The Lean file of a submission is not scanned for it: it is CONTAINED, by the checker's sandbox around every process that runs submitted text (since 2026-10-31)."
   }
  ],
  "policies": [
@@ -598,8 +598,6 @@
    ],
    "evidence": "svgolf/tests/_example/attacks/README.md (for_counter_*); svgolf/PLAN.md task ladder; docs/sv-loops.md (M0 tier); 11 svgolf/score/tests/*.sv; Examples/system-verilog/sem2/always_ff_loop",
    "verified_by_run": true,
-   "value_rank": 1,
-   "value_note": "popcount, carry chains and parity trees written as loops (task ladder: popcount)",
    "decided_by": "Thomas 2026-10-29: approved the refused-now and later classifications of the register",
    "notes": "Since 2026-11-01 (WP-PROC X1) the unroll also takes an iterator declared OUTSIDE the header (`integer i; for (i = 0; ...)`) when every reference to it lies inside loops that iterate it (the declaration is then dead and erased; `int`/`integer` only, not a port), the steps `i += c` / `i -= c`, and the comparisons `<=` / `>=` (`LessThanEqual`/`GreaterThanEqual` were missing from the operator table). Rows `proc_loop_forms`, `proc_loop_forms_local`, `proc_loop_forms2`. Since 2026-11-02 (parameter-point procedural loops), a positive parameter expression is also accepted as a compound step and evaluated at each point (`symbolic_parameter_for_parameter_step`), and an external iterator with a parameter bound is retained as the same point-expanded loop (`symbolic_parameter_for_external`). Since 2026-11-04, mixed signed/unsigned loop comparisons are refused (`loop_mixed_signed_refuse`, `loop_mixed_signed_param_refuse`) rather than using Python signed ordering. Retained loops whose user-function body reads a same-named module/local parameter are also refused (`loop_name_capture_refuse`) until iterator bindings are separate from `ParamRef` lookup. Header iterators other than signed 32-bit `int`/`integer` are refused (`loop_typed_iterator_refuse`) until declared-width wrapping and termination are modeled. Effectful headers and iterators observed outside their loops stay loud. The same literal unroll is exercised inside a retained timed always_ff process by always_ff_loop."
   },
@@ -882,7 +880,7 @@
    "why": "Yosys reads the qualifiers as full_case / parallel_case don't-cares, so a violated claim scores 0 GE; v0 refuses and WP5 will encode the claim as a proof obligation.",
    "category": "later",
    "proposed": false,
-   "prerequisite": "WP5: a violated unique / unique0 / priority claim becomes a run-time error on the settled state, forced by Terminates2",
+   "prerequisite": "a violated unique / unique0 / priority claim becomes a run-time error on the settled state, forced by Terminates2",
    "decided_by": "Thomas 2026-10-28 (carry proof obligations) and 2026-10-29 (v0 refuses, WP5 deferred)",
    "plan": "WP5",
    "kinds": {
@@ -966,8 +964,6 @@
    ],
    "evidence": "docs/sv-compound-assignments.md; svgolf banlist treats compound assignments as operators",
    "verified_by_run": true,
-   "value_rank": 17,
-   "value_note": "`y += a` and friends in procedural code",
    "decided_by": "Thomas 2026-10-29: approved the refused-now and later classifications of the register",
    "notes": "WP-PROC C1, rows `proc_compound`, `proc_compound_param_n3/n4/n8` (Xcelium-pinned)."
   },
@@ -1844,7 +1840,7 @@
    "evidence": "docs/sv-case-inside.md; extractors/sv/test_inside.py; Examples/system-verilog/sem2/inside_fixed",
    "verified_by_run": true,
    "value_rank": 13,
-   "value_note": "range checks (`a inside {[3:5]}`) in decoders",
+   "value_note": "range checks (`a inside {[3:5]}`) in decoders (the pinned Yosys 0.53 cannot read `inside` either)",
    "decided_by": "Thomas 2026-10-29: approved the refused-now and later classifications of the register"
   },
   {
@@ -2165,9 +2161,7 @@
     }
    ],
    "evidence": "svgolf/tests/_example/attacks/README.md fn_uninit.sv; 9 svgolf files carry SubroutineSymbol:Subroutine",
-   "verified_by_run": true,
-   "value_rank": 2,
-   "value_note": "helper functions for bit tricks, parity and constant functions"
+   "verified_by_run": true
   },
   {
    "id": "ex-builtins",
@@ -2435,7 +2429,7 @@
    "why": "A signed (or exotic) operand whose width changes (sign extension / truncation) cannot be emitted as an unsigned Resize; the default-point width would be baked in.",
    "category": "later",
    "proposed": false,
-   "prerequisite": "none recorded; proposed prerequisite: symbolic SignedResize for signed operands (FOLDS lane)",
+   "prerequisite": "none recorded; proposed prerequisite: symbolic SignedResize for signed operands",
    "plan": "SIGNED",
    "kinds": {
     "extractor": [
@@ -2454,7 +2448,9 @@
    ],
    "evidence": "docs/sv-envelope-schema.md Default-point folds; svgolf/PLAN.md FOLDS 'sign extension (11.8.2)'",
    "verified_by_run": true,
-   "decided_by": "Thomas 2026-10-29: approved the refused-now and later classifications of the register"
+   "decided_by": "Thomas 2026-10-29: approved the refused-now and later classifications of the register",
+   "value_rank": 10,
+   "value_note": "`$signed(x)` widened into a wider sum, the usual way to sign-extend; meanwhile sign-extend by hand: `{{K{x[W-1]}}, x}`"
   },
   {
    "id": "cv-explicit",
@@ -2483,7 +2479,7 @@
    "evidence": "Examples/system-verilog/sem2/cast_fixed; Examples/system-verilog/sem2/signed_cast_fixed; Examples/system-verilog/sem2/signed_cast_widen; Examples/system-verilog/sem2/two_state_cast_fixed; Examples/system-verilog/sem2/two_state_cast_widen; extractors/sv/test_implication.py",
    "verified_by_run": true,
    "value_rank": 9,
-   "value_note": "size casts such as `8'(a + b)` are common in golf code",
+   "value_note": "casts to a parameter width such as `N'(x)` (a cast to a fixed width such as `8'(x)` loads)",
    "decided_by": "Thomas 2026-11-03: literal unsigned sized cast measured and admitted; fixed-width four-state signed/type casts measured 2026-11-03; fixed-width 2-state casts measured 2026-11-03",
    "notes": "Fixed-width casts are source-shaped: signed sources use `SignedResize`, unsigned sources use `Resize`, and 2-state targets apply `Squash2`."
   },
@@ -3566,8 +3562,6 @@
    "evidence": "Examples/system-verilog/sem2/two_state_fixed; Examples/system-verilog/sem2/bit_param_fixed; Examples/system-verilog/sem2/two_state_var_fixed; Examples/system-verilog/sem2/two_state_struct_fixed; Examples/system-verilog/sem2/int_var_fixed; extractors/sv/test_symbolic_2state.py",
    "verified_by_run": true,
    "notes": "Fixed predefined integer declarations carry explicit packed bounds in the symbolic envelope so Lean sees their declared width; X/Z input is squashed by `Squash2`. A fixed packed struct composed solely of `bit` fields uses the same flat vector boundary. Nets, `integer`, arrays and mixed-state/unpacked aggregates remain loud.",
-   "value_rank": 10,
-   "value_note": "`int` / `bit` declared types for loop variables and flags",
    "decided_by": "Thomas 2026-11-03: packed bit ports measured through parameter points; residual declarations stay loud, fixed flat packed bit variable measured 2026-11-03, fixed predefined int storage measured 2026-11-03, fixed all-bit packed struct measured 2026-11-03"
   },
   {
@@ -3607,8 +3601,6 @@
    ],
    "evidence": "Examples/system-verilog/sem2/signed_net_fixed; Examples/system-verilog/sem2/signed_struct_fixed; Examples/system-verilog/sem2/signed_member_fixed; extractors/sv/test_symbolic_param_widths.py",
    "verified_by_run": true,
-   "value_rank": 11,
-   "value_note": "signed arithmetic and comparisons",
    "decided_by": "Thomas 2026-10-29: approved the refused-now and later classifications of the register, N2 whole-net signed nets measured 2026-11-03, fixed root-signed packed struct measured 2026-11-03, fixed packed signed member measured 2026-11-03",
    "notes": "Fixed packed member windows use the member type supplied by slang, so signed comparisons retain `s<` semantics while storage remains one flat vector."
   },
@@ -5155,7 +5147,7 @@
    "evidence": "svgolf/PLAN.md F3b; Hier2.lean #guard (pSelf)",
    "verified_by_run": true,
    "value_rank": 14,
-   "value_note": "recursive instantiation: bitonic sort, Karatsuba (F3b)"
+   "value_note": "recursive instantiation: bitonic sort, Karatsuba"
   },
   {
    "id": "le-hier-names",
@@ -6729,8 +6721,6 @@
    ],
    "evidence": "Examples/system-verilog/sem2/proc_local_automatic; harness/sv/cases2.json refusal row; Examples/system-verilog/sem2/always_ff_static_local_nba_refuse",
    "verified_by_run": true,
-   "value_rank": 3,
-   "value_note": "block-local temporaries in always_comb (static locals of a module-level always_comb are hoisted since WP-PROC L1; the remaining scoped forms load and retain a named LocalDecl refusal)",
    "decided_by": "Thomas 2026-10-29: approved the refused-now and later classifications of the register",
    "notes": "WP-PROC L1 and its initializer follow-up, plus `proc_local_automatic` as the retained LocalDecl loader witness. The always_ff loop row pins the static-local NBA/Yosys per-iteration-copy boundary."
   },
@@ -7440,7 +7430,7 @@
   }
  ],
  "svgolf": {
-  "intro": "svGolf asks for two things about each design you submit: a Lean proof that it meets the task's trusted statement under the ls-sv\nsemantics, and a score from a pinned Yosys flow. The checker refuses a design or a proof when the proof and the score could be about\ndifferent circuits, or when the evidence could be forged. This document lists every refusal the checker makes, why, and what you\ncan write instead, then says which refusals are meant to go away and which never will.\n\nIt has two halves that are easy to confuse. **The checker's own stages** (source gate, banlist, fourstate, statement, axioms, score,\npost-synthesis check) are described below stage by stage. **The language tier** (`ls-sv`, the semantics your proof is about) refuses\nmore constructs than the checker does; those show up as `extract` or `design` failures and are summarised near the end and listed in\nfull in `docs/sv-refusals.md` of the lean-surfaces repository.\n\nThis file is generated from `docs/sv-refusals.json` of lean-surfaces by `tools/gen_sv_refusals.py` and is written to be read without\nthe rest of that repository: links to lean-surfaces documents are given as repository paths.",
+  "intro": "svGolf asks for two things about each design you submit: a Lean proof that it meets the task's trusted statement under the ls-sv\nsemantics, and a score from a pinned Yosys flow. The checker refuses a design or a proof when the proof and the score could be about\ndifferent circuits, or when the evidence could be forged. This document lists every refusal the checker makes, why, and what you\ncan write instead, then says which refusals are meant to go away and which never will.\n\nIt has two halves that are easy to confuse. **The checker's own stages** (source gate, banlist, fourstate, statement, axioms, score,\npost-synthesis check) are described below stage by stage. **The language tier** (`ls-sv`, the semantics your proof is about) refuses\nmore constructs than the checker does; those show up as `extract` or `design` failures and are summarised near the end and listed in\nfull in `docs/sv-refusals.md` of the Proglib repository.\n\nThis file is generated from `docs/sv-refusals.json` of Proglib (formerly lean-surfaces) by `tools/gen_sv_refusals.py` and is written to be\nread without the rest of that repository: links to Proglib documents are given as repository paths.",
   "stages": [
    {
     "id": "task",
@@ -7453,13 +7443,18 @@
     "refuses": "any import outside Init, Std, Lean, LeanModels.Sv.*, SvGolf.*, tasks.*, Submission.Design and the Mathlib packages (Mathlib, Batteries, Aesop, Qq, ProofWidgets, Plausible, ImportGraph, LeanSearchClient), read from the header as Lean reads it (a comment between two imports separates them) and checked again against the imports Lean recorded in the compiled solution; a second file; `module` / `prelude` headers; a module no package has a source for (a stale name) is a rejection, a package or module missing from the machine (not built, not on the search path, a checkout not at the pinned revision) is an infrastructure error"
    },
    {
+    "id": "latency",
+    "what": "reads the latency the solution declares (transaction and stream tasks: `-- svgolf-latency: <n>`, a line of its own)",
+    "refuses": "no such line or more than one, a latency that is not a decimal number from 1 to 999999999, such a line in a task of another kind; later, at the clocked post-synthesis check, a point where the kernel gives no number for the latency or one beyond the checker's limit"
+   },
+   {
     "id": "source",
     "what": "`score/srcgate.py`: makes the proved program and the scored program ONE text and strips every comment",
-    "refuses": "preprocessor directives, attributes, synthesis-pragma comments, `unique` / `unique0` / `priority`, x/z/? literal digits, odd characters, host access (file, process, environment, dump and DPI constructs); in a CLOCKED task also every edge process but `always_ff @(posedge <clock>)` (an asynchronous reset, a second clock, `negedge`, `iff`), a blocking write in it, `initial`, `final`, `always_latch`, a delay or another event control, a declaration initializer"
+    "refuses": "preprocessor directives, attributes, synthesis-pragma comments, `unique` / `unique0` / `priority`, x/z/? literal digits, odd characters, host access (file, process, environment, dump and DPI constructs), every procedural `for` header but one narrow shape; in a CLOCKED task also every edge process but `always_ff @(posedge <clock>)` (an asynchronous reset, a second clock, `negedge`, `iff`), a blocking write in it, `initial`, `final`, `always_latch`, a delay or another event control, a declaration initializer"
    },
    {
     "id": "extract",
-    "what": "the pinned lean-surfaces extractor reads the canonical text",
+    "what": "the pinned Proglib extractor reads the canonical text",
     "refuses": "whatever the extractor refuses (the language tier), a wrong top module, a parameter list that differs from the task's"
    },
    {
@@ -7516,17 +7511,22 @@
     "id": "postsynth",
     "what": "`check/postsynth.py`: ls-sv and the scored netlist (Verilator) must agree on every vector of the budget",
     "refuses": "any disagreement, x/z in ls-sv outputs, a netlist Verilator will not build; a rejection is a bug report"
+   },
+   {
+    "id": "ppa",
+    "what": "`score/ppa.py` on the verified netlist: the sky130 area and delay, the ranked numbers",
+    "refuses": "a netlist whose repaired sky130 version is electrically illegal (a load over max_capacitance, a transition over max_transition, a timing-table read outside its characterized range), naming the worst cells"
    }
   ],
   "policies": [
-   "**Combinational tasks only for now.** Clocked designs, registers and pipelines are refused until the sequential layer exists (decided 2026-10-29).",
+   "**Combinational and clocked tasks.** A combinational task's design has no clocked process, no latch and no combinational loop. A clocked task (the transaction, stream and reactive kinds: matmul, sorter, arbiter) admits one clock edge, `always_ff @(posedge <clock>)` with nonblocking writes and a synchronous reset, and no x-creating construct (the group 'Clocked tasks' below).",
    "**Where the pipeline tools split, the design is refused**, never decided for one side: slang / ls-sv (the proof), Yosys (the score), Verilator and Xcelium are compared, and a shape they read differently is a loud refusal. A difference that only Icarus shows is a declared departure, not a refusal (decided 2026-10-31), and so is one that only Xcelium shows against LRM text the other tools follow (decided 2026-11-01: `\\a \\v \\f` are admitted).",
    "**A program slang rejects is rejected, and LRM-legal nondeterminism is to be modelled rather than forbidden** (decided 2026-10-31). No construct is admitted on the second ruling yet: the model does not exist, and the audit found that the rows it was first thought to cover are not LRM nondeterminism (self-reading `always_comb`: the LRM's answer is deterministic and the synthesizers compute another; settling combinational loops: refused by fourstate, and some hold state).",
-   "**Everything known that the proof and the score could read differently is refused statically, before any proof is tried** (the source gate at every parameter value; the banlist's run-time `/ % **` in every task; the 4-state rules at the points the checker probes, which narrows and does not close the gap to a statement over every value: svgolf/README.md, \"Checker v0 limits\"), and the post-synthesis check is the backstop for the disagreements nobody has found.",
+   "**Everything known that the proof and the score could read differently is refused statically, before any proof is tried** (the source gate at every parameter value; the banlist's run-time `/ % **` in every task; the 4-state rules at the points the checker probes, which narrows and does not close the gap to a statement over every value: svGolf's README.md, \"Checker v0 limits\"), and the post-synthesis check is the backstop for the disagreements nobody has found.",
    "**No other restrictions.** Beyond the per-task operator banlist and these safety gates, write any SystemVerilog ls-sv can load.",
    "**Contestants may add features to ls-sv by pull request, and the maintainers approve every such PR.** See 'How a refusal becomes allowed'.",
    "**Proofs are symbolic and parametric** (for all N). `bv_decide` is not supported for now (it runs an external SAT solver, which the checker does not support: decided 2026-11-01); `native_decide` is banned in submissions.",
-   "**No host access in the SystemVerilog text.** A submitted design cannot read host files (decided 2026-10-31); by the same principle (proposed, to confirm) it cannot write them, run programs, read the environment, write dumps or call native code. The source gate refuses the constructs; the console tasks (`$display`, `$write`, `$finish`, ...) stay. The Lean file is not covered (see the limits)."
+   "**No host access in the SystemVerilog text.** A submitted design cannot read host files (decided 2026-10-31); by the same principle (confirmed 2026-11-01) it cannot write them, run programs, read the environment, write dumps or call native code. The source gate refuses the constructs; the console tasks (`$display`, `$write`, `$finish`, ...) stay. The Lean file is not scanned for it; the checker's sandbox contains it (see the limits)."
   ],
   "groups": [
    {
@@ -7549,7 +7549,7 @@
     "id": "g-banlist",
     "stage": "banlist",
     "title": "Stage `banlist`: the task's banned operators",
-    "intro": "A task bans the run-time operator that IS the task, plus whatever Yosys merges into the same cell (alumacc turns `+` and `-` chains into the cells of `*`). Constant arithmetic (parameters, genvar loops, index arithmetic over parameters and genvars) and equality stay allowed. A task that bans `+` or `-` also bans run-time ordering comparisons (`< <= > >=`; decided 2026-11-05), which Yosys builds as its own adder. Which operators are banned is per task: `add`, `mul` and `_example` ban `+ - * / % **`; `clmul` bans `+ - *`; `fdivp` bans `/ % **` (and keeps every comparison).",
+    "intro": "A task bans the run-time operator that IS the task, plus whatever Yosys merges into the same cell (alumacc turns `+` and `-` chains into the cells of `*`). Constant arithmetic (parameters, genvar loops, index arithmetic over parameters and genvars) and equality stay allowed. A task that bans `+` or `-` also bans run-time ordering comparisons (`< <= > >=`; decided 2026-11-05), which Yosys builds as its own adder. Which operators are banned is per task: `add`, `mul` and `_example` ban `+ - * / % **`; `clmul` bans `+ - *`; `fdivp` bans `/ % **` (and keeps every comparison); every task bans run-time `/ % **`.",
     "write_ok": "for (genvar i = 0; i < N; i++) begin : g\n  assign s[i] = a[i] ^ b[i] ^ c[i];     // gates, not +\n  assign c[i+1] = (a[i] & b[i]) | (c[i] & (a[i] ^ b[i]));   // i+1 is constant arithmetic\nend",
     "refused_example": "assign s = a + b + cin;          // run-time + in a task that bans it\nassign y = a * b;                // run-time *\nassign n = $countones(a);        // Yosys builds it from $add cells\nassign p = arr.sum();            // array reduction = run-time +"
    },
@@ -7573,7 +7573,7 @@
     "id": "g-statement",
     "stage": "comparator",
     "title": "The trusted statement: interface, clocks, termination, function, range",
-    "intro": "The statement is a Lean `Prop` fixed by the task (`SvGolf/Task.lean`). A design that satisfies it must have exactly the task's ports, no edge-phase process, a completed run for every schedule and stimulus, and the task's function at every cycle, for every N in the range. These are not rules you can argue with: a design that breaks one has no proof of the statement, and the repository checks the refutations in `tests/*/negative/Refute.lean`.",
+    "intro": "The statement is a Lean `Prop` fixed by the task: `SvGolf/Task.lean` for the combinational tasks, `SvGolf/TaskSeq.lean` and `SvGolf/TaskReact.lean` for the clocked ones. A combinational design that satisfies it has exactly the task's ports, no clocked process and no combinational loop, a completed run for every schedule and stimulus, and the task's function at every cycle, for every parameter value in the range; a clocked design meets the task's guarantee in every run from every power-up state, at every parameter value in the range. These are not rules you can argue with: a design that breaks one has no proof of the statement, and the repository checks the refutations in `tests/*/negative/Refute.lean`.",
     "write_ok": "",
     "refused_example": "module adder(input logic [N-1:0] a, b, input logic ci, ...);   // port named ci, not cin\noutput logic [N:0] s;                                           // merged {cout, sum}\nalways_ff @(posedge clk) s <= a ^ b;                           // any edge process"
    },
@@ -7589,7 +7589,7 @@
     "id": "g-score",
     "stage": "score",
     "title": "Stages `score` and `postsynth`: the scored netlist",
-    "intro": "The score is area in NAND2 gate equivalents and depth, measured on the pinned Yosys + ABC netlist. The post-synthesis check then simulates ls-sv and the scored netlist on the task's vector budget and rejects any difference; it is sampling, so a difference confined to a tiny input region can slip through, which is what the static rules above are for. A rejection here is a bug report: either ls-sv or Yosys is wrong.",
+    "intro": "The `score` stage synthesizes the design with the pinned Yosys + ABC flow (area in NAND2 gate equivalents and depth, exploration columns); the `ppa` stage weighs the verified netlist on the sky130 cells, the ranked area and delay. The post-synthesis check then simulates ls-sv and the scored netlist on the task's vector budget and rejects any difference; it is sampling, so a difference confined to a tiny input region can slip through, which is what the static rules above are for. A rejection here is a bug report: either ls-sv or Yosys is wrong.",
     "write_ok": "",
     "refused_example": "always_ff @(posedge clk) y <= a & b;    // a flip-flop in the netlist: not priced"
    },
@@ -7620,34 +7620,28 @@
   ],
   "lifting": [
    "Every refusal above has a state. `refused-now` means no change is planned. `later` names the prerequisite that has to exist first; when it exists, the refusal is lifted by a pull request.",
-   "**How to propose it.** Open a pull request against lean-surfaces that adds the feature to ls-sv (extractor, `LeanModels/Sv`), with differential cases against independent oracles (Xcelium pinned data, Icarus, Verilator, Yosys): a disagreement is fixed or declared, never ignored. The maintainers approve every such PR.",
+   "**How to propose it.** Open a pull request against Proglib that adds the feature to ls-sv (extractor, `LeanModels/Sv`), with differential cases against independent oracles (Xcelium pinned data, Icarus, Verilator, Yosys): a disagreement is fixed or declared, never ignored. The maintainers approve every such PR.",
    "**If the construct brings an x source** (a function local read before assignment, a latch that is never loaded, `always @*`), a rule in `score/fourstate.py` must land first or in the same PR; the post-synthesis check is the backstop, not the plan.",
-   "**For the checker's own rules** (the source gate, the banlist, the statement), changing a refusal changes what every earlier submission means: the PR must say so, and leaderboard entries record the lean-surfaces revision they were checked against.",
+   "**For the checker's own rules** (the source gate, the banlist, the statement), changing a refusal changes what every earlier submission means: the PR must say so, and leaderboard entries record the Proglib revision they were checked against.",
    "**Update the register.** Add or edit the row in `docs/sv-refusals.json`, run `python3 tools/gen_sv_refusals.py --write`, and `--check` must pass."
   ],
   "limits": [
    "The post-synthesis check is sampling (fixed corners, task corners, harvested comparison constants, seeded random): a difference confined to a region no comparison constant selects can pass (`oob_rare.sv`, `zpair_add_rare.sv` pass it alone; the static rules are the only line there).",
-   "There is no sandbox: `import Lean` is allowed, so a Solution.lean can run `#eval` with checker privileges. The integrity snapshot is a tripwire, not a defence. Run untrusted submissions in a throwaway container. Measured (2026-10-31): a reference Solution.lean with an added `#eval IO.FS.readFile \"/etc/hosts\"` and an `IO.FS.writeFile` was ACCEPTED and did both, so the host-access refusals (`P-NO-HOST-ACCESS`) are a rule about the SystemVerilog text only.",
-   "Open: should the Lean file be gated against host access too (`#eval`, `IO`, `run_cmd`, `elab`, `initialize`, `unsafe`; `import Lean` is allowed)? Nothing gates it today.",
+   "The Lean file is not scanned for host access (`#eval`, `IO`, `run_cmd`, `elab`, `initialize`, `unsafe`; `import Lean` is allowed), because a scan cannot stop it: every process that runs submitted text (the Lean compiles, the comparator and `leanchecker`, the extractor, Yosys, Verilator and the compiled model) runs inside the checker's sandbox instead (svGolf's README.md, \"Sandbox\": no network, reads of its own inputs only, one output directory, no other program, an allowlisted environment). `check.py --sandbox require`, what every competition run uses, refuses to run without it; the default `auto` runs without it, and says so, where the mechanism is missing; on Linux it is not yet checked end to end with Lean (2026-11-10). Measured 2026-10-31, before the sandbox: a reference Solution.lean with an added `#eval IO.FS.readFile \"/etc/hosts\"` and an `IO.FS.writeFile` was accepted and did both, which is why the host-access refusals of the SystemVerilog text (`P-NO-HOST-ACCESS`) are not enough for the Lean file.",
    "The parameter's declared type is not pinned by the statement; the multi-point cross-check at the scoring point keeps the scored design one ls-sv and slang agree on, elsewhere the statement is about ls-sv's reading.",
    "The banlist front check is heuristic (a variable copied from a loop counter counts as run-time); the Yosys backstop covers the scored points only.",
    "The fourstate stage checks the points the checker probes, no others (since 2026-11-06 the scoring point, then the task's probe and backstop points; before, the scoring point only), and filters `tri-state` warnings out of Yosys `check`. Its run-time index rule reasons from index TYPES: `a[i-1]` with a 2-bit `i` is a 32-bit index and is refused on any declared range (over-refusal), as is any procedural loop counter used as an index.",
    "A gate hole not yet measured: x/z digits are exempt anywhere inside a casez/casex item EXPRESSION, not only as the item's own literal (`casez (a[1:0]) (a[0] == 1'bz) ? 2'b00 : 2'b01: ...` passes the gate). Whether ls-sv and Yosys then differ was not measured; do not rely on it.",
-   "A plain syntax error is reported by the gate as `preprocessor-skipped text` before the extractor or Yosys see it; `always @(*)` passes the gate (the `(*)` is exempt) and is refused later by the language tier.",
+   "A plain syntax error is reported by the gate as `preprocessor-skipped text` before the extractor or Yosys see it; `always @(*)` passes the gate (the `(*)` is exempt), and ls-sv runs it as `always_comb` only under the lowering rules of Proglib's `docs/sv-proc-lowering.md` (a block that assigns a variable on some paths only is refused at `design`).",
    "`ARITH_PRIMITIVES` (`$alu $macc $macc_v2 $lcu $fa`) cannot be instantiated by a submission: the backstop reads without `-icells`, so instantiating one fails earlier with `yosys failed`. In a task that bans `+` or `-` the same five types are what the post-`alumacc` check rejects: every one that `alumacc` builds, e.g. for a run-time ordering comparison (`sg-ban-cmp`, decided 2026-11-05).",
    "`--no-gate` in `score.py` and `postsynth.py` is a research flag: the result says `gated: false` and is not a svGolf score. Missing Verilator, make, a C++ compiler, Yosys or `svgolf-eval` is an infrastructure error (exit 2), never a rejection.",
    "The ordering-comparison rule (`sg-ban-cmp`) is the backstop's alone, so it holds at the backstop points only: a run-time comparison in code that only other parameter values elaborate (measured: a generate branch taken only at `N = 7` in `add`) passes the banlist, where a `+` in the same place is rejected by the front check. The scored netlist never contains it.",
-   "Open: must challenge proofs be parametric (for all N)? The README treats it as decided; `svgolf/PLAN.md` still lists it as a question for the maintainers.",
    "slang's ANALYSIS-pass errors (`multiple-always-assigns`, `mixed-var-assigns`, `multiple-cont-assigns`, \"cannot assign to input port\", \"'always' procedure does not advance time\") are read since 2026-11-01 by the banlist front check and the `fourstate` stage (`score/slangdriver.py`, the Driver's own severities, per parameter point) and by the extractor. Still unread: the elaboration warnings the driver promotes to errors (`IndexOOB`, `RangeOOB`, ...: `fourstate`'s rule (c) refuses the out-of-range ones as x sources); a module the design does not instantiate (docs/sv-refusals.json, `holes`). The banlist front check runs for every task: every task bans run-time `/ % **` since 2026-11-06, so none has an empty banlist (until then such a task skipped the front check, and `fourstate` was the only stage that read the analysis errors there)."
   ],
   "links": [
    {
     "path": "svgolf/README.md",
     "what": "rules, checker stages, scoring, `task.json` fields, checker v0 limits"
-   },
-   {
-    "path": "svgolf/PLAN.md",
-    "what": "decisions with dates, the task ladder, the day-by-day plan"
    },
    {
     "path": "svgolf/SvGolf/Task.lean",
@@ -7667,23 +7661,23 @@
    },
    {
     "path": "docs/sv-refusals.md",
-    "what": "(lean-surfaces) the register of the language tier's refusals"
+    "what": "(Proglib) the register of the language tier's refusals"
    },
    {
     "path": "docs/sv-oracle-disagreements.md",
-    "what": "(lean-surfaces) where the oracles split and what is refused or declared"
+    "what": "(Proglib) where the oracles split and what is refused or declared"
    },
    {
     "path": "docs/sv-xcelium-audit.md",
-    "what": "(lean-surfaces) the Xcelium reference audit behind the round-6 refusals"
+    "what": "(Proglib) the Xcelium reference audit behind the oracle refusals"
    },
    {
     "path": "docs/sv-envelope-schema.md",
-    "what": "(lean-surfaces) the envelope contract and the Unsupported vocabulary"
+    "what": "(Proglib) the envelope contract and the Unsupported vocabulary"
    },
    {
     "path": "docs/sv-tools-split-audit.md",
-    "what": "(lean-surfaces) the tools-split audit behind the 2026-10-31 category changes"
+    "what": "(Proglib) the tools-split audit behind the 2026-10-31 category changes"
    }
   ],
   "entries": [
@@ -7896,7 +7890,7 @@
     "why": "Yosys turns unique into full_case + parallel_case, unique0 into parallel_case, priority into full_case (synthesis don't-cares); ls-sv runs the first matching arm. A unique case that never matches scores 0 GE.",
     "category": "later",
     "proposed": false,
-    "prerequisite": "WP5: ls-sv turns a violated qualifier claim into a run-time error on the settled state so Terminates2 forces the proof obligation; the gate refusal goes once WP5 lands",
+    "prerequisite": "ls-sv turns a violated qualifier claim into a run-time error on the settled state, so that the termination conjunct forces the proof obligation; the gate refusal goes then",
     "decided_by": "Thomas 2026-10-28 (carry proof obligations) and 2026-10-29 (v0 refuses; WP5 deferred)",
     "plan": "WP5",
     "match": [
@@ -7926,6 +7920,31 @@
      "_example/priority_nomatch",
      "aes_sbox/unique_case_partial",
      "aes_sbox/unique_zero_ge"
+    ]
+   },
+   {
+    "id": "sg-loop-header",
+    "tag": "a procedural `for` loop header other than the one admitted shape",
+    "group": "g-source",
+    "layers": [
+     "svgolf-gate"
+    ],
+    "trigger": "`integer i; for (i = 0; i < N; i++)` (the iterator declared outside the header);  `for (bit [2:0] i = 0; ...)`;  `for (int i = 0; i < 2'd2; i++)`;  an iterator spelled like a parameter or another module-scope name",
+    "why": "A stopgap (2026-11-04) for three measured mis-models of procedural `for` loops in ls-sv: the condition compared as signed where SystemVerilog compares unsigned, the iterator bound by name (so that it can capture a localparam of the same name), and the iterator's declared type ignored. The gate admits one header shape, in every process: one `int` or `integer` iterator declared in the header with an initial value and a name no module-scope name has, the condition `i <op> E` over unsized decimal literals and the module's own `int` parameters, and one step (`i++`, `i--`, `i += n`, `i -= n`). A generate `for` is not procedural and is not affected.",
+    "category": "later",
+    "proposed": false,
+    "prerequisite": "ls-sv's fixes of the three mis-models (an unsigned comparison where the operands are unsigned, the iterator in its own scope, the iterator's declared type)",
+    "where": [
+     {
+      "file": "svgolf/score/srcgate.py",
+      "fn": "loop_findings"
+     }
+    ],
+    "match": [
+     {
+      "file": "svgolf/score/srcgate.py",
+      "text": "is not declared in the loop header"
+     }
     ]
    },
    {
@@ -8002,7 +8021,7 @@
      "svgolf-gate"
     ],
     "trigger": "initial $readmemh(\"/etc/hosts\", mem);  /  $readmemb  /  $writememh  /  $writememb",
-    "why": "Yosys's read_verilog opens the file of a $readmemh/$readmemb itself while it reads the design (Yosys 0.53, measured: the contents become the memory's initial value; one text scores 9.331 GE with one host file and 0 GE with another; a missing file is an error). The pinned flow reads with plain `read_verilog -sv` (no `-defer`), and then Yosys opens the file in a module the top never instantiates as well, but not in a function nobody calls or in a generate branch that is not taken; the gate refuses all of them, because it reads the text. On the organizer's machine that pulls a host file (a salt, an oracle) into the netlist and leaks bits of it through the score; the proof never sees the file. Yosys 0.53 rejects $writememh/$writememb (\"Can't resolve task name\"), but the gate refuses them first and with a file:line:col.",
+    "why": "Yosys's read_verilog opens the file of a $readmemh/$readmemb itself while it reads the design (Yosys 0.53, measured: the contents become the memory's initial value; one text scores 9.331 GE with one host file and 0 GE with another; a missing file is an error). The pinned flow reads with plain `read_verilog -sv` (no `-defer`), and then Yosys opens the file in a module the top never instantiates as well, but not in a function nobody calls or in a generate branch that is not taken; the gate refuses all of them, because it reads the text. On the machine the checker runs on, that pulls a host file (a salt, an oracle) into the netlist and leaks bits of it through the score; the proof never sees the file. Yosys 0.53 rejects $writememh/$writememb (\"Can't resolve task name\"), but the gate refuses them first and with a file:line:col.",
     "category": "never",
     "proposed": false,
     "principle": "P-NO-HOST-ACCESS",
@@ -8068,7 +8087,7 @@
      "svgolf-gate"
     ],
     "trigger": "initial $system(\"id\");  /  initial if ($value$plusargs(\"X=%d\", v)) ...  /  $test$plusargs(\"X\")  /  $getenv(\"HOME\")",
-    "why": "Runs a host program or reads the host process's environment or command line (LRM 21.6; $system and $getenv are tool extensions). The checker would execute or read them on the organizer's machine. Yosys 0.53 rejects all of them (\"Can't resolve task name\"); the gate refuses them first.",
+    "why": "Runs a host program or reads the host process's environment or command line (LRM 21.6; $system and $getenv are tool extensions). The checker would execute or read them on the machine it runs on. Yosys 0.53 rejects all of them (\"Can't resolve task name\"); the gate refuses them first.",
     "category": "never",
     "proposed": false,
     "principle": "P-NO-HOST-ACCESS",
@@ -8630,10 +8649,10 @@
      "svgolf-fourstate"
     ],
     "trigger": "always_comb begin for (int k = 0; k < N; k++) y[k] = a[k] & b[k]; end",
-    "why": "Documented gap: ls-sv does not load procedural loops today, and a PR that admits them should teach this rule loop bounds. The generate-for twin passes.",
+    "why": "The run-time index rule reasons from index TYPES and does not know loop bounds, so it refuses an `int` loop counter used as an index (ls-sv loads such a loop: the extractor expands it since 2026-11-01, and the source gate admits one header shape). The generate-for twin passes.",
     "category": "later",
     "proposed": false,
-    "prerequisite": "none recorded; proposed prerequisite: ls-sv loads procedural loops AND rule (d) learns loop bounds",
+    "prerequisite": "none recorded; proposed prerequisite: rule (d) learns loop bounds",
     "plan": "LOOPS",
     "match": [
      {
@@ -8756,7 +8775,7 @@
     "why": "A variable an always_comb block reads before it assigns it on every path holds x; Yosys `proc` refuses it ('Latch inferred ... from always_comb'). Since 2026-11-06 the banlist backstop runs for every task (every task bans run-time / % **), so a latch an always_comb block infers meets Yosys's own `proc` refusal there first (aes_sbox/case_missing_nodefault stops at `banlist`); this rule refuses the latches `proc` infers without an error (always @*, always_latch).",
     "category": "later",
     "proposed": false,
-    "prerequisite": "the sequential layer (tasks stay combinational), latch semantics in ls-sv and a latch price in score/ge.json",
+    "prerequisite": "latch semantics in ls-sv, a statement that admits a latch (the combinational statement refuses every latch: `LoopFree`) and a latch price in score/ge.json",
     "plan": "SEQ",
     "match": [
      {
@@ -8841,7 +8860,7 @@
     "layers": [
      "svgolf-checker"
     ],
-    "trigger": "a user function call in an always_comb or in an assign (`assign y = both(a, b)`), a procedural loop, any construct the extractor embeds as an `Unsupported` node instead of refusing",
+    "trigger": "a cast to a parameter width (`N'(x)`), `$signed(x)` in a wider context, a gate primitive (`and g(y, a, b)`), a function local read before it is assigned, any construct the extractor embeds as an `Unsupported` node instead of refusing",
     "why": "The extractor exits 0 and `load_design_sv2` builds `design.sem` even when a construct is unsupported: the node is kept as a loud `Process2.unsupported`/`Unsupported` expression and refuses only when run. No proof about such a design can hold, so the `design` stage rejects it before any proof, scoring or leaderboard step, naming the first loud node, at the scoring point and at every probe point not larger than it.",
     "category": "refused-now",
     "proposed": false,
@@ -9006,7 +9025,7 @@
      "svgolf-checker"
     ],
     "trigger": "import LeanModels.Python.Semantics;  import Examples.python.tri.proof;  import Mathlib2.Tactic;  import Lake",
-    "why": "The checker builds only SvGolf, tasks and svgolf-eval, so a module outside the allowlist is code nobody audited and stays outside the trusted base. Mathlib and the packages its import closure reaches (Batteries, Aesop, Qq, ProofWidgets, Plausible, ImportGraph, LeanSearchClient: the module roots, pinned by lean-surfaces' lake-manifest.json) ARE admitted since 2026-10-31: a proof that uses them is accepted on the same terms as any other, by the kernel from the task's allowed axioms alone. The comparator walks the dependency closure for axioms (a `native_decide` behind a Mathlib lemma is rejected like one in the file) and REPLAYS that closure, minus the toolchain and the submission's own modules, through the kernel, so a package olean whose declaration was added without kernel checking is rejected; toolchain modules must resolve into the toolchain; the integrity tripwire watches the Lean search path (`.olean` files of the packages, entries that do not exist) for every solution; the imports Lean recorded in the compiled solution are compared with the header the checker read.",
+    "why": "The checker builds only SvGolf, tasks and svgolf-eval, so a module outside the allowlist is code nobody audited and stays outside the trusted base. Mathlib and the packages its import closure reaches (Batteries, Aesop, Qq, ProofWidgets, Plausible, ImportGraph, LeanSearchClient: the module roots, pinned by Proglib's lake-manifest.json) ARE admitted since 2026-10-31: a proof that uses them is accepted on the same terms as any other, by the kernel from the task's allowed axioms alone. The comparator walks the dependency closure for axioms (a `native_decide` behind a Mathlib lemma is rejected like one in the file) and REPLAYS that closure, minus the toolchain and the submission's own modules, through the kernel, so a package olean whose declaration was added without kernel checking is rejected; toolchain modules must resolve into the toolchain; the integrity tripwire watches the Lean search path (`.olean` files of the packages, entries that do not exist) for every solution; the imports Lean recorded in the compiled solution are compared with the header the checker read.",
     "category": "never",
     "proposed": true,
     "principle": "P-TRUSTED-BASE",
@@ -9110,6 +9129,30 @@
     "verified_by_run": true
    },
    {
+    "id": "sg-latency",
+    "tag": "(transaction and stream tasks) a solution without exactly one latency line, or a latency line in a task of another kind",
+    "group": "g-imports",
+    "layers": [
+     "svgolf-checker"
+    ],
+    "trigger": "two `-- svgolf-latency:` lines;  `-- svgolf-latency: 0`;  a latency line in a combinational task",
+    "why": "The goal pins the latency at the scoring point (`lat p₀ = n`) and the score uses n, so a transaction or stream solution declares it in exactly one header line `-- svgolf-latency: <n>`, a decimal number of cycles from 1 to 999999999; at the clocked post-synthesis check the kernel's value at each point must be a number within the checker's limit.",
+    "category": "refused-now",
+    "proposed": false,
+    "where": [
+     {
+      "file": "svgolf/check.py",
+      "fn": "parse_latency"
+     }
+    ],
+    "match": [
+     {
+      "file": "svgolf/check.py",
+      "text": "the solution declares its latency in exactly one header line"
+     }
+    ]
+   },
+   {
     "id": "sg-interface",
     "tag": "ports that are not EXACTLY the task's (names, order, widths)",
     "group": "g-statement",
@@ -9117,8 +9160,8 @@
      "svgolf-statement",
      "svgolf-checker"
     ],
-    "trigger": "an extra or hidden input (en, a rounding-mode pin); a renamed port (ci for cin); a wider or merged output; an inout; a port one bit wider than the task's (the arbiter's mutants m004 and m007)",
-    "why": "Stimulus conventions ignore unknown names and store values at their own width, so only pinned ports mean what the hypothesis says. Since 2026-11-07 (decided; the arbiter's mutation sweep, finding F-a) the `extract` stage also compares the extractor's ports at every probe point (the defaults when a task has none) with task.json `ports` (the input ports in declaration order with their widths, then the outputs likewise, no other direction), for every kind, before any proof: the statement's `Interface` at those points. Before, a port one bit wider passed every check that needs no proof (`--unproved` called the arbiter's m004 and m007 admissible) and only the proof, which cannot exist, stood in its way.",
+    "trigger": "an extra or hidden input (en, a rounding-mode pin); a renamed port (ci for cin); a wider or merged output; an inout; a port one bit wider than the task's (two mutants of the arbiter's reference)",
+    "why": "Stimulus conventions ignore unknown names and store values at their own width, so only pinned ports mean what the hypothesis says. Since 2026-11-07 (decided after a mutation test of the arbiter) the `extract` stage also compares the extractor's ports at every probe point (the defaults when a task has none) with task.json `ports` (the input ports in declaration order with their widths, then the outputs likewise, no other direction), for every kind, before any proof: the statement's `Interface` at those points. Before, a port one bit wider passed every check that needs no proof (`--unproved` called those two mutants admissible) and only the proof, which cannot exist, stood in its way.",
     "category": "refused-now",
     "proposed": false,
     "match": [
@@ -9161,18 +9204,16 @@
    },
    {
     "id": "sg-unclocked",
-    "tag": "any edge-phase process (always_ff, always @(posedge clk), an async-reset block), even with a dead clock",
+    "tag": "(combinational tasks) any edge-phase process (always_ff, always @(posedge clk), an async-reset block), even with a dead clock",
     "group": "g-statement",
     "layers": [
      "svgolf-statement"
     ],
     "trigger": "always_ff @(posedge clk) s <= a ^ b;  clock tied low or undriven",
-    "why": "ls-sv runs every edge-phase process once per cycle whatever its clock holds, so a register on a clock nothing drives holds the right value in ls-sv and x in every simulator (0 GE in Yosys).",
-    "category": "later",
+    "why": "A combinational task's statement requires `Unclocked`: ls-sv runs every edge-phase process once per cycle whatever its clock holds, so a register on a clock nothing drives holds the right value in ls-sv and x in every simulator (0 GE in Yosys). Clocked designs are the clocked tasks' (the transaction, stream and reactive kinds), whose statements model the clock edge.",
+    "category": "refused-now",
     "proposed": false,
-    "prerequisite": "the sequential layer: ls-sv models clock edges; the `Unclocked` requirement goes then",
     "decided_by": "Thomas 2026-10-29: keep things combinatorial to begin with",
-    "plan": "SEQ",
     "match": [
      {
       "file": "svgolf/SvGolf/Task.lean",
@@ -9190,8 +9231,6 @@
     "attacks": [
      "add/dead_clock_tied"
     ],
-    "value_rank": 8,
-    "value_note": "registered, pipelined and multi-cycle designs (serial multiplier, iterative divider)",
     "notes": "Since WP-Q0 (2026-10-30) ls-sv itself refuses a dead, tied, gated, derived, register, internal-net, multiple or data-read clock and an internal asynchronous reset at the loader (gu-clock-source, gu-clock-reset, gu-clock-multiple, gu-clock-data-read in docs/sv-refusals.md), so a CLOCKED design that loads is single-clock and input-port-clocked. `Unclocked` stays the statement-level requirement of combinational tasks; the sequential statement (ClockedBy, svgolf/design/sequential/README.md) replaces it and the loader refusals are its loader-side twin."
    },
    {
@@ -9324,7 +9363,7 @@
      "svgolf-statement"
     ],
     "trigger": "an off-by-one step counter; unsigned instead of signed products; a missing sign extension; done one cycle early; the accumulator not cleared on start; an accumulator truncated to 2W",
-    "why": "`TxTask.StatementV2` (txtask-v2, svgolf/SvGolf/TaskSeq.lean) claims `Guar` for every transaction under `Released` and `Rely`, in every run from every power-up state on every known stimulus, at every parameter point in range, and the proof must establish it; a design wrong at any point, or late by a cycle, fails at the solution stage. Each matmul attack is also wrong at post-synthesis (`check.py --unproved`), so none is merely different.",
+    "why": "`TxTask.StatementV2` (`SvGolf/TaskSeq.lean`) claims `Guar` for every transaction under `Released` and `Rely`, in every run from every power-up state on every known stimulus, at every parameter point in range, and the proof must establish it; a design wrong at any point, or late by a cycle, fails at the solution stage. Each matmul attack is also wrong at post-synthesis (`check.py --unproved`), so none is merely different.",
     "category": "refused-now",
     "proposed": false,
     "match": [
@@ -9358,7 +9397,7 @@
      "svgolf-statement"
     ],
     "trigger": "the token shift reading the cell's own token (no value ever emitted); a missing else (two writes, the later wins); the neighbour push comparing the cell's own value; the valid token entering with the start (out_valid one cycle early, one value too many); a reset that leaves the cells; a top cell the drain does not clear; signed instead of unsigned order",
-    "why": "`StreamTask.StatementV2` (txtask-v2, svgolf/SvGolf/TaskSeq.lean) claims `Guar` for every transaction under `Released` and `Rely`, in every run from every power-up state on every known stimulus, at every parameter point in range, and the proof must establish it; a design wrong at any point, or one value early or late, fails at the solution stage. Each sorter attack is also wrong at post-synthesis (`check.py --unproved`), so none is merely different; designs that differ from the reference only in how they order EQUAL values (`>=` for `>`) are not attacks, since equal values are interchangeable in the emitted list.",
+    "why": "`StreamTask.StatementV2` (`SvGolf/TaskSeq.lean`) claims `Guar` for every transaction under `Released` and `Rely`, in every run from every power-up state on every known stimulus, at every parameter point in range, and the proof must establish it; a design wrong at any point, or one value early or late, fails at the solution stage. Each sorter attack is also wrong at post-synthesis (`check.py --unproved`), so none is merely different; designs that differ from the reference only in how they order EQUAL values (`>=` for `>`) are not attacks, since equal values are interchangeable in the emitted list.",
     "category": "refused-now",
     "proposed": false,
     "match": [
@@ -9387,13 +9426,13 @@
    },
    {
     "id": "sg-txstream-moore",
-    "tag": "(tx-family and stream-family tasks) an output in the combinational cone of an input port, the reset included: txtask-v2 rule 1, `MooreOutDep d []`, nothing exempt since 2026-11-09",
+    "tag": "(transaction and stream tasks) an output in the combinational cone of an input port, the reset included: the clocked statements' rule 1 (`MooreOutDep d []`), with nothing exempt since 2026-11-09",
     "group": "g-statement",
     "layers": [
      "svgolf-statement"
     ],
     "trigger": "assign out_valid = ov_q & ~rst (tests/sorter/attacks/rst_gate.sv: every snapshot right, the last output before a reset hidden on the wire); an output that reads start or an operand combinationally",
-    "why": "`TxTask.SatisfiedAtV2` and `StreamTask.SatisfiedAtV2` (svgolf/SvGolf/TaskSeq.lean) ask `MooreOutDep d []`: no combinational path, control dependencies included, from any input port to an output port, so that every claimed snapshot is what the outputs show on the wire for the whole next period. Until 2026-11-09 `rst` was exempt, which let a reset-gated output hide the snapshot before a reset entry, a snapshot the claims still cover (review L1). The post-synthesis check does not look for this (the snapshots are right), so the proof must establish it: such a design fails at the solution stage, and the kernel refutes it for every latency (tests/sorter/negative/Refute.lean, `rst_gate_refuted`).",
+    "why": "`TxTask.SatisfiedAtV2` and `StreamTask.SatisfiedAtV2` (`SvGolf/TaskSeq.lean`) ask `MooreOutDep d []`: no combinational path, control dependencies included, from any input port to an output port, so that every claimed snapshot is what the outputs show on the wire for the whole next period. Until 2026-11-09 `rst` was exempt, which let a reset-gated output hide the snapshot before a reset entry, a snapshot the claims still cover (found in the statements' review). The post-synthesis check does not look for this (the snapshots are right), so the proof must establish it: such a design fails at the solution stage, and the kernel refutes it for every latency (tests/sorter/negative/Refute.lean, `rst_gate_refuted`).",
     "category": "refused-now",
     "proposed": false,
     "match": [
@@ -9501,35 +9540,6 @@
     ]
    },
    {
-    "id": "sg-one-param",
-    "tag": "a task with two or more overridable parameters",
-    "group": "g-statement",
-    "layers": [
-     "svgolf-statement"
-    ],
-    "trigger": "(not expressible: CombTask.sem takes one Nat)",
-    "why": "The statement type is one-parameter.",
-    "category": "later",
-    "proposed": false,
-    "prerequisite": "none recorded; proposed prerequisite: a multi-parameter CombTask (sem over a tuple) and its Comb.lean reduction",
-    "plan": "MULTIPARAM",
-    "match": [
-     {
-      "file": "svgolf/SvGolf/Task.lean",
-      "text": "CombTask"
-     }
-    ],
-    "where": [
-     {
-      "file": "svgolf/SvGolf/Task.lean",
-      "fn": "CombTask"
-     }
-    ],
-    "unverified": true,
-    "verified_by_run": false,
-    "decided_by": "Thomas 2026-10-29: approved the refused-now and later classifications of the register"
-   },
-   {
     "id": "sg-no-theorem",
     "tag": "no theorem `Submission.solution`",
     "group": "g-axioms",
@@ -9588,7 +9598,7 @@
     "layers": [
      "svgolf-checker"
     ],
-    "trigger": "theorem t : ... := by sorry; also a goal ADMITTED by a tactic after it logged an error (the WP-G tactic elaborators log their refusal and admit the goal, so the proof compiles with an error and depends on sorryAx)",
+    "trigger": "theorem t : ... := by sorry; also a goal ADMITTED by a tactic after it logged an error (the `sv_structure` tactics log their refusal and admit the goal, so the proof compiles with an error and depends on sorryAx)",
     "why": "The proof depends on sorryAx, which the allow list excludes.",
     "category": "never",
     "proposed": true,
@@ -9820,18 +9830,16 @@
    },
    {
     "id": "sg-unpriced",
-    "tag": "a netlist with cells the GE table does not price",
+    "tag": "(combinational tasks) a netlist with cells the GE table does not price",
     "group": "g-score",
     "layers": [
      "svgolf-checker"
     ],
     "trigger": "always_ff @(posedge clk) y <= a & b;   (a $_DFF_P_ survives into the netlist)",
-    "why": "A combinational task's netlist contains only AND/NAND/OR/NOR/XOR/XNOR/ANDNOT/ORNOT/MUX/NOT; latches and flip-flops are not scored.",
-    "category": "later",
+    "why": "A combinational task's netlist contains only AND/NAND/OR/NOR/XOR/XNOR/ANDNOT/ORNOT/MUX/NOT; a latch or a flip-flop is not scored there (the clocked tasks' flow prices flip-flops: score/ge_seq.json).",
+    "category": "refused-now",
     "proposed": false,
-    "prerequisite": "the sequential layer and a flip-flop / latch price in score/ge.json",
     "decided_by": "Thomas 2026-10-29: keep things combinatorial to begin with",
-    "plan": "SEQ",
     "match": [
      {
       "file": "svgolf/score/score.py",
@@ -9898,7 +9906,7 @@
     "layers": [
      "svgolf-checker"
     ],
-    "trigger": "any vector of the budget on which design.sem (run2) and the Verilator netlist model differ",
+    "trigger": "any vector of the budget on which ls-sv's evaluation of the design (design.sem) and the Verilator netlist model differ",
     "why": "The proof is about ls-sv's reading, the score about Yosys's: the backstop for disagreements nobody has found. It is sampling: a difference confined to a rare region can pass. A rejection is a bug report.",
     "category": "refused-now",
     "proposed": false,
@@ -9927,11 +9935,11 @@
     "layers": [
      "svgolf-checker"
     ],
-    "trigger": "tests/_example/attacks/fn_uninit.sv (rejected at `design`; the postsynth check alone rejects it too), latch_never.sv and latch_star.sv (rejected at `fourstate` since WP-PROC follow-up 3; before it at `design`)",
-    "why": "x in IEEE, resolved freely by Yosys (to 1 or 0). ls-sv has no user function calls, no AlwaysLatch, no always @*, so no static rule sees it. Since WP-C3 the `design` stage rejects the loaded envelope that carries the Unsupported node (`Design2.hasUnsupported`); the postsynth stage, alone, still fails closed on it. Both lines hold today. Since WP-PROC follow-up 3 (2026-11-01) the latch half is also closed at the original text: rule (e) of score/fourstate.py refuses any latch `proc` infers (`select -assert-none t:$dlatch t:$adlatch t:$dlatchsr`), whatever ls-sv models, and `fourstate` runs before `design`.",
+    "trigger": "tests/_example/attacks/fn_uninit.sv (rejected at `design`; the postsynth check alone rejects it too), latch_never.sv and latch_star.sv (rejected at `fourstate` since 2026-11-01; before, at `design`)",
+    "why": "x in IEEE, resolved freely by Yosys (to 1 or 0), and no static rule sees it. ls-sv inlines a function that is a pure function of its inputs (since 2026-11-02) but not one that reads a local before assigning it, has no `always_latch`, and runs `always @*` only where it means `always_comb`, so such a design loads with an Unsupported node and the `design` stage rejects it (`Design2.hasUnsupported`); the postsynth stage, alone, still fails closed on it. Since 2026-11-01 the latch half is also closed at the original text: rule (e) of score/fourstate.py refuses any latch `proc` infers (`select -assert-none t:$dlatch t:$adlatch t:$dlatchsr`), whatever ls-sv models, and `fourstate` runs before `design`.",
     "category": "later",
     "proposed": false,
-    "prerequisite": "for a function local read before assignment: a 4-state rule in score/fourstate.py MUST land BEFORE ls-sv models function calls; the latch half is done (fourstate.py rule (e)), a latch construct ls-sv models would still need a rule for its initial x (plan LATCH4)",
+    "prerequisite": "for a function local read before assignment: a 4-state rule in score/fourstate.py must land before ls-sv models such a function; the latch half is done (fourstate.py rule (e)); a latch construct ls-sv models would still need a rule for its initial x",
     "plan": "LATCH4",
     "match": [
      {
@@ -9964,7 +9972,7 @@
    },
    {
     "id": "sg-ps-failclosed",
-    "tag": "fail-closed postsynth conditions: x/z in an ls-sv output, an unknown-valued constant in the netlist, a netlist Verilator will not lint / build / run, \u03c3_src \u2260 \u03c3_rev, port sets that differ, a netlist that does not re-read, an inout port, a non-plain identifier",
+    "tag": "fail-closed postsynth conditions: x/z in an ls-sv output, an unknown-valued constant that a gate, a flip-flop or an output reads, a netlist Verilator will not lint / build / run, σ_src ≠ σ_rev, port sets that differ, a netlist that does not re-read, an inout port, a non-plain identifier",
     "group": "g-score",
     "layers": [
      "svgolf-checker"
@@ -10014,7 +10022,7 @@
      },
      {
       "file": "svgolf/check/postsynth.py",
-      "fn": "unknown_literal"
+      "fn": "unknown_bits"
      },
      {
       "file": "svgolf/check/postsynth.py",
@@ -10032,6 +10040,30 @@
     "unverified": true,
     "verified_by_run": false,
     "notes": "\u03c3_src \u2260 \u03c3_rev (two ls-sv schedules disagree) is P-DETERMINISM (never, proposed)."
+   },
+   {
+    "id": "sg-ppa-illegal",
+    "tag": "a netlist whose repaired sky130 version is electrically illegal",
+    "group": "g-score",
+    "layers": [
+     "svgolf-checker"
+    ],
+    "trigger": "a load over max_capacitance;  a transition over max_transition;  a timing-table read outside its characterized range",
+    "why": "The ranked score is the sky130 area and delay of the verified netlist after the pinned repair; a netlist the liberty cannot time without extrapolating has no delay to rank, so the `ppa` stage refuses it and names the worst cells.",
+    "category": "refused-now",
+    "proposed": false,
+    "where": [
+     {
+      "file": "svgolf/check.py",
+      "fn": "ppa_stage"
+     }
+    ],
+    "match": [
+     {
+      "file": "svgolf/check.py",
+      "text": "the repaired sky130 netlist is electrically illegal"
+     }
+    ]
    },
    {
     "id": "sg-task-ban-op",
@@ -10152,7 +10184,7 @@
      "svgolf-gate"
     ],
     "trigger": "always_ff @(posedge clk or posedge rst) (tests/arbiter/attacks/a13_async.sv, tests/matmul/attacks/async_reset.sv); always_ff @(negedge clk); always_ff @(posedge clk iff en)",
-    "why": "The loader drops the extractor's `areset`, `edge: neg` and `iff` fields, so each of these shapes would reach ls-sv as a plain `always_ff @(posedge clk)`, a different circuit from the one Yosys scores (an asynchronous reset changes the outputs inside a period, and the scoring flow has no asynchronous-reset flop), and the statement's `ClockedBy clk none` cannot see a dropped field. So the source gate's clocked rules refuse them in every clocked kind: the reset is synchronous (contract C1).",
+    "why": "The loader drops the extractor's `areset`, `edge: neg` and `iff` fields, so each of these shapes would reach ls-sv as a plain `always_ff @(posedge clk)`, a different circuit from the one Yosys scores (an asynchronous reset changes the outputs inside a period, and the scoring flow has no asynchronous-reset flop), and the statement's `ClockedBy clk none` cannot see a dropped field. So the source gate's clocked rules refuse them in every clocked kind: the reset is synchronous.",
     "category": "refused-now",
     "proposed": false,
     "match": [
@@ -10179,6 +10211,30 @@
     ]
    },
    {
+    "id": "sg-clocked-profile",
+    "tag": "(clocked tasks) what the clock-step profile does not run: `initial`, `final`, `always_latch`, a delay, `wait`, `fork` or another event control, a blocking write in an `always_ff` body (but the step of a `for` header's own iterator), an initializer on a declaration",
+    "group": "g-clocked",
+    "layers": [
+     "svgolf-gate"
+    ],
+    "trigger": "`initial q = '0;`  `always_ff @(posedge clk) q = d;`  `logic [3:0] cnt = '0;`  `#1 q <= d;`",
+    "why": "The clocked statements update every register from the same pre-edge state, so a blocking write that another process could see is a race, and the profile has no initial values, delays or latches: the power-up state is any state, and the reset is the design's own. The source gate refuses these in every clocked kind before the proof.",
+    "category": "refused-now",
+    "proposed": false,
+    "where": [
+     {
+      "file": "svgolf/score/srcgate.py",
+      "fn": "clocked_findings"
+     }
+    ],
+    "match": [
+     {
+      "file": "svgolf/score/srcgate.py",
+      "text": "blocking assignment in `always_ff`"
+     }
+    ]
+   },
+   {
     "id": "sg-clocked-rules",
     "tag": "(clocked tasks) an x-creating construct, refused before the proof by the twin of rule 3 (`XSafe`)",
     "group": "g-clocked",
@@ -10186,7 +10242,7 @@
      "svgolf-checker"
     ],
     "trigger": "q <= a / b with b a signal; a ** e with a signed exponent e; v[i] with i declared signed; v[i] where i can leave the vector; v[i +: 4] read; 4'b1x00 outside a casez/casex item",
-    "why": "Rule 3 of the clocked statements (`XSafe`, svgolf/SvGolf/TaskSeq.lean, txtask-v2, decided 2026-11-06) forbids every construct that can create an x from known operands, so that every value of every run from every power-up state is known; the statement is the authority and the proof must establish it. check/clocked_rules.py refuses early, with a message per construct, only what ls-sv's lowering certainly turns into a construct `xsWidth` refuses, and admits the rest to the proof (tests/checker/test_xsafe_twin.py: the twin and `xsafeB` agree on the counter's and the arbiter's fixtures).",
+    "why": "Rule 3 of the clocked statements (`XSafe`, `SvGolf/TaskSeq.lean`, decided 2026-11-06) forbids every construct that can create an x from known operands, so that every value of every run from every power-up state is known; the statement is the authority and the proof must establish it. check/clocked_rules.py refuses early, with a message per construct, only what ls-sv's lowering certainly turns into a construct `xsWidth` refuses, and admits the rest to the proof (tests/checker/test_xsafe_twin.py: the twin and `xsafeB` agree on the counter's and the arbiter's fixtures).",
     "category": "refused-now",
     "proposed": false,
     "match": [
@@ -10256,7 +10312,7 @@
      "svgolf-checker"
     ],
     "trigger": "an array read at a constant index and never written (tests/seq_counter/never_loaded/mem_rom_const.sv); a write that never reaches the lane (mem_dead_write.sv, mem_unreached_word.sv)",
-    "why": "opt_mem connects every read of a lane no write loads with a defined value to an undefined value before any flip-flop exists (its log: `removing const-x lane`), which Yosys resolves separately at each read, while ls-sv gives every word one power-up value for every read. MEASURED (2026-11-06): the arbiter reference plus an unwritten two-word array read at a constant index, decided both ways at one cycle count, passed every stage before this rule and withheld the grant at entry 131071 (design/soundness/TXTASK-V2-REVIEW.md section 12, finding F1). A lane every write loads with the constant 0 or 1 gives every read one value and is accepted (`ok_mem_const0.sv`). Write: write the lane, or replace the array by constants.",
+    "why": "opt_mem connects every read of a lane no write loads with a defined value to an undefined value before any flip-flop exists (its log: `removing const-x lane`), which Yosys resolves separately at each read, while ls-sv gives every word one power-up value for every read. MEASURED (2026-11-06): the arbiter reference plus an unwritten two-word array read at a constant index, decided both ways at one cycle count, passed every stage before this rule and withheld the grant at entry 131071 (measured in the review of the clocked statements). A lane every write loads with the constant 0 or 1 gives every read one value and is accepted (`ok_mem_const0.sv`). Write: write the lane, or replace the array by constants.",
     "category": "refused-now",
     "proposed": false,
     "decided_by": "the maintainers, 2026-11-06 (txtask-v2): svGolf disallows a design where the pinned Yosys deviates from the semantics",
@@ -10292,7 +10348,7 @@
      "svgolf-checker"
     ],
     "trigger": "none in the pinned flow, which runs `synth -nofsm`; before 2026-11-06 a state register read only by comparisons with constants was recoded one-hot, with or without a reset (tests/seq_counter/never_loaded/fsm_unreset.sv, fsm_reset.sv)",
-    "why": "The fsm pass re-encodes a state register from the state codes it extracts: the new flip-flops power up in codes that are no value of the register, and a value that is no extracted state has no code, while ls-sv gives the register one power-up value of its width, so the proved and the scored circuits differ from some power-ups (design/soundness/TXTASK-V2-REVIEW.md section 12, finding F2). Since 2026-11-06 the clocked flow runs `synth -nofsm` (the combinational flow is unchanged), so a state register keeps its own flip-flops and the log has no `Mapping FSM` line; should one appear, the `score` stage refuses the design and asks for a report to the maintainers.",
+    "why": "The fsm pass re-encodes a state register from the state codes it extracts: the new flip-flops power up in codes that are no value of the register, and a value that is no extracted state has no code, while ls-sv gives the register one power-up value of its width, so the proved and the scored circuits differ from some power-ups (found in the review of the clocked statements). Since 2026-11-06 the clocked flow runs `synth -nofsm` (the combinational flow is unchanged), so a state register keeps its own flip-flops and the log has no `Mapping FSM` line; should one appear, the `score` stage refuses the design and asks for a report to the maintainers.",
     "category": "refused-now",
     "proposed": false,
     "decided_by": "the maintainers, 2026-11-06: the fsm pass is off in the clocked flow; the log refusal stays as a backstop",

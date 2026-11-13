@@ -5004,8 +5004,8 @@
   }
  ],
  "schema": "c-frontend-census-0.1",
- "survey_commit": "17f5498bd",
- "survey_measured_at_utc": "2026-11-12T22:23:16Z",
+ "survey_commit": "1d5ce79d2",
+ "survey_measured_at_utc": "2026-11-13T10:29:45Z",
  "survey_schema": "c-survey-0.1",
  "totals": {
   "c17_accepted": 0,

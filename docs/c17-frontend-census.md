@@ -3,8 +3,8 @@
 This report reruns the pinned Clang on the 350 files rejected under C23.
 It uses Clang diagnostics and modes directly; it does not parse source text.
 
-- survey commit: `17f5498bd`
-- survey measured at: `2026-11-12T22:23:16Z`
+- survey commit: `1d5ce79d2`
+- survey measured at: `2026-11-13T10:29:45Z`
 - frontend: `clang version 21.1.8 (https://github.com/conda-forge/clangdev-feedstock 334cf9a5e6c0331e9f261eaf01fc3568724fcce9)`
 - profile flags: `-D_FORTIFY_SOURCE=0`
 - C23 rejected: **293**

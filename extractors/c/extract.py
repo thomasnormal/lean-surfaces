@@ -652,9 +652,11 @@ class Extractor:
         if self.string_bytes is not None:
             begin = (n.get("range") or {}).get("begin") or {}
             offset = begin.get("offset")
-            # Macro-generated literals can be present in Clang's semantic AST
-            # without a file offset in the JSON envelope.  They remain loud;
-            # there is no stable envelope identity to join to.
+            # Macro arguments have no direct file offset in the JSON AST.  The
+            # expansion location is the parser's source identity for the
+            # semantic node, and the probe reports that same location.
+            if offset is None:
+                offset = (begin.get("expansionLoc") or {}).get("offset")
             if offset is None:
                 return out
             if offset not in self.string_bytes:

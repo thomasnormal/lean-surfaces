@@ -10,10 +10,10 @@
   "gcc.c-torture/execute": {
    "not-parsed": 267,
    "oracle-tests-compiler": 1,
-   "passed": 917,
+   "passed": 918,
    "refused-libc": 35,
    "refused-ub": 98,
-   "refused-unsupported": 536,
+   "refused-unsupported": 535,
    "timeout": 64
   },
   "gcc.c23-run": {
@@ -28,10 +28,10 @@
  "counts": {
   "not-parsed": 294,
   "oracle-tests-compiler": 1,
-  "passed": 1092,
+  "passed": 1093,
   "refused-libc": 39,
   "refused-ub": 107,
-  "refused-unsupported": 615,
+  "refused-unsupported": 614,
   "timeout": 66
  },
  "dynamic_wall_ranking": [
@@ -3226,18 +3226,10 @@
    "present": 1,
    "sole": 1,
    "wall": "unsupported:va_arg requested unsupported value type 'struct S1'"
-  },
-  {
-   "files": [
-    "strct-varg-1.c"
-   ],
-   "present": 1,
-   "sole": 1,
-   "wall": "unsupported:va_arg requested unsupported value type 'struct s'"
   }
  ],
  "manifest_hash": "bca94718b04e8394cdce992866637166f530978790bd1013cea4a00ae25ef764",
- "measured_at_utc": "2026-11-13T23:06:51Z",
+ "measured_at_utc": "2026-11-13T23:14:09Z",
  "measured_commit": "cfd1415e6",
  "pin": {
   "corpora": [
@@ -28766,8 +28758,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "va_arg requested unsupported value type 'struct s'",
-   "dynamic_wall": "unsupported:va_arg requested unsupported value type 'struct s'",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "strct-varg-1.c",
    "sha256": "8b9d0f63a946ddf96a8693c67ea786314140c055e72b1cf2b36b9f30b121a2b1",
@@ -28776,7 +28768,7 @@
     "libc-call: __builtin_va_end",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",

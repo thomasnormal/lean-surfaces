@@ -2,10 +2,10 @@
 
 Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manifest.
 
-- verdicts: 1092/2214 MATCH (passed 1092, failed 0, oracle 0)
+- verdicts: 1093/2214 MATCH (passed 1093, failed 0, oracle 0)
 - manifest SHA-256: `bca94718b04e8394cdce992866637166f530978790bd1013cea4a00ae25ef764`
 - measured commit: `cfd1415e6`
-- measured at: `2026-11-13T23:06:51Z`
+- measured at: `2026-11-13T23:14:09Z`
 
 ## Verdict counts
 
@@ -13,10 +13,10 @@ Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manife
 | --- | ---: |
 | `not-parsed` | 294 |
 | `oracle-tests-compiler` | 1 |
-| `passed` | 1092 |
+| `passed` | 1093 |
 | `refused-libc` | 39 |
 | `refused-ub` | 107 |
-| `refused-unsupported` | 615 |
+| `refused-unsupported` | 614 |
 | `timeout` | 66 |
 
 ## Counts by corpus
@@ -30,10 +30,10 @@ Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manife
 | `c-testsuite/single-exec` | `timeout` | 2 |
 | `gcc.c-torture/execute` | `not-parsed` | 267 |
 | `gcc.c-torture/execute` | `oracle-tests-compiler` | 1 |
-| `gcc.c-torture/execute` | `passed` | 917 |
+| `gcc.c-torture/execute` | `passed` | 918 |
 | `gcc.c-torture/execute` | `refused-libc` | 35 |
 | `gcc.c-torture/execute` | `refused-ub` | 98 |
-| `gcc.c-torture/execute` | `refused-unsupported` | 536 |
+| `gcc.c-torture/execute` | `refused-unsupported` | 535 |
 | `gcc.c-torture/execute` | `timeout` | 64 |
 | `gcc.c23-run` | `not-parsed` | 27 |
 | `gcc.c23-run` | `passed` | 3 |
@@ -597,4 +597,3 @@ The run's first refusal, normalized by construct; `sole` counts rows whose first
 | `unsupported:unsupported bit-field width 52 for 'long long'` | 1 | 1 | 991118-1.c |
 | `unsupported:va_arg requested unsupported value type 'struct S'` | 1 | 1 | pr92904.c |
 | `unsupported:va_arg requested unsupported value type 'struct S1'` | 1 | 1 | stdarg-3.c |
-| `unsupported:va_arg requested unsupported value type 'struct s'` | 1 | 1 | strct-varg-1.c |

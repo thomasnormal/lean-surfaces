@@ -53,6 +53,9 @@ deriving Repr, Inhabited
 structure CoreMemDesign where
   name : String
   env : IEnv
+  /-- Element widths for the retained source declarations.  `instExpr2`
+      needs this table to lower a packed bit select; keeping it beside the
+      source-shaped design avoids manufacturing a second declaration view. -/
   elems : List (String × Nat)
   scalar : Elab
   scalarEdge : Elab1
@@ -520,7 +523,8 @@ def evalMemBin (op : SymBinOp) (a b : LVec) : Res LVec :=
 
 def CoreMemDesign.evalScalar (E : CoreMemDesign) (env : IEnv) (elems : List (String × Nat))
     (st : CoreMemState) (ctx : Option Nat) (e : PExpr) : Res LVec :=
-  evalPure2 (E.scalar.view st.scalar) (instExpr2 env elems ctx e)
+  let widths := if elems.isEmpty then E.elems else elems
+  evalPure2 (E.scalar.view st.scalar) (instExpr2 env widths ctx e)
 
 mutual
 
@@ -533,14 +537,17 @@ def CoreMemDesign.evalIndex (E : CoreMemDesign) (env : IEnv) (elems : List (Stri
 def CoreMemDesign.evalExpr (E : CoreMemDesign) (env : IEnv) (elems : List (String × Nat))
     (st : CoreMemState) (ctx : Option Nat) : PExpr → Res LVec
   | e@(.arrayElem name [index]) => do
-      let some md := E.memDecl? name
-        | .unsupported s!"ArraySel: memory declaration '{name}' is not present"
-      let idx ← E.evalIndex env elems st index
-      match st.memory.readIndexId md.shape.id false idx with
-      | some v => .ok v
-      | none => .unsupported s!"ArraySel: memory identity for '{name}' is not present"
-  | .arrayElem name _ =>
-      .unsupported s!"ArraySel:rank: memory '{name}' is not a one-rank element select"
+      match E.memDecl? name with
+      | some md =>
+          let idx ← E.evalIndex env elems st index
+          match st.memory.readIndexId md.shape.id false idx with
+          | some v => .ok v
+          | none => .unsupported s!"ArraySel: memory identity for '{name}' is not present"
+      | none => E.evalScalar env elems st ctx e
+  | e@(.arrayElem name _) =>
+      if E.memDecl? name |>.isSome then
+        .unsupported s!"ArraySel:rank: memory '{name}' is not a one-rank element select"
+      else E.evalScalar env elems st ctx e
   | .arrayPart name _ _ _ _ =>
       .unsupported s!"ArraySel:part: memory '{name}' part select is outside this E slice"
   | e@(.unary op a) =>

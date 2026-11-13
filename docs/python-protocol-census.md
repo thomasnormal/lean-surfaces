@@ -170,3 +170,7 @@ the continuation layer.
 
 The corresponding `Monadic.finishCallM_continue_body_ok` bridge preserves
 `RFlow.cont`; loop re-testing remains owned by the continuation layer.
+
+The two-statement sequencing bridge `Monadic.finishCallM_pass_expr_body_ok`
+composes `pass` followed by an integer expression statement through the same
+left-to-right body walker and restoration boundary.

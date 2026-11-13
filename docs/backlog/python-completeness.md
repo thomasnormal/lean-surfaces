@@ -14465,3 +14465,20 @@ statement through `RFlow.cont` and top-level call-depth restoration.
 
 DECIDED: both `break` and `continue` flow now compose through call
 restoration; enclosing-loop continuation and recursive adequacy remain open.
+
+## 2026-11-13-pyfoundation-129 — two-statement sequencing bridge
+
+`Monadic.finishCallM_pass_expr_body_ok` checks left-to-right sequencing for a
+two-statement body: `pass` followed by an integer expression statement. The
+body reaches normal `RFlow.next` and restores the requested call depth.
+
+| Measurement | Result |
+|---|---|
+| Target | `lake build LeanModels.Python.Monadic.Eval` passed; 11/11 jobs |
+| Theorem | `Monadic.finishCallM_pass_expr_body_ok` |
+| Domain | two-statement body, arbitrary frame locals/world/depth |
+| Semantic change | theorem-only sequencing composition |
+| Remaining debt | recursive positive-fuel calls and general body adequacy |
+
+DECIDED: a multi-statement normal body now composes through the stateful call
+boundary; recursive and general body adequacy remain open.

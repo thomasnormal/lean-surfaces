@@ -326,3 +326,6 @@ seven-update bridge through an early value return.
 
 `Monadic.finishCallM_assign_seven_existing_locals_pass_body_ok` extends the
 seven-update bridge through a normal `pass` continuation.
+
+`Monadic.finishCallM_assign_seven_existing_locals_expr_body_ok` extends the
+seven-update bridge through a normal integer expression statement.

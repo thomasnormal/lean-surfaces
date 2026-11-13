@@ -139,6 +139,9 @@ def main (argv : List String) : IO UInt32 := do
           | .unsupported m => .error s!"instantiate2: {m}"
         unless d.namesNodup do
           .error "instantiate2: two declarations of one name after flattening"
+        match d.clockViolation with
+        | some (kind, text) => .error s!"{kind}: {text}"
+        | none => pure ()
         let E ← match Elab1.ofEdgeDesign2 d with
           | .ok E => pure E
           | .error m => .error m

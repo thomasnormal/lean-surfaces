@@ -61,6 +61,56 @@ def FF.eventInputsB (d : Design2) (f : FF) : Bool :=
     | none => true
     | some r => edgeInputB d r
 
+/-! Preserve the first parser-shaped refusal when body admission fails.  The
+edge profile still refuses the whole process, but callers should see the
+source node (`LocalDecl`, an unsupported statement, and so on) rather than a
+generic "body outside profile" message. -/
+
+mutual
+
+def firstUnsupportedStmt : Stmt2 → Option (String × String)
+  | .unsupported kind text => some (kind, text)
+  | .ifStmt _ yes no =>
+      match firstUnsupportedStmt yes with
+      | some r => some r
+      | none => firstUnsupportedOpt no
+  | .block body => firstUnsupportedStmts body.toList
+  | .caseStmt _ items default? _ _ =>
+      match firstUnsupportedCases items.toList with
+      | some r => some r
+      | none => firstUnsupportedOpt default?
+  | .blockingAssign .. | .nbaAssign .. => none
+
+def firstUnsupportedOpt : Option Stmt2 → Option (String × String)
+  | none => none
+  | some body => firstUnsupportedStmt body
+
+def firstUnsupportedStmts : List Stmt2 → Option (String × String)
+  | [] => none
+  | stmt :: rest =>
+      match firstUnsupportedStmt stmt with
+      | some r => some r
+      | none => firstUnsupportedStmts rest
+
+def firstUnsupportedCase : CaseItem2 → Option (String × String)
+  | .mk _ body => firstUnsupportedStmt body
+
+def firstUnsupportedCases : List CaseItem2 → Option (String × String)
+  | [] => none
+  | item :: rest =>
+      match firstUnsupportedCase item with
+      | some r => some r
+      | none => firstUnsupportedCases rest
+
+end
+
+def firstUnsupportedFFs : List FF → Option (String × String)
+  | [] => none
+  | f :: rest =>
+      match firstUnsupportedStmt f.body with
+      | some r => some r
+      | none => firstUnsupportedFFs rest
+
 /-- A source-kind-preserving entry into the edge-only fragment. Admission
 is loud; one-writer/no-clock-write profile proofs are still explicit. -/
 def Elab1.ofEdgeDesign2 (d : Design2) : Except String Elab1 :=
@@ -71,7 +121,9 @@ def Elab1.ofEdgeDesign2 (d : Design2) : Except String Elab1 :=
       if !fs.all (FF.eventInputsB d) then
         .error "9.4.2: this E edge elaborator requires declared scalar input clocks and resets"
       else if !E.okB then
-        .error "9.2.2.1/9.2.2.4: procedural body is outside E's admitted edge fragment"
+        match firstUnsupportedFFs E.procs.toList with
+        | some (kind, text) => .error s!"{kind}: {text}"
+        | none => .error "9.2.2.1/9.2.2.4: procedural body is outside E's admitted edge fragment"
       else .ok E
 
 /-- A successful transport retains the source kind, event and entire body. -/
@@ -121,7 +173,9 @@ theorem Elab1.ofEdgeDesign2_spec {d : Design2} {E : Elab1}
       · cases h
       · rename_i he
         split at h
-        · cases h
+        · split at h
+          · cases h
+          · cases h
         · rename_i hb
           cases h
           exact ⟨rfl, rfl, by simpa using FF.ofProcesses2_preserves hs,

@@ -959,12 +959,28 @@ def bitFieldSignedValue (t : IntTy) (width raw : Nat) : Int :=
     (value : Int) - (modulus : Int)
   else value
 
+def bitFieldStoreBytes (bs : List CByte) (offset width value : Nat) : List CByte :=
+  let updateByte := fun (byteIndex : Nat) (b : CByte) =>
+    let original := match b with | .conc x => x.toNat | _ => 0
+    let result := (List.range 8).foldl (fun acc bit =>
+      let absolute := byteIndex * 8 + bit
+      if absolute < offset || absolute ≥ offset + width then acc
+      else
+        let want := ((value / (2 ^ (absolute - offset))) % 2) == 1
+        if want then acc ||| (2 ^ bit)
+        else acc &&& (Nat.xor (2 ^ bit) 255)) original
+    .conc (UInt8.ofNat result)
+  bs.mapIdx updateByte
+
 
 def loadBitFieldAt (ctx : Ctx) (recordTy : CType) (field : String)
     (fieldTy : CType) (fieldPtr : Ptr) : EvalM CVal := do
   match ctx.layout.fieldBits recordTy field, ctx.layout.size recordTy,
       intTyOf? (ctx.layout.normalizeTy fieldTy) with
   | some (offsetBits, width), some recordSize, some storageTy =>
+      if width > 24 || storageTy.signed then
+        refuseUnsupported s!"unsupported bit-field width {width} for '{fieldTy}'"
+      else
       let basePtr := { fieldPtr with off := fieldPtr.off - (offsetBits / 8 : Int), bound := none }
       let bs ← readMem (fun m => m.loadBytes basePtr recordSize)
       match bitFieldBytesNat bs with
@@ -984,15 +1000,9 @@ def storeBitFieldAt (ctx : Ctx) (recordTy : CType) (field : String)
   | some (offsetBits, width), some recordSize, some storageTy, .int _ n =>
       let basePtr := { fieldPtr with off := fieldPtr.off - (offsetBits / 8 : Int), bound := none }
       let bs ← readMem (fun m => m.loadBytes basePtr recordSize)
-      match bitFieldBytesNat bs with
-      | none => refuseUnsupported "bit-field writes an indeterminate representation"
-      | some raw =>
-          let mask := (2 : Nat) ^ width - 1
-          let shiftedMask := mask * ((2 : Nat) ^ offsetBits)
-          let fieldValue := (IntTy.wrap { storageTy with bits := width } n).toNat
-          let updated := (raw &&& (Nat.xor shiftedMask ((2 : Nat) ^ (recordSize * 8) - 1))) ||| (fieldValue &&& mask) * ((2 : Nat) ^ offsetBits)
-          let bytes := (Mem.natToBytes recordSize updated).map CByte.conc
-          writeMem (fun m => m.storeBytes basePtr bytes)
+      let fieldValue := (IntTy.wrap { storageTy with bits := width } n).toNat
+      let bytes := bitFieldStoreBytes bs offsetBits width fieldValue
+      writeMem (fun m => m.storeBytes basePtr bytes)
   | some _, _, _, _ => refuseUnsupported s!"unsupported bit-field store '{fieldTy}'"
   | none, _, _, _ => refuseUnsupported s!"no bit-field layout for '{field}'"
 
@@ -1079,7 +1089,14 @@ def evalExpr (ctx : Ctx) : Expr → EvalM CVal
       if ck == "LValueToRValue" then do
         -- §6.3.2.1p2 — 1837 sites, the load-bearing implicit of the corpus.
         let p ← evalLValue ctx sub
-        loadAt p (ctx.layout.normalizeTy ty) (ctx.layout.size (ctx.layout.normalizeTy ty))
+        match sub with
+        | .member base field arrow fieldTy _ =>
+            if ctx.layout.fieldBits base.ty field |>.isSome then
+              loadBitFieldAt ctx base.ty field fieldTy p
+            else
+              loadAt p (ctx.layout.normalizeTy ty) (ctx.layout.size (ctx.layout.normalizeTy ty))
+        | _ =>
+            loadAt p (ctx.layout.normalizeTy ty) (ctx.layout.size (ctx.layout.normalizeTy ty))
       else if ck == "ArrayToPointerDecay" then do
         -- §6.3.2.1p3 — 405 sites, the LARGEST pointer producer there is.
         let p ← evalLValue ctx sub
@@ -1247,7 +1264,12 @@ def evalExpr (ctx : Ctx) : Expr → EvalM CVal
         -- POSTFIX; it never writes `++i`. Postfix yields the value BEFORE
         -- the update, and the update itself can overflow (`J.2(35)`).
         let p ← evalLValue ctx sub
-        let old ← loadAt p (ctx.layout.normalizeTy sub.ty) (ctx.layout.size (ctx.layout.normalizeTy sub.ty))
+        let old ← match sub with
+          | .member base field arrow fieldTy _ =>
+              if ctx.layout.fieldBits base.ty field |>.isSome then
+                loadBitFieldAt ctx base.ty field fieldTy p
+              else loadAt p (ctx.layout.normalizeTy sub.ty) (ctx.layout.size (ctx.layout.normalizeTy sub.ty))
+          | _ => loadAt p (ctx.layout.normalizeTy sub.ty) (ctx.layout.size (ctx.layout.normalizeTy sub.ty))
         match old with
         | .ptr _ =>
             -- C23 §6.5.3.5p2 defines pointer increment/decrement in terms
@@ -1255,7 +1277,12 @@ def evalExpr (ctx : Ctx) : Expr → EvalM CVal
             -- arithmetic rule, so one-past and object bounds stay exact.
             let nv ← evalArith ctx (if op == "++" then "+" else "-") old
               (.int IntTy.int_ 1) (ctx.layout.normalizeTy sub.ty)
-            storeAt p (ctx.layout.normalizeTy sub.ty) nv
+            match sub with
+            | .member base field arrow fieldTy _ =>
+                if ctx.layout.fieldBits base.ty field |>.isSome then
+                  storeBitFieldAt ctx base.ty field fieldTy p nv
+                else storeAt p (ctx.layout.normalizeTy sub.ty) nv
+            | _ => storeAt p (ctx.layout.normalizeTy sub.ty) nv
             pure (if post then old else nv)
         | _ =>
             let (storageT, n) ← asInt old
@@ -1265,7 +1292,12 @@ def evalExpr (ctx : Ctx) : Expr → EvalM CVal
             | .ok (.int _ nv) => do
                 let storedT ← intTyOf (ctx.layout.normalizeTy sub.ty)
                 let stored := convert storedT nv
-                storeAt p (ctx.layout.normalizeTy sub.ty) stored
+                match sub with
+                | .member base field arrow fieldTy _ =>
+                    if ctx.layout.fieldBits base.ty field |>.isSome then
+                      storeBitFieldAt ctx base.ty field fieldTy p stored
+                    else storeAt p (ctx.layout.normalizeTy sub.ty) stored
+                | _ => storeAt p (ctx.layout.normalizeTy sub.ty) stored
                 pure (if post then old else stored)
             | .ok _ => refuseUnsupported "increment of a non-integer value"
       else refuseUnsupported s!"unary operator '{op}'"
@@ -2189,12 +2221,14 @@ private theorem memInvariant_core (ctx : Ctx) : ∀ (n : Nat) (e : Expr), e.size
       | implicitCast _ s _ _ =>
           obtain ⟨i1, i2⟩ := ih s (by simp only [Expr.size_implicitCast] at he; omega)
             (Expr.isPure_implicitCast hp)
-          exact ⟨by open_eval; apply MemInvariant.ite' <;> mem_inv,
+          exact ⟨by open_eval; apply MemInvariant.ite' <;>
+              first | (simp [loadBitFieldAt]; mem_inv) | mem_inv,
             by open_lvalue; mem_inv⟩
       | cast _ s _ _ =>
           obtain ⟨i1, i2⟩ := ih s (by simp only [Expr.size_cast] at he; omega)
             (Expr.isPure_cast hp)
-          exact ⟨by open_eval; apply MemInvariant.ite' <;> mem_inv,
+          exact ⟨by open_eval; apply MemInvariant.ite' <;>
+              first | (simp [loadBitFieldAt]; mem_inv) | mem_inv,
             by open_lvalue; mem_inv⟩
       | member b f a fieldTy _ =>
           obtain ⟨i1, i2⟩ := ih b (by simp only [Expr.size_member] at he; omega)
@@ -2237,7 +2271,7 @@ private theorem memInvariant_core (ctx : Ctx) : ∀ (n : Nat) (e : Expr), e.size
           · -- `++`/`--` store; `hnode` excludes both spellings.
             open_eval
             repeat (any_goals split)
-            all_goals first | (mem_inv; done) | simp_all
+            all_goals first | (simp_all [loadBitFieldAt, storeBitFieldAt]; mem_inv; done) | (mem_inv; done) | simp_all
           · open_lvalue
             repeat (any_goals split)
             all_goals first | (mem_inv; done) | simp_all

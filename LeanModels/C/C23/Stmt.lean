@@ -210,7 +210,12 @@ def zeroMembers : Nat → Ctx → Ptr → CType → List (String × CType) → E
   | _, _, _, _, [] => pure ()
   | fuel + 1, ctx, p, ty, (nm, mty) :: rest => do
       match ctx.layout.fieldOff ty nm with
-      | some off => zeroInit fuel ctx (Mem.member p off) mty
+      | some off =>
+          if ctx.layout.fieldBits ty nm |>.isSome then
+            liftEval (storeBitFieldAt ctx ty nm mty (Mem.member p off)
+              (.int ((intTyOf? (ctx.layout.normalizeTy mty)).getD IntTy.int_) 0))
+          else
+            zeroInit fuel ctx (Mem.member p off) mty
       | none => refuseUnsupported s!"no offset for member '{nm}'"
       zeroMembers fuel ctx p ty rest
 
@@ -292,7 +297,12 @@ def initMembers : Nat → Ctx → Ptr → CType → List (String × CType) → L
     | rest, [] => zeroMembers fuel ctx p ty rest
     | (nm, mty) :: mrest, e :: erest => do
         match ctx.layout.fieldOff ty nm with
-        | some off => initObject fuel ctx (Mem.member p off) mty e
+        | some off =>
+            if ctx.layout.fieldBits ty nm |>.isSome then
+              let v ← evalE ctx e
+              liftEval (storeBitFieldAt ctx ty nm mty (Mem.member p off) v)
+            else
+              initObject fuel ctx (Mem.member p off) mty e
         | none => refuseUnsupported s!"no offset for member '{nm}'"
         initMembers fuel ctx p ty mrest erest
 

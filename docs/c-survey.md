@@ -2,10 +2,10 @@
 
 Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manifest.
 
-- verdicts: 1018/2214 MATCH (passed 1018, failed 0, oracle 0)
-- manifest SHA-256: `a10a3e2066cb79ce8f7ff2fa57ed4709451c8dd50ce3ef4e28c6a43402524102`
-- measured commit: `0d4266e74`
-- measured at: `2026-11-13T13:15:00Z`
+- verdicts: 1019/2214 MATCH (passed 1019, failed 0, oracle 0)
+- manifest SHA-256: `7edbe084f6fce8e1cddb9d2276a42037cab7be1c8d6dc9071af4ab3b7db57d53`
+- measured commit: `07d6429f8`
+- measured at: `2026-11-13T13:25:00Z`
 
 ## Verdict counts
 
@@ -13,10 +13,10 @@ Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manife
 | --- | ---: |
 | `not-parsed` | 294 |
 | `oracle-tests-compiler` | 1 |
-| `passed` | 1018 |
+| `passed` | 1019 |
 | `refused-libc` | 39 |
 | `refused-ub` | 105 |
-| `refused-unsupported` | 691 |
+| `refused-unsupported` | 690 |
 | `timeout` | 66 |
 
 ## Counts by corpus
@@ -30,10 +30,10 @@ Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manife
 | `c-testsuite/single-exec` | `timeout` | 2 |
 | `gcc.c-torture/execute` | `not-parsed` | 267 |
 | `gcc.c-torture/execute` | `oracle-tests-compiler` | 1 |
-| `gcc.c-torture/execute` | `passed` | 847 |
+| `gcc.c-torture/execute` | `passed` | 848 |
 | `gcc.c-torture/execute` | `refused-libc` | 35 |
 | `gcc.c-torture/execute` | `refused-ub` | 96 |
-| `gcc.c-torture/execute` | `refused-unsupported` | 608 |
+| `gcc.c-torture/execute` | `refused-unsupported` | 607 |
 | `gcc.c-torture/execute` | `timeout` | 64 |
 | `gcc.c23-run` | `not-parsed` | 27 |
 | `gcc.c23-run` | `passed` | 3 |
@@ -428,7 +428,6 @@ The run's first refusal, normalized by construct; `sole` counts rows whose first
 | `unsupported:no layout for declared type 'A0'` | 1 | 1 | va-arg-22.c |
 | `unsupported:no layout for declared type 'DB_TXNLIST'` | 1 | 1 | 20011008-3.c |
 | `unsupported:no layout for declared type 'PgHdr[5]'` | 1 | 1 | pr33870-1.c |
-| `unsupported:no layout for declared type 'Point'` | 1 | 1 | 20000808-1.c |
 | `unsupported:no layout for declared type 'Q'` | 1 | 1 | simd-5.c |
 | `unsupported:no layout for declared type 'ScanfState'` | 1 | 1 | va-arg-13.c |
 | `unsupported:no layout for declared type 'T0 *const'` | 1 | 1 | 991016-1.c |

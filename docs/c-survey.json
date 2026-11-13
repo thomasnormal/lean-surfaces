@@ -10,10 +10,10 @@
   "gcc.c-torture/execute": {
    "not-parsed": 267,
    "oracle-tests-compiler": 1,
-   "passed": 847,
+   "passed": 848,
    "refused-libc": 35,
    "refused-ub": 96,
-   "refused-unsupported": 608,
+   "refused-unsupported": 607,
    "timeout": 64
   },
   "gcc.c23-run": {
@@ -28,10 +28,10 @@
  "counts": {
   "not-parsed": 294,
   "oracle-tests-compiler": 1,
-  "passed": 1018,
+  "passed": 1019,
   "refused-libc": 39,
   "refused-ub": 105,
-  "refused-unsupported": 691,
+  "refused-unsupported": 690,
   "timeout": 66
  },
  "dynamic_wall_ranking": [
@@ -1915,14 +1915,6 @@
   },
   {
    "files": [
-    "20000808-1.c"
-   ],
-   "present": 1,
-   "sole": 1,
-   "wall": "unsupported:no layout for declared type 'Point'"
-  },
-  {
-   "files": [
     "simd-5.c"
    ],
    "present": 1,
@@ -3562,9 +3554,9 @@
    "wall": "unsupported:va_arg requested unsupported value type 'struct s'"
   }
  ],
- "manifest_hash": "a10a3e2066cb79ce8f7ff2fa57ed4709451c8dd50ce3ef4e28c6a43402524102",
- "measured_at_utc": "2026-11-13T13:15:00Z",
- "measured_commit": "0d4266e74",
+ "manifest_hash": "7edbe084f6fce8e1cddb9d2276a42037cab7be1c8d6dc9071af4ab3b7db57d53",
+ "measured_at_utc": "2026-11-13T13:25:00Z",
+ "measured_commit": "07d6429f8",
  "pin": {
   "corpora": [
    "C1",
@@ -6869,15 +6861,15 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "no layout for declared type 'Point'",
-   "dynamic_wall": "unsupported:no layout for declared type 'Point'",
+   "detail": "",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "20000808-1.c",
    "sha256": "9587ac2547140cf096915e059dc4c5605778185b000f95d67ca0918e01802d49",
    "static_walls": [
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",

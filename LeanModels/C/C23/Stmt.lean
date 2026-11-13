@@ -1063,6 +1063,47 @@ def callFn : Nat → Program → LeanModels.C.FunctionDefn → List CVal → Exe
               | some n => pure (.int IntTy.ulong n)
               | none => refuseUnsupported "strlen: no concrete NUL in object"
           | _ => refuseUnsupported "strlen: wrong argument count"
+        let runStrnlen : List CVal → ExecM CVal := fun vs =>
+          match vs with
+          | [src, limit] => do
+              let sp ← asPtr src
+              let (_, n) ← asInt limit
+              if n < 0 then refuseUnsupported "strnlen: negative size"
+              else do
+                let m ← get
+                let (_, source, off) ← liftEval (m.resolve sp 0)
+                let rec scanN : List CByte → Nat → Nat → Option Nat
+                  | _, 0, count => some count
+                  | [], _, _ => none
+                  | b :: rest, left, count =>
+                      match b with
+                      | .conc x => if x == 0 then some count else scanN rest (left - 1) (count + 1)
+                      | _ => none
+                match scanN (source.bytes.drop off) n.toNat 0 with
+                | some k => pure (.int IntTy.ulong k)
+                | none => refuseUnsupported "strnlen: non-concrete string range"
+          | _ => refuseUnsupported "strnlen: wrong argument count"
+        let runMemchr : List CVal → ExecM CVal := fun vs =>
+          match vs with
+          | [src, needle, count] => do
+              let sp ← asPtr src
+              let (_, wanted) ← asInt needle
+              let (_, n) ← asInt count
+              if n < 0 then refuseUnsupported "memchr: negative size"
+              else do
+                let m ← get
+                let (_, source, off) ← liftEval (m.resolve sp 0)
+                let rec find : List CByte → Nat → Option Nat
+                  | _, 0 => none
+                  | b :: rest, left =>
+                      match b with
+                      | .conc x => if x.toNat == (wanted % 256).toNat then some 0 else find rest (left - 1) |>.map (· + 1)
+                      | _ => none
+                  | [], _ => none
+                match find (source.bytes.drop off) n.toNat with
+                | some k => pure (.ptr { sp with off := sp.off + k })
+                | none => pure (.ptr Ptr.null)
+          | _ => refuseUnsupported "memchr: wrong argument count"
         let runStrchr : List CVal → ExecM CVal := fun vs =>
           match vs with
           | [src, ch] => do
@@ -1330,6 +1371,8 @@ def callFn : Nat → Program → LeanModels.C.FunctionDefn → List CVal → Exe
                     else if nm == "__builtin_strcmp" then runStrcmp vs
                     else if nm == "__builtin_memcmp" || nm == "memcmp" then runMemcmp vs
                     else if nm == "__builtin_strlen" then runStrlen vs
+                    else if nm == "strnlen" || nm == "__builtin_strnlen" then runStrnlen vs
+                    else if nm == "memchr" || nm == "__builtin_memchr" then runMemchr vs
                     else if nm == "__builtin_alloca" then runAlloca vs
                     else if nm == "malloc" || nm == "__builtin_malloc" then runMalloc vs
                     else if nm == "calloc" || nm == "__builtin_calloc" then runCalloc vs
@@ -1370,6 +1413,8 @@ def callFn : Nat → Program → LeanModels.C.FunctionDefn → List CVal → Exe
               else if nm == "__builtin_strcmp" then runStrcmp vs
               else if nm == "__builtin_memcmp" || nm == "memcmp" then runMemcmp vs
               else if nm == "__builtin_strlen" then runStrlen vs
+              else if nm == "strnlen" || nm == "__builtin_strnlen" then runStrnlen vs
+              else if nm == "memchr" || nm == "__builtin_memchr" then runMemchr vs
               else if nm == "__builtin_bswap16" then runBswap16 vs
               else if nm == "__builtin_bswap32" then runBswap32 vs
               else if nm == "__builtin_abs" || nm == "abs" then runAbs vs

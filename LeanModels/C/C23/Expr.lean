@@ -1017,7 +1017,12 @@ def storeBitFieldAt (ctx : Ctx) (recordTy : CType) (field : String)
   | some (offsetBits, width), some recordSize, some storageTy, .int _ n =>
       let basePtr := { fieldPtr with off := fieldPtr.off - (offsetBits / 8 : Int), bound := none }
       let bs ← readMem (fun m => m.loadBytes basePtr recordSize)
-      let fieldValue := (IntTy.wrap { storageTy with bits := width } n).toNat
+      -- Store the declared value's raw width-bit representation.  A signed
+      -- `-1` must occupy all one bits; converting the signed wrapped value
+      -- directly with `Int.toNat` would turn it into zero instead of its
+      -- two's-complement residue.
+      let modulus : Int := (2 : Int) ^ width
+      let fieldValue := ((n % modulus + modulus) % modulus).toNat
       let bytes := bitFieldStoreBytes bs offsetBits width fieldValue
       writeMem (fun m => m.storeBytes basePtr bytes)
   | some _, _, _, _ => refuseUnsupported s!"unsupported bit-field store '{fieldTy}'"

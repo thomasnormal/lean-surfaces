@@ -405,6 +405,16 @@ def PDesign.instantiateCoreMem (d : PDesign) (args : List Int)
     (iterFuel : Nat := 4096) : Res CoreMemDesign :=
   PDesign.instantiateCoreMemFrom { int32 := true } d args iterFuel
 
+/-! The ordinary E entry.  Parameterized unpacked declarations are canonical
+E storage, so callers must not silently fall back to the scalar `EDesign2`
+view.  The old scalar-only elaboration remains available explicitly as
+`instantiateE2Scalar`; this name is the user-facing route for both fixed and
+parameter-sized one-rank memories (IEEE 1800-2023 §7.4.2). -/
+
+def PDesign.instantiateE2 (d : PDesign) (args : List Int) (iterFuel : Nat := 4096) :
+    Res CoreMemDesign :=
+  PDesign.instantiateCoreMem d args iterFuel
+
 /-! ## Expressions -/
 
 mutual

@@ -165,6 +165,12 @@ def CoreMemDesign.ofHierarchy (top : PDesign) (lib : List PDesign) (args : List 
   | .ok d => .ok d
   | .timeout => .timeout
   | .unsupported e => .unsupported e
+
+/-! Ordinary hierarchy entry: the same canonical memory representation is
+used after parser-native child elaboration and port connection merging. -/
+def PDesign.instantiateE2H (d : PDesign) (lib : List PDesign) (args : List Int) :
+    Res CoreMemDesign :=
+  CoreMemDesign.ofHierarchy d lib args
   /- The old one-child path is retained in the source below as a reference for
      the port-connection shape; generated instances use the same hProcess rule. -/
   /-

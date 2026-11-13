@@ -1724,12 +1724,12 @@ def PDesign.instantiateE2From (envI : IEnv) (d : PDesign) (args : List Int)
           processes := ((d.processes.map (instEProcess2 envP elems)) ++ gens
             ++ d.others.map fun (k, t) => EProcess2.ordinary (.unsupported k t)).toArray }
 
-def PDesign.instantiateE2 (d : PDesign) (args : List Int) (iterFuel : Nat := 4096) :
+def PDesign.instantiateE2Scalar (d : PDesign) (args : List Int) (iterFuel : Nat := 4096) :
     Res EDesign2 :=
   d.instantiateE2From { int32 := true } args iterFuel
 
 def PDesign.instantiateDE2 (d : PDesign) (args : List Int) : EDesign2 :=
-  match d.instantiateE2 args (PDesign.surfaceFuel args) with
+  match d.instantiateE2Scalar args (PDesign.surfaceFuel args) with
   | .ok m => m
   | .timeout => { name := d.name, decls := #[],
                   processes := #[.ordinary (.unsupported "Instantiate"

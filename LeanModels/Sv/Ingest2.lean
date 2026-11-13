@@ -6,6 +6,7 @@ import LeanModels.Sv.Probe2
 import LeanModels.Sv.RangeGuard2
 import LeanModels.Sv.CombAlias2
 import LeanModels.Sv.ClockGuard2
+import LeanModels.Sv.Kernel.CoreMemExec
 
 /-!
 # SV symbolic-envelope ingestion — schema sv-0.2 (`LeanModels.Sv`)

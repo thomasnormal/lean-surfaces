@@ -722,8 +722,6 @@ structure IEnv where
   enums : List (String × Nat) := []
   members : List ((String × String) × LVec) := []
   functions : List PFunction := []
-  /-- Typed constant bindings for source-shaped pure function formals. -/
-  locals : List (String × (Int × Nat × Bool)) := []
   /-- Declared widths of TYPED parameters/localparams (semantic tier;
   untyped parameters are 32-bit ints and are absent here). -/
   pwidths : List (String × Nat) := []
@@ -774,9 +772,6 @@ deriving Repr, Inhabited
 /-- Bind a constant (prepend — shadows outer bindings of the name). -/
 def IEnv.bindVal (env : IEnv) (n : String) (v : Int) : IEnv :=
   { env with vals := (n, v) :: env.vals }
-
-def IEnv.bindLocal (env : IEnv) (n : String) (v : Int) (w : Nat) (s : Bool) : IEnv :=
-  { env with locals := (n, (v, w, s)) :: env.locals }
 
 def IEnv.bindPackageVal (env : IEnv) (pkg n : String) (v : Int) : IEnv :=
   { env with packageVals := ((pkg, n), v) :: env.packageVals }
@@ -956,10 +951,6 @@ exactly when the name is bound in `IEnv.vals` (non-INT typed parameters
 live in `IEnv.nvals`). -/
 def PExpr.isInt (env : IEnv) : PExpr → Bool
   | .int _ | .genvarRef _ | .sysCall .. => true
-  | .ident n =>
-      match env.locals.lookup n with
-      | some (_, 32, true) => true
-      | _ => false
   | .paramRef n none =>
       (env.vals.lookup n).isSome ||
         match env.nvals.lookup n with
@@ -1236,10 +1227,7 @@ unsigned; shifts and `**` the left operand's type. -/
 def ctype (env : IEnv) : PExpr → Except String (Nat × Bool)
   | .int _ | .genvarRef _ | .sysCall .. => .ok (32, true)
   | .lit v => .ok (v.width, false)
-  | .ident n =>
-      match env.locals.lookup n with
-      | some (_, w, s) => .ok (w, s)
-      | none => .error s!"signal '{n}' in a constant context"
+  | .ident n => .error s!"signal '{n}' in a constant context"
   | .paramRef n none =>
       match env.vals.lookup n with
       | some _ => .ok (32, true)
@@ -1341,10 +1329,7 @@ def evalAt (env : IEnv) (ty : Nat × Bool) : PExpr → Except String Int
       match v.toNat? with
       | some n => .ok (convertConst v.width ty.1 ty.2 n)
       | none => .error "x/z literal in a constant context"
-  | .ident n =>
-      match env.locals.lookup n with
-      | some (v, w, _) => .ok (convertConst w ty.1 ty.2 v)
-      | none => .error s!"signal '{n}' in a constant context"
+  | .ident n => .error s!"signal '{n}' in a constant context"
   | .paramRef n none =>
       match env.vals.lookup n with
       | some v => .ok (convertConst 32 ty.1 ty.2 v)
@@ -1609,6 +1594,26 @@ def assignFitMsg (w f : Nat) (v : Int) : String :=
 formals have been bound with the formal's declared width and signedness.
 The body is then sent through the same `ctype`/`evalAt` evaluator; nested
 calls remain loud until their own declaration is admitted. -/
+def substConst (bs : List (String × (Int × Nat × Bool))) : PExpr → PExpr
+  | .ident n =>
+      match bs.lookup n with
+      | some (v, w, s) => .cast s (.lit (LVec.ofInt w v))
+      | none => .ident n
+  | .unary o a => .unary o (substConst bs a)
+  | .binary o l r => .binary o (substConst bs l) (substConst bs r)
+  | .ternary c t e => .ternary (substConst bs c) (substConst bs t) (substConst bs e)
+  | .resize w a => .resize w (substConst bs a)
+  | .signedResize w a => .signedResize w (substConst bs a)
+  | .squash2 w a => .squash2 w (substConst bs a)
+  | .sysCall f a => .sysCall f (substConst bs a)
+  | .bitSel a i => .bitSel (substConst bs a) (substConst bs i)
+  | .partSel a m l => .partSel (substConst bs a) (substConst bs m) (substConst bs l)
+  | .repl n a => .repl (substConst bs n) (substConst bs a)
+  | .cast s a => .cast s (substConst bs a)
+  | .concat xs => .concat (xs.map (substConst bs))
+  | .functionCall n xs => .functionCall n (xs.map (substConst bs))
+  | e => e
+
 def evalConstFunctionCall (env : IEnv) (name : String) (args : List PExpr) : Except String Int :=
   match env.functions.find? (fun f => f.name == name) with
   | none => .error s!"function '{name}' in a constant context"
@@ -1618,18 +1623,17 @@ def evalConstFunctionCall (env : IEnv) (name : String) (args : List PExpr) : Exc
       else if f.formals.length != args.length then
         .error s!"function '{name}' argument count mismatch"
       else do
-        let env' ← f.formals.zip args |>.foldlM (init := env) fun e (formal, actual) => do
-          let (aw, as) ← ctype e actual
-          let av ← evalAt e (aw, as) actual
+        let bindings ← f.formals.zip args |>.mapM fun (formal, actual) => do
+          let (aw, as) ← ctype env actual
+          let av ← evalAt env (aw, as) actual
           let fw := match formal.type with
             | .packed _ (some w) | .typeRef _ _ (some w) => w
             | .packed _ none | .typeRef _ _ none | .unrecoverable _ => 32
-          .ok (e.bindLocal formal.name (convertConst aw fw formal.isSigned av)
-            fw formal.isSigned)
+          .ok (formal.name, (convertConst aw fw formal.isSigned av, fw, formal.isSigned))
         let rw := match f.returnType with
           | .packed _ (some w) | .typeRef _ _ (some w) => w
           | .packed _ none | .typeRef _ _ none | .unrecoverable _ => 32
-        evalAt env' (rw, f.isSigned) f.body
+        evalAt env (rw, f.isSigned) (substConst bindings f.body)
 
 /-- **Width-exact constant evaluation** (round 4 folds): the value of `e`
 at its OWN type at THESE parameters (`ctype` then `evalAt`) — `evalInt`'s
@@ -1705,10 +1709,7 @@ def evalInt (env : IEnv) : PExpr → Except String Int
       match v.toNat? with
       | some n => .ok (n : Int)
       | none => .error "x/z literal in a constant context"
-  | .ident n =>
-      match env.locals.lookup n with
-      | some (v, w, s) => if w == 32 && s then .ok v else .error s!"typed formal '{n}' outside INT class"
-      | none => .error s!"signal '{n}' in a constant context"
+  | .ident n => .error s!"signal '{n}' in a constant context"
   | .functionCall n args => evalConstFunctionCall env n args
   | .paramRef n none =>
       match env.vals.lookup n with

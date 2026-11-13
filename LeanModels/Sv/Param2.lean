@@ -1856,7 +1856,7 @@ def PDesign.instantiate2From (envI : IEnv) (d : PDesign) (args : List Int)
   if args.length != d.params.length then
     .unsupported s!"parameter arity: got {args.length}, want {d.params.length}"
   else do
-    let envP ← bindPackageParams { envI with functions := d.functions } d.packageParams
+    let envP ← bindPackageParams envI d.packageParams
     let envP ← bindPackageEnums envP d.enums
     let env0 ← bindParamsRes envP d.params args
     let env1 ← bindLocals env0 d.localParams

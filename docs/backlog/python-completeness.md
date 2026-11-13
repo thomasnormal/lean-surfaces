@@ -14308,3 +14308,21 @@ projection, try/catch, and call-depth restoration. It is the first effectful
 
 DECIDED: expression evaluation now composes through call restoration; stateful
 assignment and recursive body cases remain open.
+
+## 2026-11-13-pyfoundation-119 — state-mutating call restoration
+
+`Monadic.finishCallM_modify_ok` is the first state-mutating call-boundary
+theorem. For any world transformer `f`, a body that performs `modify f` and
+returns a value restores the requested call depth while preserving the mutated
+heap, globals, stdout, and clock fields exactly.
+
+| Measurement | Result |
+|---|---|
+| Target | `lake build LeanModels.Python.Monadic.Eval` passed; 11/11 jobs |
+| Theorem | `Monadic.finishCallM_modify_ok` |
+| Domain | arbitrary world transformer, return value, world, and depth |
+| Semantic change | theorem-only state-threading composition |
+| Remaining debt | connect assignment AST bodies and recursive calls |
+
+DECIDED: the state-threading law is now kernel-checked for arbitrary mutations;
+Python assignment-body adequacy can build on this theorem.

@@ -80,6 +80,9 @@ actual empty `execOpenList` body and its `inWorld` projection.
 nonempty statement body, a one-statement `pass` sequence.
 `Monadic.finishCallM_expr_constant_body_ok` covers the first effectful body:
 an expression statement evaluating an integer constant before completion.
+`Monadic.finishCallM_modify_ok` is the first state-mutating call theorem: an
+arbitrary world mutation threads through restoration while preserving the
+mutated heap/global/output/clock fields.
 
 ## Operator dispatch
 

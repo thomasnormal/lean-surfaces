@@ -3865,6 +3865,22 @@ theorem finishCallM_expr_constant_body_ok (K : Kont) (m : Module)
   rw [bind_apply, hraw]
   rfl
 
+theorem finishCallM_modify_ok {α : Type} (depth : Nat) (w : World)
+    (v : α) (f : World → World) :
+    toRun (finishCallM depth (do modify f; pure v : SemW α)) w =
+      .ok { f w with callDepth := depth } v := by
+  unfold finishCallM
+  apply toRun_tryCatch_ok
+  have hraw : ((do
+      let value ← (do modify f; pure v : SemW α)
+      modify fun w => { w with callDepth := depth }
+      pure value) : SemW α) w =
+      .ok (.ok v, { f w with callDepth := depth }) := by
+    rw [bind_apply]
+    rw [bind_apply]
+    rfl
+  exact hraw
+
 #print axioms evalOpen
 #print axioms execOpen
 #print axioms kont
@@ -3891,5 +3907,6 @@ theorem finishCallM_expr_constant_body_ok (K : Kont) (m : Module)
 #print axioms finishCallM_empty_body_ok
 #print axioms finishCallM_pass_body_ok
 #print axioms finishCallM_expr_constant_body_ok
+#print axioms finishCallM_modify_ok
 
 end LeanModels.Python.Monadic

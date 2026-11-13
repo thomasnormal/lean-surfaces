@@ -10,10 +10,10 @@
   "gcc.c-torture/execute": {
    "not-parsed": 267,
    "oracle-tests-compiler": 1,
-   "passed": 918,
+   "passed": 919,
    "refused-libc": 35,
    "refused-ub": 98,
-   "refused-unsupported": 535,
+   "refused-unsupported": 534,
    "timeout": 64
   },
   "gcc.c23-run": {
@@ -28,10 +28,10 @@
  "counts": {
   "not-parsed": 294,
   "oracle-tests-compiler": 1,
-  "passed": 1093,
+  "passed": 1094,
   "refused-libc": 39,
   "refused-ub": 107,
-  "refused-unsupported": 614,
+  "refused-unsupported": 613,
   "timeout": 66
  },
  "dynamic_wall_ranking": [
@@ -745,15 +745,14 @@
     "930930-2.c",
     "builtin-bitops-1.c",
     "pr17377.c",
-    "pr57875.c",
     "pr58943.c",
     "pr91635.c",
     "pr93213.c",
     "va-arg-10.c",
     "va-arg-9.c"
    ],
-   "present": 15,
-   "sole": 15,
+   "present": 14,
+   "sole": 14,
    "wall": "unsequenced-effects"
   },
   {
@@ -3229,8 +3228,8 @@
   }
  ],
  "manifest_hash": "bca94718b04e8394cdce992866637166f530978790bd1013cea4a00ae25ef764",
- "measured_at_utc": "2026-11-13T23:14:09Z",
- "measured_commit": "cfd1415e6",
+ "measured_at_utc": "2026-11-13T23:18:05Z",
+ "measured_commit": "ad52523d277b637902135434355c900bb01b858a",
  "pin": {
   "corpora": [
    "C1",
@@ -24847,15 +24846,15 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "unsequenced side effects in compound assignment",
-   "dynamic_wall": "unsequenced-effects",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "pr57875.c",
    "sha256": "437f16f6174339ac991fdbb98298c3484e98a762da61c267decea2f671645224",
    "static_walls": [
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",

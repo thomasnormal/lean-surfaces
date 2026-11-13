@@ -4321,6 +4321,32 @@ theorem finishCallM_assign_three_existing_locals_pass_body_ok (K : Kont) (m : Mo
   rw [bind_apply, hraw]
   rfl
 
+theorem finishCallM_assign_three_existing_locals_expr_body_ok (K : Kont) (m : Module)
+    (w : World) (depth : Nat) :
+    toRun (finishCallM depth
+      (inWorld [("x", .int 0), ("y", .int 0), ("z", .int 0)] (execOpenList K m
+        [.assign #[.name "x" adequacySpan]
+           (.constant (.int 1) adequacySpan) adequacySpan,
+         .assign #[.name "y" adequacySpan]
+           (.constant (.int 2) adequacySpan) adequacySpan,
+         .assign #[.name "z" adequacySpan]
+           (.constant (.int 3) adequacySpan) adequacySpan,
+         .exprStmt (.constant (.int 4) adequacySpan) adequacySpan]))) w =
+      .ok { w with callDepth := depth } .next := by
+  have hraw : (inWorld [("x", .int 0), ("y", .int 0), ("z", .int 0)] (execOpenList K m
+      [.assign #[.name "x" adequacySpan]
+         (.constant (.int 1) adequacySpan) adequacySpan,
+       .assign #[.name "y" adequacySpan]
+         (.constant (.int 2) adequacySpan) adequacySpan,
+       .assign #[.name "z" adequacySpan]
+         (.constant (.int 3) adequacySpan) adequacySpan,
+       .exprStmt (.constant (.int 4) adequacySpan) adequacySpan])) w =
+      .ok (.ok RFlow.next, w) := by rfl
+  unfold finishCallM
+  apply toRun_tryCatch_ok
+  rw [bind_apply, hraw]
+  rfl
+
 theorem finishCallM_three_pass_ret_body_ok (K : Kont) (m : Module)
     (locals : REnv) (w : World) (depth : Nat) :
     toRun (finishCallM depth
@@ -4509,6 +4535,7 @@ theorem leaveCallM_modify_exn {α : Type} (w : World) (e : PyErr)
 #print axioms finishCallM_assign_two_existing_locals_ret_body_ok
 #print axioms finishCallM_assign_three_existing_locals_ret_body_ok
 #print axioms finishCallM_assign_three_existing_locals_pass_body_ok
+#print axioms finishCallM_assign_three_existing_locals_expr_body_ok
 #print axioms finishCallM_assign_constant_body_ok
 #print axioms finishCallM_modify_ok
 #print axioms finishCallM_modify_exn

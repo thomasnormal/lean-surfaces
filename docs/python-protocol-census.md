@@ -251,3 +251,6 @@ three successive local updates followed by a return.
 
 `Monadic.finishCallM_assign_three_existing_locals_pass_body_ok` checks the
 normal continuation after those three updates.
+
+`Monadic.finishCallM_assign_three_existing_locals_expr_body_ok` checks the
+normal expression continuation after the three updates.

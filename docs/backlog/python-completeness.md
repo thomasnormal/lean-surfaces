@@ -14903,3 +14903,20 @@ and depth restoration.
 
 DECIDED: three assignment updates now compose into normal flow; arbitrary
 assignment and recursive body adequacy remain open.
+
+## 2026-11-13-pyfoundation-155 — three-assignment expression bridge
+
+`Monadic.finishCallM_assign_three_existing_locals_expr_body_ok` checks three
+local assignments followed by an integer expression statement, preserving
+normal flow and depth restoration.
+
+| Measurement | Result |
+|---|---|
+| Target | `lake build LeanModels.Python.Monadic.Eval` passed; 11/11 jobs |
+| Theorem | `Monadic.finishCallM_assign_three_existing_locals_expr_body_ok` |
+| Domain | four-statement assignment-assignment-assignment-expression body |
+| Semantic change | theorem-only multi-assignment expression composition |
+| Remaining debt | arbitrary locals and recursive positive-fuel calls |
+
+DECIDED: three assignment updates now compose into a normal expression flow;
+arbitrary assignment and recursive body adequacy remain open.

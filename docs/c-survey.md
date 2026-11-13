@@ -2,10 +2,10 @@
 
 Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manifest.
 
-- verdicts: 1016/2214 MATCH (passed 1016, failed 0, oracle 0)
-- manifest SHA-256: `d2d1db8bb48b86c40f5a4e7fd9816bdf3644dc6ea3b6e26da0b05a56e92baea3`
-- measured commit: `dc089276b`
-- measured at: `2026-11-13T12:10:00Z`
+- verdicts: 1017/2214 MATCH (passed 1017, failed 0, oracle 0)
+- manifest SHA-256: `fd0f833d7f1ce4c8dfb1db5361628cad1f6acb104993bdee7300afb1a91a2acc`
+- measured commit: `d51e9d23b`
+- measured at: `2026-11-13T13:00:00Z`
 
 ## Verdict counts
 
@@ -13,10 +13,10 @@ Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manife
 | --- | ---: |
 | `not-parsed` | 294 |
 | `oracle-tests-compiler` | 1 |
-| `passed` | 1016 |
+| `passed` | 1017 |
 | `refused-libc` | 39 |
 | `refused-ub` | 105 |
-| `refused-unsupported` | 693 |
+| `refused-unsupported` | 692 |
 | `timeout` | 66 |
 
 ## Counts by corpus
@@ -30,10 +30,10 @@ Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manife
 | `c-testsuite/single-exec` | `timeout` | 2 |
 | `gcc.c-torture/execute` | `not-parsed` | 267 |
 | `gcc.c-torture/execute` | `oracle-tests-compiler` | 1 |
-| `gcc.c-torture/execute` | `passed` | 845 |
+| `gcc.c-torture/execute` | `passed` | 846 |
 | `gcc.c-torture/execute` | `refused-libc` | 35 |
 | `gcc.c-torture/execute` | `refused-ub` | 96 |
-| `gcc.c-torture/execute` | `refused-unsupported` | 610 |
+| `gcc.c-torture/execute` | `refused-unsupported` | 609 |
 | `gcc.c-torture/execute` | `timeout` | 64 |
 | `gcc.c23-run` | `not-parsed` | 27 |
 | `gcc.c23-run` | `passed` | 3 |
@@ -362,7 +362,6 @@ The run's first refusal, normalized by construct; `sole` counts rows whose first
 | `unsupported:long double integer-to-floating conversion` | 2 | 2 | 930622-2.c, conversion.c |
 | `unsupported:more arguments than parameters` | 2 | 2 | gcc/testsuite/gcc.dg/c23-stdarg-9.c, va-arg-2.c |
 | `unsupported:no layout for declared type 'T'` | 2 | 2 | 920908-1.c, pr98474.c |
-| `unsupported:no layout for declared type 'U'` | 2 | 2 | 20011113-1.c, 20180131-1.c |
 | `unsupported:no layout for declared type 'bitmap_iterator'` | 2 | 2 | 20090113-2.c, 20090113-3.c |
 | `unsupported:no layout for declared type 'enum E'` | 2 | 2 | 00054.c, 00055.c |
 | `unsupported:no layout for declared type 'int *volatile'` | 2 | 2 | 20101025-1.c, builtin-prefetch-3.c |
@@ -434,6 +433,7 @@ The run's first refusal, normalized by construct; `sole` counts rows whose first
 | `unsupported:no layout for declared type 'ScanfState'` | 1 | 1 | va-arg-13.c |
 | `unsupported:no layout for declared type 'T0 *const'` | 1 | 1 | 991016-1.c |
 | `unsupported:no layout for declared type 'TRIAL'` | 1 | 1 | strct-pack-1.c |
+| `unsupported:no layout for declared type 'U'` | 1 | 1 | 20011113-1.c |
 | `unsupported:no layout for declared type 'V2SF'` | 1 | 1 | 20050316-2.c |
 | `unsupported:no layout for declared type 'V32'` | 1 | 1 | pr70903.c |
 | `unsupported:no layout for declared type 'V[32]'` | 1 | 1 | ieee/pr72824-2.c |

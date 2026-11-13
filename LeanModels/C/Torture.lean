@@ -410,7 +410,8 @@ def observedRecordFacts (envl : Envelope) :
                     | _ => none
                   some (ty, members, checked)
         | none => match ds.find? (fun q => match q with
-          | .typedef nm ty _ tsp => tsp.line == sp.line && ty == "struct " ++ nm
+          | .typedef nm ty _ tsp =>
+              tsp.line == sp.line && (ty == "struct " ++ nm || ty == "union " ++ nm)
           | _ => false) with
         | some (.typedef nm _ _ _) =>
             match checkedRecordLayout? fields layout with
@@ -421,7 +422,8 @@ def observedRecordFacts (envl : Envelope) :
                   let members := fields.filterMap fun field => match field with
                     | .field name ty _ _ => some (name.getD "", ty)
                     | _ => none
-                  some ("struct " ++ nm, members, checked)
+                  let tag := if checked.tagKind == "union" then "union " else "struct "
+                  some (tag ++ nm, members, checked)
         | _ => none
     | _ => none
   facts ++ ds.flatMap (fun d => match d with

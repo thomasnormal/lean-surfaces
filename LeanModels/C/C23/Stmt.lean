@@ -253,12 +253,13 @@ def initObject : Nat → Ctx → Ptr → CType → Expr → ExecM Unit
             | none => refuseUnsupported s!"no size for element type '{et}'"
         | _, _, _ => refuseUnsupported "unsupported Clang array_filler initializer"
     | .initList inits field _ _ =>
-        if (ty.startsWith "union ") then
-          match ctx.layout.members ty, inits with
+        let initTy := ctx.layout.normalizeTy ty
+        if (initTy.startsWith "union ") then
+          match ctx.layout.members initTy, inits with
           | some ms, e :: _ =>
               let target := field.getD ((ms.head?.map (·.1)).getD "")
-              match ctx.layout.fieldOff ty target with
-              | some off => initObject fuel ctx (Mem.member p off) (ms.find? (·.1 == target) |>.map (·.2) |>.getD ty) e
+              match ctx.layout.fieldOff initTy target with
+              | some off => initObject fuel ctx (Mem.member p off) (ms.find? (·.1 == target) |>.map (·.2) |>.getD initTy) e
               | none => refuseUnsupported s!"no offset for union member '{target}'"
           | _, _ => refuseUnsupported "union initializer has no member"
         else

@@ -10,10 +10,10 @@
   "gcc.c-torture/execute": {
    "not-parsed": 267,
    "oracle-tests-compiler": 1,
-   "passed": 845,
+   "passed": 846,
    "refused-libc": 35,
    "refused-ub": 96,
-   "refused-unsupported": 610,
+   "refused-unsupported": 609,
    "timeout": 64
   },
   "gcc.c23-run": {
@@ -28,10 +28,10 @@
  "counts": {
   "not-parsed": 294,
   "oracle-tests-compiler": 1,
-  "passed": 1016,
+  "passed": 1017,
   "refused-libc": 39,
   "refused-ub": 105,
-  "refused-unsupported": 693,
+  "refused-unsupported": 692,
   "timeout": 66
  },
  "dynamic_wall_ranking": [
@@ -1365,15 +1365,6 @@
   },
   {
    "files": [
-    "20011113-1.c",
-    "20180131-1.c"
-   ],
-   "present": 2,
-   "sole": 2,
-   "wall": "unsupported:no layout for declared type 'U'"
-  },
-  {
-   "files": [
     "20090113-2.c",
     "20090113-3.c"
    ],
@@ -1961,6 +1952,14 @@
    "present": 1,
    "sole": 1,
    "wall": "unsupported:no layout for declared type 'TRIAL'"
+  },
+  {
+   "files": [
+    "20011113-1.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "unsupported:no layout for declared type 'U'"
   },
   {
    "files": [
@@ -3571,9 +3570,9 @@
    "wall": "unsupported:va_arg requested unsupported value type 'struct s'"
   }
  ],
- "manifest_hash": "d2d1db8bb48b86c40f5a4e7fd9816bdf3644dc6ea3b6e26da0b05a56e92baea3",
- "measured_at_utc": "2026-11-13T12:10:00Z",
- "measured_commit": "dc089276b",
+ "manifest_hash": "fd0f833d7f1ce4c8dfb1db5361628cad1f6acb104993bdee7300afb1a91a2acc",
+ "measured_at_utc": "2026-11-13T13:00:00Z",
+ "measured_commit": "d51e9d23b",
  "pin": {
   "corpora": [
    "C1",
@@ -11566,15 +11565,15 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "no layout for declared type 'U'",
-   "dynamic_wall": "unsupported:no layout for declared type 'U'",
+   "detail": "",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "20180131-1.c",
    "sha256": "b36ae247d6cd5b5f3de20e6de554776d8460926b07d8d960c478f43975e47581",
    "static_walls": [
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",

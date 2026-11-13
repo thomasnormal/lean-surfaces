@@ -1129,12 +1129,24 @@ def CoreMemDesign.settleAssign (E : CoreMemDesign) (env : IEnv) (elems : List (S
     (st : CoreMemState) : List CoreMemProc → Res CoreMemState
   | [] => .ok st
   | .assign target value :: rest => do
-      let width ← match E.scalarWidth? target.name with
-        | some w => .ok w
-        | none => .unsupported s!"10.3: continuous target '{target.name}' is undeclared"
-      let v ← E.evalExpr env elems st (some width) value
-      let scalar := E.scalar.setName st.scalar target.name v
-      E.settleAssign env elems { st with scalar } rest
+      match target with
+      | .ident name =>
+          let width ← match E.scalarWidth? name with
+            | some w => .ok w
+            | none => .unsupported s!"10.3: continuous target '{name}' is undeclared"
+          let v ← E.evalExpr env elems st (some width) value
+          let scalar := E.scalar.setName st.scalar name v
+          E.settleAssign env elems { st with scalar } rest
+      | .arrayElem name [_] =>
+          match E.memDecl? name with
+          | none => .unsupported s!"10.3: continuous memory target '{name}' is undeclared"
+          | some md =>
+              let v ← E.evalExpr env elems st (some md.shape.elemWidth) value
+              match LeanModels.Sv.MemState.writeTarget env md.source target v st.memory with
+              | .error msg => .unsupported msg
+              | .ok none => .unsupported s!"10.3: continuous target '{name}' is not one-rank"
+              | .ok (some memory) => E.settleAssign env elems { st with memory } rest
+      | _ => .unsupported "10.3: packed or multi-rank continuous memory target is outside this slice"
   | .edge _ :: rest => E.settleAssign env elems st rest
   | .initial _ :: rest => E.settleAssign env elems st rest
   | .comb _ :: rest => E.settleAssign env elems st rest

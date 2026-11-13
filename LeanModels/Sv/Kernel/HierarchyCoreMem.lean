@@ -92,11 +92,82 @@ private def childDesign (top : PDesign) (lib : List PDesign) (args : List Int) :
   let pfx ← inst.prefix env
   pure (child', inst, pfx)
 
+private partial def generatedInstances (env : IEnv) (fuel : Nat) :
+    List GenItem → Res (List (PInst × IEnv))
+  | [] => .ok []
+  | .inst i :: rest => do
+      let tail ← generatedInstances env fuel rest
+      .ok ((i, env) :: tail)
+  | .process _ :: rest => generatedInstances env fuel rest
+  | .unsupported k t :: _ => .unsupported s!"{k}: {t}"
+  | .genIf cond yes no :: rest => do
+      let chosen := if (evalInt env cond).toOption.getD 0 != 0 then yes else no
+      let here ← generatedInstances env fuel chosen
+      let tail ← generatedInstances env fuel rest
+      .ok (here ++ tail)
+  | .genFor _ g init bound step _ body :: rest => do
+      let i ← match evalInt env init with | .ok x => .ok x | .error e => .unsupported e
+      let delta ← match stepDelta g step with | .ok x => .ok x | .error e => .unsupported e
+      let values ← genvarSeq env g bound delta fuel i
+      let here ← values.foldlM (init := []) fun acc v => do
+        let xs ← generatedInstances (env.bindVal g v) fuel body
+        .ok (acc ++ xs)
+      let tail ← generatedInstances env fuel rest
+      .ok (here ++ tail)
+
+private def childFor (env : IEnv) (lib : List PDesign) (i : PInst) :
+    Res (PDesign × PInst × String) :=
+  match lib.find? (·.name == i.module) with
+  | none => .unsupported s!"module '{i.module}' is not in the envelope library"
+  | some child =>
+      match i.given env child, i.prefix env with
+      | .error e, _ => .unsupported e
+      | _, .error e => .unsupported e
+      | .ok given, .ok pfx =>
+          match child.atPoint given with
+          | .ok (child', _) => .ok (child', i, pfx)
+          | .error e => .unsupported e
+
 /-- Build a one-child source-shaped memory design. The child may contain the
 parameter-sized unpacked storage; parent and child parameter names remain
 source-shaped, so `PDesign.instantiateCoreMem` binds dimensions at the top point. -/
 def CoreMemDesign.ofHierarchy (top : PDesign) (lib : List PDesign) (args : List Int) :
     Res CoreMemDesign :=
+  do
+  let env ← match top.paramEnvH { int32 := true } args with
+    | .ok e => .ok e
+    | .timeout => .timeout
+    | .unsupported e => .unsupported e
+  let insts ← generatedInstances env (PDesign.surfaceFuel args) top.generates
+  let children ← insts.mapM fun (i, ie) => childFor ie lib i
+  let childDecls := children.flatMap fun (child, inst, pfx) => child.decls.map fun pd => { pd with
+      name := pfx ++ pd.name
+      isInput := false
+      isOutput := false }
+  let childPs := children.flatMap fun (child, inst, pfx) =>
+    let clockMap := inst.conns.filterMap fun c =>
+      match c with | .input port (some (.ident actual)) _ => some (port, actual) | _ => none
+    child.processes.map (hProcess pfx clockMap)
+  let inputPs := children.flatMap fun (child, inst, pfx) => inst.conns.filterMap fun c =>
+      match c with
+      | .input port (some actual) _ => some (.assign (pfx ++ port) actual)
+      | _ => none
+  let outputPs := children.flatMap fun (child, inst, pfx) => inst.conns.filterMap fun c =>
+      match c with
+      | .output port (some target) => some (.assignL target (.ident (pfx ++ port)))
+      | _ => none
+  let merged := { top with
+      decls := top.decls ++ childDecls
+      processes := top.processes ++ inputPs ++ childPs ++ outputPs
+      generates := []
+      others := top.others ++ children.flatMap fun (child, _, _) => child.others }
+  match PDesign.instantiateCoreMem merged args with
+  | .ok d => .ok d
+  | .timeout => .timeout
+  | .unsupported e => .unsupported e
+  /- The old one-child path is retained in the source below as a reference for
+     the port-connection shape; generated instances use the same hProcess rule. -/
+  /-
   match childDesign top lib args with
   | .error e => .unsupported s!"Instance:memory: {e}"
   | .ok (child, inst, pfx) =>
@@ -123,7 +194,7 @@ def CoreMemDesign.ofHierarchy (top : PDesign) (lib : List PDesign) (args : List 
     match PDesign.instantiateCoreMem merged args with
     | .ok d => .ok d
     | .timeout => .timeout
-    | .unsupported e => .unsupported e
+    | .unsupported e => .unsupported e -/
 
 
 end LeanModels.Sv.Kernel

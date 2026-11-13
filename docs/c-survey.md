@@ -2,10 +2,10 @@
 
 Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manifest.
 
-- verdicts: 1057/2214 MATCH (passed 1057, failed 0, oracle 0)
+- verdicts: 1058/2214 MATCH (passed 1058, failed 0, oracle 0)
 - manifest SHA-256: `bca94718b04e8394cdce992866637166f530978790bd1013cea4a00ae25ef764`
-- measured commit: `b89e712ab`
-- measured at: `2026-11-13T17:17:41Z`
+- measured commit: `8dd2b5f96`
+- measured at: `2026-11-13T17:25:45Z`
 
 ## Verdict counts
 
@@ -13,10 +13,10 @@ Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manife
 | --- | ---: |
 | `not-parsed` | 294 |
 | `oracle-tests-compiler` | 1 |
-| `passed` | 1057 |
+| `passed` | 1058 |
 | `refused-libc` | 39 |
 | `refused-ub` | 105 |
-| `refused-unsupported` | 652 |
+| `refused-unsupported` | 651 |
 | `timeout` | 66 |
 
 ## Counts by corpus
@@ -30,10 +30,10 @@ Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manife
 | `c-testsuite/single-exec` | `timeout` | 2 |
 | `gcc.c-torture/execute` | `not-parsed` | 267 |
 | `gcc.c-torture/execute` | `oracle-tests-compiler` | 1 |
-| `gcc.c-torture/execute` | `passed` | 882 |
+| `gcc.c-torture/execute` | `passed` | 883 |
 | `gcc.c-torture/execute` | `refused-libc` | 35 |
 | `gcc.c-torture/execute` | `refused-ub` | 96 |
-| `gcc.c-torture/execute` | `refused-unsupported` | 573 |
+| `gcc.c-torture/execute` | `refused-unsupported` | 572 |
 | `gcc.c-torture/execute` | `timeout` | 64 |
 | `gcc.c23-run` | `not-parsed` | 27 |
 | `gcc.c23-run` | `passed` | 3 |
@@ -427,7 +427,6 @@ The run's first refusal, normalized by construct; `sole` counts rows whose first
 | `unsupported:no layout for declared type 'ScanfState'` | 1 | 1 | va-arg-13.c |
 | `unsupported:no layout for declared type 'T0 *const'` | 1 | 1 | 991016-1.c |
 | `unsupported:no layout for declared type 'TRIAL'` | 1 | 1 | strct-pack-1.c |
-| `unsupported:no layout for declared type 'U'` | 1 | 1 | 20011113-1.c |
 | `unsupported:no layout for declared type 'V2SF'` | 1 | 1 | 20050316-2.c |
 | `unsupported:no layout for declared type 'V32'` | 1 | 1 | pr70903.c |
 | `unsupported:no layout for declared type 'V[32]'` | 1 | 1 | ieee/pr72824-2.c |

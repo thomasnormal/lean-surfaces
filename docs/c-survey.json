@@ -10,10 +10,10 @@
   "gcc.c-torture/execute": {
    "not-parsed": 267,
    "oracle-tests-compiler": 1,
-   "passed": 882,
+   "passed": 883,
    "refused-libc": 35,
    "refused-ub": 96,
-   "refused-unsupported": 573,
+   "refused-unsupported": 572,
    "timeout": 64
   },
   "gcc.c23-run": {
@@ -28,10 +28,10 @@
  "counts": {
   "not-parsed": 294,
   "oracle-tests-compiler": 1,
-  "passed": 1057,
+  "passed": 1058,
   "refused-libc": 39,
   "refused-ub": 105,
-  "refused-unsupported": 652,
+  "refused-unsupported": 651,
   "timeout": 66
  },
  "dynamic_wall_ranking": [
@@ -1892,14 +1892,6 @@
   },
   {
    "files": [
-    "20011113-1.c"
-   ],
-   "present": 1,
-   "sole": 1,
-   "wall": "unsupported:no layout for declared type 'U'"
-  },
-  {
-   "files": [
     "20050316-2.c"
    ],
    "present": 1,
@@ -3356,8 +3348,8 @@
   }
  ],
  "manifest_hash": "bca94718b04e8394cdce992866637166f530978790bd1013cea4a00ae25ef764",
- "measured_at_utc": "2026-11-13T17:17:41Z",
- "measured_commit": "b89e712ab",
+ "measured_at_utc": "2026-11-13T17:25:45Z",
+ "measured_commit": "8dd2b5f96",
  "pin": {
   "corpora": [
    "C1",
@@ -7484,8 +7476,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "no layout for declared type 'U'",
-   "dynamic_wall": "unsupported:no layout for declared type 'U'",
+   "detail": "0",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "20011113-1.c",
    "sha256": "dc6368537064e8504888743d81c0f9e1ae1007420b398cda8d0e3c3cbea23bcd",
@@ -7493,7 +7485,7 @@
     "libc-call: memcpy",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",

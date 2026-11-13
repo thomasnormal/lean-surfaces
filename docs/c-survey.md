@@ -2,10 +2,10 @@
 
 Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manifest.
 
-- verdicts: 1004/2214 MATCH (passed 1004, failed 0, oracle 0)
-- manifest SHA-256: `5a503c2244cfd07ed069844c6b2b67bdd90cbf6aa1d21e8fb11b8f83d82bfd26`
-- measured commit: `a601792cd`
-- measured at: `2026-11-13T10:14:52Z`
+- verdicts: 1005/2214 MATCH (passed 1005, failed 0, oracle 0)
+- manifest SHA-256: `283f8ea1ee169e9e9c55ce524dbc52a569f98bec867ca4f0d0c9f462e24bea99`
+- measured commit: `7e3ffd3a8`
+- measured at: `2026-11-13T10:17:41Z`
 
 ## Verdict counts
 
@@ -13,8 +13,8 @@ Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manife
 | --- | ---: |
 | `not-parsed` | 294 |
 | `oracle-tests-compiler` | 1 |
-| `passed` | 1004 |
-| `refused-libc` | 45 |
+| `passed` | 1005 |
+| `refused-libc` | 44 |
 | `refused-ub` | 105 |
 | `refused-unsupported` | 699 |
 | `timeout` | 66 |
@@ -30,8 +30,8 @@ Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manife
 | `c-testsuite/single-exec` | `timeout` | 2 |
 | `gcc.c-torture/execute` | `not-parsed` | 267 |
 | `gcc.c-torture/execute` | `oracle-tests-compiler` | 1 |
-| `gcc.c-torture/execute` | `passed` | 833 |
-| `gcc.c-torture/execute` | `refused-libc` | 41 |
+| `gcc.c-torture/execute` | `passed` | 834 |
+| `gcc.c-torture/execute` | `refused-libc` | 40 |
 | `gcc.c-torture/execute` | `refused-ub` | 96 |
 | `gcc.c-torture/execute` | `refused-unsupported` | 616 |
 | `gcc.c-torture/execute` | `timeout` | 64 |
@@ -349,7 +349,6 @@ The run's first refusal, normalized by construct; `sole` counts rows whose first
 | `unsupported:unsupported bit-field width 32 for 'unsigned long long'` | 3 | 3 | 20081117-1.c, 930126-1.c, pr65215-3.c |
 | `libc-call: __builtin_inf` | 2 | 2 | ieee/fp-cmp-7.c, ieee/inf-2.c |
 | `libc-call: exit (an argument is not a literal 0 — which exit was reached is unknown)` | 2 | 2 | 970217-1.c, loop-8.c |
-| `libc-call: floor` | 2 | 2 | 990826-0.c, float-floor.c |
 | `libc-call: open` | 2 | 2 | loop-2f.c, loop-2g.c |
 | `unsupported:ExprWithCleanups` | 2 | 2 | 950628-1.c, pr30185.c |
 | `unsupported:GCCAsmStmt` | 2 | 2 | 20071211-1.c, pr81588.c |
@@ -404,6 +403,7 @@ The run's first refusal, normalized by construct; `sole` counts rows whose first
 | `libc-call: calloc` | 1 | 1 | 00040.c |
 | `libc-call: f` | 1 | 1 | gcc/testsuite/gcc.dg/torture/c23-stdarg-split-1a.c |
 | `libc-call: fabs` | 1 | 1 | 20020720-1.c |
+| `libc-call: floor` | 1 | 1 | float-floor.c |
 | `libc-call: fopen` | 1 | 1 | 00187.c |
 | `libc-call: main_test` | 1 | 1 | builtins/lib/main.c |
 | `libc-call: mempcpy` | 1 | 1 | string-opt-18.c |

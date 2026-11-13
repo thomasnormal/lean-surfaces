@@ -1,0 +1,516 @@
+{
+  "schema_version": "sv-0.2",
+  "language": "systemverilog",
+  "frontend": {
+    "name": "pyslang",
+    "family": "pyslang-11"
+  },
+  "mode": "symbolic",
+  "top": "unpacked_cpuregs_canonical_e",
+  "source_files": [
+    {
+      "path": "Examples/system-verilog/sem2/unpacked_cpuregs_canonical_e/unpacked_cpuregs_canonical_e.sv",
+      "sha256": "42788834a73ba626c51015d657530294074be59da1abf94d105323fe9531c6ab"
+    }
+  ],
+  "packages": [],
+  "design": {
+    "kind": "Design",
+    "modules": [
+      {
+        "kind": "Module",
+        "span": {
+          "line": 3,
+          "col": 1,
+          "end_line": 18,
+          "end_col": 10
+        },
+        "name": "unpacked_cpuregs_canonical_e",
+        "imports": [],
+        "params": [
+          {
+            "kind": "ParameterDecl",
+            "span": {
+              "line": 3,
+              "col": 53,
+              "end_line": 3,
+              "end_col": 59
+            },
+            "name": "N",
+            "type": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 3,
+                      "col": 53,
+                      "end_line": 3,
+                      "end_col": 59
+                    },
+                    "value": 31,
+                    "resolved_width": 32
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 3,
+                      "col": 53,
+                      "end_line": 3,
+                      "end_col": 59
+                    },
+                    "value": 0,
+                    "resolved_width": 32
+                  }
+                }
+              ],
+              "resolved": 32
+            },
+            "default": {
+              "kind": "Int",
+              "span": {
+                "line": 3,
+                "col": 57,
+                "end_line": 3,
+                "end_col": 59
+              },
+              "value": 32,
+              "resolved_width": 32
+            },
+            "resolved": 32
+          }
+        ],
+        "types": [],
+        "ports": [
+          {
+            "kind": "Port",
+            "span": {
+              "line": 4,
+              "col": 15,
+              "end_line": 4,
+              "end_col": 18
+            },
+            "name": "clk",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 5,
+              "col": 21,
+              "end_line": 5,
+              "end_col": 26
+            },
+            "name": "raddr",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 5,
+                      "col": 16,
+                      "end_line": 5,
+                      "end_col": 17
+                    },
+                    "value": 4,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 5,
+                      "col": 18,
+                      "end_line": 5,
+                      "end_col": 19
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 5
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 6,
+              "col": 21,
+              "end_line": 6,
+              "end_col": 26
+            },
+            "name": "waddr",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 6,
+                      "col": 16,
+                      "end_line": 6,
+                      "end_col": 17
+                    },
+                    "value": 4,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 6,
+                      "col": 18,
+                      "end_line": 6,
+                      "end_col": 19
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 5
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 7,
+              "col": 22,
+              "end_line": 7,
+              "end_col": 27
+            },
+            "name": "wdata",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 7,
+                      "col": 16,
+                      "end_line": 7,
+                      "end_col": 18
+                    },
+                    "value": 31,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 7,
+                      "col": 19,
+                      "end_line": 7,
+                      "end_col": 20
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 32
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 8,
+              "col": 15,
+              "end_line": 8,
+              "end_col": 17
+            },
+            "name": "we",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 9,
+              "col": 23,
+              "end_line": 9,
+              "end_col": 28
+            },
+            "name": "rdata",
+            "dir": "out",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 9,
+                      "col": 17,
+                      "end_line": 9,
+                      "end_col": 19
+                    },
+                    "value": 31,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 9,
+                      "col": 20,
+                      "end_line": 9,
+                      "end_col": 21
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 32
+            }
+          }
+        ],
+        "decls": [
+          {
+            "kind": "UnpackedDecl",
+            "span": {
+              "line": 11,
+              "col": 16,
+              "end_line": 11,
+              "end_col": 31
+            },
+            "name": "cpuregs",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 11,
+                      "col": 10,
+                      "end_line": 11,
+                      "end_col": 12
+                    },
+                    "value": 31,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 11,
+                      "col": 13,
+                      "end_line": 11,
+                      "end_col": 14
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 32
+            },
+            "unpacked": [
+              {
+                "msb": {
+                  "kind": "Int",
+                  "span": {
+                    "line": 11,
+                    "col": 25,
+                    "end_line": 11,
+                    "end_col": 26
+                  },
+                  "value": 0,
+                  "resolved_width": null
+                },
+                "lsb": {
+                  "kind": "Binary",
+                  "span": {
+                    "line": 11,
+                    "col": 27,
+                    "end_line": 11,
+                    "end_col": 30
+                  },
+                  "width": null,
+                  "op": "-",
+                  "left": {
+                    "kind": "ParamRef",
+                    "span": {
+                      "line": 11,
+                      "col": 27,
+                      "end_line": 11,
+                      "end_col": 28
+                    },
+                    "name": "N"
+                  },
+                  "right": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 11,
+                      "col": 29,
+                      "end_line": 11,
+                      "end_col": 30
+                    },
+                    "value": 1,
+                    "resolved_width": null
+                  }
+                }
+              }
+            ]
+          }
+        ],
+        "processes": [
+          {
+            "kind": "AlwaysPosedge",
+            "span": {
+              "line": 13,
+              "col": 3,
+              "end_line": 15,
+              "end_col": 6
+            },
+            "style": "always_ff",
+            "clock": "clk",
+            "body": {
+              "kind": "Block",
+              "span": {
+                "line": 14,
+                "col": 5,
+                "end_line": 14,
+                "end_col": 37
+              },
+              "stmts": [
+                {
+                  "kind": "If",
+                  "span": {
+                    "line": 14,
+                    "col": 5,
+                    "end_line": 14,
+                    "end_col": 37
+                  },
+                  "cond": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 14,
+                      "col": 9,
+                      "end_line": 14,
+                      "end_col": 11
+                    },
+                    "width": 1,
+                    "name": "we"
+                  },
+                  "then": {
+                    "kind": "NonblockingAssign",
+                    "span": {
+                      "line": 14,
+                      "col": 13,
+                      "end_line": 14,
+                      "end_col": 37
+                    },
+                    "target": {
+                      "kind": "ArraySel",
+                      "span": {
+                        "line": 14,
+                        "col": 13,
+                        "end_line": 14,
+                        "end_col": 27
+                      },
+                      "width": 32,
+                      "name": "cpuregs",
+                      "indices": [
+                        {
+                          "kind": "Ident",
+                          "span": {
+                            "line": 14,
+                            "col": 21,
+                            "end_line": 14,
+                            "end_col": 26
+                          },
+                          "width": 5,
+                          "name": "waddr"
+                        }
+                      ],
+                      "part": null,
+                      "unpacked": true
+                    },
+                    "value": {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 14,
+                        "col": 31,
+                        "end_line": 14,
+                        "end_col": 36
+                      },
+                      "width": 32,
+                      "name": "wdata"
+                    }
+                  },
+                  "else": null
+                }
+              ]
+            }
+          },
+          {
+            "kind": "Assign",
+            "span": {
+              "line": 17,
+              "col": 10,
+              "end_line": 17,
+              "end_col": 32
+            },
+            "target": {
+              "kind": "Ident",
+              "span": {
+                "line": 17,
+                "col": 10,
+                "end_line": 17,
+                "end_col": 15
+              },
+              "width": 32,
+              "name": "rdata"
+            },
+            "value": {
+              "kind": "ArraySel",
+              "span": {
+                "line": 17,
+                "col": 18,
+                "end_line": 17,
+                "end_col": 32
+              },
+              "width": 32,
+              "name": "cpuregs",
+              "indices": [
+                {
+                  "kind": "Ident",
+                  "span": {
+                    "line": 17,
+                    "col": 26,
+                    "end_line": 17,
+                    "end_col": 31
+                  },
+                  "width": 5,
+                  "name": "raddr"
+                }
+              ],
+              "part": null,
+              "unpacked": true
+            }
+          }
+        ],
+        "generates": [],
+        "others": []
+      }
+    ],
+    "others": []
+  },
+  "lean_blocks": []
+}

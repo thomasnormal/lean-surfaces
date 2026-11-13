@@ -3811,6 +3811,21 @@ theorem twinAgrees_execOpenList_nil_world (K : Kont) (m : Module)
   rw [inWorld_toRun, twinAgrees_execOpenList_nil]
   rfl
 
+theorem finishCallM_pure_ok {α : Type} (depth : Nat) (w : World) (v : α) :
+    toRun (finishCallM depth (pure v : SemW α)) w =
+      .ok { w with callDepth := depth } v := by
+  let action : SemW α := do
+    let value ← pure v
+    modify fun w => { w with callDepth := depth }
+    pure value
+  have hraw : action w = .ok (.ok v, { w with callDepth := depth }) := by
+    simp only [action]
+    rw [bind_apply]
+    rfl
+  unfold finishCallM
+  apply toRun_tryCatch_ok
+  exact hraw
+
 #print axioms evalOpen
 #print axioms execOpen
 #print axioms kont
@@ -3833,5 +3848,6 @@ theorem twinAgrees_execOpenList_nil_world (K : Kont) (m : Module)
 #print axioms twinAgrees_execOpenList_of_each
 #print axioms twinAgrees_execOpenList_nil
 #print axioms twinAgrees_execOpenList_nil_world
+#print axioms finishCallM_pure_ok
 
 end LeanModels.Python.Monadic

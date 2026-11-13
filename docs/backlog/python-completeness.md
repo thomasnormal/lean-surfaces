@@ -14236,3 +14236,21 @@ call semantics.
 
 DECIDED: require both successful and raised call-depth restoration observers
 before claiming ordinary call adequacy.
+
+## 2026-11-13-pyfoundation-115 — prove monadic pure call restoration
+
+`Monadic.finishCallM_pure_ok` composes the raw successful-body result with the
+state-retaining `tryCatch` and call-depth `modify` projections. A pure body
+value returns with unchanged world observables and exactly the requested
+`callDepth`, matching `Run.finishCallAt_ok` at the monadic surface.
+
+| Measurement | Result |
+|---|---|
+| Target | `lake build LeanModels.Python.Monadic.Eval` passed; 11/11 jobs |
+| Theorem | `Monadic.finishCallM_pure_ok` |
+| Domain | arbitrary value, world, and restoration depth for a pure body |
+| Semantic change | theorem-only call-boundary composition |
+| Remaining debt | non-pure body actions and positive-fuel call induction |
+
+DECIDED: the monadic restoration equation is now checked for the pure body
+base; nonempty and effectful bodies remain open.

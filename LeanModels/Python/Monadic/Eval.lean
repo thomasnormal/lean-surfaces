@@ -431,6 +431,25 @@ def withWorldRecursionUnit {α : Type} (action : SemW α) : SemW α := do
         modify fun w => { w with callDepth := w.callDepth.pred }
         raisePy e)
 
+/-- A nested callable enters through CPython's generic C call path before its
+Python frame is made.  That path checks the additional recursion unit at the
+boundary, unlike the already-entered frame wrapper used by ordinary statement
+execution. -/
+def withClosureRecursionUnit {α : Type} (action : SemW α) : SemW α := do
+  let w ← get
+  if pythonRecursionFull w.callDepth then
+    raisePy .recursionError
+  else
+    set { w with callDepth := w.callDepth + 1 }
+    tryCatch
+      (do
+        let v ← action
+        modify fun w => { w with callDepth := w.callDepth.pred }
+        pure v)
+      (fun e => do
+        modify fun w => { w with callDepth := w.callDepth.pred }
+        raisePy e)
+
 /-- A C-level call under one CPython recursion unit.  Unlike a Python frame,
 the generic C entry checks the additional unit before dispatch
 (`Py_EnterRecursiveCall`), so the last available depth is already full.
@@ -2595,14 +2614,17 @@ def callCloAt (K : Kont) (m : Module) (name : String) (params : Array Param)
     raisePy (positionalArityError w.callDepth name params args.size)
   else if isGenerator then do
     let w ← get
-    let env := markUnboundLocals body.toList (mkCallEnv params args) ++ captured
-    let g : Obj := .generator s!"<closure:{name}>" env
-      [.block body.toList] .created
-    set { w with heap := w.heap.push g }
-    pure (.ref w.heap.size)
+    if pythonFrameFull w.callDepth then
+      raisePy .recursionError
+    else
+      let env := markUnboundLocals body.toList (mkCallEnv params args) ++ captured
+      let g : Obj := .generator s!"<closure:{name}>" env
+        [.block body.toList] .created
+      set { w with heap := w.heap.push g }
+      pure (.ref w.heap.size)
   else do
     -- Ordinary closures enter the same Python-frame unit as named functions.
-    withWorldRecursionUnit do
+    withClosureRecursionUnit do
       let env := markUnboundLocals body.toList (mkCallEnv params args) ++ captured
       match ← inWorld env (execOpenList K m body.toList) with
       | .ret v => pure v

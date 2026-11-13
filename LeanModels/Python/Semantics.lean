@@ -11885,11 +11885,14 @@ def callClosure (m : Module) (fuel : Nat) (w : World) (name : String)
     else if !arityOk params args.size then
       .exn w (positionalArityError w.callDepth name params args.size)
     else if isGenerator then
-      let g : Obj :=
-        .generator s!"<closure:{name}>" (mkCallEnv params args ++ captured)
-          [.block body.toList] .created
-      .ok { w with heap := w.heap.push g } (.ref w.heap.size)
-    else if pythonFrameFull w.callDepth then
+      if pythonFrameFull w.callDepth then
+        .exn w .recursionError
+      else
+        let g : Obj :=
+          .generator s!"<closure:{name}>" (mkCallEnv params args ++ captured)
+            [.block body.toList] .created
+        .ok { w with heap := w.heap.push g } (.ref w.heap.size)
+    else if pythonRecursionFull w.callDepth then
       .exn w .recursionError
     else
       -- Objects/call.c:_PyFunction_Vectorcall evaluates an ordinary closure

@@ -20,9 +20,8 @@ python3 extractors/sv/extract.py --top picorv32 -D RISCV_FORMAL \
 
 The source SHA-256 is
 `0836050971b3c6cdd28ac3b1e5719a67fb645161912bef1e472e63995ceb062`.
-The resulting envelope at the current public-master loader is 3,439,235 bytes
-with SHA-256
-`cf572ede8f64186c495b59075f0a9bb7a45751ac15bda58265560411caadde1a`.
+The checked-in envelope is 3,442,095 bytes with SHA-256
+`17ea7b66ab8ea9b6844c317928f0430cff8b8a5b53f658f7a929bf1aa6cdc236`.
 It has one `picorv32` module and 26 named parameters.  The R2 statement
 records every pinned parameter value explicitly and retains the loader's
 loud refusal at the current `cpuregs` memory wall.

@@ -316,7 +316,10 @@ def initMembers : Nat → Ctx → Ptr → CType → List (String × CType) → L
           match ctx.layout.fieldOff ty nm with
           | some off =>
               if ctx.layout.fieldBits ty nm |>.isSome then
-                let v ← evalE ctx e
+                let v ← match e with
+                  | .implicitValueInit _ _ =>
+                      pure (.int ((intTyOf? (ctx.layout.normalizeTy mty)).getD IntTy.int_) 0)
+                  | _ => evalE ctx e
                 liftEval (storeBitFieldAt ctx ty nm mty (Mem.member p off) v)
               else
                 initObject fuel ctx (Mem.member p off) mty e

@@ -83,6 +83,9 @@ an expression statement evaluating an integer constant before completion.
 `Monadic.finishCallM_modify_ok` is the first state-mutating call theorem: an
 arbitrary world mutation threads through restoration while preserving the
 mutated heap/global/output/clock fields.
+`Monadic.leaveCallM_modify_ok` covers the matching nested-call unwind: an
+arbitrary mutation is followed by the active frame's depth decrement while
+the mutated world remains observable.
 
 ## Operator dispatch
 

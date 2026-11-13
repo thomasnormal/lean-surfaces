@@ -14326,3 +14326,21 @@ heap, globals, stdout, and clock fields exactly.
 
 DECIDED: the state-threading law is now kernel-checked for arbitrary mutations;
 Python assignment-body adequacy can build on this theorem.
+
+## 2026-11-13-pyfoundation-120 — nested-call mutation unwind
+
+`Monadic.leaveCallM_modify_ok` proves the matching nested-call success path. An
+arbitrary world mutation is followed by `leaveCallM`; the resulting world keeps
+the mutation and decrements the active Python frame depth, matching the runtime
+`Run.leaveCallDepth` observer.
+
+| Measurement | Result |
+|---|---|
+| Target | `lake build LeanModels.Python.Monadic.Eval` passed; 11/11 jobs |
+| Theorem | `Monadic.leaveCallM_modify_ok` |
+| Domain | arbitrary world mutation, return value, and nested-call state |
+| Semantic change | theorem-only nested-call unwind composition |
+| Remaining debt | assignment AST walker and recursive positive-fuel body calls |
+
+DECIDED: both top-level restoration and nested-call decrement are checked for
+arbitrary mutations; assignment-specific and recursive control remain open.

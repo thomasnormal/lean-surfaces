@@ -10,10 +10,10 @@
   "gcc.c-torture/execute": {
    "not-parsed": 267,
    "oracle-tests-compiler": 1,
-   "passed": 894,
+   "passed": 895,
    "refused-libc": 35,
    "refused-ub": 97,
-   "refused-unsupported": 560,
+   "refused-unsupported": 559,
    "timeout": 64
   },
   "gcc.c23-run": {
@@ -28,10 +28,10 @@
  "counts": {
   "not-parsed": 294,
   "oracle-tests-compiler": 1,
-  "passed": 1069,
+  "passed": 1070,
   "refused-libc": 39,
   "refused-ub": 106,
-  "refused-unsupported": 639,
+  "refused-unsupported": 638,
   "timeout": 66
  },
  "dynamic_wall_ranking": [
@@ -1840,14 +1840,6 @@
   },
   {
    "files": [
-    "991016-1.c"
-   ],
-   "present": 1,
-   "sole": 1,
-   "wall": "unsupported:no layout for declared type 'T0 *const'"
-  },
-  {
-   "files": [
     "strct-pack-1.c"
    ],
    "present": 1,
@@ -3288,8 +3280,8 @@
   }
  ],
  "manifest_hash": "bca94718b04e8394cdce992866637166f530978790bd1013cea4a00ae25ef764",
- "measured_at_utc": "2026-11-13T18:58:00Z",
- "measured_commit": "a6199d7a0",
+ "measured_at_utc": "2026-11-13T19:08:00Z",
+ "measured_commit": "670fbf8d1",
  "pin": {
   "corpora": [
    "C1",
@@ -14577,13 +14569,13 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "no layout for declared type 'T0 *const'",
-   "dynamic_wall": "unsupported:no layout for declared type 'T0 *const'",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "991016-1.c",
    "sha256": "7d4f953ef3d108bf6657f65733c38a4fc20fb2e4f7d1a87cd2285126fd420b00",
    "static_walls": [],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",

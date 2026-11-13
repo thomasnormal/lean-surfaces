@@ -14736,6 +14736,23 @@ DECIDED: assignment state now composes into a normal expression continuation
 for an existing local; arbitrary assignment and recursive body adequacy remain
 open.
 
+## 2026-11-13-pyfoundation-149 — two-assignment state bridge
+
+`Monadic.finishCallM_assign_two_existing_locals_body_ok` checks successive
+assignments `x = 1; y = 2` with both locals initially bound. The frame-local
+state threads through both assignment steps before normal completion.
+
+| Measurement | Result |
+|---|---|
+| Target | `lake build LeanModels.Python.Monadic.Eval` passed; 11/11 jobs |
+| Theorem | `Monadic.finishCallM_assign_two_existing_locals_body_ok` |
+| Domain | two consecutive assignments to existing locals |
+| Semantic change | theorem-only multi-assignment state composition |
+| Remaining debt | arbitrary locals and recursive positive-fuel calls |
+
+DECIDED: two assignment steps now compose through the body walker; arbitrary
+assignment and recursive body adequacy remain open.
+
 ## 2026-11-13-pyfoundation-135 — four-statement early-return bridge
 
 `Monadic.finishCallM_three_pass_ret_body_ok` checks three normal statements

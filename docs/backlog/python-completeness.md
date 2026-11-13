@@ -14667,6 +14667,23 @@ depth after the assignment state update.
 DECIDED: assignment state now composes into normal continuation for an
 existing local; arbitrary assignment and recursive body adequacy remain open.
 
+## 2026-11-13-pyfoundation-145 — assignment-to-break bridge
+
+`Monadic.finishCallM_assign_existing_local_break_body_ok` checks an assignment
+to an existing local followed by `break`, threading local state into
+`RFlow.brk` and depth restoration.
+
+| Measurement | Result |
+|---|---|
+| Target | `lake build LeanModels.Python.Monadic.Eval` passed; 11/11 jobs |
+| Theorem | `Monadic.finishCallM_assign_existing_local_break_body_ok` |
+| Domain | two-statement assignment-plus-break body with existing local |
+| Semantic change | theorem-only assignment and control-flow composition |
+| Remaining debt | arbitrary locals and recursive positive-fuel calls |
+
+DECIDED: assignment state now composes into break flow for an existing local;
+arbitrary assignment and recursive body adequacy remain open.
+
 ## 2026-11-13-pyfoundation-135 — four-statement early-return bridge
 
 `Monadic.finishCallM_three_pass_ret_body_ok` checks three normal statements

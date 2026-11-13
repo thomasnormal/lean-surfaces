@@ -70,6 +70,8 @@ def dynamic_wall(verdict, detail):
             return "unsupported:" + detail
         if detail.startswith("not an integer type: "):
             return "unsupported:" + detail
+        if detail == "no definition for 'main'":
+            return "missing-main"
         return "unsupported:" + detail.split(":", 1)[0]
     if verdict == "refused-libc":
         return "libc-call: " + detail if detail else "libc-call"
@@ -335,6 +337,9 @@ def selftest():
     if dynamic_wall("refused-unsupported", "not an lvalue: StringLiteral") != \
             "unsupported:not an lvalue: StringLiteral":
         print("c_survey --self-test: lvalue wall lost its construct", file=sys.stderr)
+        return 1
+    if dynamic_wall("refused-unsupported", "no definition for 'main'") != "missing-main":
+        print("c_survey --self-test: missing-main class was not separated", file=sys.stderr)
         return 1
     print("c_survey --self-test: ok")
     return 0

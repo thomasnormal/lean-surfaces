@@ -1193,9 +1193,13 @@ def callFn : Nat → Program → LeanModels.C.FunctionDefn → List CVal → Exe
               let m := ty.modulus
               let residue := (n % m + m) % m
               let rec first (bits : Nat) (index : Nat) : Nat :=
-                match bits with
-                | 0 => 0
-                | b + 1 => if b % 2 == 1 then index + 1 else first (b / 2) (index + 1)
+                if bits == 0 then 0
+                else if bits % 2 == 1 then index + 1
+                else if h : bits ≥ 2 then
+                  first (bits / 2) (index + 1)
+                else 0
+                termination_by bits
+                decreasing_by omega
               pure (.int IntTy.int_ (first residue.toNat 0))
           | _ => refuseUnsupported "__builtin_ffs: wrong argument count"
         -- GCC/Clang's fixed-width byte-swap builtins are value operations,

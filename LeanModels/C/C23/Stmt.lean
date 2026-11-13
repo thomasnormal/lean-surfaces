@@ -1513,10 +1513,11 @@ def callFn : Nat → Program → LeanModels.C.FunctionDefn → List CVal → Exe
                         | none => refuseUnsupported "__builtin_mul_overflow: destination has no declared type"
                     | none => refuseUnsupported "__builtin_mul_overflow: destination object is not live"
                 | none => refuseUnsupported "__builtin_mul_overflow: null destination"
-              let t ← liftEval (intTyOf ty)
+              let storageTy := prog.layout.normalizeTy ty
+              let t ← liftEval (intTyOf storageTy)
               let result := if op == "add" then x + y else x * y
               let overflow := !t.inRange result
-              liftEval (storeAt dp ty (.int t (t.wrap result)))
+              liftEval (storeAt dp storageTy (.int t (t.wrap result)))
               pure (.int IntTy.int_ (if overflow then 1 else 0))
           | _ => refuseUnsupported s!"__builtin_{op}_overflow: wrong argument count"
         let runVaStart : List CVal → ExecM CVal := fun vs =>

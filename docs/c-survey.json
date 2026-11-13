@@ -10,10 +10,10 @@
   "gcc.c-torture/execute": {
    "not-parsed": 267,
    "oracle-tests-compiler": 1,
-   "passed": 839,
+   "passed": 841,
    "refused-libc": 35,
    "refused-ub": 96,
-   "refused-unsupported": 616,
+   "refused-unsupported": 614,
    "timeout": 64
   },
   "gcc.c23-run": {
@@ -28,10 +28,10 @@
  "counts": {
   "not-parsed": 294,
   "oracle-tests-compiler": 1,
-  "passed": 1010,
+  "passed": 1012,
   "refused-libc": 39,
   "refused-ub": 105,
-  "refused-unsupported": 699,
+  "refused-unsupported": 697,
   "timeout": 66
  },
  "dynamic_wall_ranking": [
@@ -2253,14 +2253,6 @@
   },
   {
    "files": [
-    "pr58277-2.c"
-   ],
-   "present": 1,
-   "sole": 1,
-   "wall": "unsupported:no layout for declared type 'int ***volatile'"
-  },
-  {
-   "files": [
     "00104.c"
    ],
    "present": 1,
@@ -2594,14 +2586,6 @@
    "present": 1,
    "sole": 1,
    "wall": "unsupported:no layout for parameter type 'const unsigned int *const'"
-  },
-  {
-   "files": [
-    "pr33669.c"
-   ],
-   "present": 1,
-   "sole": 1,
-   "wall": "unsupported:no layout for parameter type 'foo_t *const'"
   },
   {
    "files": [
@@ -3613,8 +3597,8 @@
   }
  ],
  "manifest_hash": "55e7366504fecfee6c955cb3aa406fd908f92f0baa275e94717d1f04dec982b2",
- "measured_at_utc": "2026-11-13T10:29:45Z",
- "measured_commit": "1d5ce79d2",
+ "measured_at_utc": "2026-11-13T10:50:00Z",
+ "measured_commit": "7526562fa",
  "pin": {
   "corpora": [
    "C1",
@@ -22951,15 +22935,15 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "no layout for parameter type 'foo_t *const'",
-   "dynamic_wall": "unsupported:no layout for parameter type 'foo_t *const'",
+   "detail": "",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "pr33669.c",
    "sha256": "f9d1cb188e5a2cdd31d51f3efb09be9cd4205887159f89796c5e13ccebff0dd3",
    "static_walls": [
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -25287,15 +25271,15 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "no layout for declared type 'int ***volatile'",
-   "dynamic_wall": "unsupported:no layout for declared type 'int ***volatile'",
+   "detail": "",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "pr58277-2.c",
    "sha256": "9b44920c4243e0403e54662a6360be2bdb554b5584c17c42005c9981df47c3b0",
    "static_walls": [
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",

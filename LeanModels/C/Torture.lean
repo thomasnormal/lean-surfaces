@@ -137,7 +137,6 @@ pointer-to-array object form. Variable extents and elaborated scope spellings
 remain outside the fragment. -/
 def typeSpellingAdmitted (t : CType) : Bool :=
   ((!t.contains "(*") || LeanModels.C.isConstPointerToArray t) &&
-  !t.endsWith " const" && !t.endsWith " volatile" &&
   !t.endsWith " restrict" && !t.endsWith "*restrict" &&
   !t.contains "::"
 
@@ -151,6 +150,14 @@ def stripQuals : Nat → CType → CType
         stripQuals n ((t.dropEnd 9).toString.trimAsciiEnd.toString)
       else if t.endsWith "*restrict" then
         stripQuals n ((t.dropEnd 9).toString.trimAsciiEnd.toString)
+      else if t.endsWith " const" then
+        stripQuals n ((t.dropEnd 6).toString.trimAsciiEnd.toString)
+      else if t.endsWith " volatile" then
+        stripQuals n ((t.dropEnd 9).toString.trimAsciiEnd.toString)
+      else if t.endsWith "*const" then
+        stripQuals n ((t.dropEnd 5).toString.trimAsciiEnd.toString)
+      else if t.endsWith "*volatile" then
+        stripQuals n ((t.dropEnd 8).toString.trimAsciiEnd.toString)
       else t
 
 /-- `T[N]` → `(T, N)`. Constant nested arrays are walked from the outermost

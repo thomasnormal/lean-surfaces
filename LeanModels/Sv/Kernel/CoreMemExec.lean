@@ -53,6 +53,7 @@ deriving Repr, Inhabited
 structure CoreMemDesign where
   name : String
   env : IEnv
+  elems : List (String × Nat)
   scalar : Elab
   scalarEdge : Elab1
   memories : Array CoreMemDecl
@@ -155,7 +156,7 @@ def coreMemAllowedOther (entry : String × String) : Bool :=
 
 def coreMemNetMetadataAllowed (md : PNetMetadata) : Bool :=
   md.netKind == "Wire" && md.isNet && md.fourState && !md.signed &&
-    md.driverReason == some "no driver: the net reads z" && md.width == 1
+    md.driverReason == some "no driver: the net reads z" && md.driverRecords.isEmpty && md.width == 1
 
 def coreMemNetAllowed (d : PDesign) (name : String) : Bool :=
   d.netMetadata.any fun md => md.name == name && coreMemNetMetadataAllowed md
@@ -174,6 +175,18 @@ def coreMemNetDecls (d : PDesign) : List Decl :=
       let dc : Decl := { name := md.name, width := md.width, init := some (LVec.replicate md.width .lz), isNet := true }
       some dc
     else none
+
+def coreMemMetadataType (md : PNetMetadata) : PType :=
+  if md.width == 1 then .packed [] (some 1)
+  else .packed [⟨.int (Int.ofNat md.width - 1), .int 0⟩] (some md.width)
+
+def coreMemMetadataDecl (md : PNetMetadata) : PDecl :=
+  { name := md.name, type := coreMemMetadataType md, isSigned := md.signed,
+    twoState := !md.fourState, isNet := md.isNet }
+
+def coreMemMetadataDecls : List PNetMetadata → List PDecl
+  | [] => []
+  | md :: rest => coreMemMetadataDecl md :: coreMemMetadataDecls rest
 
 /-! ## Source-shaped generate expansion
 
@@ -338,9 +351,10 @@ def PDesign.instantiateCoreMemFrom (envI : IEnv) (d : PDesign) (args : List Int)
     | some (kind, text) =>
       .unsupported s!"E memory route does not yet admit module member '{kind}' ({text})"
     | none =>
+      let sourceDecls := d.decls ++ coreMemMetadataDecls d.netMetadata
       let decls0 ← buildScalarDecls1 env2 d.decls
       let decls := decls0 ++ coreMemNetDecls d
-      let elems ← buildElems env2 d.decls
+      let elems ← buildElems env2 sourceDecls
       let envP := { env2 with widths := decls.map (fun dc => (dc.name, dc.width)) }
       let memories ← buildMemDecls1 envP d.decls 0
       if memories.isEmpty && d.decls.any (fun pd => !pd.unpackedDims.isEmpty) then
@@ -353,7 +367,7 @@ def PDesign.instantiateCoreMemFrom (envI : IEnv) (d : PDesign) (args : List Int)
         let processes := (d.processes.map CoreMemProc.ofPProcess) ++
           (generated.map CoreMemProc.ofPProcess)
         let result : CoreMemDesign :=
-          { name := d.name, env := envP, scalar := scalar, scalarEdge := scalarEdge,
+          { name := d.name, env := envP, elems, scalar := scalar, scalarEdge := scalarEdge,
             memories := memories.toArray, processes := processes.toArray }
         .ok result
 
@@ -677,7 +691,7 @@ def CoreMemDesign.initialState (E : CoreMemDesign) : Res CoreMemState :=
     | _ => none
   match bodies with
   | [] => .ok E.initial
-  | [body] => E.execInitialStmt E.env [] E.initial body
+  | [body] => E.execInitialStmt E.env E.elems E.initial body
   | _ => .unsupported "T2:Initial: multiple initial processes are outside this cycle entry"
 
 /-! ## Plain `always @*` activations
@@ -693,8 +707,8 @@ def CoreMemDesign.readChanged (E : CoreMemDesign) (before after : CoreMemState)
   match reads with
   | [] => .ok false
   | expr :: rest => do
-      let old ← E.evalExpr E.env [] before none expr
-      let now ← E.evalExpr E.env [] after none expr
+      let old ← E.evalExpr E.env E.elems before none expr
+      let now ← E.evalExpr E.env E.elems after none expr
       if old == now then E.readChanged before after rest else .ok true
 
 mutual
@@ -757,7 +771,7 @@ def CoreMemDesign.runImplicit (E : CoreMemDesign) (before current : CoreMemState
       if !ready then
         E.runImplicit before current rest
       else
-        let after ← E.execImplicitStmt E.env [] current body
+        let after ← E.execImplicitStmt E.env E.elems current body
         let rearmed ← E.readChanged current after reads
         if rearmed then
           .unsupported
@@ -879,19 +893,19 @@ def CoreMemDesign.applyMemoryInputs (E : CoreMemDesign) (entry : SvState)
 def CoreMemDesign.step (E : CoreMemDesign) (st : CoreMemState) (entry : SvState) : Res CoreMemState := do
   let input := E.scalar.applyInputs st.scalar entry
   let memoryInput := E.applyMemoryInputs entry st.memory
-  let pre ← E.settleAssign E.env [] { scalar := input, memory := memoryInput } E.processes.toList
+  let pre ← E.settleAssign E.env E.elems { scalar := input, memory := memoryInput } E.processes.toList
   let before := E.scalar.view st.scalar
   let after := E.scalar.view pre.scalar
-  let (scalarQ, memoryQ) ← E.runEdges E.env [] pre before after E.processes.toList
+  let (scalarQ, memoryQ) ← E.runEdges E.env E.elems pre before after E.processes.toList
   let scalar := E.scalarEdge.commit pre.scalar scalarQ
   let memory ← match pre.memory.commitNba memoryQ with
     | some m => .ok m
     | none => .unsupported "10.4.2: memory NBA commit lost its declaration identity"
-  let settled ← E.settleAssign E.env [] { scalar, memory } E.processes.toList
+  let settled ← E.settleAssign E.env E.elems { scalar, memory } E.processes.toList
   let activated ← if E.hasImplicit then
       E.runImplicit st settled E.processes.toList
     else .ok settled
-  E.settleAssign E.env [] activated E.processes.toList
+  E.settleAssign E.env E.elems activated E.processes.toList
 
 def runCoreMemRows (E : CoreMemDesign) (st : CoreMemState) : List SvState → Res (List CoreMemState)
   | [] => .ok []

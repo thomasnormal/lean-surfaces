@@ -7,10 +7,12 @@ set_option maxRecDepth 100000 in
 load_design_sv2 netZScalar from
   "Examples/system-verilog/sem2/net_z_scalar_canonical_e/net_z_scalar_canonical_e.sv.json"
 def stimuli : List SvState := [[("clk", LVec.ofNat 1 0)], [("clk", LVec.ofNat 1 1)]]
-def outputs : Res (List (String × String)) := do
+def outputs : Res (List (String × (String × String))) := do
   let d ← PDesign.instantiateCoreMem netZScalar.pdesign [4]
   let rows ← runCoreMemRows d d.initial stimuli
-  .ok (rows.map fun s => (SvState.showSignal (CoreMemState.view d s) "q", SvState.showSignal (CoreMemState.view d s) "z_out"))
+  .ok (rows.map fun s => (SvState.showSignal (CoreMemState.view d s) "q",
+    (SvState.showSignal (CoreMemState.view d s) "z_out",
+      SvState.showSignal (CoreMemState.view d s) "z_bit")))
 #guard match PDesign.instantiateCoreMem netZScalar.pdesign [4] with
   | .ok d => d.scalar.decls.toList.any (fun x => x.name == "z" && x.isNet && x.init == some (LVec.replicate 1 .lz))
   | _ => false
@@ -19,6 +21,7 @@ def outputs : Res (List (String × String)) := do
     md.fourState && !md.signed &&
     md.driverReason == some "no driver: the net reads z" && md.driverRecords.isEmpty)
 #guard match outputs with
-  | .ok rows => rows == [("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx", "z"), ("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx", "z")]
+  | .ok rows => rows == [("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx", ("z", "z")),
+      ("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx", ("z", "z"))]
   | _ => false
 end Examples.«system-verilog».sem2.net_z_scalar_canonical_e

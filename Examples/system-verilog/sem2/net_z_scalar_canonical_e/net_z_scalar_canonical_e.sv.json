@@ -10,7 +10,7 @@
   "source_files": [
     {
       "path": "Examples/system-verilog/sem2/net_z_scalar_canonical_e/net_z_scalar_canonical_e.sv",
-      "sha256": "62cab89024fdcaa801929c34e8f0983757db1576248283ea1c716dd880da966d"
+      "sha256": "b5d67e2440ce06b90e23a58056fd6f4cfccb524c959f7cfd9b070421221ab61f"
     }
   ],
   "packages": [],
@@ -22,7 +22,7 @@
         "span": {
           "line": 2,
           "col": 1,
-          "end_line": 8,
+          "end_line": 9,
           "end_col": 10
         },
         "name": "net_z_scalar_canonical_e",
@@ -149,6 +149,22 @@
               "end_col": 61
             },
             "name": "z_out",
+            "dir": "out",
+            "width": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 3,
+              "col": 76,
+              "end_line": 3,
+              "end_col": 81
+            },
+            "name": "z_bit",
             "dir": "out",
             "width": {
               "kind": "PackedType",
@@ -323,6 +339,58 @@
               "width": 1,
               "name": "z"
             }
+          },
+          {
+            "kind": "Assign",
+            "span": {
+              "line": 8,
+              "col": 10,
+              "end_line": 8,
+              "end_col": 22
+            },
+            "target": {
+              "kind": "Ident",
+              "span": {
+                "line": 8,
+                "col": 10,
+                "end_line": 8,
+                "end_col": 15
+              },
+              "width": 1,
+              "name": "z_bit"
+            },
+            "value": {
+              "kind": "BitSel",
+              "span": {
+                "line": 8,
+                "col": 18,
+                "end_line": 8,
+                "end_col": 22
+              },
+              "width": 1,
+              "value": {
+                "kind": "Ident",
+                "span": {
+                  "line": 8,
+                  "col": 18,
+                  "end_line": 8,
+                  "end_col": 19
+                },
+                "width": 1,
+                "name": "z"
+              },
+              "index": {
+                "kind": "Int",
+                "span": {
+                  "line": 8,
+                  "col": 20,
+                  "end_line": 8,
+                  "end_col": 21
+                },
+                "value": 0,
+                "resolved_width": 32
+              }
+            }
           }
         ],
         "generates": [],
@@ -331,9 +399,9 @@
             "kind": "Unsupported",
             "span": {
               "line": 5,
-              "col": 8,
+              "col": 14,
               "end_line": 5,
-              "end_col": 9
+              "end_col": 15
             },
             "sv_kind": "NetSymbol:net-z",
             "text": "z",
@@ -341,7 +409,32 @@
               "name": "z",
               "width": {
                 "kind": "PackedType",
-                "packed": [],
+                "packed": [
+                  {
+                    "msb": {
+                      "kind": "Int",
+                      "span": {
+                        "line": 5,
+                        "col": 9,
+                        "end_line": 5,
+                        "end_col": 10
+                      },
+                      "value": 0,
+                      "resolved_width": null
+                    },
+                    "lsb": {
+                      "kind": "Int",
+                      "span": {
+                        "line": 5,
+                        "col": 11,
+                        "end_line": 5,
+                        "end_col": 12
+                      },
+                      "value": 0,
+                      "resolved_width": null
+                    }
+                  }
+                ],
                 "resolved": 1
               },
               "net_kind": "Wire",

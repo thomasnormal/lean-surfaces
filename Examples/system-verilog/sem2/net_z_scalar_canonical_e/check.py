@@ -14,8 +14,9 @@ def run(a,cwd=ROOT):
 def rows(o):return [x.split()[1:] for x in o.splitlines() if x.startswith('ROW ')]
 def main():
  exp=rows(run(['lake','env','lean','--run',str(HERE/'oracle.lean')]))
- if exp != [['i=0','q=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx','z_out=z'],['i=1','q=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx','z_out=z']]:raise RuntimeError(exp)
- print('E: 2 undriven-net rows MATCH')
+ expected=[['i=0','q=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx','z_out=z','z_bit=z'],['i=1','q=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx','z_out=z','z_bit=z']]
+ if exp != expected:raise RuntimeError(exp)
+ print('E: 2 undriven-net rows, including BitSel, MATCH')
  src=str(HERE/'net_z_scalar_canonical_e.sv');tb=str(HERE/'net_z_scalar_canonical_e_tb.sv')
  with tempfile.TemporaryDirectory(prefix='sv-e-net-z-') as w:
   exe=str(Path(w)/'sim');run(['iverilog','-g2012','-s','net_z_scalar_canonical_e_tb','-o',exe,src,tb],w);act=rows(run(['vvp',exe],w))

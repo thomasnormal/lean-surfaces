@@ -445,6 +445,9 @@ def layoutFor (envl : Envelope) : Layout :=
   let observed := observedRecordFacts envl
   let observedFor := fun t : CType =>
     let t0 := stripQuals 8 t
+    observed.find? (fun row => row.1 == t0)
+  let observedPointeeFor := fun t : CType =>
+    let t0 := stripQuals 8 t
     let t1 := if t0.endsWith "*" then
       stripQuals 8 (t0.dropEnd 1).toString.trimAsciiEnd.toString
       else t0
@@ -453,12 +456,12 @@ def layoutFor (envl : Envelope) : Layout :=
       | some (_, _, layout) => some layout.sizeBytes
       | none => (sizeAlign tds recs 16 t).map (·.1)
     elem := fun t => arrayOf (resolve tds 8 t)
-    fieldOff := fun t f => match observedFor t with
+    fieldOff := fun t f => match observedPointeeFor t with
       | some (_, _, layout) =>
           layout.fields.find? (fun field => field.name == f)
             |>.map (fun field => field.offsetBits / 8)
       | none => fieldOffIn tds recs 16 t f
-    fieldBits := fun t f => match observedFor t with
+    fieldBits := fun t f => match observedPointeeFor t with
       | some (_, _, layout) =>
           layout.fields.find? (fun field => field.name == f)
             |>.filter (·.bitfield)

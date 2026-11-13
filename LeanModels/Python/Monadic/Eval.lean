@@ -3865,6 +3865,22 @@ theorem finishCallM_expr_constant_body_ok (K : Kont) (m : Module)
   rw [bind_apply, hraw]
   rfl
 
+theorem finishCallM_assign_constant_body_ok (K : Kont) (m : Module)
+    (w : World) (depth : Nat) :
+    toRun (finishCallM depth
+      (inWorld [] (execOpenList K m
+        [.assign #[.name "x" adequacySpan]
+          (.constant (.int 1) adequacySpan) adequacySpan]))) w =
+      .ok { w with callDepth := depth } .next := by
+  have hraw : (inWorld [] (execOpenList K m
+      [.assign #[.name "x" adequacySpan]
+        (.constant (.int 1) adequacySpan) adequacySpan])) w =
+      .ok (.ok RFlow.next, w) := by rfl
+  unfold finishCallM
+  apply toRun_tryCatch_ok
+  rw [bind_apply, hraw]
+  rfl
+
 theorem finishCallM_modify_ok {α : Type} (depth : Nat) (w : World)
     (v : α) (f : World → World) :
     toRun (finishCallM depth (do modify f; pure v : SemW α)) w =
@@ -3923,6 +3939,7 @@ theorem leaveCallM_modify_ok {α : Type} (w : World) (v : α)
 #print axioms finishCallM_empty_body_ok
 #print axioms finishCallM_pass_body_ok
 #print axioms finishCallM_expr_constant_body_ok
+#print axioms finishCallM_assign_constant_body_ok
 #print axioms finishCallM_modify_ok
 #print axioms leaveCallM_modify_ok
 

@@ -14344,3 +14344,21 @@ the mutation and decrements the active Python frame depth, matching the runtime
 
 DECIDED: both top-level restoration and nested-call decrement are checked for
 arbitrary mutations; assignment-specific and recursive control remain open.
+
+## 2026-11-13-pyfoundation-121 — assignment-body call bridge
+
+`Monadic.finishCallM_assign_constant_body_ok` connects a concrete name
+assignment statement to the existing call-boundary restoration theorem. The
+fuel-free walker updates its frame-local environment, while `inWorld` projects
+the resulting world and `finishCallM` restores the requested call depth.
+
+| Measurement | Result |
+|---|---|
+| Target | `lake build LeanModels.Python.Monadic.Eval` passed; 11/11 jobs |
+| Theorem | `Monadic.finishCallM_assign_constant_body_ok` |
+| Domain | one name assignment of an integer constant |
+| Semantic change | theorem-only assignment-body composition |
+| Remaining debt | general assignment targets, recursive positive-fuel body calls |
+
+DECIDED: one assignment AST body now composes through the stateful call
+boundary; general assignment and recursive control remain open.

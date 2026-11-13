@@ -7,6 +7,12 @@ worker reached by each surface. `shared` means both surfaces call the same
 worker; `separate` marks a control or transport wrapper that still needs an
 adequacy theorem.
 
+The F9 ledger also has a concrete assignment-body bridge:
+`Monadic.finishCallM_assign_constant_body_ok` runs a name assignment through
+the fuel-free statement walker and the stateful call restoration boundary. It
+is theorem-only and leaves the assignment AST shape intact; general assignment
+expressions and recursive calls remain open.
+
 ## Protocol families
 
 | CPython 3.9 entry and call order | Trunk (`Semantics.lean`) | Runner (`Monadic/`) | Current observation / gap |

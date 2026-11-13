@@ -10,10 +10,10 @@
   "gcc.c-torture/execute": {
    "not-parsed": 267,
    "oracle-tests-compiler": 1,
-   "passed": 861,
+   "passed": 862,
    "refused-libc": 35,
    "refused-ub": 96,
-   "refused-unsupported": 594,
+   "refused-unsupported": 593,
    "timeout": 64
   },
   "gcc.c23-run": {
@@ -28,10 +28,10 @@
  "counts": {
   "not-parsed": 294,
   "oracle-tests-compiler": 1,
-  "passed": 1036,
+  "passed": 1037,
   "refused-libc": 39,
   "refused-ub": 105,
-  "refused-unsupported": 673,
+  "refused-unsupported": 672,
   "timeout": 66
  },
  "dynamic_wall_ranking": [
@@ -752,7 +752,6 @@
     "920501-6.c",
     "920726-1.c",
     "930930-2.c",
-    "bswap-1.c",
     "builtin-bitops-1.c",
     "ieee/pr109386.c",
     "pr17377.c",
@@ -764,8 +763,8 @@
     "va-arg-10.c",
     "va-arg-9.c"
    ],
-   "present": 20,
-   "sole": 20,
+   "present": 19,
+   "sole": 19,
    "wall": "unsequenced-effects"
   },
   {
@@ -3447,8 +3446,8 @@
   }
  ],
  "manifest_hash": "bca94718b04e8394cdce992866637166f530978790bd1013cea4a00ae25ef764",
- "measured_at_utc": "2026-11-13T15:43:23Z",
- "measured_commit": "9b52acf5f",
+ "measured_at_utc": "2026-11-13T16:02:35Z",
+ "measured_commit": "7d051c3d6",
  "pin": {
   "corpora": [
    "C1",
@@ -15342,8 +15341,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "unsequenced side effects in binary operands",
-   "dynamic_wall": "unsequenced-effects",
+   "detail": "0",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "bswap-1.c",
    "sha256": "7224f5f087655d63cfe475c3925f57051fdfa5c5a7abfe3f1ce31d41f438c67c",
@@ -15353,7 +15352,7 @@
     "type-layout",
     "unsequenced-effects"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",

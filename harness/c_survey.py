@@ -135,7 +135,11 @@ def static_walls(env):
         elif kind == "CallExpr":
             name = callee_name(n.get("callee"))
             if name not in ("abort", "exit") and name not in definitions:
-                walls.add("libc-call")
+                # Keep the generic fallback for an unresolved callee, but
+                # preserve Clang's resolved external name when available so
+                # the sole ranking prices one clause-sized library case at a
+                # time (memcpy, strlen, vprintf, ...).
+                walls.add("libc-call: " + name if name else "libc-call")
         elif kind in ("ImplicitCastExpr", "CStyleCastExpr"):
             cast = n.get("cast")
             if cast in ("IntegralToPointer", "PointerToIntegral", "FloatingCast",

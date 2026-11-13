@@ -14,15 +14,32 @@ def execE1 (E : Elab1) (ch : Choice) (fuel : Nat) (c : Config1) : Res Config1 :=
   | .outOfBudget _ => .timeout
   | .refused msg => .unsupported msg
 
+/-! A cycle has two slots: the low slot publishes the cycle's data inputs and
+the following high slot raises the driven clock.  Keeping these as two
+source-shaped slot entries is essential: a low-only replay never produces the
+posedge that an edge process is waiting for. -/
+
+def execE1Cycle (E : Elab1) (ch : Choice) (fuel : Nat) (clk : String)
+    (c : Config1) (entry : SvState) : Res E1Row :=
+  let low := Config1.nextSlot E c (slotEntry1 clk [entry] 0)
+  match execE1 E ch fuel low with
+  | .ok closedLow =>
+      let high := Config1.nextSlot E closedLow (slotEntry1 clk [entry] 1)
+      match execE1 E ch fuel high with
+      | .ok closed => .ok (high, closed)
+      | .timeout => .timeout
+      | .unsupported msg => .unsupported msg
+  | .timeout => .timeout
+  | .unsupported msg => .unsupported msg
+
 def runE1Tail (E : Elab1) (ch : Choice) (fuel : Nat) (clk : String) :
     Config1 → List SvState → Res (List E1Row)
-  | c, [] => .ok []
+  | _, [] => .ok []
   | c, entry :: rest =>
-      let start := Config1.nextSlot E c (slotEntry1 clk [entry] 0)
-      match execE1 E ch fuel start with
-      | .ok closed =>
+      match execE1Cycle E ch fuel clk c entry with
+      | .ok (high, closed) =>
           match runE1Tail E ch fuel clk closed rest with
-          | .ok rows => .ok ((start, closed) :: rows)
+          | .ok rows => .ok ((high, closed) :: rows)
           | .timeout => .timeout
           | .unsupported msg => .unsupported msg
       | .timeout => .timeout
@@ -34,11 +51,10 @@ def runE1 (E : Elab1) (ch : Choice) (fuel : Nat) (clk : String)
   match env with
   | [] => .ok []
   | entry :: rest =>
-      let start := Config1.nextSlot E (Config1.init E) (slotEntry1 clk [entry] 0)
-      match execE1 E ch fuel start with
-      | .ok closed =>
+      match execE1Cycle E ch fuel clk (Config1.init E) entry with
+      | .ok (high, closed) =>
           match runE1Tail E ch fuel clk closed rest with
-          | .ok rows => .ok ((start, closed) :: rows)
+          | .ok rows => .ok ((high, closed) :: rows)
           | .timeout => .timeout
           | .unsupported msg => .unsupported msg
       | .timeout => .timeout
@@ -51,6 +67,24 @@ theorem execE1_sound {E : Elab1} {ch : Choice} {fuel : Nat} {c c' : Config1}
   | closed d => simp [he] at h; cases h; exact exec1_sound he
   | outOfBudget d => simp [he] at h
   | refused msg => simp [he] at h
+
+theorem execE1Cycle_sound {E : Elab1} {ch : Choice} {fuel : Nat} {clk : String}
+    {c : Config1} {entry : SvState} {row : E1Row}
+    (h : execE1Cycle E ch fuel clk c entry = .ok row) :
+    SlotCloses1 E ch row.1 row.2 := by
+  dsimp [execE1Cycle] at h
+  cases he : execE1 E ch fuel (Config1.nextSlot E c (slotEntry1 clk [entry] 0)) with
+  | timeout => simp only [he] at h; cases h
+  | unsupported msg => simp only [he] at h; cases h
+  | ok lowClosed =>
+      cases hh : execE1 E ch fuel (Config1.nextSlot E lowClosed
+          (slotEntry1 clk [entry] 1)) with
+      | timeout => simp only [he, hh] at h; cases h
+      | unsupported msg => simp only [he, hh] at h; cases h
+      | ok highClosed =>
+          simp only [he, hh] at h
+          cases h
+          exact execE1_sound hh
 
 theorem runE1_sound {E : Elab1} {ch : Choice} {fuel : Nat} {clk : String}
     {env : List SvState} {rows : List E1Row}
@@ -69,12 +103,12 @@ theorem runE1_sound {E : Elab1} {ch : Choice} {fuel : Nat} {clk : String}
     | cons e es ih =>
         intro rs h row hr
         simp only [runE1Tail] at h
-        cases he : execE1 E ch fuel (Config1.nextSlot E c (slotEntry1 clk [e] 0)) with
+        cases he : execE1Cycle E ch fuel clk c e with
         | timeout => simp [he] at h
         | unsupported msg => simp [he] at h
-        | ok c' =>
+        | ok row =>
             simp only [he] at h
-            cases ht : runE1Tail E ch fuel clk c' es with
+            cases ht : runE1Tail E ch fuel clk row.2 es with
             | timeout => simp [ht] at h
             | unsupported msg => simp [ht] at h
             | ok rs' =>
@@ -82,19 +116,19 @@ theorem runE1_sound {E : Elab1} {ch : Choice} {fuel : Nat} {clk : String}
                 cases h
                 simp only [List.mem_cons] at hr
                 rcases hr with rfl | hr
-                · exact execE1_sound he
-                · exact ih c' rs' ht row hr
+                · exact execE1Cycle_sound he
+                · apply ih row.2 rs' ht
+                  exact hr
   cases env with
   | nil => simp [runE1] at h; subst h; simp
   | cons entry rest =>
       simp only [runE1] at h
-      cases he : execE1 E ch fuel
-          (Config1.nextSlot E (Config1.init E) (slotEntry1 clk [entry] 0)) with
+      cases he : execE1Cycle E ch fuel clk (Config1.init E) entry with
       | timeout => simp [he] at h
       | unsupported msg => simp [he] at h
-      | ok c0 =>
+      | ok row0 =>
           simp only [he] at h
-          cases ht : runE1Tail E ch fuel clk c0 rest with
+          cases ht : runE1Tail E ch fuel clk row0.2 rest with
           | timeout => simp [ht] at h
           | unsupported msg => simp [ht] at h
           | ok rs =>
@@ -103,7 +137,7 @@ theorem runE1_sound {E : Elab1} {ch : Choice} {fuel : Nat} {clk : String}
               intro row hr
               simp only [List.mem_cons] at hr
               rcases hr with rfl | hr
-              · exact execE1_sound he
-              · exact tail_sound c0 rest rs ht row hr
+              · exact execE1Cycle_sound he
+              · exact tail_sound row0.2 rest rs ht row hr
 
 end LeanModels.Sv.Kernel

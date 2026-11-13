@@ -15,7 +15,10 @@ The sv-0.2 twin of diff_test.py. Per case in harness/sv/cases2.json:
      equals the Lean trace for some schedule in `accept_sigmas`
      (default: `["src"]`).
 
-Backends: Xcelium `xrun`, Icarus `iverilog`/`vvp`, and an explicit opt-in
+Lean backends are `run2`, E-core-0 (`e0`), and E-core-1 (`e1`).  The latter
+retains positive-edge `always_ff`/plain `always` bodies and executes the
+Active/NBA slot loop.  Simulator backends are Xcelium `xrun`, Icarus
+`iverilog`/`vvp`, and an explicit opt-in
 Verilator `--sim verilator` backend. Default `--sim auto` retains the pinned
 Xcelium/Icarus selection; Verilator is never silently added to that default.
 Cases with `"xrun_only": true` skip Icarus (it cannot parse `case … inside`),
@@ -90,6 +93,7 @@ CASES_JSON = os.path.join(HARNESS_DIR, "cases2.json")
 RUNNER = os.path.join("harness", "sv", "runner2.lean")
 RUNNER_MEM = os.path.join("harness", "sv", "runner_mem2.lean")
 RUNNER_E0 = os.path.join("harness", "sv", "runner_e0.lean")
+RUNNER_E1 = os.path.join("harness", "sv", "runner_e1.lean")
 
 sys.path.insert(0, HARNESS_DIR)
 import gen_tb2  # noqa: E402
@@ -114,8 +118,11 @@ def run_cmd(cmd, cwd, timeout):
                           timeout=timeout)
 
 
-def ensure_oleans(verbose):
+def ensure_oleans(verbose, backend="run2"):
     targets = ["LeanModels.Sv." + name.replace("/", ".") for name in SV_LEAN_MODULES]
+    if backend == "e1":
+        targets.extend(["LeanModels.Sv.Kernel.Core1Elab",
+                        "LeanModels.Sv.Kernel.RunE1"])
     if verbose:
         print("  [olean] checking runner dependencies with Lake")
     p = run_cmd(["lake", "build", *targets], cwd=REPO, timeout=900)
@@ -424,8 +431,8 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--sim", choices=["auto", "xrun", "iverilog", "verilator", "both"],
                     default="auto")
-    ap.add_argument("--backend", choices=["run2", "e0"], default="run2",
-                    help="Lean semantics backend (run2 or E-core-0 array executor)")
+    ap.add_argument("--backend", choices=["run2", "e0", "e1"], default="run2",
+                    help="Lean semantics backend (run2, E-core-0 array executor, or E-core-1 edge executor)")
     ap.add_argument("--case", action="append", default=None,
                     help="restrict to one or more case names (repeat the option)")
     ap.add_argument("--workdir", default=None)
@@ -472,7 +479,7 @@ def main():
               "harness not exercised)")
         return 0
 
-    ensure_oleans(args.verbose)
+    ensure_oleans(args.verbose, args.backend)
 
     base = args.workdir or tempfile.mkdtemp(prefix="sv2diff_")
     failures = 0
@@ -516,7 +523,13 @@ def main():
             else:
                 xstatus = (st, info)
         xout = []
-        if args.backend == "e0":
+        if args.backend == "e1":
+            if case.get("memory"):
+                skipped += 1
+                print("%-24s SKIP (memory rows are outside E-core-1)" % name)
+                continue
+            runner = RUNNER_E1
+        elif args.backend == "e0":
             if case.get("memory"):
                 skipped += 1
                 print("%-24s SKIP (memory rows are outside E-core-0)" % name)

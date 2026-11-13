@@ -14852,3 +14852,20 @@ restoration.
 
 DECIDED: longer bare-return sequencing is now checked; recursive and general
 body adequacy remain open.
+
+## 2026-11-13-pyfoundation-152 — two-assignment return bridge
+
+`Monadic.finishCallM_assign_two_existing_locals_ret_body_ok` checks two local
+assignments followed by `return 3`, threading both updates into early flow and
+depth restoration.
+
+| Measurement | Result |
+|---|---|
+| Target | `lake build LeanModels.Python.Monadic.Eval` passed; 11/11 jobs |
+| Theorem | `Monadic.finishCallM_assign_two_existing_locals_ret_body_ok` |
+| Domain | three-statement assignment-assignment-return body |
+| Semantic change | theorem-only multi-assignment early-flow composition |
+| Remaining debt | arbitrary locals and recursive positive-fuel calls |
+
+DECIDED: two assignment updates now compose into return flow; arbitrary
+assignment and recursive body adequacy remain open.

@@ -242,3 +242,6 @@ sequencing to three normal statements followed by `continue`.
 
 `Monadic.finishCallM_three_pass_ret_none_body_ok` extends bare-return
 sequencing to three normal statements followed by `return`.
+
+`Monadic.finishCallM_assign_two_existing_locals_ret_body_ok` extends
+assignment return short-circuiting to two successive local updates.

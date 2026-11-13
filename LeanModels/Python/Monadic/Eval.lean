@@ -2986,6 +2986,11 @@ theorem twinAgrees_callIn_static_locals (m : Module) (fuel : Nat) (w : World)
       raiseIn, throw, throwThe, MonadExceptOf.throw, ExceptT.mk,
       StateT.pure, Except.pure, pure]
 
+theorem twinAgrees_callIn_zero_fuel (m : Module) (w : World)
+    (fname : String) (args : Array RVal) :
+    callInMono m 0 w fname args = .timeout := by
+  rfl
+
 /-- The §5.2 CLASS, present exactly when the run REFUSED. `none` is not a
 default: it is the statement that this run did not refuse. -/
 def refusalClass {α : Type} :
@@ -3805,6 +3810,7 @@ theorem twinAgrees_execOpenList_of_each (K : Kont) (m : Module) :
 #print axioms twinAgrees_callIn_unsupported_args
 #print axioms twinAgrees_callIn_arity_error
 #print axioms twinAgrees_callIn_static_locals
+#print axioms twinAgrees_callIn_zero_fuel
 #print axioms refusalClass_isSome_iff
 #print axioms toRun_ofRun
 #print axioms ofRun_toRun_normalises

@@ -14088,3 +14088,21 @@ execution.
 
 DECIDED: call preflight guard order is now covered through the static-locals
 branch; recursive body adequacy remains open.
+
+## 2026-11-13-pyfoundation-107 — pin the zero-fuel call boundary
+
+`Monadic.twinAgrees_callIn_zero_fuel` proves definitionally that every call
+shape times out at zero fuel on the monadic surface, matching the trunk's
+fuelled `callIn` boundary. This is the base case for the eventual recursive
+call induction and is independent of function lookup or body shape.
+
+| Measurement | Result |
+|---|---|
+| Target | `lake build LeanModels.Python.Monadic.Eval` passed; 11/11 jobs |
+| Theorem | `Monadic.twinAgrees_callIn_zero_fuel` |
+| Domain | all modules, worlds, names, and arguments at fuel zero |
+| Semantic change | theorem only; no evaluator behavior change |
+| Remaining debt | positive-fuel body calls, generator creation, and scripts |
+
+DECIDED: keep the zero-fuel timeout as the call induction base case; positive
+fuel remains the active adequacy boundary.

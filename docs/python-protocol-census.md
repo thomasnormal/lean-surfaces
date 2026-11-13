@@ -53,6 +53,8 @@ execution. `Monadic.twinAgrees_callIn_arity_error` now closes the arity branch
 as well, including the depth-sensitive CPython diagnostic and retained world.
 `Monadic.twinAgrees_callIn_static_locals` closes the following static-locals
 refusal branch before body execution.
+`Monadic.twinAgrees_callIn_zero_fuel` also pins the shared timeout boundary for
+every call shape.
 
 ## Operator dispatch
 

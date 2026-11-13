@@ -11,8 +11,9 @@ one native `MemState`.  The source `PStmt` is retained, including a procedural
 `forLoop`, and the loop is evaluated from `Loop2.headerSchema` at run time.
 
 The adapter is deliberately small: one-rank unpacked declarations, positive
-clock edges, continuous scalar assignments, and NBA-only edge bodies.  It does
-not lower a loop to a block, expand a memory into cells, or introduce another
+clock edges, continuous scalar assignments, one-shot time-zero initialization,
+and a retained plain `always @*` body with raw-read sensitivity.  It does not
+lower a loop to a block, expand a memory into cells, or introduce another
 memory representation.  Unknown and out-of-range memory indices use
 `MemState.issueNba`/`readIndexId`, so issue-time NBA sampling and x/no-op
 behavior are shared with the canonical memory component.
@@ -42,6 +43,10 @@ inductive CoreMemProc where
   | edge (p : CoreMemEdge)
   | assign (target : PLhs) (value : PExpr)
   | initial (body : PStmt)
+  /-- A plain `always @*` waits for a raw read change before activation.
+      Its source body remains a `PStmt`; the memory route does not lower it
+      into a clocked or combinational surrogate. -/
+  | implicit (body : PStmt)
   | unsupported (kind text : String)
 deriving Repr, Inhabited
 
@@ -70,6 +75,12 @@ def CoreMemDesign.scalarWidth? (E : CoreMemDesign) (name : String) : Option Nat 
   | none => none
 
 def CoreMemDesign.scalarE (E : CoreMemDesign) : Elab1 := E.scalarEdge
+
+def CoreMemDesign.hasImplicit (E : CoreMemDesign) : Bool :=
+  E.processes.toList.any fun p =>
+    match p with
+    | .implicit _ => true
+    | _ => false
 
 def instScalarDecl1 (env : IEnv) (pd : PDecl) : Res (Option Decl) :=
   if !pd.unpackedDims.isEmpty then
@@ -125,8 +136,7 @@ def CoreMemProc.ofPProcess : PProcess → CoreMemProc
   | .assign target value => .assign (.ident target) value
   | .assignL target value => .assign target value
   | .alwaysComb _ => .unsupported "9.2.2.2" "always_comb is outside this memory edge slice"
-  | .alwaysImplicit _ => .unsupported "ProceduralBlockSymbol:Always"
-      "implicit event control is outside the canonical memory edge slice"
+  | .alwaysImplicit body => .implicit body
   | .initial body => .initial body
   | .unsupported kind text => .unsupported kind text
 
@@ -192,6 +202,78 @@ def LeanModels.Sv.PExpr.hasMemoryReadList : List PExpr → Bool
   | [] => false
   | x :: xs => LeanModels.Sv.PExpr.hasMemoryRead x ||
       LeanModels.Sv.PExpr.hasMemoryReadList xs
+
+end
+
+/-! ## Raw sensitivity for retained implicit processes
+
+Plain `always @*` is sensitive to every value read by its body (§9.4.2.2.2),
+including the selected cell and index of a source-shaped memory read.  These
+walkers retain the parser expressions; they do not lower a body or collapse a
+memory into scalar cells. -/
+
+mutual
+
+def coreMemReadExprs : PExpr → List PExpr
+  | e@(.ident _) => [e]
+  | e@(.arrayElem _ indices) => e :: coreMemReadExprsList indices
+  | e@(.arrayPart _ indices _ a b) =>
+      e :: (coreMemReadExprsList indices ++ coreMemReadExprs a ++ coreMemReadExprs b)
+  | .unary _ a | .resize _ a | .signedResize _ a | .squash2 _ a
+  | .sysCall _ a | .reduce _ a | .cast _ a => coreMemReadExprs a
+  | .binary _ a b | .bitSel a b | .repl a b =>
+      coreMemReadExprs a ++ coreMemReadExprs b
+  | .partSel a b c | .ternary a b c =>
+      coreMemReadExprs a ++ coreMemReadExprs b ++ coreMemReadExprs c
+  | .concat xs | .functionCall _ xs => coreMemReadExprsList xs
+  | .lit _ | .fill _ | .paramRef .. | .genvarRef _ | .enumRef .. | .int _
+  | .unsupported .. => []
+
+def coreMemReadExprsList : List PExpr → List PExpr
+  | [] => []
+  | e :: rest => coreMemReadExprs e ++ coreMemReadExprsList rest
+
+def coreMemLhsReadExprs : PLhs → List PExpr
+  | .ident _ => []
+  | .bitSel _ i => coreMemReadExprs i
+  | .partSel _ a b => coreMemReadExprs a ++ coreMemReadExprs b
+  | .concat xs => coreMemLhsReadExprsList xs
+  | .arrayElem _ indices => coreMemReadExprsList indices
+  | .arrayPart _ indices _ a b =>
+      coreMemReadExprsList indices ++ coreMemReadExprs a ++ coreMemReadExprs b
+
+def coreMemLhsReadExprsList : List PLhs → List PExpr
+  | [] => []
+  | lhs :: rest => coreMemLhsReadExprs lhs ++ coreMemLhsReadExprsList rest
+
+def coreMemStmtReadExprs : PStmt → List PExpr
+  | .blockingAssign _ value | .nbaAssign _ value => coreMemReadExprs value
+  | .blockingAssignL target value | .nbaAssignL target value =>
+      coreMemLhsReadExprs target ++ coreMemReadExprs value
+  | .ifStmt cond yes no =>
+      coreMemReadExprs cond ++ coreMemStmtReadExprs yes ++ coreMemStmtReadExprsOpt no
+  | .block body => coreMemStmtReadExprsList body
+  | .forLoop _ init condition step body =>
+      coreMemReadExprs init ++ coreMemReadExprs condition ++ coreMemReadExprs step ++
+        coreMemStmtReadExprs body
+  | .caseStmt subject items default? _ _ =>
+      coreMemReadExprs subject ++ coreMemCaseReadExprs items ++
+        coreMemStmtReadExprsOpt default?
+  | .unsupported .. => []
+
+def coreMemStmtReadExprsOpt : Option PStmt → List PExpr
+  | none => []
+  | some body => coreMemStmtReadExprs body
+
+def coreMemStmtReadExprsList : List PStmt → List PExpr
+  | [] => []
+  | stmt :: rest => coreMemStmtReadExprs stmt ++ coreMemStmtReadExprsList rest
+
+def coreMemCaseReadExprs : List (List PExpr × PStmt) → List PExpr
+  | [] => []
+  | (patterns, body) :: rest =>
+      coreMemReadExprsList patterns ++ coreMemStmtReadExprs body ++
+        coreMemCaseReadExprs rest
 
 end
 
@@ -415,6 +497,95 @@ def CoreMemDesign.initialState (E : CoreMemDesign) : Res CoreMemState :=
   | [body] => E.execInitialStmt E.env [] E.initial body
   | _ => .unsupported "T2:Initial: multiple initial processes are outside this cycle entry"
 
+/-! ## Plain `always @*` activations
+
+The process starts waiting (§9.4.2.2.2).  At a slot boundary its raw reads are
+compared with the state before the slot, then the retained blocking body runs
+once in source order.  A body that changes one of its own watched reads would
+need a second Active-region pass; that cyclic shape stays loud instead of
+being silently evaluated with a stale value. -/
+
+def CoreMemDesign.readChanged (E : CoreMemDesign) (before after : CoreMemState)
+    (reads : List PExpr) : Res Bool :=
+  match reads with
+  | [] => .ok false
+  | expr :: rest => do
+      let old ← E.evalExpr E.env [] before none expr
+      let now ← E.evalExpr E.env [] after none expr
+      if old == now then E.readChanged before after rest else .ok true
+
+mutual
+
+def CoreMemDesign.execImplicitStmt (E : CoreMemDesign) (env : IEnv)
+    (elems : List (String × Nat)) (st : CoreMemState) : PStmt → Res CoreMemState
+  | .blockingAssign name value =>
+      match E.scalarTarget name with
+      | none => .unsupported s!"9.2.2.2: scalar implicit target '{name}' is undeclared"
+      | some width => do
+          let v ← E.evalExpr env elems st (some width) value
+          .ok { st with scalar := E.scalar.setName st.scalar name v }
+  | .blockingAssignL target value =>
+      match target with
+      | .ident name =>
+          match E.scalarTarget name with
+          | none => .unsupported s!"9.2.2.2: scalar implicit target '{name}' is undeclared"
+          | some width => do
+              let v ← E.evalExpr env elems st (some width) value
+              .ok { st with scalar := E.scalar.setName st.scalar name v }
+      | .arrayElem name [_] =>
+          match E.memDecl? name with
+          | none => .unsupported s!"9.2.2.2: memory implicit target '{name}' is undeclared"
+          | some md => do
+              let v ← E.evalExpr env elems st (some md.shape.elemWidth) value
+              E.writeInitialCell env elems st target name md v
+      | .arrayElem name _ =>
+          .unsupported s!"9.2.2.2: memory implicit target '{name}' is not one-rank"
+      | _ => .unsupported "9.2.2.2: packed or concatenated implicit target is outside this slice"
+  | .ifStmt cond yes no => do
+      let cv ← E.evalExpr env elems st (some 1) cond
+      if cv.condTrue then E.execImplicitStmt env elems st yes
+      else match no with
+        | none => .ok st
+        | some stmt => E.execImplicitStmt env elems st stmt
+  | .block body => E.execImplicitStmts env elems st body
+  | .forLoop .. =>
+      .unsupported "9.2.2.2: procedural loop in implicit memory body is outside this slice"
+  | .caseStmt .. =>
+      .unsupported "12.5: case in implicit memory body is outside this slice"
+  | .nbaAssign .. | .nbaAssignL .. =>
+      .unsupported "10.4.2: nonblocking assignment in implicit memory body"
+  | .unsupported kind text => .unsupported s!"{kind}: {text}"
+
+def CoreMemDesign.execImplicitStmts (E : CoreMemDesign) (env : IEnv)
+    (elems : List (String × Nat)) (st : CoreMemState) : List PStmt → Res CoreMemState
+  | [] => .ok st
+  | stmt :: rest => do
+      let st' ← E.execImplicitStmt env elems st stmt
+      E.execImplicitStmts env elems st' rest
+
+end
+
+def CoreMemDesign.runImplicit (E : CoreMemDesign) (before current : CoreMemState) :
+    List CoreMemProc → Res CoreMemState
+  | [] => .ok current
+  | .implicit body :: rest => do
+      let reads := coreMemStmtReadExprs body
+      let ready ← E.readChanged before current reads
+      if !ready then
+        E.runImplicit before current rest
+      else
+        let after ← E.execImplicitStmt E.env [] current body
+        let rearmed ← E.readChanged current after reads
+        if rearmed then
+          .unsupported
+            "ProceduralBlockSymbol:Always: implicit event process re-triggered in one active pass"
+        else
+          E.runImplicit before after rest
+  | .assign _ _ :: rest => E.runImplicit before current rest
+  | .edge _ :: rest => E.runImplicit before current rest
+  | .initial _ :: rest => E.runImplicit before current rest
+  | .unsupported kind text :: _ => .unsupported s!"{kind}: {text}"
+
 mutual
 
 def CoreMemDesign.execStmt (E : CoreMemDesign) (env : IEnv) (elems : List (String × Nat))
@@ -493,6 +664,7 @@ def CoreMemDesign.settleAssign (E : CoreMemDesign) (env : IEnv) (elems : List (S
       E.settleAssign env elems { st with scalar } rest
   | .edge _ :: rest => E.settleAssign env elems st rest
   | .initial _ :: rest => E.settleAssign env elems st rest
+  | .implicit _ :: rest => E.settleAssign env elems st rest
   | .unsupported kind text :: _ =>
       .unsupported s!"{kind}: {text}"
 
@@ -506,6 +678,7 @@ def CoreMemDesign.runEdges (E : CoreMemDesign) (env : IEnv) (elems : List (Strin
         .ok (CoreMemExec.append a b)
       else E.runEdges env elems st before after rest
   | .initial _ :: rest => E.runEdges env elems st before after rest
+  | .implicit _ :: rest => E.runEdges env elems st before after rest
   | _ :: rest => E.runEdges env elems st before after rest
 
 def CoreMemDesign.step (E : CoreMemDesign) (st : CoreMemState) (entry : SvState) : Res CoreMemState := do
@@ -518,7 +691,11 @@ def CoreMemDesign.step (E : CoreMemDesign) (st : CoreMemState) (entry : SvState)
   let memory ← match pre.memory.commitNba memoryQ with
     | some m => .ok m
     | none => .unsupported "10.4.2: memory NBA commit lost its declaration identity"
-  E.settleAssign E.env [] { scalar, memory } E.processes.toList
+  let settled ← E.settleAssign E.env [] { scalar, memory } E.processes.toList
+  let activated ← if E.hasImplicit then
+      E.runImplicit st settled E.processes.toList
+    else .ok settled
+  E.settleAssign E.env [] activated E.processes.toList
 
 def runCoreMemRows (E : CoreMemDesign) (st : CoreMemState) : List SvState → Res (List CoreMemState)
   | [] => .ok []

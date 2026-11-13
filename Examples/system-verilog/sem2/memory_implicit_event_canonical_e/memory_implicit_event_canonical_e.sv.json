@@ -10,7 +10,7 @@
   "source_files": [
     {
       "path": "Examples/system-verilog/sem2/memory_implicit_event_canonical_e/memory_implicit_event_canonical_e.sv",
-      "sha256": "4dab0c449c297a87679453321023d6c37e138c56a14812c7478f839a220599c5"
+      "sha256": "3eec1629998ae4d0b8fb913582fcec60c3fbaa70b757d1374861389b6a9f9749"
     }
   ],
   "packages": [],
@@ -22,7 +22,7 @@
         "span": {
           "line": 2,
           "col": 1,
-          "end_line": 6,
+          "end_line": 7,
           "end_col": 10
         },
         "name": "memory_implicit_event_canonical_e",
@@ -398,28 +398,140 @@
         ],
         "processes": [
           {
-            "kind": "AlwaysEvent",
+            "kind": "Initial",
             "span": {
               "line": 5,
               "col": 3,
               "end_line": 5,
+              "end_col": 46
+            },
+            "body": {
+              "kind": "Block",
+              "span": {
+                "line": 5,
+                "col": 11,
+                "end_line": 5,
+                "end_col": 46
+              },
+              "stmts": [
+                {
+                  "kind": "BlockingAssign",
+                  "span": {
+                    "line": 5,
+                    "col": 17,
+                    "end_line": 5,
+                    "end_col": 29
+                  },
+                  "target": {
+                    "kind": "ArraySel",
+                    "span": {
+                      "line": 5,
+                      "col": 17,
+                      "end_line": 5,
+                      "end_col": 21
+                    },
+                    "width": 4,
+                    "name": "s",
+                    "indices": [
+                      {
+                        "kind": "Int",
+                        "span": {
+                          "line": 5,
+                          "col": 19,
+                          "end_line": 5,
+                          "end_col": 20
+                        },
+                        "value": 0,
+                        "resolved_width": 32
+                      }
+                    ],
+                    "part": null,
+                    "unpacked": true
+                  },
+                  "value": {
+                    "kind": "Literal",
+                    "span": {
+                      "line": 5,
+                      "col": 24,
+                      "end_line": 5,
+                      "end_col": 28
+                    },
+                    "width": 4,
+                    "bits": "0101"
+                  }
+                },
+                {
+                  "kind": "BlockingAssign",
+                  "span": {
+                    "line": 5,
+                    "col": 30,
+                    "end_line": 5,
+                    "end_col": 42
+                  },
+                  "target": {
+                    "kind": "ArraySel",
+                    "span": {
+                      "line": 5,
+                      "col": 30,
+                      "end_line": 5,
+                      "end_col": 34
+                    },
+                    "width": 4,
+                    "name": "s",
+                    "indices": [
+                      {
+                        "kind": "Int",
+                        "span": {
+                          "line": 5,
+                          "col": 32,
+                          "end_line": 5,
+                          "end_col": 33
+                        },
+                        "value": 1,
+                        "resolved_width": 32
+                      }
+                    ],
+                    "part": null,
+                    "unpacked": true
+                  },
+                  "value": {
+                    "kind": "Literal",
+                    "span": {
+                      "line": 5,
+                      "col": 37,
+                      "end_line": 5,
+                      "end_col": 41
+                    },
+                    "width": 4,
+                    "bits": "1001"
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "kind": "AlwaysEvent",
+            "span": {
+              "line": 6,
+              "col": 3,
+              "end_line": 6,
               "end_col": 28
             },
             "event_kind": "ImplicitEventControl",
             "body": {
               "kind": "BlockingAssign",
               "span": {
-                "line": 5,
+                "line": 6,
                 "col": 13,
-                "end_line": 5,
+                "end_line": 6,
                 "end_col": 28
               },
               "target": {
                 "kind": "Ident",
                 "span": {
-                  "line": 5,
+                  "line": 6,
                   "col": 13,
-                  "end_line": 5,
+                  "end_line": 6,
                   "end_col": 14
                 },
                 "width": 4,
@@ -428,9 +540,9 @@
               "value": {
                 "kind": "Binary",
                 "span": {
-                  "line": 5,
+                  "line": 6,
                   "col": 17,
-                  "end_line": 5,
+                  "end_line": 6,
                   "end_col": 27
                 },
                 "width": 4,
@@ -438,9 +550,9 @@
                 "left": {
                   "kind": "ArraySel",
                   "span": {
-                    "line": 5,
+                    "line": 6,
                     "col": 17,
-                    "end_line": 5,
+                    "end_line": 6,
                     "end_col": 23
                   },
                   "width": 4,
@@ -449,9 +561,9 @@
                     {
                       "kind": "Ident",
                       "span": {
-                        "line": 5,
+                        "line": 6,
                         "col": 19,
-                        "end_line": 5,
+                        "end_line": 6,
                         "end_col": 22
                       },
                       "width": 2,
@@ -464,9 +576,9 @@
                 "right": {
                   "kind": "Ident",
                   "span": {
-                    "line": 5,
+                    "line": 6,
                     "col": 26,
-                    "end_line": 5,
+                    "end_line": 6,
                     "end_col": 27
                   },
                   "width": 4,

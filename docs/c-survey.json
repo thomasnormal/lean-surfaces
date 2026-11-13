@@ -1,19 +1,19 @@
 {
  "by_corpus": {
   "c-testsuite/single-exec": {
-   "passed": 165,
+   "passed": 167,
    "refused-libc": 2,
    "refused-ub": 8,
-   "refused-unsupported": 43,
+   "refused-unsupported": 41,
    "timeout": 2
   },
   "gcc.c-torture/execute": {
    "not-parsed": 267,
    "oracle-tests-compiler": 1,
-   "passed": 810,
+   "passed": 811,
    "refused-libc": 51,
    "refused-ub": 96,
-   "refused-unsupported": 629,
+   "refused-unsupported": 628,
    "timeout": 64
   },
   "gcc.c23-run": {
@@ -28,10 +28,10 @@
  "counts": {
   "not-parsed": 294,
   "oracle-tests-compiler": 1,
-  "passed": 978,
+  "passed": 981,
   "refused-libc": 55,
   "refused-ub": 105,
-  "refused-unsupported": 715,
+  "refused-unsupported": 712,
   "timeout": 66
  },
  "dynamic_wall_ranking": [
@@ -1409,15 +1409,6 @@
   },
   {
    "files": [
-    "00153.c",
-    "pr56799.c"
-   ],
-   "present": 2,
-   "sole": 2,
-   "wall": "unsupported:no layout for declared type 'S'"
-  },
-  {
-   "files": [
     "20011113-1.c",
     "20180131-1.c"
    ],
@@ -1961,14 +1952,6 @@
   },
   {
    "files": [
-    "20020206-2.c"
-   ],
-   "present": 1,
-   "sole": 1,
-   "wall": "unsupported:no layout for compound literal type 'A'"
-  },
-  {
-   "files": [
     "20071029-1.c"
    ],
    "present": 1,
@@ -2022,6 +2005,14 @@
    "present": 1,
    "sole": 1,
    "wall": "unsupported:no layout for declared type 'Q'"
+  },
+  {
+   "files": [
+    "pr56799.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "unsupported:no layout for declared type 'S'"
   },
   {
    "files": [
@@ -2726,14 +2717,6 @@
    "present": 1,
    "sole": 1,
    "wall": "unsupported:no layout for field 'n'"
-  },
-  {
-   "files": [
-    "00043.c"
-   ],
-   "present": 1,
-   "sole": 1,
-   "wall": "unsupported:no layout for field 'nest'"
   },
   {
    "files": [
@@ -3784,9 +3767,9 @@
    "wall": "unsupported:va_arg requested unsupported value type 'struct s'"
   }
  ],
- "manifest_hash": "8c33c9feb239fb3a1fc6b8e98961c83f16db9f584af3172191960047326f41f2",
- "measured_at_utc": "2026-11-13T09:02:52Z",
- "measured_commit": "8340acbb8",
+ "manifest_hash": "9c6f610278c05b819dd025cc1ec219a48b05820f78db8d55943d55de210fbc39",
+ "measured_at_utc": "2026-11-13T09:08:12Z",
+ "measured_commit": "a3f12a92e",
  "pin": {
   "corpora": [
    "C1",
@@ -4245,15 +4228,15 @@
   },
   {
    "corpus": "c-testsuite/single-exec",
-   "detail": "no layout for field 'nest'",
-   "dynamic_wall": "unsupported:no layout for field 'nest'",
+   "detail": "",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "00043.c",
    "sha256": "805acfaaf1b89a2e359bb926e204025df13c8c512e53402bc372a7e19e0d41e2",
    "static_walls": [
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "c-testsuite/single-exec",
@@ -5465,15 +5448,15 @@
   },
   {
    "corpus": "c-testsuite/single-exec",
-   "detail": "no layout for declared type 'S'",
-   "dynamic_wall": "unsupported:no layout for declared type 'S'",
+   "detail": "",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "00153.c",
    "sha256": "a739eb848a64c9aa155063ef51d3729dcfd2b080e9302a7eda774e12ea601907",
    "static_walls": [
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "c-testsuite/single-exec",
@@ -8119,15 +8102,15 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "no layout for compound literal type 'A'",
-   "dynamic_wall": "unsupported:no layout for compound literal type 'A'",
+   "detail": "",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "20020206-2.c",
    "sha256": "70087caf2820a83bc7b56dbc08461540cc94cd1e67b10153fd74e0c5e5de505f",
    "static_walls": [
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",

@@ -2,10 +2,10 @@
 
 Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manifest.
 
-- verdicts: 978/2214 MATCH (passed 978, failed 0, oracle 0)
-- manifest SHA-256: `8c33c9feb239fb3a1fc6b8e98961c83f16db9f584af3172191960047326f41f2`
-- measured commit: `8340acbb8`
-- measured at: `2026-11-13T09:02:52Z`
+- verdicts: 981/2214 MATCH (passed 981, failed 0, oracle 0)
+- manifest SHA-256: `9c6f610278c05b819dd025cc1ec219a48b05820f78db8d55943d55de210fbc39`
+- measured commit: `a3f12a92e`
+- measured at: `2026-11-13T09:08:12Z`
 
 ## Verdict counts
 
@@ -13,27 +13,27 @@ Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manife
 | --- | ---: |
 | `not-parsed` | 294 |
 | `oracle-tests-compiler` | 1 |
-| `passed` | 978 |
+| `passed` | 981 |
 | `refused-libc` | 55 |
 | `refused-ub` | 105 |
-| `refused-unsupported` | 715 |
+| `refused-unsupported` | 712 |
 | `timeout` | 66 |
 
 ## Counts by corpus
 
 | corpus | verdict | files |
 | --- | --- | ---: |
-| `c-testsuite/single-exec` | `passed` | 165 |
+| `c-testsuite/single-exec` | `passed` | 167 |
 | `c-testsuite/single-exec` | `refused-libc` | 2 |
 | `c-testsuite/single-exec` | `refused-ub` | 8 |
-| `c-testsuite/single-exec` | `refused-unsupported` | 43 |
+| `c-testsuite/single-exec` | `refused-unsupported` | 41 |
 | `c-testsuite/single-exec` | `timeout` | 2 |
 | `gcc.c-torture/execute` | `not-parsed` | 267 |
 | `gcc.c-torture/execute` | `oracle-tests-compiler` | 1 |
-| `gcc.c-torture/execute` | `passed` | 810 |
+| `gcc.c-torture/execute` | `passed` | 811 |
 | `gcc.c-torture/execute` | `refused-libc` | 51 |
 | `gcc.c-torture/execute` | `refused-ub` | 96 |
-| `gcc.c-torture/execute` | `refused-unsupported` | 629 |
+| `gcc.c-torture/execute` | `refused-unsupported` | 628 |
 | `gcc.c-torture/execute` | `timeout` | 64 |
 | `gcc.c23-run` | `not-parsed` | 27 |
 | `gcc.c23-run` | `passed` | 3 |
@@ -366,7 +366,6 @@ The run's first refusal, normalized by construct; `sole` counts rows whose first
 | `unsupported:long double integer-to-floating conversion` | 2 | 2 | 930622-2.c, conversion.c |
 | `unsupported:more arguments than parameters` | 2 | 2 | gcc/testsuite/gcc.dg/c23-stdarg-9.c, va-arg-2.c |
 | `unsupported:no layout for declared type 'Point'` | 2 | 2 | 20000808-1.c, 950607-2.c |
-| `unsupported:no layout for declared type 'S'` | 2 | 2 | 00153.c, pr56799.c |
 | `unsupported:no layout for declared type 'U'` | 2 | 2 | 20011113-1.c, 20180131-1.c |
 | `unsupported:no layout for declared type 'bitmap_iterator'` | 2 | 2 | 20090113-2.c, 20090113-3.c |
 | `unsupported:no layout for declared type 'enum E'` | 2 | 2 | 00054.c, 00055.c |
@@ -432,7 +431,6 @@ The run's first refusal, normalized by construct; `sole` counts rows whose first
 | `unsupported:function instrumentation is outside the tier` | 1 | 1 | eeprof-1.c |
 | `unsupported:initializer list (inch 4)` | 1 | 1 | 00150.c |
 | `unsupported:memcmp` | 1 | 1 | 20050502-2.c |
-| `unsupported:no layout for compound literal type 'A'` | 1 | 1 | 20020206-2.c |
 | `unsupported:no layout for compound literal type 'T'` | 1 | 1 | 20071029-1.c |
 | `unsupported:no layout for compound literal type 'V'` | 1 | 1 | pr109040.c |
 | `unsupported:no layout for declared type 'A0'` | 1 | 1 | va-arg-22.c |
@@ -440,6 +438,7 @@ The run's first refusal, normalized by construct; `sole` counts rows whose first
 | `unsupported:no layout for declared type 'Data[4]'` | 1 | 1 | 20010116-1.c |
 | `unsupported:no layout for declared type 'PgHdr[5]'` | 1 | 1 | pr33870-1.c |
 | `unsupported:no layout for declared type 'Q'` | 1 | 1 | simd-5.c |
+| `unsupported:no layout for declared type 'S'` | 1 | 1 | pr56799.c |
 | `unsupported:no layout for declared type 'ScanfState'` | 1 | 1 | va-arg-13.c |
 | `unsupported:no layout for declared type 'T0 *const'` | 1 | 1 | 991016-1.c |
 | `unsupported:no layout for declared type 'TRIAL'` | 1 | 1 | strct-pack-1.c |
@@ -528,7 +527,6 @@ The run's first refusal, normalized by construct; `sole` counts rows whose first
 | `unsupported:no layout for field 'fptr'` | 1 | 1 | 00087.c |
 | `unsupported:no layout for field 'j'` | 1 | 1 | pr97073.c |
 | `unsupported:no layout for field 'n'` | 1 | 1 | pr39100.c |
-| `unsupported:no layout for field 'nest'` | 1 | 1 | 00043.c |
 | `unsupported:no layout for field 's'` | 1 | 1 | 20190901-1.c |
 | `unsupported:no layout for field 'y'` | 1 | 1 | 00053.c |
 | `unsupported:no layout for parameter type 'const struct b *restrict'` | 1 | 1 | 20001024-1.c |

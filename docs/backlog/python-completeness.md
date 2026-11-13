@@ -14549,3 +14549,19 @@ statements through the left-to-right body walker before normal `RFlow.next`.
 
 DECIDED: three-statement normal sequencing is now checked; recursive and
 general assignment adequacy remain open.
+
+## 2026-11-13-pyfoundation-134 — four-statement sequencing bridge
+
+`Monadic.finishCallM_four_pass_body_ok` checks four consecutive normal
+statements through the left-to-right body walker and call-depth restoration.
+
+| Measurement | Result |
+|---|---|
+| Target | `lake build LeanModels.Python.Monadic.Eval` passed; 11/11 jobs |
+| Theorem | `Monadic.finishCallM_four_pass_body_ok` |
+| Domain | four-statement normal body |
+| Semantic change | theorem-only multi-statement sequencing composition |
+| Remaining debt | recursive positive-fuel calls and general body adequacy |
+
+DECIDED: four-statement normal sequencing is now checked; recursive and
+general body adequacy remain open.

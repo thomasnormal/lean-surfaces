@@ -186,3 +186,6 @@ sequence, proving that the second statement's `RFlow.ret` stops the body walk.
 
 `Monadic.finishCallM_three_pass_body_ok` checks a three-statement normal body,
 showing that the sequence walker composes beyond the two-statement cases.
+
+`Monadic.finishCallM_four_pass_body_ok` extends the same kernel-checked
+normal sequencing to four statements.

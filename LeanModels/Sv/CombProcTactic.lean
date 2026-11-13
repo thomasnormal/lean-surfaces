@@ -1274,7 +1274,13 @@ unsafe def runSvEquationsL (hintOnly : Bool) : TacticM Unit := do
     saved.restore
     logInfo m!"sv_equations: the netlist view and the obligations (lowered design)\n  (Boolean equations: every supported read is known in a settled state, `CombKnown.reads_known`)\n{"\n".intercalate report.toList}"
 
-@[tactic svEquations] unsafe def evalSvEquationsL : Tactic := fun _ => guardL (withDeepRec (runSvEquationsL false))
+@[tactic svEquations] unsafe def evalSvEquationsL : Tactic := fun _ => guardL do
+  let goal ← getMainGoal
+  let ty ← goal.withContext (do instantiateMVars (← goal.getType))
+  if ty.isAppOfArity ``LeanModels.Sv.Kernel.CoreMemDesign.EquationGate 1 then
+    withDeepRec do evalTactic (← `(tactic| decide))
+  else
+    withDeepRec (runSvEquationsL false)
 
 @[tactic svEquationsQ] unsafe def evalSvEquationsQL : Tactic := fun _ => guardL (withDeepRec (runSvEquationsL true))
 
@@ -1283,3 +1289,7 @@ there is no scalar `Design2` coercion hidden in `sv_structure`. -/
 example : LeanModels.Sv.Kernel.CoreMemDesign.Structure
     (default : LeanModels.Sv.Kernel.CoreMemDesign) := by
   sv_structure
+
+example : LeanModels.Sv.Kernel.CoreMemDesign.EquationGate
+    (default : LeanModels.Sv.Kernel.CoreMemDesign) := by
+  sv_equations

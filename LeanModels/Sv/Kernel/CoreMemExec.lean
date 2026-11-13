@@ -85,8 +85,25 @@ def CoreMemDesign.Structure (d : CoreMemDesign) : Prop :=
   coreMemNamesUniqueB (d.memories.toList.map (fun m => m.source.name)) = true ∧
     coreMemSupportedB d.processes.toList = true
 
+/-! The first equation gate is intentionally conservative: it admits only the
+source-shaped continuous assignments whose scalar or one-rank memory target is
+already represented by `CoreMemDesign.settleAssign`.  Clocked and procedural
+equations remain loud until their memory-aware equation theorem is added. -/
+def coreMemEquationB : List CoreMemProc → Bool
+  | [] => true
+  | .assign (.ident _) _ :: rest => coreMemEquationB rest
+  | .assign (.arrayElem _ [_]) _ :: rest => coreMemEquationB rest
+  | _ => false
+
+def CoreMemDesign.EquationGate (d : CoreMemDesign) : Prop :=
+  CoreMemDesign.Structure d ∧ coreMemEquationB d.processes.toList = true
+
 instance : DecidablePred CoreMemDesign.Structure := fun d => by
   unfold CoreMemDesign.Structure
+  infer_instance
+
+instance : DecidablePred CoreMemDesign.EquationGate := fun d => by
+  unfold CoreMemDesign.EquationGate
   infer_instance
 
 structure CoreMemState where

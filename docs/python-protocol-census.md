@@ -422,3 +422,6 @@ eleven-update bridge through an abrupt `break` flow.
 
 `Monadic.finishCallM_assign_eleven_existing_locals_continue_body_ok` extends
 the eleven-update bridge through an abrupt `continue` flow.
+
+`Monadic.finishCallM_assign_twelve_existing_locals_body_ok` extends normal
+assignment state threading to twelve successive local updates.

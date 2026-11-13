@@ -269,3 +269,6 @@ four-update bridge through a normal integer expression statement.
 
 `Monadic.finishCallM_assign_four_existing_locals_ret_none_body_ok` extends the
 four-update bridge through a bare return.
+
+`Monadic.finishCallM_assign_four_existing_locals_break_body_ok` extends the
+four-update bridge through an abrupt `break` flow.

@@ -3586,6 +3586,51 @@ indices of a 3-element tuple gives 0+1+2 = 3, and the pair unpacks. -/
         | .ok s _ => Env.lookup s.locals "d" == some (.int 9)
         | _ => false)
 
+/-! ### A CONTROL-LEVEL ADEQUACY SLICE
+
+The two interpreters use different fuel geometries, but their expression-list
+control is the same on an arbitrary-length list of constants.  This theorem is
+deliberately indexed by the list length rather than by a hand-written pair of
+literal operands: it is the first induction that composes the shared literal
+bridge with the left-to-right list walker.  The strict length bound records the
+fuel consumed by the trunk's one-step list driver at every element.
+-/
+
+private def twinConstExprs : List (Const × Span) → List Expr
+  | [] => []
+  | (c, sp) :: xs => .constant c sp :: twinConstExprs xs
+
+theorem twinAgrees_evalOpenList_constants (K : Kont) (m : Module) (st : FrameState) :
+    ∀ (xs : List (Const × Span)) (fuel : Nat), xs.length < fuel →
+      toRun (evalOpenList K m (twinConstExprs xs)) st =
+        evalExprs m fuel st (twinConstExprs xs) := by
+  intro xs
+  induction xs with
+  | nil =>
+      intro fuel hlen
+      cases fuel with
+      | zero => simp at hlen
+      | succ fuel => rfl
+  | cons x xs ih =>
+      rcases x with ⟨c, sp⟩
+      intro fuel hlen
+      cases fuel with
+      | zero => simp at hlen
+      | succ fuel =>
+          cases fuel with
+          | zero =>
+              simp [List.length_cons] at hlen
+          | succ fuel =>
+              have htail : xs.length < fuel + 1 := by
+                simp_all [List.length_cons]
+              have hi := ih (fuel + 1) htail
+              simp only [twinConstExprs, evalOpenList, toRun_bind]
+              rw [show toRun (evalOpen K m (.constant c sp)) st =
+                Run.ok st (Const.toRVal c) by rfl]
+              simp only [Run.bind]
+              rw [hi]
+              simp [evalExprs, evalExpr, toRun_pure, Run.bind, Run.liftRes]
+
 #print axioms evalOpen
 #print axioms execOpen
 #print axioms kont
@@ -3598,5 +3643,6 @@ indices of a 3-element tuple gives 0+1+2 = 3, and the pair unpacks. -/
 #print axioms inFrame_toRun
 #print axioms inWorld_toRun
 #print axioms twinAgrees_binOpHM_intBitAnd
+#print axioms twinAgrees_evalOpenList_constants
 
 end LeanModels.Python.Monadic

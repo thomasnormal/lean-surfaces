@@ -30,6 +30,14 @@ recursive entry). Those splits are now named rather than hidden behind the word
 "shared". A future admission must either route all observers through one
 worker or add a theorem and a domain row explaining why the split is exact.
 
+The two interpreter control surfaces now have a first compositional adequacy
+edge: `Monadic.twinAgrees_evalOpenList_constants` proves by induction on an
+arbitrary-length expression list that the fuel-free monadic list walker and the
+trunk's fuelled `evalExprs` agree for constant lists whenever the strict list
+length fuel bound holds. This composes the literal bridge with left-to-right
+list control without adding another per-operator refinement lemma. Calls,
+statements, and stateful script control remain the next adequacy boundary.
+
 ## Operator dispatch
 
 | Source arm | CPython entry and protocol order | Trunk | Runner | Domain / remaining gap |

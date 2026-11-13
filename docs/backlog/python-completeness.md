@@ -13948,3 +13948,25 @@ The concrete execution remains in `Examples/python/round_lab/spec.lean` as a
 
 DECIDED: keep the theorem parked until a small worker-level proof replaces the
 memory-heavy reduction; do not weaken or delete the statement.
+
+## 2026-11-13-pyfoundation-100 — compose the first control-level adequacy edge
+
+`Monadic.twinAgrees_evalOpenList_constants` is the first induction over a
+control structure shared by the two Python interpreters. For every
+arbitrary-length list of constant AST expressions, and a strict fuel bound
+above its length, the fuel-free monadic `evalOpenList` and the trunk's fuelled
+`evalExprs` produce the same `Run` result and state. The proof composes the
+existing literal bridge with the left-to-right list walker and adds no
+per-operator literal refinement lemma.
+
+| Measurement | Result |
+|---|---|
+| Target | `lake env lean LeanModels/Python/Monadic/Eval.lean` passed; 11/11 jobs |
+| Theorem | `Monadic.twinAgrees_evalOpenList_constants`, induction on list length |
+| Domain | all `Const × Span` lists, with `xs.length < fuel` |
+| Semantic change | theorem only; runner and trunk behavior unchanged |
+| Remaining debt | calls, statement execution, and stateful script control still need the general adequacy edge |
+
+DECIDED: retain both interpreter surfaces while extending adequacy through
+shared control structures; the remaining F9 debt is explicit and is not
+claimed closed by differential agreement alone.

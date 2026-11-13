@@ -699,7 +699,11 @@ def checkVaType (ctx : Ctx) (ty : CType) (v : CVal) : EvalM CVal :=
                  else refuseValue (.vaArgTypeMismatch ty "binary32")
   | .float64 _ => if ty == "double" then pure v
                  else refuseValue (.vaArgTypeMismatch ty "binary64")
-  | .aggregate _ _ | .undef | .ptrInt _ =>
+  | .aggregate actualTy _ =>
+      let expectedTy := ctx.layout.normalizeTy ty
+      if expectedTy == actualTy then pure v
+      else refuseValue (.vaArgTypeMismatch ty actualTy)
+  | .undef | .ptrInt _ =>
       refuseUnsupported s!"va_arg requested unsupported value type '{ty}'"
 
 /-- The POINTEE spelling of a pointer type: `int *` → `int`, `const S *` →

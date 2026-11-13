@@ -246,7 +246,8 @@ STATIC targets (a whole signal, a constant slice, a constant-literal element
 select, inside the declared width: LRM 11.5.1), `if`, `case`/`case inside`
 (first matching arm; a `unique`/`unique0`/`priority` claim that does not hold refuses at once,
 `CaseCheck:<qualifier>`, a known divergence from LRM 12.4.2.1, which defers the report and flushes it
-on re-trigger: X1-NOTE §13; `casez`/`casex` refuse, outside the profile) and
+on re-trigger: X1-NOTE §13; `casez`/`casex` use the parser's wildcard matcher
+(IEEE 1800-2023 §12.5.1) and
 `begin … end`. Nonblocking assignments, dynamic or concatenated targets and
 `.unsupported` nodes are refused loudly (outside E-core-0). -/
 
@@ -364,18 +365,17 @@ def caseHits (st : SvState) (sv : LVec) (mode : CaseMode) : List CaseItem2 → R
       let n ← caseHits st sv mode rest
       return (if pvs.any (fun pv => caseHit mode sv pv) then n + 1 else n)
 
-/-- The `case` modes in E-core-0's profile: plain `case` and `case … inside`. `casez`/`casex`
-(LRM 12.5.1) refuse loudly (`caseModeRefusal`); they never fall through to plain-case meaning. -/
+/-- All parser case modes are admitted; wildcard modes use `caseHit` with
+their IEEE 1800-2023 §12.5.1 matching rules. -/
 def caseModeInE0 : CaseMode → Bool
-  | .normal | .inside => true
-  | .casez | .casex => false
+  | .normal | .inside | .casez | .casex => true
 
-/-- The refusal text for a mode outside the profile (CombProc's form: the statement, then why). -/
+/-- Diagnostic text retained for callers that reject a mode in a narrower profile. -/
 def caseModeRefusal : CaseMode → String
   | .normal => "always_comb statement `case` (outside E-core-0)"
   | .inside => "always_comb statement `case … inside` (outside E-core-0)"
-  | .casez => "always_comb statement `casez` (outside E-core-0)"
-  | .casex => "always_comb statement `casex` (outside E-core-0)"
+  | .casez => "always_comb statement `casez`"
+  | .casex => "always_comb statement `casex`"
 
 /-- LRM 12.5.3's claims, as `run2` checks them (`checkCaseObligation`, master 2218821b): `unique`,
 exactly one arm matches or none and a default exists; `unique0`, at most one; `priority`, at least
@@ -890,9 +890,10 @@ def casezProbe : Elab where
   procs := #[.comb (.caseStmt (.ident "s")
     #[.mk #[.lit (.ofNat 2 1)] (.blockingAssign (.ident "y") (.lit (.ofNat 2 1)))] none .casez .none)]
 
--- `casez` refuses loudly; it never runs with plain-case meaning.
-#guard isRefused (exec casezProbe σ_src 10
+-- Wildcard matching follows the parser's `caseHit` mode (§12.5.1).
+#guard showClosed casezProbe ["y"] (exec casezProbe σ_src 10
   (Config.init casezProbe (casezProbe.setName casezProbe.initStore "s" (.ofNat 2 1))))
+  == some ["01"]
 
 -- The second block senses `t[0]` and nothing else of `t`.
 #guard xprocBits.sens 1 == [.whole "b", .win "t" 0 1]

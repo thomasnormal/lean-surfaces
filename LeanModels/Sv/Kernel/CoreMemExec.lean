@@ -616,7 +616,7 @@ Case selection stays on the retained `PStmt.caseStmt` node.  Patterns are
 evaluated in the current state, compared with the parser's IEEE case matcher,
 and the first matching arm is returned without rewriting the arm into an
 `if` chain.  Qualified-case claims inspect every arm before the selected arm
-runs; `casez`/`casex` retain the E-core-0 loud boundary. -/
+runs; `casez`/`casex` use the same parser-native wildcard matcher. -/
 
 def coreMemCaseHits (E : CoreMemDesign) (env : IEnv) (elems : List (String × Nat))
     (st : CoreMemState) (subject : LVec) (mode : CaseMode) :

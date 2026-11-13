@@ -219,6 +219,9 @@ same local assignment into `RFlow.cont`.
 `Monadic.finishCallM_assign_existing_local_ret_none_body_ok` composes the
 assignment into bare-return flow, preserving `RFlow.ret .none`.
 
+`Monadic.finishCallM_assign_existing_local_expr_body_ok` composes the local
+assignment into a following normal expression statement.
+
 `Monadic.finishCallM_three_pass_ret_body_ok` extends early-return sequencing
 to three normal statements followed by a return.
 

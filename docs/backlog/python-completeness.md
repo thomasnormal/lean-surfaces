@@ -14718,6 +14718,24 @@ state into `RFlow.ret .none` and depth restoration.
 DECIDED: assignment state now composes into bare-return flow for an existing
 local; arbitrary assignment and recursive body adequacy remain open.
 
+## 2026-11-13-pyfoundation-148 — assignment-to-expression bridge
+
+`Monadic.finishCallM_assign_existing_local_expr_body_ok` checks an assignment
+to an existing local followed by an integer expression statement, preserving
+normal flow and restoring depth.
+
+| Measurement | Result |
+|---|---|
+| Target | `lake build LeanModels.Python.Monadic.Eval` passed; 11/11 jobs |
+| Theorem | `Monadic.finishCallM_assign_existing_local_expr_body_ok` |
+| Domain | two-statement assignment-plus-expression body with existing local |
+| Semantic change | theorem-only assignment-state composition |
+| Remaining debt | arbitrary locals and recursive positive-fuel calls |
+
+DECIDED: assignment state now composes into a normal expression continuation
+for an existing local; arbitrary assignment and recursive body adequacy remain
+open.
+
 ## 2026-11-13-pyfoundation-135 — four-statement early-return bridge
 
 `Monadic.finishCallM_three_pass_ret_body_ok` checks three normal statements

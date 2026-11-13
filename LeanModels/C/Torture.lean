@@ -830,13 +830,15 @@ def tortureMain (args : List String) : IO UInt32 := do
   | ["--single", path] => return ← singleMain path 512
   | ["--single", path, f] => return ← singleMain path (f.toNat?.getD 512)
   | _ => pure ()
-  let (manifestPath, fuel) :=
+  let (onlyName, manifestPath, fuel) : Option String × String × Nat :=
     match args with
-    | [p] => (p, 64)
-    | [p, f] => (p, f.toNat?.getD 64)
-    | _ => ("", 64)
+    | [p] => (none, p, 64)
+    | [p, f] => (none, p, f.toNat?.getD 64)
+    | ["--only", name, p] => (some name, p, 64)
+    | ["--only", name, p, f] => (some name, p, f.toNat?.getD 64)
+    | _ => (none, "", 64)
   if manifestPath.isEmpty then
-    IO.eprintln "usage: c-torture-run <manifest.json> [fuel] | --single <envelope.json> [fuel]"
+    IO.eprintln "usage: c-torture-run <manifest.json> [fuel] | --only <name> <manifest.json> [fuel] | --single <envelope.json> [fuel]"
     return 2
   let contents ← IO.FS.readFile ⟨manifestPath⟩
   let j ← IO.ofExcept (Lean.Json.parse contents)
@@ -844,9 +846,10 @@ def tortureMain (args : List String) : IO UInt32 := do
   let mut rows : List (String × Verdict) := []
   for tj in tests do
     let e := parseEntry tj
-    let v ← runEntry fuel e
-    IO.println s!"{e.name}\t{v.token}\t{v.detail}"
-    rows := rows ++ [(e.name, v)]
+    if onlyName.isNone || onlyName.getD "" == e.name then
+      let v ← runEntry fuel e
+      IO.println s!"{e.name}\t{v.token}\t{v.detail}"
+      rows := rows ++ [(e.name, v)]
   IO.println "----"
   for l in summarise rows do IO.println l
   return 0

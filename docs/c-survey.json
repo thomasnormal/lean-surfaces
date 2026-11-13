@@ -10,10 +10,10 @@
   "gcc.c-torture/execute": {
    "not-parsed": 267,
    "oracle-tests-compiler": 1,
-   "passed": 856,
+   "passed": 857,
    "refused-libc": 35,
    "refused-ub": 96,
-   "refused-unsupported": 599,
+   "refused-unsupported": 598,
    "timeout": 64
   },
   "gcc.c23-run": {
@@ -28,10 +28,10 @@
  "counts": {
   "not-parsed": 294,
   "oracle-tests-compiler": 1,
-  "passed": 1029,
+  "passed": 1030,
   "refused-libc": 39,
   "refused-ub": 105,
-  "refused-unsupported": 680,
+  "refused-unsupported": 679,
   "timeout": 66
  },
  "dynamic_wall_ranking": [
@@ -2351,14 +2351,6 @@
   },
   {
    "files": [
-    "enum-1.c"
-   ],
-   "present": 1,
-   "sole": 1,
-   "wall": "unsupported:no layout for declared type 'token'"
-  },
-  {
-   "files": [
     "20120111-1.c"
    ],
    "present": 1,
@@ -3502,9 +3494,9 @@
    "wall": "unsupported:va_arg requested unsupported value type 'struct s'"
   }
  ],
- "manifest_hash": "b5ca6ce45ea98ddf14b874975105a6119d0c5fd7d4771d8795bb167220efb099",
+ "manifest_hash": "90ba3435c00124b1282de1f29479229070ad4daf8f3b458dc51fa82f54a4b876",
  "measured_at_utc": "2026-11-13T15:00:00Z",
- "measured_commit": "f5c35ba78",
+ "measured_commit": "d9437c1b3",
  "pin": {
   "corpora": [
    "C1",
@@ -17729,13 +17721,13 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "no layout for declared type 'token'",
-   "dynamic_wall": "unsupported:no layout for declared type 'token'",
+   "detail": "",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "enum-1.c",
    "sha256": "e89e9f7e3f9ab5129e43cf13e82568c05dca736cb33231b806045292efb57b86",
    "static_walls": [],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",

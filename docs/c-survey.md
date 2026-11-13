@@ -2,9 +2,9 @@
 
 Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manifest.
 
-- verdicts: 1029/2214 MATCH (passed 1029, failed 0, oracle 0)
-- manifest SHA-256: `b5ca6ce45ea98ddf14b874975105a6119d0c5fd7d4771d8795bb167220efb099`
-- measured commit: `f5c35ba78`
+- verdicts: 1030/2214 MATCH (passed 1030, failed 0, oracle 0)
+- manifest SHA-256: `90ba3435c00124b1282de1f29479229070ad4daf8f3b458dc51fa82f54a4b876`
+- measured commit: `d9437c1b3`
 - measured at: `2026-11-13T15:00:00Z`
 
 ## Verdict counts
@@ -13,10 +13,10 @@ Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manife
 | --- | ---: |
 | `not-parsed` | 294 |
 | `oracle-tests-compiler` | 1 |
-| `passed` | 1029 |
+| `passed` | 1030 |
 | `refused-libc` | 39 |
 | `refused-ub` | 105 |
-| `refused-unsupported` | 680 |
+| `refused-unsupported` | 679 |
 | `timeout` | 66 |
 
 ## Counts by corpus
@@ -30,10 +30,10 @@ Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manife
 | `c-testsuite/single-exec` | `timeout` | 2 |
 | `gcc.c-torture/execute` | `not-parsed` | 267 |
 | `gcc.c-torture/execute` | `oracle-tests-compiler` | 1 |
-| `gcc.c-torture/execute` | `passed` | 856 |
+| `gcc.c-torture/execute` | `passed` | 857 |
 | `gcc.c-torture/execute` | `refused-libc` | 35 |
 | `gcc.c-torture/execute` | `refused-ub` | 96 |
-| `gcc.c-torture/execute` | `refused-unsupported` | 599 |
+| `gcc.c-torture/execute` | `refused-unsupported` | 598 |
 | `gcc.c-torture/execute` | `timeout` | 64 |
 | `gcc.c23-run` | `not-parsed` | 27 |
 | `gcc.c23-run` | `passed` | 3 |
@@ -483,7 +483,6 @@ The run's first refusal, normalized by construct; `sole` counts rows whose first
 | `unsupported:no layout for declared type 't_be'` | 1 | 1 | 960416-1.c |
 | `unsupported:no layout for declared type 'three_byte_t'` | 1 | 1 | struct-ret-2.c |
 | `unsupported:no layout for declared type 'three_char_t'` | 1 | 1 | strct-pack-4.c |
-| `unsupported:no layout for declared type 'token'` | 1 | 1 | enum-1.c |
 | `unsupported:no layout for declared type 'uint32_t'` | 1 | 1 | 20120111-1.c |
 | `unsupported:no layout for declared type 'uint32_t[16]'` | 1 | 1 | pr65369.c |
 | `unsupported:no layout for declared type 'unit_flags'` | 1 | 1 | 20090527-1.c |

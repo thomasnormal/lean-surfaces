@@ -2949,6 +2949,28 @@ theorem twinAgrees_callIn_unsupported_args (m : Module) (fuel : Nat) (w : World)
       raiseIn, throw, throwThe, MonadExceptOf.throw, ExceptT.mk,
       StateT.pure, Except.pure, pure]
 
+theorem twinAgrees_callIn_arity_error (m : Module) (fuel : Nat) (w : World)
+    (fname : String) (args : Array RVal) (f : FunctionDefn) (hfuel : 0 < fuel)
+    (hfind : findFunction m fname = some f) (hargs : f.argsOk = true)
+    (hlocal : f.localsOk = true) (hgen : proofCellGeneratorUnsafe m fname = false)
+    (harity : arityOk f.params args.size = false) :
+    callInMono m fuel w fname args =
+      .exn { w with callDepth := pythonTopCallDepth }
+        (positionalArityError (entryBindingDepth pythonTopCallDepth) fname f.params args.size) := by
+  cases fuel with
+  | zero => omega
+  | succ fuel =>
+    have hget : (getThe World : PyM World World) { w with callDepth :=
+        pythonRecursionLimit + 1 } =
+        .ok (.ok { w with callDepth := pythonRecursionLimit + 1 },
+          { w with callDepth := pythonRecursionLimit + 1 }) := by rfl
+    simp [hget, callInMono, callInM, kont, hfind, hargs, hlocal, hgen, harity,
+      toRun, pythonTopCallDepth, Monadic.refuse, LeanModels.refuse, raisePy,
+      raiseIn, throw, throwThe, MonadExceptOf.throw, ExceptT.mk, StateT.pure,
+      MonadState.get, MonadStateOf.get, instMonadStateOfOfMonadLift,
+      ExceptT.instMonadLift, StateT.instMonad, StateT.get, StateT.bind,
+      ExceptT.bind, ExceptT.bindCont, Except.bind, bind, Except.pure, pure]
+
 /-- The §5.2 CLASS, present exactly when the run REFUSED. `none` is not a
 default: it is the statement that this run did not refuse. -/
 def refusalClass {α : Type} :
@@ -3766,6 +3788,7 @@ theorem twinAgrees_execOpenList_of_each (K : Kont) (m : Module) :
 #print axioms callInMono_eq_ofHalt
 #print axioms twinAgrees_callIn_missing_function
 #print axioms twinAgrees_callIn_unsupported_args
+#print axioms twinAgrees_callIn_arity_error
 #print axioms refusalClass_isSome_iff
 #print axioms toRun_ofRun
 #print axioms ofRun_toRun_normalises

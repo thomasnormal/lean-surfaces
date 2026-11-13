@@ -14050,3 +14050,22 @@ unsupported-parameter refusal before entering the body.
 
 DECIDED: preserve the call guard order in the refinement edge; body-call and
 script adequacy remain open.
+
+## 2026-11-13-pyfoundation-105 — bridge the arity call preflight
+
+`Monadic.twinAgrees_callIn_arity_error` closes the depth-sensitive arity branch
+of call entry. For a found function with supported parameter and local-shape
+flags, a clear generator-cell guard, and `arityOk = false`, both interpreters
+return the same `positionalArityError` at the normalized entry depth while
+retaining the world.
+
+| Measurement | Result |
+|---|---|
+| Target | `lake build LeanModels.Python.Monadic.Eval` passed; 11/11 jobs |
+| Theorem | `Monadic.twinAgrees_callIn_arity_error` |
+| Domain | positive fuel, found functions, and failed positional arity |
+| Semantic change | theorem only; no evaluator behavior change |
+| Remaining debt | generator creation, local-shape preflight, recursive body calls, and scripts |
+
+DECIDED: the call preflight bridge now covers missing names, unsupported
+parameters, and arity diagnostics; recursive body adequacy remains open.

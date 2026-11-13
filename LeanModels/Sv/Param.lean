@@ -912,6 +912,7 @@ def SymBinOp.constClass : SymBinOp → ConstOpClass
 32-bit signed result out). -/
 def SymBinOp.intArith : SymBinOp → Bool
   | .m0 .add | .m0 .sub | .m0 .mul | .m0 .and | .m0 .or | .m0 .xor
+  | .m0 (.shl _) | .m0 (.shr _) | .m0 (.ashl _) | .m0 (.ashr _)
   | .mul | .div | .mod | .pow | .shl | .shr | .ashl | .ashr => true
   | _ => false
 
@@ -1722,13 +1723,17 @@ def evalInt (env : IEnv) : PExpr → Except String Int
         | .pow =>
             if b < 0 then .error "'**' with a negative exponent" else .ok (a ^ b.toNat)
         | .shl | .ashl =>
-            if b < 0 then .error "shift by a negative amount" else .ok (a * (2 : Int) ^ b.toNat)
+            if b < 0 then .error "shift by a negative amount"
+            else if 32 ≤ b then .error "shift amount above 32 in an untyped constant context"
+            else .ok (a * (2 : Int) ^ b.toNat)
         | .shr =>
             if a < 0 then .error "'>>' of a negative constant (width-dependent)"
             else if b < 0 then .error "shift by a negative amount"
+            else if 32 ≤ b then .error "shift amount above 32 in an untyped constant context"
             else .ok (a.tdiv ((2 : Int) ^ b.toNat))
         | .ashr =>
             if b < 0 then .error "shift by a negative amount"
+            else if 32 ≤ b then .error "shift amount above 32 in an untyped constant context"
             else .ok (a.fdiv ((2 : Int) ^ b.toNat))
       else evalSized env (.binary op l r)
   | .ternary c t e =>
@@ -1816,16 +1821,25 @@ def evalIntExactRec (env : IEnv) : PExpr → Except String Int
         | .div => if b == 0 then .error "division by zero" else .ok (canonInt 32 true (a.tdiv b))
         | .mod => if b == 0 then .error "modulo by zero" else .ok (canonInt 32 true (a.tmod b))
         | .pow => if b < 0 then .error "negative exponent" else .ok (canonInt 32 true (a ^ b.toNat))
-        -- IEEE 1800-2023 §11.4.10 treats a negative shift count as a
-        -- count whose unsigned representation is far beyond the operand;
-        -- the finite 32-bit result is therefore all zeros for these shifts.
-        | .shl | .ashl => if b < 0 then .ok 0 else .ok (canonInt 32 true (a * (2 : Int)^b.toNat))
-        | .shr =>
-            if b < 0 then .ok 0
-            else
+        -- IEEE 1800-2023 §11.4.10 converts the shift amount to an unsigned
+        -- value. A negative signed `int` count is therefore far beyond the
+        -- 32-bit operand: left/logical-right shifts produce zero, while an
+        -- arithmetic-right shift fills with the sign bit. Cap every amount
+        -- at 32 before constructing a power so a hostile parameter cannot
+        -- make the kernel build `2^2147483647`.
+        | .m0 (.shl _) | .m0 (.ashl _) | .shl | .ashl =>
+            if b < 0 then .ok 0 else
+            if 32 ≤ b then .ok 0 else
+            .ok (canonInt 32 true (a * (2 : Int)^b.toNat))
+        | .m0 (.shr _) | .shr =>
+            if b < 0 then .ok 0 else
+            if 32 ≤ b then .ok 0 else
               let ua := if a < 0 then a + (2 : Int) ^ 32 else a
               .ok (canonInt 32 true (ua.tdiv ((2 : Int)^b.toNat)))
-        | .ashr => if b < 0 then .ok 0 else .ok (canonInt 32 true (a.fdiv ((2 : Int)^b.toNat)))
+        | .m0 (.ashr _) | .ashr =>
+            if b < 0 then .ok (if a < 0 then -1 else 0) else
+            if 32 ≤ b then .ok (if a < 0 then -1 else 0) else
+            .ok (canonInt 32 true (a.fdiv ((2 : Int)^b.toNat)))
         | _ => evalSized env (.binary op l r)
       else evalSized env (.binary op l r)
   | e => evalSized env e
@@ -2619,6 +2633,15 @@ def evalUntyped (env : IEnv) (e : PExpr) : Except String Int := do
     let (w, s) ← ctype env e
     let v' ← evalAt env (w + 64, s) (e.shiftBarriers env)
     if v' == v then .ok v else .error (untypedWrapMsg w v v')
+
+/- Negative and oversized shifts in the historical untyped constant tier stay
+   loud: their self-determined width is not fixed by a declared `int` target.
+   This is the deliberate untyped-localparam boundary, while the exact `int`
+   tier follows §11.4.10 with a 32-bit amount cap. -/
+#guard (evalUntyped ({} : IEnv)
+    (.binary .ashr (.int (-8)) (.int (-1)))) matches .error _
+#guard (evalUntyped ({} : IEnv)
+    (.binary .ashr (.int (-8)) (.int 40))) matches .error _
 
 /-- **The initializer of an INT-class TARGET** (round 4 folds): an
 `integer` or `int` localparam, or an `integer`/`int` parameter's default — an

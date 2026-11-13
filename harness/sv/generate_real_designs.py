@@ -16,7 +16,7 @@ ROWS = [
     ("prim_packer", "OpenTitan 0a6ff685", "20", "no", "Constant: CallExpression (IdxW, line 44)"),
     ("CV32E40P", "openhwgroup v1.0.1 / 6148cf5", "574", "no", "AlwaysPosedge:edge"),
     ("Ibex", "lowRISC d513671d", "396", "no", "AlwaysLatch:unknown process kind"),
-    ("PicoRV32", "YosysHQ ef203c2b", "70", "loader yes; E no", "Instantiate: cpuregs unpacked memory"),
+    ("PicoRV32", "YosysHQ ef203c2b", "70", "yes", "canonical E loaded: 1 memory, 54 processes"),
     ("DarkRISCV", "darklife bb6b483c", "1", "no", "Constant: non-literal FLUSH initializer"),
 ]
 

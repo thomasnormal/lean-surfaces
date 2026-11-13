@@ -557,7 +557,7 @@
    ],
    "present": 102,
    "sole": 102,
-   "wall": "unsupported:no definition for 'main'"
+   "wall": "missing-main"
   },
   {
    "files": [
@@ -3226,8 +3226,8 @@
   }
  ],
  "manifest_hash": "bca94718b04e8394cdce992866637166f530978790bd1013cea4a00ae25ef764",
- "measured_at_utc": "2026-11-13T23:30:19Z",
- "measured_commit": "9782881444b6b511904e144491e11f3c6a92ea81",
+ "measured_at_utc": "2026-11-13T23:42:42Z",
+ "measured_commit": "ac4bb7adebf1c54272b7bbafd4a8481908bce785",
  "pin": {
   "corpora": [
    "C1",
@@ -9194,7 +9194,7 @@
   {
    "corpus": "gcc.c-torture/execute",
    "detail": "no definition for 'main'",
-   "dynamic_wall": "unsupported:no definition for 'main'",
+   "dynamic_wall": "missing-main",
    "manifest_status": "parsed",
    "name": "20040705-1.c",
    "sha256": "01159407b359f0de8ae49f5ea25067f8262864cece011024a8e2d7f6c2f303f3",
@@ -9204,7 +9204,7 @@
   {
    "corpus": "gcc.c-torture/execute",
    "detail": "no definition for 'main'",
-   "dynamic_wall": "unsupported:no definition for 'main'",
+   "dynamic_wall": "missing-main",
    "manifest_status": "parsed",
    "name": "20040705-2.c",
    "sha256": "0e04a163f2f03d1fc934f5fb5d76cc033dfa118211da913bb5c959d12e795b52",
@@ -9267,7 +9267,7 @@
   {
    "corpus": "gcc.c-torture/execute",
    "detail": "no definition for 'main'",
-   "dynamic_wall": "unsupported:no definition for 'main'",
+   "dynamic_wall": "missing-main",
    "manifest_status": "parsed",
    "name": "20040709-3.c",
    "sha256": "8dc1a60b8c4a99d14dfbce5006e6b9a08d7be54c08ae28287a02dc9e6baf7b46",
@@ -15337,7 +15337,7 @@
   {
    "corpus": "gcc.c-torture/execute",
    "detail": "no definition for 'main'",
-   "dynamic_wall": "unsupported:no definition for 'main'",
+   "dynamic_wall": "missing-main",
    "manifest_status": "parsed",
    "name": "builtins/20010124-1.c",
    "sha256": "2db9734f594a277fa8f9df9f2318cf200e9e34f8cd9f7eaa5f12d7baa76139f0",
@@ -15361,7 +15361,7 @@
   {
    "corpus": "gcc.c-torture/execute",
    "detail": "no definition for 'main'",
-   "dynamic_wall": "unsupported:no definition for 'main'",
+   "dynamic_wall": "missing-main",
    "manifest_status": "parsed",
    "name": "builtins/abs-1.c",
    "sha256": "89d00f58bbe40e451a331c4022376dc199d2fc557e36e8e8535829af6fa8be3a",
@@ -15374,7 +15374,7 @@
   {
    "corpus": "gcc.c-torture/execute",
    "detail": "no definition for 'main'",
-   "dynamic_wall": "unsupported:no definition for 'main'",
+   "dynamic_wall": "missing-main",
    "manifest_status": "parsed",
    "name": "builtins/abs-2-lib.c",
    "sha256": "3ce61668e139a8dbe23571a5fb9aeeb8823836c62cae737ed2274a8484199f34",
@@ -15384,7 +15384,7 @@
   {
    "corpus": "gcc.c-torture/execute",
    "detail": "no definition for 'main'",
-   "dynamic_wall": "unsupported:no definition for 'main'",
+   "dynamic_wall": "missing-main",
    "manifest_status": "parsed",
    "name": "builtins/abs-2.c",
    "sha256": "cfacb41aae716e2c05c9953a41bc1f0a9a75f4841926c95152c7a7fd9c8bddef",
@@ -15400,7 +15400,7 @@
   {
    "corpus": "gcc.c-torture/execute",
    "detail": "no definition for 'main'",
-   "dynamic_wall": "unsupported:no definition for 'main'",
+   "dynamic_wall": "missing-main",
    "manifest_status": "parsed",
    "name": "builtins/abs-3-lib.c",
    "sha256": "3ce61668e139a8dbe23571a5fb9aeeb8823836c62cae737ed2274a8484199f34",
@@ -15432,7 +15432,7 @@
   {
    "corpus": "gcc.c-torture/execute",
    "detail": "no definition for 'main'",
-   "dynamic_wall": "unsupported:no definition for 'main'",
+   "dynamic_wall": "missing-main",
    "manifest_status": "parsed",
    "name": "builtins/complex-1.c",
    "sha256": "6b1a12e6c24c632e8ca5721a1477eb0bd53a161befe4d9d2ace677593cdb336f",
@@ -15464,7 +15464,7 @@
   {
    "corpus": "gcc.c-torture/execute",
    "detail": "no definition for 'main'",
-   "dynamic_wall": "unsupported:no definition for 'main'",
+   "dynamic_wall": "missing-main",
    "manifest_status": "parsed",
    "name": "builtins/fprintf-lib.c",
    "sha256": "f4b8e7ea83720beb62647ef73a76990d7e158f21573486b8182a04be80435929",
@@ -15812,7 +15812,7 @@
   {
    "corpus": "gcc.c-torture/execute",
    "detail": "no definition for 'main'",
-   "dynamic_wall": "unsupported:no definition for 'main'",
+   "dynamic_wall": "missing-main",
    "manifest_status": "parsed",
    "name": "builtins/memchr-lib.c",
    "sha256": "999ec57309bb0777572f8690a809e7650f7063fe33cfb91927e79d2218ab7236",
@@ -15822,7 +15822,7 @@
   {
    "corpus": "gcc.c-torture/execute",
    "detail": "no definition for 'main'",
-   "dynamic_wall": "unsupported:no definition for 'main'",
+   "dynamic_wall": "missing-main",
    "manifest_status": "parsed",
    "name": "builtins/memchr.c",
    "sha256": "33be41a4da1cd6a8048eaef259f03bfc92a8ca08e1c0e7454e3579dc6dc1400d",
@@ -15837,7 +15837,7 @@
   {
    "corpus": "gcc.c-torture/execute",
    "detail": "no definition for 'main'",
-   "dynamic_wall": "unsupported:no definition for 'main'",
+   "dynamic_wall": "missing-main",
    "manifest_status": "parsed",
    "name": "builtins/memcmp-lib.c",
    "sha256": "413abdbb76e214880ae211043705aef16960299b7b05bf36b74b1bcd01f2765a",
@@ -15847,7 +15847,7 @@
   {
    "corpus": "gcc.c-torture/execute",
    "detail": "no definition for 'main'",
-   "dynamic_wall": "unsupported:no definition for 'main'",
+   "dynamic_wall": "missing-main",
    "manifest_status": "parsed",
    "name": "builtins/memcmp.c",
    "sha256": "5649950ca6b90a18f8dc6159eed34d5db77be4a3ab8abe25fa29b71c1fd5505e",
@@ -15863,7 +15863,7 @@
   {
    "corpus": "gcc.c-torture/execute",
    "detail": "no definition for 'main'",
-   "dynamic_wall": "unsupported:no definition for 'main'",
+   "dynamic_wall": "missing-main",
    "manifest_status": "parsed",
    "name": "builtins/memcpy-chk-lib.c",
    "sha256": "443a6406bba4959ce906f10b14c4b5f841544884c094ab83ae5ed97f92c7d5da",
@@ -15883,7 +15883,7 @@
   {
    "corpus": "gcc.c-torture/execute",
    "detail": "no definition for 'main'",
-   "dynamic_wall": "unsupported:no definition for 'main'",
+   "dynamic_wall": "missing-main",
    "manifest_status": "parsed",
    "name": "builtins/memmove-2-lib.c",
    "sha256": "e6eb8dff84cea348d3aad572938b51132e88e63a58e99c51e4c29d0ab2ba4a5d",
@@ -15893,7 +15893,7 @@
   {
    "corpus": "gcc.c-torture/execute",
    "detail": "no definition for 'main'",
-   "dynamic_wall": "unsupported:no definition for 'main'",
+   "dynamic_wall": "missing-main",
    "manifest_status": "parsed",
    "name": "builtins/memmove-2.c",
    "sha256": "b60dfe8e2e6631fbd5acf4d1cb5cf29cf6d6212815a9773e992325ea6a3bee9d",
@@ -15909,7 +15909,7 @@
   {
    "corpus": "gcc.c-torture/execute",
    "detail": "no definition for 'main'",
-   "dynamic_wall": "unsupported:no definition for 'main'",
+   "dynamic_wall": "missing-main",
    "manifest_status": "parsed",
    "name": "builtins/memmove-chk-lib.c",
    "sha256": "443a6406bba4959ce906f10b14c4b5f841544884c094ab83ae5ed97f92c7d5da",
@@ -15929,7 +15929,7 @@
   {
    "corpus": "gcc.c-torture/execute",
    "detail": "no definition for 'main'",
-   "dynamic_wall": "unsupported:no definition for 'main'",
+   "dynamic_wall": "missing-main",
    "manifest_status": "parsed",
    "name": "builtins/memmove-lib.c",
    "sha256": "e6eb8dff84cea348d3aad572938b51132e88e63a58e99c51e4c29d0ab2ba4a5d",
@@ -15986,7 +15986,7 @@
   {
    "corpus": "gcc.c-torture/execute",
    "detail": "no definition for 'main'",
-   "dynamic_wall": "unsupported:no definition for 'main'",
+   "dynamic_wall": "missing-main",
    "manifest_status": "parsed",
    "name": "builtins/mempcpy-2-lib.c",
    "sha256": "27dee54e260745328c7e5c250a6526a7e97f0a84072089cc65dd7fce214cd8c1",
@@ -16013,7 +16013,7 @@
   {
    "corpus": "gcc.c-torture/execute",
    "detail": "no definition for 'main'",
-   "dynamic_wall": "unsupported:no definition for 'main'",
+   "dynamic_wall": "missing-main",
    "manifest_status": "parsed",
    "name": "builtins/mempcpy-chk-lib.c",
    "sha256": "443a6406bba4959ce906f10b14c4b5f841544884c094ab83ae5ed97f92c7d5da",
@@ -16033,7 +16033,7 @@
   {
    "corpus": "gcc.c-torture/execute",
    "detail": "no definition for 'main'",
-   "dynamic_wall": "unsupported:no definition for 'main'",
+   "dynamic_wall": "missing-main",
    "manifest_status": "parsed",
    "name": "builtins/mempcpy-lib.c",
    "sha256": "27dee54e260745328c7e5c250a6526a7e97f0a84072089cc65dd7fce214cd8c1",
@@ -16060,7 +16060,7 @@
   {
    "corpus": "gcc.c-torture/execute",
    "detail": "no definition for 'main'",
-   "dynamic_wall": "unsupported:no definition for 'main'",
+   "dynamic_wall": "missing-main",
    "manifest_status": "parsed",
    "name": "builtins/memset-chk-lib.c",
    "sha256": "443a6406bba4959ce906f10b14c4b5f841544884c094ab83ae5ed97f92c7d5da",
@@ -16080,7 +16080,7 @@
   {
    "corpus": "gcc.c-torture/execute",
    "detail": "no definition for 'main'",
-   "dynamic_wall": "unsupported:no definition for 'main'",
+   "dynamic_wall": "missing-main",
    "manifest_status": "parsed",
    "name": "builtins/memset-lib.c",
    "sha256": "0a5c4aefff4ba3c5fb0672ff1dcfb74d8097b89ac47735571507b6e94f588485",
@@ -16090,7 +16090,7 @@
   {
    "corpus": "gcc.c-torture/execute",
    "detail": "no definition for 'main'",
-   "dynamic_wall": "unsupported:no definition for 'main'",
+   "dynamic_wall": "missing-main",
    "manifest_status": "parsed",
    "name": "builtins/memset.c",
    "sha256": "0b19240ed32874e700d46b818aad1914dd59939bb410b8f21f545115750dc2c4",
@@ -16103,7 +16103,7 @@
   {
    "corpus": "gcc.c-torture/execute",
    "detail": "no definition for 'main'",
-   "dynamic_wall": "unsupported:no definition for 'main'",
+   "dynamic_wall": "missing-main",
    "manifest_status": "parsed",
    "name": "builtins/pr22237-1-lib.c",
    "sha256": "2eede17fa0b5023c22c0a1f2efced3166a22a496d195b352d0b551c9115f2e4b",
@@ -16125,7 +16125,7 @@
   {
    "corpus": "gcc.c-torture/execute",
    "detail": "no definition for 'main'",
-   "dynamic_wall": "unsupported:no definition for 'main'",
+   "dynamic_wall": "missing-main",
    "manifest_status": "parsed",
    "name": "builtins/pr22237-lib.c",
    "sha256": "2eede17fa0b5023c22c0a1f2efced3166a22a496d195b352d0b551c9115f2e4b",
@@ -16147,7 +16147,7 @@
   {
    "corpus": "gcc.c-torture/execute",
    "detail": "no definition for 'main'",
-   "dynamic_wall": "unsupported:no definition for 'main'",
+   "dynamic_wall": "missing-main",
    "manifest_status": "parsed",
    "name": "builtins/pr23484-chk-lib.c",
    "sha256": "443a6406bba4959ce906f10b14c4b5f841544884c094ab83ae5ed97f92c7d5da",
@@ -16167,7 +16167,7 @@
   {
    "corpus": "gcc.c-torture/execute",
    "detail": "no definition for 'main'",
-   "dynamic_wall": "unsupported:no definition for 'main'",
+   "dynamic_wall": "missing-main",
    "manifest_status": "parsed",
    "name": "builtins/pr93262-chk-lib.c",
    "sha256": "443a6406bba4959ce906f10b14c4b5f841544884c094ab83ae5ed97f92c7d5da",
@@ -16187,7 +16187,7 @@
   {
    "corpus": "gcc.c-torture/execute",
    "detail": "no definition for 'main'",
-   "dynamic_wall": "unsupported:no definition for 'main'",
+   "dynamic_wall": "missing-main",
    "manifest_status": "parsed",
    "name": "builtins/printf-lib.c",
    "sha256": "9cac4b2a1e30897590981049473f237fbd0a4f05d7292c41233910157dba494f",
@@ -16207,7 +16207,7 @@
   {
    "corpus": "gcc.c-torture/execute",
    "detail": "no definition for 'main'",
-   "dynamic_wall": "unsupported:no definition for 'main'",
+   "dynamic_wall": "missing-main",
    "manifest_status": "parsed",
    "name": "builtins/snprintf-chk-lib.c",
    "sha256": "443a6406bba4959ce906f10b14c4b5f841544884c094ab83ae5ed97f92c7d5da",
@@ -16227,7 +16227,7 @@
   {
    "corpus": "gcc.c-torture/execute",
    "detail": "no definition for 'main'",
-   "dynamic_wall": "unsupported:no definition for 'main'",
+   "dynamic_wall": "missing-main",
    "manifest_status": "parsed",
    "name": "builtins/sprintf-chk-lib.c",
    "sha256": "443a6406bba4959ce906f10b14c4b5f841544884c094ab83ae5ed97f92c7d5da",
@@ -16247,7 +16247,7 @@
   {
    "corpus": "gcc.c-torture/execute",
    "detail": "no definition for 'main'",
-   "dynamic_wall": "unsupported:no definition for 'main'",
+   "dynamic_wall": "missing-main",
    "manifest_status": "parsed",
    "name": "builtins/sprintf-lib.c",
    "sha256": "2dde409037cc2fa2c3ae5dcc834b8ad05a673e0a34f4ee9fa716915a93b74e03",
@@ -16257,7 +16257,7 @@
   {
    "corpus": "gcc.c-torture/execute",
    "detail": "no definition for 'main'",
-   "dynamic_wall": "unsupported:no definition for 'main'",
+   "dynamic_wall": "missing-main",
    "manifest_status": "parsed",
    "name": "builtins/sprintf.c",
    "sha256": "7382da9df5daa3c1631827c2ee4d44aa71025d55c9153fa7f54fed61e7ba1034",
@@ -16273,7 +16273,7 @@
   {
    "corpus": "gcc.c-torture/execute",
    "detail": "no definition for 'main'",
-   "dynamic_wall": "unsupported:no definition for 'main'",
+   "dynamic_wall": "missing-main",
    "manifest_status": "parsed",
    "name": "builtins/stpcpy-chk-lib.c",
    "sha256": "443a6406bba4959ce906f10b14c4b5f841544884c094ab83ae5ed97f92c7d5da",
@@ -16293,7 +16293,7 @@
   {
    "corpus": "gcc.c-torture/execute",
    "detail": "no definition for 'main'",
-   "dynamic_wall": "unsupported:no definition for 'main'",
+   "dynamic_wall": "missing-main",
    "manifest_status": "parsed",
    "name": "builtins/stpncpy-chk-lib.c",
    "sha256": "443a6406bba4959ce906f10b14c4b5f841544884c094ab83ae5ed97f92c7d5da",
@@ -16313,7 +16313,7 @@
   {
    "corpus": "gcc.c-torture/execute",
    "detail": "no definition for 'main'",
-   "dynamic_wall": "unsupported:no definition for 'main'",
+   "dynamic_wall": "missing-main",
    "manifest_status": "parsed",
    "name": "builtins/strcat-chk-lib.c",
    "sha256": "443a6406bba4959ce906f10b14c4b5f841544884c094ab83ae5ed97f92c7d5da",
@@ -16333,7 +16333,7 @@
   {
    "corpus": "gcc.c-torture/execute",
    "detail": "no definition for 'main'",
-   "dynamic_wall": "unsupported:no definition for 'main'",
+   "dynamic_wall": "missing-main",
    "manifest_status": "parsed",
    "name": "builtins/strcat-lib.c",
    "sha256": "75b5a8dfe314d083a0c8c37fec5953166787bd3586e082c5a2e8c09669ce1c8c",
@@ -16361,7 +16361,7 @@
   {
    "corpus": "gcc.c-torture/execute",
    "detail": "no definition for 'main'",
-   "dynamic_wall": "unsupported:no definition for 'main'",
+   "dynamic_wall": "missing-main",
    "manifest_status": "parsed",
    "name": "builtins/strchr-lib.c",
    "sha256": "0f8bac4b275f5e901d9248e0a2cd6bd9c5e849875ffde118be5e04e5dedb12ac",
@@ -16371,7 +16371,7 @@
   {
    "corpus": "gcc.c-torture/execute",
    "detail": "no definition for 'main'",
-   "dynamic_wall": "unsupported:no definition for 'main'",
+   "dynamic_wall": "missing-main",
    "manifest_status": "parsed",
    "name": "builtins/strchr.c",
    "sha256": "bb40290d2f398bcc21a941c62681732e2cc39fd49df33e5f74d7f89f302cd26f",
@@ -16388,7 +16388,7 @@
   {
    "corpus": "gcc.c-torture/execute",
    "detail": "no definition for 'main'",
-   "dynamic_wall": "unsupported:no definition for 'main'",
+   "dynamic_wall": "missing-main",
    "manifest_status": "parsed",
    "name": "builtins/strcmp-lib.c",
    "sha256": "3a6e0535e0d9778afeceae76c48c55ab13438ba1e22d3c782e6241dc0806a1dc",
@@ -16398,7 +16398,7 @@
   {
    "corpus": "gcc.c-torture/execute",
    "detail": "no definition for 'main'",
-   "dynamic_wall": "unsupported:no definition for 'main'",
+   "dynamic_wall": "missing-main",
    "manifest_status": "parsed",
    "name": "builtins/strcmp.c",
    "sha256": "c427dc42ed16be7222ea7b1ecb2ab8ab91817aee8ccb07544a6a5e060d7b7574",
@@ -16413,7 +16413,7 @@
   {
    "corpus": "gcc.c-torture/execute",
    "detail": "no definition for 'main'",
-   "dynamic_wall": "unsupported:no definition for 'main'",
+   "dynamic_wall": "missing-main",
    "manifest_status": "parsed",
    "name": "builtins/strcpy-2-lib.c",
    "sha256": "7add6b3a47667a10ac59bea429b42eca10d93b332c6be88898cac919ec280ec7",
@@ -16423,7 +16423,7 @@
   {
    "corpus": "gcc.c-torture/execute",
    "detail": "no definition for 'main'",
-   "dynamic_wall": "unsupported:no definition for 'main'",
+   "dynamic_wall": "missing-main",
    "manifest_status": "parsed",
    "name": "builtins/strcpy-2.c",
    "sha256": "41a8a145cc1e3a3174892f35243b35599f064ab19be10b8c696b2334934b8923",
@@ -16437,7 +16437,7 @@
   {
    "corpus": "gcc.c-torture/execute",
    "detail": "no definition for 'main'",
-   "dynamic_wall": "unsupported:no definition for 'main'",
+   "dynamic_wall": "missing-main",
    "manifest_status": "parsed",
    "name": "builtins/strcpy-chk-lib.c",
    "sha256": "443a6406bba4959ce906f10b14c4b5f841544884c094ab83ae5ed97f92c7d5da",
@@ -16457,7 +16457,7 @@
   {
    "corpus": "gcc.c-torture/execute",
    "detail": "no definition for 'main'",
-   "dynamic_wall": "unsupported:no definition for 'main'",
+   "dynamic_wall": "missing-main",
    "manifest_status": "parsed",
    "name": "builtins/strcpy-lib.c",
    "sha256": "7add6b3a47667a10ac59bea429b42eca10d93b332c6be88898cac919ec280ec7",
@@ -16467,7 +16467,7 @@
   {
    "corpus": "gcc.c-torture/execute",
    "detail": "no definition for 'main'",
-   "dynamic_wall": "unsupported:no definition for 'main'",
+   "dynamic_wall": "missing-main",
    "manifest_status": "parsed",
    "name": "builtins/strcpy.c",
    "sha256": "a1d14a66f4382dbcbef023721b22721f2062ad86d5ad2eb386c20f31a40b393a",
@@ -16485,7 +16485,7 @@
   {
    "corpus": "gcc.c-torture/execute",
    "detail": "no definition for 'main'",
-   "dynamic_wall": "unsupported:no definition for 'main'",
+   "dynamic_wall": "missing-main",
    "manifest_status": "parsed",
    "name": "builtins/strcspn-lib.c",
    "sha256": "7504b181146175af3d9534b1ce8936914d2eddfbf9427917d3692d44cd3f62fa",
@@ -16495,7 +16495,7 @@
   {
    "corpus": "gcc.c-torture/execute",
    "detail": "no definition for 'main'",
-   "dynamic_wall": "unsupported:no definition for 'main'",
+   "dynamic_wall": "missing-main",
    "manifest_status": "parsed",
    "name": "builtins/strcspn.c",
    "sha256": "cb88553de26233a048f309756e43fad2fec22ebd43d6b36d91ce3a5146dddecc",
@@ -16511,7 +16511,7 @@
   {
    "corpus": "gcc.c-torture/execute",
    "detail": "no definition for 'main'",
-   "dynamic_wall": "unsupported:no definition for 'main'",
+   "dynamic_wall": "missing-main",
    "manifest_status": "parsed",
    "name": "builtins/strlen-2-lib.c",
    "sha256": "1641ea6c66a4fd28df7783a790a08cc532dde268e74f7fcca1d7cd42122fdae3",
@@ -16535,7 +16535,7 @@
   {
    "corpus": "gcc.c-torture/execute",
    "detail": "no definition for 'main'",
-   "dynamic_wall": "unsupported:no definition for 'main'",
+   "dynamic_wall": "missing-main",
    "manifest_status": "parsed",
    "name": "builtins/strlen-3-lib.c",
    "sha256": "1641ea6c66a4fd28df7783a790a08cc532dde268e74f7fcca1d7cd42122fdae3",
@@ -16559,7 +16559,7 @@
   {
    "corpus": "gcc.c-torture/execute",
    "detail": "no definition for 'main'",
-   "dynamic_wall": "unsupported:no definition for 'main'",
+   "dynamic_wall": "missing-main",
    "manifest_status": "parsed",
    "name": "builtins/strlen-lib.c",
    "sha256": "1641ea6c66a4fd28df7783a790a08cc532dde268e74f7fcca1d7cd42122fdae3",
@@ -16569,7 +16569,7 @@
   {
    "corpus": "gcc.c-torture/execute",
    "detail": "no definition for 'main'",
-   "dynamic_wall": "unsupported:no definition for 'main'",
+   "dynamic_wall": "missing-main",
    "manifest_status": "parsed",
    "name": "builtins/strlen.c",
    "sha256": "2a0ee641cf4d4d267ff62c5a32b61157b26acb7e8720155dcd904b0279a2e639",
@@ -16584,7 +16584,7 @@
   {
    "corpus": "gcc.c-torture/execute",
    "detail": "no definition for 'main'",
-   "dynamic_wall": "unsupported:no definition for 'main'",
+   "dynamic_wall": "missing-main",
    "manifest_status": "parsed",
    "name": "builtins/strncat-chk-lib.c",
    "sha256": "443a6406bba4959ce906f10b14c4b5f841544884c094ab83ae5ed97f92c7d5da",
@@ -16604,7 +16604,7 @@
   {
    "corpus": "gcc.c-torture/execute",
    "detail": "no definition for 'main'",
-   "dynamic_wall": "unsupported:no definition for 'main'",
+   "dynamic_wall": "missing-main",
    "manifest_status": "parsed",
    "name": "builtins/strncat-lib.c",
    "sha256": "77ae152675c935110d565dde94f3a470c4b2bbf6e87ef8f831588df29bd6cb7a",
@@ -16614,7 +16614,7 @@
   {
    "corpus": "gcc.c-torture/execute",
    "detail": "no definition for 'main'",
-   "dynamic_wall": "unsupported:no definition for 'main'",
+   "dynamic_wall": "missing-main",
    "manifest_status": "parsed",
    "name": "builtins/strncat.c",
    "sha256": "d548d368a31363b2abfa9b5d5725f682a85c389e7c6f2f9c8744259c9aedfddc",
@@ -16632,7 +16632,7 @@
   {
    "corpus": "gcc.c-torture/execute",
    "detail": "no definition for 'main'",
-   "dynamic_wall": "unsupported:no definition for 'main'",
+   "dynamic_wall": "missing-main",
    "manifest_status": "parsed",
    "name": "builtins/strncmp-2-lib.c",
    "sha256": "cab9a277e45496f68ed71fac3484f7ebf8cb4e87eebb3bbbcd76ba5def213373",
@@ -16642,7 +16642,7 @@
   {
    "corpus": "gcc.c-torture/execute",
    "detail": "no definition for 'main'",
-   "dynamic_wall": "unsupported:no definition for 'main'",
+   "dynamic_wall": "missing-main",
    "manifest_status": "parsed",
    "name": "builtins/strncmp-2.c",
    "sha256": "69129e82e65f6116726d64e4c61c9d24814f7159ec148059e9b9037944d3f407",
@@ -16656,7 +16656,7 @@
   {
    "corpus": "gcc.c-torture/execute",
    "detail": "no definition for 'main'",
-   "dynamic_wall": "unsupported:no definition for 'main'",
+   "dynamic_wall": "missing-main",
    "manifest_status": "parsed",
    "name": "builtins/strncmp-lib.c",
    "sha256": "cab9a277e45496f68ed71fac3484f7ebf8cb4e87eebb3bbbcd76ba5def213373",
@@ -16666,7 +16666,7 @@
   {
    "corpus": "gcc.c-torture/execute",
    "detail": "no definition for 'main'",
-   "dynamic_wall": "unsupported:no definition for 'main'",
+   "dynamic_wall": "missing-main",
    "manifest_status": "parsed",
    "name": "builtins/strncmp.c",
    "sha256": "aac75a74e27607a404b06400f395d70cfdcd17edc313e2da7b8125caf3fe308b",
@@ -16681,7 +16681,7 @@
   {
    "corpus": "gcc.c-torture/execute",
    "detail": "no definition for 'main'",
-   "dynamic_wall": "unsupported:no definition for 'main'",
+   "dynamic_wall": "missing-main",
    "manifest_status": "parsed",
    "name": "builtins/strncpy-chk-lib.c",
    "sha256": "443a6406bba4959ce906f10b14c4b5f841544884c094ab83ae5ed97f92c7d5da",
@@ -16701,7 +16701,7 @@
   {
    "corpus": "gcc.c-torture/execute",
    "detail": "no definition for 'main'",
-   "dynamic_wall": "unsupported:no definition for 'main'",
+   "dynamic_wall": "missing-main",
    "manifest_status": "parsed",
    "name": "builtins/strncpy-lib.c",
    "sha256": "b806efa17530c6e0c2957f590a81e10ab3b744a8334ccc6d875989fa19209def",
@@ -16711,7 +16711,7 @@
   {
    "corpus": "gcc.c-torture/execute",
    "detail": "no definition for 'main'",
-   "dynamic_wall": "unsupported:no definition for 'main'",
+   "dynamic_wall": "missing-main",
    "manifest_status": "parsed",
    "name": "builtins/strncpy.c",
    "sha256": "360af1d5fdfb61e1dd0c2f3cbaeb497ca8d5bb5e731f94c53fe9ff81de12ab94",
@@ -16728,7 +16728,7 @@
   {
    "corpus": "gcc.c-torture/execute",
    "detail": "no definition for 'main'",
-   "dynamic_wall": "unsupported:no definition for 'main'",
+   "dynamic_wall": "missing-main",
    "manifest_status": "parsed",
    "name": "builtins/strnlen-lib.c",
    "sha256": "8e63bf27ca5dd590fd8dd073bde8dc5f329e62b6894f4e1c103bc454ee09c048",
@@ -16738,7 +16738,7 @@
   {
    "corpus": "gcc.c-torture/execute",
    "detail": "no definition for 'main'",
-   "dynamic_wall": "unsupported:no definition for 'main'",
+   "dynamic_wall": "missing-main",
    "manifest_status": "parsed",
    "name": "builtins/strnlen.c",
    "sha256": "a882a43cd8068337ca4bba827f687c1e10736f1b351daaee11e77112b7d3e989",
@@ -16754,7 +16754,7 @@
   {
    "corpus": "gcc.c-torture/execute",
    "detail": "no definition for 'main'",
-   "dynamic_wall": "unsupported:no definition for 'main'",
+   "dynamic_wall": "missing-main",
    "manifest_status": "parsed",
    "name": "builtins/strpbrk-lib.c",
    "sha256": "3ff042941109acd7f702a5c40d45e071e531242e5faffb79a7f24d62f6aff1a4",
@@ -16764,7 +16764,7 @@
   {
    "corpus": "gcc.c-torture/execute",
    "detail": "no definition for 'main'",
-   "dynamic_wall": "unsupported:no definition for 'main'",
+   "dynamic_wall": "missing-main",
    "manifest_status": "parsed",
    "name": "builtins/strpbrk.c",
    "sha256": "52efe3421374784ae4861db84f151c5416e7b8cc50b7e6bcf9285b8209d7aa35",
@@ -16780,7 +16780,7 @@
   {
    "corpus": "gcc.c-torture/execute",
    "detail": "no definition for 'main'",
-   "dynamic_wall": "unsupported:no definition for 'main'",
+   "dynamic_wall": "missing-main",
    "manifest_status": "parsed",
    "name": "builtins/strpcpy-2-lib.c",
    "sha256": "13629568a306effb48e4e9fd476580fe12fbc709aa7c41d008b57557653da6d1",
@@ -16807,7 +16807,7 @@
   {
    "corpus": "gcc.c-torture/execute",
    "detail": "no definition for 'main'",
-   "dynamic_wall": "unsupported:no definition for 'main'",
+   "dynamic_wall": "missing-main",
    "manifest_status": "parsed",
    "name": "builtins/strpcpy-lib.c",
    "sha256": "13629568a306effb48e4e9fd476580fe12fbc709aa7c41d008b57557653da6d1",
@@ -16833,7 +16833,7 @@
   {
    "corpus": "gcc.c-torture/execute",
    "detail": "no definition for 'main'",
-   "dynamic_wall": "unsupported:no definition for 'main'",
+   "dynamic_wall": "missing-main",
    "manifest_status": "parsed",
    "name": "builtins/strrchr-lib.c",
    "sha256": "270af3cbb993c9a4e739b214eb2ad6593c42cd894f4ce34f7c87e81235cbf37d",
@@ -16843,7 +16843,7 @@
   {
    "corpus": "gcc.c-torture/execute",
    "detail": "no definition for 'main'",
-   "dynamic_wall": "unsupported:no definition for 'main'",
+   "dynamic_wall": "missing-main",
    "manifest_status": "parsed",
    "name": "builtins/strrchr.c",
    "sha256": "a4e44fba91c48221e40938f70616fdc3522b20da51c46a37256f45b0f386c64c",
@@ -16860,7 +16860,7 @@
   {
    "corpus": "gcc.c-torture/execute",
    "detail": "no definition for 'main'",
-   "dynamic_wall": "unsupported:no definition for 'main'",
+   "dynamic_wall": "missing-main",
    "manifest_status": "parsed",
    "name": "builtins/strspn-lib.c",
    "sha256": "1b8523b5c67b9eb2e45b70e942b197d1bceedec5f71b1b76b9ad1fe5f076e3bb",
@@ -16870,7 +16870,7 @@
   {
    "corpus": "gcc.c-torture/execute",
    "detail": "no definition for 'main'",
-   "dynamic_wall": "unsupported:no definition for 'main'",
+   "dynamic_wall": "missing-main",
    "manifest_status": "parsed",
    "name": "builtins/strspn.c",
    "sha256": "fee1f98f1c9c240df7df6f339eefaae6830af438a84bd3780bcce1b964cb86dd",
@@ -16900,7 +16900,7 @@
   {
    "corpus": "gcc.c-torture/execute",
    "detail": "no definition for 'main'",
-   "dynamic_wall": "unsupported:no definition for 'main'",
+   "dynamic_wall": "missing-main",
    "manifest_status": "parsed",
    "name": "builtins/strstr-asm.c",
    "sha256": "c8fd9de5b7ef367f2ab9648ad698bcd1dde1ffeb68177ac073b217609550f0b9",
@@ -16915,7 +16915,7 @@
   {
    "corpus": "gcc.c-torture/execute",
    "detail": "no definition for 'main'",
-   "dynamic_wall": "unsupported:no definition for 'main'",
+   "dynamic_wall": "missing-main",
    "manifest_status": "parsed",
    "name": "builtins/strstr-lib.c",
    "sha256": "1bd02cfafee2e719e8412c50af6bc530a625470c7283155b8edd326514094837",
@@ -16925,7 +16925,7 @@
   {
    "corpus": "gcc.c-torture/execute",
    "detail": "no definition for 'main'",
-   "dynamic_wall": "unsupported:no definition for 'main'",
+   "dynamic_wall": "missing-main",
    "manifest_status": "parsed",
    "name": "builtins/strstr.c",
    "sha256": "a7179459e6e62deee1d9d851ba22ae42c4447bd9926fd81399d11dfaa7a30ee8",
@@ -16950,7 +16950,7 @@
   {
    "corpus": "gcc.c-torture/execute",
    "detail": "no definition for 'main'",
-   "dynamic_wall": "unsupported:no definition for 'main'",
+   "dynamic_wall": "missing-main",
    "manifest_status": "parsed",
    "name": "builtins/uabs-1.c",
    "sha256": "9e302663aaf9c611d3f9dd593fafd91e1d26e630b87592a85d09aeb5c737f5e1",
@@ -16963,7 +16963,7 @@
   {
    "corpus": "gcc.c-torture/execute",
    "detail": "no definition for 'main'",
-   "dynamic_wall": "unsupported:no definition for 'main'",
+   "dynamic_wall": "missing-main",
    "manifest_status": "parsed",
    "name": "builtins/uabs-2-lib.c",
    "sha256": "3ce61668e139a8dbe23571a5fb9aeeb8823836c62cae737ed2274a8484199f34",
@@ -16973,7 +16973,7 @@
   {
    "corpus": "gcc.c-torture/execute",
    "detail": "no definition for 'main'",
-   "dynamic_wall": "unsupported:no definition for 'main'",
+   "dynamic_wall": "missing-main",
    "manifest_status": "parsed",
    "name": "builtins/uabs-2.c",
    "sha256": "5c1e1d621d7881c4874eda59b35a5c652808eba7955c75b2c818acc2073ac3ca",
@@ -16989,7 +16989,7 @@
   {
    "corpus": "gcc.c-torture/execute",
    "detail": "no definition for 'main'",
-   "dynamic_wall": "unsupported:no definition for 'main'",
+   "dynamic_wall": "missing-main",
    "manifest_status": "parsed",
    "name": "builtins/uabs-3-lib.c",
    "sha256": "3ce61668e139a8dbe23571a5fb9aeeb8823836c62cae737ed2274a8484199f34",
@@ -17009,7 +17009,7 @@
   {
    "corpus": "gcc.c-torture/execute",
    "detail": "no definition for 'main'",
-   "dynamic_wall": "unsupported:no definition for 'main'",
+   "dynamic_wall": "missing-main",
    "manifest_status": "parsed",
    "name": "builtins/vsnprintf-chk-lib.c",
    "sha256": "443a6406bba4959ce906f10b14c4b5f841544884c094ab83ae5ed97f92c7d5da",
@@ -17029,7 +17029,7 @@
   {
    "corpus": "gcc.c-torture/execute",
    "detail": "no definition for 'main'",
-   "dynamic_wall": "unsupported:no definition for 'main'",
+   "dynamic_wall": "missing-main",
    "manifest_status": "parsed",
    "name": "builtins/vsprintf-chk-lib.c",
    "sha256": "443a6406bba4959ce906f10b14c4b5f841544884c094ab83ae5ed97f92c7d5da",
@@ -17628,7 +17628,7 @@
   {
    "corpus": "gcc.c23-run",
    "detail": "no definition for 'main'",
-   "dynamic_wall": "unsupported:no definition for 'main'",
+   "dynamic_wall": "missing-main",
    "manifest_status": "parsed",
    "name": "gcc/testsuite/gcc.dg/c23-align-6.c",
    "sha256": "a82cc760cf53bcefdce7b1ad9dabc82ad34f704c929e9e1f7f210d23d36ab778",
@@ -17797,7 +17797,7 @@
   {
    "corpus": "gcc.c23-run",
    "detail": "no definition for 'main'",
-   "dynamic_wall": "unsupported:no definition for 'main'",
+   "dynamic_wall": "missing-main",
    "manifest_status": "parsed",
    "name": "gcc/testsuite/gcc.dg/c23-empty-init-warn-10.c",
    "sha256": "9051c8d1748cbf55337ab9210ef2356c497fefa2ef14df5d37b08c5d1dfc3d18",
@@ -17807,7 +17807,7 @@
   {
    "corpus": "gcc.c23-run",
    "detail": "no definition for 'main'",
-   "dynamic_wall": "unsupported:no definition for 'main'",
+   "dynamic_wall": "missing-main",
    "manifest_status": "parsed",
    "name": "gcc/testsuite/gcc.dg/c23-empty-init-warn-11.c",
    "sha256": "b42c74aac77969285639d5447634e3ef9745d71651a2328a870c2eff39168e9b",
@@ -17817,7 +17817,7 @@
   {
    "corpus": "gcc.c23-run",
    "detail": "no definition for 'main'",
-   "dynamic_wall": "unsupported:no definition for 'main'",
+   "dynamic_wall": "missing-main",
    "manifest_status": "parsed",
    "name": "gcc/testsuite/gcc.dg/c23-empty-init-warn-12.c",
    "sha256": "552254dbcfeb9115affc603af2b452227ec7b354397e90b966c2c342a36206bd",
@@ -17827,7 +17827,7 @@
   {
    "corpus": "gcc.c23-run",
    "detail": "no definition for 'main'",
-   "dynamic_wall": "unsupported:no definition for 'main'",
+   "dynamic_wall": "missing-main",
    "manifest_status": "parsed",
    "name": "gcc/testsuite/gcc.dg/c23-empty-init-warn-13.c",
    "sha256": "4db65e4dbf4ced3a470235f0ba6ae0b8a2d1368ebd90fc4692cf30134a1cb5c8",
@@ -17837,7 +17837,7 @@
   {
    "corpus": "gcc.c23-run",
    "detail": "no definition for 'main'",
-   "dynamic_wall": "unsupported:no definition for 'main'",
+   "dynamic_wall": "missing-main",
    "manifest_status": "parsed",
    "name": "gcc/testsuite/gcc.dg/c23-empty-init-warn-14.c",
    "sha256": "3a74ccf9c140b003170a23fead0c13c87ea51a4006cd8a62afa0905c0bbd92f1",
@@ -17847,7 +17847,7 @@
   {
    "corpus": "gcc.c23-run",
    "detail": "no definition for 'main'",
-   "dynamic_wall": "unsupported:no definition for 'main'",
+   "dynamic_wall": "missing-main",
    "manifest_status": "parsed",
    "name": "gcc/testsuite/gcc.dg/c23-empty-init-warn-15.c",
    "sha256": "0ee5dcb2f5aeb7fa6ebfc8afc0958e6f8891f7087e601505c3518abd4bafd5be",
@@ -17857,7 +17857,7 @@
   {
    "corpus": "gcc.c23-run",
    "detail": "no definition for 'main'",
-   "dynamic_wall": "unsupported:no definition for 'main'",
+   "dynamic_wall": "missing-main",
    "manifest_status": "parsed",
    "name": "gcc/testsuite/gcc.dg/c23-empty-init-warn-16.c",
    "sha256": "0a566d77c443154793a7846653e2b4ec12d64856dd98c549fa8b805df8456f78",
@@ -17893,7 +17893,7 @@
   {
    "corpus": "gcc.c23-run",
    "detail": "no definition for 'main'",
-   "dynamic_wall": "unsupported:no definition for 'main'",
+   "dynamic_wall": "missing-main",
    "manifest_status": "parsed",
    "name": "gcc/testsuite/gcc.dg/c23-empty-init-warn-3.c",
    "sha256": "7fea72fc46190e60897dfa7b363773dc29b6454c7fe8074f69dfc17757c5de44",
@@ -17916,7 +17916,7 @@
   {
    "corpus": "gcc.c23-run",
    "detail": "no definition for 'main'",
-   "dynamic_wall": "unsupported:no definition for 'main'",
+   "dynamic_wall": "missing-main",
    "manifest_status": "parsed",
    "name": "gcc/testsuite/gcc.dg/c23-empty-init-warn-5.c",
    "sha256": "95c3230e326e7e078f88c2e6fe5d467933855ebf3be31897b98d0a5a4c3850aa",
@@ -17926,7 +17926,7 @@
   {
    "corpus": "gcc.c23-run",
    "detail": "no definition for 'main'",
-   "dynamic_wall": "unsupported:no definition for 'main'",
+   "dynamic_wall": "missing-main",
    "manifest_status": "parsed",
    "name": "gcc/testsuite/gcc.dg/c23-empty-init-warn-6.c",
    "sha256": "b18eedfa405a089fbd0b644acb431f41cc29ff7d96b587b8a49388a4e3188082",
@@ -17936,7 +17936,7 @@
   {
    "corpus": "gcc.c23-run",
    "detail": "no definition for 'main'",
-   "dynamic_wall": "unsupported:no definition for 'main'",
+   "dynamic_wall": "missing-main",
    "manifest_status": "parsed",
    "name": "gcc/testsuite/gcc.dg/c23-empty-init-warn-7.c",
    "sha256": "53dc2381507b8f0a2bdaa2111531767e18d9e4de41b4cad24ac0622ca5813110",
@@ -17946,7 +17946,7 @@
   {
    "corpus": "gcc.c23-run",
    "detail": "no definition for 'main'",
-   "dynamic_wall": "unsupported:no definition for 'main'",
+   "dynamic_wall": "missing-main",
    "manifest_status": "parsed",
    "name": "gcc/testsuite/gcc.dg/c23-empty-init-warn-8.c",
    "sha256": "e19eb54ff381fc06abf028c03fd57ba784640600a111f0a9372716dec1962051",
@@ -18439,7 +18439,7 @@
   {
    "corpus": "gcc.c23-run",
    "detail": "no definition for 'main'",
-   "dynamic_wall": "unsupported:no definition for 'main'",
+   "dynamic_wall": "missing-main",
    "manifest_status": "parsed",
    "name": "gcc/testsuite/gcc.dg/cpp/c23-trigraphs-2.c",
    "sha256": "932d60f9807cc471b9fdf807096171dcc99383beba89e208bce188576734baa7",
@@ -19026,7 +19026,7 @@
   {
    "corpus": "gcc.c-torture/execute",
    "detail": "no definition for 'main'",
-   "dynamic_wall": "unsupported:no definition for 'main'",
+   "dynamic_wall": "missing-main",
    "manifest_status": "parsed",
    "name": "ieee/fp-cmp-4f.c",
    "sha256": "fc005ba136e4c7d09df682f663d25666a916eb0e7567534b70523f187d1c9f33",
@@ -19036,7 +19036,7 @@
   {
    "corpus": "gcc.c-torture/execute",
    "detail": "no definition for 'main'",
-   "dynamic_wall": "unsupported:no definition for 'main'",
+   "dynamic_wall": "missing-main",
    "manifest_status": "parsed",
    "name": "ieee/fp-cmp-4l.c",
    "sha256": "3cd2dfdbd3688e7c33991c53efdb874ee1eb4362391da0f44f7ffe39a0c62bc1",
@@ -19120,7 +19120,7 @@
   {
    "corpus": "gcc.c-torture/execute",
    "detail": "no definition for 'main'",
-   "dynamic_wall": "unsupported:no definition for 'main'",
+   "dynamic_wall": "missing-main",
    "manifest_status": "parsed",
    "name": "ieee/fp-cmp-8f.c",
    "sha256": "63a6c51a75ca449dbb75ff99aca18fed39abf4205174bab503addea3fdae41f3",
@@ -19130,7 +19130,7 @@
   {
    "corpus": "gcc.c-torture/execute",
    "detail": "no definition for 'main'",
-   "dynamic_wall": "unsupported:no definition for 'main'",
+   "dynamic_wall": "missing-main",
    "manifest_status": "parsed",
    "name": "ieee/fp-cmp-8l.c",
    "sha256": "e6cce53b1545117f6ac24106cc9806d50cabdd3219a39fdd755e16e9ff71cfbb",
@@ -19479,7 +19479,7 @@
   {
    "corpus": "gcc.c-torture/execute",
    "detail": "no definition for 'main'",
-   "dynamic_wall": "unsupported:no definition for 'main'",
+   "dynamic_wall": "missing-main",
    "manifest_status": "parsed",
    "name": "ieee/pr38016.c",
    "sha256": "5c9b88dc196d3abaccb747f37785f76a51d263765291d090ca9920cf27727517",
@@ -26432,7 +26432,7 @@
   {
    "corpus": "gcc.c-torture/execute",
    "detail": "no definition for 'main'",
-   "dynamic_wall": "unsupported:no definition for 'main'",
+   "dynamic_wall": "missing-main",
    "manifest_status": "parsed",
    "name": "pr71626-2.c",
    "sha256": "e774e4f4b42092af006f5d9634b34d31541970f8e9546a801dfb277904ed1b84",

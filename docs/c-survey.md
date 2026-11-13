@@ -4,8 +4,8 @@ Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manife
 
 - verdicts: 1096/2214 MATCH (passed 1096, failed 0, oracle 0)
 - manifest SHA-256: `bca94718b04e8394cdce992866637166f530978790bd1013cea4a00ae25ef764`
-- measured commit: `9782881444b6b511904e144491e11f3c6a92ea81`
-- measured at: `2026-11-13T23:30:19Z`
+- measured commit: `ac4bb7adebf1c54272b7bbafd4a8481908bce785`
+- measured at: `2026-11-13T23:42:42Z`
 
 ## Verdict counts
 
@@ -303,7 +303,7 @@ The run's first refusal, normalized by construct; `sole` counts rows whose first
 | --- | ---: | ---: | --- |
 | `frontend` | 294 | 294 | 20000227-1.c, 20000412-3.c, 20000717-3.c, 20000822-1.c, 20001009-2.c |
 | `undefined-behavior` | 107 | 107 | 00032.c, 00115.c, 00141.c, 00144.c, 00200.c |
-| `unsupported:no definition for 'main'` | 102 | 102 | 20040705-1.c, 20040705-2.c, 20040709-3.c, builtins/20010124-1.c, builtins/abs-1.c |
+| `missing-main` | 102 | 102 | 20040705-1.c, 20040705-2.c, 20040709-3.c, builtins/20010124-1.c, builtins/abs-1.c |
 | `timeout` | 66 | 66 | 00041.c, 00128.c, 20000412-2.c, 20020108-1.c, 20030916-1.c |
 | `unsupported:extern object 'inside_main' has no definition in the translation unit` | 40 | 40 | builtins/20010124-1-lib.c, builtins/complex-1-lib.c, builtins/fputs-lib.c, builtins/lib/abs.c, builtins/lib/bfill.c |
 | `unsupported:pointer bit-cast across incompatible effective types` | 21 | 21 | 00103.c, 20001017-2.c, 20050316-1.c, 20050607-1.c, 20060412-1.c |

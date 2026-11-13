@@ -76,6 +76,8 @@ projections for a pure successful body, restoring call depth on the monadic
 surface as well.
 `Monadic.finishCallM_empty_body_ok` composes the same restoration with the
 actual empty `execOpenList` body and its `inWorld` projection.
+`Monadic.finishCallM_pass_body_ok` extends this composition to the first
+nonempty statement body, a one-statement `pass` sequence.
 
 ## Operator dispatch
 

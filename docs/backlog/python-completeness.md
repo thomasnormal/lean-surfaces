@@ -14272,3 +14272,21 @@ world observables, and the requested restored depth.
 
 DECIDED: the ordinary empty-body call path is now composed through the actual
 interpreter boundary; nonempty body adequacy remains open.
+
+## 2026-11-13-pyfoundation-117 — compose the first nonempty body
+
+`Monadic.finishCallM_pass_body_ok` proves the first nonempty positive-fuel body
+case: a one-statement `pass` sequence runs through `execOpenList`, `inWorld`,
+`tryCatch`, and call-depth restoration to the same `.next` result and world
+observables as the trunk shape.
+
+| Measurement | Result |
+|---|---|
+| Target | `lake build LeanModels.Python.Monadic.Eval` passed; 11/11 jobs |
+| Theorem | `Monadic.finishCallM_pass_body_ok` |
+| Domain | arbitrary module, continuation, locals, world, and depth; body `[pass]` |
+| Semantic change | theorem-only first nonempty control case |
+| Remaining debt | effectful statements and recursive positive-fuel calls |
+
+DECIDED: the call restoration composition now covers empty and first nonempty
+statement bodies; proceed to effectful statement sequencing.

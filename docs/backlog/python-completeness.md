@@ -15562,7 +15562,7 @@ depth restoration.
 
 | Measurement | Result |
 |---|---|
-| Target | `lake build LeanModels.Python.Monadic.Eval` pending for this item |
+| Target | `lake build LeanModels.Python.Monadic.Eval` passed; 11/11 jobs |
 | Theorem | `Monadic.finishCallM_assign_nine_existing_locals_ret_body_ok` |
 | Domain | nine consecutive assignments to existing locals followed by value return |
 | Semantic change | theorem-only nine-assignment early-flow composition |
@@ -15640,4 +15640,22 @@ restoration.
 | Remaining debt | arbitrary locals and recursive positive-fuel calls |
 
 DECIDED: nine assignment steps now compose through break flow; arbitrary
+assignment and recursive body adequacy remain open.
+
+## 2026-11-13-pyfoundation-197 — nine-assignment continue bridge
+
+`Monadic.finishCallM_assign_nine_existing_locals_continue_body_ok` checks nine
+successive assignments `r = 0; s = 1; t = 2; u = 3; v = 4; w = 5; x = 6; y = 7; z = 8`
+followed by `continue`, preserving the updated frame through abrupt flow and
+depth restoration.
+
+| Measurement | Result |
+|---|---|
+| Target | `lake build LeanModels.Python.Monadic.Eval` pending for this item |
+| Theorem | `Monadic.finishCallM_assign_nine_existing_locals_continue_body_ok` |
+| Domain | nine consecutive assignments to existing locals followed by continue |
+| Semantic change | theorem-only nine-assignment continue-flow composition |
+| Remaining debt | arbitrary locals and recursive positive-fuel calls |
+
+DECIDED: nine assignment steps now compose through continue flow; arbitrary
 assignment and recursive body adequacy remain open.

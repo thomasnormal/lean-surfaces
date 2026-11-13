@@ -10,10 +10,10 @@
   "gcc.c-torture/execute": {
    "not-parsed": 267,
    "oracle-tests-compiler": 1,
-   "passed": 841,
+   "passed": 842,
    "refused-libc": 35,
    "refused-ub": 96,
-   "refused-unsupported": 614,
+   "refused-unsupported": 613,
    "timeout": 64
   },
   "gcc.c23-run": {
@@ -28,10 +28,10 @@
  "counts": {
   "not-parsed": 294,
   "oracle-tests-compiler": 1,
-  "passed": 1012,
+  "passed": 1013,
   "refused-libc": 39,
   "refused-ub": 105,
-  "refused-unsupported": 697,
+  "refused-unsupported": 696,
   "timeout": 66
  },
  "dynamic_wall_ranking": [
@@ -2141,14 +2141,6 @@
   },
   {
    "files": [
-    "20080117-1.c"
-   ],
-   "present": 1,
-   "sole": 1,
-   "wall": "unsupported:no layout for declared type 'const gs_imager_state'"
-  },
-  {
-   "files": [
     "00219.c"
    ],
    "present": 1,
@@ -3597,8 +3589,8 @@
   }
  ],
  "manifest_hash": "55e7366504fecfee6c955cb3aa406fd908f92f0baa275e94717d1f04dec982b2",
- "measured_at_utc": "2026-11-13T11:05:00Z",
- "measured_commit": "78d70f407",
+ "measured_at_utc": "2026-11-13T11:15:00Z",
+ "measured_commit": "d59b1abc2",
  "pin": {
   "corpora": [
    "C1",
@@ -10776,15 +10768,15 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "no layout for declared type 'const gs_imager_state'",
-   "dynamic_wall": "unsupported:no layout for declared type 'const gs_imager_state'",
+   "detail": "",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "20080117-1.c",
    "sha256": "3ae8df6d96430073e71d1091a6589b916cb18130adcbcb411cbf0379ae81b11c",
    "static_walls": [
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",

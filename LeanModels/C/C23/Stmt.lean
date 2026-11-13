@@ -181,7 +181,11 @@ def zeroInit : Nat → Ctx → Ptr → CType → ExecM Unit
     -- an integer member: the value zero at its own width
     | some t => liftEval (writeMem (fun m => Mem.storeInt m p t 0))
     | none =>
-      if isPtrType ty then
+      if ctx.layout.normalizeTy ty == "float" then
+        liftEval (writeMem (fun m => Mem.storeFloat32 m p (Float32.Model.ofBits (UInt32.ofNat 0))))
+      else if ctx.layout.normalizeTy ty == "double" then
+        liftEval (writeMem (fun m => Mem.storeFloat64 m p (Float.Model.ofBits (UInt64.ofNat 0))))
+      else if isPtrType ty then
         -- §6.3.2.3p3: `= 0` on a pointer is a NULL POINTER, not zero bytes
         liftEval (writeMem (fun m => Mem.storePtr m p Ptr.null))
       else

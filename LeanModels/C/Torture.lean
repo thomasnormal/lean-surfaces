@@ -312,6 +312,8 @@ def recordLayoutMatchesFields : List Decl → List RecordLayoutField → Bool
        | none, none => true
        | _, _ => false) &&
       recordLayoutMatchesFields ds fs
+  | .record .. :: ds, fs => recordLayoutMatchesFields ds fs
+  | .unsupported .. :: ds, fs => recordLayoutMatchesFields ds fs
   | _ :: ds, fs => recordLayoutMatchesFields ds fs
   | _, _ => false
 

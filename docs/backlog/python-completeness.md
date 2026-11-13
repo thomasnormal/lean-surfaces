@@ -16284,3 +16284,21 @@ depth restoration.
 
 DECIDED: fourteen assignment steps now compose through continue flow; arbitrary
 assignment and recursive body adequacy remain open.
+
+## 2026-11-13-pyfoundation-233 — fifteen-assignment state bridge
+
+`Monadic.finishCallM_assign_fifteen_existing_locals_body_ok` checks fifteen
+successive assignments `l = 0; m = 1; n = 2; o = 3; p = 4; q = 5; r = 6; s = 7; t = 8; u = 9; v = 10; w = 11; x = 12; y = 13; z = 14`
+to existing locals, threading all updates through normal completion and depth
+restoration.
+
+| Measurement | Result |
+|---|---|
+| Target | `lake build LeanModels.Python.Monadic.Eval` passed; 11/11 jobs |
+| Theorem | `Monadic.finishCallM_assign_fifteen_existing_locals_body_ok` |
+| Domain | fifteen consecutive assignments to existing locals |
+| Semantic change | theorem-only fifteen-assignment state composition |
+| Remaining debt | arbitrary locals and recursive positive-fuel calls |
+
+DECIDED: fifteen assignment steps now compose through the body walker; arbitrary
+assignment and recursive body adequacy remain open.

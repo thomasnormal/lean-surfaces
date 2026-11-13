@@ -557,3 +557,6 @@ eighteen-update bridge through an early value return.
 
 `Monadic.finishCallM_assign_eighteen_existing_locals_pass_body_ok` extends the
 eighteen-update bridge through a normal `pass` flow.
+
+`Monadic.finishCallM_assign_eighteen_existing_locals_expr_body_ok` extends the
+eighteen-update bridge through a normal expression statement.

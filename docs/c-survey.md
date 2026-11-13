@@ -2,10 +2,10 @@
 
 Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manifest.
 
-- verdicts: 977/2214 MATCH (passed 977, failed 0, oracle 0)
-- manifest SHA-256: `137df1554492be730c8aeaf6c5f1402fd2797042c02e13ff0c6c60533da5c874`
-- measured commit: `375534b1cc8d918c5ff3ead9723d0b261ef9d552`
-- measured at: `2026-11-13T02:16:08Z`
+- verdicts: 978/2214 MATCH (passed 978, failed 0, oracle 0)
+- manifest SHA-256: `8c33c9feb239fb3a1fc6b8e98961c83f16db9f584af3172191960047326f41f2`
+- measured commit: `8340acbb8`
+- measured at: `2026-11-13T09:02:52Z`
 
 ## Verdict counts
 
@@ -13,10 +13,10 @@ Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manife
 | --- | ---: |
 | `not-parsed` | 294 |
 | `oracle-tests-compiler` | 1 |
-| `passed` | 977 |
+| `passed` | 978 |
 | `refused-libc` | 55 |
-| `refused-ub` | 104 |
-| `refused-unsupported` | 717 |
+| `refused-ub` | 105 |
+| `refused-unsupported` | 715 |
 | `timeout` | 66 |
 
 ## Counts by corpus
@@ -30,10 +30,10 @@ Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manife
 | `c-testsuite/single-exec` | `timeout` | 2 |
 | `gcc.c-torture/execute` | `not-parsed` | 267 |
 | `gcc.c-torture/execute` | `oracle-tests-compiler` | 1 |
-| `gcc.c-torture/execute` | `passed` | 809 |
+| `gcc.c-torture/execute` | `passed` | 810 |
 | `gcc.c-torture/execute` | `refused-libc` | 51 |
-| `gcc.c-torture/execute` | `refused-ub` | 95 |
-| `gcc.c-torture/execute` | `refused-unsupported` | 631 |
+| `gcc.c-torture/execute` | `refused-ub` | 96 |
+| `gcc.c-torture/execute` | `refused-unsupported` | 629 |
 | `gcc.c-torture/execute` | `timeout` | 64 |
 | `gcc.c23-run` | `not-parsed` | 27 |
 | `gcc.c23-run` | `passed` | 3 |
@@ -48,32 +48,248 @@ Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manife
 | wall | sole | present | example files |
 | --- | ---: | ---: | --- |
 | `type-layout` | 366 | 1100 | 00015.c, 00016.c, 00017.c, 00018.c, 00019.c |
-| `libc-call` | 215 | 758 | 00025.c, 00040.c, 00056.c, 00087.c, 00089.c |
+| `libc-call: __builtin_abort` | 158 | 379 | 20080719-1.c, 20081103-1.c, 20081218-1.c, 20110418-1.c, 20121108-1.c |
+| `libc-call` | 5 | 21 | 00087.c, 00089.c, 00124.c, 00159.c, 00189.c |
 | `cast:IntegralToPointer` | 3 | 29 | 00214.c, 20000314-1.c, 20000622-1.c, 20001101.c, 20010329-1.c |
 | `unsequenced-effects` | 3 | 20 | 00121.c, 20001228-1.c, 20020406-1.c, 20060102-1.c, 20230802-1.c |
 | `cast:PointerToIntegral` | 2 | 28 | 00144.c, 20000622-1.c, 20011121-1.c, 20030811-1.c, 20050215-1.c |
+| `libc-call: malloc` | 2 | 15 | 20000914-1.c, 20020406-1.c, 20051113-1.c, 920810-1.c, 941014-2.c |
+| `libc-call: __builtin_return_address` | 2 | 4 | 20010122-1.c, 20030323-1.c, 20030811-1.c, pr17377.c |
+| `libc-call: memcmp` | 1 | 27 | 00179.c, 20050502-2.c, 20050826-1.c, builtins/memcmp.c, builtins/memmove-2.c |
+| `libc-call: memset` | 1 | 26 | 00179.c, 20001203-2.c, 20031012-1.c, 20040823-1.c, 20050826-1.c |
+| `libc-call: __builtin_memcmp` | 1 | 17 | 20081103-1.c, ieee/mzero2.c, ieee/mzero3.c, ieee/mzero5.c, pr108498-2.c |
 | `unsupported:AddrLabelExpr` | 1 | 10 | 20040302-1.c, 20041214-1.c, 20071210-1.c, 920302-1.c, 920501-4.c |
 | `unsupported:StmtExpr` | 1 | 10 | 00213.c, 00214.c, 20000703-1.c, 20000917-1.c, 20001203-2.c |
+| `libc-call: __builtin_alloca` | 1 | 9 | 20021113-1.c, 20070824-1.c, alloca-1.c, built-in-setjmp.c, frame-address.c |
+| `libc-call: __builtin_malloc` | 1 | 7 | 20071018-1.c, 20071120-1.c, pr15262-1.c, pr36765.c, pr43008.c |
+| `libc-call: link_error` | 1 | 7 | 20030330-1.c, builtins/abs-2.c, builtins/complex-1.c, builtins/memcmp.c, builtins/uabs-2.c |
+| `libc-call: __builtin_ffs` | 1 | 5 | builtin-bitops-1.c, ffs-1.c, ffs-2.c, pr61725.c, pr97325.c |
+| `libc-call: __builtin_constant_p` | 1 | 4 | 20030330-1.c, bcp-1.c, builtin-constant.c, pr19449.c |
+| `libc-call: signal` | 1 | 4 | 20101011-1.c, ieee/fp-cmp-1.c, ieee/fp-cmp-2.c, ieee/fp-cmp-3.c |
+| `libc-call: calloc` | 1 | 3 | 00040.c, 20020406-1.c, ipa-sra-2.c |
+| `libc-call: __builtin_abs` | 1 | 2 | pr34130.c, pr42614.c |
+| `libc-call: __c11_atomic_is_lock_free` | 1 | 1 | gcc/testsuite/gcc.dg/atomic/c23-stdatomic-lockfree-char8_t.c |
+| `libc-call: fun` | 1 | 1 | pr42231.c |
+| `libc-call: main_test` | 1 | 1 | builtins/lib/main.c |
 | `string-literal` | 0 | 270 | 00025.c, 00026.c, 00056.c, 00058.c, 00112.c |
 | `cast:IntegralToFloating` | 0 | 84 | 00113.c, 00119.c, 00123.c, 00174.c, 00175.c |
+| `libc-call: printf` | 0 | 73 | 00056.c, 00125.c, 00131.c, 00132.c, 00154.c |
+| `libc-call: __builtin_c23_va_start` | 0 | 66 | 00204.c, 20000519-1.c, 20041113-1.c, 20071213-1.c, 920501-8.c |
+| `libc-call: __builtin_va_end` | 0 | 65 | 20041214-1.c, 20071213-1.c, 920501-8.c, 920625-1.c, 920726-1.c |
 | `cast:FloatingCast` | 0 | 56 | 00174.c, 00175.c, 00204.c, 20000605-1.c, 20020411-1.c |
+| `libc-call: __builtin_memset` | 0 | 30 | 20000815-1.c, 20001026-1.c, 20020619-1.c, 20030606-1.c, 20030717-1.c |
 | `cast:FloatingToIntegral` | 0 | 28 | 00175.c, 20000605-1.c, 20010118-1.c, 20031003-1.c, 20040709-1.c |
+| `libc-call: __builtin_memcpy` | 0 | 28 | 20000703-1.c, 20011121-1.c, 20030408-1.c, 20040411-1.c, 20060930-2.c |
 | `unsupported:PackedAttr` | 0 | 27 | 00210.c, 20010518-2.c, 20020227-1.c, 20030224-2.c, 20040625-1.c |
+| `libc-call: strlen` | 0 | 23 | 00025.c, 00179.c, 20010409-1.c, 20011024-1.c, 20050218-1.c |
+| `libc-call: strcpy` | 0 | 18 | 00179.c, 00180.c, 20031204-1.c, 20041214-1.c, 20120207-1.c |
+| `libc-call: strcmp` | 0 | 16 | 00179.c, 20001011-1.c, 20011024-1.c, 20030715-1.c, 20041214-1.c |
+| `libc-call: __builtin_strcmp` | 0 | 15 | 20010915-1.c, 20021011-1.c, 920302-1.c, 920501-8.c, 920726-1.c |
+| `libc-call: memcpy` | 0 | 15 | 00179.c, 20010925-1.c, 20011024-1.c, 20011113-1.c, 20050826-1.c |
 | `unsupported:AlignedAttr` | 0 | 15 | 20010904-1.c, 20010904-2.c, 20171008-1.c, 960117-1.c, 990326-1.c |
+| `libc-call: __builtin_printf` | 0 | 14 | 20020406-1.c, 20121108-1.c, 20141022-1.c, builtins/strnlen.c, memchr-1.c |
+| `libc-call: __builtin_strlen` | 0 | 14 | 20030221-1.c, 20031012-1.c, 920726-1.c, 980506-3.c, builtins/strlen.c |
 | `unsupported:ImaginaryLiteral` | 0 | 13 | 20041124-1.c, 20041201-1.c, 20070614-1.c, builtins/complex-1.c, complex-1.c |
+| `libc-call: sprintf` | 0 | 11 | 00186.c, 20030626-1.c, 20030626-2.c, 20070201-1.c, 920501-8.c |
 | `unsupported:IndirectGotoStmt` | 0 | 10 | 20040302-1.c, 20041214-1.c, 20071210-1.c, 920302-1.c, 920501-3.c |
+| `libc-call: __builtin_mul_overflow` | 0 | 9 | pr108789.c, pr64006.c, pr68381.c, pr71554.c, pr84169.c |
+| `libc-call: __builtin_inf` | 0 | 8 | ieee/compare-fp-1.c, ieee/compare-fp-4.c, ieee/copysign1.c, ieee/copysign2.c, ieee/fp-cmp-7.c |
+| `libc-call: __builtin_strcpy` | 0 | 8 | 20021011-1.c, 921117-1.c, 950221-1.c, builtins/strcpy.c, pr84339.c |
+| `libc-call: __builtin_inff` | 0 | 7 | gcc/testsuite/gcc.dg/c23-float-2.c, gcc/testsuite/gcc.dg/c23-float-3.c, ieee/copysign1.c, ieee/copysign2.c, ieee/inf-1.c |
+| `libc-call: strncmp` | 0 | 7 | 00179.c, 20050218-1.c, builtins/strncmp-2.c, builtins/strncmp.c, builtins/strstr-asm-lib.c |
 | `unsupported:IndirectFieldDecl` | 0 | 7 | 00046.c, 00050.c, 00216.c, 20030714-1.c, anon-1.c |
+| `libc-call: __builtin_isunordered` | 0 | 6 | ieee/compare-fp-1.c, ieee/compare-fp-3.c, ieee/compare-fp-4.c, ieee/fp-cmp-4.c, ieee/fp-cmp-5.c |
+| `libc-call: __builtin_nan` | 0 | 6 | ieee/builtin-nan-1.c, ieee/compare-fp-1.c, ieee/compare-fp-4.c, ieee/copysign1.c, ieee/copysign2.c |
+| `libc-call: __builtin_nanf` | 0 | 6 | gcc/testsuite/gcc.dg/c23-float-4.c, gcc/testsuite/gcc.dg/c23-float-5.c, ieee/copysign1.c, ieee/copysign2.c, ieee/pr109386.c |
+| `libc-call: __builtin_prefetch` | 0 | 6 | builtin-prefetch-1.c, builtin-prefetch-2.c, builtin-prefetch-3.c, builtin-prefetch-4.c, builtin-prefetch-5.c |
+| `libc-call: abs` | 0 | 6 | 20041126-1.c, builtins/abs-1.c, builtins/abs-2.c, pr33142.c, ssad-run.c |
+| `libc-call: strchr` | 0 | 6 | 00179.c, 20000112-1.c, 20000910-2.c, builtins/strchr.c, builtins/strstr-asm-lib.c |
 | `unsupported:DesignatedInitUpdateExpr` | 0 | 6 | gcc/testsuite/gcc.dg/c23-empty-init-5.c, gcc/testsuite/gcc.dg/c23-empty-init-warn-1.c, gcc/testsuite/gcc.dg/c23-empty-init-warn-17.c, gcc/testsuite/gcc.dg/c23-empty-init-warn-2.c, gcc/testsuite/gcc.dg/c23-empty-init-warn-4.c |
 | `unsupported:ExprWithCleanups` | 0 | 6 | 00204.c, 20020320-1.c, 20041124-1.c, 950628-1.c, gcc/testsuite/gcc.dg/c23-stdarg-9.c |
 | `unsupported:GenericSelectionExpr` | 0 | 6 | 00219.c, gcc/testsuite/gcc.dg/c23-bool-1.c, gcc/testsuite/gcc.dg/c23-bool-2.c, gcc/testsuite/gcc.dg/c23-float-2.c, gcc/testsuite/gcc.dg/c23-float-3.c |
+| `libc-call: __builtin_add_overflow` | 0 | 5 | pr108789.c, pr85095.c, pr90311.c, pr91635.c, pr93494.c |
+| `libc-call: __builtin_expect` | 0 | 5 | 00214.c, 20020418-1.c, ieee/unsafe-fp-assoc-1.c, pr115277.c, pr91597.c |
+| `libc-call: __builtin_infl` | 0 | 5 | ieee/copysign1.c, ieee/copysign2.c, ieee/inf-1.c, ieee/inf-2.c, ieee/pr36332.c |
+| `libc-call: __builtin_longjmp` | 0 | 5 | built-in-setjmp.c, builtins/lib/chk.c, pr60003.c, pr64242.c, pr84521.c |
+| `libc-call: vprintf` | 0 | 5 | builtins/lib/printf.c, printf-chk-1.c, va-arg-21.c, vprintf-1.c, vprintf-chk-1.c |
+| `libc-call: __builtin_copysign` | 0 | 4 | ieee/copysign1.c, ieee/copysign2.c, ieee/mzero6.c, pr44683.c |
+| `libc-call: __builtin_copysignf` | 0 | 4 | ieee/copysign1.c, ieee/copysign2.c, ieee/pr72824-2.c, ieee/pr72824.c |
+| `libc-call: __builtin_islessgreater` | 0 | 4 | ieee/compare-fp-1.c, ieee/fp-cmp-4.c, ieee/fp-cmp-5.c, ieee/fp-cmp-8.c |
+| `libc-call: __builtin_setjmp` | 0 | 4 | built-in-setjmp.c, pr60003.c, pr64242.c, pr84521.c |
+| `libc-call: __builtin_unreachable` | 0 | 4 | 20230509-1.c, gcc/testsuite/gcc.dg/c23-unreachable-1.c, pr81281.c, pr97888-1.c |
+| `libc-call: vfprintf` | 0 | 4 | builtins/lib/fprintf.c, fprintf-chk-1.c, vfprintf-1.c, vfprintf-chk-1.c |
 | `unsupported:GCCAsmStmt` | 0 | 4 | 20071211-1.c, 990413-2.c, pr56982.c, pr81588.c |
 | `unsupported:OffsetOfExpr` | 0 | 4 | gcc/testsuite/gcc.dg/c23-empty-init-5.c, pr103255.c, pr30778.c, pr44468.c |
+| `libc-call: __builtin_fabs` | 0 | 3 | ieee/20010114-2.c, ieee/20030331-1.c, ieee/cdivchkd.c |
+| `libc-call: __builtin_huge_val` | 0 | 3 | ieee/hugeval.c, ieee/inf-1.c, ieee/inf-3.c |
+| `libc-call: __builtin_isgreater` | 0 | 3 | ieee/fp-cmp-4.c, ieee/fp-cmp-5.c, ieee/fp-cmp-8.c |
+| `libc-call: __builtin_isgreaterequal` | 0 | 3 | ieee/fp-cmp-4.c, ieee/fp-cmp-5.c, ieee/fp-cmp-8.c |
+| `libc-call: __builtin_isless` | 0 | 3 | ieee/fp-cmp-4.c, ieee/fp-cmp-5.c, ieee/fp-cmp-8.c |
+| `libc-call: __builtin_islessequal` | 0 | 3 | ieee/fp-cmp-4.c, ieee/fp-cmp-5.c, ieee/fp-cmp-8.c |
+| `libc-call: __builtin_isnan` | 0 | 3 | gcc/testsuite/gcc.dg/c23-float-4.c, ieee/inf-4.c, ieee/pr108540-1.c |
+| `libc-call: __builtin_signbit` | 0 | 3 | 20080502-1.c, ieee/pr108540-1.c, pr35456.c |
+| `libc-call: __builtin_sprintf` | 0 | 3 | 20021120-3.c, pr78586.c, pr79327.c |
+| `libc-call: __builtin_va_copy` | 0 | 3 | stdarg-1.c, va-arg-10.c, va-arg-14.c |
+| `libc-call: __builtin_va_start` | 0 | 3 | 20041214-1.c, pr38151.c, va-arg-2.c |
+| `libc-call: bcopy` | 0 | 3 | builtins/memmove-2.c, builtins/memmove.c, builtins/memops-asm.c |
+| `libc-call: memmove` | 0 | 3 | builtins/memmove-2.c, builtins/memmove.c, string-opt-18.c |
+| `libc-call: mempcpy` | 0 | 3 | builtins/mempcpy-2.c, builtins/mempcpy.c, string-opt-18.c |
+| `libc-call: strncpy` | 0 | 3 | 00179.c, builtins/strncpy.c, string-opt-5.c |
+| `libc-call: strrchr` | 0 | 3 | 00179.c, builtins/strrchr.c, string-opt-5.c |
 | `unsupported:MaxFieldAlignmentAttr` | 0 | 3 | 20131127-1.c, pr58570.c, pr79737-1.c |
 | `unsupported:MayAliasAttr` | 0 | 3 | mayalias-2.c, mayalias-3.c, pr43987.c |
 | `unsupported:ModeAttr` | 0 | 3 | 20050107-1.c, 20050119-1.c, 20050119-2.c |
+| `libc-call: __builtin_bswap32` | 0 | 2 | bswap-3.c, pr90025.c |
+| `libc-call: __builtin_classify_type` | 0 | 2 | 20040709-1.c, 20040709-2.c |
+| `libc-call: __builtin_clz` | 0 | 2 | builtin-bitops-1.c, pr37780.c |
+| `libc-call: __builtin_conjf` | 0 | 2 | 20020411-1.c, builtins/complex-1.c |
+| `libc-call: __builtin_copysignl` | 0 | 2 | ieee/copysign1.c, ieee/copysign2.c |
+| `libc-call: __builtin_ctz` | 0 | 2 | builtin-bitops-1.c, pr37780.c |
+| `libc-call: __builtin_fabsf` | 0 | 2 | ieee/cdivchkf.c, ieee/pr109386.c |
+| `libc-call: __builtin_fmax` | 0 | 2 | ieee/cdivchkd.c, ieee/cdivchkf.c |
+| `libc-call: __builtin_huge_valf` | 0 | 2 | ieee/inf-1.c, ieee/inf-3.c |
+| `libc-call: __builtin_huge_vall` | 0 | 2 | ieee/inf-1.c, ieee/inf-3.c |
+| `libc-call: __builtin_isinf` | 0 | 2 | ieee/pr108540-1.c, ieee/pr109386.c |
+| `libc-call: __builtin_memmove` | 0 | 2 | builtins/memmove.c, pr93213.c |
+| `libc-call: __builtin_mempcpy` | 0 | 2 | builtins/mempcpy-2.c, builtins/mempcpy.c |
+| `libc-call: __builtin_nanl` | 0 | 2 | ieee/copysign1.c, ieee/copysign2.c |
+| `libc-call: __builtin_stpcpy` | 0 | 2 | builtins/strpcpy-2.c, builtins/strpcpy.c |
+| `libc-call: __builtin_strncpy` | 0 | 2 | builtins/strncpy.c, pr93249.c |
+| `libc-call: __builtin_strstr` | 0 | 2 | builtins/strstr-asm.c, builtins/strstr.c |
+| `libc-call: __builtin_trap` | 0 | 2 | 20020418-1.c, pr125291.c |
+| `libc-call: _setjmp` | 0 | 2 | 20210505-1.c, pr56982.c |
+| `libc-call: f` | 0 | 2 | builtins/20010124-1.c, gcc/testsuite/gcc.dg/torture/c23-stdarg-split-1a.c |
+| `libc-call: floor` | 0 | 2 | 990826-0.c, float-floor.c |
+| `libc-call: fp` | 0 | 2 | 00209.c, func-ptr-1.c |
+| `libc-call: fprintf` | 0 | 2 | fprintf-1.c, gofast.c |
+| `libc-call: free` | 0 | 2 | ipa-sra-2.c, pr42614.c |
+| `libc-call: fwrite` | 0 | 2 | 00187.c, builtins/fputs-lib.c |
+| `libc-call: g` | 0 | 2 | builtins/20010124-1.c, gcc/testsuite/gcc.dg/torture/c23-stdarg-split-1a.c |
+| `libc-call: ilogb` | 0 | 2 | ieee/cdivchkd.c, ieee/cdivchkf.c |
+| `libc-call: labs` | 0 | 2 | builtins/abs-1.c, builtins/abs-2.c |
+| `libc-call: longjmp` | 0 | 2 | 20210505-1.c, pr56982.c |
+| `libc-call: memchr` | 0 | 2 | builtins/memchr.c, memchr-1.c |
+| `libc-call: mmap` | 0 | 2 | loop-2f.c, loop-2g.c |
+| `libc-call: open` | 0 | 2 | loop-2f.c, loop-2g.c |
+| `libc-call: sin` | 0 | 2 | 00174.c, ieee/mzero4.c |
+| `libc-call: stpcpy` | 0 | 2 | builtins/strpcpy-2.c, builtins/strpcpy.c |
+| `libc-call: strcat` | 0 | 2 | 00179.c, builtins/strcat.c |
+| `libc-call: strstr` | 0 | 2 | builtins/strstr-asm.c, builtins/strstr.c |
+| `libc-call: uabs` | 0 | 2 | builtins/uabs-1.c, builtins/uabs-2.c |
+| `libc-call: ulabs` | 0 | 2 | builtins/uabs-1.c, builtins/uabs-2.c |
+| `libc-call: vsprintf` | 0 | 2 | builtins/lib/chk.c, builtins/lib/sprintf.c |
 | `unsupported:PredefinedExpr` | 0 | 2 | 20001011-1.c, pr58831.c |
 | `unsupported:StaticAssertDecl` | 0 | 2 | gcc/testsuite/gcc.dg/c23-bool-2.c, gcc/testsuite/gcc.dg/c23-digit-separators-1.c |
 | `unsupported:VAArgExpr` | 0 | 2 | gcc/testsuite/gcc.dg/c23-stdarg-9.c, va-arg-2.c |
+| `libc-call: __assert_fail` | 0 | 1 | pr58831.c |
+| `libc-call: __builtin_bcopy` | 0 | 1 | builtins/memmove.c |
+| `libc-call: __builtin_bswap16` | 0 | 1 | pr97386-1.c |
+| `libc-call: __builtin_bswap64` | 0 | 1 | bswap-1.c |
+| `libc-call: __builtin_bzero` | 0 | 1 | builtins/memops-asm.c |
+| `libc-call: __builtin_cimag` | 0 | 1 | builtins/complex-1.c |
+| `libc-call: __builtin_cimagf` | 0 | 1 | builtins/complex-1.c |
+| `libc-call: __builtin_cimagl` | 0 | 1 | builtins/complex-1.c |
+| `libc-call: __builtin_clrsb` | 0 | 1 | builtin-bitops-1.c |
+| `libc-call: __builtin_clrsbl` | 0 | 1 | builtin-bitops-1.c |
+| `libc-call: __builtin_clrsbll` | 0 | 1 | builtin-bitops-1.c |
+| `libc-call: __builtin_clzl` | 0 | 1 | builtin-bitops-1.c |
+| `libc-call: __builtin_clzll` | 0 | 1 | builtin-bitops-1.c |
+| `libc-call: __builtin_conj` | 0 | 1 | builtins/complex-1.c |
+| `libc-call: __builtin_conjl` | 0 | 1 | builtins/complex-1.c |
+| `libc-call: __builtin_creal` | 0 | 1 | builtins/complex-1.c |
+| `libc-call: __builtin_crealf` | 0 | 1 | builtins/complex-1.c |
+| `libc-call: __builtin_creall` | 0 | 1 | builtins/complex-1.c |
+| `libc-call: __builtin_ctzl` | 0 | 1 | builtin-bitops-1.c |
+| `libc-call: __builtin_ctzll` | 0 | 1 | builtin-bitops-1.c |
+| `libc-call: __builtin_fabsl` | 0 | 1 | ieee/cdivchkld.c |
+| `libc-call: __builtin_ffsl` | 0 | 1 | builtin-bitops-1.c |
+| `libc-call: __builtin_ffsll` | 0 | 1 | builtin-bitops-1.c |
+| `libc-call: __builtin_fmaxl` | 0 | 1 | ieee/cdivchkld.c |
+| `libc-call: __builtin_frame_address` | 0 | 1 | frame-address.c |
+| `libc-call: __builtin_free` | 0 | 1 | pr84339.c |
+| `libc-call: __builtin_index` | 0 | 1 | builtins/strchr.c |
+| `libc-call: __builtin_isfinite` | 0 | 1 | ieee/inf-4.c |
+| `libc-call: __builtin_memchr` | 0 | 1 | builtins/memchr.c |
+| `libc-call: __builtin_parity` | 0 | 1 | builtin-bitops-1.c |
+| `libc-call: __builtin_parityl` | 0 | 1 | builtin-bitops-1.c |
+| `libc-call: __builtin_parityll` | 0 | 1 | builtin-bitops-1.c |
+| `libc-call: __builtin_popcount` | 0 | 1 | builtin-bitops-1.c |
+| `libc-call: __builtin_popcountl` | 0 | 1 | builtin-bitops-1.c |
+| `libc-call: __builtin_popcountll` | 0 | 1 | builtin-bitops-1.c |
+| `libc-call: __builtin_rindex` | 0 | 1 | builtins/strrchr.c |
+| `libc-call: __builtin_snprintf` | 0 | 1 | pr78622.c |
+| `libc-call: __builtin_strcat` | 0 | 1 | builtins/strcat.c |
+| `libc-call: __builtin_strchr` | 0 | 1 | builtins/strchr.c |
+| `libc-call: __builtin_strcspn` | 0 | 1 | builtins/strcspn.c |
+| `libc-call: __builtin_strncat` | 0 | 1 | builtins/strncat.c |
+| `libc-call: __builtin_strncmp` | 0 | 1 | builtins/strncmp.c |
+| `libc-call: __builtin_strpbrk` | 0 | 1 | builtins/strpbrk.c |
+| `libc-call: __builtin_strrchr` | 0 | 1 | builtins/strrchr.c |
+| `libc-call: __builtin_strspn` | 0 | 1 | builtins/strspn.c |
+| `libc-call: __sync_add_and_fetch_8` | 0 | 1 | pr122000.c |
+| `libc-call: alloca` | 0 | 1 | 20010122-1.c |
+| `libc-call: atan` | 0 | 1 | ieee/mzero4.c |
+| `libc-call: atanf` | 0 | 1 | ieee/mzero4.c |
+| `libc-call: atoi` | 0 | 1 | 20221006-1.c |
+| `libc-call: cimag` | 0 | 1 | builtins/complex-1.c |
+| `libc-call: cimagf` | 0 | 1 | builtins/complex-1.c |
+| `libc-call: cimagl` | 0 | 1 | builtins/complex-1.c |
+| `libc-call: compare1` | 0 | 1 | pr34456.c |
+| `libc-call: conj` | 0 | 1 | builtins/complex-1.c |
+| `libc-call: conjf` | 0 | 1 | builtins/complex-1.c |
+| `libc-call: conjl` | 0 | 1 | builtins/complex-1.c |
+| `libc-call: creal` | 0 | 1 | builtins/complex-1.c |
+| `libc-call: crealf` | 0 | 1 | builtins/complex-1.c |
+| `libc-call: creall` | 0 | 1 | builtins/complex-1.c |
+| `libc-call: extfunc` | 0 | 1 | pr67037.c |
+| `libc-call: fabs` | 0 | 1 | 20020720-1.c |
+| `libc-call: fclose` | 0 | 1 | 00187.c |
+| `libc-call: fetestexcept` | 0 | 1 | gcc/testsuite/gcc.dg/c23-float-5.c |
+| `libc-call: fgetc` | 0 | 1 | 00187.c |
+| `libc-call: fgets` | 0 | 1 | 00187.c |
+| `libc-call: fopen` | 0 | 1 | 00187.c |
+| `libc-call: fprintfptr` | 0 | 1 | 00189.c |
+| `libc-call: fread` | 0 | 1 | 00187.c |
+| `libc-call: func` | 0 | 1 | bcp-1.c |
+| `libc-call: getc` | 0 | 1 | 00187.c |
+| `libc-call: h1` | 0 | 1 | gcc/testsuite/gcc.dg/torture/c23-stdarg-split-1a.c |
+| `libc-call: h2` | 0 | 1 | gcc/testsuite/gcc.dg/torture/c23-stdarg-split-1a.c |
+| `libc-call: h3` | 0 | 1 | gcc/testsuite/gcc.dg/torture/c23-stdarg-split-1a.c |
+| `libc-call: h4` | 0 | 1 | gcc/testsuite/gcc.dg/torture/c23-stdarg-split-1a.c |
+| `libc-call: h5` | 0 | 1 | gcc/testsuite/gcc.dg/torture/c23-stdarg-split-1a.c |
+| `libc-call: h6` | 0 | 1 | gcc/testsuite/gcc.dg/torture/c23-stdarg-split-1a.c |
+| `libc-call: h7` | 0 | 1 | gcc/testsuite/gcc.dg/torture/c23-stdarg-split-1a.c |
+| `libc-call: ilogbl` | 0 | 1 | ieee/cdivchkld.c |
+| `libc-call: imaxabs` | 0 | 1 | builtins/abs-2.c |
+| `libc-call: index` | 0 | 1 | builtins/strchr.c |
+| `libc-call: indirect` | 0 | 1 | pr68390.c |
+| `libc-call: isprint` | 0 | 1 | 991112-1.c |
+| `libc-call: llabs` | 0 | 1 | builtins/abs-2.c |
+| `libc-call: my_clrsb` | 0 | 1 | builtin-bitops-1.c |
+| `libc-call: my_clz` | 0 | 1 | builtin-bitops-1.c |
+| `libc-call: my_ctz` | 0 | 1 | builtin-bitops-1.c |
+| `libc-call: my_ffs` | 0 | 1 | builtin-bitops-1.c |
+| `libc-call: my_parity` | 0 | 1 | builtin-bitops-1.c |
+| `libc-call: my_popcount` | 0 | 1 | builtin-bitops-1.c |
+| `libc-call: not_defined` | 0 | 1 | gcc/testsuite/gcc.dg/c23-unreachable-1.c |
+| `libc-call: p` | 0 | 1 | 00216.c |
+| `libc-call: pow` | 0 | 1 | 980709-1.c |
+| `libc-call: putchar` | 0 | 1 | 00204.c |
+| `libc-call: qsort` | 0 | 1 | pr34456.c |
+| `libc-call: rindex` | 0 | 1 | builtins/strrchr.c |
+| `libc-call: sinf` | 0 | 1 | ieee/mzero4.c |
+| `libc-call: sqrt` | 0 | 1 | ieee/20041213-1.c |
+| `libc-call: strcspn` | 0 | 1 | builtins/strcspn.c |
+| `libc-call: strncat` | 0 | 1 | builtins/strncat.c |
+| `libc-call: strnlen` | 0 | 1 | builtins/strnlen.c |
+| `libc-call: strpbrk` | 0 | 1 | builtins/strpbrk.c |
+| `libc-call: strspn` | 0 | 1 | builtins/strspn.c |
+| `libc-call: tan` | 0 | 1 | ieee/mzero4.c |
+| `libc-call: tanf` | 0 | 1 | ieee/mzero4.c |
+| `libc-call: terminate_me` | 0 | 1 | pr54937.c |
+| `libc-call: ullabs` | 0 | 1 | builtins/uabs-2.c |
+| `libc-call: umaxabs` | 0 | 1 | builtins/uabs-2.c |
+| `libc-call: x` | 0 | 1 | 991112-1.c |
 | `unsupported:BinaryConditionalOperator` | 0 | 1 | pr68249.c |
 | `unsupported:CXXNullPtrLiteralExpr` | 0 | 1 | gcc/testsuite/gcc.dg/c23-nullptr-5.c |
 | `unsupported:LabelDecl` | 0 | 1 | 980526-1.c |
@@ -86,7 +302,7 @@ The run's first refusal, normalized by construct; `sole` counts rows whose first
 | wall | sole | present | example files |
 | --- | ---: | ---: | --- |
 | `frontend` | 294 | 294 | 20000227-1.c, 20000412-3.c, 20000717-3.c, 20000822-1.c, 20001009-2.c |
-| `undefined-behavior` | 104 | 104 | 00032.c, 00115.c, 00141.c, 00144.c, 00200.c |
+| `undefined-behavior` | 105 | 105 | 00032.c, 00115.c, 00141.c, 00144.c, 00200.c |
 | `unsupported:no definition for 'main'` | 102 | 102 | 20040705-1.c, 20040705-2.c, 20040709-3.c, builtins/20010124-1.c, builtins/abs-1.c |
 | `timeout` | 66 | 66 | 00041.c, 00128.c, 20000412-2.c, 20020108-1.c, 20030916-1.c |
 | `unsupported:extern object 'inside_main' has no definition in the translation unit` | 40 | 40 | builtins/20010124-1-lib.c, builtins/complex-1-lib.c, builtins/fputs-lib.c, builtins/lib/abs.c, builtins/lib/bfill.c |
@@ -142,7 +358,6 @@ The run's first refusal, normalized by construct; `sole` counts rows whose first
 | `unsupported:GenericSelectionExpr` | 2 | 2 | gcc/testsuite/gcc.dg/c23-bool-1.c, gcc/testsuite/gcc.dg/c23-float-2.c |
 | `unsupported:OffsetOfExpr` | 2 | 2 | pr30778.c, pr44468.c |
 | `unsupported:call to '__builtin_nanf' in a context with no program — call it through 'callByName'` | 2 | 2 | gcc/testsuite/gcc.dg/c23-float-4.c, gcc/testsuite/gcc.dg/c23-float-5.c |
-| `unsupported:cannot initialize aggregate 'int[]'` | 2 | 2 | 20030109-1.c, pr33382.c |
 | `unsupported:cannot initialize aggregate 'struct T'` | 2 | 2 | pr22141-1.c, pr22141-2.c |
 | `unsupported:extern object 'abs_called' has no definition in the translation unit` | 2 | 2 | builtins/abs-1-lib.c, builtins/uabs-1-lib.c |
 | `unsupported:extern object 'x' has no definition in the translation unit` | 2 | 2 | 00094.c, 00110.c |
@@ -207,8 +422,9 @@ The run's first refusal, normalized by construct; `sole` counts rows whose first
 | `unsupported:cannot initialize aggregate 'int'` | 1 | 1 | gcc/testsuite/gcc.dg/c23-empty-init-1.c |
 | `unsupported:cannot initialize aggregate 'struct D'` | 1 | 1 | pr39339.c |
 | `unsupported:cannot initialize aggregate 'u8'` | 1 | 1 | 00216.c |
-| `unsupported:cannot zero-initialize 'int[]'` | 1 | 1 | 20050613-1.c |
 | `unsupported:compound literal initializer callback unavailable` | 1 | 1 | 20050929-1.c |
+| `unsupported:explicit initializer for flexible array member 'j'` | 1 | 1 | pr33382.c |
+| `unsupported:explicit initializer for flexible array member 'z'` | 1 | 1 | 20030109-1.c |
 | `unsupported:extern object 'ReadyFlag_NotProperlyInitialized' has no definition in the translation unit` | 1 | 1 | pr31072.c |
 | `unsupported:extern object 'aa' has no definition in the translation unit` | 1 | 1 | 20000403-1.c |
 | `unsupported:extern object 'i' has no definition in the translation unit` | 1 | 1 | pure-1.c |
@@ -382,7 +598,6 @@ The run's first refusal, normalized by construct; `sole` counts rows whose first
 | `unsupported:unbound declaration 'id22' (name 'c')` | 1 | 1 | pr103417.c |
 | `unsupported:unbound declaration 'id22' (name 's')` | 1 | 1 | pr67781.c |
 | `unsupported:unbound declaration 'id22' (name 't')` | 1 | 1 | packed-2.c |
-| `unsupported:unbound declaration 'id24' (name 'a1')` | 1 | 1 | 20010924-1.c |
 | `unsupported:unbound declaration 'id25' (name 'f')` | 1 | 1 | pr19689.c |
 | `unsupported:unbound declaration 'id25' (name 'v')` | 1 | 1 | 20050215-1.c |
 | `unsupported:unbound declaration 'id26' (name 'u')` | 1 | 1 | pr87053.c |

@@ -65,6 +65,29 @@ structure CoreMemDesign where
   scalarEdge : Elab1
   memories : Array CoreMemDecl
   processes : Array CoreMemProc
+deriving Inhabited
+
+/-! A structural admission predicate for the canonical memory family.  This is
+not a scalar `Design2` coercion: memory declarations remain source-shaped
+`MemShape`s, and the process check is deliberately only an admission check.
+Equation tactics must add their own memory-aware obligations before claiming a
+settled result. -/
+def coreMemSupportedB : List CoreMemProc → Bool
+  | [] => true
+  | .unsupported _ _ :: _ => false
+  | _ :: rest => coreMemSupportedB rest
+
+def coreMemNamesUniqueB : List String → Bool
+  | [] => true
+  | n :: rest => (!rest.contains n) && coreMemNamesUniqueB rest
+
+def CoreMemDesign.Structure (d : CoreMemDesign) : Prop :=
+  coreMemNamesUniqueB (d.memories.toList.map (fun m => m.source.name)) = true ∧
+    coreMemSupportedB d.processes.toList = true
+
+instance : DecidablePred CoreMemDesign.Structure := fun d => by
+  unfold CoreMemDesign.Structure
+  infer_instance
 
 structure CoreMemState where
   scalar : Store

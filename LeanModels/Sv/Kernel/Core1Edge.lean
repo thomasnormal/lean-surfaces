@@ -155,6 +155,7 @@ structure Elab1 where
   decls : Array Decl
   procs : Array FF
   name : String := "core1"
+deriving Inhabited
 
 /-- The store, view and typing of E-core-0, for the same declarations. -/
 def Elab1.base (E : Elab1) : Elab := { decls := E.decls, procs := #[], name := E.name }

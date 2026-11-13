@@ -134,6 +134,7 @@ structure Elab where
   procs : Array Proc0
   /-- The module's name (carried to the corresponding Design2; E never reads it). -/
   name : String := "core0"
+deriving Inhabited
 
 def Proc0.toProcess2 : Proc0 → Process2
   | .assign t e => .assign t e

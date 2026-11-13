@@ -4,6 +4,7 @@ import LeanModels.Sv.CombCoreSimp
 import LeanModels.Sv.CombProcEq
 import LeanModels.Sv.CombProcGroup
 import LeanModels.Sv.CombProcAlias
+import LeanModels.Sv.Kernel.CoreMemExec
 
 /-!
 # `sv_structure` / `sv_interface` / `sv_equations` for designs with `always_comb` bodies (WP-G, G2.2, R5)
@@ -763,7 +764,12 @@ unsafe def runSvStructureL (rankStx? lexStx? : Option Syntax) (hintOnly : Bool) 
 
 @[tactic svStructure] unsafe def evalSvStructureL : Tactic := fun stx => guardL do
   unless stx[2].isNone do throwUnsupportedSyntax
-  if stx[1].isNone then
+  let goal ← getMainGoal
+  let ty ← goal.withContext (do instantiateMVars (← goal.getType))
+  if ty.isAppOfArity ``LeanModels.Sv.Kernel.CoreMemDesign.Structure 1 then
+    withDeepRec do
+      evalTactic (← `(tactic| decide))
+  else if stx[1].isNone then
     withDeepRec (runSvStructureL none none false)
   else
     let cl := stx[1][0]
@@ -1271,3 +1277,9 @@ unsafe def runSvEquationsL (hintOnly : Bool) : TacticM Unit := do
 @[tactic svEquations] unsafe def evalSvEquationsL : Tactic := fun _ => guardL (withDeepRec (runSvEquationsL false))
 
 @[tactic svEquationsQ] unsafe def evalSvEquationsQL : Tactic := fun _ => guardL (withDeepRec (runSvEquationsL true))
+
+/-! The memory-aware branch is deliberately a direct `CoreMemDesign` check;
+there is no scalar `Design2` coercion hidden in `sv_structure`. -/
+example : LeanModels.Sv.Kernel.CoreMemDesign.Structure
+    (default : LeanModels.Sv.Kernel.CoreMemDesign) := by
+  sv_structure

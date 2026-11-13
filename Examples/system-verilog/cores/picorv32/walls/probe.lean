@@ -26,6 +26,12 @@ load_design_sv2 unpacked_cpuregs_wall
   | .ok d => d.memories.size == 1 && d.processes.size == 2
   | _ => false
 
+/-! The canonical time-zero settle now completes for the pinned parameter
+point; the remaining performance wall is in later empty-input cycles. -/
+#guard match unpacked_cpuregs_wall.e 32 with
+  | .ok d => match d.initialState with | .ok _ => true | _ => false
+  | _ => false
+
 set_option maxRecDepth 100000 in
 load_design_sv2 net_z_memory_wall
   from "Examples/system-verilog/cores/picorv32/walls/net_z_memory.sv.json"

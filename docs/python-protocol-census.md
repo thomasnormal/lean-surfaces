@@ -39,8 +39,10 @@ list control without adding another per-operator refinement lemma.
 `Monadic.twinAgrees_evalOpenList_of_each` factors that induction into a
 reusable composition theorem: any pointwise expression bridge, quantified over
 the continuation state and positive remaining fuel, lifts to the whole list.
-Calls, statements, and stateful script control remain the next adequacy
-boundary.
+`Monadic.twinAgrees_execOpenList_of_each` supplies the matching statement
+sequencing theorem, preserving the updated state after `.next` and the early
+`.brk`, `.cont`, `.ret`, exception, timeout, and refusal flows. Calls and
+stateful script control remain the next adequacy boundary.
 
 ## Operator dispatch
 

@@ -3676,6 +3676,56 @@ theorem twinAgrees_evalOpenList_of_each (K : Kont) (m : Module) :
               | exn st' err => simp [hres, evalExprs, Run.bind]
               | ok st' v => simp [hres, hi st', evalExprs, toRun_pure, Run.bind]
 
+/- The statement-level counterpart uses the same proof shape, including the
+   retained state after a normal statement and the four flow results.  It is
+   intentionally a composition theorem: statement-specific bridges remain
+   separate obligations, while this induction owns sequencing and early flow. -/
+theorem twinAgrees_execOpenList_of_each (K : Kont) (m : Module) :
+    ∀ (ss : List Stmt) (fuel : Nat) (st : FrameState), ss.length < fuel →
+      (∀ s ∈ ss, ∀ st' g, 0 < g →
+        toRun (execOpen K m s) st' = execStmt m g st' s) →
+      toRun (execOpenList K m ss) st = execStmts m fuel st ss := by
+  intro ss
+  induction ss with
+  | nil =>
+      intro fuel st hlen hEach
+      cases fuel with
+      | zero => simp at hlen
+      | succ fuel => rfl
+  | cons s ss ih =>
+      intro fuel st hlen hEach
+      cases fuel with
+      | zero => simp at hlen
+      | succ fuel =>
+          cases fuel with
+          | zero => simp [List.length_cons] at hlen
+          | succ fuel =>
+              have htail : ss.length < fuel + 1 := by
+                simp_all [List.length_cons]
+              have hfirst := hEach s (by simp) st (fuel + 1) (by omega)
+              have htailEach : ∀ s' ∈ ss, ∀ st' g, 0 < g →
+                  toRun (execOpen K m s') st' = execStmt m g st' s' := by
+                intro s' hs' st' g hg
+                exact hEach s' (by simp [hs']) st' g hg
+              have hi : ∀ st', toRun (execOpenList K m ss) st' =
+                  execStmts m (fuel + 1) st' ss := by
+                intro st'
+                exact ih (fuel + 1) st' htail htailEach
+              simp only [execOpenList, toRun_bind]
+              rw [hfirst]
+              simp only [Run.bind]
+              generalize hres : execStmt m (fuel + 1) st s = r
+              cases r with
+              | timeout => simp [hres, execStmts, Run.bind]
+              | unsupported msg => simp [hres, execStmts, Run.bind]
+              | exn st' err => simp [hres, execStmts, Run.bind]
+              | ok st' flow =>
+                  cases flow with
+                  | next => simp [hres, hi st', execStmts, toRun_pure, Run.bind]
+                  | brk => simp [hres, execStmts, toRun_pure, Run.bind]
+                  | cont => simp [hres, execStmts, toRun_pure, Run.bind]
+                  | ret v => simp [hres, execStmts, toRun_pure, Run.bind]
+
 #print axioms evalOpen
 #print axioms execOpen
 #print axioms kont
@@ -3690,5 +3740,6 @@ theorem twinAgrees_evalOpenList_of_each (K : Kont) (m : Module) :
 #print axioms twinAgrees_binOpHM_intBitAnd
 #print axioms twinAgrees_evalOpenList_constants
 #print axioms twinAgrees_evalOpenList_of_each
+#print axioms twinAgrees_execOpenList_of_each
 
 end LeanModels.Python.Monadic

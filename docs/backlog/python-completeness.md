@@ -13992,3 +13992,23 @@ operator-specific literal theorem.
 DECIDED: keep the list walker as one shared control theorem and extend the
 pointwise bridge domain in later F9 slices; no claim of whole-interpreter
 adequacy is made.
+
+## 2026-11-13-pyfoundation-102 — compose statement sequencing adequacy
+
+`Monadic.twinAgrees_execOpenList_of_each` is the statement-level companion to
+the expression-list composition theorem. Given pointwise bridges for every
+statement, induction over an arbitrary list lifts them to `execOpenList` and
+the trunk's `execStmts`, preserving the updated frame after `.next` and the
+first `.brk`, `.cont`, `.ret`, exception, timeout, or refusal flow. Calls and
+stateful script control remain explicit obligations.
+
+| Measurement | Result |
+|---|---|
+| Target | `lake build LeanModels.Python.Monadic.Eval` passed; 11/11 jobs |
+| Theorem | `Monadic.twinAgrees_execOpenList_of_each`, induction on statement lists |
+| Domain | arbitrary statement lists with pointwise bridges and `ss.length < fuel` |
+| Semantic change | theorem only; no evaluator behavior change |
+| Remaining debt | connect the call boundary and stateful script execution |
+
+DECIDED: retain statement sequencing as one shared control theorem; no claim of
+whole-interpreter adequacy is made until calls and scripts are related.

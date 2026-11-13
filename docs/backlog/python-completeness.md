@@ -14581,3 +14581,19 @@ followed by `return 1`, preserving the early `RFlow.ret` through restoration.
 
 DECIDED: longer early-return sequencing is now checked; recursive and general
 body adequacy remain open.
+
+## 2026-11-13-pyfoundation-136 — longer break sequencing bridge
+
+`Monadic.finishCallM_three_pass_break_body_ok` checks three normal statements
+followed by `break`, preserving `RFlow.brk` through restoration.
+
+| Measurement | Result |
+|---|---|
+| Target | `lake build LeanModels.Python.Monadic.Eval` passed; 11/11 jobs |
+| Theorem | `Monadic.finishCallM_three_pass_break_body_ok` |
+| Domain | four-statement body ending in break |
+| Semantic change | theorem-only sequencing and control-flow composition |
+| Remaining debt | recursive positive-fuel calls and general loop adequacy |
+
+DECIDED: longer break sequencing is now checked; recursive and general loop
+adequacy remain open.

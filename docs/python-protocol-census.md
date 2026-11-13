@@ -192,3 +192,6 @@ normal sequencing to four statements.
 
 `Monadic.finishCallM_three_pass_ret_body_ok` extends early-return sequencing
 to three normal statements followed by a return.
+
+`Monadic.finishCallM_three_pass_break_body_ok` extends break-flow sequencing
+to three normal statements followed by `break`.

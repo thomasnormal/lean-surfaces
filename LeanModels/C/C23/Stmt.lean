@@ -753,7 +753,11 @@ def functionCallFree (f : LeanModels.C.FunctionDefn) : Bool :=
                 (nm == "__builtin_fabs" || nm == "__builtin_fabsf" ||
                  nm == "__builtin_fabsl" || nm == "__builtin_isinf" ||
                  nm == "__builtin_isnan" || nm == "__builtin_isfinite" ||
-                 nm == "__builtin_signbit") &&
+                 nm == "__builtin_signbit" || nm == "__builtin_bswap16" ||
+                 nm == "__builtin_bswap32" || nm == "__builtin_bswap64" ||
+                 nm == "__builtin_ffs" || nm.contains "ctz" || nm.contains "clz" ||
+                 nm.contains "clrsb" || nm.contains "popcount" || nm.contains "parity" ||
+                 nm == "__builtin_abs" || nm == "abs") &&
                 args.all (Expr.localOnly allowed)
             | none => false
         | _ => false
@@ -763,6 +767,7 @@ def functionCallFree (f : LeanModels.C.FunctionDefn) : Bool :=
           | .call .. => pureBuiltin node
           | .member .. | .index .. => false
           | .unop op .. => op != "*" && op != "&"
+          | .declRef _ _ "FunctionDecl" .. => true
           | .declRef (some id) .. => allowed.contains id
           | .declRef none .. => false
           | _ => true

@@ -722,8 +722,31 @@ false. -/
 def stmtCallFree (s : Stmt) : Bool :=
   s.substmts.all (fun sub => sub.ownExprs.all Expr.isPure)
 
+def Decl.identity? : Decl → Option DeclarationId
+  | .var id _ _ _ _ _ _ _ => id
+  | .param id _ _ _ _ => id
+  | _ => none
+
+def Stmt.localIds (s : Stmt) : List DeclarationId :=
+  s.substmts.flatMap fun node => match node with
+    | .decl ds _ => ds.filterMap Decl.identity?
+    | _ => []
+
+def Expr.localOnly (allowed : List DeclarationId) : Expr → Bool
+  | e => e.subexprs.all fun node =>
+      match node with
+      | .call .. | .member .. | .index .. => false
+      | .unop op .. => op != "*" && op != "&"
+      | .declRef (some id) .. => allowed.contains id
+      | .declRef none .. => false
+      | _ => true
+
 def functionCallFree (f : LeanModels.C.FunctionDefn) : Bool :=
-  f.body.map stmtCallFree |>.getD false
+  match f.body with
+  | none => false
+  | some body =>
+      let allowed := (f.params.filterMap Decl.identity?) ++ Stmt.localIds body
+      (body.substmts.flatMap Stmt.ownExprs).all (Expr.localOnly allowed)
 
 /-- §6.5.3.3 — call a defined function with already-evaluated arguments.
 
@@ -1202,10 +1225,15 @@ def callFn : Nat → Program → LeanModels.C.FunctionDefn → List CVal → Exe
                   (fun i => ((residue / ((2 : Int) ^ i)) % 2) == 0) |>.length
                 let leading := indexes.reverse.takeWhile
                   (fun i => ((residue / ((2 : Int) ^ i)) % 2) == 0) |>.length
+                let signedValue := IntTy.wrap { ty with signed := true } residue
+                let signBit := if signedValue < 0 then 1 else 0
+                let redundant := (List.range (ty.bits - 1)).reverse.takeWhile
+                  (fun i => ((residue / ((2 : Int) ^ i)) % 2) == signBit) |>.length
                 let result :=
                   if nm.contains "popcount" then ones
                   else if nm.contains "parity" then ones % 2
                   else if nm.contains "ctz" then trailing
+                  else if nm.contains "clrsb" then redundant
                   else leading
                 pure (.int IntTy.int_ result)
           | _ => refuseUnsupported s!"{nm}: wrong argument count"
@@ -1404,8 +1432,8 @@ def callFn : Nat → Program → LeanModels.C.FunctionDefn → List CVal → Exe
                     else if nm == "malloc" || nm == "__builtin_malloc" then runMalloc vs
                     else if nm == "calloc" || nm == "__builtin_calloc" then runCalloc vs
                     else if nm == "free" || nm == "__builtin_free" then runFree vs
-                    else if nm.contains "ctz" || nm.contains "clz" || nm.contains "popcount" || nm.contains "parity" then runBitCount nm vs
-                    else if nm == "__builtin_ffs" then runFfs vs
+                    else if nm.contains "ctz" || nm.contains "clz" || nm.contains "clrsb" || nm.contains "popcount" || nm.contains "parity" then runBitCount nm vs
+                    else if nm == "__builtin_ffs" || nm.contains "ffs" then runFfs vs
                     else if nm == "__builtin_mul_overflow" then runArithOverflow "mul" vs
                     else if nm == "__builtin_add_overflow" then runArithOverflow "add" vs
                     else throw (.libc nm)
@@ -1455,8 +1483,8 @@ def callFn : Nat → Program → LeanModels.C.FunctionDefn → List CVal → Exe
               else if nm == "malloc" || nm == "__builtin_malloc" then runMalloc vs
               else if nm == "calloc" || nm == "__builtin_calloc" then runCalloc vs
               else if nm == "free" || nm == "__builtin_free" then runFree vs
-              else if nm.contains "ctz" || nm.contains "clz" || nm.contains "popcount" || nm.contains "parity" then runBitCount nm vs
-              else if nm == "__builtin_ffs" then runFfs vs
+              else if nm.contains "ctz" || nm.contains "clz" || nm.contains "clrsb" || nm.contains "popcount" || nm.contains "parity" then runBitCount nm vs
+              else if nm == "__builtin_ffs" || nm.contains "ffs" then runFfs vs
               else if nm == "__builtin_mul_overflow" then runArithOverflow "mul" vs
               else if nm == "__builtin_add_overflow" then runArithOverflow "add" vs
               else throw (.libc nm)

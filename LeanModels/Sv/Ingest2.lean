@@ -781,10 +781,11 @@ partial def parseGenItem (j : Json) : Except String GenItem := do
     | "AlwaysPosedge" | "AlwaysComb" | "Assign" | "Initial" =>
         return .process (← parsePProcess j)
     | "Instance" => return .inst (← parsePInst j)
-    | "Var" | "Net" | "LocalParam" | "ParameterDecl" =>
+    | "Var" | "Net" | "UnpackedDecl" | "LocalParam" | "ParameterDecl" =>
         -- Generate-local declarations — including a `localparam` in a
-        -- generate block (per-instance constant scoping) — are outside this
-        -- slice: a loud item, never a whole-envelope parse failure.
+        -- generate block (per-instance constant scoping) and an unpacked
+        -- storage declaration — are outside this slice: a loud item, never
+        -- a whole-envelope parse failure.
         return .unsupported s!"GenerateDecl:{kind}"
           s!"generate-local declaration '{(getOptStr j "name").getD "?"}'"
     | "Unsupported" =>
@@ -1776,6 +1777,12 @@ private def unsupMemberText : String := r#"{
     "expr": {"kind": "Int", "span": null, "value": 1, "resolved_width": 32}, "resolved": 1}"#
     >>= parseGenItem).toOption
         == some (.unsupported "GenerateDecl:LocalParam" "generate-local declaration 'LL'")
+#guard (Json.parse r#"{"kind": "UnpackedDecl", "span": null, "name": "mem",
+    "width": {"kind": "PackedType", "packed": [], "resolved": 1},
+    "unpacked": [{"msb": {"kind": "Int", "value": 1},
+                   "lsb": {"kind": "Int", "value": 0}}]}"#
+    >>= parseGenItem).toOption
+        == some (.unsupported "GenerateDecl:UnpackedDecl" "generate-local declaration 'mem'")
 -- A signed literal's parser metadata is a context conversion; explicit
 -- `$signed` remains the separate `Cast` node.
 #guard (Json.parse r#"{"kind": "Literal", "span": null, "width": 4, "bits": "1111", "signed": true}"#

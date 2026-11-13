@@ -14162,3 +14162,22 @@ boundary equation needed by `tryCatch`, call unwinding, and script sequencing.
 
 DECIDED: use the successful-bind projection instead of unfolding the monad
 stack in each call-boundary proof.
+
+## 2026-11-13-pyfoundation-111 — bridge successful try/catch projection
+
+`Monadic.toRun_tryCatch_ok` specializes the bind projection to the protected
+exception layer. If the protected action returns a successful value/state,
+the handler is bypassed and `toRun (tryCatch action handler)` returns the same
+`Run.ok` result. This is the final generic equation needed to normalize the
+ordinary empty-body call path without unfolding `ExceptT` at every site.
+
+| Measurement | Result |
+|---|---|
+| Target | `lake build LeanModels.Python.Monadic.Substrate` passed; 9/9 jobs |
+| Theorem | `Monadic.toRun_tryCatch_ok` |
+| Domain | successful protected actions, arbitrary handlers and state |
+| Semantic change | theorem-only substrate extension |
+| Remaining debt | compose the projection with positive-fuel ordinary calls |
+
+DECIDED: retain try/catch success as a shared boundary theorem; exception paths
+remain separately governed by the existing state-retaining semantics.

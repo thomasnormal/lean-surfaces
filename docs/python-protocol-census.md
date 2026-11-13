@@ -62,6 +62,9 @@ fuel calls and scripts share one state-wrapper boundary.
 frame lift, preserving timeout, refusal, exception, and success projections.
 `Monadic.toRun_bind_ok` factors the successful bind projection used by
 `tryCatch` and call unwinding, so those proofs can stay at the `Run` boundary.
+`Monadic.toRun_tryCatch_ok` specializes the same projection to a successful
+protected action, preserving its returned state and value through the handler
+layer.
 
 ## Operator dispatch
 

@@ -127,79 +127,6 @@ def buildMemDecls1 (env : IEnv) : List PDecl → Nat → Res (List CoreMemDecl)
       | .ok none => .ok tail
       | .ok (some shape) => .ok ({ source := pd, shape } :: tail)
 
-/-! Generate templates are instantiated at the concrete parameter point, while
-the process and array nodes remain the same source-shaped constructors.  This
-is the structural elaboration required by IEEE 1800-2023 §27.4; no memory cell
-is expanded. -/
-private def genExprCore (g : String) (v : Int) : PExpr → PExpr
-  | .genvarRef n => if n == g then .int v else .genvarRef n
-  | .arrayElem n xs => .arrayElem n (xs.map (genExprCore g v))
-  | .arrayPart n xs m a b => .arrayPart n (xs.map (genExprCore g v)) m (genExprCore g v a) (genExprCore g v b)
-  | .bitSel a b => .bitSel (genExprCore g v a) (genExprCore g v b)
-  | .partSel a b c => .partSel (genExprCore g v a) (genExprCore g v b) (genExprCore g v c)
-  | .unary o a => .unary o (genExprCore g v a)
-  | .binary o a b => .binary o (genExprCore g v a) (genExprCore g v b)
-  | .ternary a b c => .ternary (genExprCore g v a) (genExprCore g v b) (genExprCore g v c)
-  | .concat xs => .concat (xs.map (genExprCore g v))
-  | .resize w a => .resize w (genExprCore g v a)
-  | .signedResize w a => .signedResize w (genExprCore g v a)
-  | .squash2 w a => .squash2 w (genExprCore g v a)
-  | .sysCall f a => .sysCall f (genExprCore g v a)
-  | .reduce o a => .reduce o (genExprCore g v a)
-  | .cast s a => .cast s (genExprCore g v a)
-  | .repl n a => .repl (genExprCore g v n) (genExprCore g v a)
-  | .functionCall n xs => .functionCall n (xs.map (genExprCore g v))
-  | e => e
-
-private def genLhsCore (g : String) (v : Int) : PLhs → PLhs
-  | .arrayElem n xs => .arrayElem n (xs.map (genExprCore g v))
-  | .arrayPart n xs m a b => .arrayPart n (xs.map (genExprCore g v)) m (genExprCore g v a) (genExprCore g v b)
-  | .bitSel n i => .bitSel n (genExprCore g v i)
-  | .partSel n a b => .partSel n (genExprCore g v a) (genExprCore g v b)
-  | .concat xs => .concat (xs.map (genLhsCore g v))
-  | l => l
-
-private partial def genStmtCore (g : String) (v : Int) : PStmt → PStmt
-  | .blockingAssign n e => .blockingAssign n (genExprCore g v e)
-  | .nbaAssign n e => .nbaAssign n (genExprCore g v e)
-  | .blockingAssignL l e => .blockingAssignL (genLhsCore g v l) (genExprCore g v e)
-  | .nbaAssignL l e => .nbaAssignL (genLhsCore g v l) (genExprCore g v e)
-  | .ifStmt c a b => .ifStmt (genExprCore g v c) (genStmtCore g v a) (b.map (genStmtCore g v))
-  | .block xs => .block (xs.map (genStmtCore g v))
-  | .forLoop i a c s b => .forLoop i (genExprCore g v a) (genExprCore g v c) (genExprCore g v s) (genStmtCore g v b)
-  | .caseStmt e xs d m c => .caseStmt (genExprCore g v e) (xs.map fun (ps,b) => (ps.map (genExprCore g v), genStmtCore g v b)) (d.map (genStmtCore g v)) m c
-  | e => e
-
-private def genProcCore (g : String) (v : Int) : PProcess → PProcess
-  | .alwaysFF c b => .alwaysFF c (genStmtCore g v b)
-  | .alwaysPlain c b => .alwaysPlain c (genStmtCore g v b)
-  | .alwaysFFR c r b h => .alwaysFFR c r (genStmtCore g v b) h
-  | .alwaysComb b => .alwaysComb (genStmtCore g v b)
-  | .alwaysImplicit b => .alwaysImplicit (genStmtCore g v b)
-  | .assign n e => .assign n (genExprCore g v e)
-  | .assignL l e => .assignL (genLhsCore g v l) (genExprCore g v e)
-  | .initial b => .initial (genStmtCore g v b)
-  | e => e
-
-private partial def genProcessesCore (env : IEnv) (fuel : Nat) : List GenItem → Res (List PProcess)
-  | [] => .ok []
-  | .process p :: rest => do let tail ← genProcessesCore env fuel rest; .ok (p :: tail)
-  | .genFor _ g init bound step _ body :: rest => do
-      let i ← match evalInt env init with | .ok x => .ok x | .error e => .unsupported e
-      let delta ← match stepDelta g step with | .ok x => .ok x | .error e => .unsupported e
-      let values ← genvarSeq env g bound delta fuel i
-      let here := values.flatMap fun v => body.filterMap fun item =>
-        match item with | .process p => some (genProcCore g v p) | _ => none
-      let tail ← genProcessesCore env fuel rest
-      .ok (here ++ tail)
-  | .genIf c yes no :: rest => do
-      let chosen := if (evalInt env c).toOption.getD 0 != 0 then yes else no
-      let here ← genProcessesCore env fuel chosen
-      let tail ← genProcessesCore env fuel rest
-      .ok (here ++ tail)
-  | .unsupported k t :: _ => .unsupported s!"{k}: {t}"
-  | .inst i :: _ => .unsupported s!"Instance: generated instance '{i.name}' is outside canonical memory hierarchy"
-
 def CoreMemProc.ofPProcess : PProcess → CoreMemProc
   | .alwaysFF clock body => .edge { clock, body, style := .alwaysFF }
   | .alwaysPlain clock body => .edge { clock, body, style := .alwaysPlain }
@@ -212,6 +139,148 @@ def CoreMemProc.ofPProcess : PProcess → CoreMemProc
   | .alwaysImplicit body => .implicit body
   | .initial body => .initial body
   | .unsupported kind text => .unsupported kind text
+
+/-! ## Source-shaped generate expansion
+
+Generate elaboration selects and repeats the parser's process nodes; it does
+not lower their bodies into `Process2` or expand memory declarations into
+cells. A concrete genvar is retained as an integer expression in the copied
+source node, so the canonical executor still sees the original `PProcess` /
+`PStmt` shape and the native `MemState` route.
+-/
+
+def coreMemSubstExpr (vals : List (String × Int)) : PExpr → PExpr
+  | .genvarRef n =>
+      match vals.lookup n with
+      | some v => .int v
+      | none => .genvarRef n
+  | .unary op a => .unary op (coreMemSubstExpr vals a)
+  | .binary op a b => .binary op (coreMemSubstExpr vals a) (coreMemSubstExpr vals b)
+  | .ternary c a b => .ternary (coreMemSubstExpr vals c) (coreMemSubstExpr vals a)
+      (coreMemSubstExpr vals b)
+  | .concat xs => .concat (xs.map (coreMemSubstExpr vals))
+  | .resize w a => .resize w (coreMemSubstExpr vals a)
+  | .signedResize w a => .signedResize w (coreMemSubstExpr vals a)
+  | .squash2 w a => .squash2 w (coreMemSubstExpr vals a)
+  | .sysCall fn a => .sysCall fn (coreMemSubstExpr vals a)
+  | .bitSel a b => .bitSel (coreMemSubstExpr vals a) (coreMemSubstExpr vals b)
+  | .partSel a b c => .partSel (coreMemSubstExpr vals a) (coreMemSubstExpr vals b)
+      (coreMemSubstExpr vals c)
+  | .repl a b => .repl (coreMemSubstExpr vals a) (coreMemSubstExpr vals b)
+  | .reduce op a => .reduce op (coreMemSubstExpr vals a)
+  | .cast s a => .cast s (coreMemSubstExpr vals a)
+  | .arrayElem n xs => .arrayElem n (xs.map (coreMemSubstExpr vals))
+  | .arrayPart n xs mode a b => .arrayPart n (xs.map (coreMemSubstExpr vals)) mode
+      (coreMemSubstExpr vals a) (coreMemSubstExpr vals b)
+  | .functionCall n xs => .functionCall n (xs.map (coreMemSubstExpr vals))
+  | e => e
+
+def coreMemSubstLhs (vals : List (String × Int)) : PLhs → PLhs
+  | .bitSel n i => .bitSel n (coreMemSubstExpr vals i)
+  | .partSel n a b => .partSel n (coreMemSubstExpr vals a) (coreMemSubstExpr vals b)
+  | .concat xs => .concat (xs.map (coreMemSubstLhs vals))
+  | .arrayElem n xs => .arrayElem n (xs.map (coreMemSubstExpr vals))
+  | .arrayPart n xs mode a b => .arrayPart n (xs.map (coreMemSubstExpr vals)) mode
+      (coreMemSubstExpr vals a) (coreMemSubstExpr vals b)
+  | l => l
+
+mutual
+def coreMemSubstStmt (vals : List (String × Int)) : PStmt → PStmt
+  | .blockingAssign n e => .blockingAssign n (coreMemSubstExpr vals e)
+  | .nbaAssign n e => .nbaAssign n (coreMemSubstExpr vals e)
+  | .ifStmt c t e => .ifStmt (coreMemSubstExpr vals c) (coreMemSubstStmt vals t)
+      (coreMemSubstStmtOpt vals e)
+  | .block xs => .block (coreMemSubstStmtList vals xs)
+  | .forLoop n i c s b => .forLoop n (coreMemSubstExpr vals i)
+      (coreMemSubstExpr vals c) (coreMemSubstExpr vals s) (coreMemSubstStmt vals b)
+  | .blockingAssignL l e => .blockingAssignL (coreMemSubstLhs vals l)
+      (coreMemSubstExpr vals e)
+  | .nbaAssignL l e => .nbaAssignL (coreMemSubstLhs vals l)
+      (coreMemSubstExpr vals e)
+  | .caseStmt s items d mode check =>
+      .caseStmt (coreMemSubstExpr vals s)
+        (coreMemSubstCaseItems vals items) (coreMemSubstStmtOpt vals d) mode check
+  | s => s
+termination_by structural s => s
+
+def coreMemSubstStmtOpt (vals : List (String × Int)) : Option PStmt → Option PStmt
+  | none => none
+  | some s => some (coreMemSubstStmt vals s)
+termination_by structural o => o
+
+def coreMemSubstStmtList (vals : List (String × Int)) : List PStmt → List PStmt
+  | [] => []
+  | s :: ss => coreMemSubstStmt vals s :: coreMemSubstStmtList vals ss
+termination_by structural xs => xs
+
+def coreMemSubstCaseItems (vals : List (String × Int)) :
+    List (List PExpr × PStmt) → List (List PExpr × PStmt)
+  | [] => []
+  | (ps, b) :: rest =>
+      (ps.map (coreMemSubstExpr vals), coreMemSubstStmt vals b) ::
+        coreMemSubstCaseItems vals rest
+termination_by structural xs => xs
+
+def coreMemSubstProcess (vals : List (String × Int)) : PProcess → PProcess
+  | .alwaysFF c b => .alwaysFF c (coreMemSubstStmt vals b)
+  | .alwaysPlain c b => .alwaysPlain c (coreMemSubstStmt vals b)
+  | .alwaysComb b => .alwaysComb (coreMemSubstStmt vals b)
+  | .alwaysImplicit b => .alwaysImplicit (coreMemSubstStmt vals b)
+  | .assign n e => .assign n (coreMemSubstExpr vals e)
+  | .assignL l e => .assignL (coreMemSubstLhs vals l) (coreMemSubstExpr vals e)
+  | .alwaysFFR c r b h => .alwaysFFR c r (coreMemSubstStmt vals b) h
+  | .initial b => .initial (coreMemSubstStmt vals b)
+  | p => p
+end
+
+def coreMemBindVals (env : IEnv) (vals : List (String × Int)) : IEnv :=
+  -- `vals` is ordered from the innermost generate scope outward. Binding the
+  -- reverse list preserves the head-first shadowing used by `lookup`.
+  vals.reverse.foldl (fun e (n, v) => e.bindVal n v) env
+
+mutual
+def coreMemExpandItem (env : IEnv) (iterFuel : Nat) (vals : List (String × Int)) :
+    GenItem → Res (List PProcess)
+  | .process p => .ok [coreMemSubstProcess vals p]
+  | .unsupported k t => .ok [.unsupported k t]
+  | .inst i => .ok [.unsupported "Instance"
+      s!"module instance '{i.name}' of '{i.module}' outside the canonical E memory route"]
+  | .genIf cond thenB elseB =>
+      match evalGenGuard (coreMemBindVals env vals) cond with
+      | .error e => .unsupported s!"generate if: {e}"
+      | .ok v => if v != 0 then coreMemExpandList env iterFuel vals thenB
+                 else coreMemExpandList env iterFuel vals elseB
+  | .genFor _label g initE bound step _rc body =>
+      let env' := coreMemBindVals env vals
+      match evalInt env' initE, stepDelta g step with
+      | .ok i0, .ok δ => do
+          let vs ← genvarSeq env' g bound δ iterFuel i0
+          coreMemExpandIters env iterFuel vals g vs body
+      | .error e, _ => .unsupported s!"generate for: {e}"
+      | _, .error e => .unsupported s!"generate for: {e}"
+  termination_by it => (sizeOf it, 0)
+  decreasing_by all_goals (simp_wf; omega)
+
+def coreMemExpandList (env : IEnv) (iterFuel : Nat) (vals : List (String × Int)) :
+    List GenItem → Res (List PProcess)
+  | [] => .ok []
+  | it :: rest => do
+      let ps ← coreMemExpandItem env iterFuel vals it
+      let qs ← coreMemExpandList env iterFuel vals rest
+      .ok (ps ++ qs)
+  termination_by xs => (sizeOf xs, 0)
+  decreasing_by all_goals (simp_wf; omega)
+
+def coreMemExpandIters (env : IEnv) (iterFuel : Nat) (vals : List (String × Int))
+    (g : String) : List Int → List GenItem → Res (List PProcess)
+  | [], _ => .ok []
+  | v :: vs, body => do
+      let ps ← coreMemExpandList env iterFuel ((g, v) :: vals) body
+      let qs ← coreMemExpandIters env iterFuel vals g vs body
+      .ok (ps ++ qs)
+  termination_by vs body => (sizeOf body, vs.length + 1)
+  decreasing_by all_goals (simp_wf; omega)
+end
 
 def PDesign.instantiateCoreMemFrom (envI : IEnv) (d : PDesign) (args : List Int)
     (iterFuel : Nat := 4096) : Res CoreMemDesign := do
@@ -229,7 +298,7 @@ def PDesign.instantiateCoreMemFrom (envI : IEnv) (d : PDesign) (args : List Int)
     let env2 := { env2 with pwidths := pws }
     let env2 := { env2 with dims := dimTable env2 d.decls }
     let env2 := { env2 with functions := d.functions }
-    let generated ← genProcessesCore env2 (PDesign.surfaceFuel args) d.generates
+    let generated ← coreMemExpandList env2 iterFuel [] d.generates
     if !d.others.isEmpty then
       .unsupported "E memory route does not yet admit hierarchy items"
     else
@@ -244,7 +313,12 @@ def PDesign.instantiateCoreMemFrom (envI : IEnv) (d : PDesign) (args : List Int)
           { name := d.name, decls := decls.toArray, procs := #[] }
         let scalarEdge : Elab1 :=
           { decls := decls.toArray, procs := #[], name := d.name }
-        .ok ({ name := d.name, env := envP, scalar := scalar, scalarEdge := scalarEdge, memories := memories.toArray, processes := ((d.processes ++ generated).map CoreMemProc.ofPProcess).toArray } : CoreMemDesign)
+        let processes := (d.processes.map CoreMemProc.ofPProcess) ++
+          (generated.map CoreMemProc.ofPProcess)
+        let result : CoreMemDesign :=
+          { name := d.name, env := envP, scalar := scalar, scalarEdge := scalarEdge,
+            memories := memories.toArray, processes := processes.toArray }
+        .ok result
 
 def PDesign.instantiateCoreMem (d : PDesign) (args : List Int)
     (iterFuel : Nat := 4096) : Res CoreMemDesign :=

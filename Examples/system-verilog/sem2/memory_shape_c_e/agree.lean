@@ -21,6 +21,6 @@ def refusal : Bool :=
   | _ => false
 #guard refusal
 #guard match LeanModels.Sv.Kernel.PDesign.instantiateCoreMem memoryShapeC.pdesign [4, 2] with
-  | .unsupported msg => msg.contains "generate items"
+  | .ok d => d.processes.size == 3
   | _ => false
 end Examples.«system-verilog».sem2.memory_shape_c_e

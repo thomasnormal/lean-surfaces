@@ -18,4 +18,4 @@ with tempfile.TemporaryDirectory(prefix="sv-memory-shape-b-") as d:
     print("Xcelium 24.03-s004: 6 rows recorded (same trace)")
   else:
     print("no Xcelium result: xrun unavailable")
-print("E: loud refusal Instance (child memory is outside the current MemE entry)")
+print("E: loud refusal Instance (child memory is outside the canonical E entry)")

@@ -120,9 +120,10 @@ decision, not an oversight. -/
 def torScalarSize : CType → Option Nat
   | "char" | "signed char" | "unsigned char" | "_Bool" | "bool" => some 1
   | "short" | "short int" | "unsigned short" => some 2
-  | "int" | "unsigned int" | "unsigned" => some 4
+  | "int" | "unsigned int" | "unsigned" | "int32_t" | "uint32_t" => some 4
   | "long" | "unsigned long" | "long long" | "unsigned long long"
   | "long int" | "unsigned long int" => some 8
+  | "int64_t" | "uint64_t" => some 8
   | "__int128" | "unsigned __int128" => some 16
   | t => if t.startsWith "enum " then some 4
          else if t.endsWith "*" || LeanModels.C.isConstPointerToArray t

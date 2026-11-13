@@ -1,10 +1,10 @@
 {
  "by_corpus": {
   "c-testsuite/single-exec": {
-   "passed": 168,
+   "passed": 170,
    "refused-libc": 2,
    "refused-ub": 8,
-   "refused-unsupported": 40,
+   "refused-unsupported": 38,
    "timeout": 2
   },
   "gcc.c-torture/execute": {
@@ -28,10 +28,10 @@
  "counts": {
   "not-parsed": 294,
   "oracle-tests-compiler": 1,
-  "passed": 1027,
+  "passed": 1029,
   "refused-libc": 39,
   "refused-ub": 105,
-  "refused-unsupported": 682,
+  "refused-unsupported": 680,
   "timeout": 66
  },
  "dynamic_wall_ranking": [
@@ -1361,15 +1361,6 @@
    "present": 2,
    "sole": 2,
    "wall": "unsupported:no layout for declared type 'bitmap_iterator'"
-  },
-  {
-   "files": [
-    "00054.c",
-    "00055.c"
-   ],
-   "present": 2,
-   "sole": 2,
-   "wall": "unsupported:no layout for declared type 'enum E'"
   },
   {
    "files": [
@@ -3511,9 +3502,9 @@
    "wall": "unsupported:va_arg requested unsupported value type 'struct s'"
   }
  ],
- "manifest_hash": "9e708a59a29899150ebbc37d6cab9c2f2484cab19964af2a0a43215ba229ebca",
- "measured_at_utc": "2026-11-13T14:45:00Z",
- "measured_commit": "39e5b7def",
+ "manifest_hash": "b5ca6ce45ea98ddf14b874975105a6119d0c5fd7d4771d8795bb167220efb099",
+ "measured_at_utc": "2026-11-13T15:00:00Z",
+ "measured_commit": "f5c35ba78",
  "pin": {
   "corpora": [
    "C1",
@@ -4102,23 +4093,23 @@
   },
   {
    "corpus": "c-testsuite/single-exec",
-   "detail": "no layout for declared type 'enum E'",
-   "dynamic_wall": "unsupported:no layout for declared type 'enum E'",
+   "detail": "",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "00054.c",
    "sha256": "718b90dcd2d10215bb9f7da2f907c870767fea1d727896ce3143ce6757e6cbf5",
    "static_walls": [],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "c-testsuite/single-exec",
-   "detail": "no layout for declared type 'enum E'",
-   "dynamic_wall": "unsupported:no layout for declared type 'enum E'",
+   "detail": "",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "00055.c",
    "sha256": "933199c7b04826b5fc668864de28be00ac51089c351eea074d04666217bdf78f",
    "static_walls": [],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "c-testsuite/single-exec",

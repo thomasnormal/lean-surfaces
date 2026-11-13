@@ -270,7 +270,8 @@ the profile fact `char_signed`, answering `J.3.5(5)`.
 `void`, or a spelling outside the census. Every consumer refuses on
 `none` rather than inventing a width. -/
 def intTyOf? (ty : CType) : Option IntTy :=
-  match ty with
+  if ty.startsWith "enum " then some IntTy.int_
+  else match ty with
   | "char" => some IntTy.char_
   | "signed char" => some IntTy.char_
   | "unsigned char" => some IntTy.uchar

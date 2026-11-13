@@ -258,10 +258,16 @@ def record_layout_records(path):
     if not isinstance(records, list):
         die("record layout probe returned a non-array")
     by_offset = {}
+    enum_values = {}
     for record in records:
-        if not isinstance(record, dict) or record.get("kind") != "RecordLayout":
+        if not isinstance(record, dict) or record.get("kind") not in ("RecordLayout", "EnumValue"):
             die("record layout probe returned an invalid record")
         offset = record.get("offset")
+        if record.get("kind") == "EnumValue":
+            if type(offset) is not int or offset < 0 or type(record.get("value")) is not int:
+                die("record layout probe returned an invalid enum value")
+            enum_values[offset] = record["value"]
+            continue
         if (type(offset) is not int or offset < 0 or
                 type(record.get("token_length")) is not int or
                 record["token_length"] <= 0 or
@@ -273,7 +279,7 @@ def record_layout_records(path):
                 not isinstance(record.get("fields"), list)):
             die("record layout probe returned an invalid record")
         by_offset.setdefault(offset, []).append(record)
-    return by_offset
+    return {"layouts": by_offset, "enum_values": enum_values}
 
 
 def check_profile():
@@ -376,7 +382,8 @@ class Extractor:
         self.text = source_text
         self.string_bytes = string_bytes
         self.floating_bits = floating_bits
-        self.record_layouts = record_layouts
+        self.record_layouts = (record_layouts or {}).get("layouts", {})
+        self.enum_values = (record_layouts or {}).get("enum_values", {})
         self.lines = source_text.splitlines()
         self.labels = {}
         self.unsupported = 0
@@ -548,6 +555,10 @@ class Extractor:
         out = {"decl_id": n.get("id"), "name": n.get("name")}
         if (v or {}).get("value") is not None:
             out["value"] = v["value"]
+        else:
+            offset = ((n.get("range") or {}).get("begin") or {}).get("offset")
+            if offset in self.enum_values:
+                out["value"] = str(self.enum_values[offset])
         return out
 
     def e_EmptyDecl(self, n):

@@ -2,10 +2,10 @@
 
 Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manifest.
 
-- verdicts: 1027/2214 MATCH (passed 1027, failed 0, oracle 0)
-- manifest SHA-256: `9e708a59a29899150ebbc37d6cab9c2f2484cab19964af2a0a43215ba229ebca`
-- measured commit: `39e5b7def`
-- measured at: `2026-11-13T14:45:00Z`
+- verdicts: 1029/2214 MATCH (passed 1029, failed 0, oracle 0)
+- manifest SHA-256: `b5ca6ce45ea98ddf14b874975105a6119d0c5fd7d4771d8795bb167220efb099`
+- measured commit: `f5c35ba78`
+- measured at: `2026-11-13T15:00:00Z`
 
 ## Verdict counts
 
@@ -13,20 +13,20 @@ Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manife
 | --- | ---: |
 | `not-parsed` | 294 |
 | `oracle-tests-compiler` | 1 |
-| `passed` | 1027 |
+| `passed` | 1029 |
 | `refused-libc` | 39 |
 | `refused-ub` | 105 |
-| `refused-unsupported` | 682 |
+| `refused-unsupported` | 680 |
 | `timeout` | 66 |
 
 ## Counts by corpus
 
 | corpus | verdict | files |
 | --- | --- | ---: |
-| `c-testsuite/single-exec` | `passed` | 168 |
+| `c-testsuite/single-exec` | `passed` | 170 |
 | `c-testsuite/single-exec` | `refused-libc` | 2 |
 | `c-testsuite/single-exec` | `refused-ub` | 8 |
-| `c-testsuite/single-exec` | `refused-unsupported` | 40 |
+| `c-testsuite/single-exec` | `refused-unsupported` | 38 |
 | `c-testsuite/single-exec` | `timeout` | 2 |
 | `gcc.c-torture/execute` | `not-parsed` | 267 |
 | `gcc.c-torture/execute` | `oracle-tests-compiler` | 1 |
@@ -362,7 +362,6 @@ The run's first refusal, normalized by construct; `sole` counts rows whose first
 | `unsupported:more arguments than parameters` | 2 | 2 | gcc/testsuite/gcc.dg/c23-stdarg-9.c, va-arg-2.c |
 | `unsupported:no layout for declared type 'T'` | 2 | 2 | 920908-1.c, pr98474.c |
 | `unsupported:no layout for declared type 'bitmap_iterator'` | 2 | 2 | 20090113-2.c, 20090113-3.c |
-| `unsupported:no layout for declared type 'enum E'` | 2 | 2 | 00054.c, 00055.c |
 | `unsupported:no layout for declared type 'int *volatile'` | 2 | 2 | 20101025-1.c, builtin-prefetch-3.c |
 | `unsupported:no layout for declared type 'jmp_buf'` | 2 | 2 | 20210505-1.c, pr56982.c |
 | `unsupported:no layout for declared type 'st'` | 2 | 2 | pr31448-2.c, pr31448.c |

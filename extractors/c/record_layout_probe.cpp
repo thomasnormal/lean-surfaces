@@ -72,6 +72,17 @@ public:
     records.push_back(std::move(item));
     return true;
   }
+
+  bool VisitEnumConstantDecl(clang::EnumConstantDecl *constant) {
+    const auto &sources = context->getSourceManager();
+    const auto loc = sources.getExpansionLoc(constant->getBeginLoc());
+    if (!sources.isWrittenInMainFile(loc)) return true;
+    records.push_back(llvm::json::Object{
+        {"kind", "EnumValue"},
+        {"offset", static_cast<int64_t>(sources.getFileOffset(loc))},
+        {"value", static_cast<int64_t>(constant->getInitVal().getSExtValue())}});
+    return true;
+  }
 };
 
 class Consumer : public clang::ASTConsumer {

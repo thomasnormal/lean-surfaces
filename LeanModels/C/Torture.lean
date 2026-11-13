@@ -124,7 +124,8 @@ def torScalarSize : CType → Option Nat
   | "long" | "unsigned long" | "long long" | "unsigned long long"
   | "long int" | "unsigned long int" => some 8
   | "__int128" | "unsigned __int128" => some 16
-  | t => if t.endsWith "*" || LeanModels.C.isConstPointerToArray t
+  | t => if t.startsWith "enum " then some 4
+         else if t.endsWith "*" || LeanModels.C.isConstPointerToArray t
          then some 8 else none
 
 /-- The envelope's ordinary declaration types are flat Clang spellings.

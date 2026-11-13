@@ -335,3 +335,6 @@ seven-update bridge through a bare return.
 
 `Monadic.finishCallM_assign_seven_existing_locals_break_body_ok` extends the
 seven-update bridge through an abrupt `break` flow.
+
+`Monadic.finishCallM_assign_seven_existing_locals_continue_body_ok` extends the
+seven-update bridge through an abrupt `continue` flow.

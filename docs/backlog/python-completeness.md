@@ -15329,7 +15329,7 @@ followed by `pass`, preserving normal completion and depth restoration.
 
 | Measurement | Result |
 |---|---|
-| Target | `lake build LeanModels.Python.Monadic.Eval` pending for this item |
+| Target | `lake build LeanModels.Python.Monadic.Eval` passed; 11/11 jobs |
 | Theorem | `Monadic.finishCallM_assign_seven_existing_locals_pass_body_ok` |
 | Domain | seven consecutive assignments to existing locals followed by pass |
 | Semantic change | theorem-only seven-assignment normal-flow composition |
@@ -15408,4 +15408,22 @@ depth restoration.
 | Remaining debt | arbitrary locals and recursive positive-fuel calls |
 
 DECIDED: seven assignment steps now compose through continue flow; arbitrary
+assignment and recursive body adequacy remain open.
+
+## 2026-11-13-pyfoundation-184 — eight-assignment state bridge
+
+`Monadic.finishCallM_assign_eight_existing_locals_body_ok` checks eight
+successive assignments `s = 0; t = 1; u = 2; v = 3; w = 4; x = 5; y = 6; z = 7`
+to existing locals, threading all updates through normal completion and depth
+restoration.
+
+| Measurement | Result |
+|---|---|
+| Target | `lake build LeanModels.Python.Monadic.Eval` pending for this item |
+| Theorem | `Monadic.finishCallM_assign_eight_existing_locals_body_ok` |
+| Domain | eight consecutive assignments to existing locals |
+| Semantic change | theorem-only eight-assignment state composition |
+| Remaining debt | arbitrary locals and recursive positive-fuel calls |
+
+DECIDED: eight assignment steps now compose through the body walker; arbitrary
 assignment and recursive body adequacy remain open.

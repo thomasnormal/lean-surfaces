@@ -14566,6 +14566,22 @@ statements through the left-to-right body walker and call-depth restoration.
 DECIDED: four-statement normal sequencing is now checked; recursive and
 general body adequacy remain open.
 
+## 2026-11-13-pyfoundation-139 — five-statement sequencing bridge
+
+`Monadic.finishCallM_five_pass_body_ok` checks five consecutive normal
+statements through the left-to-right body walker and depth restoration.
+
+| Measurement | Result |
+|---|---|
+| Target | `lake build LeanModels.Python.Monadic.Eval` passed; 11/11 jobs |
+| Theorem | `Monadic.finishCallM_five_pass_body_ok` |
+| Domain | five-statement normal body |
+| Semantic change | theorem-only multi-statement sequencing composition |
+| Remaining debt | recursive positive-fuel calls and general body adequacy |
+
+DECIDED: five-statement normal sequencing is now checked; recursive and
+general body adequacy remain open.
+
 ## 2026-11-13-pyfoundation-135 — four-statement early-return bridge
 
 `Monadic.finishCallM_three_pass_ret_body_ok` checks three normal statements

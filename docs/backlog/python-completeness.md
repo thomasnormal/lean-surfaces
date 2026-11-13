@@ -14770,6 +14770,24 @@ frame-local updates thread through normal completion and depth restoration.
 DECIDED: three assignment steps now compose through the body walker; arbitrary
 assignment and recursive body adequacy remain open.
 
+## 2026-11-13-pyfoundation-151 — assignment return short-circuit bridge
+
+`Monadic.finishCallM_assign_existing_local_ret_pass_body_ok` checks an
+assignment to an existing local followed by `return 2` and a trailing `pass`.
+The return flow short-circuits the trailing statement after assignment state is
+threaded.
+
+| Measurement | Result |
+|---|---|
+| Target | `lake build LeanModels.Python.Monadic.Eval` passed; 11/11 jobs |
+| Theorem | `Monadic.finishCallM_assign_existing_local_ret_pass_body_ok` |
+| Domain | three-statement assignment-return-trailing body |
+| Semantic change | theorem-only assignment and early-flow composition |
+| Remaining debt | arbitrary locals and recursive positive-fuel calls |
+
+DECIDED: assignment state now composes with return short-circuiting; arbitrary
+assignment and recursive body adequacy remain open.
+
 ## 2026-11-13-pyfoundation-135 — four-statement early-return bridge
 
 `Monadic.finishCallM_three_pass_ret_body_ok` checks three normal statements

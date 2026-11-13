@@ -228,6 +228,9 @@ existing-local assignments, threading both updates through normal completion.
 `Monadic.finishCallM_assign_three_existing_locals_body_ok` extends the same
 state threading to three successive assignments.
 
+`Monadic.finishCallM_assign_existing_local_ret_pass_body_ok` checks that a
+return after assignment short-circuits a trailing statement.
+
 `Monadic.finishCallM_three_pass_ret_body_ok` extends early-return sequencing
 to three normal statements followed by a return.
 

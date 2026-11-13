@@ -14362,3 +14362,21 @@ the resulting world and `finishCallM` restores the requested call depth.
 
 DECIDED: one assignment AST body now composes through the stateful call
 boundary; general assignment and recursive control remain open.
+
+## 2026-11-13-pyfoundation-122 — nested-call exception unwind
+
+The stateful substrate now has `toRun_tryCatch_exn`, and
+`Monadic.leaveCallM_modify_exn` proves the nested-call exception path. The
+handler retains the body mutation, decrements the active frame depth, and
+re-raises the same `PyErr`.
+
+| Measurement | Result |
+|---|---|
+| Target | `lake build LeanModels.Python.Monadic.Eval` passed; 11/11 jobs |
+| Theorems | `toRun_tryCatch_exn`, `Monadic.leaveCallM_modify_exn` |
+| Domain | arbitrary world mutation and raised Python exception |
+| Semantic change | theorem-only exception-state composition |
+| Remaining debt | recursive positive-fuel calls and general assignment targets |
+
+DECIDED: successful and exceptional nested-call mutation unwinds are now
+kernel-checked; recursive control remains open.

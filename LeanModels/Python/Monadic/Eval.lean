@@ -3913,6 +3913,15 @@ theorem leaveCallM_modify_ok {α : Type} (w : World) (v : α)
   apply toRun_tryCatch_ok
   exact hraw
 
+theorem leaveCallM_modify_exn {α : Type} (w : World) (e : PyErr)
+    (f : World → World) :
+    toRun (leaveCallM (do modify f; raisePy e : SemW α)) w =
+      .exn { f w with callDepth := (f w).callDepth.pred } e := by
+  unfold leaveCallM
+  apply toRun_tryCatch_exn
+  · rfl
+  · rfl
+
 #print axioms evalOpen
 #print axioms execOpen
 #print axioms kont
@@ -3942,5 +3951,6 @@ theorem leaveCallM_modify_ok {α : Type} (w : World) (v : α)
 #print axioms finishCallM_assign_constant_body_ok
 #print axioms finishCallM_modify_ok
 #print axioms leaveCallM_modify_ok
+#print axioms leaveCallM_modify_exn
 
 end LeanModels.Python.Monadic

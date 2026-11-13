@@ -13,6 +13,11 @@ the fuel-free statement walker and the stateful call restoration boundary. It
 is theorem-only and leaves the assignment AST shape intact; general assignment
 expressions and recursive calls remain open.
 
+The matching exception path is covered by `Monadic.leaveCallM_modify_exn`,
+using the generic `toRun_tryCatch_exn` substrate equation. A raised Python
+error retains the mutated world and receives the same nested-frame depth
+decrement as a successful return.
+
 ## Protocol families
 
 | CPython 3.9 entry and call order | Trunk (`Semantics.lean`) | Runner (`Monadic/`) | Current observation / gap |

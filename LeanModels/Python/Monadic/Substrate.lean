@@ -305,6 +305,19 @@ theorem toRun_tryCatch_ok {σ α : Type} (x : PyM σ α) (handler : PyErr → Py
     ExceptT.mk, toRun, pure]
   rfl
 
+theorem toRun_tryCatch_exn {σ α : Type} (x : PyM σ α) (handler : PyErr → PyM σ α)
+    (s s' s'' : σ) (e e' : PyErr)
+    (hx : x s = .ok (.error e, s'))
+    (hh : handler e s' = .ok (.error e', s'')) :
+    toRun (tryCatch x handler) s = .exn s'' e' := by
+  change toRun (ExceptT.tryCatch x handler) s = _
+  unfold ExceptT.tryCatch
+  simp only [ExceptT.mk, StateT.bind, Except.bind, ExceptT.bindCont, Bind.bind]
+  unfold toRun
+  simp only [StateT.bind]
+  simp only [hx, Except.ok, Except.bind, StateT.bind, Bind.bind]
+  rw [hh]
+
 /-- **`Functor.map` IS NOT UNFOLDED HERE, and that is the proof shape rather
 than a preference.** Unfolding it drops below `bind_apply`'s reach and the goal
 stops being about this stack at all; going through `map_eq_pure_bind` keeps the
@@ -320,6 +333,7 @@ theorem toRun_map {σ α β : Type} (g : α → β) (x : PyM σ α) (s : σ) :
 #print axioms toRun_bind
 #print axioms toRun_bind_ok
 #print axioms toRun_tryCatch_ok
+#print axioms toRun_tryCatch_exn
 #print axioms toRun_set
 #print axioms toRun_modify
 #print axioms toRun_liftState

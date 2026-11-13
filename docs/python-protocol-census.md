@@ -467,3 +467,6 @@ the thirteen-update bridge through an abrupt `continue` flow.
 
 `Monadic.finishCallM_assign_fourteen_existing_locals_body_ok` extends normal
 assignment state threading to fourteen successive local updates.
+
+`Monadic.finishCallM_assign_fourteen_existing_locals_ret_body_ok` extends the
+fourteen-update bridge through an early value return.

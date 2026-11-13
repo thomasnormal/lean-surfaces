@@ -60,9 +60,8 @@
   "refused-ub: LeanModels.C.C23.UB.signedOverflow \"-\" { signed := true, bits := 32 } 2147483648": 3,
   "refused-unsupported: break, continue or goto escaped a function body": 2,
   "refused-unsupported: case label nested in a control statement": 1,
-  "refused-unsupported: castKind 'FloatingCast'": 2,
   "refused-unsupported: extern object 'aa' has no definition in the translation unit": 1,
-  "refused-unsupported: floating literal lacks parser-native bits": 12,
+  "refused-unsupported: floating literal lacks parser-native bits": 14,
   "refused-unsupported: indirect call through a non-FunctionDecl reference": 1,
   "refused-unsupported: integer-to-pointer conversion is not an unchanged uintptr_t/intptr_t round-trip": 3,
   "refused-unsupported: no definition for 'main'": 3,
@@ -109,8 +108,8 @@
   "refused-unsupported: unsequenced side effects in compound assignment": 1,
   "timeout": 4
  },
- "measured_at_utc": "2026-11-13T15:21:42Z",
- "measured_commit": "f136489bb6f56009223744cad1366bd832337d91",
+ "measured_at_utc": "2026-11-13T22:11:42Z",
+ "measured_commit": "02f3d34dec0ab80d789329029b64f49b9e6e1166",
  "note": "Written by harness/c_torture_score.py --emit, from a `lake exe c-torture-run` log.  The pin is docs/c-torture-pin.json.  This file is the tier's \u00a79.0 number as a second artifact: correcting the instrument corrects the next run, and the published figure is corrected where it was published.",
  "oracle_tests_compiler_tests": [
   "20021127-1.c"

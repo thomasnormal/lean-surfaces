@@ -800,6 +800,27 @@ def CoreMemDesign.issueTarget (E : CoreMemDesign) (env : IEnv) (elems : List (St
       .unsupported s!"11.5.1: memory NBA target '{name}' is not one-rank"
   | _ => .unsupported "11.5.1: packed or concatenated memory NBA target is outside this E slice"
 
+def CoreMemDesign.writeMemoryAssign (E : CoreMemDesign) (env : IEnv)
+    (elems : List (String × Nat)) (st : CoreMemState) (target : PLhs)
+    (md : CoreMemDecl) (value : LVec) : Res CoreMemState :=
+  match target with
+  | .arrayElem _ [(.int k)] =>
+      match st.memory.lookupId md.shape.id with
+      | some block =>
+          let converted := md.shape.convert value
+          if block.read k == converted then .ok st
+          else
+            match LeanModels.Sv.MemState.writeTarget env md.source target value st.memory with
+            | .error msg => .unsupported msg
+            | .ok none => .unsupported "10.3: continuous target is not one-rank"
+            | .ok (some memory) => .ok { st with memory }
+      | none => .unsupported s!"10.3: memory identity for '{md.source.name}' is not present"
+  | _ =>
+      match LeanModels.Sv.MemState.writeTarget env md.source target value st.memory with
+      | .error msg => .unsupported msg
+      | .ok none => .unsupported "10.3: continuous target is not one-rank"
+      | .ok (some memory) => .ok { st with memory }
+
 def CoreMemExec.fromQueue (st : CoreMemState) : Res CoreMemQueue → CoreMemExec
   | .ok (scalarQ, memoryQ) => .ok { state := st, scalarQ, memoryQ }
   | .timeout => .timeout
@@ -1251,10 +1272,8 @@ def CoreMemDesign.settleAssign (E : CoreMemDesign) (env : IEnv) (elems : List (S
           | none => .unsupported s!"10.3: continuous memory target '{name}' is undeclared"
           | some md =>
               let v ← E.evalExpr env elems st (some md.shape.elemWidth) value
-              match LeanModels.Sv.MemState.writeTarget env md.source target v st.memory with
-              | .error msg => .unsupported msg
-              | .ok none => .unsupported s!"10.3: continuous target '{name}' is not one-rank"
-              | .ok (some memory) => E.settleAssign env elems { st with memory } rest
+              let st' ← E.writeMemoryAssign env elems st target md v
+              E.settleAssign env elems st' rest
       | _ => .unsupported "10.3: packed or multi-rank continuous memory target is outside this slice"
   | .edge _ :: rest => E.settleAssign env elems st rest
   | .initial _ :: rest => E.settleAssign env elems st rest

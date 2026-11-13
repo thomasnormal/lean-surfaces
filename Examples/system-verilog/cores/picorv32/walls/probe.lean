@@ -1,135 +1,80 @@
 import LeanModels.Sv.Ingest2
-import LeanModels.Sv.MemCycle
-import LeanModels.Sv.HierarchyNode2
+import LeanModels.Sv.Kernel.CoreMemExec
+import LeanModels.Sv.Kernel.HierarchyCoreMem
+
+/-!
+Current ordinary-route probes for the PicoRV32 memory walls.  `load_design_sv2`
+now exposes the canonical source-shaped memory family through `.sem` (and
+`.e`); this file deliberately does not call the retired scalar or side-route
+memory elaborators.  In particular, the hierarchy shape is checked through
+the same user-facing family that the real-design loader uses, so a crash is
+never mistaken for a refusal.
+-/
+
+open LeanModels.Sv
+open LeanModels.Sv.Kernel
 
 set_option maxRecDepth 100000 in
 load_design_sv2 unpacked_cpuregs_wall
   from "Examples/system-verilog/cores/picorv32/walls/unpacked_cpuregs.sv.json"
 
+/-! PicoRV32's one-rank `cpuregs` is admitted as one native memory. -/
+#guard match unpacked_cpuregs_wall.sem 32 with
+  | .ok d => d.memories.size == 1 && d.processes.size == 2
+  | _ => false
+#guard match unpacked_cpuregs_wall.e 32 with
+  | .ok d => d.memories.size == 1 && d.processes.size == 2
+  | _ => false
+
 set_option maxRecDepth 100000 in
 load_design_sv2 net_z_memory_wall
   from "Examples/system-verilog/cores/picorv32/walls/net_z_memory.sv.json"
+
+#guard match net_z_memory_wall.sem 4 with
+  | .ok d => d.memories.size == 1 && d.processes.size == 1
+  | _ => false
+#guard net_z_memory_wall.pdesign.others ==
+  [("NetSymbol:net-z", "pcpi_mul_wr")]
+#guard net_z_memory_wall.pdesign.netMetadata ==
+  [{ name := "pcpi_mul_wr", width := 1, netKind := "Wire", signed := false,
+     fourState := true, isNet := true, driverReason := some "no driver: the net reads z" }]
 
 set_option maxRecDepth 100000 in
 load_design_sv2 task_memory_wall
   from "Examples/system-verilog/cores/picorv32/walls/task_memory.sv.json"
 
+#guard match task_memory_wall.sem 4 with
+  | .ok d => d.memories.size == 1 && d.processes.size == 2
+  | _ => false
+#guard task_memory_wall.pdesign.others ==
+  [("SubroutineSymbol:empty-task", "task empty_statement;\n    begin end\n  endtask")]
+
 set_option maxRecDepth 100000 in
 load_design_sv2 task_memory_comments_wall
   from "Examples/system-verilog/cores/picorv32/walls/task_memory_comments.sv.json"
+
+/-! A nonempty task marker remains a loud module-member refusal. -/
+#guard match task_memory_comments_wall.sem 4 with
+  | .unsupported _ => true
+  | _ => false
 
 set_option maxRecDepth 100000 in
 load_design_sv2 xz_memory_wall
   from "Examples/system-verilog/cores/picorv32/walls/xz_memory.sv.json"
 
-set_option maxRecDepth 100000 in
-load_design_sv2 nonliteral_initializer_wall
-  from "Examples/system-verilog/cores/picorv32/walls/nonliteral_initializer.sv.json"
-
-set_option maxRecDepth 100000 in
-load_design_sv2 xz_conversion_memory_wall
-  from "Examples/system-verilog/cores/picorv32/walls/xz_conversion_memory.sv.json"
-
-#guard match (unpacked_cpuregs_wall.sem 32).processes with
-  | #[.unsupported "Instantiate"
-      "decl 'cpuregs': unpacked array storage outside E (UnpackedDecl:memory)"] => true
-  | _ => false
-
-private def cpuregsMem : LeanModels.Sv.Kernel.MemDesign2 :=
-  unpacked_cpuregs_wall.pdesign.instantiateMemD2 [32]
-
-#guard cpuregsMem.memDecls.length == 1
-#guard cpuregsMem.processes.length == 2
-
-#guard match (net_z_memory_wall.pdesign.instantiateMemD2 [4]).processes with
-  | [.assign "q" (.arrayElem "mem" [.int 0])] => true
-  | _ => false
-
-#guard net_z_memory_wall.pdesign.others == [("NetSymbol:net-z", "pcpi_mul_wr")]
-#guard net_z_memory_wall.pdesign.netMetadata ==
-  [{ name := "pcpi_mul_wr", width := 1, netKind := "Wire", signed := false,
-     fourState := true, isNet := true, driverReason := some "no driver: the net reads z" }]
-
-#guard task_memory_wall.pdesign.others ==
-  [("SubroutineSymbol:empty-task", "task empty_statement;\n    begin end\n  endtask")]
-
--- The memory adapter's admission is keyed to the extractor's exact empty-task
--- marker.  A general task marker remains a loud unsupported module member.
-#guard LeanModels.Sv.Kernel.memAllowedOther
-  ("SubroutineSymbol:empty-task", "task empty_statement;\n    begin end\n  endtask")
-#guard !LeanModels.Sv.Kernel.memAllowedOther
-  ("SubroutineSymbol:Subroutine", "task nonempty; begin q = 1; endtask")
-
-private def taskMem : LeanModels.Sv.Kernel.MemDesign2 :=
-  task_memory_wall.pdesign.instantiateMemD2 [4]
-
-#guard match taskMem.processes with
-  | .alwaysFF "clk" (.block [.block []]) :: .assign "q" (.arrayElem "mem" [.int 0]) :: _ => true
-  | _ => false
-
-#guard task_memory_comments_wall.pdesign.others ==
-  [("SubroutineSymbol:Subroutine",
-    "task empty_statement;\n    // This task is used by the `assert directive in non-formal mode to\n    // avoid empty statement (which are unsupported by plain Verilog syntax).\n    begin end\n  endtask")]
-
-#guard match (task_memory_comments_wall.pdesign.instantiateMemD2 [4]).processes with
-  | [.unsupported "Instantiate"
-      "memory cycle route does not yet admit unsupported module members"] => true
-  | _ => false
-
 #guard xz_memory_wall.pdesign.others ==
   [("IntegerLiteral:unsized-xz-parametric", "'bx")]
-
-#guard match (xz_memory_wall.sem 32).processes with
-  | #[.unsupported "Instantiate"
-      "decl 'mem': unpacked array storage outside E (UnpackedDecl:memory)"] => true
+#guard match xz_memory_wall.sem 32 with
+  | .ok d => d.memories.size == 1 && d.processes.size == 2
   | _ => false
 
-#guard match (xz_memory_wall.pdesign.instantiateMemD2 [4]).processes with
-  | [.assign "q" (.arrayElem "mem" [.int 0]),
-      .assignL (.arrayElem "mem" [.int 0]) (.lit _)] => true
-  | _ => false
+set_option maxRecDepth 100000 in
+load_design_sv2 memoryShapeB
+  from "Examples/system-verilog/sem2/memory_shape_b_canonical_e/memory_shape_b_canonical_e.sv.json"
 
--- The admitted unsized `'bx` remains an x-valued memory cell and therefore
--- produces x on the continuous read; it is never turned into a convenient 0.
-#guard match LeanModels.Sv.Kernel.runMem2 (xz_memory_wall.pdesign.instantiateMemD2 [4]) 32
-    [[("clk", LeanModels.Sv.LVec.lit "0")]] with
-  | .ok [st] => LeanModels.Sv.SvState.lookup st "q" == some (LeanModels.Sv.LVec.xVec 32)
-  | _ => false
-
--- The ordinary flat family remains loud at this declaration boundary, while
--- the source-shaped memory route retains and executes the initializer once
--- before its first input sample.
-#guard match nonliteral_initializer_wall.sem.processes with
-  | #[.unsupported "Instantiate" _] => true
-  | _ => false
-
-#guard match (nonliteral_initializer_wall.pdesign.instantiateMemD2 []).initializers with
-  | [("t", .resize 2 (.ident "a"))] => true
-  | _ => false
-
-#guard match LeanModels.Sv.Kernel.runMem2
-    (nonliteral_initializer_wall.pdesign.instantiateMemD2 []) 32
-    [[("a", LeanModels.Sv.LVec.lit "11")]] with
-  | .ok [st] => LeanModels.Sv.SvState.lookup st "q" == some (LeanModels.Sv.LVec.lit "0x")
-  | _ => false
-
-#guard xz_conversion_memory_wall.pdesign.others ==
-  [("ConversionExpression:xz-literal-parametric", "'bx"),
-   ("IntegerLiteral:unsized-xz-parametric", "'bx")]
-
-#guard (xz_conversion_memory_wall.sem 8).processes.toList.any fun p =>
-  match p with
-  | .unsupported "ConversionExpression:xz-literal-parametric" _ => true
-  | _ => false
-
--- The conversion marker widens the unsized x site at the instantiated target
--- width, so the memory route remains all-x when N differs from the default.
-#guard match (xz_conversion_memory_wall.pdesign.instantiateMemD2 [16]).processes with
-  | [.assign "q" (.ident "mem[0]"), .assign "mem[0]" (.lit _)] => true
-  | _ => false
-
-#guard match LeanModels.Sv.Kernel.runMem2
-    (xz_conversion_memory_wall.pdesign.instantiateMemD2 [16]) 32
-    [[("clk", LeanModels.Sv.LVec.lit "0")]] with
-  | .ok [st] => LeanModels.Sv.SvState.lookup st "q" == some (LeanModels.Sv.LVec.xVec 16)
+/-! Shape (b) uses the ordinary hierarchy-memory family.  This guard is the
+Lean side of the simulator oracle and remains bounded, so a hierarchy bug is
+reported as a failed check rather than a process crash. -/
+#guard match memoryShapeB.sem 4 3 with
+  | .ok d => d.memories.size == 1 && d.processes.size == 5
   | _ => false

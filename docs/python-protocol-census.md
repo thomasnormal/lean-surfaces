@@ -225,6 +225,9 @@ assignment into a following normal expression statement.
 `Monadic.finishCallM_assign_two_existing_locals_body_ok` checks two successive
 existing-local assignments, threading both updates through normal completion.
 
+`Monadic.finishCallM_assign_three_existing_locals_body_ok` extends the same
+state threading to three successive assignments.
+
 `Monadic.finishCallM_three_pass_ret_body_ok` extends early-return sequencing
 to three normal statements followed by a return.
 

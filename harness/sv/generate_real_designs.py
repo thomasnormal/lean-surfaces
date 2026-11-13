@@ -11,9 +11,9 @@ OUT = ROOT / "docs" / "sv-real-designs.md"
 # output table is generated; changing a result requires changing its measured
 # receipt and rerunning this script.
 ROWS = [
-    ("prim_fifo_sync", "OpenTitan 0a6ff685", "37", "no", "Constant: CallExpression (DepthW, line 22)"),
+    ("prim_fifo_sync", "OpenTitan 0a6ff685", "37", "no", "PortSymbol:net-z (wready_o, line 30)"),
     ("prim_arbiter_ppc", "OpenTitan 0a6ff685", "11", "no", "T2:Initial (CheckNGreaterZero_A, line 57)"),
-    ("prim_packer", "OpenTitan 0a6ff685", "20", "no", "Constant: CallExpression (IdxW, line 44)"),
+    ("prim_packer", "OpenTitan 0a6ff685", "20", "no", "PortSymbol:net-z (ready_o, line 18)"),
     ("CV32E40P", "openhwgroup v1.0.1 / 6148cf5", "574", "no", "AlwaysPosedge:edge"),
     ("Ibex", "lowRISC d513671d", "396", "no", "AlwaysLatch:unknown process kind"),
     ("PicoRV32", "YosysHQ ef203c2b", "70", "yes", "canonical E loaded: 1 memory, 54 processes"),

@@ -2624,7 +2624,10 @@ def callCloAt (K : Kont) (m : Module) (name : String) (params : Array Param)
       pure (.ref w.heap.size)
   else do
     -- Ordinary closures enter the same Python-frame unit as named functions.
-    withClosureRecursionUnit do
+    let w ← get
+    if envHasGenerator w.heap captured && pythonRecursionFull (w.callDepth + 1) then
+      raisePy .recursionError
+    else withClosureRecursionUnit do
       let env := markUnboundLocals body.toList (mkCallEnv params args) ++ captured
       match ← inWorld env (execOpenList K m body.toList) with
       | .ret v => pure v

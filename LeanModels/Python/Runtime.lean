@@ -374,6 +374,18 @@ notation resolves into the `Array` namespace — same caveat as `Env.lookup`). -
 def Heap.get? (h : Heap) (a : Addr) : Option Obj :=
   if hlt : a < h.size then some (h[a]'hlt) else Option.none
 
+/-- Whether a closure capture contains a live generator reference.  CPython's
+generator-bearing closure call path consumes the pending C entry unit before
+the nested Python frame; the walker is kept here so both interpreters share
+the same admission fact. -/
+def envHasGenerator (h : Heap) : REnv → Bool
+  | [] => false
+  | (_, .ref a) :: rest =>
+      (match Heap.get? h a with
+       | some (.generator ..) => true
+       | _ => false) || envHasGenerator h rest
+  | _ :: rest => envHasGenerator h rest
+
 /-- Bounds-checked heap write (same address, new object; size preserved). -/
 def Heap.update (h : Heap) (a : Addr) (o : Obj) : Option Heap :=
   if hlt : a < h.size then some (h.set a o hlt) else Option.none

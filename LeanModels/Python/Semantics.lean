@@ -11897,9 +11897,12 @@ def callClosure (m : Module) (fuel : Nat) (w : World) (name : String)
     else
       -- Objects/call.c:_PyFunction_Vectorcall evaluates an ordinary closure
       -- in a Python frame; ceval.c:_PyEval_EvalFrameDefault enters the unit.
-      Run.leaveCallDepth <|
-      Run.toWorld <|
-        execStmts m fuel ⟨{ w with callDepth := w.callDepth + 1 },
+      if envHasGenerator w.heap captured && pythonRecursionFull (w.callDepth + 1) then
+        .exn w .recursionError
+      else
+        Run.leaveCallDepth <|
+        Run.toWorld <|
+          execStmts m fuel ⟨{ w with callDepth := w.callDepth + 1 },
           mkCallEnv params args ++ captured⟩ body.toList ⤳ fun st flow =>
         match flow with
         | .ret v => .ok st v

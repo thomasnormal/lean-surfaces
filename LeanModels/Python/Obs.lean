@@ -2266,6 +2266,7 @@ theorem fuelMono (fuel : Nat) :
           (Run.le_ite (Run.le_refl _) ?_))
         refine Run.le_ite (Run.le_refl _) ?_
         refine Run.le_ite (Run.le_refl _) ?_
+        refine Run.le_ite (Run.le_refl _) ?_
         refine Run.le_leaveCallDepth ?_
         refine Run.le_toWorld ?_
         refine Run.le_bind

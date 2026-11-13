@@ -14254,3 +14254,21 @@ value returns with unchanged world observables and exactly the requested
 
 DECIDED: the monadic restoration equation is now checked for the pure body
 base; nonempty and effectful bodies remain open.
+
+## 2026-11-13-pyfoundation-116 — restore depth for empty statement bodies
+
+`Monadic.finishCallM_empty_body_ok` composes the empty `execOpenList` body,
+`inWorld`, `tryCatch`, and call-depth restoration. It proves that an empty
+ordinary body returns `.next`, `.none`-equivalent control state, unchanged
+world observables, and the requested restored depth.
+
+| Measurement | Result |
+|---|---|
+| Target | `lake build LeanModels.Python.Monadic.Eval` passed; 11/11 jobs |
+| Theorem | `Monadic.finishCallM_empty_body_ok` |
+| Domain | arbitrary module, continuation, locals, world, and restoration depth |
+| Semantic change | theorem-only empty-body call composition |
+| Remaining debt | nonempty positive-fuel bodies and recursive calls |
+
+DECIDED: the ordinary empty-body call path is now composed through the actual
+interpreter boundary; nonempty body adequacy remains open.

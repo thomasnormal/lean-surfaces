@@ -423,6 +423,9 @@ structure Layout where
   /-- `offsetof`, keyed on the BASE expression's spelling, so `p->f` and
   `x.f` look up under `"const Pos *"` and `"Pos"` respectively. -/
   fieldOff : CType → String → Option Nat
+  /-- Declaration-identity lookup for block-local records whose tag spelling
+  collides with another record in the same translation unit. -/
+  fieldOffDecl : DeclarationId → String → Option Nat := fun _ _ => none
   /-- Bit-field representation facts from Clang's record-layout observation.
   The pair is `(offset_bits, width_bits)`; `none` means an ordinary member.
   These are frontend facts, never reconstructed from a type spelling. -/
@@ -465,6 +468,7 @@ structure Layout where
 missing layout fact is a loud refusal rather than a guessed offset. -/
 def Layout.unknown : Layout :=
   { size := fun _ => none, fieldOff := fun _ _ => none
+    fieldOffDecl := fun _ _ => none
     fieldBits := fun _ _ => none
     flexibleField := fun _ _ => false
     elem := fun _ => none, members := fun _ => none
@@ -1542,11 +1546,20 @@ def evalArgs (ctx : Ctx) : List Expr → EvalM (List CVal)
 Takes `base` — a strict SUBTERM — rather than the reassembled node. The
 node this replaces was rebuilt as `.member base field arrow ty sp`, which
 is not a subterm of anything, and that is what defeated the recursion. -/
+def directDeclId : Expr → Option DeclarationId
+  | .declRef id _ _ _ _ => id
+  | .implicitCast _ sub _ _ => directDeclId sub
+  | .cast _ sub _ _ => directDeclId sub
+  | .paren sub _ _ => directDeclId sub
+  | _ => none
+
 def memberAddr (ctx : Ctx) (base : Expr) (field : String) (arrow : Bool)
     (fieldTy : CType) : EvalM Ptr := do
   let basePtr ← if arrow then (do let v ← evalExpr ctx base; asPtr v)
                 else evalLValue ctx base
-  match ctx.layout.fieldOff base.ty field with
+  let off? := (directDeclId base).bind (fun did => ctx.layout.fieldOffDecl did field)
+    |>.orElse (fun _ => ctx.layout.fieldOff base.ty field)
+  match off? with
   | some off =>
       match ctx.layout.size (ctx.layout.normalizeTy fieldTy) with
       | some sz => pure (Mem.memberRange basePtr off sz)

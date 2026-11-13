@@ -519,9 +519,30 @@ def fieldOffIn (tds : List (CType × CType))
 
 /-- The layout for ONE test, built from its own envelope. -/
 def layoutFor (envl : Envelope) : Layout :=
+  let ds := allDecls envl
   let tds := typedefsOf envl
   let recs := recordsOf envl
   let observed := observedRecordFacts envl
+  let declFieldOff := fun did f =>
+    match ds.find? (fun q => match q with
+      | .var (some vid) _ _ _ _ (some rid) _ _ => vid == did &&
+          ds.any (fun r => match r with
+            | .record (some rrid) _ fields (some layout) _ =>
+                rrid == rid && (checkedRecordLayout? fields layout).isSome
+            | _ => false)
+      | _ => false) with
+    | some (.var _ _ _ _ _ (some rid) _ _) =>
+        match ds.find? (fun q => match q with
+          | .record (some rrid) _ _ _ _ => rrid == rid
+          | _ => false) with
+        | some (.record _ _ fields (some layout) _) =>
+            match checkedRecordLayout? fields layout with
+            | some checked =>
+                checked.fields.find? (fun field => field.name == f)
+                  |>.map (fun field => field.offsetBits / 8)
+            | none => none
+        | _ => none
+    | _ => none
   -- Feed checked parser-native records into the structural array/typedef
   -- fallback too.  An anonymous typedef such as `Data` has no named
   -- RecordDecl in `recordsOf`, but its observed declaration identity still
@@ -540,6 +561,7 @@ def layoutFor (envl : Envelope) : Layout :=
   { size := fun t => match observedFor t with
       | some (_, _, layout) => some layout.sizeBytes
       | none => (sizeAlign tds recsWithObserved 16 t).map (·.1)
+    fieldOffDecl := declFieldOff
     elem := fun t => arrayOf (resolve tds 8 t)
     fieldOff := fun t f => match observedPointeeFor t with
       | some (_, _, layout) =>

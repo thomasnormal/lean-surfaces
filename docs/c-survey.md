@@ -2,10 +2,10 @@
 
 Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manifest.
 
-- verdicts: 993/2214 MATCH (passed 993, failed 0, oracle 0)
-- manifest SHA-256: `4d8afe61eef80e3375b075675de6e69c9ce458e67ceccb058324689347c1449d`
-- measured commit: `ae892f81e`
-- measured at: `2026-11-13T09:40:50Z`
+- verdicts: 994/2214 MATCH (passed 994, failed 0, oracle 0)
+- manifest SHA-256: `e284f1ab02d894ce47edac10d10dc08d0847477b73ca6eb801bc5e68f46ef2f5`
+- measured commit: `60ee2ce57`
+- measured at: `2026-11-13T09:49:07Z`
 
 ## Verdict counts
 
@@ -13,20 +13,20 @@ Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manife
 | --- | ---: |
 | `not-parsed` | 294 |
 | `oracle-tests-compiler` | 1 |
-| `passed` | 993 |
+| `passed` | 994 |
 | `refused-libc` | 55 |
 | `refused-ub` | 105 |
-| `refused-unsupported` | 700 |
+| `refused-unsupported` | 699 |
 | `timeout` | 66 |
 
 ## Counts by corpus
 
 | corpus | verdict | files |
 | --- | --- | ---: |
-| `c-testsuite/single-exec` | `passed` | 167 |
+| `c-testsuite/single-exec` | `passed` | 168 |
 | `c-testsuite/single-exec` | `refused-libc` | 2 |
 | `c-testsuite/single-exec` | `refused-ub` | 8 |
-| `c-testsuite/single-exec` | `refused-unsupported` | 41 |
+| `c-testsuite/single-exec` | `refused-unsupported` | 40 |
 | `c-testsuite/single-exec` | `timeout` | 2 |
 | `gcc.c-torture/execute` | `not-parsed` | 267 |
 | `gcc.c-torture/execute` | `oracle-tests-compiler` | 1 |
@@ -518,7 +518,6 @@ The run's first refusal, normalized by construct; `sole` counts rows whose first
 | `unsupported:no layout for field 'j'` | 1 | 1 | pr97073.c |
 | `unsupported:no layout for field 'n'` | 1 | 1 | pr39100.c |
 | `unsupported:no layout for field 's'` | 1 | 1 | 20190901-1.c |
-| `unsupported:no layout for field 'y'` | 1 | 1 | 00053.c |
 | `unsupported:no layout for parameter type 'const unsigned int *const'` | 1 | 1 | pr63209.c |
 | `unsupported:no layout for parameter type 'foo_t *const'` | 1 | 1 | pr33669.c |
 | `unsupported:no layout for parameter type 'int **restrict'` | 1 | 1 | 20080506-2.c |

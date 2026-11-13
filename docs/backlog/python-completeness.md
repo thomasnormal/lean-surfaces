@@ -15135,7 +15135,7 @@ successive assignments `v = 0; w = 1; x = 2; y = 3; z = 4` followed by
 
 | Measurement | Result |
 |---|---|
-| Target | `lake build LeanModels.Python.Monadic.Eval` pending for this item |
+| Target | `lake build LeanModels.Python.Monadic.Eval` passed; 11/11 jobs |
 | Theorem | `Monadic.finishCallM_assign_five_existing_locals_break_body_ok` |
 | Domain | five consecutive assignments to existing locals followed by break |
 | Semantic change | theorem-only five-assignment break-flow composition |
@@ -15213,3 +15213,21 @@ successive assignments `u = 0; v = 1; w = 2; x = 3; y = 4; z = 5` followed by
 
 DECIDED: six assignment steps now compose through normal pass flow; arbitrary
 assignment and recursive body adequacy remain open.
+
+## 2026-11-13-pyfoundation-173 — six-assignment expression bridge
+
+`Monadic.finishCallM_assign_six_existing_locals_expr_body_ok` checks six
+successive assignments `u = 0; v = 1; w = 2; x = 3; y = 4; z = 5` followed by
+an integer expression statement, preserving normal completion and depth
+restoration.
+
+| Measurement | Result |
+|---|---|
+| Target | `lake build LeanModels.Python.Monadic.Eval` pending for this item |
+| Theorem | `Monadic.finishCallM_assign_six_existing_locals_expr_body_ok` |
+| Domain | six consecutive assignments to existing locals followed by an expression statement |
+| Semantic change | theorem-only six-assignment expression-flow composition |
+| Remaining debt | arbitrary locals and recursive positive-fuel calls |
+
+DECIDED: six assignment steps now compose through a normal expression flow;
+arbitrary assignment and recursive body adequacy remain open.

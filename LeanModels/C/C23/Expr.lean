@@ -895,6 +895,7 @@ def mayWrite (ctx : Ctx) (e : Expr) : Bool :=
               nm == "__builtin_inf" || nm == "__builtin_inff" ||
               nm == "__builtin_huge_val" || nm == "__builtin_huge_valf" ||
               nm == "__builtin_nanf" || nm == "__builtin_nan" ||
+              nm == "__builtin_copysign" || nm == "__builtin_copysignf" ||
               nm == "__builtin_bswap16" || nm == "__builtin_bswap32" ||
               nm == "__builtin_bswap64" || nm == "__builtin_ffs" ||
               nm.contains "ctz" || nm.contains "clz" || nm.contains "clrsb" ||

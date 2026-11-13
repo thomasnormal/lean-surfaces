@@ -754,6 +754,7 @@ def functionCallFree (f : LeanModels.C.FunctionDefn) : Bool :=
                  nm == "__builtin_fabsl" || nm == "__builtin_isinf" ||
                  nm == "__builtin_isnan" || nm == "__builtin_isfinite" ||
                  nm == "__builtin_signbit" || nm == "__builtin_bswap16" ||
+                 nm == "__builtin_copysign" || nm == "__builtin_copysignf" ||
                  nm == "__builtin_bswap32" || nm == "__builtin_bswap64" ||
                  nm == "__builtin_ffs" || nm.contains "ctz" || nm.contains "clz" ||
                  nm.contains "clrsb" || nm.contains "popcount" || nm.contains "parity" ||
@@ -1390,6 +1391,21 @@ def callFn : Nat → Program → LeanModels.C.FunctionDefn → List CVal → Exe
                 pure (.float64 (Float.Model.ofBits (UInt64.ofNat 0x7ff8000000000000)))
               else refuseUnsupported s!"{nm}: long double NaN is outside the profile"
           | _ => refuseUnsupported s!"{nm}: wrong argument count"
+        let runCopySign : String → List CVal → ExecM CVal := fun nm vs =>
+          match vs with
+          | [.float32 a, .float32 b] =>
+              if nm == "__builtin_copysignf" then
+                let mag := a.toBits &&& UInt32.ofNat 0x7fffffff
+                let sign := b.toBits &&& UInt32.ofNat 0x80000000
+                pure (.float32 (Float32.Model.ofBits (mag ||| sign)))
+              else refuseUnsupported s!"{nm}: expected binary64 arguments"
+          | [.float64 a, .float64 b] =>
+              if nm == "__builtin_copysign" then
+                let mag := a.toBits &&& UInt64.ofNat 0x7fffffffffffffff
+                let sign := b.toBits &&& UInt64.ofNat 0x8000000000000000
+                pure (.float64 (Float.Model.ofBits (mag ||| sign)))
+              else refuseUnsupported s!"{nm}: expected binary32 arguments"
+          | _ => refuseUnsupported s!"{nm}: unsupported argument types"
         let runAbs : List CVal → ExecM CVal := fun vs =>
           match vs with
           | [value] => do
@@ -1512,6 +1528,7 @@ def callFn : Nat → Program → LeanModels.C.FunctionDefn → List CVal → Exe
                 runBswap64 vs
                     else if nm == "__builtin_fabs" || nm == "__builtin_fabsf" || nm == "__builtin_fabsl" then runFloatAbs nm vs
                     else if nm == "__builtin_nanf" || nm == "__builtin_nan" || nm == "__builtin_nanl" then runFloatNan nm vs
+                    else if nm == "__builtin_copysign" || nm == "__builtin_copysignf" then runCopySign nm vs
                     else if nm == "__builtin_isfinite" || nm == "__builtin_isnan" || nm == "__builtin_isinf" || nm == "__builtin_signbit" then runFloatClass nm vs
                     else if nm == "__builtin_inf" || nm == "__builtin_inff" || nm == "__builtin_infl" || nm == "__builtin_huge_val" || nm == "__builtin_huge_valf" || nm == "__builtin_huge_vall" then
                       runInf nm vs
@@ -1592,6 +1609,7 @@ def callFn : Nat → Program → LeanModels.C.FunctionDefn → List CVal → Exe
               else if nm == "__builtin_bswap64" then runBswap64 vs
               else if nm == "__builtin_fabs" || nm == "__builtin_fabsf" || nm == "__builtin_fabsl" then runFloatAbs nm vs
               else if nm == "__builtin_nanf" || nm == "__builtin_nan" || nm == "__builtin_nanl" then runFloatNan nm vs
+              else if nm == "__builtin_copysign" || nm == "__builtin_copysignf" then runCopySign nm vs
               else if nm == "__builtin_isfinite" || nm == "__builtin_isnan" || nm == "__builtin_isinf" || nm == "__builtin_signbit" then runFloatClass nm vs
               else if nm == "__builtin_inf" || nm == "__builtin_inff" || nm == "__builtin_infl" || nm == "__builtin_huge_val" || nm == "__builtin_huge_valf" || nm == "__builtin_huge_vall" then runInf nm vs
               else if nm == "__builtin_abs" || nm == "abs" then runAbs vs

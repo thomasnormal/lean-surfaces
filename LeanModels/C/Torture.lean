@@ -328,6 +328,7 @@ def checkedRecordLayout? (fields : List Decl) (layout : RecordLayout) :
    .field (some "b") "int" none default]
   [{ name := "a", offsetBits := 0, bitfield := false },
    { name := "b", offsetBits := 32, bitfield := false }]
+#guard ("union (unnamed at x)".startsWith "union (unnamed")
 
 /-! A checked, identity-backed aggregate fact.  The type key is only the
 spelling Clang itself attached to the declaration (`struct S`/`union U`);
@@ -341,7 +342,7 @@ def observedRecordFacts (envl : Envelope) :
     fields.filterMap fun child => match child with
       | .record _ none nested (some layout) _ =>
           match fields.find? (fun f => match f with
-            | .field _ ty _ _ => ty.startsWith "struct (unnamed"
+            | .field _ ty _ _ => ty.startsWith "struct (unnamed" || ty.startsWith "union (unnamed"
             | _ => false) with
           | some (.field _ ty _ _) =>
               match checkedRecordLayout? nested layout with

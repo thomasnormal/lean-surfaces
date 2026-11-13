@@ -640,13 +640,25 @@ def coreMemSelectCase (E : CoreMemDesign) (env : IEnv) (elems : List (String × 
 
 /-! ## Source-shaped edge bodies -/
 
-abbrev CoreMemExec := Res (NbaQueue2 × MemNbaQueue)
+/- An edge activation carries both the state changed immediately by blocking
+assignments and the updates deferred to the NBA region.  Keeping the state in
+the result is what makes source order observable: a later statement samples a
+value written by an earlier blocking assignment, while an NBA still samples
+the state at its issue site. -/
+structure CoreMemExecResult where
+  state : CoreMemState
+  scalarQ : NbaQueue2
+  memoryQ : MemNbaQueue
+
+abbrev CoreMemExec := Res CoreMemExecResult
+
+abbrev CoreMemQueue := NbaQueue2 × MemNbaQueue
 
 def CoreMemDesign.scalarTarget (E : CoreMemDesign) (name : String) : Option Nat :=
   E.scalarWidth? name
 
 def CoreMemDesign.issueTarget (E : CoreMemDesign) (env : IEnv) (elems : List (String × Nat))
-    (st : CoreMemState) (target : PLhs) (value : LVec) : CoreMemExec :=
+    (st : CoreMemState) (target : PLhs) (value : LVec) : Res CoreMemQueue :=
   match target with
   | .ident name =>
       match E.scalarTarget name with
@@ -669,8 +681,13 @@ def CoreMemDesign.issueTarget (E : CoreMemDesign) (env : IEnv) (elems : List (St
       .unsupported s!"11.5.1: memory NBA target '{name}' is not one-rank"
   | _ => .unsupported "11.5.1: packed or concatenated memory NBA target is outside this E slice"
 
-def CoreMemExec.append (a b : NbaQueue2 × MemNbaQueue) : NbaQueue2 × MemNbaQueue :=
-  (a.1 ++ b.1, a.2 ++ b.2)
+def CoreMemExec.fromQueue (st : CoreMemState) : Res CoreMemQueue → CoreMemExec
+  | .ok (scalarQ, memoryQ) => .ok { state := st, scalarQ, memoryQ }
+  | .timeout => .timeout
+  | .unsupported msg => .unsupported msg
+
+def CoreMemExec.append (a b : CoreMemExecResult) : CoreMemExecResult :=
+  { state := b.state, scalarQ := a.scalarQ ++ b.scalarQ, memoryQ := a.memoryQ ++ b.memoryQ }
 
 /-! ## Time-zero source statements
 
@@ -978,6 +995,29 @@ def CoreMemDesign.runComb (E : CoreMemDesign) (before current : CoreMemState) :
   | .implicit _ :: rest => E.runComb before current rest
   | .unsupported kind text :: _ => .unsupported s!"{kind}: {text}"
 
+/- A blocking edge write updates the retained state immediately.  The same
+one-rank source-shaped memory target used by the initializer and combinational
+routes is accepted here; NBA targets continue through `issueTarget` below. -/
+def CoreMemDesign.execBlockingTarget (E : CoreMemDesign) (env : IEnv)
+    (elems : List (String × Nat)) (st : CoreMemState) (target : PLhs)
+    (value : PExpr) : Res CoreMemState :=
+  match target with
+  | .ident name =>
+      match E.scalarTarget name with
+      | none => .unsupported s!"9.2.2.1: scalar edge target '{name}' is undeclared"
+      | some width => do
+          let v ← E.evalExpr env elems st (some width) value
+          .ok { st with scalar := E.scalar.setName st.scalar name v }
+  | .arrayElem name [_] =>
+      match E.memDecl? name with
+      | none => .unsupported s!"9.2.2.1: memory edge target '{name}' is undeclared"
+      | some md => do
+          let v ← E.evalExpr env elems st (some md.shape.elemWidth) value
+          E.writeInitialCell env elems st target name md v
+  | .arrayElem name _ =>
+      .unsupported s!"9.2.2.1: memory edge target '{name}' is not one-rank"
+  | _ => .unsupported "9.2.2.1: packed or concatenated edge target is outside this E slice"
+
 mutual
 
 def CoreMemDesign.execStmtFuel (E : CoreMemDesign) (env : IEnv) (elems : List (String × Nat))
@@ -988,7 +1028,7 @@ def CoreMemDesign.execStmtFuel (E : CoreMemDesign) (env : IEnv) (elems : List (S
       | none => .unsupported s!"11.5.1: scalar NBA target '{target}' is undeclared"
       | some width => do
           let v ← E.evalExpr env elems st (some width) value
-          E.issueTarget env elems st (.ident target) v
+          CoreMemExec.fromQueue st (E.issueTarget env elems st (.ident target) v)
   | fuel + 1, .nbaAssignL target value =>
       match target with
       | .ident name =>
@@ -996,20 +1036,26 @@ def CoreMemDesign.execStmtFuel (E : CoreMemDesign) (env : IEnv) (elems : List (S
           | none => .unsupported s!"11.5.1: scalar NBA target '{name}' is undeclared"
           | some width => do
               let v ← E.evalExpr env elems st (some width) value
-              E.issueTarget env elems st target v
+              CoreMemExec.fromQueue st (E.issueTarget env elems st target v)
       | .arrayElem name [index] =>
           match E.memDecl? name with
           | none => .unsupported s!"11.5.1: memory NBA target '{name}' is undeclared"
           | some md => do
               let v ← E.evalExpr env elems st (some md.shape.elemWidth) value
-              E.issueTarget env elems st target v
+              CoreMemExec.fromQueue st (E.issueTarget env elems st target v)
       | _ => .unsupported "11.5.1: memory target is outside the one-rank element tier"
-  | fuel + 1, .blockingAssign _ _ | fuel + 1, .blockingAssignL _ _ =>
-      .unsupported "9.2.2.1: blocking assignment in a canonical E edge body"
+  | fuel + 1, .blockingAssign name value => do
+      let st' ← E.execBlockingTarget env elems st (.ident name) value
+      .ok { state := st', scalarQ := [], memoryQ := [] }
+  | fuel + 1, .blockingAssignL target value => do
+      let st' ← E.execBlockingTarget env elems st target value
+      .ok { state := st', scalarQ := [], memoryQ := [] }
   | fuel + 1, .ifStmt cond yes no => do
       let cv ← E.evalExpr env elems st (some 1) cond
       if cv.condTrue then E.execStmtFuel env elems st fuel yes
-      else match no with | none => .ok ([], []) | some s => E.execStmtFuel env elems st fuel s
+      else match no with
+        | none => .ok { state := st, scalarQ := [], memoryQ := [] }
+        | some s => E.execStmtFuel env elems st fuel s
   | fuel + 1, .block body => E.execStmtsFuel env elems st fuel body
   | fuel + 1, .forLoop iterator init condition step body =>
       match forValues2 env iterator init condition step with
@@ -1025,14 +1071,14 @@ def CoreMemDesign.execStmtFuel (E : CoreMemDesign) (env : IEnv) (elems : List (S
         | .none =>
             let selected ← coreMemSelectCase E env elems st sv mode items default?
             match selected with
-            | none => .ok ([], [])
+            | none => .ok { state := st, scalarQ := [], memoryQ := [] }
             | some body => E.execStmtFuel env elems st fuel body
         | qualifier =>
             let n ← coreMemCaseHits E env elems st sv mode items
             if caseClaimOk qualifier default?.isSome n then
               let selected ← coreMemSelectCase E env elems st sv mode items default?
               match selected with
-              | none => .ok ([], [])
+              | none => .ok { state := st, scalarQ := [], memoryQ := [] }
               | some body => E.execStmtFuel env elems st fuel body
             else
               .unsupported s!"12.5.3: {caseCheckName qualifier}"
@@ -1041,19 +1087,19 @@ def CoreMemDesign.execStmtFuel (E : CoreMemDesign) (env : IEnv) (elems : List (S
 def CoreMemDesign.execStmtsFuel (E : CoreMemDesign) (env : IEnv) (elems : List (String × Nat))
     (st : CoreMemState) : Nat → List PStmt → CoreMemExec
   | 0, _ => .timeout
-  | fuel + 1, [] => .ok ([], [])
+  | fuel + 1, [] => .ok { state := st, scalarQ := [], memoryQ := [] }
   | fuel + 1, stmt :: rest => do
       let a ← E.execStmtFuel env elems st fuel stmt
-      let b ← E.execStmtsFuel env elems st fuel rest
+      let b ← E.execStmtsFuel env elems a.state fuel rest
       .ok (CoreMemExec.append a b)
 
 def CoreMemDesign.execLoopValuesFuel (E : CoreMemDesign) (env : IEnv) (elems : List (String × Nat))
     (st : CoreMemState) : Nat → List Int → PStmt → String → CoreMemExec
   | 0, _, _, _ => .timeout
-  | fuel + 1, [], _, _ => .ok ([], [])
+  | fuel + 1, [], _, _ => .ok { state := st, scalarQ := [], memoryQ := [] }
   | fuel + 1, i :: rest, body, iterator => do
       let a ← E.execStmtFuel (env.bindVal iterator i) elems st fuel body
-      let b ← E.execLoopValuesFuel env elems st fuel rest body iterator
+      let b ← E.execLoopValuesFuel env elems a.state fuel rest body iterator
       .ok (CoreMemExec.append a b)
 
 end
@@ -1113,11 +1159,11 @@ def CoreMemDesign.initialState (E : CoreMemDesign) : Res CoreMemState := do
 
 def CoreMemDesign.runEdges (E : CoreMemDesign) (env : IEnv) (elems : List (String × Nat))
     (st : CoreMemState) (before after : SvState) : List CoreMemProc → CoreMemExec
-  | [] => .ok ([], [])
+  | [] => .ok { state := st, scalarQ := [], memoryQ := [] }
   | .edge p :: rest =>
       if p.fires before after then do
         let a ← E.execStmt env elems st p.body
-        let b ← E.runEdges env elems st before after rest
+        let b ← E.runEdges env elems a.state before after rest
         .ok (CoreMemExec.append a b)
       else E.runEdges env elems st before after rest
   | .initial _ :: rest => E.runEdges env elems st before after rest
@@ -1147,9 +1193,9 @@ def CoreMemDesign.step (E : CoreMemDesign) (st : CoreMemState) (entry : SvState)
   let combBefore := pre
   let before := E.scalar.view st.scalar
   let after := E.scalar.view pre.scalar
-  let (scalarQ, memoryQ) ← E.runEdges E.env E.elems pre before after E.processes.toList
-  let scalar := E.scalarEdge.commit pre.scalar scalarQ
-  let memory ← match pre.memory.commitNba memoryQ with
+  let edge ← E.runEdges E.env E.elems pre before after E.processes.toList
+  let scalar := E.scalarEdge.commit edge.state.scalar edge.scalarQ
+  let memory ← match edge.state.memory.commitNba edge.memoryQ with
     | some m => .ok m
     | none => .unsupported "10.4.2: memory NBA commit lost its declaration identity"
   let settled ← E.settleAssign E.env E.elems { scalar, memory } E.processes.toList

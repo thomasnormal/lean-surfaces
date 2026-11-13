@@ -755,6 +755,7 @@ def functionCallFree (f : LeanModels.C.FunctionDefn) : Bool :=
                  nm == "__builtin_isnan" || nm == "__builtin_isfinite" ||
                  nm == "__builtin_signbit" || nm == "__builtin_bswap16" ||
                  nm == "__builtin_copysign" || nm == "__builtin_copysignf" || nm == "fabs" ||
+                 nm == "floor" || nm == "floorf" ||
                  nm == "__builtin_bswap32" || nm == "__builtin_bswap64" ||
                  nm == "__builtin_ffs" || nm.contains "ctz" || nm.contains "clz" ||
                  nm.contains "clrsb" || nm.contains "popcount" || nm.contains "parity" ||
@@ -1382,6 +1383,23 @@ def callFn : Nat → Program → LeanModels.C.FunctionDefn → List CVal → Exe
               else refuseUnsupported s!"{nm}: expected binary32 argument"
           | [_] => refuseUnsupported s!"{nm}: unsupported floating argument"
           | _ => refuseUnsupported s!"{nm}: wrong argument count"
+        let runFloatFloor : String → List CVal → ExecM CVal := fun nm vs =>
+          let floorQ := fun q : LeanModels.SoftFloat.Q =>
+            Int.ediv q.num (q.den : Int)
+          match vs with
+          | [.float32 f] =>
+              if nm == "floorf" then
+                match LeanModels.SoftFloat.valQ (Float32.Model.unpack f) with
+                | some q => pure (.float32 (Float32.Model.ofInt (floorQ q)))
+                | none => refuseUnsupported s!"{nm}: non-finite argument"
+              else refuseUnsupported s!"{nm}: expected binary64 argument"
+          | [.float64 f] =>
+              if nm == "floor" then
+                match LeanModels.SoftFloat.valQ (Float.Model.unpack f) with
+                | some q => pure (.float64 (Float.Model.ofInt (floorQ q)))
+                | none => refuseUnsupported s!"{nm}: non-finite argument"
+              else refuseUnsupported s!"{nm}: expected binary32 argument"
+          | _ => refuseUnsupported s!"{nm}: unsupported argument types"
         let runFloatNan : String → List CVal → ExecM CVal := fun nm vs =>
           match vs with
           | [_] =>
@@ -1527,6 +1545,7 @@ def callFn : Nat → Program → LeanModels.C.FunctionDefn → List CVal → Exe
               else if nm == "__builtin_bswap64" then
                 runBswap64 vs
                     else if nm == "__builtin_fabs" || nm == "__builtin_fabsf" || nm == "__builtin_fabsl" || nm == "fabs" || nm == "fabsf" then runFloatAbs nm vs
+                    else if nm == "floor" || nm == "floorf" then runFloatFloor nm vs
                     else if nm == "__builtin_nanf" || nm == "__builtin_nan" || nm == "__builtin_nanl" then runFloatNan nm vs
                     else if nm == "__builtin_copysign" || nm == "__builtin_copysignf" then runCopySign nm vs
                     else if nm == "__builtin_isfinite" || nm == "__builtin_isnan" || nm == "__builtin_isinf" || nm == "__builtin_signbit" then runFloatClass nm vs
@@ -1608,6 +1627,7 @@ def callFn : Nat → Program → LeanModels.C.FunctionDefn → List CVal → Exe
               else if nm == "__builtin_bswap32" then runBswap32 vs
               else if nm == "__builtin_bswap64" then runBswap64 vs
               else if nm == "__builtin_fabs" || nm == "__builtin_fabsf" || nm == "__builtin_fabsl" || nm == "fabs" || nm == "fabsf" then runFloatAbs nm vs
+              else if nm == "floor" || nm == "floorf" then runFloatFloor nm vs
               else if nm == "__builtin_nanf" || nm == "__builtin_nan" || nm == "__builtin_nanl" then runFloatNan nm vs
               else if nm == "__builtin_copysign" || nm == "__builtin_copysignf" then runCopySign nm vs
               else if nm == "__builtin_isfinite" || nm == "__builtin_isnan" || nm == "__builtin_isinf" || nm == "__builtin_signbit" then runFloatClass nm vs

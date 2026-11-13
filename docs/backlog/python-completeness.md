@@ -15048,7 +15048,7 @@ threading all updates through normal completion and depth restoration.
 
 | Measurement | Result |
 |---|---|
-| Target | `lake build LeanModels.Python.Monadic.Eval` pending for this item |
+| Target | `lake build LeanModels.Python.Monadic.Eval` passed; 11/11 jobs |
 | Theorem | `Monadic.finishCallM_assign_five_existing_locals_body_ok` |
 | Domain | five consecutive assignments to existing locals |
 | Semantic change | theorem-only five-assignment state composition |
@@ -15160,4 +15160,21 @@ restoration.
 | Remaining debt | arbitrary locals and recursive positive-fuel calls |
 
 DECIDED: five assignment steps now compose through continue flow; arbitrary
+assignment and recursive body adequacy remain open.
+
+## 2026-11-13-pyfoundation-170 — six-assignment state bridge
+
+`Monadic.finishCallM_assign_six_existing_locals_body_ok` checks six successive
+assignments `u = 0; v = 1; w = 2; x = 3; y = 4; z = 5` to existing locals,
+threading all updates through normal completion and depth restoration.
+
+| Measurement | Result |
+|---|---|
+| Target | `lake build LeanModels.Python.Monadic.Eval` pending for this item |
+| Theorem | `Monadic.finishCallM_assign_six_existing_locals_body_ok` |
+| Domain | six consecutive assignments to existing locals |
+| Semantic change | theorem-only six-assignment state composition |
+| Remaining debt | arbitrary locals and recursive positive-fuel calls |
+
+DECIDED: six assignment steps now compose through the body walker; arbitrary
 assignment and recursive body adequacy remain open.

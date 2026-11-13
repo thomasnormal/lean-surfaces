@@ -167,3 +167,6 @@ the `RFlow.ret .none` channel through the same boundary.
 The loop-control bridge `Monadic.finishCallM_break_body_ok` preserves
 `RFlow.brk` through the boundary as well; enclosing-loop handling remains in
 the continuation layer.
+
+The corresponding `Monadic.finishCallM_continue_body_ok` bridge preserves
+`RFlow.cont`; loop re-testing remains owned by the continuation layer.

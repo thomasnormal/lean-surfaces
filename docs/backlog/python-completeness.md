@@ -14449,3 +14449,19 @@ retaining `RFlow.brk` for the enclosing control shell.
 
 DECIDED: `break` flow now composes through call restoration; enclosing-loop
 continuation and recursive body adequacy remain open.
+
+## 2026-11-13-pyfoundation-128 — continue-flow body bridge
+
+`Monadic.finishCallM_continue_body_ok` composes a concrete `continue`
+statement through `RFlow.cont` and top-level call-depth restoration.
+
+| Measurement | Result |
+|---|---|
+| Target | `lake build LeanModels.Python.Monadic.Eval` passed; 11/11 jobs |
+| Theorem | `Monadic.finishCallM_continue_body_ok` |
+| Domain | one `continue` statement, arbitrary frame locals/world/depth |
+| Semantic change | theorem-only control-flow composition |
+| Remaining debt | recursive positive-fuel calls and general loop adequacy |
+
+DECIDED: both `break` and `continue` flow now compose through call
+restoration; enclosing-loop continuation and recursive adequacy remain open.

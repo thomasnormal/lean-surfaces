@@ -1,4 +1,5 @@
 import LeanModels.Sv.Ingest2
+import LeanModels.Sv.Kernel.CoreMemExec
 namespace Examples.«system-verilog».sem2.memory_shape_b_e
 open LeanModels.Sv
 load_design_sv2 memoryShapeB from

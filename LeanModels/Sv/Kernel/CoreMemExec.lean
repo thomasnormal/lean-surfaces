@@ -145,18 +145,23 @@ def PDesign.instantiateCoreMemFrom (envI : IEnv) (d : PDesign) (args : List Int)
     let env2 := { env2 with pwidths := pws }
     let env2 := { env2 with dims := dimTable env2 d.decls }
     let env2 := { env2 with functions := d.functions }
-    let decls ← buildScalarDecls1 env2 d.decls
-    let elems ← buildElems env2 d.decls
-    let envP := { env2 with widths := decls.map (fun dc => (dc.name, dc.width)) }
-    let memories ← buildMemDecls1 envP d.decls 0
-    if memories.isEmpty && d.decls.any (fun pd => !pd.unpackedDims.isEmpty) then
-      .unsupported "UnpackedDecl:memory: no one-rank unpacked declaration was admitted"
+    if !d.generates.isEmpty then
+      .unsupported "E memory route does not yet admit generate items"
+    else if !d.others.isEmpty then
+      .unsupported "E memory route does not yet admit hierarchy items"
     else
-      let scalar : Elab :=
-        { name := d.name, decls := decls.toArray, procs := #[] }
-      let scalarEdge : Elab1 :=
-        { decls := decls.toArray, procs := #[], name := d.name }
-      .ok ({ name := d.name, env := envP, scalar := scalar, scalarEdge := scalarEdge, memories := memories.toArray, processes := (d.processes.map CoreMemProc.ofPProcess).toArray } : CoreMemDesign)
+      let decls ← buildScalarDecls1 env2 d.decls
+      let elems ← buildElems env2 d.decls
+      let envP := { env2 with widths := decls.map (fun dc => (dc.name, dc.width)) }
+      let memories ← buildMemDecls1 envP d.decls 0
+      if memories.isEmpty && d.decls.any (fun pd => !pd.unpackedDims.isEmpty) then
+        .unsupported "UnpackedDecl:memory: no one-rank unpacked declaration was admitted"
+      else
+        let scalar : Elab :=
+          { name := d.name, decls := decls.toArray, procs := #[] }
+        let scalarEdge : Elab1 :=
+          { decls := decls.toArray, procs := #[], name := d.name }
+        .ok ({ name := d.name, env := envP, scalar := scalar, scalarEdge := scalarEdge, memories := memories.toArray, processes := (d.processes.map CoreMemProc.ofPProcess).toArray } : CoreMemDesign)
 
 def PDesign.instantiateCoreMem (d : PDesign) (args : List Int)
     (iterFuel : Nat := 4096) : Res CoreMemDesign :=

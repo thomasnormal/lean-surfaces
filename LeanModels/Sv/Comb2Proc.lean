@@ -987,15 +987,6 @@ theorem CaseItem2.symExecList_names_arm {d : Design2} {S : SymState} {subj : Exp
 
 namespace LVec
 
-/-- A vector resized to its own width is itself. -/
-theorem resizeU_of_width {v : LVec} {w : Nat} (h : v.width = w) : v.resizeU w = v := by
-  apply LVec.ext_getD (by simp [h])
-  intro i hi
-  simp only [LVec.width_resizeU] at hi
-  simp only [LVec.resizeU, Array.getElem?_ofFn, hi, dite_true, Option.getD_some]
-  have : i < v.bits.size := by rw [← h] at hi; exact hi
-  simp [this]
-
 /-- Bit `i` of a concatenation `{p, q}` (`q` in the low bits). -/
 theorem getD_concat (p q : LVec) (i : Nat) :
     (p.concat q).bits[i]?.getD .lx =

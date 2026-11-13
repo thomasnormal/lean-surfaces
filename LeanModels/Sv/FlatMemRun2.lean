@@ -43,13 +43,6 @@ theorem rfRead_width (W : Nat) (mem ra : LVec) : (rfRead W mem ra).width = W := 
   · split <;> simp
   · simp
 
-theorem resizeU_of_width {v : LVec} {w : Nat} (h : v.width = w) : v.resizeU w = v := by
-  subst h
-  apply LVec.ext_getElem?
-  intro i
-  simp only [LVec.resizeU, Array.getElem?_ofFn, LVec.width]
-  by_cases hi : i < v.bits.size <;> simp [hi]
-
 /-- A dynamic element read of one signal by another is `rfRead`. -/
 theorem eval_index {F W : Nat} (hF : 2 ≤ F) {st : SvState} {m r : String} {mem ra : LVec}
     (hm : SvState.lookup st m = some mem) (hr : SvState.lookup st r = some ra) :
@@ -143,7 +136,7 @@ theorem rfWrite_abs {A W : Nat} (hW : 1 ≤ W) {mem : LVec} {s : Fin (2 ^ A) →
   · simp only [hwe, Bool.false_eq_true, if_false]; exact h
 
 #print axioms rfRead_width
-#print axioms resizeU_of_width
+#print axioms LVec.resizeU_of_width
 #print axioms eval_index
 #print axioms rfRead_eq
 #print axioms rfWrite_abs

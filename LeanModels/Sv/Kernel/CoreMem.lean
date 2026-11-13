@@ -135,18 +135,6 @@ def MemBlock.write (m : MemBlock) (k : Int) (v : LVec)
     { shape := m.shape, cell := c, cell_width := hc }
   else m
 
-theorem resizeU_of_width {v : LVec} {w : Nat} (h : v.width = w) :
-    v.resizeU w = v := by
-  apply LVec.ext_getElem?
-  intro i
-  simp only [LVec.resizeU, Array.getElem?_ofFn, LVec.width]
-  change v.bits.size = w at h
-  by_cases hi : i < v.bits.size
-  · have hiw : i < w := by omega
-    simp [hi, hiw]
-  · have hiw : w ≤ i := by omega
-    simp [hi, hiw]
-
 theorem MemBlock.read_write_same {m : MemBlock} {k : Int} {v : LVec}
     (hin : m.shape.inRange k) (hv : v.width = m.shape.elemWidth) :
     (m.write k v).read k = m.shape.convert v := by

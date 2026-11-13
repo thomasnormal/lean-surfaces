@@ -82,12 +82,16 @@ abbrev Obs_E0 : ObservationModel := Obs_E E0
 
 theorem Elab.applyInputs_ty (E : Elab) (s : Store) (entry : SvState) (x : VarId) :
     (E.applyInputs s entry x).ty = (s x).ty := by
-  unfold Elab.applyInputs
-  split
-  · split
-    · split <;> rfl
-    · rfl
-  · rfl
+  by_cases he : entry.isEmpty = true
+  · cases hd : E.declOf x <;> simp [Elab.applyInputs, he, hd]
+  · cases hd : E.declOf x with
+    | none => simp [Elab.applyInputs, he, hd]
+    | some dc =>
+        simp only [Elab.applyInputs, he, hd, ↓reduceIte]
+        by_cases hi : dc.isInput = true
+        · simp [hi]
+          split <;> rfl
+        · simp [hi]
 
 theorem Elab.Typed.applyInputs {E : Elab} {s : Store} (hT : E.Typed s) (entry : SvState) :
     E.Typed (E.applyInputs s entry) := by
@@ -98,12 +102,7 @@ theorem Elab.Typed.applyInputs {E : Elab} {s : Store} (hT : E.Typed s) (entry : 
 /-- An empty batch of input events changes nothing. -/
 theorem Elab.applyInputs_nil (E : Elab) (s : Store) : E.applyInputs s [] = s := by
   funext x
-  unfold Elab.applyInputs
-  split
-  · split
-    · simp [SvState.lookup]
-    · rfl
-  · rfl
+  simp [Elab.applyInputs]
 
 /-- The declared name a variable resolves from is an input name when its declaration is an input. -/
 theorem Elab.mem_inputNames {E : Elab} {dc : Decl} (hdc : dc ∈ E.decls.toList)
@@ -125,15 +124,7 @@ theorem Elab.lookup_view_applyInputs_of_not_input {E : Elab} (s : Store) (entry 
         | false => rfl
         | true => exact absurd (hname ▸ Elab.mem_inputNames hmem h) hn
       simp only [Option.map_some, Elab.applyInputs, hdecl, hin]
-      rfl
-
-/-- `resizeU` to a vector's own width is the identity. -/
-theorem LVec.resizeU_of_width {v : LVec} {w : Nat} (h : v.width = w) : v.resizeU w = v := by
-  apply LVec.ext_getD (by simp [h])
-  intro i hi
-  simp only [LVec.width_resizeU] at hi
-  have hi' : i < v.bits.size := by simp only [LVec.width] at h; omega
-  simp [LVec.resizeU, hi, hi']
+      simp
 
 /-- On a list whose image has no duplicates, the map is injective. -/
 theorem nodup_map_inj {α β : Type} {f : α → β} :
@@ -168,16 +159,23 @@ theorem Elab.lookup_view_applyInputs_input {E : Elab} (hnd : (E.decls.toList.map
         cases hi : dc'.isInput with
         | false => simp [hi] at hsome
         | true =>
-            simp only [hi, if_true, Option.some.injEq] at hsome
-            have : dc' = dc := nodup_map_inj hnd hdc' hmem (hsome.trans hname.symm)
+            simp [hi] at hsome
+            have hname' : dc'.name = n := hsome
+            have : dc' = dc := nodup_map_inj hnd hdc' hmem (hname'.trans hname.symm)
             exact this ▸ hi
       have hty := hT x dc hdecl
       have h4' : (s x).ty.fourState = true := by
         rw [hty]; simp [VType.ofDecl, h4 dc hmem]
       have hwd : (s x).ty.width = v.width := by
         rw [hty]; rw [hdw, Option.some.injEq] at hw; simpa [VType.ofDecl] using hw
-      simp only [Option.map_some, Elab.applyInputs, hdecl, hin, if_true, hname, hv]
-      simp only [Val.ofLVec, VType.conv_of_four h4', hwd, LVec.resizeU_of_width rfl]
+      by_cases he : entry.isEmpty
+      · have : False := by
+          cases entry with
+          | nil => simpa [SvState.lookup] using hv
+          | cons a as => simp at he
+        contradiction
+      simp [Option.map_some, Elab.applyInputs, hdecl, hin, hname, hv, he,
+        Val.ofLVec, VType.conv_of_four h4', hwd, LVec.resizeU_of_width]
 
 /-! ## Slots -/
 

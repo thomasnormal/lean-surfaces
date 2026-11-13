@@ -118,6 +118,20 @@ arithmetic x-collapse — x/z bits pass through bit by bit (pin4 Z01–Z04). -/
 def resizeU (v : LVec) (w : Nat) : LVec :=
   ⟨.ofFn (n := w) fun i => v.bits[i.val]?.getD .l0⟩
 
+/-- Resizing a vector to its existing width is the identity.  This is the
+canonical width bridge shared by the semantic and native E layers. -/
+theorem resizeU_of_width {v : LVec} {w : Nat} (h : v.width = w) :
+    v.resizeU w = v := by
+  cases v with
+  | mk bits =>
+      simp only [resizeU, width] at h ⊢
+      subst w
+      congr 1
+      apply Array.ext
+      · simp
+      · intro i hi hi'
+        simp [Array.getElem?_eq_getElem hi, Array.getElem?_eq_getElem hi']
+
 /-- Replication `{n{v}}` (§11.4.12.1). -/
 def replVec (n : Nat) (v : LVec) : LVec :=
   ⟨(Array.replicate n v.bits).flatten⟩

@@ -1,0 +1,536 @@
+{
+  "schema_version": "sv-0.2",
+  "language": "systemverilog",
+  "frontend": {
+    "name": "pyslang",
+    "family": "pyslang-11"
+  },
+  "mode": "symbolic",
+  "top": "always_comb_memory_canonical_e",
+  "source_files": [
+    {
+      "path": "Examples/system-verilog/sem2/always_comb_memory_canonical_e/always_comb_memory_canonical_e.sv",
+      "sha256": "7630ff3785fd9a3948a23b654bc1aa8fea94fb3d7ddf69f24f72d33ab9e7a01f"
+    }
+  ],
+  "packages": [],
+  "design": {
+    "kind": "Design",
+    "modules": [
+      {
+        "kind": "Module",
+        "span": {
+          "line": 2,
+          "col": 1,
+          "end_line": 18,
+          "end_col": 10
+        },
+        "name": "always_comb_memory_canonical_e",
+        "imports": [],
+        "params": [
+          {
+            "kind": "ParameterDecl",
+            "span": {
+              "line": 2,
+              "col": 59,
+              "end_line": 2,
+              "end_col": 64
+            },
+            "name": "W",
+            "type": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 2,
+                      "col": 59,
+                      "end_line": 2,
+                      "end_col": 64
+                    },
+                    "value": 31,
+                    "resolved_width": 32
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 2,
+                      "col": 59,
+                      "end_line": 2,
+                      "end_col": 64
+                    },
+                    "value": 0,
+                    "resolved_width": 32
+                  }
+                }
+              ],
+              "resolved": 32
+            },
+            "default": {
+              "kind": "Int",
+              "span": {
+                "line": 2,
+                "col": 63,
+                "end_line": 2,
+                "end_col": 64
+              },
+              "value": 4,
+              "resolved_width": 32
+            },
+            "resolved": 4
+          }
+        ],
+        "types": [],
+        "ports": [
+          {
+            "kind": "Port",
+            "span": {
+              "line": 3,
+              "col": 17,
+              "end_line": 3,
+              "end_col": 20
+            },
+            "name": "clk",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 4,
+              "col": 17,
+              "end_line": 4,
+              "end_col": 19
+            },
+            "name": "en",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 5,
+              "col": 25,
+              "end_line": 5,
+              "end_col": 26
+            },
+            "name": "d",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Binary",
+                    "span": {
+                      "line": 5,
+                      "col": 18,
+                      "end_line": 5,
+                      "end_col": 21
+                    },
+                    "width": null,
+                    "op": "-",
+                    "left": {
+                      "kind": "ParamRef",
+                      "span": {
+                        "line": 5,
+                        "col": 18,
+                        "end_line": 5,
+                        "end_col": 19
+                      },
+                      "name": "W"
+                    },
+                    "right": {
+                      "kind": "Int",
+                      "span": {
+                        "line": 5,
+                        "col": 20,
+                        "end_line": 5,
+                        "end_col": 21
+                      },
+                      "value": 1,
+                      "resolved_width": null
+                    }
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 5,
+                      "col": 22,
+                      "end_line": 5,
+                      "end_col": 23
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 4
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 6,
+              "col": 26,
+              "end_line": 6,
+              "end_col": 27
+            },
+            "name": "q",
+            "dir": "out",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Binary",
+                    "span": {
+                      "line": 6,
+                      "col": 19,
+                      "end_line": 6,
+                      "end_col": 22
+                    },
+                    "width": null,
+                    "op": "-",
+                    "left": {
+                      "kind": "ParamRef",
+                      "span": {
+                        "line": 6,
+                        "col": 19,
+                        "end_line": 6,
+                        "end_col": 20
+                      },
+                      "name": "W"
+                    },
+                    "right": {
+                      "kind": "Int",
+                      "span": {
+                        "line": 6,
+                        "col": 21,
+                        "end_line": 6,
+                        "end_col": 22
+                      },
+                      "value": 1,
+                      "resolved_width": null
+                    }
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 6,
+                      "col": 23,
+                      "end_line": 6,
+                      "end_col": 24
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 4
+            }
+          }
+        ],
+        "decls": [
+          {
+            "kind": "Var",
+            "span": {
+              "line": 8,
+              "col": 19,
+              "end_line": 8,
+              "end_col": 28
+            },
+            "name": "mem[0]",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Binary",
+                    "span": {
+                      "line": 8,
+                      "col": 12,
+                      "end_line": 8,
+                      "end_col": 15
+                    },
+                    "width": null,
+                    "op": "-",
+                    "left": {
+                      "kind": "ParamRef",
+                      "span": {
+                        "line": 8,
+                        "col": 12,
+                        "end_line": 8,
+                        "end_col": 13
+                      },
+                      "name": "W"
+                    },
+                    "right": {
+                      "kind": "Int",
+                      "span": {
+                        "line": 8,
+                        "col": 14,
+                        "end_line": 8,
+                        "end_col": 15
+                      },
+                      "value": 1,
+                      "resolved_width": null
+                    }
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 8,
+                      "col": 16,
+                      "end_line": 8,
+                      "end_col": 17
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 4
+            },
+            "two_state": false,
+            "flat_base": "mem",
+            "flat_index": 0,
+            "init": null
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 8,
+              "col": 19,
+              "end_line": 8,
+              "end_col": 28
+            },
+            "name": "mem[1]",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Binary",
+                    "span": {
+                      "line": 8,
+                      "col": 12,
+                      "end_line": 8,
+                      "end_col": 15
+                    },
+                    "width": null,
+                    "op": "-",
+                    "left": {
+                      "kind": "ParamRef",
+                      "span": {
+                        "line": 8,
+                        "col": 12,
+                        "end_line": 8,
+                        "end_col": 13
+                      },
+                      "name": "W"
+                    },
+                    "right": {
+                      "kind": "Int",
+                      "span": {
+                        "line": 8,
+                        "col": 14,
+                        "end_line": 8,
+                        "end_col": 15
+                      },
+                      "value": 1,
+                      "resolved_width": null
+                    }
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 8,
+                      "col": 16,
+                      "end_line": 8,
+                      "end_col": 17
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 4
+            },
+            "two_state": false,
+            "flat_base": "mem",
+            "flat_index": 1,
+            "init": null
+          }
+        ],
+        "processes": [
+          {
+            "kind": "AlwaysComb",
+            "span": {
+              "line": 10,
+              "col": 5,
+              "end_line": 14,
+              "end_col": 8
+            },
+            "body": {
+              "kind": "Block",
+              "span": {
+                "line": 10,
+                "col": 17,
+                "end_line": 14,
+                "end_col": 8
+              },
+              "stmts": [
+                {
+                  "kind": "BlockingAssign",
+                  "span": {
+                    "line": 11,
+                    "col": 7,
+                    "end_line": 11,
+                    "end_col": 18
+                  },
+                  "target": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 11,
+                      "col": 7,
+                      "end_line": 11,
+                      "end_col": 8
+                    },
+                    "width": 4,
+                    "name": "q"
+                  },
+                  "value": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 11,
+                      "col": 11,
+                      "end_line": 11,
+                      "end_col": 17
+                    },
+                    "width": 4,
+                    "name": "mem[0]"
+                  }
+                },
+                {
+                  "kind": "If",
+                  "span": {
+                    "line": 12,
+                    "col": 7,
+                    "end_line": 13,
+                    "end_col": 15
+                  },
+                  "cond": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 12,
+                      "col": 11,
+                      "end_line": 12,
+                      "end_col": 13
+                    },
+                    "width": 1,
+                    "name": "en"
+                  },
+                  "then": {
+                    "kind": "BlockingAssign",
+                    "span": {
+                      "line": 13,
+                      "col": 9,
+                      "end_line": 13,
+                      "end_col": 15
+                    },
+                    "target": {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 13,
+                        "col": 9,
+                        "end_line": 13,
+                        "end_col": 10
+                      },
+                      "width": 4,
+                      "name": "q"
+                    },
+                    "value": {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 13,
+                        "col": 13,
+                        "end_line": 13,
+                        "end_col": 14
+                      },
+                      "width": 4,
+                      "name": "d"
+                    }
+                  },
+                  "else": null
+                }
+              ]
+            }
+          },
+          {
+            "kind": "AlwaysPosedge",
+            "span": {
+              "line": 16,
+              "col": 5,
+              "end_line": 17,
+              "end_col": 19
+            },
+            "style": "always_ff",
+            "clock": "clk",
+            "body": {
+              "kind": "NonblockingAssign",
+              "span": {
+                "line": 17,
+                "col": 7,
+                "end_line": 17,
+                "end_col": 19
+              },
+              "target": {
+                "kind": "Ident",
+                "span": {
+                  "line": 17,
+                  "col": 7,
+                  "end_line": 17,
+                  "end_col": 13
+                },
+                "width": 4,
+                "name": "mem[0]"
+              },
+              "value": {
+                "kind": "Ident",
+                "span": {
+                  "line": 17,
+                  "col": 17,
+                  "end_line": 17,
+                  "end_col": 18
+                },
+                "width": 4,
+                "name": "d"
+              }
+            }
+          }
+        ],
+        "generates": [],
+        "others": [],
+        "cell_refs": [
+          {
+            "name": "mem[0]",
+            "base": "mem",
+            "index": 0
+          }
+        ]
+      }
+    ],
+    "others": []
+  },
+  "lean_blocks": []
+}

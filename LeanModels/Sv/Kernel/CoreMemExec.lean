@@ -43,6 +43,10 @@ inductive CoreMemProc where
   | edge (p : CoreMemEdge)
   | assign (target : PLhs) (value : PExpr)
   | initial (body : PStmt)
+  /-- An `always_comb` body runs once at time zero and is reactivated when a
+      value in its implicit sensitivity set changes.  The retained `PStmt`
+      stays source-shaped; this route does not lower it to `Process2`. -/
+  | comb (body : PStmt)
   /-- A plain `always @*` waits for a raw read change before activation.
       Its source body remains a `PStmt`; the memory route does not lower it
       into a clocked or combinational surrogate. -/
@@ -84,6 +88,12 @@ def CoreMemDesign.hasImplicit (E : CoreMemDesign) : Bool :=
   E.processes.toList.any fun p =>
     match p with
     | .implicit _ => true
+    | _ => false
+
+def CoreMemDesign.hasComb (E : CoreMemDesign) : Bool :=
+  E.processes.toList.any fun p =>
+    match p with
+    | .comb _ => true
     | _ => false
 
 def instScalarDecl1 (env : IEnv) (pd : PDecl) : Res (Option Decl) :=
@@ -139,7 +149,7 @@ def CoreMemProc.ofPProcess : PProcess → CoreMemProc
       else .edge { clock, reset := some reset, body, style := .alwaysFF }
   | .assign target value => .assign (.ident target) value
   | .assignL target value => .assign target value
-  | .alwaysComb _ => .unsupported "9.2.2.2" "always_comb is outside this memory edge slice"
+  | .alwaysComb body => .comb body
   | .alwaysImplicit body => .implicit body
   | .initial body => .initial body
   | .unsupported kind text => .unsupported kind text
@@ -711,16 +721,6 @@ def CoreMemDesign.execInitialLoop (E : CoreMemDesign) (env : IEnv)
 
 end
 
-def CoreMemDesign.initialState (E : CoreMemDesign) : Res CoreMemState :=
-  let bodies := E.processes.toList.filterMap fun p =>
-    match p with
-    | .initial body => some body
-    | _ => none
-  match bodies with
-  | [] => .ok E.initial
-  | [body] => E.execInitialStmt E.env E.elems E.initial body
-  | _ => .unsupported "T2:Initial: multiple initial processes are outside this cycle entry"
-
 /-! ## Plain `always @*` activations
 
 The process starts waiting (§9.4.2.2.2).  At a slot boundary its raw reads are
@@ -789,6 +789,66 @@ def CoreMemDesign.execImplicitStmts (E : CoreMemDesign) (env : IEnv)
 
 end
 
+/-! ## `always_comb` activations
+
+`always_comb` has a distinct startup rule from plain `always @*`: it executes
+once at time zero (§9.2.2.2), then wakes on changes to the expressions read by
+the retained body (§9.2.2.2.1).  The body fragment here is deliberately the
+same source-shaped blocking/conditional/blocking subset as the implicit-event
+route.  NBA, loop, case, and unsupported statements remain loud at their own
+node; no statement is lowered into a second AST. -/
+
+mutual
+
+def CoreMemDesign.execCombStmt (E : CoreMemDesign) (env : IEnv)
+    (elems : List (String × Nat)) (st : CoreMemState) : PStmt → Res CoreMemState
+  | .blockingAssign name value =>
+      match E.scalarTarget name with
+      | none => .unsupported s!"9.2.2.2: scalar always_comb target '{name}' is undeclared"
+      | some width => do
+          let v ← E.evalExpr env elems st (some width) value
+          .ok { st with scalar := E.scalar.setName st.scalar name v }
+  | .blockingAssignL target value =>
+      match target with
+      | .ident name =>
+          match E.scalarTarget name with
+          | none => .unsupported s!"9.2.2.2: scalar always_comb target '{name}' is undeclared"
+          | some width => do
+              let v ← E.evalExpr env elems st (some width) value
+              .ok { st with scalar := E.scalar.setName st.scalar name v }
+      | .arrayElem name [_] =>
+          match E.memDecl? name with
+          | none => .unsupported s!"9.2.2.2: memory always_comb target '{name}' is undeclared"
+          | some md => do
+              let v ← E.evalExpr env elems st (some md.shape.elemWidth) value
+              E.writeInitialCell env elems st target name md v
+      | .arrayElem name _ =>
+          .unsupported s!"9.2.2.2: memory always_comb target '{name}' is not one-rank"
+      | _ => .unsupported "9.2.2.2: packed or concatenated always_comb target is outside this slice"
+  | .ifStmt cond yes no => do
+      let cv ← E.evalExpr env elems st (some 1) cond
+      if cv.condTrue then E.execCombStmt env elems st yes
+      else match no with
+        | none => .ok st
+        | some stmt => E.execCombStmt env elems st stmt
+  | .block body => E.execCombStmts env elems st body
+  | .forLoop .. =>
+      .unsupported "9.2.2.2: procedural loop in always_comb body is outside this slice"
+  | .caseStmt .. =>
+      .unsupported "12.5: case in always_comb body is outside this slice"
+  | .nbaAssign .. | .nbaAssignL .. =>
+      .unsupported "10.4.2: nonblocking assignment in always_comb body"
+  | .unsupported kind text => .unsupported s!"{kind}: {text}"
+
+def CoreMemDesign.execCombStmts (E : CoreMemDesign) (env : IEnv)
+    (elems : List (String × Nat)) (st : CoreMemState) : List PStmt → Res CoreMemState
+  | [] => .ok st
+  | stmt :: rest => do
+      let st' ← E.execCombStmt env elems st stmt
+      E.execCombStmts env elems st' rest
+
+end
+
 def CoreMemDesign.runImplicit (E : CoreMemDesign) (before current : CoreMemState) :
     List CoreMemProc → Res CoreMemState
   | [] => .ok current
@@ -808,6 +868,32 @@ def CoreMemDesign.runImplicit (E : CoreMemDesign) (before current : CoreMemState
   | .assign _ _ :: rest => E.runImplicit before current rest
   | .edge _ :: rest => E.runImplicit before current rest
   | .initial _ :: rest => E.runImplicit before current rest
+  | .comb _ :: rest => E.runImplicit before current rest
+  | .unsupported kind text :: _ => .unsupported s!"{kind}: {text}"
+
+def CoreMemDesign.runCombInitial (E : CoreMemDesign) (current : CoreMemState) :
+    List CoreMemProc → Res CoreMemState
+  | [] => .ok current
+  | .comb body :: rest => do
+      let after ← E.execCombStmt E.env E.elems current body
+      E.runCombInitial after rest
+  | _ :: rest => E.runCombInitial current rest
+
+def CoreMemDesign.runComb (E : CoreMemDesign) (before current : CoreMemState) :
+    List CoreMemProc → Res CoreMemState
+  | [] => .ok current
+  | .comb body :: rest => do
+      let reads := coreMemStmtReadExprs body
+      let ready ← E.readChanged before current reads
+      if !ready then
+        E.runComb before current rest
+      else
+        let after ← E.execCombStmt E.env E.elems current body
+        E.runComb before after rest
+  | .assign _ _ :: rest => E.runComb before current rest
+  | .edge _ :: rest => E.runComb before current rest
+  | .initial _ :: rest => E.runComb before current rest
+  | .implicit _ :: rest => E.runComb before current rest
   | .unsupported kind text :: _ => .unsupported s!"{kind}: {text}"
 
 mutual
@@ -888,9 +974,26 @@ def CoreMemDesign.settleAssign (E : CoreMemDesign) (env : IEnv) (elems : List (S
       E.settleAssign env elems { st with scalar } rest
   | .edge _ :: rest => E.settleAssign env elems st rest
   | .initial _ :: rest => E.settleAssign env elems st rest
+  | .comb _ :: rest => E.settleAssign env elems st rest
   | .implicit _ :: rest => E.settleAssign env elems st rest
   | .unsupported kind text :: _ =>
       .unsupported s!"{kind}: {text}"
+
+def CoreMemDesign.initialState (E : CoreMemDesign) : Res CoreMemState := do
+  let bodies := E.processes.toList.filterMap fun p =>
+    match p with
+    | .initial body => some body
+    | _ => none
+  let base ← match bodies with
+    | [] => .ok E.initial
+    | [body] => E.execInitialStmt E.env E.elems E.initial body
+    | _ => .unsupported "T2:Initial: multiple initial processes are outside this cycle entry"
+  if !E.hasComb then
+    .ok base
+  else
+    let settled ← E.settleAssign E.env E.elems base E.processes.toList
+    let combed ← E.runCombInitial settled E.processes.toList
+    E.settleAssign E.env E.elems combed E.processes.toList
 
 def CoreMemDesign.runEdges (E : CoreMemDesign) (env : IEnv) (elems : List (String × Nat))
     (st : CoreMemState) (before after : SvState) : List CoreMemProc → CoreMemExec
@@ -920,7 +1023,12 @@ def CoreMemDesign.applyMemoryInputs (E : CoreMemDesign) (entry : SvState)
 def CoreMemDesign.step (E : CoreMemDesign) (st : CoreMemState) (entry : SvState) : Res CoreMemState := do
   let input := E.scalar.applyInputs st.scalar entry
   let memoryInput := E.applyMemoryInputs entry st.memory
-  let pre ← E.settleAssign E.env E.elems { scalar := input, memory := memoryInput } E.processes.toList
+  let pre0 ← E.settleAssign E.env E.elems { scalar := input, memory := memoryInput } E.processes.toList
+  let pre ← if E.hasComb then
+      E.runComb st pre0 E.processes.toList
+    else .ok pre0
+  let pre ← E.settleAssign E.env E.elems pre E.processes.toList
+  let combBefore := pre
   let before := E.scalar.view st.scalar
   let after := E.scalar.view pre.scalar
   let (scalarQ, memoryQ) ← E.runEdges E.env E.elems pre before after E.processes.toList
@@ -932,7 +1040,10 @@ def CoreMemDesign.step (E : CoreMemDesign) (st : CoreMemState) (entry : SvState)
   let activated ← if E.hasImplicit then
       E.runImplicit st settled E.processes.toList
     else .ok settled
-  E.settleAssign E.env E.elems activated E.processes.toList
+  let combed ← if E.hasComb then
+      E.runComb combBefore activated E.processes.toList
+    else .ok activated
+  E.settleAssign E.env E.elems combed E.processes.toList
 
 def runCoreMemRows (E : CoreMemDesign) (st : CoreMemState) : List SvState → Res (List CoreMemState)
   | [] => .ok []

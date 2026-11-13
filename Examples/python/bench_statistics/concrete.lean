@@ -1,4 +1,5 @@
 import LeanModels.Python
+import LeanModels.Python.Monadic.Eval
 
 /-! A small concrete theorem for the vendored CPython 3.9.25
 `statistics.median` function. The odd-cardinality branch avoids the separate
@@ -13,5 +14,10 @@ theorem bench_statistics_median_odd :
     (match callFunction bench_statistics "median"
       #[.list #[.int 1, .int 3, .int 5]] 4096 with
      | .ok (.int 3) => true
+     | _ => false) &&
+    (match LeanModels.Python.Monadic.callInMono bench_statistics 4096
+        (initWorld bench_statistics) "median"
+        #[.listV #[.int 1, .int 3, .int 5]] with
+     | .ok _ (.int 3) => true
      | _ => false) = true := by
   native_decide

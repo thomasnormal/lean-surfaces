@@ -15508,7 +15508,7 @@ restoration.
 
 | Measurement | Result |
 |---|---|
-| Target | `lake build LeanModels.Python.Monadic.Eval` pending for this item |
+| Target | `lake build LeanModels.Python.Monadic.Eval` passed; 11/11 jobs |
 | Theorem | `Monadic.finishCallM_assign_eight_existing_locals_break_body_ok` |
 | Domain | eight consecutive assignments to existing locals followed by break |
 | Semantic change | theorem-only eight-assignment break-flow composition |
@@ -15587,3 +15587,21 @@ followed by `pass`, preserving normal completion and depth restoration.
 
 DECIDED: nine assignment steps now compose through normal pass flow; arbitrary
 assignment and recursive body adequacy remain open.
+
+## 2026-11-13-pyfoundation-194 — nine-assignment expression bridge
+
+`Monadic.finishCallM_assign_nine_existing_locals_expr_body_ok` checks nine
+successive assignments `r = 0; s = 1; t = 2; u = 3; v = 4; w = 5; x = 6; y = 7; z = 8`
+followed by an integer expression statement, preserving normal completion and
+depth restoration.
+
+| Measurement | Result |
+|---|---|
+| Target | `lake build LeanModels.Python.Monadic.Eval` pending for this item |
+| Theorem | `Monadic.finishCallM_assign_nine_existing_locals_expr_body_ok` |
+| Domain | nine consecutive assignments to existing locals followed by an expression statement |
+| Semantic change | theorem-only nine-assignment expression-flow composition |
+| Remaining debt | arbitrary locals and recursive positive-fuel calls |
+
+DECIDED: nine assignment steps now compose through a normal expression flow;
+arbitrary assignment and recursive body adequacy remain open.

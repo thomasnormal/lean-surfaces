@@ -2,10 +2,10 @@
 
 Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manifest.
 
-- verdicts: 998/2214 MATCH (passed 998, failed 0, oracle 0)
-- manifest SHA-256: `ba6cffb15db5237f7c78461a7076869aab1ae2c0a1c0fc37d1b290916d27f543`
-- measured commit: `bcba26845`
-- measured at: `2026-11-13T10:04:17Z`
+- verdicts: 1000/2214 MATCH (passed 1000, failed 0, oracle 0)
+- manifest SHA-256: `2c46223d202255d1a14f8e696c8127b599978335a057195b98fb5f569f01a014`
+- measured commit: `8ed7ade05`
+- measured at: `2026-11-13T10:07:33Z`
 
 ## Verdict counts
 
@@ -13,8 +13,8 @@ Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manife
 | --- | ---: |
 | `not-parsed` | 294 |
 | `oracle-tests-compiler` | 1 |
-| `passed` | 998 |
-| `refused-libc` | 51 |
+| `passed` | 1000 |
+| `refused-libc` | 49 |
 | `refused-ub` | 105 |
 | `refused-unsupported` | 699 |
 | `timeout` | 66 |
@@ -30,8 +30,8 @@ Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manife
 | `c-testsuite/single-exec` | `timeout` | 2 |
 | `gcc.c-torture/execute` | `not-parsed` | 267 |
 | `gcc.c-torture/execute` | `oracle-tests-compiler` | 1 |
-| `gcc.c-torture/execute` | `passed` | 827 |
-| `gcc.c-torture/execute` | `refused-libc` | 47 |
+| `gcc.c-torture/execute` | `passed` | 829 |
+| `gcc.c-torture/execute` | `refused-libc` | 45 |
 | `gcc.c-torture/execute` | `refused-ub` | 96 |
 | `gcc.c-torture/execute` | `refused-unsupported` | 616 |
 | `gcc.c-torture/execute` | `timeout` | 64 |
@@ -318,7 +318,6 @@ The run's first refusal, normalized by construct; `sole` counts rows whose first
 | `unsupported:va_arg requested unsupported value type 'struct tiny'` | 8 | 8 | 931004-10.c, 931004-12.c, 931004-14.c, 931004-2.c, 931004-4.c |
 | `unsupported:StmtExpr` | 7 | 7 | 20000703-1.c, 20000917-1.c, 20020206-1.c, 20020320-1.c, 930406-1.c |
 | `unsupported:unsupported bit-field width 1 for 'int'` | 7 | 7 | pr110165-1.c, pr110166-1.c, pr48973-1.c, pr48973-2.c, pr49123.c |
-| `libc-call: __builtin_malloc` | 6 | 6 | 20071018-1.c, 20071120-1.c, pr36765.c, pr43008.c, pr84339.c |
 | `libc-call: malloc` | 6 | 6 | 20020406-1.c, 960521-1.c, pr41395-1.c, pr41395-2.c, pr41463.c |
 | `unsupported:DesignatedInitUpdateExpr` | 6 | 6 | gcc/testsuite/gcc.dg/c23-empty-init-5.c, gcc/testsuite/gcc.dg/c23-empty-init-warn-1.c, gcc/testsuite/gcc.dg/c23-empty-init-warn-17.c, gcc/testsuite/gcc.dg/c23-empty-init-warn-2.c, gcc/testsuite/gcc.dg/c23-empty-init-warn-4.c |
 | `unsupported:break, continue or goto escaped a function body` | 6 | 6 | 00010.c, 00199.c, 20030909-1.c, 20040704-1.c, pr119291.c |
@@ -327,6 +326,7 @@ The run's first refusal, normalized by construct; `sole` counts rows whose first
 | `unsupported:no layout for declared type '_Complex double'` | 5 | 5 | 20030910-1.c, 960512-1.c, complex-1.c, complex-2.c, ieee/cdivchkd.c |
 | `unsupported:no layout for declared type 'struct S'` | 5 | 5 | 20050107-1.c, 20171008-1.c, pr52979-1.c, pr52979-2.c, pr79737-1.c |
 | `unsupported:unbound declaration 'id180' (name 'stdout')` | 5 | 5 | 00189.c, fprintf-1.c, fprintf-chk-1.c, vfprintf-1.c, vfprintf-chk-1.c |
+| `libc-call: __builtin_malloc` | 4 | 4 | 20071120-1.c, pr43008.c, pr84339.c, strlen-7.c |
 | `unsupported:extern object 'b' has no definition in the translation unit` | 4 | 4 | alias-2.c, alias-3.c, alias-4.c, gcc/testsuite/gcc.dg/c23-bool-2.c |
 | `unsupported:indirect call through a non-FunctionDecl reference` | 4 | 4 | 20010122-1.c, pr28289.c, pr34768-1.c, pr34768-2.c |
 | `unsupported:not an integer type: 'double'` | 4 | 4 | 961223-1.c, ieee/pr28634.c, pr29798.c, stdarg-4.c |

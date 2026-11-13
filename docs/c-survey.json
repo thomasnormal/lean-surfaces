@@ -10,8 +10,8 @@
   "gcc.c-torture/execute": {
    "not-parsed": 267,
    "oracle-tests-compiler": 1,
-   "passed": 827,
-   "refused-libc": 47,
+   "passed": 829,
+   "refused-libc": 45,
    "refused-ub": 96,
    "refused-unsupported": 616,
    "timeout": 64
@@ -28,8 +28,8 @@
  "counts": {
   "not-parsed": 294,
   "oracle-tests-compiler": 1,
-  "passed": 998,
-  "refused-libc": 51,
+  "passed": 1000,
+  "refused-libc": 49,
   "refused-ub": 105,
   "refused-unsupported": 699,
   "timeout": 66
@@ -917,19 +917,6 @@
   },
   {
    "files": [
-    "20071018-1.c",
-    "20071120-1.c",
-    "pr36765.c",
-    "pr43008.c",
-    "pr84339.c",
-    "strlen-7.c"
-   ],
-   "present": 6,
-   "sole": 6,
-   "wall": "libc-call: __builtin_malloc"
-  },
-  {
-   "files": [
     "20020406-1.c",
     "960521-1.c",
     "pr41395-1.c",
@@ -1026,6 +1013,17 @@
    "present": 5,
    "sole": 5,
    "wall": "unsupported:unbound declaration 'id180' (name 'stdout')"
+  },
+  {
+   "files": [
+    "20071120-1.c",
+    "pr43008.c",
+    "pr84339.c",
+    "strlen-7.c"
+   ],
+   "present": 4,
+   "sole": 4,
+   "wall": "libc-call: __builtin_malloc"
   },
   {
    "files": [
@@ -3666,9 +3664,9 @@
    "wall": "unsupported:va_arg requested unsupported value type 'struct s'"
   }
  ],
- "manifest_hash": "ba6cffb15db5237f7c78461a7076869aab1ae2c0a1c0fc37d1b290916d27f543",
- "measured_at_utc": "2026-11-13T10:04:17Z",
- "measured_commit": "bcba26845",
+ "manifest_hash": "2c46223d202255d1a14f8e696c8127b599978335a057195b98fb5f569f01a014",
+ "measured_at_utc": "2026-11-13T10:07:33Z",
+ "measured_commit": "8ed7ade05",
  "pin": {
   "corpora": [
    "C1",
@@ -10674,8 +10672,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "__builtin_malloc",
-   "dynamic_wall": "libc-call: __builtin_malloc",
+   "detail": "",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "20071018-1.c",
    "sha256": "933684cc6ff82204898950889f50a29fd41eedc455fa74a2cfd02e4b86aa5cbe",
@@ -10683,7 +10681,7 @@
     "libc-call: __builtin_malloc",
     "type-layout"
    ],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -23392,15 +23390,15 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "__builtin_malloc",
-   "dynamic_wall": "libc-call: __builtin_malloc",
+   "detail": "",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "pr36765.c",
    "sha256": "052031ec2e6ee0be696f449c5992d7cce5aa910d2933b6e8f7601517c6c5ce70",
    "static_walls": [
     "libc-call: __builtin_malloc"
    ],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",

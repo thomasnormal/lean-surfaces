@@ -10,10 +10,10 @@
   "gcc.c-torture/execute": {
    "not-parsed": 267,
    "oracle-tests-compiler": 1,
-   "passed": 907,
+   "passed": 908,
    "refused-libc": 35,
    "refused-ub": 98,
-   "refused-unsupported": 546,
+   "refused-unsupported": 545,
    "timeout": 64
   },
   "gcc.c23-run": {
@@ -28,10 +28,10 @@
  "counts": {
   "not-parsed": 294,
   "oracle-tests-compiler": 1,
-  "passed": 1082,
+  "passed": 1083,
   "refused-libc": 39,
   "refused-ub": 107,
-  "refused-unsupported": 625,
+  "refused-unsupported": 624,
   "timeout": 66
  },
  "dynamic_wall_ranking": [
@@ -1300,15 +1300,6 @@
   },
   {
    "files": [
-    "920908-1.c",
-    "pr98474.c"
-   ],
-   "present": 2,
-   "sole": 2,
-   "wall": "unsupported:no layout for declared type 'T'"
-  },
-  {
-   "files": [
     "20101025-1.c",
     "builtin-prefetch-3.c"
    ],
@@ -1818,6 +1809,14 @@
    "present": 1,
    "sole": 1,
    "wall": "unsupported:no layout for declared type 'ScanfState'"
+  },
+  {
+   "files": [
+    "920908-1.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "unsupported:no layout for declared type 'T'"
   },
   {
    "files": [
@@ -3261,8 +3260,8 @@
   }
  ],
  "manifest_hash": "bca94718b04e8394cdce992866637166f530978790bd1013cea4a00ae25ef764",
- "measured_at_utc": "2026-11-13T21:20:00Z",
- "measured_commit": "bed664ad8",
+ "measured_at_utc": "2026-11-13T22:55:58Z",
+ "measured_commit": "b5b854337e09d06ef409d4a74e878f1700c65639",
  "pin": {
   "corpora": [
    "C1",
@@ -28194,15 +28193,15 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "no layout for declared type 'T'",
-   "dynamic_wall": "unsupported:no layout for declared type 'T'",
+   "detail": "",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "pr98474.c",
    "sha256": "25a1e42975163cadb179af80ba282b87b21d3ea1ff216656041b9cd7796aec14",
    "static_walls": [
     "libc-call: __builtin_abort"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",

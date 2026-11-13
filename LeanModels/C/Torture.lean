@@ -357,6 +357,10 @@ def observedRecordFacts (envl : Envelope) :
               | none => []
           | _ => []
       | _ => []
+  let nestedFacts2 := fun fields : List Decl =>
+    nestedFacts fields ++ fields.flatMap (fun child => match child with
+      | .record _ _ nested _ _ => nestedFacts nested
+      | _ => [])
   let facts := ds.filterMap fun d => match d with
     | .record (some _) (some nm) fields (some layout) _ =>
         match checkedRecordLayout? fields layout with
@@ -407,7 +411,7 @@ def observedRecordFacts (envl : Envelope) :
         | _ => none
     | _ => none
   facts ++ ds.flatMap (fun d => match d with
-    | .record _ _ fields _ _ => nestedFacts fields
+    | .record _ _ fields _ _ => nestedFacts2 fields
     | _ => [])
 
 

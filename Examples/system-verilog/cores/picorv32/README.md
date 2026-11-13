@@ -1919,3 +1919,21 @@ The ordinary route still stops first at `picorv32.v:203` on the `cpuregs`
 unpacked memory declaration.  No whole-core E execution, retirement trace or
 symbolic ADDI invariant is claimed; the old guard-bypassed 80-cycle result
 remains **UNVALIDATED**.
+
+## 2026-11-13 ordinary-route execution probe
+
+The unchanged RISCV_FORMAL envelope was re-probed against public master
+`714e443c090aade7c7244a4896291b7d721caf50` after the canonical one-rank memory
+route landed.  Its SHA-256 is
+`17ea7b66ab8ea9b6844c317928f0430cff8b8a5b53f658f7a929bf1aa6cdc236`.
+The user-facing `load_design_sv2` family now instantiates PicoRV32 at all 26
+pinned parameters with `memories=1`, `processes=54`, and `scalar.decls=255`.
+The direct initial-process body returns `ok`; evaluating the complete
+`initialState` (the time-zero settle path) produces no result within a bounded
+120-second Lean probe (process exit 124).  This is a reduction/performance wall
+after successful admission, not an unsupported construct, so no E execution,
+retirement trace, or ADDI theorem is claimed.
+
+The current pinned RISCV_FORMAL census is
+`360 ADMITTED / 0 REFUSED / 4 NOT REACHED` (`remaining=4`); the four remaining
+rows are inactive generate branches.  E-RUN remains `0/unmeasured`.

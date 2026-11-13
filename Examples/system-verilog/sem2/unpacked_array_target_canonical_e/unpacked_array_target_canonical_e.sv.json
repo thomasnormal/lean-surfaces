@@ -1,0 +1,413 @@
+{
+  "schema_version": "sv-0.2",
+  "language": "systemverilog",
+  "frontend": {
+    "name": "pyslang",
+    "family": "pyslang-11"
+  },
+  "mode": "symbolic",
+  "top": "unpacked_array_target_canonical_e",
+  "source_files": [
+    {
+      "path": "Examples/system-verilog/sem2/unpacked_array_target_canonical_e/unpacked_array_target_canonical_e.sv",
+      "sha256": "eb781e6f0a27df03244622c954ef8ed8d7dc7c7205e3794b990fa7c9feeb2787"
+    }
+  ],
+  "packages": [],
+  "design": {
+    "kind": "Design",
+    "modules": [
+      {
+        "kind": "Module",
+        "span": {
+          "line": 2,
+          "col": 1,
+          "end_line": 9,
+          "end_col": 10
+        },
+        "name": "unpacked_array_target_canonical_e",
+        "imports": [],
+        "params": [],
+        "types": [],
+        "ports": [
+          {
+            "kind": "Port",
+            "span": {
+              "line": 2,
+              "col": 60,
+              "end_line": 2,
+              "end_col": 61
+            },
+            "name": "x",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 2,
+                      "col": 55,
+                      "end_line": 2,
+                      "end_col": 56
+                    },
+                    "value": 7,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 2,
+                      "col": 57,
+                      "end_line": 2,
+                      "end_col": 58
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 8
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 3,
+              "col": 15,
+              "end_line": 3,
+              "end_col": 18
+            },
+            "name": "idx",
+            "dir": "in",
+            "width": {
+              "kind": "PackedType",
+              "packed": [],
+              "resolved": 1
+            }
+          },
+          {
+            "kind": "Port",
+            "span": {
+              "line": 3,
+              "col": 39,
+              "end_line": 3,
+              "end_col": 40
+            },
+            "name": "y",
+            "dir": "out",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 3,
+                      "col": 34,
+                      "end_line": 3,
+                      "end_col": 35
+                    },
+                    "value": 7,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 3,
+                      "col": 36,
+                      "end_line": 3,
+                      "end_col": 37
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 8
+            }
+          }
+        ],
+        "decls": [
+          {
+            "kind": "Var",
+            "span": {
+              "line": 4,
+              "col": 15,
+              "end_line": 4,
+              "end_col": 25
+            },
+            "name": "slot[0]",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 4,
+                      "col": 10,
+                      "end_line": 4,
+                      "end_col": 11
+                    },
+                    "value": 7,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 4,
+                      "col": 12,
+                      "end_line": 4,
+                      "end_col": 13
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 8
+            },
+            "two_state": false,
+            "flat_base": "slot",
+            "flat_index": 0,
+            "init": null
+          },
+          {
+            "kind": "Var",
+            "span": {
+              "line": 4,
+              "col": 15,
+              "end_line": 4,
+              "end_col": 25
+            },
+            "name": "slot[1]",
+            "width": {
+              "kind": "PackedType",
+              "packed": [
+                {
+                  "msb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 4,
+                      "col": 10,
+                      "end_line": 4,
+                      "end_col": 11
+                    },
+                    "value": 7,
+                    "resolved_width": null
+                  },
+                  "lsb": {
+                    "kind": "Int",
+                    "span": {
+                      "line": 4,
+                      "col": 12,
+                      "end_line": 4,
+                      "end_col": 13
+                    },
+                    "value": 0,
+                    "resolved_width": null
+                  }
+                }
+              ],
+              "resolved": 8
+            },
+            "two_state": false,
+            "flat_base": "slot",
+            "flat_index": 1,
+            "init": null
+          }
+        ],
+        "processes": [
+          {
+            "kind": "AlwaysComb",
+            "span": {
+              "line": 5,
+              "col": 3,
+              "end_line": 8,
+              "end_col": 6
+            },
+            "body": {
+              "kind": "Block",
+              "span": {
+                "line": 5,
+                "col": 15,
+                "end_line": 8,
+                "end_col": 6
+              },
+              "stmts": [
+                {
+                  "kind": "Unsupported",
+                  "span": {
+                    "line": 6,
+                    "col": 5,
+                    "end_line": 6,
+                    "end_col": 19
+                  },
+                  "sv_kind": "AssignmentExpression:target",
+                  "text": "slot[idx] = x;"
+                },
+                {
+                  "kind": "BlockingAssign",
+                  "span": {
+                    "line": 7,
+                    "col": 5,
+                    "end_line": 7,
+                    "end_col": 19
+                  },
+                  "target": {
+                    "kind": "Ident",
+                    "span": {
+                      "line": 7,
+                      "col": 5,
+                      "end_line": 7,
+                      "end_col": 6
+                    },
+                    "width": 8,
+                    "name": "y"
+                  },
+                  "value": {
+                    "kind": "Ternary",
+                    "span": {
+                      "line": 7,
+                      "col": 9,
+                      "end_line": 7,
+                      "end_col": 18
+                    },
+                    "width": 8,
+                    "cond": {
+                      "kind": "Binary",
+                      "span": {
+                        "line": 7,
+                        "col": 14,
+                        "end_line": 7,
+                        "end_col": 17
+                      },
+                      "width": 1,
+                      "op": "===",
+                      "left": {
+                        "kind": "Ident",
+                        "span": {
+                          "line": 7,
+                          "col": 14,
+                          "end_line": 7,
+                          "end_col": 17
+                        },
+                        "width": 1,
+                        "name": "idx"
+                      },
+                      "right": {
+                        "kind": "Literal",
+                        "span": {
+                          "line": 7,
+                          "col": 14,
+                          "end_line": 7,
+                          "end_col": 17
+                        },
+                        "width": 1,
+                        "bits": "0"
+                      }
+                    },
+                    "then": {
+                      "kind": "Ident",
+                      "span": {
+                        "line": 7,
+                        "col": 9,
+                        "end_line": 7,
+                        "end_col": 13
+                      },
+                      "width": 8,
+                      "name": "slot[0]"
+                    },
+                    "else": {
+                      "kind": "Ternary",
+                      "span": {
+                        "line": 7,
+                        "col": 9,
+                        "end_line": 7,
+                        "end_col": 18
+                      },
+                      "width": 8,
+                      "cond": {
+                        "kind": "Binary",
+                        "span": {
+                          "line": 7,
+                          "col": 14,
+                          "end_line": 7,
+                          "end_col": 17
+                        },
+                        "width": 1,
+                        "op": "===",
+                        "left": {
+                          "kind": "Ident",
+                          "span": {
+                            "line": 7,
+                            "col": 14,
+                            "end_line": 7,
+                            "end_col": 17
+                          },
+                          "width": 1,
+                          "name": "idx"
+                        },
+                        "right": {
+                          "kind": "Literal",
+                          "span": {
+                            "line": 7,
+                            "col": 14,
+                            "end_line": 7,
+                            "end_col": 17
+                          },
+                          "width": 1,
+                          "bits": "1"
+                        }
+                      },
+                      "then": {
+                        "kind": "Ident",
+                        "span": {
+                          "line": 7,
+                          "col": 9,
+                          "end_line": 7,
+                          "end_col": 13
+                        },
+                        "width": 8,
+                        "name": "slot[1]"
+                      },
+                      "else": {
+                        "kind": "Literal",
+                        "span": {
+                          "line": 7,
+                          "col": 9,
+                          "end_line": 7,
+                          "end_col": 18
+                        },
+                        "width": 8,
+                        "bits": "xxxxxxxx"
+                      }
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        ],
+        "generates": [],
+        "others": [],
+        "cell_refs": [
+          {
+            "name": "slot[0]",
+            "base": "slot",
+            "index": 0
+          },
+          {
+            "name": "slot[1]",
+            "base": "slot",
+            "index": 1
+          }
+        ]
+      }
+    ],
+    "others": []
+  },
+  "lean_blocks": []
+}

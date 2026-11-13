@@ -541,74 +541,136 @@ def evalMemBin (op : SymBinOp) (a b : LVec) : Res LVec :=
   | .land => .ok (evalBinOp .land a b)
   | .lor => .ok (evalBinOp .lor a b)
 
+def CoreMemDesign.evalScalarLocals (E : CoreMemDesign) (env : IEnv) (elems : List (String × Nat))
+    (st : CoreMemState) (ctx : Option Nat) (locals : SvState) (e : PExpr) : Res LVec :=
+  let widths := if elems.isEmpty then E.elems else elems
+  evalPure2 (locals ++ E.scalar.view st.scalar) (instExpr2 env widths ctx e)
+
 def CoreMemDesign.evalScalar (E : CoreMemDesign) (env : IEnv) (elems : List (String × Nat))
     (st : CoreMemState) (ctx : Option Nat) (e : PExpr) : Res LVec :=
-  let widths := if elems.isEmpty then E.elems else elems
-  evalPure2 (E.scalar.view st.scalar) (instExpr2 env widths ctx e)
+  E.evalScalarLocals env elems st ctx [] e
+
+def CoreMemDesign.evalFunctionArgs (E : CoreMemDesign) (env : IEnv) (elems : List (String × Nat))
+    (st : CoreMemState) (locals : SvState) : List PDecl → List PExpr → Res (List LVec)
+  | [], [] => .ok []
+  | formal :: formals, actual :: actuals => do
+      let width ← match formal.type.width env with
+        | .ok w => .ok w
+        | .error msg => .unsupported s!"function formal '{formal.name}': {msg}"
+      let value ← E.evalScalarLocals env elems st (some width) locals actual
+      let value := if formal.isSigned then value.resizeSigned width else value.resizeU width
+      let rest ← E.evalFunctionArgs env elems st locals formals actuals
+      .ok (value :: rest)
+  | _ :: _, [] | [], _ :: _ => .unsupported "CallExpression:user-function:arity"
+
+/-! A source-shaped function call keeps the parser's `PExpr.functionCall`
+node.  IEEE 1800-2023 §§13.4–13.5 define the automatic function's input
+formal binding, expression evaluation, and return conversion; the evaluator
+implements that direct call here rather than replacing the node with an
+inlined expression.  Static functions and output/ref/inout formals remain
+named refusals because their storage and side effects are outside this
+source-shaped expression subset. -/
+def CoreMemDesign.evalFunction (E : CoreMemDesign) (env : IEnv) (elems : List (String × Nat))
+    (st : CoreMemState) (locals : SvState) (name : String) (args : List PExpr) : Res LVec :=
+  match env.functions.find? (fun f => f.name == name) with
+  | none => .unsupported s!"CallExpression:user-function: function '{name}' is not declared"
+  | some f =>
+      if !f.automatic then
+        .unsupported s!"SubroutineSymbol:static: function '{name}' is not automatic"
+      else if f.formals.any (fun formal => !formal.isInput) then
+        .unsupported s!"SubroutineSymbol:formal: function '{name}' formals must be input-only"
+      else
+        match f.returnType.width env with
+        | .error msg => .unsupported s!"SubroutineSymbol:return-type: {msg}"
+        | .ok returnWidth => do
+            let values ← E.evalFunctionArgs env elems st locals f.formals args
+            let bindings := f.formals.zip values |>.map fun (formal, value) => (formal.name, value)
+            let value ← E.evalScalarLocals env elems st (some returnWidth) bindings f.body
+            .ok (if f.isSigned then value.resizeSigned returnWidth else value.resizeU returnWidth)
 
 mutual
 
-def CoreMemDesign.evalIndex (E : CoreMemDesign) (env : IEnv) (elems : List (String × Nat))
-    (st : CoreMemState) (e : PExpr) : Res LVec :=
+def CoreMemDesign.evalIndexLocals (E : CoreMemDesign) (env : IEnv) (elems : List (String × Nat))
+    (st : CoreMemState) (locals : SvState) (e : PExpr) : Res LVec :=
   match evalInt env e with
   | .ok i => .ok (LVec.ofInt 32 i)
-  | .error _ => E.evalExpr env elems st none e
+  | .error _ => E.evalExprLocals env elems st none locals e
 
-def CoreMemDesign.evalExpr (E : CoreMemDesign) (env : IEnv) (elems : List (String × Nat))
-    (st : CoreMemState) (ctx : Option Nat) : PExpr → Res LVec
+def CoreMemDesign.evalExprLocals (E : CoreMemDesign) (env : IEnv) (elems : List (String × Nat))
+    (st : CoreMemState) (ctx : Option Nat) (locals : SvState) : PExpr → Res LVec
   | e@(.arrayElem name [index]) => do
       match E.memDecl? name with
       | some md =>
-          let idx ← E.evalIndex env elems st index
+          let idx ← E.evalIndexLocals env elems st locals index
           match st.memory.readIndexId md.shape.id false idx with
           | some v => .ok v
           | none => .unsupported s!"ArraySel: memory identity for '{name}' is not present"
-      | none => E.evalScalar env elems st ctx e
+      | none => E.evalScalarLocals env elems st ctx locals e
   | e@(.arrayElem name _) =>
       if E.memDecl? name |>.isSome then
         .unsupported s!"ArraySel:rank: memory '{name}' is not a one-rank element select"
-      else E.evalScalar env elems st ctx e
+      else E.evalScalarLocals env elems st ctx locals e
   | e@(.arrayPart name _ _ _ _) =>
       match E.memDecl? name with
       | some _ =>
           .unsupported s!"ArraySel:part: memory '{name}' part select is outside this E slice"
-      | none => E.evalScalar env elems st ctx e
+      | none => E.evalScalarLocals env elems st ctx locals e
+  | .functionCall name args => E.evalFunction env elems st locals name args
   | e@(.unary op a) =>
       if LeanModels.Sv.PExpr.hasMemoryRead e then do
-        evalMemUnary op (← E.evalExpr env elems st ctx a)
-      else E.evalScalar env elems st ctx e
+        evalMemUnary op (← E.evalExprLocals env elems st ctx locals a)
+      else E.evalScalarLocals env elems st ctx locals e
   | e@(.binary op a b) =>
       if LeanModels.Sv.PExpr.hasMemoryRead e then do
-        evalMemBin op (← E.evalExpr env elems st ctx a) (← E.evalExpr env elems st ctx b)
-      else E.evalScalar env elems st ctx e
+        evalMemBin op (← E.evalExprLocals env elems st ctx locals a)
+          (← E.evalExprLocals env elems st ctx locals b)
+      else E.evalScalarLocals env elems st ctx locals e
   | e@(.ternary c a b) =>
       if LeanModels.Sv.PExpr.hasMemoryRead e then
         do
-          let cv ← E.evalExpr env elems st none c
-          let tv ← E.evalExpr env elems st ctx a
-          let fv ← E.evalExpr env elems st ctx b
+          let cv ← E.evalExprLocals env elems st none locals c
+          let tv ← E.evalExprLocals env elems st ctx locals a
+          let fv ← E.evalExprLocals env elems st ctx locals b
           .ok (LVec.ternary cv tv fv)
-      else E.evalScalar env elems st ctx e
+      else E.evalScalarLocals env elems st ctx locals e
   | e@(.concat xs) =>
       if LeanModels.Sv.PExpr.hasMemoryRead e then do
-        let vs ← evalMemExprList E env elems st xs
+        let vs ← E.evalMemExprListLocals env elems st locals xs
         .ok (LVec.concatMany vs.toArray)
-      else E.evalScalar env elems st ctx e
+      else E.evalScalarLocals env elems st ctx locals e
   | e@(.resize _ a) =>
       if LeanModels.Sv.PExpr.hasMemoryRead e then do
-        let v ← E.evalExpr env elems st ctx a
+        let v ← E.evalExprLocals env elems st ctx locals a
         .ok (v.resizeU (ctx.getD v.width))
-      else E.evalScalar env elems st ctx e
+      else E.evalScalarLocals env elems st ctx locals e
   | e@(.signedResize _ a) =>
       if LeanModels.Sv.PExpr.hasMemoryRead e then do
-        let v ← E.evalExpr env elems st ctx a
+        let v ← E.evalExprLocals env elems st ctx locals a
         .ok (v.resizeSigned (ctx.getD v.width))
-      else E.evalScalar env elems st ctx e
+      else E.evalScalarLocals env elems st ctx locals e
   | e@(.squash2 _ a) =>
       if LeanModels.Sv.PExpr.hasMemoryRead e then do
-        return (← E.evalExpr env elems st ctx a).toTwoState
-      else E.evalScalar env elems st ctx e
-  | e => E.evalScalar env elems st ctx e
+        return (← E.evalExprLocals env elems st ctx locals a).toTwoState
+      else E.evalScalarLocals env elems st ctx locals e
+  | e => E.evalScalarLocals env elems st ctx locals e
+
+def CoreMemDesign.evalMemExprListLocals (E : CoreMemDesign) (env : IEnv) (elems : List (String × Nat))
+    (st : CoreMemState) (locals : SvState) : List PExpr → Res (List LVec)
+  | [] => .ok []
+  | e :: es => do
+      let v ← E.evalExprLocals env elems st none locals e
+      let vs ← E.evalMemExprListLocals env elems st locals es
+      .ok (v :: vs)
+
+end
+
+def CoreMemDesign.evalIndex (E : CoreMemDesign) (env : IEnv) (elems : List (String × Nat))
+    (st : CoreMemState) (e : PExpr) : Res LVec :=
+  E.evalIndexLocals env elems st [] e
+
+def CoreMemDesign.evalExpr (E : CoreMemDesign) (env : IEnv) (elems : List (String × Nat))
+    (st : CoreMemState) (ctx : Option Nat) (e : PExpr) : Res LVec :=
+  E.evalExprLocals env elems st ctx [] e
 
 def evalMemExprList (E : CoreMemDesign) (env : IEnv) (elems : List (String × Nat))
     (st : CoreMemState) : List PExpr → Res (List LVec)
@@ -617,8 +679,6 @@ def evalMemExprList (E : CoreMemDesign) (env : IEnv) (elems : List (String × Na
       let v ← E.evalExpr env elems st none e
       let vs ← evalMemExprList E env elems st es
       .ok (v :: vs)
-
-end
 
 /-! ## Source-shaped case selection
 

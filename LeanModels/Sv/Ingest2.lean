@@ -847,7 +847,8 @@ def parsePDecl (j : Json) : Except String PDecl := do
           let init ← match getOptField j "init" with
             | none => pure none
             | some ji => pure (some (← withCtx "init" (parsePExpr ji)))
-          return { name := name, type := ty, unpackedDims := unpacked, isSigned := isSigned, twoState := twoState, isNet := kind == "Net", init := init, flatBase := flatBase, flatIndex := flatIndex }
+          let dir? := getOptStr j "dir"
+          return { name := name, type := ty, unpackedDims := unpacked, isSigned := isSigned, twoState := twoState, isInput := dir? == some "in", isOutput := dir? == some "out", isNet := kind == "Net", init := init, flatBase := flatBase, flatIndex := flatIndex }
       | other => throw s!"unknown declaration kind {other.quote}"
 
 /-- The optional `signed` field of a `ParameterDecl`/`LocalParam` (the

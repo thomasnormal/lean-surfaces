@@ -11,7 +11,7 @@ This table is generated from the pinned public-design census receipts. It measur
 | `prim_packer` | OpenTitan 0a6ff685 | 20 | no | `PortSymbol:net-z (ready_o, line 18)` |
 | `CV32E40P` | openhwgroup v1.0.1 / 6148cf5 | 574 | no | `AlwaysPosedge:edge` |
 | `Ibex` | lowRISC d513671d | 396 | no | `AlwaysLatch:unknown process kind` |
-| `PicoRV32` | YosysHQ ef203c2b | 0 | yes | `time-zero initialState settle: no result within 120 s; census 360 admitted, 0 refused, 4 not reached` |
+| `PicoRV32` | YosysHQ ef203c2b | 0 | yes | `canonical E initialState completes in about 22 s; reset-held-low full step and eight empty-input cycles pass; census 360 admitted, 0 refused, 4 not reached` |
 | `DarkRISCV` | darklife bb6b483c | 1 | no | `Constant: non-literal FLUSH initializer` |
 
 The three OpenTitan rows use the F1-retention census in `docs/sv-frontier.md`; CV32E40P and the RISC-V scouting rows use `Examples/system-verilog/cores/README.md` and `docs/cv32e40p-census.json`. The table is an admission census, not a proof claim.

@@ -1467,8 +1467,18 @@ elab "load_design_sv2 " name:ident " from " path:str : command => do
     -- every parameter point
     -- (2026-10-28, WP2 — `Hier2.lean`, "Drivers").
     let flatTop := lib.isEmpty || GenItem.listInstFree pd.generates
+    let memoryTop := pd.decls.any (fun d => !d.unpackedDims.isEmpty) ||
+      lib.any (fun m => m.decls.any (fun d => !d.unpackedDims.isEmpty))
     let semBody :=
-      if flatTop then
+      if memoryTop then
+        if flatTop then
+          Lean.mkApp3 (Lean.mkConst ``LeanModels.Sv.Kernel.PDesign.instantiateE2)
+            (Lean.mkConst pdName) argsList
+            (Lean.mkApp (Lean.mkConst ``LeanModels.Sv.PDesign.surfaceFuel) argsList)
+        else
+          Lean.mkApp3 (Lean.mkConst ``LeanModels.Sv.Kernel.PDesign.instantiateE2H)
+            (Lean.mkConst pdName) (Lean.mkConst libName) argsList
+      else if flatTop then
         if pd.functions.isEmpty then
           Lean.mkApp2 (Lean.mkConst ``LeanModels.Sv.PDesign.instantiateGDAlias2)
             (Lean.mkConst pdName) argsList
@@ -1480,9 +1490,12 @@ elab "load_design_sv2 " name:ident " from " path:str : command => do
           (Lean.mkConst pdName) (Lean.mkConst libName) argsList
     let semValue := paramNames.foldr
       (fun p acc => Lean.mkLambda (Name.mkSimple p) .default natTy acc) semBody
+    let semResultTy := if memoryTop then
+      Lean.mkApp (Lean.mkConst ``LeanModels.Sv.Res)
+        (Lean.mkConst ``LeanModels.Sv.Kernel.CoreMemDesign)
+      else Lean.mkConst ``LeanModels.Sv.Design2
     let semType := paramNames.foldr
-      (fun p acc => Lean.mkForall (Name.mkSimple p) .default natTy acc)
-      (Lean.mkConst ``LeanModels.Sv.Design2)
+      (fun p acc => Lean.mkForall (Name.mkSimple p) .default natTy acc) semResultTy
     addAndCompile <| .defnDecl {
       name := semName
       levelParams := []
@@ -1492,7 +1505,9 @@ elab "load_design_sv2 " name:ident " from " path:str : command => do
       safety := .safe }
     enableRealizationsForConst semName
     addDocStringCore semName
-      (if flatTop then
+      (if memoryTop then
+        s!"Canonical E memory family `{envl.top}` (`Res CoreMemDesign`, source-shaped native `MemState`; use `.e`/`.sem` for the ordinary memory route)."
+      else if flatTop then
         s!"Semantic-tier design family `{envl.top}` (`Design2`, via `PDesign.instantiateGDAlias2 {pdName}` — `instantiateD2` plus the per-parameter-point always_comb alias guard, Hier2.lean): one `Nat` binder per SV parameter, declaration order — {paramNames}. Runs under `run2` (selects, case, async active-low reset in-tier)."
       else
         s!"Semantic-tier design family `{envl.top}` (`Design2`, via `PDesign.instantiateHDAlias2 {pdName} {libName}` — the module hierarchy flattened with the per-parameter-point always_comb alias guard, Hier2.lean): one `Nat` binder per SV parameter, declaration order — {paramNames}. Runs under `run2`.")

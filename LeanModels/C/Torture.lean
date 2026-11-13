@@ -207,7 +207,8 @@ What is still a named zero: `_Alignas` and `#pragma pack` are outside the pin
 and outside the modelled vocabulary. The extractor retains their clang
 attribute nodes as `unsupported` children of the record, and `recordsOf`
 omits any record containing one, so every use refuses rather than receiving a
-natural-alignment offset. Bit-fields follow the same omission path. -/
+natural-alignment offset. Bit-fields use the separate checked observations
+below; the legacy spelling fallback still omits them. -/
 
 /-- Round `off` up to a multiple of `al`. `al = 0` is not a alignment and is
 returned unchanged rather than dividing by zero. -/
@@ -218,19 +219,11 @@ def roundUp (off al : Nat) : Nat :=
 §6.7.2.1p18 requires increasing addresses in declaration order, so the order
 is the standard's and not a convenience.
 
-**A RECORD WITH A BIT-FIELD IS OMITTED, and omission is the refusal.** This
-layout places whole members at byte offsets; §6.7.2.1p11's bit-fields share
-a storage unit and their width is not modelled here. A record that is
-absent from this list has no size and no member offsets, so every use of it
-refuses — which is the honest zero. The alternative is what this lane
-actually shipped: laying `unsigned int b : 1` out as a full `unsigned int`,
-which made 20031211-1.c store `0xbeef` into a one-bit field and read
-`0xbeef` back, and report a FAILURE rather than a refusal. A model that
-cannot represent a construct must decline it, not approximate it.
-
-The refusal surfaces at the use site as `no size for …` naming the type
-rather than the bit-field; that message is honest but not yet specific, and
-making `Layout` carry a reason is its own inch. -/
+The legacy spelling fallback omits records with bit-fields. Checked
+`ASTRecordLayout` observations are admitted separately below, where the
+evaluator reads and updates the dumped bit ranges. A record absent from both
+tables has no size or member offsets, so every use refuses — the honest zero.
+No ABI packing rule is reconstructed from a type spelling. -/
 def recordHasBitfield (fields : List Decl) : Bool :=
   fields.any fun d => match d with
     | .field _ _ (some _) _ => true
@@ -340,7 +333,7 @@ def observedRecordFacts (envl : Envelope) :
         match checkedRecordLayout? fields layout with
         | none => none
         | some checked =>
-            if checked.fields.any (fun field => field.bitfield) || recordHasUnsupported fields then none
+            if recordHasUnsupported fields then none
             else
               let tag := if checked.tagKind == "union" then "union " else "struct "
               let members := fields.filterMap fun field => match field with
@@ -465,6 +458,12 @@ def layoutFor (envl : Envelope) : Layout :=
           layout.fields.find? (fun field => field.name == f)
             |>.map (fun field => field.offsetBits / 8)
       | none => fieldOffIn tds recs 16 t f
+    fieldBits := fun t f => match observedFor t with
+      | some (_, _, layout) =>
+          layout.fields.find? (fun field => field.name == f)
+            |>.filter (·.bitfield)
+            |>.bind (fun field => field.widthBits.map (fun width => (field.offsetBits, width)))
+      | none => none
     members := fun t =>
       match observedFor t with
       | some (_, members, _) => some members

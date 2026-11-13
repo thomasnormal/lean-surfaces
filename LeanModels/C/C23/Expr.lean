@@ -423,6 +423,10 @@ structure Layout where
   /-- `offsetof`, keyed on the BASE expression's spelling, so `p->f` and
   `x.f` look up under `"const Pos *"` and `"Pos"` respectively. -/
   fieldOff : CType → String → Option Nat
+  /-- Bit-field representation facts from Clang's record-layout observation.
+  The pair is `(offset_bits, width_bits)`; `none` means an ordinary member.
+  These are frontend facts, never reconstructed from a type spelling. -/
+  fieldBits : CType → String → Option (Nat × Nat) := fun _ _ => none
   /-- An array type's element type and extent, for `T[N]`.
 
   Needed because **aggregate initialization WRITES through the layout**
@@ -459,6 +463,7 @@ structure Layout where
 missing layout fact is a loud refusal rather than a guessed offset. -/
 def Layout.unknown : Layout :=
   { size := fun _ => none, fieldOff := fun _ _ => none
+    fieldBits := fun _ _ => none
     elem := fun _ => none, members := fun _ => none
     normalizeTy := id }
 
@@ -935,6 +940,63 @@ def hasTwoImpure (ctx : Ctx) : List Expr → Bool
       if mayWrite ctx e then es.any (mayWrite ctx) || hasTwoImpure ctx es
       else hasTwoImpure ctx es
 
+/-! ### C23 §6.7.2.1p11 — bit-field object representation
+
+Bit-fields share the record's storage bytes.  The offset and width below are
+the parser-native `ASTRecordLayout` observations carried by the envelope;
+the evaluator performs only the byte/bit extraction required by the clause.
+No ABI packing rule is reconstructed here. -/
+
+def bitFieldBytesNat : List CByte → Option Nat
+  | bs =>
+      if bs.any (fun b => match b with | .conc _ => false | _ => true) then none
+      else some (Mem.natOfBytes (bs.map (fun b => match b with | .conc x => x | _ => 0)))
+
+def bitFieldSignedValue (t : IntTy) (width raw : Nat) : Int :=
+  let modulus := (2 : Nat) ^ width
+  let value := raw % modulus
+  if t.signed && width > 0 && value >= (2 : Nat) ^ (width - 1) then
+    (value : Int) - (modulus : Int)
+  else value
+
+
+def loadBitFieldAt (ctx : Ctx) (recordTy : CType) (field : String)
+    (fieldTy : CType) (fieldPtr : Ptr) : EvalM CVal := do
+  match ctx.layout.fieldBits recordTy field, ctx.layout.size recordTy,
+      intTyOf? (ctx.layout.normalizeTy fieldTy) with
+  | some (offsetBits, width), some recordSize, some storageTy =>
+      let basePtr := { fieldPtr with off := fieldPtr.off - (offsetBits / 8 : Int), bound := none }
+      let bs ← readMem (fun m => m.loadBytes basePtr recordSize)
+      match bitFieldBytesNat bs with
+      | none => refuseUnsupported "bit-field reads an indeterminate representation"
+      | some raw =>
+          let mask := (2 : Nat) ^ width - 1
+          pure (.int storageTy (bitFieldSignedValue storageTy width
+            ((raw / ((2 : Nat) ^ offsetBits)) &&& mask)))
+  | some _, none, _ => refuseUnsupported s!"no layout for bit-field record '{recordTy}'"
+  | some _, _, none => refuseUnsupported s!"unsupported bit-field type '{fieldTy}'"
+  | none, _, _ => refuseUnsupported s!"no bit-field layout for '{field}'"
+
+def storeBitFieldAt (ctx : Ctx) (recordTy : CType) (field : String)
+    (fieldTy : CType) (fieldPtr : Ptr) (v : CVal) : EvalM Unit := do
+  match ctx.layout.fieldBits recordTy field, ctx.layout.size recordTy,
+      intTyOf? (ctx.layout.normalizeTy fieldTy), v with
+  | some (offsetBits, width), some recordSize, some storageTy, .int _ n =>
+      let basePtr := { fieldPtr with off := fieldPtr.off - (offsetBits / 8 : Int), bound := none }
+      let bs ← readMem (fun m => m.loadBytes basePtr recordSize)
+      match bitFieldBytesNat bs with
+      | none => refuseUnsupported "bit-field writes an indeterminate representation"
+      | some raw =>
+          let mask := (2 : Nat) ^ width - 1
+          let shiftedMask := mask * ((2 : Nat) ^ offsetBits)
+          let fieldValue := (IntTy.wrap { storageTy with bits := width } n).toNat
+          let updated := (raw &&& (Nat.xor shiftedMask ((2 : Nat) ^ (recordSize * 8) - 1))) ||| (fieldValue &&& mask) * ((2 : Nat) ^ offsetBits)
+          let bytes := (Mem.natToBytes recordSize updated).map CByte.conc
+          writeMem (fun m => m.storeBytes basePtr bytes)
+  | some _, _, _, _ => refuseUnsupported s!"unsupported bit-field store '{fieldTy}'"
+  | none, _, _, _ => refuseUnsupported s!"no bit-field layout for '{field}'"
+
+
 mutual
 
 /-- §6.3.2.1p1 — an expression in LVALUE position, yielding the address
@@ -1127,7 +1189,14 @@ def evalExpr (ctx : Ctx) : Expr → EvalM CVal
           refuseUnsupported "unsequenced side effects in assignment"
         let p ← evalLValue ctx l
         let v ← evalExpr ctx r
-        storeAt p (ctx.layout.normalizeTy l.ty) v
+        match l with
+        | .member base field arrow fieldTy _ =>
+            if ctx.layout.fieldBits base.ty field |>.isSome then
+              storeBitFieldAt ctx base.ty field fieldTy p v
+            else
+              storeAt p (ctx.layout.normalizeTy l.ty) v
+        | _ =>
+            storeAt p (ctx.layout.normalizeTy l.ty) v
         pure v
       else do
         let lv ← evalExpr ctx l
@@ -1207,7 +1276,14 @@ def evalExpr (ctx : Ctx) : Expr → EvalM CVal
       if mayWrite ctx r then
         refuseUnsupported "unsequenced side effects in compound assignment"
       let p ← evalLValue ctx l
-      let old ← loadAt p (ctx.layout.normalizeTy l.ty) (ctx.layout.size (ctx.layout.normalizeTy l.ty))
+      let old ← match l with
+        | .member base field arrow fieldTy _ =>
+            if ctx.layout.fieldBits base.ty field |>.isSome then
+              loadBitFieldAt ctx base.ty field fieldTy p
+            else
+              loadAt p (ctx.layout.normalizeTy l.ty) (ctx.layout.size (ctx.layout.normalizeTy l.ty))
+        | _ =>
+            loadAt p (ctx.layout.normalizeTy l.ty) (ctx.layout.size (ctx.layout.normalizeTy l.ty))
       let rv ← evalExpr ctx r
       match old, rv with
       | .ptr _, .int _ _ => do
@@ -1216,7 +1292,14 @@ def evalExpr (ctx : Ctx) : Expr → EvalM CVal
           -- operator, with the lvalue evaluated once.  `evalArith` already
           -- performs the provenance, bound, and element-size checks.
           let nv ← evalArith ctx (compoundBase op) old rv computeResultType
-          storeAt p (ctx.layout.normalizeTy l.ty) nv
+          match l with
+          | .member base field arrow fieldTy _ =>
+              if ctx.layout.fieldBits base.ty field |>.isSome then
+                storeBitFieldAt ctx base.ty field fieldTy p nv
+              else
+                storeAt p (ctx.layout.normalizeTy l.ty) nv
+          | _ =>
+              storeAt p (ctx.layout.normalizeTy l.ty) nv
           pure nv
       | _, _ => do
           let lhsT ← intTyOf (ctx.layout.normalizeTy computeLHSType)
@@ -1229,16 +1312,26 @@ def evalExpr (ctx : Ctx) : Expr → EvalM CVal
           let storageT ← intTyOf (ctx.layout.normalizeTy l.ty)
           let (_, nvN) ← asInt nv
           let stored := convert storageT nvN
-          storeAt p (ctx.layout.normalizeTy l.ty) stored
+          match l with
+          | .member base field arrow fieldTy _ =>
+              if ctx.layout.fieldBits base.ty field |>.isSome then
+                storeBitFieldAt ctx base.ty field fieldTy p stored
+              else
+                storeAt p (ctx.layout.normalizeTy l.ty) stored
+          | _ =>
+              storeAt p (ctx.layout.normalizeTy l.ty) stored
           pure stored
 
   -- ===== lvalues reaching value position without a conversion =====
   -- Clang wraps scalar reads in `LValueToRValue`, so these are the
   -- aggregate-valued cases; evaluating the address and loading is the rule
   -- either way (§6.3.2.1p2).
-  | .member base field arrow ty _ => do
+  | .member base field arrow ty span => do
       let p ← memberAddr ctx base field arrow ty
-      loadAt p (ctx.layout.normalizeTy ty) (ctx.layout.size (ctx.layout.normalizeTy ty))
+      if ctx.layout.fieldBits base.ty field |>.isSome then
+        loadBitFieldAt ctx base.ty field ty p
+      else
+        loadAt p (ctx.layout.normalizeTy ty) (ctx.layout.size (ctx.layout.normalizeTy ty))
   | .index base idx ty _ => do
       let p ← indexAddr ctx base idx ty
       loadAt p (ctx.layout.normalizeTy ty) (ctx.layout.size (ctx.layout.normalizeTy ty))
@@ -2107,7 +2200,8 @@ private theorem memInvariant_core (ctx : Ctx) : ∀ (n : Nat) (e : Expr), e.size
           obtain ⟨i1, i2⟩ := ih b (by simp only [Expr.size_member] at he; omega)
             (Expr.isPure_member hp)
           have hma : MemInvariant (memberAddr ctx b f a fieldTy) := MemInvariant.memberAddr' i1 i2
-          exact ⟨by open_eval; mem_inv, by open_lvalue; mem_inv⟩
+          exact ⟨by open_eval; simp [loadBitFieldAt]; mem_inv,
+            by open_lvalue; mem_inv⟩
       | index b i ty _ =>
           obtain ⟨b1, _⟩ := ih b (by simp only [Expr.size_index] at he; omega)
             (Expr.isPure_index_base hp)

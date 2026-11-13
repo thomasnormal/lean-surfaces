@@ -18,6 +18,12 @@ load_design_sv2 memoryShapeA
 
 #check memoryShapeA.e
 
+/-! User-facing ordinary-route check: `load_design_sv2` followed by
+`memoryShapeA.e 4 3` retains one parameter-sized memory declaration. -/
+#guard match memoryShapeA.e 4 3 with
+  | .ok d => d.memories.size == 1
+  | _ => false
+
 def stimulus : List SvState :=
   [[("clk", LVec.ofNat 1 0), ("d", LVec.ofNat 8 1), ("idx", LVec.ofNat 5 0)],
    [("clk", LVec.ofNat 1 1), ("d", LVec.ofNat 8 2), ("idx", LVec.ofNat 5 0)],

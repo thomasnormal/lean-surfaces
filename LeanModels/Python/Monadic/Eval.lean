@@ -5621,6 +5621,52 @@ theorem finishCallM_assign_eight_existing_locals_break_body_ok (K : Kont) (m : M
   rw [bind_apply, hraw]
   rfl
 
+theorem finishCallM_assign_eight_existing_locals_continue_body_ok (K : Kont) (m : Module)
+    (w : World) (depth : Nat) :
+    toRun (finishCallM depth
+      (inWorld [("s", .int 0), ("t", .int 0), ("u", .int 0), ("v", .int 0), ("w", .int 0), ("x", .int 0), ("y", .int 0), ("z", .int 0)] (execOpenList K m
+        [.assign #[.name "s" adequacySpan]
+           (.constant (.int 0) adequacySpan) adequacySpan,
+         .assign #[.name "t" adequacySpan]
+           (.constant (.int 1) adequacySpan) adequacySpan,
+         .assign #[.name "u" adequacySpan]
+           (.constant (.int 2) adequacySpan) adequacySpan,
+         .assign #[.name "v" adequacySpan]
+           (.constant (.int 3) adequacySpan) adequacySpan,
+         .assign #[.name "w" adequacySpan]
+           (.constant (.int 4) adequacySpan) adequacySpan,
+         .assign #[.name "x" adequacySpan]
+           (.constant (.int 5) adequacySpan) adequacySpan,
+         .assign #[.name "y" adequacySpan]
+           (.constant (.int 6) adequacySpan) adequacySpan,
+         .assign #[.name "z" adequacySpan]
+           (.constant (.int 7) adequacySpan) adequacySpan,
+         .cont adequacySpan]))) w =
+      .ok { w with callDepth := depth } RFlow.cont := by
+  have hraw : (inWorld [("s", .int 0), ("t", .int 0), ("u", .int 0), ("v", .int 0), ("w", .int 0), ("x", .int 0), ("y", .int 0), ("z", .int 0)] (execOpenList K m
+      [.assign #[.name "s" adequacySpan]
+         (.constant (.int 0) adequacySpan) adequacySpan,
+       .assign #[.name "t" adequacySpan]
+         (.constant (.int 1) adequacySpan) adequacySpan,
+       .assign #[.name "u" adequacySpan]
+         (.constant (.int 2) adequacySpan) adequacySpan,
+       .assign #[.name "v" adequacySpan]
+         (.constant (.int 3) adequacySpan) adequacySpan,
+       .assign #[.name "w" adequacySpan]
+         (.constant (.int 4) adequacySpan) adequacySpan,
+       .assign #[.name "x" adequacySpan]
+         (.constant (.int 5) adequacySpan) adequacySpan,
+       .assign #[.name "y" adequacySpan]
+         (.constant (.int 6) adequacySpan) adequacySpan,
+       .assign #[.name "z" adequacySpan]
+         (.constant (.int 7) adequacySpan) adequacySpan,
+       .cont adequacySpan])) w =
+      .ok (.ok RFlow.cont, w) := by rfl
+  unfold finishCallM
+  apply toRun_tryCatch_ok
+  rw [bind_apply, hraw]
+  rfl
+
 theorem finishCallM_three_pass_ret_body_ok (K : Kont) (m : Module)
     (locals : REnv) (w : World) (depth : Nat) :
     toRun (finishCallM depth
@@ -5844,6 +5890,7 @@ theorem leaveCallM_modify_exn {α : Type} (w : World) (e : PyErr)
 #print axioms finishCallM_assign_eight_existing_locals_expr_body_ok
 #print axioms finishCallM_assign_eight_existing_locals_ret_none_body_ok
 #print axioms finishCallM_assign_eight_existing_locals_break_body_ok
+#print axioms finishCallM_assign_eight_existing_locals_continue_body_ok
 #print axioms finishCallM_assign_constant_body_ok
 #print axioms finishCallM_modify_ok
 #print axioms finishCallM_modify_exn

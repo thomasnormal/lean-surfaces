@@ -2,10 +2,10 @@
 
 Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manifest.
 
-- verdicts: 1121/2214 MATCH (passed 1121, failed 0, oracle 0)
+- verdicts: 1122/2214 MATCH (passed 1122, failed 0, oracle 0)
 - manifest SHA-256: `bca94718b04e8394cdce992866637166f530978790bd1013cea4a00ae25ef764`
-- measured commit: `e881c996d83dd2bbf1bbf3f18ae0d907f30043eb`
-- measured at: `2026-11-14T08:00:47Z`
+- measured commit: `d4105bb16e424b2a7900ec5b0bf85f8d5405d0fd`
+- measured at: `2026-11-14T11:29:57Z`
 
 ## Verdict counts
 
@@ -13,20 +13,20 @@ Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manife
 | --- | ---: |
 | `not-parsed` | 294 |
 | `oracle-tests-compiler` | 1 |
-| `passed` | 1121 |
+| `passed` | 1122 |
 | `refused-libc` | 38 |
 | `refused-ub` | 107 |
-| `refused-unsupported` | 587 |
+| `refused-unsupported` | 586 |
 | `timeout` | 66 |
 
 ## Counts by corpus
 
 | corpus | verdict | files |
 | --- | --- | ---: |
-| `c-testsuite/single-exec` | `passed` | 174 |
+| `c-testsuite/single-exec` | `passed` | 175 |
 | `c-testsuite/single-exec` | `refused-libc` | 2 |
 | `c-testsuite/single-exec` | `refused-ub` | 8 |
-| `c-testsuite/single-exec` | `refused-unsupported` | 34 |
+| `c-testsuite/single-exec` | `refused-unsupported` | 33 |
 | `c-testsuite/single-exec` | `timeout` | 2 |
 | `gcc.c-torture/execute` | `not-parsed` | 267 |
 | `gcc.c-torture/execute` | `oracle-tests-compiler` | 1 |
@@ -446,7 +446,6 @@ The run's first refusal, normalized by construct; `sole` counts rows whose first
 | `unsupported:no layout for declared type 'gfc_array_i4'` | 1 | 1 | 20090113-1.c |
 | `unsupported:no layout for declared type 'hexdouble'` | 1 | 1 | ieee/unsafe-fp-assoc-1.c |
 | `unsupported:no layout for declared type 'info_t'` | 1 | 1 | 20100430-1.c |
-| `unsupported:no layout for declared type 'int (*(*)(int, int))(int, int)'` | 1 | 1 | 00124.c |
 | `unsupported:no layout for declared type 'int (*)(int, int)'` | 1 | 1 | 991112-1.c |
 | `unsupported:no layout for declared type 'int (*)[++i]'` | 1 | 1 | gcc/testsuite/gcc.dg/c23-auto-2.c |
 | `unsupported:no layout for declared type 'int *volatile'` | 1 | 1 | builtin-prefetch-3.c |

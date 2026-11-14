@@ -1,10 +1,10 @@
 {
  "by_corpus": {
   "c-testsuite/single-exec": {
-   "passed": 174,
+   "passed": 175,
    "refused-libc": 2,
    "refused-ub": 8,
-   "refused-unsupported": 34,
+   "refused-unsupported": 33,
    "timeout": 2
   },
   "gcc.c-torture/execute": {
@@ -28,10 +28,10 @@
  "counts": {
   "not-parsed": 294,
   "oracle-tests-compiler": 1,
-  "passed": 1121,
+  "passed": 1122,
   "refused-libc": 38,
   "refused-ub": 107,
-  "refused-unsupported": 587,
+  "refused-unsupported": 586,
   "timeout": 66
  },
  "dynamic_wall_ranking": [
@@ -1998,14 +1998,6 @@
   },
   {
    "files": [
-    "00124.c"
-   ],
-   "present": 1,
-   "sole": 1,
-   "wall": "unsupported:no layout for declared type 'int (*(*)(int, int))(int, int)'"
-  },
-  {
-   "files": [
     "991112-1.c"
    ],
    "present": 1,
@@ -3166,8 +3158,8 @@
   }
  ],
  "manifest_hash": "bca94718b04e8394cdce992866637166f530978790bd1013cea4a00ae25ef764",
- "measured_at_utc": "2026-11-14T08:00:47Z",
- "measured_commit": "e881c996d83dd2bbf1bbf3f18ae0d907f30043eb",
+ "measured_at_utc": "2026-11-14T11:29:57Z",
+ "measured_commit": "d4105bb16e424b2a7900ec5b0bf85f8d5405d0fd",
  "pin": {
   "corpora": [
    "C1",
@@ -4514,15 +4506,15 @@
   },
   {
    "corpus": "c-testsuite/single-exec",
-   "detail": "no layout for declared type 'int (*(*)(int, int))(int, int)'",
-   "dynamic_wall": "unsupported:no layout for declared type 'int (*(*)(int, int))(int, int)'",
+   "detail": "",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "00124.c",
    "sha256": "77b3d195814db328448ba7ce8986574ab66ed59ded9746ce479c94a75b31e02d",
    "static_walls": [
     "libc-call"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "c-testsuite/single-exec",

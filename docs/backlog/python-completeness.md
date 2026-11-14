@@ -16810,3 +16810,23 @@ DECIDED: nineteen assignment steps now compose through the body walker; arbitrar
 | Remaining debt | arbitrary locals and recursive positive-fuel calls |
 
 DECIDED: nineteen assignment steps now compose through value return; arbitrary assignment and recursive body adequacy remain open.
+
+## 2026-11-14-pyfoundation-263 — arbitrary assignment-list bridge
+
+The fixed-count bridge series is replaced by the induction theorem
+`Monadic.execOpenList_assignments_next`, which proves sequencing for every finite
+list of assignment statements from a pointwise one-statement `next` bridge. Its
+`finishCallM_assignments_body_ok` wrapper carries the result through call-depth
+restoration. The theorem is independent of assignment-list length; existing
+concrete count theorems remain compatibility examples and no new count is added.
+
+| Measurement | Result |
+|---|---|
+| Target | `lake build LeanModels.Python.Monadic.Eval` passed; 11/11 jobs |
+| Theorem | `Monadic.execOpenList_assignments_next`; `Monadic.finishCallM_assignments_body_ok` |
+| Domain | any finite list whose elements are assignment statements, with a pointwise open-executor bridge |
+| Semantic change | theorem-only induction over arbitrary assignment-list length |
+| Remaining debt | deriving each fixed-count example from the generic theorem and recursive positive-fuel calls |
+
+DECIDED: the assignment sequencing result is now stated once for every finite
+list length; fixed-count additions stop here.

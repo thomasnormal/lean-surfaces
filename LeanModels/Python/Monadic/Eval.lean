@@ -3801,6 +3801,54 @@ theorem twinAgrees_execOpenList_of_each (K : Kont) (m : Module) :
                   | cont => simp [hres, execStmts, toRun_pure, Run.bind]
                   | ret v => simp [hres, execStmts, toRun_pure, Run.bind]
 
+/-- Any finite list of assignment statements composes through the open executor.
+The induction owns sequencing; callers supply the one-statement assignment
+bridge for every element and the shape premise keeps this theorem on the
+assignment-only domain. -/
+theorem execOpenList_assignments_next (K : Kont) (m : Module) :
+    ∀ (ss : List Stmt) (st : FrameState),
+      (∀ s ∈ ss, ∃ targets value sp, s = .assign targets value sp) →
+      (∀ s ∈ ss, ∀ st',
+        execOpen K m s st' = .ok (.ok RFlow.next, st')) →
+      execOpenList K m ss st = .ok (.ok RFlow.next, st) := by
+  intro ss
+  induction ss with
+  | nil =>
+      intro st hShape hEach
+      rfl
+  | cons s ss ih =>
+      intro st hShape hEach
+      simp only [execOpenList]
+      rw [SemMWith.run_bind]
+      rw [hEach s (by simp) st]
+      have hTailShape : ∀ s' ∈ ss, ∃ targets value sp, s' = .assign targets value sp := by
+        intro s' hs'
+        exact hShape s' (by simp [hs'])
+      have hTailEach : ∀ s' ∈ ss, ∀ st',
+          execOpen K m s' st' = .ok (.ok RFlow.next, st') := by
+        intro s' hs' st'
+        exact hEach s' (by simp [hs']) st'
+      exact ih st hTailShape hTailEach
+
+
+theorem finishCallM_assignments_body_ok (K : Kont) (m : Module)
+    (locals : REnv) (ss : List Stmt) (w : World) (depth : Nat)
+    (hShape : ∀ s ∈ ss, ∃ targets value sp, s = .assign targets value sp)
+    (hEach : ∀ s ∈ ss, ∀ st',
+      execOpen K m s st' = .ok (.ok RFlow.next, st')) :
+    toRun (finishCallM depth
+      (inWorld locals (execOpenList K m ss))) w =
+      .ok { w with callDepth := depth } .next := by
+  have hlist := execOpenList_assignments_next K m ss ⟨w, locals⟩ hShape hEach
+  have hraw : (inWorld locals (execOpenList K m ss)) w =
+      .ok (.ok RFlow.next, w) := by
+    unfold inWorld zoomOut
+    rw [hlist]
+  unfold finishCallM
+  apply toRun_tryCatch_ok
+  rw [bind_apply, hraw]
+  rfl
+
 theorem twinAgrees_execOpenList_nil (K : Kont) (m : Module) (st : FrameState) :
     toRun (execOpenList K m []) st = .ok st .next := by
   rfl
@@ -9197,6 +9245,7 @@ theorem leaveCallM_modify_exn {α : Type} (w : World) (e : PyErr)
 #print axioms finishCallM_assign_seventeen_existing_locals_continue_body_ok
 #print axioms finishCallM_assign_eighteen_existing_locals_body_ok
 #print axioms finishCallM_assign_nineteen_existing_locals_body_ok
+#print axioms finishCallM_assignments_body_ok
 #print axioms finishCallM_assign_nineteen_existing_locals_ret_body_ok
 #print axioms finishCallM_assign_eighteen_existing_locals_continue_body_ok
 #print axioms finishCallM_assign_eighteen_existing_locals_break_body_ok

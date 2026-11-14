@@ -572,3 +572,7 @@ eighteen-update bridge through abrupt `break` flow.
 `Monadic.finishCallM_assign_nineteen_existing_locals_body_ok` extends normal assignment state threading to nineteen successive local updates.
 
 `Monadic.finishCallM_assign_nineteen_existing_locals_ret_body_ok` extends the nineteen-update bridge through an early value return.
+
+`Monadic.execOpenList_assignments_next` and its `finishCallM_assignments_body_ok`
+wrapper provide one induction theorem for arbitrary finite assignment lists;
+fixed-count assignment bridges are no longer the work item.

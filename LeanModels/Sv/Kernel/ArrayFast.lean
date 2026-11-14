@@ -30,6 +30,14 @@ def FastConfig.ofConfig (E : Elab) (c : Config) : FastConfig :=
 def FastConfig.toConfig (c : FastConfig) : Config :=
   { store := c.store, active := c.active, k := c.k }
 
+/-! The array view starts extensionally equal to the authoritative function
+store.  This is the first refinement lemma for the direct route; subsequent
+write lemmas can use it to relate a flat array update to `Store.set`. -/
+theorem FastConfig.ofConfig_store (E : Elab) (c : Config) :
+    (FastConfig.ofConfig E c).store = c.store := by
+  unfold FastConfig.ofConfig FastConfig.store
+  exact arrayStore_cells c.store E.decls.size
+
 def fastWriteWins (E : Elab) (fallback : Store) (a : Array Val)
     (value : LVec) : List (Win × Nat) → Res (Array Val)
   | [] => .ok a

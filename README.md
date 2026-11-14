@@ -27,7 +27,7 @@ These bars use each tier's checked-in differential corpus: `MATCH` rows divided 
 | Language | Completion | Current measurement |
 | --- | --- | --- |
 | Python | <progress value="95.6" max="100" aria-label="95.6% complete">95.6%</progress> **95.6%** | 4,968 / 5,195 differential rows ([coverage](docs/python-coverage.md)); proof interpreter: 4,845 / 5,195 |
-| C | <progress value="49.9" max="100" aria-label="49.9% complete">49.9%</progress> **49.9%** | 1,104 / 2,214 survey rows ([survey](docs/c-survey.md)) |
+| C | <progress value="50.0" max="100" aria-label="50.0% complete">50.0%</progress> **50.0%** | 1,107 / 2,214 survey rows ([survey](docs/c-survey.md)) |
 | C++ | <progress value="0.2" max="100" aria-label="0.2% complete">0.2%</progress> **0.2%** | 4 / 1,762 differential rows ([coverage](docs/cpp-coverage.md)) |
 | Rust | <progress value="0.0" max="100" aria-label="0.0% complete">0.0%</progress> **0.0%** | Lane planned, implementation not started ([roadmap](#roadmap-not-built--do-not-expect-it-in-this-tree)) |
 | SystemVerilog | <progress value="92.3" max="100" aria-label="92.3% complete">92.3%</progress> **92.3%** | 591 / 640 differential self-check rows ([coverage](docs/sv-coverage.md)) |

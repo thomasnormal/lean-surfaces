@@ -612,3 +612,5 @@ still open.
 `toRun_tryCatch_handler_ok`, `toRun_tryCatch_handler_timeout`, and `toRun_tryCatch_handler_unsupported` close the explicit handler-result projections for protected Python exceptions.
 
 `Monadic.finishCallM_of_ok` and `Monadic.finishCallM_of_exn` provide explicit-result call-boundary transport for successful and exceptional protected actions.
+
+`Monadic.finishCallM_of_timeout` and `Monadic.finishCallM_of_unsupported` complete explicit-result call transport for timeout and refusal outcomes.

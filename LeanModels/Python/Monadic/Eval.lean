@@ -4297,6 +4297,31 @@ theorem finishCallM_of_exn {α : Type} (depth : Nat) (action : SemW α)
     (s'' := { w' with callDepth := depth }) (e := e) (e' := e)
     hbody hh
 
+theorem finishCallM_of_timeout {α : Type} (depth : Nat) (action : SemW α)
+    (w : World) (h : action w = .error .timeout) :
+    toRun (finishCallM depth action) w = .timeout := by
+  unfold finishCallM
+  apply toRun_tryCatch_timeout
+  have hbody : (do
+      let value ← action
+      modify fun w : World => { w with callDepth := depth }
+      pure value) w = .error .timeout := by
+    simp [bind_apply, h]
+  exact hbody
+
+theorem finishCallM_of_unsupported {α : Type} (depth : Nat) (action : SemW α)
+    (w : World) (cause : RefusalCause Unit) (msg : String) (snapshot : Option Unit)
+    (h : action w = .error (.unsupported cause msg snapshot)) :
+    toRun (finishCallM depth action) w = .unsupported msg := by
+  unfold finishCallM
+  apply toRun_tryCatch_unsupported (cause := cause) (msg := msg) (snapshot := snapshot)
+  have hbody : (do
+      let value ← action
+      modify fun w : World => { w with callDepth := depth }
+      pure value) w = .error (.unsupported cause msg snapshot) := by
+    simp [bind_apply, h]
+  exact hbody
+
 theorem finishCallM_pure_ok {α : Type} (depth : Nat) (w : World) (v : α) :
     toRun (finishCallM depth (pure v : SemW α)) w =
       .ok { w with callDepth := depth } v := by
@@ -9686,6 +9711,8 @@ theorem leaveCallM_modify_exn {α : Type} (w : World) (e : PyErr)
 #print axioms finishCallM_assignments_body_ok
 #print axioms finishCallM_of_ok
 #print axioms finishCallM_of_exn
+#print axioms finishCallM_of_timeout
+#print axioms finishCallM_of_unsupported
 #print axioms finishCallM_assignments_ret_run
 #print axioms finishCallM_assignments_pass_run
 #print axioms execOpenList_assignments_break_run

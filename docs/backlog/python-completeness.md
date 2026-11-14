@@ -17094,3 +17094,19 @@ exceptions without asserting the blocked arbitrary-action congruence.
 | Remaining debt | explicit timeout/refusal call wrappers and recursive call/body composition |
 
 DECIDED: success and exception call transport are now reusable under explicit result premises; arbitrary handler congruence remains open.
+
+## 2026-11-14-pyfoundation-280 — explicit finishCallM timeout/refusal transport
+
+`Monadic.finishCallM_of_timeout` and
+`Monadic.finishCallM_of_unsupported` complete the explicit-result call-boundary
+transport for timeout and classified refusal outcomes.
+
+| Measurement | Result |
+|---|---|
+| Target | `lake build LeanModels.Python.Monadic.Eval` passed; 11/11 jobs |
+| Theorem | `Monadic.finishCallM_of_timeout`; `Monadic.finishCallM_of_unsupported` |
+| Domain | explicit timeout or classified refusal protected-action result |
+| Semantic change | theorem-only call-specific restoration transport |
+| Remaining debt | applying explicit wrappers to recursive `callInM` body branches |
+
+DECIDED: all four protected-action result classes now have explicit `finishCallM` transport wrappers; arbitrary-action congruence remains open.

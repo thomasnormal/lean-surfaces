@@ -17110,3 +17110,21 @@ transport for timeout and classified refusal outcomes.
 | Remaining debt | applying explicit wrappers to recursive `callInM` body branches |
 
 DECIDED: all four protected-action result classes now have explicit `finishCallM` transport wrappers; arbitrary-action congruence remains open.
+
+## 2026-11-14-pyfoundation-281 — inWorld call-body success transport
+
+`Monadic.finishCallM_inWorld_of_ok` applies the explicit success transport to an
+ordinary frame action: when the body action returns a known value and resulting
+`FrameState`, it projects the resulting world through `inWorld` and restores the
+requested call depth. This is the reusable success slice for `callInM`'s
+ordinary body branch.
+
+| Measurement | Result |
+|---|---|
+| Target | `lake build LeanModels.Python.Monadic.Eval` passed; 11/11 jobs |
+| Theorem | `Monadic.finishCallM_inWorld_of_ok` |
+| Domain | known successful `SemF` body result under a frame/world boundary |
+| Semantic change | theorem-only call-body success transport |
+| Remaining debt | inWorld exception/timeout/refusal slices and recursive `callInM` integration |
+
+DECIDED: the ordinary body success path now has an explicit frame/world transport theorem; arbitrary body transport remains open.

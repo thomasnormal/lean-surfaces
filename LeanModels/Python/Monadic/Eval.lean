@@ -4322,6 +4322,18 @@ theorem finishCallM_of_unsupported {α : Type} (depth : Nat) (action : SemW α)
     simp [bind_apply, h]
   exact hbody
 
+theorem finishCallM_inWorld_of_ok {α : Type} (depth : Nat)
+    (locals : REnv) (action : SemF α) (w : World)
+    (st' : FrameState) (v : α)
+    (h : action ⟨w, locals⟩ = .ok (.ok v, st')) :
+    toRun (finishCallM depth (inWorld locals action)) w =
+      .ok { st'.world with callDepth := depth } v := by
+  have hi : (inWorld locals action) w =
+      .ok (.ok v, st'.world) := by
+    unfold inWorld zoomOut
+    rw [h]
+  exact finishCallM_of_ok depth (inWorld locals action) w st'.world v hi
+
 theorem finishCallM_pure_ok {α : Type} (depth : Nat) (w : World) (v : α) :
     toRun (finishCallM depth (pure v : SemW α)) w =
       .ok { w with callDepth := depth } v := by
@@ -9713,6 +9725,7 @@ theorem leaveCallM_modify_exn {α : Type} (w : World) (e : PyErr)
 #print axioms finishCallM_of_exn
 #print axioms finishCallM_of_timeout
 #print axioms finishCallM_of_unsupported
+#print axioms finishCallM_inWorld_of_ok
 #print axioms finishCallM_assignments_ret_run
 #print axioms finishCallM_assignments_pass_run
 #print axioms execOpenList_assignments_break_run

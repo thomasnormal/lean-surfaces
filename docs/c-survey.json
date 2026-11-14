@@ -10,10 +10,10 @@
   "gcc.c-torture/execute": {
    "not-parsed": 267,
    "oracle-tests-compiler": 1,
-   "passed": 943,
+   "passed": 944,
    "refused-libc": 34,
    "refused-ub": 98,
-   "refused-unsupported": 511,
+   "refused-unsupported": 510,
    "timeout": 64
   },
   "gcc.c23-run": {
@@ -28,10 +28,10 @@
  "counts": {
   "not-parsed": 294,
   "oracle-tests-compiler": 1,
-  "passed": 1118,
+  "passed": 1119,
   "refused-libc": 38,
   "refused-ub": 107,
-  "refused-unsupported": 590,
+  "refused-unsupported": 589,
   "timeout": 66
  },
  "dynamic_wall_ranking": [
@@ -1702,14 +1702,6 @@
   },
   {
    "files": [
-    "20050502-2.c"
-   ],
-   "present": 1,
-   "sole": 1,
-   "wall": "unsupported:memcmp"
-  },
-  {
-   "files": [
     "20071029-1.c"
    ],
    "present": 1,
@@ -3190,8 +3182,8 @@
   }
  ],
  "manifest_hash": "bca94718b04e8394cdce992866637166f530978790bd1013cea4a00ae25ef764",
- "measured_at_utc": "2026-11-14T02:28:14Z",
- "measured_commit": "9f6a7b394",
+ "measured_at_utc": "2026-11-14T05:24:40Z",
+ "measured_commit": "37ee28a41c270bb43bfd1d4b0784cd3101d06b59",
  "pin": {
   "corpora": [
    "C1",
@@ -9708,8 +9700,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "memcmp: non-concrete byte",
-   "dynamic_wall": "unsupported:memcmp",
+   "detail": "",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "20050502-2.c",
    "sha256": "b16fc089d1975840561e3f3b7af8720741cfb5d0b3cb76e48255820c3e1a7f0f",
@@ -9718,7 +9710,7 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",

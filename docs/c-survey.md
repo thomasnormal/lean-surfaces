@@ -2,10 +2,10 @@
 
 Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manifest.
 
-- verdicts: 1125/2214 MATCH (passed 1125, failed 0, oracle 0)
+- verdicts: 1126/2214 MATCH (passed 1126, failed 0, oracle 0)
 - manifest SHA-256: `bca94718b04e8394cdce992866637166f530978790bd1013cea4a00ae25ef764`
-- measured commit: `a4e59bf3986bb448911ed7445029a8654e6a5e43`
-- measured at: `2026-11-14T14:35:59Z`
+- measured commit: `5cb211ca58013d53779d2b6bdc8ffea6b7f85377`
+- measured at: `2026-11-14T15:25:34Z`
 
 ## Verdict counts
 
@@ -13,10 +13,10 @@ Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manife
 | --- | ---: |
 | `not-parsed` | 294 |
 | `oracle-tests-compiler` | 1 |
-| `passed` | 1125 |
+| `passed` | 1126 |
 | `refused-libc` | 38 |
 | `refused-ub` | 107 |
-| `refused-unsupported` | 583 |
+| `refused-unsupported` | 582 |
 | `timeout` | 66 |
 
 ## Counts by corpus
@@ -36,10 +36,10 @@ Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manife
 | `gcc.c-torture/execute` | `refused-unsupported` | 508 |
 | `gcc.c-torture/execute` | `timeout` | 64 |
 | `gcc.c23-run` | `not-parsed` | 27 |
-| `gcc.c23-run` | `passed` | 3 |
+| `gcc.c23-run` | `passed` | 4 |
 | `gcc.c23-run` | `refused-libc` | 2 |
 | `gcc.c23-run` | `refused-ub` | 1 |
-| `gcc.c23-run` | `refused-unsupported` | 43 |
+| `gcc.c23-run` | `refused-unsupported` | 42 |
 
 ## Static wall ranking
 
@@ -317,8 +317,8 @@ The run's first refusal, normalized by construct; `sole` counts rows whose first
 | `unsupported:StmtExpr` | 7 | 7 | 20000703-1.c, 20000917-1.c, 20020206-1.c, 20020320-1.c, 930406-1.c |
 | `unsupported:case label nested in a control statement` | 7 | 7 | 00051.c, 00143.c, 00182.c, 20111208-1.c, medce-1.c |
 | `libc-call: malloc` | 6 | 6 | 20020406-1.c, 960521-1.c, pr41395-1.c, pr41395-2.c, pr41463.c |
-| `unsupported:DesignatedInitUpdateExpr` | 6 | 6 | gcc/testsuite/gcc.dg/c23-empty-init-5.c, gcc/testsuite/gcc.dg/c23-empty-init-warn-1.c, gcc/testsuite/gcc.dg/c23-empty-init-warn-17.c, gcc/testsuite/gcc.dg/c23-empty-init-warn-2.c, gcc/testsuite/gcc.dg/c23-empty-init-warn-4.c |
 | `unsupported:break, continue or goto escaped a function body` | 6 | 6 | 00010.c, 00199.c, 20030909-1.c, 20040704-1.c, pr119291.c |
+| `unsupported:DesignatedInitUpdateExpr` | 5 | 5 | gcc/testsuite/gcc.dg/c23-empty-init-5.c, gcc/testsuite/gcc.dg/c23-empty-init-warn-17.c, gcc/testsuite/gcc.dg/c23-empty-init-warn-2.c, gcc/testsuite/gcc.dg/c23-empty-init-warn-4.c, gcc/testsuite/gcc.dg/c23-empty-init-warn-9.c |
 | `unsupported:function-to-pointer decay (inch 5)` | 5 | 5 | 20021118-2.c, 20041212-1.c, 20101011-1.c, pr42231.c, pr68390.c |
 | `unsupported:no layout for declared type '_Complex double'` | 5 | 5 | 20030910-1.c, 960512-1.c, complex-1.c, complex-2.c, ieee/cdivchkd.c |
 | `unsupported:unbound declaration 'id180' (name 'stdout')` | 5 | 5 | 00189.c, fprintf-1.c, fprintf-chk-1.c, vfprintf-1.c, vfprintf-chk-1.c |

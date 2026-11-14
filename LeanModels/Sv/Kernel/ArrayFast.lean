@@ -389,6 +389,48 @@ theorem fastStep_refines_step_of_flat (E : Elab) (ch : Choice)
               | slotClosed c' => simp [hs] at h
               | refused r => simp [hs] at h
 
+theorem fastStep_closed_refines_step (E : Elab) (ch : Choice) (c : FastConfig)
+    (h : fastStep E ch c = .ok none) :
+    step E ch c.toConfig = .slotClosed c.toConfig := by
+  cases hch : ch.choose c.k c.active with
+  | nil =>
+      simpa [fastStep, step, FastConfig.toConfig, hch]
+  | cons p rest =>
+      cases hp : E.procs[p]? with
+      | none =>
+          have hfb := fastStep_fallback_eq E ch c p rest hch
+            (by intro t e hpe; simp [hp] at hpe)
+          rw [hfb] at h
+          cases hs : step E ch c.toConfig with
+          | next c' => simp [hs] at h
+          | slotClosed c' =>
+              have hc := step_slotClosed hs
+              simpa [hs, hc]
+          | refused r => simp [hs] at h
+      | some proc =>
+          cases proc with
+          | assign t e => simp [fastStep, hch, hp] at h
+          | comb body =>
+              have hfb := fastStep_fallback_eq E ch c p rest hch
+                (by intro t e hpe; simp [hp] at hpe)
+              rw [hfb] at h
+              cases hs : step E ch c.toConfig with
+              | next c' => simp [hs] at h
+              | slotClosed c' =>
+                  have hc := step_slotClosed hs
+                  simpa [hs, hc]
+              | refused r => simp [hs] at h
+          | implicit body =>
+              have hfb := fastStep_fallback_eq E ch c p rest hch
+                (by intro t e hpe; simp [hp] at hpe)
+              rw [hfb] at h
+              cases hs : step E ch c.toConfig with
+              | next c' => simp [hs] at h
+              | slotClosed c' =>
+                  have hc := step_slotClosed hs
+                  simpa [hs, hc]
+              | refused r => simp [hs] at h
+
 def fastExec (E : Elab) (ch : Choice) : Nat → FastConfig → Res FastConfig
   | 0, _ => .timeout
   | n + 1, c =>
@@ -481,6 +523,15 @@ theorem fastExec_sound_of_flat (E : Elab) (ch : Choice)
   exact fastExec_sound_of_step_refines E ch hclosed
     (fun {c} {c'} hs => fastStep_refines_step_of_flat E ch c (hflat c) hs)
     n c c' h
+
+theorem fastExec_sound_of_flat_closed (E : Elab) (ch : Choice)
+    (hflat : ∀ c : FastConfig, FlatAssignmentRun E c)
+    (n : Nat) (c c' : FastConfig)
+    (h : fastExec E ch (n + 1) c = .ok c') :
+    SlotCloses E ch c.toConfig c'.toConfig := by
+  exact fastExec_sound_of_flat E ch
+    (fun hs => fastStep_closed_refines_step E ch _ hs)
+    hflat n c c' h
 
 def fastRun (E : Elab) (ch : Choice) (fuel : Nat) (env : List SvState) :
     Res (List FastConfig) :=

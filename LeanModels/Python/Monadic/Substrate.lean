@@ -318,6 +318,46 @@ theorem toRun_tryCatch_exn {σ α : Type} (x : PyM σ α) (handler : PyErr → P
   simp only [hx, Except.ok, Except.bind, StateT.bind, Bind.bind]
   rw [hh]
 
+theorem toRun_tryCatch_handler_ok {σ α : Type} (x : PyM σ α)
+    (handler : PyErr → PyM σ α) (s s' s'' : σ) (a : α) (e : PyErr)
+    (hx : x s = .ok (.error e, s'))
+    (hh : handler e s' = .ok (.ok a, s'')) :
+    toRun (tryCatch x handler) s = .ok s'' a := by
+  change toRun (ExceptT.tryCatch x handler) s = _
+  unfold ExceptT.tryCatch
+  simp only [ExceptT.mk, StateT.bind, Except.bind, ExceptT.bindCont, Bind.bind]
+  unfold toRun
+  simp only [StateT.bind]
+  simp only [hx, Except.ok, Except.bind, StateT.bind, Bind.bind]
+  rw [hh]
+
+theorem toRun_tryCatch_handler_timeout {σ α : Type} (x : PyM σ α)
+    (handler : PyErr → PyM σ α) (s s' : σ) (e : PyErr)
+    (hx : x s = .ok (.error e, s'))
+    (hh : handler e s' = .error .timeout) :
+    toRun (tryCatch x handler) s = .timeout := by
+  change toRun (ExceptT.tryCatch x handler) s = _
+  unfold ExceptT.tryCatch
+  simp only [ExceptT.mk, StateT.bind, Except.bind, ExceptT.bindCont, Bind.bind]
+  unfold toRun
+  simp only [StateT.bind]
+  simp only [hx, Except.ok, Except.bind, StateT.bind, Bind.bind]
+  simp only [hh, Except.error]
+
+theorem toRun_tryCatch_handler_unsupported {σ α : Type} (x : PyM σ α)
+    (handler : PyErr → PyM σ α) (s s' : σ) (e : PyErr)
+    (cause : RefusalCause Unit) (msg : String) (snapshot : Option Unit)
+    (hx : x s = .ok (.error e, s'))
+    (hh : handler e s' = .error (.unsupported cause msg snapshot)) :
+    toRun (tryCatch x handler) s = .unsupported msg := by
+  change toRun (ExceptT.tryCatch x handler) s = _
+  unfold ExceptT.tryCatch
+  simp only [ExceptT.mk, StateT.bind, Except.bind, ExceptT.bindCont, Bind.bind]
+  unfold toRun
+  simp only [StateT.bind]
+  simp only [hx, Except.ok, Except.bind, StateT.bind, Bind.bind]
+  simp only [hh, Except.error]
+
 theorem toRun_tryCatch_timeout {σ α : Type} (x : PyM σ α)
     (handler : PyErr → PyM σ α) (s : σ)
     (h : x s = .error .timeout) :

@@ -17058,3 +17058,22 @@ DECIDED: recursive call/body adequacy is correctly priced as a substrate
 transport debt, not a missing assignment case. The next productive item must
 factor the `StateT.bind`/handler continuation equation or prove a call-specific
 transport theorem with explicit handler-result premises.
+
+## 2026-11-14-pyfoundation-278 — explicit tryCatch handler-result equations
+
+`Monadic.toRun_tryCatch_handler_ok`,
+`Monadic.toRun_tryCatch_handler_timeout`, and
+`Monadic.toRun_tryCatch_handler_unsupported` add the handler-side projections
+for the `x s = .ok (.error e, s')` branch. Together with the existing handler
+exception equation, they expose every handler result class without an arbitrary
+`StateT.bind` congruence claim.
+
+| Measurement | Result |
+|---|---|
+| Target | `lake build LeanModels.Python.Monadic.Eval` passed; 11/11 jobs |
+| Theorem | three handler-result `toRun_tryCatch` equations |
+| Domain | Python exception from the protected action with explicit handler result |
+| Semantic change | theorem-only substrate normalization |
+| Remaining debt | combining projections into recursive call/body transport |
+
+DECIDED: all explicit handler result classes now have projection equations; the generic transport theorem remains a separate composition task.

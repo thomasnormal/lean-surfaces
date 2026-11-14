@@ -608,3 +608,5 @@ The remaining recursive call/body adequacy debt is the `callInM` body branch's
 `finishCallM`/`leaveCallM` transport and four-flow mapping; assignment-list
 composition is complete, while generic `StateT.bind` handler normalization is
 still open.
+
+`toRun_tryCatch_handler_ok`, `toRun_tryCatch_handler_timeout`, and `toRun_tryCatch_handler_unsupported` close the explicit handler-result projections for protected Python exceptions.

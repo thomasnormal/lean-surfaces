@@ -1,0 +1,37 @@
+{
+  "schema": "sv-e-rows-1",
+  "source": "harness/sv/cases2.json",
+  "row_names_sha256": "a706825b8d8667675f6076fa4916d71d54b4041d6eaca53960a289c9cd25b4d1",
+  "oracle_rows": 684,
+  "frozen_baseline": {
+    "label": "S0",
+    "backend": "e0",
+    "simulators": ["Icarus Verilog 13.0", "Xcelium 24.03-s004"],
+    "wall_seconds": 120,
+    "workers": 8,
+    "xcheck": false
+  },
+  "outcomes": [
+    {"label": "E-MATCH", "count": 547, "examples": ["acg_alias_bits_ok", "xnor_bin"]},
+    {"label": "loud E refusal: edge/timed process outside E-core-0", "count": 57, "examples": ["alu_div_w32", "always_ff_loop"]},
+    {"label": "loud E refusal: generate guard is not an integer guard", "count": 17, "examples": ["const_wrap_k0_u1", "fold_lpshr"]},
+    {"label": "loud E refusal: dynamic assignment target is not a static window", "count": 8, "examples": ["acg_dyn_ok", "proc_compound"]},
+    {"label": "loud E refusal: retained casez is outside E-core-0", "count": 1, "examples": ["symbolic_casez_casex"]},
+    {"label": "loud envelope refusal: old sv-0.1 envelope", "count": 1, "examples": ["net_decl_driver"]},
+    {"label": "declared simulator divergence", "count": 16, "examples": ["acg_xproc_bits", "array_oob_asc"]},
+    {"label": "measured E/simulator divergence", "count": 3, "examples": ["dyn32", "fold_cgrow_n33"]},
+    {"label": "simulator-side error, no E verdict", "count": 18, "examples": ["nested_member_indexed", "packed_member_indexed"]},
+    {"label": "E-core-0 memory route not present", "count": 9, "examples": ["async_mem_fifo", "readmemh_rom_memory"]},
+    {"label": "oracle unavailable", "count": 5, "examples": ["fixed_array_stream_continuous", "streaming_left_fixed"]},
+    {"label": "per-row timeout", "count": 2, "examples": ["proc_local", "symbolic_parameter_for_large"]}
+  ],
+  "current": {
+    "e_matches": 549,
+    "measured_divergences": 3,
+    "triage": [
+      {"row": "fold_cgrow_n33", "verdict": "MATCH", "simulator": "Icarus Verilog 13.0"},
+      {"row": "fold_cgrow_n40", "verdict": "MATCH", "simulator": "Icarus Verilog 13.0"},
+      {"row": "dyn32", "verdict": "MATCH", "simulator": "Icarus Verilog 13.0", "departure": "Xcelium partial-overhang runtime part-select returns all x"}
+    ]
+  }
+}

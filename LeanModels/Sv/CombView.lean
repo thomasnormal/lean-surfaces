@@ -25,9 +25,10 @@ and, one level down, further `generate for` loops of such assigns (two levels de
 * signed reads (the loader's cast marker `PExpr.cast true (.ident n)`): a design that reads a signed signal is
   summarized through its UNSIGNED TWIN (`PDesign.unsign`, "Signed reads" below), and the theorems are carried back to the
   design as written by `CombSigned.lean`, under the width obligation of `sv_equations`;
-* localparams (`localparam integer L = e`, `e` an integer constant expression of the parameters and the
-  earlier localparams: `+ - *` by a literal, `/` `%` by a positive literal, `$clog2`): one more NAMED CONSTANT,
-  wherever a parameter may stand (`Summary.lps`, `Summary.val`; see "Local parameters" below);
+* localparams (`localparam integer L = e` or `localparam int L = e`, `e` an integer constant expression of the parameters
+  and the earlier localparams: `+ - *` by a literal, `/` `%` by a positive literal, the shifts, `**`, `$clog2`, and
+  `c ? a : b` whose condition is a comparison `s< s<= s> s>= == !=` or an `int`): one more NAMED CONSTANT, wherever a
+  parameter may stand (`Summary.lps`, `Summary.val`; see "Local parameters" below);
 * accesses (`Acc`): the whole signal, a bit `x[i]`, an element of a 1-D array, a row or an element
   of a 2-D array (`x[i]`, `x[i][j]`), a part `x[hi:lo]` or a part of a row `x[i][hi:lo]`; every
   index and bound AFFINE in the parameters and the enclosing genvars (`i`, `i + 1`, `N`, `2*N - 1`), where a quotient of
@@ -2163,8 +2164,15 @@ A `localparam L = <constant expression of the parameters>` enters the view as on
 `Summary.params` lists the module parameters and then the localparams (the names an `Aff` may
 mention), and `Summary.lps` keeps each localparam's definition as a `CE`, a tiny constant-expression
 language (integer literals, references to parameters and EARLIER localparams, `+`, `-`, `*` by a
-literal, `/` and `%` by a positive literal, `$clog2`). `Summary.val s args` is the valuation of all the constants:
-the parameters zipped with the arguments, then each localparam evaluated over what precedes it.
+literal, `/` and `%` by a positive literal, the shifts, `**`, `$clog2`, and `?:` whose condition is a comparison or an
+`int`). `Summary.val s args` is the valuation of all the constants: the parameters zipped with the arguments, then each
+localparam evaluated over what precedes it.
+
+`a ** b` (`CE.pow`) is `a ^ b`, an opaque atom for the obligations like `$clog2` (a power of a `$clog2` localparam,
+`2 ** L`, is the usual case; `le_two_pow_clog2_int` and `two_pow_clog2_lt_int` are the facts about it a player needs).
+`c ? a : b` (`CE.cond`) is an `if` in the valuation, which `omega` reads as a case split; at a symbolic parameter the
+instantiation cannot decide the condition either, and the parameter stage evaluates both arms and holds the same `if`
+(`closeParamEnv`'s `liftIte`, CombViewTactic.lean). A comparison is read only as such a condition (`CE.cmpOk`).
 
 `$clog2 (e)` is not linear: downstream (widths, loop bounds, the obligations) its value is an opaque atom, `↑(clog2 n)`
 for the natural number `n` of its argument, which `omega` reads as a non-negative unknown. A fact about it that an
@@ -2190,6 +2198,12 @@ instantiation's value to one wrap around the summary's tree and remove the wraps
 (`canonInt32_add_l` and its siblings, `canonInt32_of_bounds`). Where the readings part the tactics refuse, naming the
 operation (`CE.wrapDiag`); a definition is never read at a value other than the instantiation's. -/
 
+/-- The comparison of a `CE.cmp`: the signed order comparisons `s< s<= s> s>=` (the loader's spelling of a comparison of
+two signed operands, IEEE 1800-2023 §11.4.4) and the equalities `==`, `!=` (§11.4.5). -/
+inductive CECmp where
+  | lt | le | gt | ge | eq | ne
+deriving Repr, BEq, DecidableEq, Inhabited
+
 /-- The definition of a localparam. -/
 inductive CE where
   | lit (v : Int)
@@ -2210,6 +2224,16 @@ inductive CE where
   /-- `a >>> b` of an `int` (signed): the arithmetic shift of the 32-bit value of `a` (§11.4.10: the vacated bits take
   the sign bit; an amount of 32 or more, a negative one included, leaves the sign bit in every position). -/
   | ashr (a b : CE)
+  /-- `a ** b` of two `int` operands (IEEE 1800-2023 §11.4.3, Table 11-4): the power of `a` by the non-negative
+  exponent `b`, an `int` (§11.6.1: the type of the left operand). A negative exponent the instantiation refuses
+  (`evalIntExactRec`), so the summary never reads one. -/
+  | pow (a b : CE)
+  /-- A comparison of two `int` operands (IEEE 1800-2023 §11.4.4, §11.4.5): 1 where it holds, else 0. Read only as the
+  condition of `?:` (`CE.cmpOk`). -/
+  | cmp (k : CECmp) (a b : CE)
+  /-- `c ? a : b` (IEEE 1800-2023 §11.4.11): `a` where the condition is non-zero, else `b` (the operands of a constant
+  expression are known, so the condition is never x). Its arms are `int`s, and so is the result (§11.6.1). -/
+  | cond (c a b : CE)
 deriving Repr, BEq, DecidableEq, Inhabited
 
 /-- The value of a definition, unbounded (`/` and `%` truncate toward zero, IEEE 1800-2023 §11.4.2; `$clog2` is
@@ -2233,7 +2257,14 @@ value is in the 32-bit range (`-8 >> 1` is 2147483644 in both), which is what th
 (`shr_pattern_of_bounds`: the instantiation's pattern `if a < 0 then a + 2^32 else a` is the summary's `a % 2^32`), with
 ONE exception: a `>>>` of a negative `int` by a negative amount is -1 under §11.4.10 (every bit shifted out, the sign
 bit filled in) and 0 in the instantiation (the semantics owners have the finding). The two differ there and the tactics
-refuse, naming it (`CE.wrapDiag`). -/
+refuse, naming it (`CE.wrapDiag`).
+
+`**`, the comparisons and `?:` (IEEE 1800-2023 §11.4.3, §11.4.4, §11.4.5, §11.4.11) read the values of their operands:
+`a ** b` is `a ^ b` (its low 32 bits depend only on the low 32 bits of `a` for a given exponent, and the exponent is the
+value of `b`), a comparison is 1 or 0 by the order of the two values, and `c ? a : b` is the arm the value of `c`
+selects. The instantiation evaluates the comparison and the condition on the 32-bit values of their operands
+(`evalAt` at the operands' common type, 32-bit signed), so `hag` holds where those operands, the exponent and the result
+are in the signed 32-bit range (`CE.wrapDiag` names the operand that leaves it). -/
 def CE.eval (σ : String → Int) : CE → Int
   | .lit v => v
   | .ref n => σ n
@@ -2247,6 +2278,14 @@ def CE.eval (σ : String → Int) : CE → Int
   | .shl a b => a.eval σ * 2 ^ (b.eval σ % 4294967296).toNat
   | .shr a b => a.eval σ % 4294967296 / 2 ^ (b.eval σ % 4294967296).toNat
   | .ashr a b => canonInt 32 true (a.eval σ) / 2 ^ (b.eval σ % 4294967296).toNat
+  | .pow a b => a.eval σ ^ (b.eval σ).toNat
+  | .cmp .lt a b => if a.eval σ < b.eval σ then 1 else 0
+  | .cmp .le a b => if a.eval σ ≤ b.eval σ then 1 else 0
+  | .cmp .gt a b => if b.eval σ < a.eval σ then 1 else 0
+  | .cmp .ge a b => if b.eval σ ≤ a.eval σ then 1 else 0
+  | .cmp .eq a b => if a.eval σ = b.eval σ then 1 else 0
+  | .cmp .ne a b => if a.eval σ = b.eval σ then 0 else 1
+  | .cond c a b => if c.eval σ = 0 then b.eval σ else a.eval σ
 
 /-! The shifts at the values the clean-room rows and local Icarus Verilog 12.0 give (`localparam integer` of the
 expression, printed with `%0d`): `(1 << 33) >> 32` is 0, `(1 << 31) >>> 1` is -1073741824, `(1 << (7 + 24)) >> 30` is 2
@@ -2277,6 +2316,29 @@ theorem le_two_pow_clog2 (n : Nat) : n ≤ 2 ^ LeanModels.Sv.clog2 n := by
   · have := Nat.lt_log2_self (n := n - 1)
     omega
 
+/-- `n ≤ 2 ^ $clog2 n` over `Int` (the form the obligations of a `2 ** $clog2(…)` localparam take, `CE.pow`). -/
+theorem le_two_pow_clog2_int (n : Nat) : (n : Int) ≤ (2 : Int) ^ LeanModels.Sv.clog2 n := by
+  have h := le_two_pow_clog2 n
+  have e : ((2 ^ LeanModels.Sv.clog2 n : Nat) : Int) = (2 : Int) ^ LeanModels.Sv.clog2 n := by simp
+  rw [← e]
+  exact Int.ofNat_le.mpr h
+
+/-- `2 ^ $clog2 n < 2 n` for `n ≥ 1`: the least power of two at or above `n` is below `2 n` (an upper bound of a
+`2 ** $clog2(…)` localparam that `omega` reads). -/
+theorem two_pow_clog2_lt_int (n : Nat) (h : 1 ≤ n) : (2 : Int) ^ LeanModels.Sv.clog2 n < 2 * (n : Int) := by
+  have hn : 2 ^ LeanModels.Sv.clog2 n < 2 * n := by
+    unfold LeanModels.Sv.clog2
+    by_cases h1 : n ≤ 1
+    · simp only [h1, ↓reduceIte, Nat.pow_zero]; omega
+    · simp only [h1, ↓reduceIte]
+      have h2 : n - 1 ≠ 0 := by omega
+      have := Nat.log2_self_le h2
+      rw [Nat.pow_succ]
+      omega
+  have e : ((2 ^ LeanModels.Sv.clog2 n : Nat) : Int) = (2 : Int) ^ LeanModels.Sv.clog2 n := by simp
+  rw [← e]
+  omega
+
 /-- The bindings of the localparams, each evaluated over the bindings before it (latest first). -/
 def lpEnv : List (String × CE) → List (String × Int) → List (String × Int)
   | [], acc => acc
@@ -2284,13 +2346,6 @@ def lpEnv : List (String × CE) → List (String × Int) → List (String × Int
 
 def CE.isLit : CE → Bool
   | .lit _ => true
-  | _ => false
-
-/-- A `$clog2` occurs in the definition (for the refusal message of a 2-state `int` localparam). -/
-def CE.hasClog2 : CE → Bool
-  | .clog2 _ | .clog2S _ => true
-  | .add a b | .sub a b | .mul a b | .shl a b | .shr a b | .ashr a b => a.hasClog2 || b.hasClog2
-  | .divK a _ | .modK a _ => a.hasClog2
   | _ => false
 
 def ceMul (nm : String) (a b : CE) : Except String CE :=
@@ -2316,8 +2371,36 @@ def ceBin (nm : String) : SymBinOp → CE → CE → Except String CE
   | .shl, a, b | .ashl, a, b => .ok (.shl a b)
   | .shr, a, b => .ok (.shr a b)
   | .ashr, a, b => .ok (.ashr a b)
+  -- `**` of two `int`s (IEEE 1800-2023 §11.4.3)
+  | .pow, a, b => .ok (.pow a b)
+  -- the comparisons of two `int`s (§11.4.4: the loader spells a comparison of signed operands `s<` …; §11.4.5), read
+  -- only as the condition of `?:` (`CE.cmpOk`)
+  | .slt, a, b => .ok (.cmp .lt a b)
+  | .sle, a, b => .ok (.cmp .le a b)
+  | .sgt, a, b => .ok (.cmp .gt a b)
+  | .sge, a, b => .ok (.cmp .ge a b)
+  | .m0 .eq, a, b => .ok (.cmp .eq a b)
+  | .m0 .ne, a, b => .ok (.cmp .ne a b)
   | op, _, _ =>
-      .error s!"localparam `{nm}`: operator `{op.sym}` is outside the v1 fragment (a localparam may use + - *, / % by an integer literal, the shifts << <<< >> >>>, and `$clog2`)"
+      .error s!"localparam `{nm}`: operator `{op.sym}` is outside the v1 fragment (a localparam may use + - *, / % by an integer literal, the shifts << <<< >> >>>, `**`, `$clog2`, and `?:` on a comparison s< s<= s> s>= == !=)"
+
+/-- A `?:` occurs in the definition (the parameter stage then lifts the decision of its condition into the value,
+`closeParamEnv`'s `lift`). -/
+def CE.hasCond : CE → Bool
+  | .cond .. => true
+  | .add a b | .sub a b | .mul a b | .shl a b | .shr a b | .ashr a b | .pow a b | .cmp _ a b => a.hasCond || b.hasCond
+  | .divK a _ | .modK a _ | .clog2 a | .clog2S a => a.hasCond
+  | _ => false
+
+/-- Every comparison of a definition is the condition of a `?:` (`CE.cmp` is 1 or 0, the value of a comparison as a
+condition; a comparison used as a number is not read). -/
+def CE.cmpOk : CE → Bool
+  | .lit _ | .ref _ => true
+  | .add a b | .sub a b | .mul a b | .shl a b | .shr a b | .ashr a b | .pow a b => a.cmpOk && b.cmpOk
+  | .divK a _ | .modK a _ | .clog2 a | .clog2S a => a.cmpOk
+  | .cmp _ _ _ => false
+  | .cond (.cmp _ x y) a b => x.cmpOk && y.cmpOk && a.cmpOk && b.cmpOk
+  | .cond c a b => c.cmpOk && a.cmpOk && b.cmpOk
 
 /-- Recognize a localparam's initializer, in the scope of the names bound before it. -/
 def ceOf? (nm : String) (scope : List String) : PExpr → Except String CE
@@ -2332,28 +2415,38 @@ def ceOf? (nm : String) (scope : List String) : PExpr → Except String CE
           match ceOf? nm scope r with
           | .error e => .error e
           | .ok b => ceBin nm op a b
+  | .ternary c t e =>
+      match ceOf? nm scope c with
+      | .error e => .error e
+      | .ok cc =>
+          match ceOf? nm scope t with
+          | .error e => .error e
+          | .ok a =>
+              match ceOf? nm scope e with
+              | .error e => .error e
+              | .ok b => .ok (.cond cc a b)
   | .squash2 _ a =>
+      -- A 2-state `int` target squashes its initializer (`Squash2`). Over an INT-class initializer, which every
+      -- definition of this language is (`PExpr.isInt`: the `intArith` operators, `?:` of INT-class arms, `$clog2`), the
+      -- instantiation evaluates the operand exactly as it evaluates an `integer`'s (`evalIntTarget`: `evalIntExact` of
+      -- the operand, wrapped to 32 bits by `bindLocal`), so the squash changes nothing that `hag` does not check. The
+      -- one structural difference is `$clog2` alone, which `bindLocal` binds unwrapped (`CE.clog2S`).
       match ceOf? nm scope a with
       | .error e => .error e
       | .ok c =>
-          if c.hasClog2 then
-            -- `$clog2` is an integer constant function.  `int` and
-            -- `integer` are both 32-bit signed in the summary, so retain
-            -- the same opaque `CE.clog2` atom; the defaults gate separately
-            -- checks the exact 32-bit elaboration point.
-            match c with
-            | .clog2 a => .ok (.clog2S a)
-            | _ => .ok c
-          else
-            .error s!"localparam `{nm}`: a 2-state `int` localparam initialised by `/` or `%` is squashed to 2 states and wraps at 2^31 in the elaborated design (its closed arithmetic form would be false for huge parameters); declare it `localparam integer {nm} = …;` (outside the v1 fragment)"
+          match c with
+          | .clog2 a => .ok (.clog2S a)
+          | _ => .ok c
   | .sysCall .clog2 a =>
       match ceOf? nm scope a with
       | .error e => .error e
       | .ok c => .ok (.clog2 c)
+  | .resize _ _ | .signedResize _ _ =>
+      .error s!"localparam `{nm}`: an operand converted to the width of its expression (the envelope's `Resize`: a comparison or another 1-bit value used as a number, `(N > 2) + 1`, or a sized operand) is outside the v1 fragment (a comparison is read only as the condition of `?:`)"
   | .sysCall .. =>
-      .error s!"localparam `{nm}`: a system call other than `$clog2` is outside the v1 fragment (a localparam may use + - *, / % by an integer literal, the shifts << <<< >> >>>, and `$clog2`)"
+      .error s!"localparam `{nm}`: a system call other than `$clog2` is outside the v1 fragment (a localparam may use + - *, / % by an integer literal, the shifts << <<< >> >>>, `**`, `$clog2`, and `?:` on a comparison s< s<= s> s>= == !=)"
   | _ =>
-      .error s!"localparam `{nm}`: the initializer is outside the v1 fragment (a localparam may use integer literals, parameters, earlier localparams, + - *, / % by an integer literal, the shifts << <<< >> >>>, and `$clog2`)"
+      .error s!"localparam `{nm}`: the initializer is outside the v1 fragment (a localparam may use integer literals, parameters, earlier localparams, + - *, / % by an integer literal, the shifts << <<< >> >>>, `**`, `$clog2`, and `?:` on a comparison s< s<= s> s>= == !=)"
 
 /-- The localparam's declared type: `int`/`integer` (packed `[31:0]`, signed or default) or none — the
 INT class, which `bindLocal` binds in `IEnv.vals`, where the parameters are. -/
@@ -2367,7 +2460,12 @@ def lpTypeOk (lp : PLocalParam) : Bool :=
 def lpOf? (scope : List String) (lp : PLocalParam) : Except String CE :=
   if !lpTypeOk lp then
     .error s!"localparam `{lp.name}`: only `int`/`integer` (32-bit signed) localparams are in the v1 fragment"
-  else ceOf? lp.name scope lp.expr
+  else
+    match ceOf? lp.name scope lp.expr with
+    | .error e => .error e
+    | .ok c =>
+        if c.cmpOk then .ok c
+        else .error s!"localparam `{lp.name}`: a comparison is read only as the condition of `?:` (a comparison used as a number, an operand of `+` or of another operator, is outside the v1 fragment)"
 
 def lpsOf? : List String → List PLocalParam → Except String (List (String × CE))
   | _, [] => .ok []
@@ -2519,6 +2617,11 @@ def lsites : List LSite :=
 vocabulary to `simp` for that design only: naming it in the tactics' own lists costs about 21 units of heartbeats per
 `simp` call on every proof (measured), which the designs without a replication would pay for nothing. -/
 def hasRepl : Bool := s.lsites.any fun ls => !ls.site.rcounts.isEmpty
+
+/-- Does a localparam have a `?:` (`CE.hasCond`)? The parameter stage of such a design lifts the decision of the
+condition into the value where the hypotheses do not settle it (`closeParamEnv`'s `lift`); every other design is
+evaluated exactly as before. -/
+def hasCond : Bool := s.lps.any fun (_, c) => c.hasCond
 
 /-- The loop-header paths of the generate tree: each top-level loop alone, and each inner loop
 under its outer loop (outermost first). -/

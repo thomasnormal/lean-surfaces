@@ -43,6 +43,13 @@ def CE.showP : Nat → CE → String
   | p, .shl a b => let t := s!"{a.showP 1} << {b.showP 1}"; if p ≥ 1 then s!"({t})" else t
   | p, .shr a b => let t := s!"{a.showP 1} >> {b.showP 1}"; if p ≥ 1 then s!"({t})" else t
   | p, .ashr a b => let t := s!"{a.showP 1} >>> {b.showP 1}"; if p ≥ 1 then s!"({t})" else t
+  -- `**` binds more tightly than `*` (Table 11-2): its operands are parenthesized unless atomic
+  | p, .pow a b => let t := s!"{a.showP 3} ** {b.showP 3}"; if p ≥ 3 then s!"({t})" else t
+  | p, .cmp k a b =>
+      let o := match k with
+        | .lt => "<" | .le => "<=" | .gt => ">" | .ge => ">=" | .eq => "==" | .ne => "!="
+      let t := s!"{a.showP 1} {o} {b.showP 1}"; if p ≥ 1 then s!"({t})" else t
+  | p, .cond c a b => let t := s!"{c.showP 1} ? {a.showP 1} : {b.showP 1}"; if p ≥ 1 then s!"({t})" else t
 
 def CE.show (c : CE) : String := c.showP 0
 
@@ -70,6 +77,12 @@ not the shift itself. -/
 def CE.opDiag (σ : String → Int) : CE → Option String
   | .lit _ | .ref _ => none
   | .add a b | .sub a b | .mul a b | .shl a b | .shr a b => a.opDiag σ <|> b.opDiag σ
+  -- the exponent's value and the comparison's operands are read whole by the summary and at 32 bits by the
+  -- instantiation; the arm `?:` selects is read by both alike (only the condition's value decides)
+  | .pow a b => a.opDiag σ <|> b.opDiag σ <|> CE.operandDiag σ (.pow a b) b
+  | .cmp k a b => a.opDiag σ <|> b.opDiag σ <|> CE.operandDiag σ (.cmp k a b) a <|> CE.operandDiag σ (.cmp k a b) b
+  | .cond c a b =>
+      c.opDiag σ <|> CE.operandDiag σ (.cond c a b) c <|> (if c.eval σ = 0 then b.opDiag σ else a.opDiag σ)
   | .divK a k => a.opDiag σ <|> CE.operandDiag σ (.divK a k) a
   | .modK a k => a.opDiag σ <|> CE.operandDiag σ (.modK a k) a
   | .clog2 a => a.opDiag σ <|> CE.operandDiag σ (.clog2 a) a
@@ -85,7 +98,8 @@ def CE.opDiag (σ : String → Int) : CE → Option String
 /-- A `>>>` occurs in the definition. -/
 def CE.hasAshr : CE → Bool
   | .ashr _ _ => true
-  | .add a b | .sub a b | .mul a b | .shl a b | .shr a b => a.hasAshr || b.hasAshr
+  | .add a b | .sub a b | .mul a b | .shl a b | .shr a b | .pow a b | .cmp _ a b => a.hasAshr || b.hasAshr
+  | .cond c a b => c.hasAshr || a.hasAshr || b.hasAshr
   | .divK a _ | .modK a _ | .clog2 a | .clog2S a => a.hasAshr
   | _ => false
 

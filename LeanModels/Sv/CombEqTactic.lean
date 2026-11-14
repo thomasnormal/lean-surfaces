@@ -650,7 +650,7 @@ unsafe def runSvEquationsCore (hintOnly : Bool) : TacticM Unit := do
           closeWith n what (← `(tactic| decide +kernel))
       closeWith `hs "the recognizer's summary could not be computed by `rfl`" (← `(tactic| rfl))
       closeWith `harity "the number of arguments differs from the number of parameters" (← `(tactic| rfl))
-      closeParamEnv "sv_equations" (← find `h1)
+      closeParamEnv "sv_equations" (← find `h1) (lift := s.hasCond)
       closeHag "sv_equations" (← find `hag) s args
       closeDecide `hok "the structural check failed"
       let paramRd? : Option String := if vrOk then none else

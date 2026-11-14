@@ -1,5 +1,5 @@
-// NEGATIVE FIXTURE (a 2-state `int` initialised by `/`): a correct ripple adder, plus a localparam that the sv_comb tactics
-// refuse with a specific message (see ../comb_neg.lean). The localparam is unused on purpose.
+// A 2-state `int` initialised by `/` (formerly a negative fixture): a correct ripple adder, plus a localparam that the
+// sv_comb tactics read through its squashed operand (see ../comb_neg.lean, `lp_intdiv_comb`). The localparam is unused.
 module lp_intdiv #(parameter int N = 8) (
   input  logic [N-1:0] a, b,
   input  logic         cin,

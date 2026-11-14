@@ -10,8 +10,8 @@
   "gcc.c-torture/execute": {
    "not-parsed": 267,
    "oracle-tests-compiler": 1,
-   "passed": 940,
-   "refused-libc": 35,
+   "passed": 941,
+   "refused-libc": 34,
    "refused-ub": 98,
    "refused-unsupported": 513,
    "timeout": 64
@@ -28,8 +28,8 @@
  "counts": {
   "not-parsed": 294,
   "oracle-tests-compiler": 1,
-  "passed": 1115,
-  "refused-libc": 39,
+  "passed": 1116,
+  "refused-libc": 38,
   "refused-ub": 107,
   "refused-unsupported": 592,
   "timeout": 66
@@ -898,18 +898,6 @@
   },
   {
    "files": [
-    "20181120-1.c",
-    "20230630-2.c",
-    "20230630-4.c",
-    "gcc/testsuite/gcc.dg/c23-nullptr-5.c",
-    "pr77767.c"
-   ],
-   "present": 5,
-   "sole": 5,
-   "wall": "libc-call: __builtin_abort"
-  },
-  {
-   "files": [
     "20021118-2.c",
     "20041212-1.c",
     "20101011-1.c",
@@ -943,6 +931,17 @@
    "present": 5,
    "sole": 5,
    "wall": "unsupported:unbound declaration 'id180' (name 'stdout')"
+  },
+  {
+   "files": [
+    "20230630-2.c",
+    "20230630-4.c",
+    "gcc/testsuite/gcc.dg/c23-nullptr-5.c",
+    "pr77767.c"
+   ],
+   "present": 4,
+   "sole": 4,
+   "wall": "libc-call: __builtin_abort"
   },
   {
    "files": [
@@ -3193,8 +3192,8 @@
   }
  ],
  "manifest_hash": "bca94718b04e8394cdce992866637166f530978790bd1013cea4a00ae25ef764",
- "measured_at_utc": "2026-11-14T01:51:52Z",
- "measured_commit": "3d4383f53",
+ "measured_at_utc": "2026-11-14T02:00:57Z",
+ "measured_commit": "59bc445ec",
  "pin": {
   "corpora": [
    "C1",
@@ -11221,8 +11220,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "__builtin_abort",
-   "dynamic_wall": "libc-call: __builtin_abort",
+   "detail": "",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "20181120-1.c",
    "sha256": "244ff6672843fc6ffb9b9ff7edd92fe6e87e6b1daa603bd3b62bb8327d9a1ea1",
@@ -11230,7 +11229,7 @@
     "libc-call: __builtin_abort",
     "type-layout"
    ],
-   "verdict": "refused-libc"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",

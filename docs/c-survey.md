@@ -2,10 +2,10 @@
 
 Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manifest.
 
-- verdicts: 1115/2214 MATCH (passed 1115, failed 0, oracle 0)
+- verdicts: 1116/2214 MATCH (passed 1116, failed 0, oracle 0)
 - manifest SHA-256: `bca94718b04e8394cdce992866637166f530978790bd1013cea4a00ae25ef764`
-- measured commit: `3d4383f53`
-- measured at: `2026-11-14T01:51:52Z`
+- measured commit: `59bc445ec`
+- measured at: `2026-11-14T02:00:57Z`
 
 ## Verdict counts
 
@@ -13,8 +13,8 @@ Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manife
 | --- | ---: |
 | `not-parsed` | 294 |
 | `oracle-tests-compiler` | 1 |
-| `passed` | 1115 |
-| `refused-libc` | 39 |
+| `passed` | 1116 |
+| `refused-libc` | 38 |
 | `refused-ub` | 107 |
 | `refused-unsupported` | 592 |
 | `timeout` | 66 |
@@ -30,8 +30,8 @@ Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manife
 | `c-testsuite/single-exec` | `timeout` | 2 |
 | `gcc.c-torture/execute` | `not-parsed` | 267 |
 | `gcc.c-torture/execute` | `oracle-tests-compiler` | 1 |
-| `gcc.c-torture/execute` | `passed` | 940 |
-| `gcc.c-torture/execute` | `refused-libc` | 35 |
+| `gcc.c-torture/execute` | `passed` | 941 |
+| `gcc.c-torture/execute` | `refused-libc` | 34 |
 | `gcc.c-torture/execute` | `refused-ub` | 98 |
 | `gcc.c-torture/execute` | `refused-unsupported` | 513 |
 | `gcc.c-torture/execute` | `timeout` | 64 |
@@ -319,10 +319,10 @@ The run's first refusal, normalized by construct; `sole` counts rows whose first
 | `libc-call: malloc` | 6 | 6 | 20020406-1.c, 960521-1.c, pr41395-1.c, pr41395-2.c, pr41463.c |
 | `unsupported:DesignatedInitUpdateExpr` | 6 | 6 | gcc/testsuite/gcc.dg/c23-empty-init-5.c, gcc/testsuite/gcc.dg/c23-empty-init-warn-1.c, gcc/testsuite/gcc.dg/c23-empty-init-warn-17.c, gcc/testsuite/gcc.dg/c23-empty-init-warn-2.c, gcc/testsuite/gcc.dg/c23-empty-init-warn-4.c |
 | `unsupported:break, continue or goto escaped a function body` | 6 | 6 | 00010.c, 00199.c, 20030909-1.c, 20040704-1.c, pr119291.c |
-| `libc-call: __builtin_abort` | 5 | 5 | 20181120-1.c, 20230630-2.c, 20230630-4.c, gcc/testsuite/gcc.dg/c23-nullptr-5.c, pr77767.c |
 | `unsupported:function-to-pointer decay (inch 5)` | 5 | 5 | 20021118-2.c, 20041212-1.c, 20101011-1.c, pr42231.c, pr68390.c |
 | `unsupported:no layout for declared type '_Complex double'` | 5 | 5 | 20030910-1.c, 960512-1.c, complex-1.c, complex-2.c, ieee/cdivchkd.c |
 | `unsupported:unbound declaration 'id180' (name 'stdout')` | 5 | 5 | 00189.c, fprintf-1.c, fprintf-chk-1.c, vfprintf-1.c, vfprintf-chk-1.c |
+| `libc-call: __builtin_abort` | 4 | 4 | 20230630-2.c, 20230630-4.c, gcc/testsuite/gcc.dg/c23-nullptr-5.c, pr77767.c |
 | `libc-call: __builtin_malloc` | 4 | 4 | 20071120-1.c, pr43008.c, pr84339.c, strlen-7.c |
 | `unsupported:extern object 'b' has no definition in the translation unit` | 4 | 4 | alias-2.c, alias-3.c, alias-4.c, gcc/testsuite/gcc.dg/c23-bool-2.c |
 | `unsupported:indirect call through a non-FunctionDecl reference` | 4 | 4 | 20010122-1.c, pr28289.c, pr34768-1.c, pr34768-2.c |

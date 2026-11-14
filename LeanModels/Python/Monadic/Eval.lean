@@ -4244,6 +4244,41 @@ theorem finishCallM_assignments_body_ok (K : Kont) (m : Module)
   rw [bind_apply, hraw]
   rfl
 
+/-! A narrowly explicit top-depth call branch.  This is the first composition
+    of the assignment-list transport with `callInM`; it keeps the branch
+    guards and the continuation explicit instead of claiming a generic
+    arbitrary-handler transport. -/
+theorem twinAgrees_callInM_top_assignments
+    (K : Kont) (m : Module) (fname : String) (args : Array RVal)
+    (f : FunctionDefn) (w : World)
+    (hfind : findFunction m fname = some f)
+    (hgen : proofCellGeneratorUnsafe m fname = false)
+    (hargs : f.argsOk = true) (hlocal : f.localsOk = true)
+    (hnotgen : f.isGenerator = false)
+    (harity : arityOk f.params args.size = true)
+    (hShape : ∀ s ∈ f.body.toList,
+      ∃ targets value sp, s = .assign targets value sp)
+    (hEach : ∀ s ∈ f.body.toList, ∀ st',
+      execOpen K m s st' = .ok (.ok RFlow.next, st')) :
+    toRun (callInM K m fname args) { w with callDepth := pythonTopCallDepth } =
+      .ok { w with callDepth := pythonTopCallDepth } .none := by
+  have hbody := finishCallM_assignments_body_ok K m
+    (globalCallEnv { w with callDepth := pythonTopCallDepth }
+      f.params args f.body f.hasGlobal)
+    f.body.toList { w with callDepth := 1 } pythonTopCallDepth hShape hEach
+  unfold callInM
+  rw [hfind]
+  simp only [hgen, hargs, hlocal, hnotgen, harity,
+    Bool.false_eq_true, Bool.not_true, Bool.not_eq_true, ↓reduceIte]
+  rw [toRun_get_bind]
+  rw [if_pos (beq_self_eq_true _)]
+  rw [toRun_bind]
+  rw [toRun_set]
+  simp only [Run.bind]
+  rw [toRun_bind]
+  rw [hbody]
+  rfl
+
 theorem twinAgrees_execOpenList_nil (K : Kont) (m : Module) (st : FrameState) :
     toRun (execOpenList K m []) st = .ok st .next := by
   rfl

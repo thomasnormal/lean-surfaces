@@ -624,3 +624,5 @@ still open.
 The direct top-depth `callInM` integration is parked at the outer `get`/`StateT.bind` reduction; explicit body transport remains available.
 
 `Monadic.toRun_get_bind` and `Monadic.toRun_set_bind` normalize state getter/setter binds for direct call-plan adequacy proofs.
+
+Direct top-depth `callInM` integration remains parked after the getter/setter normalization attempt; explicit body transport remains available.

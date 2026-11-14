@@ -17189,3 +17189,16 @@ reduction blocker exposed by direct `callInM` integration.
 | Remaining debt | retry direct `callInM` branch integration using these equations |
 
 DECIDED: getter/setter bind normalization is now explicit at the `Run` boundary.
+
+
+## 2026-11-14-pyfoundation-286 — direct callInM integration after getter normalization (blocked)
+
+The retry of `Monadic.callInM_top_body_ret_ok` after landing
+`toRun_get_bind`/`toRun_set_bind` still leaves the outer `get`/`StateT.bind`
+match unresolved. The exploratory declaration was removed; the failed build
+also surfaced a `sorryAx` dependency from the unsolved proof state, so no result
+is claimed. The explicit body transport and getter/setter equations remain
+valid independently.
+
+DECIDED: direct call-plan integration remains blocked after the targeted getter
+normalization attempt; no fixed-count theorem or weakened call theorem was added.

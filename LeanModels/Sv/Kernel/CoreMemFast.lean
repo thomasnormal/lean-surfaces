@@ -195,6 +195,28 @@ theorem CoreMemDesign.fastSettleAssignAt_implicit_cons_refines
       .ok (s'.toState, view') := by
   simpa [CoreMemDesign.fastSettleAssignAt, CoreMemDesign.settleAssignAt] using htail
 
+theorem CoreMemDesign.fastSettleAssignAt_single_array_refines
+    (E : CoreMemDesign) (env : IEnv) (elems : List (String × Nat))
+    (s : CoreMemFastState) (view : SvState) (index : Nat)
+    (name : String) (indexExpr : PExpr) (value : PExpr)
+    (md : CoreMemDecl) (v : LVec) (s' : CoreMemFastState) (view' : SvState)
+    (hmem : E.memDecl? name = some md)
+    (hv : E.evalExpr env elems s.toState (some md.shape.elemWidth) value = .ok v)
+    (h : E.fastSettleAssignAt env elems s view index
+      [.assign (.arrayElem name [indexExpr]) value] = .ok (s', view')) :
+    E.settleAssignAt env elems s.toState view index
+      [.assign (.arrayElem name [indexExpr]) value] =
+      .ok (s'.toState, view') := by
+  simp [CoreMemDesign.fastSettleAssignAt, hmem, hv] at h
+  simp [CoreMemDesign.settleAssignAt, hmem, hv]
+  rcases h with ⟨a, ha, hof, hview⟩
+  have hstate : a = s'.toState := by
+    calc
+      a = (CoreMemFastState.ofState E a).toState := by
+        simp [CoreMemFastState.ofState_toState]
+      _ = s'.toState := congrArg CoreMemFastState.toState hof
+  exact ⟨a, ha, hstate, hview⟩
+
 theorem CoreMemDesign.settleAssignAt_two_ident_fast_refines
     (E : CoreMemDesign) (s a₁ a₂ : CoreMemFastState) (view : SvState)
     (index : Nat) (name₁ name₂ : String) (value₁ value₂ : PExpr)

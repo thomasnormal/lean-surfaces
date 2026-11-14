@@ -262,6 +262,45 @@ theorem fastStep_fallback_eq (E : Elab) (ch : Choice) (c : FastConfig)
       | comb body => simp [hp, step]
       | implicit body => simp [hp, step]
 
+/-! A flat assignment is the only extra premise needed by the direct route.
+The premise is stated on the source-shaped windows, so it remains parametric
+and does not expand the array or the process list. -/
+def FlatAssignment (E : Elab) (c : FastConfig) (t : Lhs2) : Prop :=
+  ∀ ws, t.windows? E.toDesign2 = some ws →
+    ∀ wn off, (wn, off) ∈ Win.placed ws →
+      ∃ x, E.resolve wn.1 = some x ∧ x.path = [] ∧ x.decl < c.cells.size
+
+theorem fastStep_assign_refines_step_of_flat (E : Elab) (ch : Choice)
+    (c : FastConfig) (p : ProcId) (rest : List ProcId)
+    (t : Lhs2) (e : Expr2) (ws : List Win) (v : LVec) (a' : Array Val)
+    (hchoose : ch.choose c.k c.active = p :: rest)
+    (hp : E.procs[p]? = some (.assign t e))
+    (hws : t.windows? E.toDesign2 = some ws)
+    (hv : evalPure2 (E.view c.store) e = .ok v)
+    (hfast : fastActivateAssign E c t e = .ok a')
+    (hflat : FlatAssignment E c t) :
+    ∃ fc, fastStep E ch c = .ok (some fc) ∧
+      step E ch c.toConfig = .next fc.toConfig := by
+  have hflat' : ∀ wn off, (wn, off) ∈ Win.placed ws →
+      ∃ x, E.resolve wn.1 = some x ∧ x.path = [] ∧ x.decl < c.cells.size :=
+    hflat ws hws
+  have hfastWins : fastWriteWins E c.fallback c.cells
+      (v.resizeU (Win.sumWidth ws)) (Win.placed ws) = .ok a' := by
+    simpa [fastActivateAssign, hws, hv] using hfast
+  have hstore : arrayStore a' c.fallback =
+      E.writeWins c.store (v.resizeU (Win.sumWidth ws)) (Win.placed ws) :=
+    fastActivateAssign_store_eq E c t e ws v a' hws hv hfastWins hflat'
+  have hact' : activate E p c.store = .ok (.ok (),
+      E.writeWins c.store (v.resizeU (Win.sumWidth ws)) (Win.placed ws)) := by
+    simp only [activate, hp, hws]
+    rw [SemMWith.run_bind_ok (SemMWith.run_get c.store)]
+    rw [SemMWith.run_bind_ok (show ofRes (evalPure2 (E.view c.store) e) c.store =
+      .ok (.ok v, c.store) by rw [hv]; rfl)]
+    rfl
+  exact fastStep_assign_refines_step E ch c p rest t e a'
+    (E.writeWins c.store (v.resizeU (Win.sumWidth ws)) (Win.placed ws))
+    hchoose hp hfast hact' hstore
+
 def fastExec (E : Elab) (ch : Choice) : Nat → FastConfig → Res FastConfig
   | 0, _ => .timeout
   | n + 1, c =>
@@ -282,6 +321,65 @@ theorem fastExec_succ_of_next (E : Elab) (ch : Choice) (n : Nat)
     (htail : fastExec E ch n c' = .ok c'') :
     fastExec E ch (n + 1) c = .ok c'' := by
   simp [fastExec, hstep, htail]
+
+/-! Once the direct instrument has established its one-step refinement, the
+recursive executor inherits the exact E slot judgment.  Keeping the two
+one-step premises explicit makes the theorem reusable for the assignment and
+fallback branches without introducing a second scheduler semantics. -/
+theorem fastExec_sound_of_step_refines (E : Elab) (ch : Choice)
+    (hclosed : ∀ {c : FastConfig},
+      fastStep E ch c = .ok none →
+        step E ch c.toConfig = .slotClosed c.toConfig)
+    (hnext : ∀ {c c' : FastConfig},
+      fastStep E ch c = .ok (some c') →
+        step E ch c.toConfig = .next c'.toConfig)
+    (n : Nat) (c c' : FastConfig)
+    (h : fastExec E ch (n + 1) c = .ok c') :
+    SlotCloses E ch c.toConfig c'.toConfig := by
+  induction n generalizing c c' with
+  | zero =>
+      simp only [fastExec] at h
+      cases hs : fastStep E ch c with
+      | ok o =>
+          cases ho : o with
+          | none =>
+              simp only [hs, ho, Res.ok.injEq] at h
+              cases h
+              have hs' : fastStep E ch c = .ok none := by simpa [ho] using hs
+              exact ⟨Steps.refl _, hclosed hs'⟩
+          | some c1 =>
+              simp only [hs, ho] at h
+              simp at h
+      | timeout => simp [hs] at h
+      | unsupported msg => simp [hs] at h
+  | succ n ih =>
+      simp only [fastExec] at h
+      cases hs : fastStep E ch c with
+      | ok o =>
+          cases ho : o with
+          | none =>
+              simp only [hs, ho, Res.ok.injEq] at h
+              cases h
+              have hs' : fastStep E ch c = .ok none := by simpa [ho] using hs
+              exact ⟨Steps.refl _, hclosed hs'⟩
+          | some c1 =>
+              simp only [hs, ho] at h
+              change fastExec E ch (n + 1) c1 = .ok c' at h
+              cases ht : fastExec E ch (n + 1) c1 with
+              | ok d =>
+                  have hdc : d = c' := by
+                    apply Res.ok.inj
+                    rw [← ht]
+                    exact h
+                  obtain ⟨hsteps, hclose⟩ := ih c1 d ht
+                  have hs' : fastStep E ch c = .ok (some c1) := by
+                    simpa [ho] using hs
+                  subst c'
+                  exact ⟨Steps.head (hnext hs') hsteps, hclose⟩
+              | timeout => rw [ht] at h; cases h
+              | unsupported msg => rw [ht] at h; cases h
+      | timeout => simp [hs] at h
+      | unsupported msg => simp [hs] at h
 
 def fastRun (E : Elab) (ch : Choice) (fuel : Nat) (env : List SvState) :
     Res (List FastConfig) :=

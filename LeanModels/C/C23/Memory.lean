@@ -512,6 +512,22 @@ pointer rather than silently valid. -/
 def storePtr (m : Mem) (p : Ptr) (q : Ptr) : MRes Mem :=
   m.storeBytes p ((List.range 8).map (CByte.ptrByte q))
 
+/-! Function pointers are identities, not object addresses.  This token
+survives storage in a struct field without inventing an ABI representation. -/
+def storeFunction (m : Mem) (p : Ptr) (id : DeclarationId) : MRes Mem :=
+  m.storeBytes p (List.replicate 8 (CByte.funByte id))
+
+def loadFunction (m : Mem) (p : Ptr) : MRes (Option DeclarationId) := do
+  let (_, c, off) ← m.resolve p 1
+  match (c.bytes.drop off).head? with
+  | some (.funByte id) =>
+      let bytes := (c.bytes.drop off).take 8
+      if bytes == List.replicate 8 (CByte.funByte id) then
+        pure (some id)
+      else
+        .error (.memUB (.nonValueRepresentation (Option.getD p.obj 0) off))
+  | _ => pure none
+
 /-- Read a pointer: the eight bytes must be one pointer's representation,
 in order. Anything else is `J.2(12)` — including a torn pointer, which
 no sanitizer on either host detects. -/

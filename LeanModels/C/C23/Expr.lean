@@ -383,7 +383,7 @@ indeterminately sequenced (`J.1(16)`); `evalArgs` fixes left-to-right as
 the CANONICAL order for extracting witnesses, and Thomas's `∀ order`
 ruling becomes a theorem about `evalArgs` — a thing that can be stated —
 rather than a property of an opaque handler, which could not be. -/
-abbrev CallHandler := Expr → List CVal → EvalM CVal
+abbrev CallHandler := Expr → Option CVal → List CVal → EvalM CVal
 
 /-- The handler for a context with **no program behind it**: a bare `Ctx`
 knows names, enums and layout, and nothing about function definitions, so
@@ -397,7 +397,7 @@ and a refusal must not un-happen them.
 The message used to read *"the call semantics is inch 5"*. Inch 5 has
 landed and `callFn` supplies a real handler; what remains true is only
 that THIS context has no program. -/
-def noCalls : CallHandler := fun callee _ =>
+def noCalls : CallHandler := fun callee _ _ =>
   refuseUnsupported
     s!"call to '{calleeNameOf callee}' in a context with no program — call it through 'callByName'"
 
@@ -424,6 +424,10 @@ structure Layout where
   /-- `offsetof`, keyed on the BASE expression's spelling, so `p->f` and
   `x.f` look up under `"const Pos *"` and `"Pos"` respectively. -/
   fieldOff : CType → String → Option Nat
+  /-- Frontend-observed byte extent of a member.  This is needed when the
+  member type is a function pointer, whose spelling is intentionally not
+  re-parsed by the layout fallback. -/
+  fieldSize : CType → String → Option Nat := fun _ _ => none
   /-- Declaration-identity lookup for block-local records whose tag spelling
   collides with another record in the same translation unit. -/
   fieldOffDecl : DeclarationId → String → Option Nat := fun _ _ => none
@@ -469,6 +473,7 @@ structure Layout where
 missing layout fact is a loud refusal rather than a guessed offset. -/
 def Layout.unknown : Layout :=
   { size := fun _ => none, fieldOff := fun _ _ => none
+    fieldSize := fun _ _ => none
     fieldOffDecl := fun _ _ => none
     fieldBits := fun _ _ => none
     flexibleField := fun _ _ => false
@@ -515,6 +520,7 @@ def truthy (v : CVal) : EvalM Bool :=
   | .float64 f => pure (!Float.Model.beq f (Float.Model.ofBits 0))
   | .ptr p => pure (!p.isNull)
   | .ptrInt _ => refuseUnsupported "pointer-integer value used in a Boolean context"
+  | .funPtr _ => refuseUnsupported "function pointer used in a Boolean context"
   | .aggregate _ _ => refuseUnsupported "aggregate used as truth value"
   | .undef => refuseUB (.indetAutomatic 0 0)
 
@@ -659,6 +665,7 @@ def asPtr (v : CVal) : EvalM Ptr :=
   match v with
   | .ptr p => pure p
   | .ptrInt _ => refuseUnsupported "pointer-integer value requires an unchanged cast back"
+  | .funPtr _ => refuseUnsupported "function pointer used as an object pointer"
   | .int _ _ => refuseUnsupported "integer used as a pointer (no int↔ptr cast in tier)"
   | .float32 _ | .float64 _ => refuseUnsupported "floating value used as a pointer"
   | .aggregate _ _ => refuseUnsupported "aggregate used as a pointer"
@@ -670,6 +677,7 @@ def asInt (v : CVal) : EvalM (IntTy × Int) :=
   | .int t n => pure (t, n)
   | .ptr _ => refuseUnsupported "pointer used as an integer (no ptr↔int cast in tier)"
   | .ptrInt _ => refuseUnsupported "pointer-integer value used as an ordinary integer"
+  | .funPtr _ => refuseUnsupported "function pointer used as an integer"
   | .float32 _ | .float64 _ => refuseUnsupported "floating value used as an integer"
   | .aggregate _ _ => refuseUnsupported "aggregate used as an integer"
   | .undef => refuseUB (.indetAutomatic 0 0)
@@ -695,6 +703,7 @@ def checkVaType (ctx : Ctx) (ty : CType) (v : CVal) : EvalM CVal :=
       | none => refuseUnsupported s!"va_arg requested unsupported type '{ty}'"
   | .ptr _ => if isPtrType ty then pure v
              else refuseValue (.vaArgTypeMismatch ty "pointer")
+  | .funPtr _ => refuseValue (.vaArgTypeMismatch ty "function pointer")
   | .float32 _ => if ty == "float" then pure v
                  else refuseValue (.vaArgTypeMismatch ty "binary32")
   | .float64 _ => if ty == "double" then pure v
@@ -750,6 +759,7 @@ def loadAt (p : Ptr) (ty : CType) (size : Option Nat) : EvalM CVal :=
 /-- Store a value at an address, at the lvalue's type. -/
 def storeAt (p : Ptr) (ty : CType) (v : CVal) : EvalM Unit :=
   match v with
+  | .funPtr id => writeMem (fun m => Mem.storeFunction m p id)
   | .ptr q => writeMem (fun m => Mem.storePtr m p q)
   | .ptrInt q =>
       if isPtrIntType ty then writeMem (fun m => Mem.storePtrInt m p q)
@@ -1110,6 +1120,11 @@ def evalLValue (ctx : Ctx) : Expr → EvalM Ptr
       writeMem (fun m => m.storeBytes (Ptr.toObjectBound o bs.length) bs)
       pure (Ptr.toObjectBound o bs.length)
   -- §6.5.2p2: an identifier designating an object is an lvalue.
+  | .declRef (some _) _ "FunctionDecl" _ _ =>
+      -- A function designator has no object address.  The address-of arm
+      -- recognizes this parser node and returns its declaration identity;
+      -- this placeholder keeps the shared lvalue recursion well-founded.
+      pure Ptr.null
   | .declRef (some id) name _ ty _ =>
       match ctx.idEnv.lookup? id with
       | some o =>
@@ -1166,14 +1181,18 @@ def evalExpr (ctx : Ctx) : Expr → EvalM CVal
       if ck == "LValueToRValue" then do
         -- §6.3.2.1p2 — 1837 sites, the load-bearing implicit of the corpus.
         let p ← evalLValue ctx sub
-        match sub with
-        | .member base field arrow fieldTy _ =>
-            if ctx.layout.fieldBits base.ty field |>.isSome then
-              loadBitFieldAt ctx base.ty field fieldTy p
-            else
-              loadAt p (ctx.layout.normalizeTy ty) (ctx.layout.size (ctx.layout.normalizeTy ty))
-        | _ =>
-            loadAt p (ctx.layout.normalizeTy ty) (ctx.layout.size (ctx.layout.normalizeTy ty))
+        let functionValue ← readMem (fun m => Mem.loadFunction m p)
+        match functionValue with
+        | some id => pure (.funPtr id)
+        | none =>
+            match sub with
+            | .member base field arrow fieldTy _ =>
+                if ctx.layout.fieldBits base.ty field |>.isSome then
+                  loadBitFieldAt ctx base.ty field fieldTy p
+                else
+                  loadAt p (ctx.layout.normalizeTy ty) (ctx.layout.size (ctx.layout.normalizeTy ty))
+            | _ =>
+                loadAt p (ctx.layout.normalizeTy ty) (ctx.layout.size (ctx.layout.normalizeTy ty))
       else if ck == "ArrayToPointerDecay" then do
         -- §6.3.2.1p3 — 405 sites, the LARGEST pointer producer there is.
         let p ← evalLValue ctx sub
@@ -1212,7 +1231,9 @@ def evalExpr (ctx : Ctx) : Expr → EvalM CVal
         else
           refuseUnsupported "pointer bit-cast across incompatible effective types"
       else if ck == "FunctionToPointerDecay" then
-        refuseUnsupported "function-to-pointer decay (inch 5)"
+        match sub with
+        | .declRef (some id) _ "FunctionDecl" _ _ => pure (.funPtr id)
+        | _ => refuseUnsupported "function-to-pointer decay of an unresolved function"
       else if ck == "IntegralToFloating" then
         do
         let v ← evalExpr ctx sub
@@ -1312,12 +1333,17 @@ def evalExpr (ctx : Ctx) : Expr → EvalM CVal
       if op == "&" then do
         -- §6.5.4.2p3 — address-of, 106 sites. It does NOT read the object.
         let p ← evalLValue ctx sub
-        pure (.ptr p)
+        match sub with
+        | .declRef (some id) _ "FunctionDecl" _ _ => pure (.funPtr id)
+        | _ => pure (.ptr p)
       else if op == "*" then do
         -- §6.5.4.2p4 — indirection reaching value position directly.
         let v ← evalExpr ctx sub
-        let p ← asPtr v
-        loadAt p (ctx.layout.normalizeTy ty) (ctx.layout.size (ctx.layout.normalizeTy ty))
+        match v with
+        | .funPtr id => pure (.funPtr id)
+        | _ =>
+            let p ← asPtr v
+            loadAt p (ctx.layout.normalizeTy ty) (ctx.layout.size (ctx.layout.normalizeTy ty))
       else if op == "!" then do
         -- §6.5.4.3p5 — `!x` is `(0 == x)`. 80 sites.
         let v ← evalExpr ctx sub
@@ -1536,8 +1562,16 @@ def evalExpr (ctx : Ctx) : Expr → EvalM CVal
         refuseUnsupported "call through an incompatible function-pointer cast"
       if hasTwoImpure ctx args then
         refuseUnsupported "unsequenced side effects in call arguments"
-      let vs ← evalArgs ctx args
-      ctx.call callee vs
+      match calleeName callee with
+      | some _ =>
+          let vs ← evalArgs ctx args
+          ctx.call callee none vs
+      | none =>
+          let target ← evalArgs ctx [callee]
+          let vs ← evalArgs ctx args
+          match target with
+          | [value] => ctx.call callee (some value) vs
+          | _ => refuseUnsupported "indirect call lost its callee value"
 
   -- §6.5.4.4 — `sizeof`, answered by the layout, never computed here.
   | .typeTrait trait argTy sub ty _ =>
@@ -1578,7 +1612,7 @@ def evalExpr (ctx : Ctx) : Expr → EvalM CVal
   | .unsupported k _ _ => refuseUnsupported s!"out of tier: {k}"
   termination_by e => 2 * e.size + 1
   decreasing_by
-    all_goals (simp_wf <;> (try simp [Expr.size_constExpr, Expr.size, Expr.subexprs]) <;> omega)
+    all_goals (simp_wf <;> (try simp [Expr.sizes_cons, Expr.size_unop, Expr.size_pos, Expr.sizes, Expr.size_constExpr, Expr.size, Expr.subexprs]) <;> omega)
 
 /-- §6.5.3.3p4 — a call's arguments, evaluated in the CALLER's scope,
 **left to right**.
@@ -1631,7 +1665,8 @@ def memberAddr (ctx : Ctx) (base : Expr) (field : String) (arrow : Bool)
     |>.orElse (fun _ => ctx.layout.fieldOff base.ty field)
   match off? with
   | some off =>
-      match ctx.layout.size (ctx.layout.normalizeTy fieldTy) with
+      match (ctx.layout.size (ctx.layout.normalizeTy fieldTy)).orElse
+          (fun _ => ctx.layout.fieldSize base.ty field) with
       | some sz => pure (Mem.memberRange basePtr off sz)
       | none => refuseUnsupported s!"no layout for field '{field}'"
   | none => refuseUnsupported s!"no layout for field '{field}'"

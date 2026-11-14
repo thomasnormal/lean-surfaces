@@ -261,6 +261,10 @@ inductive CByte where
   | conc (b : UInt8)
   | ptrByte (p : Ptr) (k : Nat)
   | ptrIntByte (p : Ptr) (k : Nat)
+  /-- A function pointer's identity, kept as a parser declaration id rather
+  than an ABI address.  This token is only stored/loaded by the function
+  pointer bridge in the expression layer. -/
+  | funByte (id : DeclarationId)
   | indet
 deriving Repr, Inhabited, BEq
 
@@ -275,6 +279,9 @@ inductive CVal where
   | float64 (v : Float.Model)
   | ptr (p : Ptr)
   | ptrInt (p : Ptr)
+  /-- C23 function pointer identity, represented by Clang's declaration id;
+  no machine address or calling convention is modeled. -/
+  | funPtr (id : DeclarationId)
   | aggregate (ty : CType) (bytes : List CByte)
   | undef
 deriving Repr, Inhabited, BEq

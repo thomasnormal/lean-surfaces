@@ -397,6 +397,9 @@ def Expr.size (e : Expr) : Nat := e.subexprs.length
 /-- The same measure over an argument list. -/
 def Expr.sizes (es : List Expr) : Nat := (es.flatMap Expr.subexprs).length
 
+@[simp] theorem Expr.sizes_nil : Expr.sizes [] = 0 := by
+  rfl
+
 -- Every constructor the evaluator RECURSES INTO needs its own equation, or
 -- `omega` has no fact relating a subterm's size to its parent's. The first
 -- attempt covered only member/index/paren/call and left nine goals unprovable

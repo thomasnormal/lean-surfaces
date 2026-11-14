@@ -1576,8 +1576,14 @@ def callFn : Nat → Program → LeanModels.C.FunctionDefn → List CVal → Exe
           | _ => refuseUnsupported "va_end: wrong argument count"
         -- The callee's own call handler: one fuel less, so the recursion
         -- terminates on the fuel and on nothing else.
-        let handler : CallHandler := fun callee vs =>
-          match calleeId callee with
+        let handler : CallHandler := fun callee indirect vs =>
+          match indirect with
+          | some (.funPtr declaration) =>
+              match prog.findId? declaration with
+              | some g => callFn fuel prog g vs
+              | none => refuseUnsupported s!"indirect function pointer declaration '{declaration.value}' is not defined"
+          | some _ => refuseUnsupported "indirect call through a non-function value"
+          | none => match calleeId callee with
           | some declaration =>
             -- `abort` and `exit` are the score oracle even when clang's
             -- callee carries an external declaration ID. Resolve those two

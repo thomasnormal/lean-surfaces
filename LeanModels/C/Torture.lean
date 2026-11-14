@@ -338,6 +338,21 @@ def recordLayoutWellFormed (layout : RecordLayout) : Bool :=
   layout.fields.all (fun field =>
     field.offsetBits % 8 == 0 || field.bitfield)
 
+/-- Byte extent of one frontend-observed member.  The extent is the distance
+to the next observed member, or the record's end for the last member; unions
+therefore use the record size.  This consumes Clang's offsets and size and
+does not inspect a member type spelling. -/
+def recordFieldSize (layout : RecordLayout) (field : String) : Option Nat :=
+  let rec seek : List RecordLayoutField → Option Nat
+    | [] => none
+    | current :: rest =>
+        if current.name != field then seek rest
+        else
+          match rest.find? (fun next => next.offsetBits > current.offsetBits) with
+          | some next => some ((next.offsetBits - current.offsetBits) / 8)
+          | none => some (layout.sizeBytes - current.offsetBits / 8)
+  seek layout.fields
+
 def recordLayoutMatchesFields : List Decl → List RecordLayoutField → Bool
   | [], [] => true
   | .field name _ bits _ :: ds, field :: fs =>
@@ -597,9 +612,14 @@ def layoutFor (envl : Envelope) : Layout :=
       else t0
     let t2 := resolve tds 8 t1
     observed.find? (fun row => row.1 == t2)
+  let observedFieldSizeFor := fun (t : CType) (f : String) =>
+    match observedPointeeFor t with
+    | some (_, _, layout) => recordFieldSize layout f
+    | none => none
   { size := fun t => match observedFor t with
       | some (_, _, layout) => some layout.sizeBytes
       | none => (sizeAlign tds recsWithObserved 16 t).map (·.1)
+    fieldSize := observedFieldSizeFor
     fieldOffDecl := declFieldOff
     elem := fun t => arrayOf (resolve tds 8 t)
     fieldOff := fun t f => match observedPointeeFor t with
@@ -864,7 +884,7 @@ def scoreEnvelope (fuel : Nat) (envl : Envelope)
         .failed
       else match value with
         | .int _ 0 | .undef => .passed
-        | .int _ _ | .float32 _ | .float64 _ | .ptr _ | .ptrInt _ | .aggregate _ _ => .failed
+        | .int _ _ | .float32 _ | .float64 _ | .ptr _ | .ptrInt _ | .funPtr _ | .aggregate _ _ => .failed
   | .ok (.error (.libc "abort"), _) =>
       match oracleSym with
       | some sym =>

@@ -16995,3 +16995,17 @@ was weakened and no fixed-count theorem was added.
 DECIDED: the generic call-restoration transport is a substrate blocker; next item
 is to factor a four-result `toRun_tryCatch` normalization lemma before retrying
 this theorem.
+
+## 2026-11-14-pyfoundation-274 — four-result tryCatch normalization (blocked)
+
+The attempted `Monadic.toRun_tryCatch_cases` substrate lemma was removed after
+its build exposed the same reduction boundary as the preceding call-restoration
+transport blocker. Even after opening `ExceptT.tryCatch` and `StateT.bind`, an
+arbitrary action result leaves a `StateT.bind` continuation match under `toRun`;
+case-splitting timeout, refusal, exception, and success does not normalize it
+with `rfl` or the existing equations. No semantics were weakened and no
+fixed-count theorem was added.
+
+DECIDED: the four-result normalization remains blocked by the substrate's
+`StateT.bind` reduction shape; the exact blocker is now recorded separately from
+the generic `finishCallM` transport.

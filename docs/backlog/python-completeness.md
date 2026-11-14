@@ -16930,3 +16930,20 @@ both are `.next` flows after their pointwise statement bridges.
 | Remaining debt | generic bare-return, break and continue wrappers |
 
 DECIDED: expression-flow composition is now stated once for arbitrary assignment-list length; no fixed-count theorem was added.
+
+## 2026-11-14-pyfoundation-270 — generic assignment-list bare return
+
+`Monadic.execOpenList_assignments_bare_ret_run` and
+`Monadic.finishCallM_assignments_bare_ret_run` specialize arbitrary assignment-
+prefix composition to a final bare `return`, represented by `.ret .none`.
+They reuse the generic value-return theorem at both interpreter boundaries.
+
+| Measurement | Result |
+|---|---|
+| Target | `lake build LeanModels.Python.Monadic.Eval` passed; 11/11 jobs |
+| Theorem | `Monadic.execOpenList_assignments_bare_ret_run`; `Monadic.finishCallM_assignments_bare_ret_run` |
+| Domain | arbitrary assignment list followed by bare return |
+| Semantic change | theorem-only generic bare-return composition |
+| Remaining debt | generic break and continue wrappers |
+
+DECIDED: bare-return composition is now stated once for arbitrary assignment-list length; no fixed-count theorem was added.

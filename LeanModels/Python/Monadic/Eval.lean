@@ -3984,6 +3984,17 @@ theorem finishCallM_assignments_pass_run (K : Kont) (m : Module)
   rw [bind_apply, hraw]
   rfl
 
+theorem execOpenList_assignments_bare_ret_run (K : Kont) (m : Module) :
+    ∀ (ss : List Stmt) (ret : Stmt) (st : FrameState),
+      (∀ s ∈ ss, ∃ targets value sp, s = .assign targets value sp) →
+      (∀ s ∈ ss, ∀ st', ∃ st'',
+        toRun (execOpen K m s) st' = .ok st'' .next) →
+      (∀ st', ∃ st'',
+        toRun (execOpen K m ret) st' = .ok st'' (.ret .none)) →
+      ∃ st', toRun (execOpenList K m (ss ++ [ret])) st = .ok st' (.ret .none) := by
+  intro ss ret st hShape hEach hRet
+  exact execOpenList_assignments_ret_run K m .none ss ret st hShape hEach hRet
+
 theorem finishCallM_assignments_expr_run (K : Kont) (m : Module)
     (locals : REnv) (ss : List Stmt) (expr : Stmt)
     (w : World) (depth : Nat)
@@ -4043,6 +4054,19 @@ theorem finishCallM_assignments_ret_run (K : Kont) (m : Module)
   apply toRun_tryCatch_ok
   rw [bind_apply, hraw]
   rfl
+
+theorem finishCallM_assignments_bare_ret_run (K : Kont) (m : Module)
+    (locals : REnv) (ss : List Stmt) (ret : Stmt)
+    (w : World) (depth : Nat)
+    (hShape : ∀ s ∈ ss, ∃ targets value sp, s = .assign targets value sp)
+    (hEach : ∀ s ∈ ss, ∀ st', ∃ st'',
+      toRun (execOpen K m s) st' = .ok st'' .next)
+    (hRet : ∀ st', ∃ st'',
+      toRun (execOpen K m ret) st' = .ok st'' (.ret .none)) :
+    ∃ (st' : FrameState), toRun (finishCallM depth
+      (inWorld locals (execOpenList K m (ss ++ [ret])))) w =
+      .ok { st'.world with callDepth := depth } (.ret .none) := by
+  exact finishCallM_assignments_ret_run K m locals ss ret .none w depth hShape hEach hRet
 
 theorem finishCallM_assignments_body_ok (K : Kont) (m : Module)
     (locals : REnv) (ss : List Stmt) (w : World) (depth : Nat)
@@ -9463,6 +9487,8 @@ theorem leaveCallM_modify_exn {α : Type} (w : World) (e : PyErr)
 #print axioms finishCallM_assignments_pass_run
 #print axioms execOpenList_assignments_expr_run
 #print axioms finishCallM_assignments_expr_run
+#print axioms execOpenList_assignments_bare_ret_run
+#print axioms finishCallM_assignments_bare_ret_run
 #print axioms execOpenList_assignments_pass_run
 #print axioms execOpenList_assignments_ret_run
 #print axioms execOpenList_assignments_threaded

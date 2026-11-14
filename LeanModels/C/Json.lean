@@ -265,7 +265,14 @@ partial def parseExpr (j : Json) : Except String Expr := do
         let value? ← getOptStr j "value"
         match value? with
         | some value => return .constExpr value (← optSub "sub") (← ty) span
-        | none => return .unsupported "ConstantExpr" "unfolded constant expression" span
+        | none =>
+            -- Clang omits the folded spelling for pointer constants such as
+            -- `&gs1`, but retains the parser expression that carries their
+            -- value. Preserve that child; the semantics does not consult a
+            -- fabricated diagnostic value when the child is present.
+            match ← optSub "sub" with
+            | some sub => return .constExpr "" (some sub) (← ty) span
+            | none => return .unsupported "ConstantExpr" "unfolded constant expression" span
     | "VAArgExpr" =>
         return .vaArg (← sub "ap") (← ty) span
     | "Unsupported" =>

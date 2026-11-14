@@ -242,6 +242,14 @@ def initObject : Nat → Ctx → Ptr → CType → Expr → ExecM Unit
   | fuel + 1, ctx, p, ty, e =>
     match e with
     | .implicitValueInit _ _ => zeroInit fuel ctx p ty
+    -- Clang wraps nested aggregate initializers in ConstantExpr nodes even
+    -- when their value is the parser's InitListExpr. Preserve §6.7.11's
+    -- aggregate walk instead of sending that wrapper to evalExpr, where the
+    -- value-position InitListExpr is intentionally loud.
+    | .constExpr _ (some (.initList _ _ _ _)) _ _ =>
+        initObject fuel ctx p ty (match e with | .constExpr _ (some sub) _ _ => sub | _ => e)
+    | .constExpr _ (some (.arrayInitList _ _ _ _ _)) _ _ =>
+        initObject fuel ctx p ty (match e with | .constExpr _ (some sub) _ _ => sub | _ => e)
     | .arrayInitList inits filler field _ _ =>
         -- Clang's array_filler is [default filler, positional entries...].
         -- Only its implicit-zero default is in tier; retain and refuse other

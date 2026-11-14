@@ -1611,9 +1611,13 @@ def evalExpr (ctx : Ctx) : Expr → EvalM CVal
       -- operand, so evaluate it rather than treating the diagnostic value as
       -- the program's value (§6.6 constant expressions).
       let sv ← evalExpr ctx sub
-      let (_, n) ← asInt sv
-      let t ← intTyOf (ctx.layout.normalizeTy ty)
-      pure (.int t n)
+      match sv with
+      | .ptr p => pure (.ptr p)
+      | .funPtr id => pure (.funPtr id)
+      | _ =>
+          let (_, n) ← asInt sv
+          let t ← intTyOf (ctx.layout.normalizeTy ty)
+          pure (.int t n)
   | .constExpr v none ty _ => do
       let t ← intTyOf (ctx.layout.normalizeTy ty)
       match v.toInt? with

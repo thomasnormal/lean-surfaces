@@ -16864,3 +16864,20 @@ unblock the raw `inWorld` wrapper without changing semantics.
 | Remaining debt | lifting this theorem through `inWorld` and call-depth restoration |
 
 DECIDED: the generic append/return proof is now at the established `toRun` boundary; raw-state lifting remains separate.
+
+## 2026-11-14-pyfoundation-266 — inWorld assignment-list return wrapper
+
+`Monadic.finishCallM_assignments_ret_run` lifts the generic `toRun` append/return
+composition through `inWorld` and `finishCallM`. It existentially exposes the
+resulting world because assignment statements may mutate the heap, then restores
+the requested call depth.
+
+| Measurement | Result |
+|---|---|
+| Target | `lake build LeanModels.Python.Monadic.Eval` passed; 11/11 jobs |
+| Theorem | `Monadic.finishCallM_assignments_ret_run` |
+| Domain | arbitrary assignment list followed by value return, with world threading |
+| Semantic change | theorem-only `inWorld`/call-depth wrapper |
+| Remaining debt | generic pass, expression, bare-return, break and continue wrappers |
+
+DECIDED: the generic value-return theorem now crosses the frame/world call boundary without assuming assignments preserve the world.

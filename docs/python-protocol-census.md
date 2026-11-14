@@ -584,3 +584,5 @@ return composition lemma; the fixed-count matrix remains closed.
 
 `Monadic.execOpenList_assignments_ret_run` supplies the arbitrary-list append/
 return composition at the established `toRun` boundary.
+
+`Monadic.finishCallM_assignments_ret_run` lifts arbitrary-list value-return composition through `inWorld` and call-depth restoration.

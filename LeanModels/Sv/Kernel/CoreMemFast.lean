@@ -159,4 +159,40 @@ theorem CoreMemDesign.fastSettleAssignAt_skip_cons_refines
       .ok (s'.toState, view') := by
   simpa [CoreMemDesign.fastSettleAssignAt, CoreMemDesign.settleAssignAt] using htail
 
+theorem CoreMemDesign.fastSettleAssignAt_initial_cons_refines
+    (E : CoreMemDesign) (env : IEnv) (elems : List (String × Nat))
+    (s : CoreMemFastState) (view : SvState) (index : Nat)
+    (body : PStmt) (rest : List CoreMemProc) (s' : CoreMemFastState) (view' : SvState)
+    (hfast : E.fastSettleAssignAt env elems s view index (.initial body :: rest) =
+      .ok (s', view'))
+    (htail : E.settleAssignAt env elems s.toState view (index + 1) rest =
+      .ok (s'.toState, view')) :
+    E.settleAssignAt env elems s.toState view index (.initial body :: rest) =
+      .ok (s'.toState, view') := by
+  simpa [CoreMemDesign.fastSettleAssignAt, CoreMemDesign.settleAssignAt] using htail
+
+theorem CoreMemDesign.fastSettleAssignAt_comb_cons_refines
+    (E : CoreMemDesign) (env : IEnv) (elems : List (String × Nat))
+    (s : CoreMemFastState) (view : SvState) (index : Nat)
+    (body : PStmt) (rest : List CoreMemProc) (s' : CoreMemFastState) (view' : SvState)
+    (hfast : E.fastSettleAssignAt env elems s view index (.comb body :: rest) =
+      .ok (s', view'))
+    (htail : E.settleAssignAt env elems s.toState view (index + 1) rest =
+      .ok (s'.toState, view')) :
+    E.settleAssignAt env elems s.toState view index (.comb body :: rest) =
+      .ok (s'.toState, view') := by
+  simpa [CoreMemDesign.fastSettleAssignAt, CoreMemDesign.settleAssignAt] using htail
+
+theorem CoreMemDesign.fastSettleAssignAt_implicit_cons_refines
+    (E : CoreMemDesign) (env : IEnv) (elems : List (String × Nat))
+    (s : CoreMemFastState) (view : SvState) (index : Nat)
+    (body : PStmt) (rest : List CoreMemProc) (s' : CoreMemFastState) (view' : SvState)
+    (hfast : E.fastSettleAssignAt env elems s view index (.implicit body :: rest) =
+      .ok (s', view'))
+    (htail : E.settleAssignAt env elems s.toState view (index + 1) rest =
+      .ok (s'.toState, view')) :
+    E.settleAssignAt env elems s.toState view index (.implicit body :: rest) =
+      .ok (s'.toState, view') := by
+  simpa [CoreMemDesign.fastSettleAssignAt, CoreMemDesign.settleAssignAt] using htail
+
 end LeanModels.Sv.Kernel

@@ -38,6 +38,43 @@ theorem FastConfig.ofConfig_store (E : Elab) (c : Config) :
   unfold FastConfig.ofConfig FastConfig.store
   exact arrayStore_cells c.store E.decls.size
 
+theorem arrayStore_set_flat (a : Array Val) (fallback : Store) (x : VarId) (v : Val)
+    (hp : x.path = []) (hb : x.decl < a.size) :
+    arrayStore (a.setIfInBounds x.decl v) fallback x = v := by
+  cases x with
+  | mk path decl =>
+      cases path with
+      | nil => simp [arrayStore, Array.getD, hb]
+      | cons head tail => simp_all
+
+theorem arrayStore_set_flat_frame (a : Array Val) (fallback : Store)
+    (x y : VarId) (v : Val) (hp : x.path = []) (hb : x.decl < a.size)
+    (hne : y ≠ x) :
+    arrayStore (a.setIfInBounds x.decl v) fallback y = arrayStore a fallback y := by
+  cases x with
+  | mk xp xd =>
+    cases y with
+    | mk yp yd =>
+      cases xp with
+      | nil =>
+        cases yp with
+        | nil =>
+            simp only [arrayStore, Array.getD]
+            by_cases hy : yd < a.size
+            · have hxy : xd ≠ yd := by
+                intro he
+                apply hne
+                cases he
+                rfl
+              have hs := Array.getElem?_setIfInBounds
+                (xs := a) (i := xd) (j := yd) (a := v)
+              rw [Array.getElem?_eq_getElem hy] at hs
+              simp [hy, hxy] at hs ⊢
+              exact hs
+            · simp [hy]
+        | cons yh yt => rfl
+      | cons xh xt => simp_all
+
 def fastWriteWins (E : Elab) (fallback : Store) (a : Array Val)
     (value : LVec) : List (Win × Nat) → Res (Array Val)
   | [] => .ok a

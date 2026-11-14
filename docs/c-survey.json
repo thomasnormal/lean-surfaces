@@ -10,10 +10,10 @@
   "gcc.c-torture/execute": {
    "not-parsed": 267,
    "oracle-tests-compiler": 1,
-   "passed": 937,
+   "passed": 938,
    "refused-libc": 35,
    "refused-ub": 98,
-   "refused-unsupported": 516,
+   "refused-unsupported": 515,
    "timeout": 64
   },
   "gcc.c23-run": {
@@ -28,10 +28,10 @@
  "counts": {
   "not-parsed": 294,
   "oracle-tests-compiler": 1,
-  "passed": 1112,
+  "passed": 1113,
   "refused-libc": 39,
   "refused-ub": 107,
-  "refused-unsupported": 595,
+  "refused-unsupported": 594,
   "timeout": 66
  },
  "dynamic_wall_ranking": [
@@ -1257,15 +1257,6 @@
   },
   {
    "files": [
-    "20101025-1.c",
-    "builtin-prefetch-3.c"
-   ],
-   "present": 2,
-   "sole": 2,
-   "wall": "unsupported:no layout for declared type 'int *volatile'"
-  },
-  {
-   "files": [
     "20210505-1.c",
     "pr56982.c"
    ],
@@ -2039,6 +2030,14 @@
    "present": 1,
    "sole": 1,
    "wall": "unsupported:no layout for declared type 'int (*)[++i]'"
+  },
+  {
+   "files": [
+    "builtin-prefetch-3.c"
+   ],
+   "present": 1,
+   "sole": 1,
+   "wall": "unsupported:no layout for declared type 'int *volatile'"
   },
   {
    "files": [
@@ -3210,8 +3209,8 @@
   }
  ],
  "manifest_hash": "bca94718b04e8394cdce992866637166f530978790bd1013cea4a00ae25ef764",
- "measured_at_utc": "2026-11-14T01:05:32Z",
- "measured_commit": "46d37d552",
+ "measured_at_utc": "2026-11-14T01:42:54Z",
+ "measured_commit": "2e7fc5046",
  "pin": {
   "corpora": [
    "C1",
@@ -10816,13 +10815,13 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "no layout for declared type 'int *volatile'",
-   "dynamic_wall": "unsupported:no layout for declared type 'int *volatile'",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "20101025-1.c",
    "sha256": "076cae97c6192e807020fb8f7e70f981c07fdd6271059481b048f0775617429d",
    "static_walls": [],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",

@@ -217,6 +217,40 @@ theorem CoreMemDesign.fastSettleAssignAt_single_array_refines
       _ = s'.toState := congrArg CoreMemFastState.toState hof
   exact ⟨a, ha, hstate, hview⟩
 
+theorem CoreMemDesign.fastSettleAssignAt_two_array_refines
+    (E : CoreMemDesign) (s a₁ a₂ : CoreMemFastState) (view : SvState)
+    (index : Nat) (name₁ name₂ : String) (indexExpr₁ indexExpr₂ value₁ value₂ : PExpr)
+    (md₁ md₂ : CoreMemDecl) (v₁ v₂ : LVec)
+    (hmem₁ : E.memDecl? name₁ = some md₁)
+    (hmem₂ : E.memDecl? name₂ = some md₂)
+    (hv₁ : E.evalExpr E.env E.elems s.toState (some md₁.shape.elemWidth) value₁ = .ok v₁)
+    (hv₂ : E.evalExpr E.env E.elems a₁.toState (some md₂.shape.elemWidth) value₂ = .ok v₂)
+    (h₁ : E.fastSettleAssignAt E.env E.elems s view index
+      [.assign (.arrayElem name₁ [indexExpr₁]) value₁] = .ok (a₁, view))
+    (h₂ : E.fastSettleAssignAt E.env E.elems a₁ view (index + 1)
+      [.assign (.arrayElem name₂ [indexExpr₂]) value₂] = .ok (a₂, view)) :
+    E.settleAssignAt E.env E.elems s.toState view index
+      [.assign (.arrayElem name₁ [indexExpr₁]) value₁,
+       .assign (.arrayElem name₂ [indexExpr₂]) value₂] =
+      .ok (a₂.toState, view) := by
+  simp [CoreMemDesign.fastSettleAssignAt, CoreMemDesign.settleAssignAt,
+    hmem₁, hmem₂, hv₁, hv₂] at h₁ h₂ ⊢
+  rcases h₁ with ⟨a, ha, ha₁⟩
+  rcases h₂ with ⟨b, hb, hb₂⟩
+  have ha_to : a = a₁.toState := by
+    calc
+      a = (CoreMemFastState.ofState E a).toState := by
+        simp [CoreMemFastState.ofState_toState]
+      _ = a₁.toState := congrArg CoreMemFastState.toState ha₁
+  have hb_to : b = a₂.toState := by
+    calc
+      b = (CoreMemFastState.ofState E b).toState := by
+        simp [CoreMemFastState.ofState_toState]
+      _ = a₂.toState := congrArg CoreMemFastState.toState hb₂
+  refine ⟨a, ha, v₂, ?_, ?_⟩
+  · simpa [ha_to] using hv₂
+  · simpa [ha_to, hb_to] using hb
+
 theorem CoreMemDesign.settleAssignAt_two_ident_fast_refines
     (E : CoreMemDesign) (s a₁ a₂ : CoreMemFastState) (view : SvState)
     (index : Nat) (name₁ name₂ : String) (value₁ value₂ : PExpr)

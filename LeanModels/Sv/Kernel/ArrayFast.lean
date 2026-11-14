@@ -156,12 +156,24 @@ theorem fastWriteWins_ok_of_flat (E : Elab) (fallback : Store) (a : Array Val)
           simp [Elab.writeWin, hx, hb, old, a1, arrayStore, Array.getD]
         | cons hd tl => simp_all
 
-
 def fastActivateAssign (E : Elab) (c : FastConfig) (t : Lhs2) (e : Expr2) : Res (Array Val) := do
   let some ws := t.windows? E.toDesign2
     | .unsupported "10.3.2: continuous assignment target has no static window"
   let v ← evalPure2 (E.view c.store) e
   fastWriteWins E c.fallback c.cells (v.resizeU (Win.sumWidth ws)) (Win.placed ws)
+
+theorem fastActivateAssign_store_eq (E : Elab) (c : FastConfig)
+    (t : Lhs2) (e : Expr2) (ws : List Win) (v : LVec) (a' : Array Val)
+    (hws : t.windows? E.toDesign2 = some ws)
+    (hv : evalPure2 (E.view c.store) e = .ok v)
+    (h : fastWriteWins E c.fallback c.cells
+      (v.resizeU (Win.sumWidth ws)) (Win.placed ws) = .ok a')
+    (hflat : ∀ wn off, (wn, off) ∈ Win.placed ws →
+      ∃ x, E.resolve wn.1 = some x ∧ x.path = [] ∧ x.decl < c.cells.size) :
+    arrayStore a' c.fallback =
+      E.writeWins c.store (v.resizeU (Win.sumWidth ws)) (Win.placed ws) := by
+  exact fastWriteWins_ok_of_flat E c.fallback c.cells
+    (v.resizeU (Win.sumWidth ws)) (Win.placed ws) a' h hflat
 
 def fastTriggered (E : Elab) (before after : FastConfig) : List ProcId :=
   E.triggered (E.view before.store) (E.view after.store)

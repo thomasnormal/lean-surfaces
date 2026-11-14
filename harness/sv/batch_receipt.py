@@ -91,6 +91,9 @@ FIXTURES: tuple[Fixture, ...] = (
     Fixture("for_loop.sv", "for_loop",
             (Port("clk", 1, clock=True), Port("d", 8)), (Port("q", 8),),
             retain_loops=True, retain_proc_rewrites=True),
+    Fixture("parameterized_size_cast.sv", "parameterized_size_cast_canonical_e",
+            (Port("x", 8),), (Port("y", 2),),
+            (Point("W2", (2,)), Point("W12", (12,)))),
     Fixture("constant_width_conversion.sv", "constant_width_conversion",
             (Port("x", 1),), (Port("y", 1),),
             (Point("E8", (8,)), Point("E4", (4,)))),
@@ -162,6 +165,9 @@ def port_width(fixture: Fixture, point: Point, port: Port) -> int:
         return point.args[0]
     if fixture.top == "memory_edge_loop" and point.args:
         return point.args[0]
+    if fixture.top == "parameterized_size_cast_canonical_e" and point.args \
+            and port.name == "y":
+        return point.args[0]
     return port.width
 
 
@@ -227,6 +233,7 @@ def testbench(fixture: Fixture, point: Point, rows: list[dict[str, int | str]]) 
             "localparam_shift": ("E",),
             "memory_edge_loop": ("W", "N"),
             "parameterized_unpacked_storage": ("N",),
+            "parameterized_size_cast_canonical_e": ("W",),
             "generate_if_unpacked_array": ("N",),
         }[fixture.top]
         params = "#(" + ", ".join(f".{n}({v})" for n, v in zip(names, point.args)) + ")"

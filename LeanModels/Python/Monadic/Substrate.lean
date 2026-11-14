@@ -289,6 +289,16 @@ theorem toRun_bind {σ α β : Type} (x : PyM σ α) (f : α → PyM σ β) (s :
   · rcases l with _ | ⟨c, m, sn⟩ <;> rfl
   · cases r <;> rfl
 
+theorem toRun_get_bind {σ α : Type} (f : σ → PyM σ α) (s : σ) :
+    toRun (get >>= f) s = toRun (f s) s := by
+  rw [toRun_bind]
+  rfl
+
+theorem toRun_set_bind {σ α : Type} (s' : σ) (f : PUnit → PyM σ α) (s : σ) :
+    toRun (set s' >>= f) s = toRun (f ()) s' := by
+  rw [toRun_bind]
+  rfl
+
 theorem toRun_bind_ok {σ α β : Type} (x : PyM σ α) (f : α → PyM σ β)
     (s s' : σ) (a : α) (h : toRun x s = .ok s' a) :
     toRun (x >>= f) s = toRun (f a) s' := by
@@ -398,6 +408,8 @@ theorem toRun_map {σ α β : Type} (g : α → β) (x : PyM σ α) (s : σ) :
 #print axioms toRun_tryCatch_ok
 #print axioms toRun_tryCatch_exn
 #print axioms toRun_set
+#print axioms toRun_get_bind
+#print axioms toRun_set_bind
 #print axioms toRun_modify
 #print axioms toRun_liftState
 #print axioms toRun_map

@@ -17173,3 +17173,19 @@ no fixed-count theorem was added.
 
 DECIDED: direct `callInM` integration is a separate state-wrapper blocker; next
 item is to factor a `toRun` getter/setter normalization lemma before retrying.
+
+## 2026-11-14-pyfoundation-285 — getter/setter bind normalization
+
+`Monadic.toRun_get_bind` and `Monadic.toRun_set_bind` normalize the outer
+state-get/set binds at the `Run` boundary. These equations target the exact
+reduction blocker exposed by direct `callInM` integration.
+
+| Measurement | Result |
+|---|---|
+| Target | `lake build LeanModels.Python.Monadic.Eval` passed; 11/11 jobs |
+| Theorem | `Monadic.toRun_get_bind`; `Monadic.toRun_set_bind` |
+| Domain | arbitrary stateful continuation after `get` or `set` |
+| Semantic change | theorem-only getter/setter transport |
+| Remaining debt | retry direct `callInM` branch integration using these equations |
+
+DECIDED: getter/setter bind normalization is now explicit at the `Run` boundary.

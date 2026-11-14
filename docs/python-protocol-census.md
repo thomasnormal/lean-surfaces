@@ -622,3 +622,5 @@ still open.
 `Monadic.finishCallM_inWorld_of_timeout` and `Monadic.finishCallM_inWorld_of_unsupported` complete explicit timeout/refusal transport at the `callInM` frame/world boundary.
 
 The direct top-depth `callInM` integration is parked at the outer `get`/`StateT.bind` reduction; explicit body transport remains available.
+
+`Monadic.toRun_get_bind` and `Monadic.toRun_set_bind` normalize state getter/setter binds for direct call-plan adequacy proofs.

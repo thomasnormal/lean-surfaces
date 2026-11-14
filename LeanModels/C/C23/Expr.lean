@@ -421,6 +421,8 @@ it is what keeps the C type parser out of the tier. -/
 structure Layout where
   /-- `sizeof(ty)` in bytes (§6.5.4.4). -/
   size : CType → Option Nat
+  /-- Frontend-observed sizes for declarator-shaped types. -/
+  typeSize : CType → Option Nat := fun _ => none
   /-- `offsetof`, keyed on the BASE expression's spelling, so `p->f` and
   `x.f` look up under `"const Pos *"` and `"Pos"` respectively. -/
   fieldOff : CType → String → Option Nat
@@ -473,6 +475,7 @@ structure Layout where
 missing layout fact is a loud refusal rather than a guessed offset. -/
 def Layout.unknown : Layout :=
   { size := fun _ => none, fieldOff := fun _ _ => none
+    typeSize := fun _ => none
     fieldSize := fun _ _ => none
     fieldOffDecl := fun _ _ => none
     fieldBits := fun _ _ => none
@@ -1233,6 +1236,13 @@ def evalExpr (ctx : Ctx) : Expr → EvalM CVal
       else if ck == "FunctionToPointerDecay" then
         match sub with
         | .declRef (some id) _ "FunctionDecl" _ _ => pure (.funPtr id)
+        | .paren (.unop "*" ptr _ _ _) _ _ => do
+            -- §6.3.2.1p4: a function designator produced by indirection is
+            -- converted without inventing an address.
+            let v ← evalExpr ctx ptr
+            match v with
+            | .funPtr id => pure (.funPtr id)
+            | _ => refuseUnsupported "function-to-pointer decay of an unresolved function"
         | _ => refuseUnsupported "function-to-pointer decay of an unresolved function"
       else if ck == "IntegralToFloating" then
         do
@@ -1869,6 +1879,13 @@ def Expr.nodeIsPure : Expr → Bool
   | .strLit .. => false
   -- Out of tier: unknown, therefore not pure.
   | .unsupported .. => false
+  | .implicitCast _ (.paren (.unop "*" _ _ _ _) _ _) _ _ => false
+  -- Function designator decay is semantically read-only, but its parser
+  -- shape may evaluate an indirect designator. Keep the purity theorem's
+  -- fragment conservative until that recursive identity path is covered.
+  | .implicitCast ck _ _ _ => ck != "FunctionToPointerDecay"
+  | .cast _ (.paren (.unop "*" _ _ _ _) _ _) _ _ => false
+  | .cast ck _ _ _ => ck != "FunctionToPointerDecay"
   | _ => true
 
 /-- An expression whose evaluation cannot change memory — `nodeIsPure` at

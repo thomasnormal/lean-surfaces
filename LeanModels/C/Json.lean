@@ -395,6 +395,11 @@ def parseExternal (j : Json) : Except String External :=
   withCtx "external" do
     return { name := ← getStr j "name", ty := ← getOptStr j "type" }
 
+def parseTypeLayout (j : Json) : Except String TypeLayout := withCtx "type_layout" do
+  return { ty := ← getStr j "type"
+           sizeBytes := ← getNat j "size_bytes"
+           alignmentBytes := ← getNat j "alignment_bytes" }
+
 def parseEnvelope (j : Json) : Except String Envelope := withCtx "envelope" do
   let ver ← getStr j "schema_version"
   unless ver == "c-0.1" do
@@ -411,7 +416,12 @@ def parseEnvelope (j : Json) : Except String Envelope := withCtx "envelope" do
            sourceFile := ← getStr j "source_file"
            sourceSha256 := ← getStr j "source_sha256"
            unit := { items := ← (← getArr tu "decls").mapM parseTopLevel }
-           externals := ← (← getArr j "externals").mapM parseExternal }
+           externals := ← (← getArr j "externals").mapM parseExternal
+           typeLayouts := ← match getOptNode j "type_layouts" with
+             | none => pure []
+             | some a => do
+                 let xs ← a.getArr?
+                 xs.toList.mapM parseTypeLayout }
 
 def parseEnvelopeString (s : String) : Except String Envelope := do
   match Json.parse s with

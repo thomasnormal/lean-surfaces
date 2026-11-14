@@ -616,9 +616,14 @@ def layoutFor (envl : Envelope) : Layout :=
     match observedPointeeFor t with
     | some (_, _, layout) => recordFieldSize layout f
     | none => none
-  { size := fun t => match observedFor t with
-      | some (_, _, layout) => some layout.sizeBytes
-      | none => (sizeAlign tds recsWithObserved 16 t).map (·.1)
+  let observedTypeSize := fun t : CType =>
+    envl.typeLayouts.find? (fun row => row.ty == t) |>.map (·.sizeBytes)
+  { size := fun t => match observedTypeSize t with
+      | some sz => some sz
+      | none => match observedFor t with
+        | some (_, _, layout) => some layout.sizeBytes
+        | none => (sizeAlign tds recsWithObserved 16 t).map (·.1)
+    typeSize := observedTypeSize
     fieldSize := observedFieldSizeFor
     fieldOffDecl := declFieldOff
     elem := fun t => arrayOf (resolve tds 8 t)

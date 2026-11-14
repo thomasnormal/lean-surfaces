@@ -128,6 +128,15 @@ structure RecordLayout where
   fields : List RecordLayoutField
 deriving Repr, Inhabited, BEq, Lean.ToExpr
 
+/-- A parser-native size/alignment observation for a declared object type.
+This supplements record layouts for declarator-shaped objects such as nested
+function-pointer objects whose size is a frontend fact but has no record node. -/
+structure TypeLayout where
+  ty : CType
+  sizeBytes : Nat
+  alignmentBytes : Nat
+deriving Repr, Inhabited, BEq, Lean.ToExpr
+
 /-! ## The three layers
 
 C's grammar makes the layering, not us: a function DEFINITION is the only
@@ -303,6 +312,7 @@ structure Envelope where
   sourceSha256 : String
   unit : TranslationUnit
   externals : List External
+  typeLayouts : List TypeLayout := []
 deriving Repr, Inhabited
 
 /-! ## Structural queries

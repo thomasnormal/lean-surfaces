@@ -259,10 +259,21 @@ def record_layout_records(path):
         die("record layout probe returned a non-array")
     by_offset = {}
     enum_values = {}
+    type_layouts = []
     for record in records:
-        if not isinstance(record, dict) or record.get("kind") not in ("RecordLayout", "EnumValue"):
+        if not isinstance(record, dict) or record.get("kind") not in ("RecordLayout", "EnumValue", "TypeLayout"):
             die("record layout probe returned an invalid record")
         offset = record.get("offset")
+        if record.get("kind") == "TypeLayout":
+            if (type(offset) is not int or offset < 0 or
+                    type(record.get("token_length")) is not int or
+                    record["token_length"] <= 0 or type(record.get("type")) is not str or
+                    not record["type"] or type(record.get("size_bytes")) is not int or
+                    record["size_bytes"] < 0 or type(record.get("alignment_bytes")) is not int or
+                    record["alignment_bytes"] < 0):
+                die("record layout probe returned an invalid type layout")
+            type_layouts.append(record)
+            continue
         if record.get("kind") == "EnumValue":
             if type(offset) is not int or offset < 0 or type(record.get("value")) is not int:
                 die("record layout probe returned an invalid enum value")
@@ -279,7 +290,8 @@ def record_layout_records(path):
                 not isinstance(record.get("fields"), list)):
             die("record layout probe returned an invalid record")
         by_offset.setdefault(offset, []).append(record)
-    return {"layouts": by_offset, "enum_values": enum_values}
+    return {"layouts": by_offset, "enum_values": enum_values,
+            "type_layouts": type_layouts}
 
 
 def check_profile():
@@ -384,6 +396,7 @@ class Extractor:
         self.floating_bits = floating_bits
         self.record_layouts = (record_layouts or {}).get("layouts", {})
         self.enum_values = (record_layouts or {}).get("enum_values", {})
+        self.type_layouts = (record_layouts or {}).get("type_layouts", [])
         self.lines = source_text.splitlines()
         self.labels = {}
         self.unsupported = 0
@@ -957,6 +970,9 @@ def extract(path, source_name=None, standard="c23"):
         "source_sha256": hashlib.sha256(src).hexdigest(),
         "translation_unit": {"kind": "TranslationUnit", "decls": top},
         "externals": externals(tu, target, Loc),
+        "type_layouts": [{"type": r["type"], "size_bytes": r["size_bytes"],
+                          "alignment_bytes": r["alignment_bytes"]}
+                         for r in ex.type_layouts],
         "lean_blocks": [],
     }, ex.unsupported
 

@@ -58,6 +58,11 @@ and bit-field width.  It joins records by the parser-provided source span; it
 does not interpret a type spelling or serialize an address.  Build and run the
 determinism check with the pinned frontend:
 
+The same probe emits `TypeLayout` facts for complete declared object types,
+including declarator-shaped function-pointer objects. These are joined by
+Clang's exact type string and carried as `type_layouts`; no type-spelling
+parser or ABI address model is introduced.
+
 ```sh
 export LEAN_C_RECORD_LAYOUT_PLUGIN=/outside/the/repo/record_layout_probe.so
 "$LEAN_C_CLANGXX" --no-default-config -std=c++17 -fPIC -shared -fno-rtti \

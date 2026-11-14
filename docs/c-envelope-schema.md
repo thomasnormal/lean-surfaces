@@ -50,6 +50,7 @@ census or the profile forced it:
   "source_sha256": "<hex sha256 of source bytes>",
   "translation_unit": {"kind": "TranslationUnit", "decls": [ <decl>... ]},
   "externals": [ {"name": "memcpy", "type": "void *(void *, const void *, unsigned long)"} ],
+  "type_layouts": [ {"type": "int (*)(int)", "size_bytes": 8, "alignment_bytes": 8} ],
   "lean_blocks": []
 }
 ```
@@ -71,6 +72,13 @@ a C envelope is a function of (source, extractor, PROFILE).
 
 `lean_blocks` is `[]` for C and exists so the envelope stays
 language-neutral; the inline-spec convention has no C form yet.
+
+`type_layouts` is an optional list of parser-native size/alignment facts from
+the pinned Clang layout probe. It is keyed by the exact type string already
+attached to a Clang declaration; the extractor and Lean loader never parse
+that spelling. It covers declarator-shaped objects such as nested function
+pointers whose size has no `RecordLayout` node. A missing fact remains a loud
+layout refusal.
 
 ## 2 Spans
 

@@ -25,8 +25,16 @@ def run(clang, plugin, source):
     if not isinstance(document, list):
         raise RuntimeError("probe output is not a record array")
     for record in document:
-        if not isinstance(record, dict) or record.get("kind") != "RecordLayout":
-            raise RuntimeError(f"invalid RecordLayout record: {record!r}")
+        if not isinstance(record, dict) or record.get("kind") not in ("RecordLayout", "TypeLayout"):
+            raise RuntimeError(f"invalid layout record: {record!r}")
+        if record.get("kind") == "TypeLayout":
+            if (type(record.get("offset")) is not int or record["offset"] < 0 or
+                    type(record.get("token_length")) is not int or record["token_length"] <= 0 or
+                    type(record.get("type")) is not str or not record["type"] or
+                    type(record.get("size_bytes")) is not int or record["size_bytes"] < 0 or
+                    type(record.get("alignment_bytes")) is not int or record["alignment_bytes"] < 0):
+                raise RuntimeError(f"invalid TypeLayout record: {record!r}")
+            continue
         if (type(record.get("offset")) is not int or record["offset"] < 0 or
                 type(record.get("token_length")) is not int or
                 record["token_length"] <= 0 or
@@ -62,13 +70,17 @@ def self_test(clang, plugin):
         _, records = run(clang, plugin, source)
     finally:
         source.unlink(missing_ok=True)
-    if (len(records) != 3 or records[0]["tag_kind"] != "struct" or
-            records[1]["tag_kind"] != "union" or records[2]["tag_kind"] != "struct"):
+    record_layouts = [r for r in records if r["kind"] == "RecordLayout"]
+    type_layouts = [r for r in records if r["kind"] == "TypeLayout"]
+    if (len(record_layouts) != 3 or record_layouts[0]["tag_kind"] != "struct" or
+            record_layouts[1]["tag_kind"] != "union" or record_layouts[2]["tag_kind"] != "struct"):
         raise RuntimeError(f"self-test expected struct and union records: {records!r}")
-    if records[0]["size_bytes"] != 12 or records[0]["fields"][2].get("width_bits") != 3:
+    if record_layouts[0]["size_bytes"] != 12 or record_layouts[0]["fields"][2].get("width_bits") != 3:
         raise RuntimeError(f"self-test layout values were not parser-native: {records!r}")
-    if records[2]["fields"][1].get("incomplete_array") is not True:
+    if record_layouts[2]["fields"][1].get("incomplete_array") is not True:
         raise RuntimeError(f"self-test flexible-array marker was not parser-native: {records!r}")
+    if len(type_layouts) != 1 or type_layouts[0]["type"] != "struct S":
+        raise RuntimeError(f"self-test type layout was not parser-native: {records!r}")
     print("c_record_layout_determinism: self-test ok")
     return 0
 

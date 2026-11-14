@@ -83,6 +83,28 @@ public:
         {"value", static_cast<int64_t>(constant->getInitVal().getSExtValue())}});
     return true;
   }
+
+  bool VisitVarDecl(clang::VarDecl *decl) {
+    const auto &sources = context->getSourceManager();
+    const auto loc = sources.getExpansionLoc(decl->getBeginLoc());
+    if (!sources.isWrittenInMainFile(loc) || decl->isImplicit() ||
+        decl->getType()->isIncompleteType()) return true;
+    const auto end_loc = clang::Lexer::getLocForEndOfToken(
+        sources.getExpansionLoc(decl->getEndLoc()), 0, sources,
+        clang::LangOptions());
+    const auto begin = sources.getFileOffset(loc);
+    const auto finish = end_loc.isValid() ? sources.getFileOffset(end_loc) : begin;
+    const auto size = context->getTypeSizeInChars(decl->getType());
+    const auto align = context->getTypeAlignInChars(decl->getType());
+    records.push_back(llvm::json::Object{
+        {"kind", "TypeLayout"},
+        {"offset", static_cast<int64_t>(begin)},
+        {"token_length", static_cast<int64_t>(finish - begin)},
+        {"type", decl->getType().getAsString()},
+        {"size_bytes", static_cast<int64_t>(size.getQuantity())},
+        {"alignment_bytes", static_cast<int64_t>(align.getQuantity())}});
+    return true;
+  }
 };
 
 class Consumer : public clang::ASTConsumer {

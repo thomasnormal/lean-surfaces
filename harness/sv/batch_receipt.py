@@ -94,6 +94,9 @@ FIXTURES: tuple[Fixture, ...] = (
     Fixture("parameterized_size_cast.sv", "parameterized_size_cast_canonical_e",
             (Port("x", 8),), (Port("y", 2),),
             (Point("W2", (2,)), Point("W12", (12,)))),
+    Fixture("packed_shift_register.sv", "packed_shift_register_canonical_e",
+            (Port("clk", 1, clock=True), Port("v", 1)), (Port("q", 4),),
+            (Point("N4", (4,)), Point("N8", (8,)))),
     Fixture("constant_width_conversion.sv", "constant_width_conversion",
             (Port("x", 1),), (Port("y", 1),),
             (Point("E8", (8,)), Point("E4", (4,)))),
@@ -168,6 +171,9 @@ def port_width(fixture: Fixture, point: Point, port: Port) -> int:
     if fixture.top == "parameterized_size_cast_canonical_e" and point.args \
             and port.name == "y":
         return point.args[0]
+    if fixture.top == "packed_shift_register_canonical_e" and point.args \
+            and port.name == "q":
+        return point.args[0]
     return port.width
 
 
@@ -234,6 +240,7 @@ def testbench(fixture: Fixture, point: Point, rows: list[dict[str, int | str]]) 
             "memory_edge_loop": ("W", "N"),
             "parameterized_unpacked_storage": ("N",),
             "parameterized_size_cast_canonical_e": ("W",),
+            "packed_shift_register_canonical_e": ("N",),
             "generate_if_unpacked_array": ("N",),
         }[fixture.top]
         params = "#(" + ", ".join(f".{n}({v})" for n, v in zip(names, point.args)) + ")"

@@ -566,3 +566,5 @@ eighteen-update bridge through an early bare return.
 
 `Monadic.finishCallM_assign_eighteen_existing_locals_break_body_ok` extends the
 eighteen-update bridge through abrupt `break` flow.
+
+`Monadic.finishCallM_assign_eighteen_existing_locals_continue_body_ok` extends the eighteen-update bridge through abrupt `continue` flow.

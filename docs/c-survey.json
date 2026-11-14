@@ -10,10 +10,10 @@
   "gcc.c-torture/execute": {
    "not-parsed": 267,
    "oracle-tests-compiler": 1,
-   "passed": 921,
+   "passed": 922,
    "refused-libc": 35,
    "refused-ub": 98,
-   "refused-unsupported": 532,
+   "refused-unsupported": 531,
    "timeout": 64
   },
   "gcc.c23-run": {
@@ -28,10 +28,10 @@
  "counts": {
   "not-parsed": 294,
   "oracle-tests-compiler": 1,
-  "passed": 1096,
+  "passed": 1097,
   "refused-libc": 39,
   "refused-ub": 107,
-  "refused-unsupported": 611,
+  "refused-unsupported": 610,
   "timeout": 66
  },
  "dynamic_wall_ranking": [
@@ -736,26 +736,6 @@
   },
   {
    "files": [
-    "00051.c",
-    "00143.c",
-    "00182.c",
-    "20011109-1.c",
-    "20080719-1.c",
-    "20111208-1.c",
-    "920506-1.c",
-    "medce-1.c",
-    "pr114965.c",
-    "pr120677.c",
-    "pr44575.c",
-    "pr91632.c",
-    "switch-1.c"
-   ],
-   "present": 13,
-   "sole": 13,
-   "wall": "unsupported:case label nested in a control statement"
-  },
-  {
-   "files": [
     "20001228-1.c",
     "20021120-1.c",
     "20050218-1.c",
@@ -772,6 +752,25 @@
    "present": 12,
    "sole": 12,
    "wall": "unsequenced-effects"
+  },
+  {
+   "files": [
+    "00051.c",
+    "00143.c",
+    "00182.c",
+    "20080719-1.c",
+    "20111208-1.c",
+    "920506-1.c",
+    "medce-1.c",
+    "pr114965.c",
+    "pr120677.c",
+    "pr44575.c",
+    "pr91632.c",
+    "switch-1.c"
+   ],
+   "present": 12,
+   "sole": 12,
+   "wall": "unsupported:case label nested in a control statement"
   },
   {
    "files": [
@@ -3226,8 +3225,8 @@
   }
  ],
  "manifest_hash": "bca94718b04e8394cdce992866637166f530978790bd1013cea4a00ae25ef764",
- "measured_at_utc": "2026-11-13T23:42:42Z",
- "measured_commit": "ac4bb7adebf1c54272b7bbafd4a8481908bce785",
+ "measured_at_utc": "2026-11-14T00:06:55Z",
+ "measured_commit": "9e2b069bd3f83e1065109466c3a403146d235211",
  "pin": {
   "corpora": [
    "C1",
@@ -7331,13 +7330,13 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "case label nested in a control statement",
-   "dynamic_wall": "unsupported:case label nested in a control statement",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "20011109-1.c",
    "sha256": "1ddde69b748e07a418efa9aad7345339f4c3a40be94dbfd7912b766e3f2e1df8",
    "static_walls": [],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",

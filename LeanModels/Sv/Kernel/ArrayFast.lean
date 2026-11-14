@@ -276,6 +276,13 @@ theorem fastExec_succ_of_closed (E : Elab) (ch : Choice) (n : Nat)
     fastExec E ch (n + 1) c = .ok c := by
   simp [fastExec, h]
 
+theorem fastExec_succ_of_next (E : Elab) (ch : Choice) (n : Nat)
+    (c c' c'' : FastConfig)
+    (hstep : fastStep E ch c = .ok (some c'))
+    (htail : fastExec E ch n c' = .ok c'') :
+    fastExec E ch (n + 1) c = .ok c'' := by
+  simp [fastExec, hstep, htail]
+
 def fastRun (E : Elab) (ch : Choice) (fuel : Nat) (env : List SvState) :
     Res (List FastConfig) :=
   match env with

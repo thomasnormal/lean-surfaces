@@ -399,6 +399,12 @@ def switchHasNestedLabel : Stmt → Bool
       | _ => containsCaseLabel s
   | s => containsCaseLabel s
 
+def switchHasControlNestedLabel (s : Stmt) : Bool :=
+  s.substmts.any fun t =>
+    match t with
+    | .ifS .. | .forS .. | .whileS .. | .doS .. | .switchS .. => containsCaseLabel t
+    | _ => false
+
 def switchFindAux (ctx : Ctx) (cv : CVal) :
     List SwitchItem → Option (List Stmt) → Option (List Stmt) → EvalM (Option (List Stmt))
   | [], selected, fallback =>
@@ -441,7 +447,7 @@ mutual
 def execSwitch : Nat → Ctx → Expr → Stmt → ExecM Flow
   | 0, _, _, _ => exhausted
   | fuel + 1, ctx, cond, body => do
-      if switchHasNestedLabel body then
+      if switchHasControlNestedLabel body then
         refuseUnsupported "case label nested in a control statement"
       let cv ← evalE ctx cond
       let selected ← switchFind ctx cv body

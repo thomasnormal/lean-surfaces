@@ -195,4 +195,33 @@ theorem CoreMemDesign.fastSettleAssignAt_implicit_cons_refines
       .ok (s'.toState, view') := by
   simpa [CoreMemDesign.fastSettleAssignAt, CoreMemDesign.settleAssignAt] using htail
 
+theorem CoreMemDesign.settleAssignAt_two_ident_fast_refines
+    (E : CoreMemDesign) (s a₁ a₂ : CoreMemFastState) (view : SvState)
+    (index : Nat) (name₁ name₂ : String) (value₁ value₂ : PExpr)
+    (width₁ width₂ : Nat) (v₁ v₂ : LVec) (x₁ x₂ : VarId)
+    (hwidth₁ : E.scalarWidth? name₁ = some width₁)
+    (hwidth₂ : E.scalarWidth? name₂ = some width₂)
+    (hresolve₁ : E.scalar.resolve name₁ = some x₁)
+    (hresolve₂ : E.scalar.resolve name₂ = some x₂)
+    (hpath₁ : x₁.path = []) (hpath₂ : x₂.path = [])
+    (hbound₁ : x₁.decl < s.scalar.cells.size)
+    (hbound₂ : x₂.decl < a₁.scalar.cells.size)
+    (hv₁ : E.evalScalarAssignAtView E.env E.elems s.toState view
+      (some width₁) index value₁ = .ok v₁)
+    (hv₂ : E.evalScalarAssignAtView E.env E.elems a₁.toState
+      (SvState.set view name₁ v₁) (some width₂) (index + 1) value₂ = .ok v₂)
+    (h₁ : E.fastScalarAssignAt s view index name₁ value₁ = .ok a₁)
+    (h₂ : E.fastScalarAssignAt a₁ (SvState.set view name₁ v₁)
+      (index + 1) name₂ value₂ = .ok a₂) :
+    E.settleAssignAt E.env E.elems s.toState view index
+      [.assign (.ident name₁) value₁, .assign (.ident name₂) value₂] =
+      .ok (a₂.toState, SvState.set (SvState.set view name₁ v₁) name₂ v₂) := by
+  have hs₁ := E.fastScalarAssignAt_toState s a₁ view index name₁ value₁
+    width₁ v₁ x₁ hwidth₁ hresolve₁ hpath₁ hbound₁ hv₁ h₁
+  have hs₂ := E.fastScalarAssignAt_toState a₁ a₂ (SvState.set view name₁ v₁)
+    (index + 1) name₂ value₂ width₂ v₂ x₂ hwidth₂ hresolve₂ hpath₂ hbound₂ hv₂ h₂
+  have hv₂' := hv₂
+  rw [hs₁] at hv₂'
+  simp [CoreMemDesign.settleAssignAt, hwidth₁, hwidth₂, hv₁, hv₂', hs₁, hs₂]
+
 end LeanModels.Sv.Kernel

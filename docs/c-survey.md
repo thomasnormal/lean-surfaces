@@ -2,10 +2,10 @@
 
 Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manifest.
 
-- verdicts: 1097/2214 MATCH (passed 1097, failed 0, oracle 0)
+- verdicts: 1098/2214 MATCH (passed 1098, failed 0, oracle 0)
 - manifest SHA-256: `bca94718b04e8394cdce992866637166f530978790bd1013cea4a00ae25ef764`
-- measured commit: `9e2b069bd3f83e1065109466c3a403146d235211`
-- measured at: `2026-11-14T00:06:55Z`
+- measured commit: `6e7b41b64`
+- measured at: `2026-11-14T00:13:56Z`
 
 ## Verdict counts
 
@@ -13,10 +13,10 @@ Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manife
 | --- | ---: |
 | `not-parsed` | 294 |
 | `oracle-tests-compiler` | 1 |
-| `passed` | 1097 |
+| `passed` | 1098 |
 | `refused-libc` | 39 |
 | `refused-ub` | 107 |
-| `refused-unsupported` | 610 |
+| `refused-unsupported` | 609 |
 | `timeout` | 66 |
 
 ## Counts by corpus
@@ -30,10 +30,10 @@ Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manife
 | `c-testsuite/single-exec` | `timeout` | 2 |
 | `gcc.c-torture/execute` | `not-parsed` | 267 |
 | `gcc.c-torture/execute` | `oracle-tests-compiler` | 1 |
-| `gcc.c-torture/execute` | `passed` | 922 |
+| `gcc.c-torture/execute` | `passed` | 923 |
 | `gcc.c-torture/execute` | `refused-libc` | 35 |
 | `gcc.c-torture/execute` | `refused-ub` | 98 |
-| `gcc.c-torture/execute` | `refused-unsupported` | 531 |
+| `gcc.c-torture/execute` | `refused-unsupported` | 530 |
 | `gcc.c-torture/execute` | `timeout` | 64 |
 | `gcc.c23-run` | `not-parsed` | 27 |
 | `gcc.c23-run` | `passed` | 3 |
@@ -309,9 +309,9 @@ The run's first refusal, normalized by construct; `sole` counts rows whose first
 | `unsupported:pointer bit-cast across incompatible effective types` | 21 | 21 | 00103.c, 20001017-2.c, 20050316-1.c, 20050607-1.c, 20060412-1.c |
 | `cast:FloatingCast` | 20 | 20 | 00174.c, 00175.c, 20000605-1.c, 20020413-1.c, 990413-2.c |
 | `unsequenced-effects` | 12 | 12 | 20001228-1.c, 20021120-1.c, 20050218-1.c, 20051021-1.c, 920501-6.c |
-| `unsupported:case label nested in a control statement` | 12 | 12 | 00051.c, 00143.c, 00182.c, 20080719-1.c, 20111208-1.c |
 | `unsupported:integer-to-pointer conversion is not an unchanged uintptr_t/intptr_t round-trip` | 12 | 12 | 00214.c, 20000622-1.c, 20010329-1.c, 20021010-2.c, 20041112-1.c |
 | `unsupported:pointer-to-integer conversion outside uintptr_t/intptr_t` | 12 | 12 | 20011121-1.c, 20060420-1.c, 941014-1.c, 980526-2.c, alloca-1.c |
+| `unsupported:case label nested in a control statement` | 11 | 11 | 00051.c, 00143.c, 00182.c, 20080719-1.c, 20111208-1.c |
 | `unsupported:no layout for declared type 'V'` | 9 | 9 | pr105613.c, pr110817-1.c, pr110817-2.c, pr110817-3.c, pr71626-1.c |
 | `unsupported:AddrLabelExpr` | 8 | 8 | 20040302-1.c, 20071210-1.c, 920302-1.c, 920501-4.c, 920501-5.c |
 | `unsupported:long double floating literal` | 8 | 8 | 20030914-1.c, 20080502-1.c, gcc/testsuite/gcc.dg/c23-float-1.c, ieee/20010226-1.c, ieee/pr36332.c |

@@ -17128,3 +17128,19 @@ ordinary body branch.
 | Remaining debt | inWorld exception/timeout/refusal slices and recursive `callInM` integration |
 
 DECIDED: the ordinary body success path now has an explicit frame/world transport theorem; arbitrary body transport remains open.
+
+## 2026-11-14-pyfoundation-282 — inWorld call-body exception transport
+
+`Monadic.finishCallM_inWorld_of_exn` applies explicit exception transport to a
+known `FrameState` body result, projects the retained world through `inWorld`,
+and restores call depth while preserving the Python error.
+
+| Measurement | Result |
+|---|---|
+| Target | `lake build LeanModels.Python.Monadic.Eval` passed; 11/11 jobs |
+| Theorem | `Monadic.finishCallM_inWorld_of_exn` |
+| Domain | known exceptional `SemF` body result under a frame/world boundary |
+| Semantic change | theorem-only call-body exception transport |
+| Remaining debt | inWorld timeout/refusal slices and recursive `callInM` integration |
+
+DECIDED: ordinary call-body exception flow now has an explicit frame/world transport theorem; arbitrary body transport remains open.

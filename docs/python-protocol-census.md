@@ -616,3 +616,5 @@ still open.
 `Monadic.finishCallM_of_timeout` and `Monadic.finishCallM_of_unsupported` complete explicit-result call transport for timeout and refusal outcomes.
 
 `Monadic.finishCallM_inWorld_of_ok` applies explicit success restoration to a known frame action result, covering the ordinary `callInM` body boundary.
+
+`Monadic.finishCallM_inWorld_of_exn` applies explicit exception restoration to a known frame action result at the `callInM` body boundary.

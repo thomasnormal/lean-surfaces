@@ -16896,3 +16896,19 @@ induction for a final statement whose `toRun` bridge returns normal `.next`.
 | Remaining debt | lifting pass through `inWorld`/call-depth and the other generic flow variants |
 
 DECIDED: generic pass sequencing is stated at `toRun`; no fixed-count theorem was added.
+
+## 2026-11-14-pyfoundation-268 — inWorld assignment-list pass wrapper
+
+`Monadic.finishCallM_assignments_pass_run` lifts generic assignment-prefix/pass
+composition through `inWorld` and `finishCallM`, existentially exposing the
+resulting world and restoring call depth.
+
+| Measurement | Result |
+|---|---|
+| Target | `lake build LeanModels.Python.Monadic.Eval` passed; 11/11 jobs |
+| Theorem | `Monadic.finishCallM_assignments_pass_run` |
+| Domain | arbitrary assignment list followed by normal pass flow, with world threading |
+| Semantic change | theorem-only `inWorld`/call-depth pass wrapper |
+| Remaining debt | generic expression, bare-return, break and continue wrappers |
+
+DECIDED: generic pass composition now crosses the frame/world and call-depth boundary; no fixed-count theorem was added.

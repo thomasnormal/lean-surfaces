@@ -588,3 +588,5 @@ return composition at the established `toRun` boundary.
 `Monadic.finishCallM_assignments_ret_run` lifts arbitrary-list value-return composition through `inWorld` and call-depth restoration.
 
 `Monadic.execOpenList_assignments_pass_run` extends arbitrary assignment-list composition through a final normal pass flow.
+
+`Monadic.finishCallM_assignments_pass_run` lifts arbitrary-list pass composition through `inWorld` and call-depth restoration.

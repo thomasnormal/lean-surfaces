@@ -3926,6 +3926,53 @@ theorem execOpenList_assignments_pass_run (K : Kont) (m : Module) :
         exact hEach s' (by simp [hs']) st'
       exact ih pass st₁ hTailShape hTailEach hPass
 
+theorem finishCallM_assignments_pass_run (K : Kont) (m : Module)
+    (locals : REnv) (ss : List Stmt) (pass : Stmt)
+    (w : World) (depth : Nat)
+    (hShape : ∀ s ∈ ss, ∃ targets value sp, s = .assign targets value sp)
+    (hEach : ∀ s ∈ ss, ∀ st', ∃ st'',
+      toRun (execOpen K m s) st' = .ok st'' .next)
+    (hPass : ∀ st', ∃ st'',
+      toRun (execOpen K m pass) st' = .ok st'' .next) :
+    ∃ (st' : FrameState), toRun (finishCallM depth
+      (inWorld locals (execOpenList K m (ss ++ [pass])))) w =
+      .ok { st'.world with callDepth := depth } .next := by
+  have hlist := execOpenList_assignments_pass_run K m ss pass
+    ⟨w, locals⟩ hShape hEach hPass
+  rcases hlist with ⟨st', hrun⟩
+  have hframe : execOpenList K m (ss ++ [pass]) ⟨w, locals⟩ =
+      .ok (.ok RFlow.next, st') := by
+    generalize hx : execOpenList K m (ss ++ [pass]) ⟨w, locals⟩ = r at hrun
+    cases r with
+    | error e =>
+        cases e with
+        | timeout =>
+            simp only [hx, toRun] at hrun
+            cases hrun
+        | unsupported cause msg snap =>
+            simp only [hx, toRun] at hrun
+            cases hrun
+    | ok p =>
+        rcases p with ⟨result, st0⟩
+        cases result with
+        | error e =>
+            simp only [hx, toRun] at hrun
+            cases hrun
+        | ok a =>
+            simp only [hx, toRun] at hrun
+            have ha : a = RFlow.next := by injection hrun
+            have hs0 : st0 = st' := by injection hrun
+            rw [ha, hs0]
+  have hraw : (inWorld locals (execOpenList K m (ss ++ [pass]))) w =
+      .ok (.ok RFlow.next, st'.world) := by
+    unfold inWorld zoomOut
+    rw [hframe]
+  refine ⟨st', ?_⟩
+  unfold finishCallM
+  apply toRun_tryCatch_ok
+  rw [bind_apply, hraw]
+  rfl
+
 theorem finishCallM_assignments_ret_run (K : Kont) (m : Module)
     (locals : REnv) (ss : List Stmt) (ret : Stmt) (v : RVal)
     (w : World) (depth : Nat)
@@ -9389,6 +9436,7 @@ theorem leaveCallM_modify_exn {α : Type} (w : World) (e : PyErr)
 #print axioms finishCallM_assign_nineteen_existing_locals_body_ok
 #print axioms finishCallM_assignments_body_ok
 #print axioms finishCallM_assignments_ret_run
+#print axioms finishCallM_assignments_pass_run
 #print axioms execOpenList_assignments_pass_run
 #print axioms execOpenList_assignments_ret_run
 #print axioms execOpenList_assignments_threaded

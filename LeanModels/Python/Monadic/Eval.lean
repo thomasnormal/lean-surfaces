@@ -3958,6 +3958,38 @@ theorem execOpenList_assignments_break_run (K : Kont) (m : Module) :
         exact hEach s' (by simp [hs']) st'
       exact ih brk st₁ hTailShape hTailEach hBreak
 
+theorem execOpenList_assignments_continue_run (K : Kont) (m : Module) :
+    ∀ (ss : List Stmt) (cont : Stmt) (st : FrameState),
+      (∀ s ∈ ss, ∃ targets value sp, s = .assign targets value sp) →
+      (∀ s ∈ ss, ∀ st', ∃ st'',
+        toRun (execOpen K m s) st' = .ok st'' .next) →
+      (∀ st', ∃ st'',
+        toRun (execOpen K m cont) st' = .ok st'' .cont) →
+      ∃ st', toRun (execOpenList K m (ss ++ [cont])) st = .ok st' .cont := by
+  intro ss
+  induction ss with
+  | nil =>
+      intro cont st hShape hEach hContinue
+      simp only [List.nil_append, execOpenList, toRun_bind]
+      rcases hContinue st with ⟨st', hs⟩
+      refine ⟨st', ?_⟩
+      simp only [Run.bind, hs]
+      rfl
+  | cons s ss ih =>
+      intro cont st hShape hEach hContinue
+      simp only [List.cons_append, execOpenList, toRun_bind]
+      rcases hEach s (by simp) st with ⟨st₁, hs⟩
+      rw [hs]
+      simp only [Run.bind]
+      have hTailShape : ∀ s' ∈ ss, ∃ targets value sp, s' = .assign targets value sp := by
+        intro s' hs'
+        exact hShape s' (by simp [hs'])
+      have hTailEach : ∀ s' ∈ ss, ∀ st', ∃ st'',
+          toRun (execOpen K m s') st' = .ok st'' .next := by
+        intro s' hs' st'
+        exact hEach s' (by simp [hs']) st'
+      exact ih cont st₁ hTailShape hTailEach hContinue
+
 theorem execOpenList_assignments_expr_run (K : Kont) (m : Module) :
     ∀ (ss : List Stmt) (expr : Stmt) (st : FrameState),
       (∀ s ∈ ss, ∃ targets value sp, s = .assign targets value sp) →
@@ -4066,6 +4098,53 @@ theorem finishCallM_assignments_break_run (K : Kont) (m : Module)
             rw [ha, hs0]
   have hraw : (inWorld locals (execOpenList K m (ss ++ [brk]))) w =
       .ok (.ok RFlow.brk, st'.world) := by
+    unfold inWorld zoomOut
+    rw [hframe]
+  refine ⟨st', ?_⟩
+  unfold finishCallM
+  apply toRun_tryCatch_ok
+  rw [bind_apply, hraw]
+  rfl
+
+theorem finishCallM_assignments_continue_run (K : Kont) (m : Module)
+    (locals : REnv) (ss : List Stmt) (cont : Stmt)
+    (w : World) (depth : Nat)
+    (hShape : ∀ s ∈ ss, ∃ targets value sp, s = .assign targets value sp)
+    (hEach : ∀ s ∈ ss, ∀ st', ∃ st'',
+      toRun (execOpen K m s) st' = .ok st'' .next)
+    (hContinue : ∀ st', ∃ st'',
+      toRun (execOpen K m cont) st' = .ok st'' .cont) :
+    ∃ (st' : FrameState), toRun (finishCallM depth
+      (inWorld locals (execOpenList K m (ss ++ [cont])))) w =
+      .ok { st'.world with callDepth := depth } .cont := by
+  have hlist := execOpenList_assignments_continue_run K m ss cont
+    ⟨w, locals⟩ hShape hEach hContinue
+  rcases hlist with ⟨st', hrun⟩
+  have hframe : execOpenList K m (ss ++ [cont]) ⟨w, locals⟩ =
+      .ok (.ok RFlow.cont, st') := by
+    generalize hx : execOpenList K m (ss ++ [cont]) ⟨w, locals⟩ = r at hrun
+    cases r with
+    | error e =>
+        cases e with
+        | timeout =>
+            simp only [hx, toRun] at hrun
+            cases hrun
+        | unsupported cause msg snap =>
+            simp only [hx, toRun] at hrun
+            cases hrun
+    | ok p =>
+        rcases p with ⟨result, st0⟩
+        cases result with
+        | error e =>
+            simp only [hx, toRun] at hrun
+            cases hrun
+        | ok a =>
+            simp only [hx, toRun] at hrun
+            have ha : a = RFlow.cont := by injection hrun
+            have hs0 : st0 = st' := by injection hrun
+            rw [ha, hs0]
+  have hraw : (inWorld locals (execOpenList K m (ss ++ [cont]))) w =
+      .ok (.ok RFlow.cont, st'.world) := by
     unfold inWorld zoomOut
     rw [hframe]
   refine ⟨st', ?_⟩
@@ -9566,6 +9645,8 @@ theorem leaveCallM_modify_exn {α : Type} (w : World) (e : PyErr)
 #print axioms finishCallM_assignments_pass_run
 #print axioms execOpenList_assignments_break_run
 #print axioms finishCallM_assignments_break_run
+#print axioms execOpenList_assignments_continue_run
+#print axioms finishCallM_assignments_continue_run
 #print axioms execOpenList_assignments_expr_run
 #print axioms finishCallM_assignments_expr_run
 #print axioms execOpenList_assignments_bare_ret_run

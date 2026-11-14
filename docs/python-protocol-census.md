@@ -596,3 +596,5 @@ return composition at the established `toRun` boundary.
 `Monadic.execOpenList_assignments_bare_ret_run` and `Monadic.finishCallM_assignments_bare_ret_run` cover arbitrary assignment-list bare-return flow at both interpreter boundaries.
 
 `Monadic.execOpenList_assignments_break_run` and `Monadic.finishCallM_assignments_break_run` cover arbitrary assignment-list break flow at both interpreter boundaries.
+
+`Monadic.execOpenList_assignments_continue_run` and `Monadic.finishCallM_assignments_continue_run` cover arbitrary assignment-list continue flow at both interpreter boundaries.

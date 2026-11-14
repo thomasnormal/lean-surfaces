@@ -16963,3 +16963,19 @@ composition ending in `break`, at the `toRun` and world/call-depth boundaries.
 | Remaining debt | generic continue wrapper |
 
 DECIDED: break-flow composition is now stated once for arbitrary assignment-list length; no fixed-count theorem was added.
+
+## 2026-11-14-pyfoundation-272 — generic assignment-list continue flow
+
+`Monadic.execOpenList_assignments_continue_run` and
+`Monadic.finishCallM_assignments_continue_run` prove arbitrary assignment-prefix
+composition ending in `continue`, at the `toRun` and world/call-depth boundaries.
+
+| Measurement | Result |
+|---|---|
+| Target | `lake build LeanModels.Python.Monadic.Eval` passed; 11/11 jobs |
+| Theorem | `Monadic.execOpenList_assignments_continue_run`; `Monadic.finishCallM_assignments_continue_run` |
+| Domain | arbitrary assignment list followed by continue |
+| Semantic change | theorem-only generic continue composition |
+| Remaining debt | none among the assignment-list flow variants; fixed-count bridges remain closed |
+
+DECIDED: continue-flow composition is now stated once for arbitrary assignment-list length; no fixed-count theorem was added.

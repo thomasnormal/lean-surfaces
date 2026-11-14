@@ -271,6 +271,11 @@ def fastExec (E : Elab) (ch : Choice) : Nat → FastConfig → Res FastConfig
       | .timeout => .timeout
       | .unsupported msg => .unsupported msg
 
+theorem fastExec_succ_of_closed (E : Elab) (ch : Choice) (n : Nat)
+    (c c' : FastConfig) (h : fastStep E ch c = .ok none) :
+    fastExec E ch (n + 1) c = .ok c := by
+  simp [fastExec, h]
+
 def fastRun (E : Elab) (ch : Choice) (fuel : Nat) (env : List SvState) :
     Res (List FastConfig) :=
   match env with

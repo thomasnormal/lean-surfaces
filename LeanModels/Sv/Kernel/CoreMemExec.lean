@@ -79,6 +79,8 @@ structure CoreMemDesign where
   remains the authority for stateful reads.
   -/
   compiledCombReads : Array (Option (List Expr2)) := #[]
+  /-- Pure raw-read expressions for retained plain `always @*` bodies. -/
+  compiledImplicitReads : Array (Option (List Expr2)) := #[]
 deriving Inhabited
 
 /-! A structural admission predicate for the canonical memory family.  This is
@@ -703,10 +705,24 @@ def CoreMemDesign.compileCombReads (E : CoreMemDesign) :
         else none
     | _ => none
 
+def CoreMemDesign.compileImplicitReads (E : CoreMemDesign) :
+    Array (Option (List Expr2)) :=
+  E.processes.map fun p =>
+    match p with
+    | .implicit body =>
+        let reads := coreMemStmtReadExprs body
+        if reads.all (fun e => !LeanModels.Sv.PExpr.hasMemoryRead e &&
+            !LeanModels.Sv.PExpr.hasFunctionCall e) then
+          some (reads.map (instExpr2 E.env E.elems none))
+        else none
+    | _ => none
+
 def PDesign.instantiateCoreMem (d : PDesign) (args : List Int)
     (iterFuel : Nat := 4096) : Res CoreMemDesign := do
   let result ← PDesign.instantiateCoreMemFrom { int32 := true } d args iterFuel
-  .ok { result with compiledCombReads := result.compileCombReads }
+  .ok { result with
+    compiledCombReads := result.compileCombReads
+    compiledImplicitReads := result.compileImplicitReads }
 
 /-! The ordinary E entry.  Parameterized unpacked declarations are canonical
 E storage, so callers must not silently fall back to the scalar `EDesign2`
@@ -1117,6 +1133,13 @@ def CoreMemDesign.readChangedAt (E : CoreMemDesign)
   | some (some compiled) => CoreMemDesign.readChangedPure beforeView afterView compiled
   | _ => E.readChanged before after reads
 
+def CoreMemDesign.readChangedImplicitAt (E : CoreMemDesign)
+    (before after : CoreMemState) (beforeView afterView : SvState)
+    (index : Nat) (reads : List PExpr) : Res Bool :=
+  match E.compiledImplicitReads[index]? with
+  | some (some compiled) => CoreMemDesign.readChangedPure beforeView afterView compiled
+  | _ => E.readChanged before after reads
+
 mutual
 
 def CoreMemDesign.execImplicitStmtFuel (E : CoreMemDesign) (env : IEnv)
@@ -1296,27 +1319,34 @@ def CoreMemDesign.execCombStmt (E : CoreMemDesign) (env : IEnv)
     .ok (E.compactScalar st' view')
 
 
-def CoreMemDesign.runImplicit (E : CoreMemDesign) (before current : CoreMemState) :
+def CoreMemDesign.runImplicitAt (E : CoreMemDesign) (before current : CoreMemState)
+    (beforeView currentView : SvState) (index : Nat) :
     List CoreMemProc → Res CoreMemState
   | [] => .ok current
   | .implicit body :: rest => do
       let reads := coreMemStmtReadExprs body
-      let ready ← E.readChanged before current reads
+      let ready ← E.readChangedImplicitAt before current beforeView currentView index reads
       if !ready then
-        E.runImplicit before current rest
+        E.runImplicitAt before current beforeView currentView (index + 1) rest
       else
         let after ← E.execImplicitStmt E.env E.elems current body
-        let rearmed ← E.readChanged current after reads
+        let afterView := E.scalar.view after.scalar
+        let rearmed ← E.readChangedImplicitAt current after currentView afterView index reads
         if rearmed then
           .unsupported
             "ProceduralBlockSymbol:Always: implicit event process re-triggered in one active pass"
         else
-          E.runImplicit before after rest
-  | .assign _ _ :: rest => E.runImplicit before current rest
-  | .edge _ :: rest => E.runImplicit before current rest
-  | .initial _ :: rest => E.runImplicit before current rest
-  | .comb _ :: rest => E.runImplicit before current rest
+          E.runImplicitAt before after beforeView afterView (index + 1) rest
+  | .assign _ _ :: rest => E.runImplicitAt before current beforeView currentView (index + 1) rest
+  | .edge _ :: rest => E.runImplicitAt before current beforeView currentView (index + 1) rest
+  | .initial _ :: rest => E.runImplicitAt before current beforeView currentView (index + 1) rest
+  | .comb _ :: rest => E.runImplicitAt before current beforeView currentView (index + 1) rest
   | .unsupported kind text :: _ => .unsupported s!"{kind}: {text}"
+
+def CoreMemDesign.runImplicit (E : CoreMemDesign) (before current : CoreMemState) :
+    List CoreMemProc → Res CoreMemState := fun procs =>
+  E.runImplicitAt before current (E.scalar.view before.scalar)
+    (E.scalar.view current.scalar) 0 procs
 
 def CoreMemDesign.runCombInitialWithView (E : CoreMemDesign) (current : CoreMemState)
     (view : SvState) : List CoreMemProc → Res (CoreMemState × SvState)

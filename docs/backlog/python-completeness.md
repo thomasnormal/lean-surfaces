@@ -16881,3 +16881,18 @@ the requested call depth.
 | Remaining debt | generic pass, expression, bare-return, break and continue wrappers |
 
 DECIDED: the generic value-return theorem now crosses the frame/world call boundary without assuming assignments preserve the world.
+
+## 2026-11-14-pyfoundation-267 — toRun assignment-list pass composition
+
+`Monadic.execOpenList_assignments_pass_run` proves the arbitrary assignment-prefix
+induction for a final statement whose `toRun` bridge returns normal `.next`.
+
+| Measurement | Result |
+|---|---|
+| Target | `lake build LeanModels.Python.Monadic.Eval` passed; 11/11 jobs |
+| Theorem | `Monadic.execOpenList_assignments_pass_run` |
+| Domain | any finite assignment list followed by a normal-flow pass statement |
+| Semantic change | theorem-only generic pass sequencing |
+| Remaining debt | lifting pass through `inWorld`/call-depth and the other generic flow variants |
+
+DECIDED: generic pass sequencing is stated at `toRun`; no fixed-count theorem was added.

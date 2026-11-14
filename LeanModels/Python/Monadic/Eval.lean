@@ -3894,6 +3894,38 @@ theorem execOpenList_assignments_ret_run (K : Kont) (m : Module) (v : RVal) :
         exact hEach s' (by simp [hs']) st'
       exact ih ret st₁ hTailShape hTailEach hRet
 
+theorem execOpenList_assignments_pass_run (K : Kont) (m : Module) :
+    ∀ (ss : List Stmt) (pass : Stmt) (st : FrameState),
+      (∀ s ∈ ss, ∃ targets value sp, s = .assign targets value sp) →
+      (∀ s ∈ ss, ∀ st', ∃ st'',
+        toRun (execOpen K m s) st' = .ok st'' .next) →
+      (∀ st', ∃ st'',
+        toRun (execOpen K m pass) st' = .ok st'' .next) →
+      ∃ st', toRun (execOpenList K m (ss ++ [pass])) st = .ok st' .next := by
+  intro ss
+  induction ss with
+  | nil =>
+      intro pass st hShape hEach hPass
+      simp only [List.nil_append, execOpenList, toRun_bind]
+      rcases hPass st with ⟨st', hs⟩
+      refine ⟨st', ?_⟩
+      simp only [Run.bind, hs]
+      rfl
+  | cons s ss ih =>
+      intro pass st hShape hEach hPass
+      simp only [List.cons_append, execOpenList, toRun_bind]
+      rcases hEach s (by simp) st with ⟨st₁, hs⟩
+      rw [hs]
+      simp only [Run.bind]
+      have hTailShape : ∀ s' ∈ ss, ∃ targets value sp, s' = .assign targets value sp := by
+        intro s' hs'
+        exact hShape s' (by simp [hs'])
+      have hTailEach : ∀ s' ∈ ss, ∀ st', ∃ st'',
+          toRun (execOpen K m s') st' = .ok st'' .next := by
+        intro s' hs' st'
+        exact hEach s' (by simp [hs']) st'
+      exact ih pass st₁ hTailShape hTailEach hPass
+
 theorem finishCallM_assignments_ret_run (K : Kont) (m : Module)
     (locals : REnv) (ss : List Stmt) (ret : Stmt) (v : RVal)
     (w : World) (depth : Nat)
@@ -9357,6 +9389,7 @@ theorem leaveCallM_modify_exn {α : Type} (w : World) (e : PyErr)
 #print axioms finishCallM_assign_nineteen_existing_locals_body_ok
 #print axioms finishCallM_assignments_body_ok
 #print axioms finishCallM_assignments_ret_run
+#print axioms execOpenList_assignments_pass_run
 #print axioms execOpenList_assignments_ret_run
 #print axioms execOpenList_assignments_threaded
 #print axioms finishCallM_assign_nineteen_existing_locals_ret_body_ok

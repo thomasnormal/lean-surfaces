@@ -581,3 +581,6 @@ fixed-count assignment bridges are no longer the work item.
 
 The generic value-return wrapper is parked pending a raw `execOpenList` append/
 return composition lemma; the fixed-count matrix remains closed.
+
+`Monadic.execOpenList_assignments_ret_run` supplies the arbitrary-list append/
+return composition at the established `toRun` boundary.

@@ -16846,3 +16846,21 @@ theorem is raw-state and cannot be applied directly to the wrapper's
 DECIDED: blocker is the missing raw `execOpenList` append/return composition lemma;
 next item is to prove that substrate lemma (or recast the wrapper through the
 existing `toRun` sequencing theorem) before adding any flow-specific bridge.
+
+## 2026-11-14-pyfoundation-265 — toRun append/return substrate lemma
+
+`Monadic.execOpenList_assignments_ret_run` recasts the generic value-return
+composition through the existing `toRun` sequencing boundary. It inducts over an
+arbitrary assignment prefix, existentially threads each resulting frame state,
+and then applies a final return bridge. This is the substrate lemma needed to
+unblock the raw `inWorld` wrapper without changing semantics.
+
+| Measurement | Result |
+|---|---|
+| Target | `lake build LeanModels.Python.Monadic.Eval` passed; 11/11 jobs |
+| Theorem | `Monadic.execOpenList_assignments_ret_run` |
+| Domain | any finite assignment list followed by a value-return statement at the `toRun` boundary |
+| Semantic change | theorem-only append/return composition |
+| Remaining debt | lifting this theorem through `inWorld` and call-depth restoration |
+
+DECIDED: the generic append/return proof is now at the established `toRun` boundary; raw-state lifting remains separate.

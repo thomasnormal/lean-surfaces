@@ -17041,3 +17041,20 @@ theorem was added.
 DECIDED: combined transport remains blocked by the handler continuation match
 under `StateT.bind`; the timeout/refusal projection equations are the strongest
 landed substrate result so far.
+
+## 2026-11-14-pyfoundation-277 — recursive call/body adequacy reassessment
+
+The remaining F9 adequacy debt is concentrated in `callInM`'s ordinary
+non-generator body branch: after argument binding and recursion guards, the
+runner executes `inWorld (execOpenList ...)` under `finishCallM` or `leaveCallM`,
+then maps four `RFlow` cases to a returned value/refusal. The statement-list
+composition theorem is complete, but the generic `finishCallM`/`tryCatch`
+transport is blocked by the unresolved handler continuation match recorded in
+items 273, 274 and 276. This is the recursive call/body boundary still open in
+the census; no further assignment-list syntax theorem is warranted until that
+substrate transport is available.
+
+DECIDED: recursive call/body adequacy is correctly priced as a substrate
+transport debt, not a missing assignment case. The next productive item must
+factor the `StateT.bind`/handler continuation equation or prove a call-specific
+transport theorem with explicit handler-result premises.

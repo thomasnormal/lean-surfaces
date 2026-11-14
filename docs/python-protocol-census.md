@@ -603,3 +603,8 @@ return composition at the established `toRun` boundary.
 The generic `finishCallM` transport, the four-result normalization attempt, and the combined handler transport remain parked at the substrate: unfolding `ExceptT.tryCatch` leaves a `StateT.bind` continuation match that does not reduce under arbitrary handler results. Assignment-list flow coverage remains complete.
 
 `Monadic.toRun_tryCatch_timeout` and `Monadic.toRun_tryCatch_unsupported` close the timeout/refusal projections of the shared `tryCatch` substrate.
+
+The remaining recursive call/body adequacy debt is the `callInM` body branch's
+`finishCallM`/`leaveCallM` transport and four-flow mapping; assignment-list
+composition is complete, while generic `StateT.bind` handler normalization is
+still open.

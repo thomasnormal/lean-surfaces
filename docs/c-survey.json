@@ -10,10 +10,10 @@
   "gcc.c-torture/execute": {
    "not-parsed": 267,
    "oracle-tests-compiler": 1,
-   "passed": 938,
+   "passed": 940,
    "refused-libc": 35,
    "refused-ub": 98,
-   "refused-unsupported": 515,
+   "refused-unsupported": 513,
    "timeout": 64
   },
   "gcc.c23-run": {
@@ -28,10 +28,10 @@
  "counts": {
   "not-parsed": 294,
   "oracle-tests-compiler": 1,
-  "passed": 1113,
+  "passed": 1115,
   "refused-libc": 39,
   "refused-ub": 107,
-  "refused-unsupported": 594,
+  "refused-unsupported": 592,
   "timeout": 66
  },
  "dynamic_wall_ranking": [
@@ -2257,14 +2257,6 @@
   },
   {
    "files": [
-    "pr47538.c"
-   ],
-   "present": 1,
-   "sole": 1,
-   "wall": "unsupported:no layout for field 'c'"
-  },
-  {
-   "files": [
     "00218.c"
    ],
    "present": 1,
@@ -2286,14 +2278,6 @@
    "present": 1,
    "sole": 1,
    "wall": "unsupported:no layout for field 'fptr'"
-  },
-  {
-   "files": [
-    "20190901-1.c"
-   ],
-   "present": 1,
-   "sole": 1,
-   "wall": "unsupported:no layout for field 's'"
   },
   {
    "files": [
@@ -3209,8 +3193,8 @@
   }
  ],
  "manifest_hash": "bca94718b04e8394cdce992866637166f530978790bd1013cea4a00ae25ef764",
- "measured_at_utc": "2026-11-14T01:42:54Z",
- "measured_commit": "2e7fc5046",
+ "measured_at_utc": "2026-11-14T01:51:52Z",
+ "measured_commit": "3d4383f53",
  "pin": {
   "corpora": [
    "C1",
@@ -11276,8 +11260,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "no layout for field 's'",
-   "dynamic_wall": "unsupported:no layout for field 's'",
+   "detail": "",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "20190901-1.c",
    "sha256": "1a26bfd6faf94ca757cbd11d36a5a35eb6acc4f8a08edda0086e10f3f451d650",
@@ -11285,7 +11269,7 @@
     "libc-call: __builtin_abort",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -23992,8 +23976,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "no layout for field 'c'",
-   "dynamic_wall": "unsupported:no layout for field 'c'",
+   "detail": "",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "pr47538.c",
    "sha256": "7ddc400661a1d3c0585c8a1e3c93d6aa4a0ec3410b9e099eaf7a9c2331f9fbb0",
@@ -24003,7 +23987,7 @@
     "libc-call: __builtin_memcpy",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",

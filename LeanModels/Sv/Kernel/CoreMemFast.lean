@@ -291,6 +291,41 @@ theorem CoreMemDesign.fastSettleAssignAt_scalar_array_refines
   simp [CoreMemDesign.settleAssignAt, hwidth₁, hmem₂, hv₁, hv₂', hs₁]
   exact hbc'
 
+theorem CoreMemDesign.fastSettleAssignAt_array_scalar_refines
+    (E : CoreMemDesign) (s a₁ a₂ : CoreMemFastState) (view : SvState)
+    (index : Nat) (name₁ name₂ : String) (indexExpr₁ value₁ value₂ : PExpr)
+    (md₁ : CoreMemDecl) (v₁ v₂ : LVec) (width₂ : Nat) (x₂ : VarId)
+    (hmem₁ : E.memDecl? name₁ = some md₁)
+    (hwidth₂ : E.scalarWidth? name₂ = some width₂)
+    (hresolve₂ : E.scalar.resolve name₂ = some x₂)
+    (hpath₂ : x₂.path = [])
+    (hbound₂ : x₂.decl < a₁.scalar.cells.size)
+    (hv₁ : E.evalExpr E.env E.elems s.toState
+      (some md₁.shape.elemWidth) value₁ = .ok v₁)
+    (hv₂ : E.evalScalarAssignAtView E.env E.elems a₁.toState view
+      (some width₂) (index + 1) value₂ = .ok v₂)
+    (h₁ : E.fastSettleAssignAt E.env E.elems s view index
+      [.assign (.arrayElem name₁ [indexExpr₁]) value₁] = .ok (a₁, view))
+    (h₂ : E.fastScalarAssignAt a₁ view (index + 1) name₂ value₂ = .ok a₂) :
+    E.settleAssignAt E.env E.elems s.toState view index
+      [.assign (.arrayElem name₁ [indexExpr₁]) value₁,
+       .assign (.ident name₂) value₂] =
+      .ok (a₂.toState, SvState.set view name₂ v₂) := by
+  have hs₂ := E.fastScalarAssignAt_toState a₁ a₂ view (index + 1) name₂ value₂
+    width₂ v₂ x₂ hwidth₂ hresolve₂ hpath₂ hbound₂ hv₂ h₂
+  simp [CoreMemDesign.fastSettleAssignAt, CoreMemDesign.settleAssignAt,
+    hmem₁, hv₁] at h₁
+  rcases h₁ with ⟨c, hc, hc₁⟩
+  have hc_to : c = a₁.toState := by
+    calc
+      c = (CoreMemFastState.ofState E c).toState := by
+        simp [CoreMemFastState.ofState_toState]
+      _ = a₁.toState := congrArg CoreMemFastState.toState hc₁
+  have hc' := hc
+  rw [hc_to] at hc'
+  simp [CoreMemDesign.settleAssignAt, hmem₁, hwidth₂, hv₁, hs₂, hc']
+  exact ⟨v₂, hv₂, rfl, rfl⟩
+
 theorem CoreMemDesign.settleAssignAt_two_ident_fast_refines
     (E : CoreMemDesign) (s a₁ a₂ : CoreMemFastState) (view : SvState)
     (index : Nat) (name₁ name₂ : String) (value₁ value₂ : PExpr)

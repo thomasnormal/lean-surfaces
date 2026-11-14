@@ -1,10 +1,10 @@
 {
  "by_corpus": {
   "c-testsuite/single-exec": {
-   "passed": 172,
+   "passed": 174,
    "refused-libc": 2,
    "refused-ub": 8,
-   "refused-unsupported": 36,
+   "refused-unsupported": 34,
    "timeout": 2
   },
   "gcc.c-torture/execute": {
@@ -28,10 +28,10 @@
  "counts": {
   "not-parsed": 294,
   "oracle-tests-compiler": 1,
-  "passed": 1119,
+  "passed": 1121,
   "refused-libc": 38,
   "refused-ub": 107,
-  "refused-unsupported": 589,
+  "refused-unsupported": 587,
   "timeout": 66
  },
  "dynamic_wall_ranking": [
@@ -2262,14 +2262,6 @@
   },
   {
    "files": [
-    "00087.c"
-   ],
-   "present": 1,
-   "sole": 1,
-   "wall": "unsupported:no layout for field 'fptr'"
-  },
-  {
-   "files": [
     "20080506-2.c"
    ],
    "present": 1,
@@ -2627,14 +2619,6 @@
    "present": 1,
    "sole": 1,
    "wall": "unsupported:unbound declaration 'id15' (name 'x')"
-  },
-  {
-   "files": [
-    "00089.c"
-   ],
-   "present": 1,
-   "sole": 1,
-   "wall": "unsupported:unbound declaration 'id15' (name 'zero')"
   },
   {
    "files": [
@@ -3182,8 +3166,8 @@
   }
  ],
  "manifest_hash": "bca94718b04e8394cdce992866637166f530978790bd1013cea4a00ae25ef764",
- "measured_at_utc": "2026-11-14T05:24:40Z",
- "measured_commit": "37ee28a41c270bb43bfd1d4b0784cd3101d06b59",
+ "measured_at_utc": "2026-11-14T08:00:47Z",
+ "measured_commit": "e881c996d83dd2bbf1bbf3f18ae0d907f30043eb",
  "pin": {
   "corpora": [
    "C1",
@@ -4119,8 +4103,8 @@
   },
   {
    "corpus": "c-testsuite/single-exec",
-   "detail": "no layout for field 'fptr'",
-   "dynamic_wall": "unsupported:no layout for field 'fptr'",
+   "detail": "",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "00087.c",
    "sha256": "e03579d95be9203e5c927316a2ac235735370197c79a043b5e85234f7f8a59da",
@@ -4128,7 +4112,7 @@
     "libc-call",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "c-testsuite/single-exec",
@@ -4142,8 +4126,8 @@
   },
   {
    "corpus": "c-testsuite/single-exec",
-   "detail": "unbound declaration 'id15' (name 'zero')",
-   "dynamic_wall": "unsupported:unbound declaration 'id15' (name 'zero')",
+   "detail": "",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "00089.c",
    "sha256": "1d8ddc94cdd2524d8e9b785bed0761d727308d2058c984301f7423bdca2b849a",
@@ -4151,7 +4135,7 @@
     "libc-call",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "c-testsuite/single-exec",

@@ -2,10 +2,10 @@
 
 Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manifest.
 
-- verdicts: 1119/2214 MATCH (passed 1119, failed 0, oracle 0)
+- verdicts: 1121/2214 MATCH (passed 1121, failed 0, oracle 0)
 - manifest SHA-256: `bca94718b04e8394cdce992866637166f530978790bd1013cea4a00ae25ef764`
-- measured commit: `37ee28a41c270bb43bfd1d4b0784cd3101d06b59`
-- measured at: `2026-11-14T05:24:40Z`
+- measured commit: `e881c996d83dd2bbf1bbf3f18ae0d907f30043eb`
+- measured at: `2026-11-14T08:00:47Z`
 
 ## Verdict counts
 
@@ -13,20 +13,20 @@ Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manife
 | --- | ---: |
 | `not-parsed` | 294 |
 | `oracle-tests-compiler` | 1 |
-| `passed` | 1119 |
+| `passed` | 1121 |
 | `refused-libc` | 38 |
 | `refused-ub` | 107 |
-| `refused-unsupported` | 589 |
+| `refused-unsupported` | 587 |
 | `timeout` | 66 |
 
 ## Counts by corpus
 
 | corpus | verdict | files |
 | --- | --- | ---: |
-| `c-testsuite/single-exec` | `passed` | 172 |
+| `c-testsuite/single-exec` | `passed` | 174 |
 | `c-testsuite/single-exec` | `refused-libc` | 2 |
 | `c-testsuite/single-exec` | `refused-ub` | 8 |
-| `c-testsuite/single-exec` | `refused-unsupported` | 36 |
+| `c-testsuite/single-exec` | `refused-unsupported` | 34 |
 | `c-testsuite/single-exec` | `timeout` | 2 |
 | `gcc.c-torture/execute` | `not-parsed` | 267 |
 | `gcc.c-torture/execute` | `oracle-tests-compiler` | 1 |
@@ -479,7 +479,6 @@ The run's first refusal, normalized by construct; `sole` counts rows whose first
 | `unsupported:no layout for field 'b'` | 1 | 1 | pr38151.c |
 | `unsupported:no layout for field 'code'` | 1 | 1 | 00218.c |
 | `unsupported:no layout for field 'f2'` | 1 | 1 | pr101188.c |
-| `unsupported:no layout for field 'fptr'` | 1 | 1 | 00087.c |
 | `unsupported:no layout for parameter type 'int **restrict'` | 1 | 1 | 20080506-2.c |
 | `unsupported:no layout for parameter type 'int *restrict'` | 1 | 1 | pr38212.c |
 | `unsupported:no size for pointee of 'int (*)[4]'` | 1 | 1 | pr124358.c |
@@ -525,7 +524,6 @@ The run's first refusal, normalized by construct; `sole` counts rows whose first
 | `unsupported:unbound declaration 'id15' (name 'f1')` | 1 | 1 | complex-7.c |
 | `unsupported:unbound declaration 'id15' (name 'fptr')` | 1 | 1 | 00088.c |
 | `unsupported:unbound declaration 'id15' (name 'x')` | 1 | 1 | 20090623-1.c |
-| `unsupported:unbound declaration 'id15' (name 'zero')` | 1 | 1 | 00089.c |
 | `unsupported:unbound declaration 'id151' (name 's')` | 1 | 1 | pr91597.c |
 | `unsupported:unbound declaration 'id18' (name 'a')` | 1 | 1 | pr65427.c |
 | `unsupported:unbound declaration 'id18' (name 'g')` | 1 | 1 | 20031214-1.c |

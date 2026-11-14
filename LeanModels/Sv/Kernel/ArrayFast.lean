@@ -194,6 +194,36 @@ def fastStep (E : Elab) (ch : Choice) (c : FastConfig) : Res (Option FastConfig)
           | .slotClosed _ => return none
           | .refused r => .unsupported r.observable.2
 
+theorem fastStep_assign_eq (E : Elab) (ch : Choice) (c : FastConfig)
+    (p : ProcId) (rest : List ProcId) (t : Lhs2) (e : Expr2)
+    (a' : Array Val)
+    (hchoose : ch.choose c.k c.active = p :: rest)
+    (hp : E.procs[p]? = some (.assign t e))
+    (hfast : fastActivateAssign E c t e = .ok a') :
+    fastStep E ch c =
+      .ok (some (FastConfig.mk a' c.fallback
+        (rest ++ (E.triggered (E.view c.store)
+          (E.view ((FastConfig.mk a' c.fallback [] (c.k + 1)).store))).filter
+            (fun q => decide (q ∉ rest))) (c.k + 1))) := by
+  unfold fastStep
+  rw [hchoose]
+  have hv : E.view ({ cells := a', fallback := c.fallback, active := [], k := c.k + 1 } : FastConfig).store =
+      E.view ({ cells := a', fallback := c.fallback, active := [], k := c.k + 1 } : FastConfig).store := rfl
+  simp [hp, hfast, fastTriggered, hv]
+
+theorem step_assign_eq (E : Elab) (ch : Choice) (c : FastConfig)
+    (p : ProcId) (rest : List ProcId) (s' : Store)
+    (hchoose : ch.choose c.k c.active = p :: rest)
+    (hact : activate E p c.store = .ok (.ok (), s')) :
+    step E ch c.toConfig =
+      .next (Config.mk s' (rest ++
+        (E.triggered (E.view c.store) (E.view s')).filter (fun q => decide (q ∉ rest)))
+        (c.k + 1)) := by
+  unfold step
+  simp only [FastConfig.toConfig]
+  rw [hchoose]
+  simp [hact]
+
 theorem fastStep_fallback_eq (E : Elab) (ch : Choice) (c : FastConfig)
     (p : ProcId) (rest : List ProcId)
     (hchoose : ch.choose c.k c.active = p :: rest)

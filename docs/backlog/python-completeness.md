@@ -16796,3 +16796,17 @@ DECIDED: eighteen assignment steps now compose through continue flow; arbitrary 
 | Remaining debt | arbitrary locals and recursive positive-fuel calls |
 
 DECIDED: nineteen assignment steps now compose through the body walker; arbitrary assignment and recursive body adequacy remain open.
+
+## 2026-11-14-pyfoundation-262 — nineteen-assignment return bridge
+
+`Monadic.finishCallM_assign_nineteen_existing_locals_ret_body_ok` checks nineteen successive assignments through `aa = 18` followed by `return 19`, preserving the updated frame through early value flow and call-depth restoration.
+
+| Measurement | Result |
+|---|---|
+| Target | `lake build LeanModels.Python.Monadic.Eval` passed; 11/11 jobs |
+| Theorem | `Monadic.finishCallM_assign_nineteen_existing_locals_ret_body_ok` |
+| Domain | nineteen consecutive assignments to existing locals followed by value return |
+| Semantic change | theorem-only nineteen-assignment value-return composition |
+| Remaining debt | arbitrary locals and recursive positive-fuel calls |
+
+DECIDED: nineteen assignment steps now compose through value return; arbitrary assignment and recursive body adequacy remain open.

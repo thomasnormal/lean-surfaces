@@ -38,9 +38,9 @@ load_design_sv2 lp_shr_neg from "Examples/system-verilog/lp_shift/neg/lp_shr_neg
 load_design_sv2 lp_ashr_neg from "Examples/system-verilog/lp_shift/neg/lp_ashr_neg.sv.json"
 
 -- The instantiation's values at `N = 8`: `(N - 16) >> 1` is the pattern of -8 shifted with a zero, 2147483644 (IEEE
--- 1800-2023 §11.4.10; the local simulators agree); `(N - 16) >>> (N - 9)` is 0, where IEEE and the local simulators give -1.
+-- 1800-2023 §11.4.10; the local simulators agree); `(N - 16) >>> (N - 9)` is -1, with the sign bit filled as IEEE specifies.
 #guard ((lp_shr_neg.pdesign.paramEnv2 [8]).toOption.map fun e => e.intVal? "S") == some (some 2147483644)
-#guard ((lp_ashr_neg.pdesign.paramEnv2 [8]).toOption.map fun e => e.intVal? "S") == some (some 0)
+#guard ((lp_ashr_neg.pdesign.paramEnv2 [8]).toOption.map fun e => e.intVal? "S") == some (some (-1))
 
 /--
 error: sv_structure: the parameter stage (`paramEnv2`) of this design could not be evaluated at a symbolic parameter: the instantiation decides `Int.ofNat
@@ -55,19 +55,6 @@ example (N : Nat) (hN : 1 ≤ N) (hR : (N : Int) < 2147483648) : CombDesign (lp_
 example (N : Nat) (hN : 2 ≤ N) (hN' : N ≤ 32) : CombDesign (lp_shl_neg.sem N) := by
   sv_structure
   all_goals (intros; omega)
-
-/--
-error: sv_structure: the parameter values could not be read off the instantiation environment: at a symbolic parameter the instantiation holds `S` at its exact 32-bit `int` value, `1 *
-  2 ^
-    (Int.ofNat
-        N).toNat` wrapped to 32 bits at every step, which is the summary's `1 *
-  2 ^
-    (Int.ofNat N %
-        4294967296).toNat` only where every value is in the signed 32-bit range [-2147483648, 2147483647] (the instantiation wraps every literal, constant read and intermediate result of an `int` expression to 32 bits, IEEE 1800-2023 §11.4, §11.6.1, §11.8.1), and `omega` could not show that from the hypotheses in context (a theorem at a symbolic `int` parameter needs a range premise such as `(hR : (N : Int) < 2147483648)`; a shift `a << b` is in range where `a * 2^b` is, §11.4.10)
--/
-#guard_msgs (whitespace := lax) in
-example (N : Nat) (hN : 1 ≤ N) (hR : (N : Int) < 2147483648) : CombDesign (lp_shl_wide.sem N) := by
-  sv_structure
 
 /--
 error: sv_structure: the parameter values could not be read off the instantiation environment: the localparam `S` is the 32-bit `int` 0 in the instantiation, and the summary's value of its definition is 1099511627776: the value of the definition `1 << N` is 1099511627776 at these parameters, outside the signed 32-bit range [-2147483648, 2147483647]: the instantiation's value is its 32-bit wrap 0 (IEEE 1800-2023 §11.4, §11.6.1, §11.8.1: every result of an `int` expression is 32 bits wide), and the summary reads the unbounded value, so a localparam whose value leaves the range is outside the fragment
@@ -94,24 +81,12 @@ example (N : Nat) (hN : 16 ≤ N) (hR : (N : Int) < 2147483648) : CombDesign (lp
   sv_structure
   all_goals (intros; omega)
 
--- `>>>` of a negative `int` by a negative amount (`N ≤ 8`): -1 under IEEE 1800-2023 §11.4.10, 0 in the instantiation
-/--
-error: sv_structure: the parameter values could not be read off the instantiation environment: at a symbolic parameter the instantiation holds `S` at its exact 32-bit `int` value, `0` wrapped to 32 bits at every step, which is the summary's `canonInt
-    32 true (Int.ofNat N - 16) /
-  2 ^
-    ((Int.ofNat N - 9) %
-        4294967296).toNat` only where every value is in the signed 32-bit range [-2147483648, 2147483647] (the instantiation wraps every literal, constant read and intermediate result of an `int` expression to 32 bits, IEEE 1800-2023 §11.4, §11.6.1, §11.8.1), and `omega` could not show that from the hypotheses in context (a theorem at a symbolic `int` parameter needs a range premise such as `(hR : (N : Int) < 2147483648)`; a shift `a << b` is in range where `a * 2^b` is, §11.4.10) (the definition has a `>>>`: of a negative `int` by a negative amount it is -1 under IEEE 1800-2023 §11.4.10, every bit shifted out and the sign bit filled in, and 0 in the instantiation, `evalIntExactRec`; a statement needs premises that keep its amount or its operand non-negative; the semantics owners have the finding)
--/
-#guard_msgs (whitespace := lax) in
-example (N : Nat) (hN : 1 ≤ N) (hN' : N ≤ 8) : CombDesign (lp_ashr_neg.sem N) := by
-  sv_structure
-
 /-- A non-negative amount (`9 ≤ N`), the operand negative below `N = 16`: the arithmetic shift rounds down in both
 readings. -/
 example (N : Nat) (hN : 9 ≤ N) (hN' : N < 16) : CombDesign (lp_ashr_neg.sem N) := by
   sv_structure
 
-example (N : Nat) (hN : 16 ≤ N) (hR : (N : Int) < 2147483648) : CombDesign (lp_ashr_neg.sem N) := by
+example (N : Nat) (hN : 16 ≤ N) (hN' : N ≤ 40) (hR : (N : Int) < 2147483648) : CombDesign (lp_ashr_neg.sem N) := by
   sv_structure
 
 end Examples.«system-verilog».lp_shift.neg

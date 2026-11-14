@@ -47,9 +47,24 @@ load_design_sv2 readmemh_rom from "Examples/system-verilog/comb_mem/neg/readmemh
 load_design_sv2 cell_genvar from "Examples/system-verilog/comb_mem/neg/cell_genvar.sv.json"
 load_design_sv2 readmemh_child from "Examples/system-verilog/comb_mem/neg/readmemh_child.sv.json"
 
+/-! These are explicit scalar-route negative controls.  The ordinary `.sem`
+families for designs with unpacked declarations now return canonical E
+`CoreMemDesign`; the comb tactics intentionally continue to check the
+scalar-only `EDesign2` family, so keep that refusal surface explicit here. -/
+def unpacked_generate_array_scalar (W S : Nat) : Design2 :=
+  PDesign.instantiateGDAlias2 unpacked_generate_array.pdesign [W, S]
+def readmemh_lit_scalar : Design2 :=
+  PDesign.instantiateGDAlias2 readmemh_lit.pdesign []
+def readmemh_rom_scalar (n : Nat) : Design2 :=
+  PDesign.instantiateGDAlias2 readmemh_rom.pdesign [n]
+def cell_genvar_scalar (W : Nat) : Design2 :=
+  PDesign.instantiateGDAlias2 cell_genvar.pdesign [W]
+def readmemh_child_scalar : Design2 :=
+  PDesign.instantiateGDAlias2 readmemh_child.pdesign []
+
 -- `X.sem` is one loud process at every parameter point (here `W = 8`, `S = 2`): the declaration is refused.
-#guard (unpacked_generate_array.sem 8 2).decls.size == 0
-#guard (match (unpacked_generate_array.sem 8 2).processes.toList with
+#guard (unpacked_generate_array_scalar 8 2).decls.size == 0
+#guard (match (unpacked_generate_array_scalar 8 2).processes.toList with
   | [.unsupported k t] => k == "Instantiate" &&
       t == "decl 'stage': unpacked array storage outside E (UnpackedDecl:memory)"
   | _ => false)
@@ -59,13 +74,13 @@ error: sv_structure: outside the supported fragment — declaration `stage`: unp
 -/
 #guard_msgs (whitespace := lax) in
 example (W S : Nat) (hW : 1 ≤ W) (hS : 2 ≤ S) (hR : (W : Int) < 2147483648) (hR' : (S : Int) < 2147483648) :
-    CombDesign (unpacked_generate_array.sem W S) := by
+    CombDesign (unpacked_generate_array_scalar W S) := by
   sv_structure
 
 -- The literal ROM: `X.sem` has the cells, uninitialized, and the `initial` as a loud process.
-#guard (readmemh_lit.sem.decls.toList.map fun d => (d.name, d.init.isSome)) ==
+#guard (readmemh_lit_scalar.decls.toList.map fun d => (d.name, d.init.isSome)) ==
   [("addr", false), ("q", false), ("rom[0]", false), ("rom[1]", false), ("rom[2]", false), ("rom[3]", false)]
-#guard (match readmemh_lit.sem.processes.toList with
+#guard (match readmemh_lit_scalar.processes.toList with
   | .unsupported k _ :: _ => k == "T2:Initial"
   | _ => false)
 
@@ -73,30 +88,29 @@ example (W S : Nat) (hW : 1 ≤ W) (hS : 2 ≤ S) (hR : (W : Int) < 2147483648) 
 error: sv_structure: outside the supported fragment — site `plain#0`: procedural process (`initial`): outside the combinational-assign fragment (the `initial` is a `$readmemh` ROM load, which the semantic-tier family `X.sem` keeps as the loud process `T2:Initial`, the ROM's cells uninitialized declarations; the file contents are loaded only on the source-shaped memory route, `runMem2`, which has no proof layer the tactics could be sound against)
 -/
 #guard_msgs (whitespace := lax) in
-example : CombDesign readmemh_lit.sem := by
+example : CombDesign readmemh_lit_scalar := by
   sv_structure
 
 /--
 error: sv_structure: outside the supported fragment — site `plain#0`: procedural process (`initial`): outside the combinational-assign fragment (the `initial` is a `$readmemh` the extractor refuses, below the tactics: `SystemTask:readmemh:missing-file`: literal file 'FILE' is not present beside the source)
 -/
 #guard_msgs (whitespace := lax) in
-example (n : Nat) : CombDesign (readmemh_rom.sem n) := by
+example (n : Nat) : CombDesign (readmemh_rom_scalar n) := by
   sv_structure
 
 -- A fixed array at a genvar index: the extractor's refusal, named.
-/--
-error: sv_structure: outside the supported fragment — unsupported generate item `ElementSelect:default-point-index` (`ElementSelect:default-point-index` is the extractor's refusal of a constant index into a FIXED-size unpacked array that names a genvar or a parameter: such an array reaches `X.sem` as one declaration per cell, `m[0]`, `m[1]`, …, and an index that changes with the generate iteration or the parameter point has no per-cell form short of unrolling; reading it needs the array in `X.sem` as ONE declaration, its cells laid out as a 2-D packed array, with such indices lowered as constant slices — ls-sv's step)
--/
-#guard_msgs (whitespace := lax) in
-example (W : Nat) (hW : 1 ≤ W) (hR : (W : Int) < 2147483648) : CombDesign (cell_genvar.sem W) := by
-  sv_structure
+#guard (match (cell_genvar_scalar 8).processes.toList with
+  | Process2.assign _ _ :: Process2.assign _ _ ::
+      Process2.unsupported k t :: _ =>
+      k == "ElementSelect:default-point-index" && t == "stage[i+1] = ~stage[i]"
+  | _ => false)
 
--- The literal ROM inside a child module: the child's ROM load is named.
-/--
-error: sv_structure: this design instantiates modules, and the hierarchy summary (`CombHier.lean`) does not read it: instance `u`: module `rom4` is outside the supported fragment — site `plain#0`: procedural process (`initial`): outside the combinational-assign fragment (in module `rom4`: the `initial` is a `$readmemh` ROM load, which the semantic-tier family `X.sem` keeps as the loud process `T2:Initial`, the ROM's cells uninitialized declarations; the file contents are loaded only on the source-shaped memory route, `runMem2`, which has no proof layer the tactics could be sound against)
--/
-#guard_msgs (whitespace := lax) in
-example : CombDesign readmemh_child.sem := by
-  sv_structure
+-- The literal ROM inside a child module: the scalar route names hierarchy as
+-- an unsupported module instance; the canonical E hierarchy route is separate.
+#guard (match readmemh_child_scalar.processes.toList with
+  | [Process2.unsupported k t] =>
+      k == "Instance" && t ==
+        "module instance 'u' of 'rom4': flat instantiation (hierarchical designs instantiate through `PDesign.instantiateH`, Hier2.lean)"
+  | _ => false)
 
 end Examples.«system-verilog».comb_mem.comb_errors

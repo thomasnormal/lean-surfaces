@@ -4279,6 +4279,43 @@ theorem twinAgrees_callInM_top_assignments
   rw [hbody]
   rfl
 
+theorem twinAgrees_callInM_top_assignments_ret
+    (K : Kont) (m : Module) (fname : String) (args : Array RVal)
+    (f : FunctionDefn) (w : World) (ss : List Stmt) (ret : Stmt) (v : RVal)
+    (hfind : findFunction m fname = some f)
+    (hgen : proofCellGeneratorUnsafe m fname = false)
+    (hargs : f.argsOk = true) (hlocal : f.localsOk = true)
+    (hnotgen : f.isGenerator = false)
+    (harity : arityOk f.params args.size = true)
+    (hbodyEq : f.body.toList = ss ++ [ret])
+    (hShape : ∀ s ∈ ss,
+      ∃ targets value sp, s = .assign targets value sp)
+    (hEach : ∀ s ∈ ss, ∀ st', ∃ st'',
+      toRun (execOpen K m s) st' = .ok st'' .next)
+    (hRet : ∀ st', ∃ st'',
+      toRun (execOpen K m ret) st' = .ok st'' (.ret v)) :
+    ∃ w', toRun (callInM K m fname args)
+      { w with callDepth := pythonTopCallDepth } = .ok w' v := by
+  have hbody := finishCallM_assignments_ret_run K m
+    (globalCallEnv { w with callDepth := pythonTopCallDepth }
+      f.params args f.body f.hasGlobal)
+    ss ret v { w with callDepth := 1 } pythonTopCallDepth hShape hEach hRet
+  unfold callInM
+  rw [hfind]
+  simp only [hgen, hargs, hlocal, hnotgen, harity,
+    Bool.false_eq_true, Bool.not_true, Bool.not_eq_true, ↓reduceIte]
+  rw [toRun_get_bind]
+  rw [if_pos (beq_self_eq_true _)]
+  rw [toRun_bind]
+  rw [toRun_set]
+  simp only [Run.bind]
+  rw [hbodyEq]
+  rw [toRun_bind]
+  rcases hbody with ⟨st', hbody⟩
+  rw [hbody]
+  simp only [Run.bind]
+  exact ⟨{ st'.world with callDepth := pythonTopCallDepth }, rfl⟩
+
 theorem twinAgrees_execOpenList_nil (K : Kont) (m : Module) (st : FrameState) :
     toRun (execOpenList K m []) st = .ok st .next := by
   rfl

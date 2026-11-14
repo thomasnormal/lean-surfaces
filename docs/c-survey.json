@@ -10,10 +10,10 @@
   "gcc.c-torture/execute": {
    "not-parsed": 267,
    "oracle-tests-compiler": 1,
-   "passed": 946,
+   "passed": 947,
    "refused-libc": 34,
    "refused-ub": 98,
-   "refused-unsupported": 508,
+   "refused-unsupported": 507,
    "timeout": 64
   },
   "gcc.c23-run": {
@@ -28,10 +28,10 @@
  "counts": {
   "not-parsed": 294,
   "oracle-tests-compiler": 1,
-  "passed": 1126,
+  "passed": 1127,
   "refused-libc": 38,
   "refused-ub": 107,
-  "refused-unsupported": 582,
+  "refused-unsupported": 581,
   "timeout": 66
  },
  "dynamic_wall_ranking": [
@@ -870,19 +870,6 @@
   },
   {
    "files": [
-    "00010.c",
-    "00199.c",
-    "20030909-1.c",
-    "20040704-1.c",
-    "pr119291.c",
-    "pr17078-1.c"
-   ],
-   "present": 6,
-   "sole": 6,
-   "wall": "unsupported:break, continue or goto escaped a function body"
-  },
-  {
-   "files": [
     "gcc/testsuite/gcc.dg/c23-empty-init-5.c",
     "gcc/testsuite/gcc.dg/c23-empty-init-warn-17.c",
     "gcc/testsuite/gcc.dg/c23-empty-init-warn-2.c",
@@ -892,6 +879,18 @@
    "present": 5,
    "sole": 5,
    "wall": "unsupported:DesignatedInitUpdateExpr"
+  },
+  {
+   "files": [
+    "00010.c",
+    "00199.c",
+    "20040704-1.c",
+    "pr119291.c",
+    "pr17078-1.c"
+   ],
+   "present": 5,
+   "sole": 5,
+   "wall": "unsupported:break, continue or goto escaped a function body"
   },
   {
    "files": [
@@ -3140,8 +3139,8 @@
   }
  ],
  "manifest_hash": "bca94718b04e8394cdce992866637166f530978790bd1013cea4a00ae25ef764",
- "measured_at_utc": "2026-11-14T15:25:34Z",
- "measured_commit": "5cb211ca58013d53779d2b6bdc8ffea6b7f85377",
+ "measured_at_utc": "2026-11-14T16:18:18Z",
+ "measured_commit": "922b99b3e31f9d8a06250c4526c102b06c485b20",
  "pin": {
   "corpora": [
    "C1",
@@ -8607,13 +8606,13 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "break, continue or goto escaped a function body",
-   "dynamic_wall": "unsupported:break, continue or goto escaped a function body",
+   "detail": "",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "20030909-1.c",
    "sha256": "bf47473cd7dcf75a607776eb5f2e1b8fba0f7069558dff9ea90a176b0d6c45c1",
    "static_walls": [],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",

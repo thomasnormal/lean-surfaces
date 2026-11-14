@@ -37,4 +37,39 @@ private def observed : Bool :=
 
 #guard observed
 
+/-! A source-order fold is included only as a kernel-cost probe.  It is not
+the E scheduler and is not exposed as a semantic runner; the exact E route
+above remains `fastRun`.  The fold gives the N=8 store benchmark a cheap
+kernel check while the schedule-independent refinement is still pending. -/
+
+private def sourcePass : List ProcId → FastConfig → Res FastConfig
+  | [], c => .ok c
+  | p :: ps, c =>
+      match E.procs[p]? with
+      | some (.assign t e) => do
+          let cells ← fastActivateAssign E c t e
+          sourcePass ps { c with cells, active := [] }
+      | _ => .unsupported "source-order probe requires continuous assignments"
+
+private def sourceRounds : Nat → FastConfig → Res FastConfig
+  | 0, c => .ok c
+  | n + 1, c =>
+      match sourcePass (List.range E.procs.size) c with
+      | .ok c' => sourceRounds n c'
+      | .timeout => .timeout
+      | .unsupported msg => .unsupported msg
+
+private def sourceObserved : Bool :=
+  match stimulus with
+  | entry :: _ =>
+      match sourceRounds 12 (FastConfig.ofConfig E (Config.start E entry)) with
+      | .ok c =>
+          let view := E.view c.store
+          SvState.showSignal view "s" == "00000000" &&
+            SvState.showSignal view "cout" == "1"
+      | _ => false
+  | [] => false
+
+example : sourceObserved = true := by decide +kernel
+
 end Examples.«system-verilog».ripple_add.array_fast

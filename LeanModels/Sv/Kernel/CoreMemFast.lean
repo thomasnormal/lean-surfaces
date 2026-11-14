@@ -47,6 +47,14 @@ def CoreMemDesign.fastScalarWrite (E : CoreMemDesign) (s : CoreMemFastState)
             cells := s.scalar.cells.setIfInBounds x.decl converted } }
       | _ => .unsupported "10.3.2: non-flat scalar target"
 
+def CoreMemDesign.fastScalarAssignAt (E : CoreMemDesign) (s : CoreMemFastState)
+    (view : SvState) (index : Nat) (name : String) (value : PExpr) : Res CoreMemFastState := do
+  let width ← match E.scalarWidth? name with
+    | some w => .ok w
+    | none => .unsupported s!"10.3: continuous target '{name}' is undeclared"
+  let v ← E.evalScalarAssignAtView E.env E.elems s.toState view (some width) index value
+  E.fastScalarWrite s name v
+
 theorem CoreMemDesign.fastScalarWrite_toState
     (E : CoreMemDesign) (s s' : CoreMemFastState) (name : String) (v : LVec)
     (x : VarId)
@@ -73,5 +81,26 @@ theorem CoreMemDesign.fastScalarWrite_toState
       simp [Elab.setName, hresolve, arrayStore, hbound]
     | cons head tail =>
       simp_all
+
+theorem CoreMemDesign.fastScalarAssignAt_toState
+    (E : CoreMemDesign) (s s' : CoreMemFastState) (view : SvState)
+    (index : Nat) (name : String) (value : PExpr) (width : Nat) (v : LVec)
+    (x : VarId)
+    (hwidth : E.scalarWidth? name = some width)
+    (hresolve : E.scalar.resolve name = some x)
+    (hpath : x.path = [])
+    (hbound : x.decl < s.scalar.cells.size)
+    (hv : E.evalScalarAssignAtView E.env E.elems s.toState view
+      (some width) index value = .ok v)
+    (h : E.fastScalarAssignAt s view index name value = .ok s') :
+    s'.toState = { s.toState with
+      scalar := E.scalar.setName s.toState.scalar name v } := by
+  unfold CoreMemDesign.fastScalarAssignAt at h
+  simp [hwidth] at h
+  rw [hv] at h
+  obtain ⟨a, ha, hwrite⟩ := h
+  have hav : a = v := (Res.ok.inj ha).symm
+  subst a
+  exact E.fastScalarWrite_toState s s' name v x hresolve hpath hbound hwrite
 
 end LeanModels.Sv.Kernel

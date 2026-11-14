@@ -1,10 +1,10 @@
 {
  "by_corpus": {
   "c-testsuite/single-exec": {
-   "passed": 175,
+   "passed": 176,
    "refused-libc": 2,
    "refused-ub": 8,
-   "refused-unsupported": 33,
+   "refused-unsupported": 32,
    "timeout": 2
   },
   "gcc.c-torture/execute": {
@@ -28,10 +28,10 @@
  "counts": {
   "not-parsed": 294,
   "oracle-tests-compiler": 1,
-  "passed": 1124,
+  "passed": 1125,
   "refused-libc": 38,
   "refused-ub": 107,
-  "refused-unsupported": 584,
+  "refused-unsupported": 583,
   "timeout": 66
  },
  "dynamic_wall_ranking": [
@@ -1693,14 +1693,6 @@
   },
   {
    "files": [
-    "00150.c"
-   ],
-   "present": 1,
-   "sole": 1,
-   "wall": "unsupported:initializer list (inch 4)"
-  },
-  {
-   "files": [
     "20071029-1.c"
    ],
    "present": 1,
@@ -3149,8 +3141,8 @@
   }
  ],
  "manifest_hash": "bca94718b04e8394cdce992866637166f530978790bd1013cea4a00ae25ef764",
- "measured_at_utc": "2026-11-14T13:29:13Z",
- "measured_commit": "d644b08bf660a7a9be864f30576dd86b1bba77d6",
+ "measured_at_utc": "2026-11-14T14:35:59Z",
+ "measured_commit": "a4e59bf3986bb448911ed7445029a8654e6a5e43",
  "pin": {
   "corpora": [
    "C1",
@@ -4795,15 +4787,15 @@
   },
   {
    "corpus": "c-testsuite/single-exec",
-   "detail": "initializer list (inch 4)",
-   "dynamic_wall": "unsupported:initializer list (inch 4)",
+   "detail": "",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "00150.c",
    "sha256": "43965a3537ff957841cbec8350e3378cbc4690e7358d504845e82e341bb179bb",
    "static_walls": [
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "c-testsuite/single-exec",

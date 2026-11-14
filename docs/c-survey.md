@@ -2,10 +2,10 @@
 
 Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manifest.
 
-- verdicts: 1124/2214 MATCH (passed 1124, failed 0, oracle 0)
+- verdicts: 1125/2214 MATCH (passed 1125, failed 0, oracle 0)
 - manifest SHA-256: `bca94718b04e8394cdce992866637166f530978790bd1013cea4a00ae25ef764`
-- measured commit: `d644b08bf660a7a9be864f30576dd86b1bba77d6`
-- measured at: `2026-11-14T13:29:13Z`
+- measured commit: `a4e59bf3986bb448911ed7445029a8654e6a5e43`
+- measured at: `2026-11-14T14:35:59Z`
 
 ## Verdict counts
 
@@ -13,20 +13,20 @@ Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manife
 | --- | ---: |
 | `not-parsed` | 294 |
 | `oracle-tests-compiler` | 1 |
-| `passed` | 1124 |
+| `passed` | 1125 |
 | `refused-libc` | 38 |
 | `refused-ub` | 107 |
-| `refused-unsupported` | 584 |
+| `refused-unsupported` | 583 |
 | `timeout` | 66 |
 
 ## Counts by corpus
 
 | corpus | verdict | files |
 | --- | --- | ---: |
-| `c-testsuite/single-exec` | `passed` | 175 |
+| `c-testsuite/single-exec` | `passed` | 176 |
 | `c-testsuite/single-exec` | `refused-libc` | 2 |
 | `c-testsuite/single-exec` | `refused-ub` | 8 |
-| `c-testsuite/single-exec` | `refused-unsupported` | 33 |
+| `c-testsuite/single-exec` | `refused-unsupported` | 32 |
 | `c-testsuite/single-exec` | `timeout` | 2 |
 | `gcc.c-torture/execute` | `not-parsed` | 267 |
 | `gcc.c-torture/execute` | `oracle-tests-compiler` | 1 |
@@ -408,7 +408,6 @@ The run's first refusal, normalized by construct; `sole` counts rows whose first
 | `unsupported:extern object 'i' has no definition in the translation unit` | 1 | 1 | pure-1.c |
 | `unsupported:extern object 'p' has no definition in the translation unit` | 1 | 1 | gcc/testsuite/gcc.dg/c23-unreachable-1.c |
 | `unsupported:function instrumentation is outside the tier` | 1 | 1 | eeprof-1.c |
-| `unsupported:initializer list (inch 4)` | 1 | 1 | 00150.c |
 | `unsupported:no layout for compound literal type 'T'` | 1 | 1 | 20071029-1.c |
 | `unsupported:no layout for compound literal type 'V'` | 1 | 1 | pr109040.c |
 | `unsupported:no layout for declared type 'A0'` | 1 | 1 | va-arg-22.c |

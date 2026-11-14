@@ -38,6 +38,12 @@ theorem FastConfig.ofConfig_store (E : Elab) (c : Config) :
   unfold FastConfig.ofConfig FastConfig.store
   exact arrayStore_cells c.store E.decls.size
 
+theorem FastConfig.toConfig_ofConfig (E : Elab) (c : Config) :
+    (FastConfig.ofConfig E c).toConfig = c := by
+  cases c
+  simp [FastConfig.ofConfig, FastConfig.toConfig, FastConfig.store]
+  rw [arrayStore_cells]
+
 theorem arrayStore_set_flat (a : Array Val) (fallback : Store) (x : VarId) (v : Val)
     (hp : x.path = []) (hb : x.decl < a.size) :
     arrayStore (a.setIfInBounds x.decl v) fallback x = v := by
@@ -270,6 +276,13 @@ def FlatAssignment (E : Elab) (c : FastConfig) (t : Lhs2) : Prop :=
     ∀ wn off, (wn, off) ∈ Win.placed ws →
       ∃ x, E.resolve wn.1 = some x ∧ x.path = [] ∧ x.decl < c.cells.size
 
+def FlatAssignmentRun (E : Elab) (c : FastConfig) : Prop :=
+  ∀ (p : ProcId) (t : Lhs2) (e : Expr2) (a' : Array Val),
+    E.procs[p]? = some (Proc0.assign t e) →
+    fastActivateAssign E c t e = .ok a' →
+      ∃ ws v, t.windows? E.toDesign2 = some ws ∧
+        evalPure2 (E.view c.store) e = .ok v ∧ FlatAssignment E c t
+
 theorem fastStep_assign_refines_step_of_flat (E : Elab) (ch : Choice)
     (c : FastConfig) (p : ProcId) (rest : List ProcId)
     (t : Lhs2) (e : Expr2) (ws : List Win) (v : LVec) (a' : Array Val)
@@ -300,6 +313,65 @@ theorem fastStep_assign_refines_step_of_flat (E : Elab) (ch : Choice)
   exact fastStep_assign_refines_step E ch c p rest t e a'
     (E.writeWins c.store (v.resizeU (Win.sumWidth ws)) (Win.placed ws))
     hchoose hp hfast hact' hstore
+
+theorem fastStep_refines_step_of_flat (E : Elab) (ch : Choice)
+    (c : FastConfig) (hflat : FlatAssignmentRun E c)
+    {fc : FastConfig} (h : fastStep E ch c = .ok (some fc)) :
+    step E ch c.toConfig = .next fc.toConfig := by
+  cases hch : ch.choose c.k c.active with
+  | nil => simp [fastStep, hch] at h
+  | cons p rest =>
+      cases hp : E.procs[p]? with
+      | none =>
+          have hfb := fastStep_fallback_eq E ch c p rest hch
+            (by intro t e hpe; simp [hp] at hpe)
+          rw [hfb] at h
+          cases hs : step E ch c.toConfig with
+          | next c' =>
+              simp [hs] at h
+              rw [← h, FastConfig.toConfig_ofConfig]
+          | slotClosed c' => simp [hs] at h
+          | refused r => simp [hs] at h
+      | some proc =>
+          cases proc with
+          | assign t e =>
+              simp only [fastStep, hch, hp] at h
+              cases hfa : fastActivateAssign E c t e with
+              | timeout => simp [hfa] at h
+              | unsupported msg => simp [hfa] at h
+              | ok a' =>
+                  simp [hfa] at h
+                  unfold FlatAssignmentRun at hflat
+                  obtain ⟨ws, v, hws, hv, hflat'⟩ := hflat p t e a' hp hfa
+                  have href := fastStep_assign_refines_step_of_flat E ch c p rest t e
+                    ws v a' hch hp hws hv hfa hflat'
+                  obtain ⟨fc', hfast', hstep'⟩ := href
+                  have h2 : fastStep E ch c = .ok (some fc) := by
+                    simpa [fastStep, hch, hp, hfa] using h
+                  have hfc : fc' = fc := by
+                    exact Option.some.inj (Res.ok.inj (hfast'.symm.trans h2))
+                  subst fc'
+                  exact hstep'
+          | comb body =>
+              have hfb := fastStep_fallback_eq E ch c p rest hch
+                (by intro t e hpe; simp [hp] at hpe)
+              rw [hfb] at h
+              cases hs : step E ch c.toConfig with
+              | next c' =>
+                  simp [hs] at h
+                  rw [← h, FastConfig.toConfig_ofConfig]
+              | slotClosed c' => simp [hs] at h
+              | refused r => simp [hs] at h
+          | implicit body =>
+              have hfb := fastStep_fallback_eq E ch c p rest hch
+                (by intro t e hpe; simp [hp] at hpe)
+              rw [hfb] at h
+              cases hs : step E ch c.toConfig with
+              | next c' =>
+                  simp [hs] at h
+                  rw [← h, FastConfig.toConfig_ofConfig]
+              | slotClosed c' => simp [hs] at h
+              | refused r => simp [hs] at h
 
 def fastExec (E : Elab) (ch : Choice) : Nat → FastConfig → Res FastConfig
   | 0, _ => .timeout
@@ -352,6 +424,7 @@ theorem fastExec_sound_of_step_refines (E : Elab) (ch : Choice)
               simp at h
       | timeout => simp [hs] at h
       | unsupported msg => simp [hs] at h
+
   | succ n ih =>
       simp only [fastExec] at h
       cases hs : fastStep E ch c with
@@ -380,6 +453,18 @@ theorem fastExec_sound_of_step_refines (E : Elab) (ch : Choice)
               | unsupported msg => rw [ht] at h; cases h
       | timeout => simp [hs] at h
       | unsupported msg => simp [hs] at h
+
+theorem fastExec_sound_of_flat (E : Elab) (ch : Choice)
+    (hclosed : ∀ {c : FastConfig},
+      fastStep E ch c = .ok none →
+        step E ch c.toConfig = .slotClosed c.toConfig)
+    (hflat : ∀ c : FastConfig, FlatAssignmentRun E c)
+    (n : Nat) (c c' : FastConfig)
+    (h : fastExec E ch (n + 1) c = .ok c') :
+    SlotCloses E ch c.toConfig c'.toConfig := by
+  exact fastExec_sound_of_step_refines E ch hclosed
+    (fun {c} {c'} hs => fastStep_refines_step_of_flat E ch c (hflat c) hs)
+    n c c' h
 
 def fastRun (E : Elab) (ch : Choice) (fuel : Nat) (env : List SvState) :
     Res (List FastConfig) :=

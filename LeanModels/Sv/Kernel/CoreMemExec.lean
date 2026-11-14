@@ -108,6 +108,7 @@ equations remain loud until their memory-aware equation theorem is added. -/
 def coreMemEquationB : List CoreMemProc → Bool
   | [] => true
   | .assign (.ident _) _ :: rest => coreMemEquationB rest
+  | .assign (.arrayElem _ []) (.arrayElem _ []) :: rest => coreMemEquationB rest
   | .assign (.arrayElem _ [_]) _ :: rest => coreMemEquationB rest
   | _ => false
 
@@ -124,7 +125,41 @@ instance : DecidablePred CoreMemDesign.EquationGate := fun d => by
 
 structure CoreMemState where
   scalar : Store
+  /-- Data-backed scalar values, indexed by the flat declaration ordinal.
+      The canonical `Store` view is rebuilt from this array after each
+      source-shaped update, so sequential assignments do not form a chain of
+      `Store.set` closures. -/
+  scalarCache : Array Val
   memory : MemState
+
+/-! The scalar E store is a function for compatibility with canonical E.  The
+    cache is the state representation; this direct view avoids rebuilding a
+    `Store.set` closure chain when a source-shaped hierarchy assigns several
+    scalar outputs during one settle pass. -/
+def CoreMemDesign.scalarStore (E : CoreMemDesign) (cache : Array Val) : Store :=
+  fun x =>
+    match x.path with
+    | [] =>
+        match cache[x.decl]? with
+        | some v => v
+        | none => E.scalar.initStore x
+    | _ => E.scalar.initStore x
+
+def CoreMemDesign.scalarCacheOf (E : CoreMemDesign) (s : Store) : Array Val :=
+  Array.ofFn (n := E.scalar.decls.size) fun i => s { decl := i.val }
+
+def CoreMemDesign.setScalarState (E : CoreMemDesign) (st : CoreMemState)
+    (name : String) (v : LVec) : CoreMemState :=
+  match E.scalar.resolve name with
+  | some x =>
+      let cache := st.scalarCache.set! x.decl (Val.ofLVec (st.scalar x).ty v)
+      { st with scalar := E.scalarStore cache, scalarCache := cache }
+  | none => st
+
+def CoreMemDesign.normalizeScalar (E : CoreMemDesign) (st : CoreMemState)
+    (s : Store) : CoreMemState :=
+  let cache := E.scalarCacheOf s
+  { st with scalar := E.scalarStore cache, scalarCache := cache }
 
 /-! A threaded view is the authoritative name-facing image while one source
 body settles.  Materializing it back into a flat `Store` at process
@@ -140,10 +175,13 @@ def CoreMemDesign.storeFromView (E : CoreMemDesign) (view : SvState) : Store :=
 
 def CoreMemDesign.compactScalar (E : CoreMemDesign) (st : CoreMemState) (view : SvState) :
     CoreMemState :=
-  { st with scalar := E.storeFromView view }
+  let cache := E.scalarCacheOf (E.storeFromView view)
+  { st with scalar := E.scalarStore cache, scalarCache := cache }
 
 def CoreMemDesign.initial (E : CoreMemDesign) : CoreMemState :=
-  { scalar := E.scalar.initStore
+  let cache := E.scalarCacheOf E.scalar.initStore
+  { scalar := E.scalarStore cache
+    scalarCache := cache
     memory := MemState.ofShapes (E.memories.toList.map CoreMemDecl.shape) }
 
 def CoreMemDesign.scalarAssignInputsOnly (E : CoreMemDesign) : Bool :=
@@ -1012,6 +1050,21 @@ def CoreMemDesign.writeMemoryAssign (E : CoreMemDesign) (env : IEnv)
       | .ok none => .unsupported "10.3: continuous target is not one-rank"
       | .ok (some memory) => .ok { st with memory }
 
+/-! A whole unpacked-array port connection remains a source-shaped array
+assignment.  Its runtime meaning is the ordinary continuous assignment of
+each element to the child declaration; `MemState.copyId` performs that copy
+without expanding the declaration into cells. -/
+def CoreMemDesign.copyMemoryAssign (E : CoreMemDesign) (st : CoreMemState)
+    (target source : String) : Res CoreMemState :=
+  match E.memDecl? target, E.memDecl? source with
+  | some dst, some src =>
+      match st.memory.copyId src.shape.id dst.shape.id with
+      | some memory => .ok { st with memory }
+      | none => .unsupported
+          s!"23.3.3: unpacked port connection '{source}' to '{target}' has incompatible bounds"
+  | none, _ => .unsupported s!"23.3.3: unpacked port target '{target}' is undeclared"
+  | _, none => .unsupported s!"23.3.3: unpacked port actual '{source}' is undeclared"
+
 def CoreMemExec.fromQueue (st : CoreMemState) : Res CoreMemQueue → CoreMemExec
   | .ok (scalarQ, memoryQ) => .ok { state := st, scalarQ, memoryQ }
   | .timeout => .timeout
@@ -1038,28 +1091,29 @@ def CoreMemDesign.writeInitialCell (E : CoreMemDesign) (env : IEnv)
       do
         let idx ← E.evalIndex env elems st index
         match st.memory.writeIndexId md.shape.id index.signedCast idx value with
-        | some memory => .ok { scalar := st.scalar, memory := memory }
+        | some memory => .ok { st with memory }
         | none => .unsupported s!"11.5.1: memory identity for '{name}' is not present"
   | .arrayElem _ _ => .unsupported
       s!"11.5.1: memory initial target '{name}' is not one-rank"
   | _ => .unsupported "11.5.1: packed or concatenated initial target is outside this E slice"
 
 def CoreMemDesign.execInitialStmt (E : CoreMemDesign) (env : IEnv)
-    (elems : List (String × Nat)) (st : CoreMemState) : PStmt → Res CoreMemState
-  | .blockingAssign name value =>
+    (elems : List (String × Nat)) (st : CoreMemState) : Nat → PStmt → Res CoreMemState
+  | 0, _ => .timeout
+  | fuel + 1, .blockingAssign name value =>
       match E.scalarTarget name with
       | none => .unsupported s!"11.5.1: scalar initial target '{name}' is undeclared"
       | some width => do
           let v ← E.evalExpr env elems st (some width) value
-          .ok { st with scalar := E.scalar.setName st.scalar name v }
-  | .blockingAssignL target value =>
+          .ok (E.setScalarState st name v)
+  | fuel + 1, .blockingAssignL target value =>
       match target with
       | .ident name =>
           match E.scalarTarget name with
           | none => .unsupported s!"11.5.1: scalar initial target '{name}' is undeclared"
           | some width => do
               let v ← E.evalExpr env elems st (some width) value
-              .ok { st with scalar := E.scalar.setName st.scalar name v }
+              .ok (E.setScalarState st name v)
       | .arrayElem name [_] =>
           match E.memDecl? name with
           | none => .unsupported s!"11.5.1: memory initial target '{name}' is undeclared"
@@ -1069,36 +1123,38 @@ def CoreMemDesign.execInitialStmt (E : CoreMemDesign) (env : IEnv)
       | .arrayElem name _ =>
           .unsupported s!"11.5.1: memory initial target '{name}' is not one-rank"
       | _ => .unsupported "11.5.1: packed or concatenated initial target is outside this E slice"
-  | .ifStmt cond yes no => do
+  | fuel + 1, .ifStmt cond yes no => do
       let cv ← E.evalExpr env elems st (some 1) cond
-      if cv.condTrue then E.execInitialStmt env elems st yes
+      if cv.condTrue then E.execInitialStmt env elems st fuel yes
       else match no with
         | none => .ok st
-        | some stmt => E.execInitialStmt env elems st stmt
-  | .block body => E.execInitialStmts env elems st body
-  | .forLoop iterator init condition step body =>
+        | some stmt => E.execInitialStmt env elems st fuel stmt
+  | fuel + 1, .block body => E.execInitialStmts env elems st fuel body
+  | fuel + 1, .forLoop iterator init condition step body =>
       match forValues2 env iterator init condition step with
       | .timeout => .timeout
       | .unsupported e => .unsupported s!"ForLoopStatement: {e}"
-      | .ok values => E.execInitialLoop env elems st values body iterator
-  | .nbaAssign .. | .nbaAssignL .. =>
+      | .ok values => E.execInitialLoop env elems st fuel values body iterator
+  | fuel + 1, .nbaAssign .. | fuel + 1, .nbaAssignL .. =>
       .unsupported "10.4.2: nonblocking assignment in a time-zero initializer"
-  | .caseStmt .. => .unsupported "12.5: case in a time-zero initializer is outside this slice"
-  | .unsupported kind text => .unsupported s!"{kind}: {text}"
+  | fuel + 1, .caseStmt .. => .unsupported "12.5: case in a time-zero initializer is outside this slice"
+  | fuel + 1, .unsupported kind text => .unsupported s!"{kind}: {text}"
 
 def CoreMemDesign.execInitialStmts (E : CoreMemDesign) (env : IEnv)
-    (elems : List (String × Nat)) (st : CoreMemState) : List PStmt → Res CoreMemState
-  | [] => .ok st
-  | stmt :: rest => do
-      let st' ← E.execInitialStmt env elems st stmt
-      E.execInitialStmts env elems st' rest
+    (elems : List (String × Nat)) (st : CoreMemState) : Nat → List PStmt → Res CoreMemState
+  | 0, _ => .timeout
+  | fuel + 1, [] => .ok st
+  | fuel + 1, stmt :: rest => do
+      let st' ← E.execInitialStmt env elems st fuel stmt
+      E.execInitialStmts env elems st' fuel rest
 
 def CoreMemDesign.execInitialLoop (E : CoreMemDesign) (env : IEnv)
-    (elems : List (String × Nat)) (st : CoreMemState) : List Int → PStmt → String → Res CoreMemState
-  | [], _, _ => .ok st
-  | i :: rest, body, iterator => do
-      let st' ← E.execInitialStmt (env.bindVal iterator i) elems st body
-      E.execInitialLoop env elems st' rest body iterator
+    (elems : List (String × Nat)) (st : CoreMemState) : Nat → List Int → PStmt → String → Res CoreMemState
+  | 0, _, _, _ => .timeout
+  | fuel + 1, [], _, _ => .ok st
+  | fuel + 1, i :: rest, body, iterator => do
+      let st' ← E.execInitialStmt (env.bindVal iterator i) elems st fuel body
+      E.execInitialLoop env elems st' fuel rest body iterator
 
 end
 
@@ -1150,7 +1206,7 @@ def CoreMemDesign.execImplicitStmtFuel (E : CoreMemDesign) (env : IEnv)
       | none => .unsupported s!"9.2.2.2: scalar implicit target '{name}' is undeclared"
       | some width => do
           let v ← E.evalExpr env elems st (some width) value
-          .ok { st with scalar := E.scalar.setName st.scalar name v }
+          .ok (E.setScalarState st name v)
   | fuel + 1, .blockingAssignL target value =>
       match target with
       | .ident name =>
@@ -1158,7 +1214,7 @@ def CoreMemDesign.execImplicitStmtFuel (E : CoreMemDesign) (env : IEnv)
           | none => .unsupported s!"9.2.2.2: scalar implicit target '{name}' is undeclared"
           | some width => do
               let v ← E.evalExpr env elems st (some width) value
-              .ok { st with scalar := E.scalar.setName st.scalar name v }
+              .ok (E.setScalarState st name v)
       | .arrayElem name [_] =>
           match E.memDecl? name with
           | none => .unsupported s!"9.2.2.2: memory implicit target '{name}' is undeclared"
@@ -1245,8 +1301,8 @@ def CoreMemDesign.execCombStmtFuel (E : CoreMemDesign) (env : IEnv)
       | none => .unsupported s!"9.2.2.2: scalar always_comb target '{name}' is undeclared"
       | some width => do
           let v ← E.evalCombExpr env elems st view (some width) value
-          let scalar := E.scalar.setName st.scalar name v
-          .ok ({ st with scalar }, SvState.set view name v)
+          let st' := E.setScalarState st name v
+          .ok (st', SvState.set view name v)
   | fuel + 1, .blockingAssignL target value =>
       match target with
       | .ident name =>
@@ -1254,8 +1310,8 @@ def CoreMemDesign.execCombStmtFuel (E : CoreMemDesign) (env : IEnv)
           | none => .unsupported s!"9.2.2.2: scalar always_comb target '{name}' is undeclared"
           | some width => do
               let v ← E.evalCombExpr env elems st view (some width) value
-              let scalar := E.scalar.setName st.scalar name v
-              .ok ({ st with scalar }, SvState.set view name v)
+              let st' := E.setScalarState st name v
+              .ok (st', SvState.set view name v)
       | .arrayElem name [_] =>
           match E.memDecl? name with
           | none => .unsupported s!"9.2.2.2: memory always_comb target '{name}' is undeclared"
@@ -1398,7 +1454,7 @@ def CoreMemDesign.execBlockingTarget (E : CoreMemDesign) (env : IEnv)
       | none => .unsupported s!"9.2.2.1: scalar edge target '{name}' is undeclared"
       | some width => do
           let v ← E.evalExpr env elems st (some width) value
-          .ok { st with scalar := E.scalar.setName st.scalar name v }
+          .ok (E.setScalarState st name v)
   | .arrayElem name [_] =>
       match E.memDecl? name with
       | none => .unsupported s!"9.2.2.1: memory edge target '{name}' is undeclared"
@@ -1523,8 +1579,17 @@ def CoreMemDesign.settleAssignAt (E : CoreMemDesign) (env : IEnv) (elems : List 
             | some w => .ok w
             | none => .unsupported s!"10.3: continuous target '{name}' is undeclared"
           let v ← E.evalScalarAssignAtView env elems st view (some width) index value
-          let scalar := E.scalar.setName st.scalar name v
-          E.settleAssignAt env elems { st with scalar } (SvState.set view name v) (index + 1) rest
+          let st' := E.setScalarState st name v
+          E.settleAssignAt env elems st' (SvState.set view name v) (index + 1) rest
+      | .arrayElem target [] =>
+          (match value with
+           | .arrayElem source [] =>
+               match E.copyMemoryAssign st target source with
+               | .ok st' => E.settleAssignAt env elems st' view (index + 1) rest
+               | .timeout => .timeout
+               | .unsupported msg => .unsupported msg
+           | _ => .unsupported
+               "23.3.3: unpacked port connection actual is not a whole array")
       | .arrayElem name [_] =>
           match E.memDecl? name with
           | none => .unsupported s!"10.3: continuous memory target '{name}' is undeclared"
@@ -1561,7 +1626,7 @@ def CoreMemDesign.initialState (E : CoreMemDesign) : Res CoreMemState := do
     | _ => none
   let base ← match bodies with
     | [] => .ok E.initial
-    | [body] => E.execInitialStmt E.env E.elems E.initial body
+    | [body] => E.execInitialStmt E.env E.elems E.initial 4096 body
     | _ => .unsupported "T2:Initial: multiple initial processes are outside this cycle entry"
   if !E.hasComb then
     .ok base
@@ -1599,9 +1664,10 @@ def CoreMemDesign.applyMemoryInputs (E : CoreMemDesign) (entry : SvState)
         | some v => (m.writeId md.shape.id i (md.shape.convert v)).getD m) mem) memory
 
 def CoreMemDesign.step (E : CoreMemDesign) (st : CoreMemState) (entry : SvState) : Res CoreMemState := do
-  let input := E.scalar.applyInputs st.scalar entry
+  let inputStore := E.scalar.applyInputs st.scalar entry
   let memoryInput := E.applyMemoryInputs entry st.memory
-  let pre0 ← E.settleAssign E.env E.elems { scalar := input, memory := memoryInput } E.processes.toList
+  let inputState := E.normalizeScalar { st with memory := memoryInput } inputStore
+  let pre0 ← E.settleAssign E.env E.elems inputState E.processes.toList
   let pre ← if E.hasComb then
       E.runComb st pre0 E.processes.toList
     else .ok pre0
@@ -1610,11 +1676,12 @@ def CoreMemDesign.step (E : CoreMemDesign) (st : CoreMemState) (entry : SvState)
   let before := E.scalar.view st.scalar
   let after := E.scalar.view pre.scalar
   let edge ← E.runEdges E.env E.elems pre before after E.processes.toList
-  let scalar := E.scalarEdge.commit edge.state.scalar edge.scalarQ
+  let committedStore := E.scalarEdge.commit edge.state.scalar edge.scalarQ
   let memory ← match edge.state.memory.commitNba edge.memoryQ with
     | some m => .ok m
     | none => .unsupported "10.4.2: memory NBA commit lost its declaration identity"
-  let settled ← E.settleAssign E.env E.elems { scalar, memory } E.processes.toList
+  let committed := E.normalizeScalar edge.state committedStore
+  let settled ← E.settleAssign E.env E.elems { committed with memory } E.processes.toList
   let activated ← if E.hasImplicit then
       E.runImplicit st settled E.processes.toList
     else .ok settled

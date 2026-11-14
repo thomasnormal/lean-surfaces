@@ -85,6 +85,13 @@ def MemShape.convert (m : MemShape) (v : LVec) : LVec :=
     v.toTwoState.bits.size = v.bits.size := by
   simp [LVec.toTwoState]
 
+@[simp] theorem MemShape.width_convert (m : MemShape) (v : LVec) :
+    (m.convert v).width = m.elemWidth := by
+  by_cases h : m.twoState
+  · simp [MemShape.convert, h, bits_size_resizeU_mem,
+      bits_size_toTwoState_mem, LVec.toTwoState, LVec.width]
+  · simp [MemShape.convert, h, bits_size_resizeU_mem, LVec.width]
+
 /-- The value of an uninitialized element.  Four-state variables start x;
 undriven nets have their independent z startup; two-state elements apply the
 same deterministic conversion as every later assignment. -/
@@ -96,6 +103,10 @@ structure MemBlock where
   shape : MemShape
   cell : Int → LVec
   cell_width : ∀ k, (cell k).width = shape.elemWidth
+  /-- Persistent point updates, newest first.  Keeping updates as data rather
+      than wrapping `cell` in another closure on every write preserves the
+      native block representation while keeping repeated cycle writes cheap. -/
+  updates : List (Int × LVec) := []
 
 /-- An uninitialized memory block.  `startCell` supplies the declaration's
 typed x/z startup value without expanding the memory into scalar cells. -/
@@ -116,23 +127,15 @@ instance : Inhabited MemBlock where
 
 /-- Read a source label.  Out-of-range labels read all-x at the element width. -/
 def MemBlock.read (m : MemBlock) (k : Int) : LVec :=
-  if m.shape.inRange k then m.cell k else LVec.xVec m.shape.elemWidth
+  if m.shape.inRange k then
+    (m.updates.find? (fun p => p.1 == k)).map (·.2) |>.getD (m.cell k)
+  else LVec.xVec m.shape.elemWidth
 
 /-- Write one source label.  The caller supplies the typed element-width fact. -/
 def MemBlock.write (m : MemBlock) (k : Int) (v : LVec)
     : MemBlock :=
   if m.shape.inRange k then
-    let c : Int → LVec := fun j => if j = k then m.shape.convert v else m.cell j
-    let hc : ∀ j, (c j).width = m.shape.elemWidth := by
-      intro j
-      by_cases hj : j = k
-      · by_cases h : m.shape.twoState
-        · simp [c, hj, MemShape.convert, h, bits_size_resizeU_mem,
-            bits_size_toTwoState_mem, LVec.toTwoState, LVec.width]
-        · simp [c, hj, MemShape.convert, h, bits_size_resizeU_mem,
-            bits_size_toTwoState_mem, LVec.toTwoState, LVec.width]
-      · simp [c, hj, m.cell_width]
-    { shape := m.shape, cell := c, cell_width := hc }
+    { m with updates := (k, m.shape.convert v) :: m.updates }
   else m
 
 theorem MemBlock.read_write_same {m : MemBlock} {k : Int} {v : LVec}
@@ -145,7 +148,10 @@ theorem MemBlock.read_write_other {m : MemBlock} {k j : Int} {v : LVec}
     (hkj : j ≠ k) (hv : v.width = m.shape.elemWidth) :
     (m.write k v).read j = m.read j := by
   by_cases hj : m.shape.inRange k
-  · simp [MemBlock.write, MemBlock.read, hj, hkj]
+  · by_cases hji : m.shape.inRange j
+    · have hkj' : k ≠ j := Ne.symm hkj
+      simp [MemBlock.write, MemBlock.read, hj, hji, hkj, hkj']
+    · simp [MemBlock.write, MemBlock.read, hj, hji]
   · simp [MemBlock.write, hj]
 
 theorem MemBlock.read_oob {m : MemBlock} {k : Int}
@@ -233,15 +239,39 @@ structure MemState where
   /-- Canonical lookup by structured declaration identity.  The name lookup is
       retained as a compatibility view for the source-shaped adapter. -/
   byId : MemId → Option MemBlock := fun _ => none
+  /-- A data-backed identity table.  The function view above is kept in the
+      structure for source compatibility, while updates use this table so
+      repeated cycles do not build a closure chain. -/
+  entries : List (MemId × MemBlock) := []
+  /-- The same data-backed view keyed by source spelling. -/
+  names : List (String × MemBlock) := []
 
 instance : Inhabited MemState :=
-  ⟨{ lookup := fun _ => none, byId := fun _ => none }⟩
+  ⟨{ lookup := fun _ => none, byId := fun _ => none, entries := [], names := [] }⟩
 
 def MemState.empty : MemState := default
 
+private def MemState.upsert (xs : List (MemId × MemBlock)) (id : MemId) (m : MemBlock) :
+    List (MemId × MemBlock) :=
+  (id, m) :: xs.filter fun p => p.1 != id
+
+private def MemState.findEntry (xs : List (MemId × MemBlock)) (id : MemId) : Option MemBlock :=
+  (xs.find? (fun p => p.1 == id)).map (·.2)
+
+private def MemState.upsertName (xs : List (String × MemBlock)) (name : String) (m : MemBlock) :
+    List (String × MemBlock) :=
+  (name, m) :: xs.filter fun p => p.1 != name
+
+private def MemState.findName (xs : List (String × MemBlock)) (name : String) : Option MemBlock :=
+  (xs.find? (fun p => p.1 == name)).map (·.2)
+
 def MemState.set (s : MemState) (name : String) (m : MemBlock) : MemState :=
-  { lookup := fun n => if n == name then some m else s.lookup n
-    byId := fun id => if id == m.shape.id then some m else s.byId id }
+  let entries := MemState.upsert s.entries m.shape.id m
+  let names := MemState.upsertName s.names name m
+  { lookup := MemState.findName names
+    byId := MemState.findEntry entries
+    entries := entries
+    names := names }
 
 /-- Canonical identity lookup. -/
 def MemState.lookupId (s : MemState) (id : MemId) : Option MemBlock := s.byId id
@@ -249,8 +279,12 @@ def MemState.lookupId (s : MemState) (id : MemId) : Option MemBlock := s.byId id
 /-- Replace a block through its structured identity while retaining the
 source-spelling compatibility view. -/
 def MemState.setId (s : MemState) (id : MemId) (m : MemBlock) : MemState :=
-  { lookup := fun n => if n == m.shape.name then some m else s.lookup n
-    byId := fun i => if i == id then some m else s.byId i }
+  let entries := MemState.upsert s.entries id m
+  let names := MemState.upsertName s.names m.shape.name m
+  { lookup := MemState.findName names
+    byId := MemState.findEntry entries
+    entries := entries
+    names := names }
 
 def MemState.ofShapes : List MemShape → MemState
   | [] => MemState.empty
@@ -287,12 +321,55 @@ def MemState.writeIndexId (s : MemState) (id : MemId) (signedIndex : Bool)
     (idx value : LVec) : Option MemState :=
   (s.lookupId id).map fun m => s.setId id (m.writeIndex signedIndex idx value)
 
+/-- Copy one source-shaped one-rank memory into another declaration at a
+    module-port connection.  The unpacked labels are part of the port type,
+    so a connection with different bounds is refused; packed element width
+    and two-state conversion are applied by the destination shape (§23.3.3,
+    IEEE 1800-2023).  The memory remains one native block and is addressed by
+    its structured declaration identities. -/
+def MemState.copyId (s : MemState) (source target : MemId) : Option MemState :=
+  match s.lookupId source, s.lookupId target with
+  | some src, some dst =>
+      if src.shape.msb == dst.shape.msb && src.shape.lsb == dst.shape.lsb then
+        /- A port connection with the same packed width and two-state
+           conversion is value-preserving.  Keep the source cell function
+           itself instead of wrapping it in a redundant `resizeU`/conversion
+           closure on every cycle; this is still one native block, while
+           avoiding an unbounded chain of equivalent continuous-assignment
+           wrappers.  The other branch retains the destination conversion
+           required by §23.3.3/§6.11. -/
+        let cell := if src.shape.elemWidth == dst.shape.elemWidth &&
+            src.shape.twoState == dst.shape.twoState then src.cell
+          else fun k => dst.shape.convert (src.read k)
+        let updates := if src.shape.elemWidth == dst.shape.elemWidth &&
+            src.shape.twoState == dst.shape.twoState then src.updates else []
+        let copied : MemBlock :=
+          { shape := dst.shape, cell := cell,
+            updates := updates,
+            cell_width := by
+              intro k
+              by_cases h : src.shape.elemWidth == dst.shape.elemWidth &&
+                src.shape.twoState == dst.shape.twoState
+              · have h' : (src.shape.elemWidth == dst.shape.elemWidth) = true ∧
+                    (src.shape.twoState == dst.shape.twoState) = true := by
+                    simpa only [Bool.and_eq_true] using h
+                have hwidth : src.shape.elemWidth = dst.shape.elemWidth :=
+                  beq_iff_eq.mp h'.1
+                have hstate : src.shape.twoState = dst.shape.twoState :=
+                  beq_iff_eq.mp h'.2
+                simp [cell, hstate, src.cell_width, hwidth]
+              · simp [cell, h, MemShape.width_convert] }
+        some (s.setId target copied)
+      else none
+  | _, _ => none
+
 theorem MemState.read_write_same {s : MemState} {name : String} {k : Int}
     {v : LVec} {m : MemBlock} (hm : s.lookup name = some m)
     (hin : m.shape.inRange k) (hv : v.width = m.shape.elemWidth) :
     (s.write name k v).bind
         (fun s' => s'.read name k) = some (m.shape.convert v) := by
-  simp [MemState.write, hm, MemState.read, MemState.set]
+  simp [MemState.write, hm, MemState.read, MemState.set,
+    MemState.findName, MemState.upsertName]
   exact MemBlock.read_write_same hin hv
 
 theorem MemState.read_write_other {s : MemState} {name : String} {k j : Int}
@@ -300,7 +377,8 @@ theorem MemState.read_write_other {s : MemState} {name : String} {k j : Int}
     (hjk : j ≠ k) (hv : v.width = m.shape.elemWidth) :
     (s.write name k v).bind
         (fun s' => s'.read name j) = s.read name j := by
-  simp [MemState.write, hm, MemState.read, MemState.set]
+  simp [MemState.write, hm, MemState.read, MemState.set,
+    MemState.findName, MemState.upsertName]
   exact MemBlock.read_write_other hjk hv
 
 theorem MemState.read_unknown {s : MemState} {name : String} {k : Int}

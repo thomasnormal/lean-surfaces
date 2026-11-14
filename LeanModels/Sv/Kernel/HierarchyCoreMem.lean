@@ -150,7 +150,10 @@ def CoreMemDesign.ofHierarchy (top : PDesign) (lib : List PDesign) (args : List 
     child.processes.map (hProcess pfx clockMap)
   let inputPs := children.flatMap fun (child, inst, pfx) => inst.conns.filterMap fun c =>
       match c with
-      | .input port (some actual) _ => some (.assign (pfx ++ port) actual)
+      | .input port (some actual) _ =>
+          match actual with
+          | .arrayElem _ [] => some (.assignL (.arrayElem (pfx ++ port) []) actual)
+          | _ => some (.assign (pfx ++ port) actual)
       | _ => none
   let outputPs := children.flatMap fun (child, inst, pfx) => inst.conns.filterMap fun c =>
       match c with

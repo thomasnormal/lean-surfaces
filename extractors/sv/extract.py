@@ -34417,6 +34417,36 @@ def _sym_net_output_target(sm, port, left):
         return False
 
 
+def _sym_whole_unpacked_actual(e):
+    """Return a source name for a one-rank unpacked-array actual.
+
+    A whole array passed to an unpacked formal is still one parser value; it
+    is not a scalar expression and must not go through the packed expression
+    converter.  The envelope keeps it as an ``ArraySel`` with an empty index
+    path, which is the source-shaped whole-array form consumed by canonical E
+    hierarchy port connections (§23.3.3, IEEE 1800-2023).  Nested arrays and
+    aggregate expressions remain loud until their own node semantics exist.
+    """
+    try:
+        op = e
+        while type(op).__name__ == "ConversionExpression":
+            op = getattr(op, "operand", None)
+            if op is None:
+                return None
+        if type(op).__name__ != "NamedValueExpression":
+            return None
+        symbol = getattr(op, "symbol", None)
+        if symbol is None or str(getattr(symbol, "kind", "")) not in (
+                "SymbolKind.Variable", "SymbolKind.Net"):
+            return None
+        shape = _fixed_array_dimensions(op.type, max_cells=None)
+        if shape is None or len(shape[0]) != 1:
+            return None
+        return _array_storage_name(symbol)
+    except Exception:
+        return None
+
+
 def _sym_port_conn(sm, m, pc):
     """One port connection of instance `m` -> `PortConn` (or `Unsupported`).
     Inputs carry the actual as a VALUE expression (`expr`, `null` when
@@ -34452,6 +34482,14 @@ def _sym_port_conn(sm, m, pc):
             node["expr"] = None
             node["net"] = net
         else:
+            whole = _sym_whole_unpacked_actual(e)
+            if whole is not None:
+                node["expr"] = {
+                    "kind": "ArraySel", "span": node_span(sm, e),
+                    "width": int(port.type.bitWidth), "name": whole,
+                    "indices": [], "part": None, "unpacked": True,
+                }
+                return node
             # Round 5 (2026-10-29): an unsized x/z literal widened anywhere
             # in an input actual is loud (`_sym_unsized_xz_widening`).
             # Round 5 repair: an actual HOLDING an unsized x/z-top literal is

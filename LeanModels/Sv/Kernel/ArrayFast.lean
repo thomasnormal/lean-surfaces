@@ -283,6 +283,22 @@ def FlatAssignmentRun (E : Elab) (c : FastConfig) : Prop :=
       ∃ ws v, t.windows? E.toDesign2 = some ws ∧
         evalPure2 (E.view c.store) e = .ok v ∧ FlatAssignment E c t
 
+theorem flatAssignmentRun_of_flat (E : Elab) (c : FastConfig)
+    (hflat : ∀ (p : ProcId) (t : Lhs2) (e : Expr2),
+      E.procs[p]? = some (Proc0.assign t e) → FlatAssignment E c t) :
+    FlatAssignmentRun E c := by
+  intro p t e a' hp hfa
+  unfold fastActivateAssign at hfa
+  split at hfa
+  next ws hws =>
+    cases hev : evalPure2 (E.view c.store) e with
+    | timeout => simp [hev] at hfa
+    | unsupported msg => simp [hev] at hfa
+    | ok v =>
+        exact ⟨ws, v, hws, rfl, hflat p t e hp⟩
+  next hnone hno =>
+    simp at hfa
+
 theorem fastStep_assign_refines_step_of_flat (E : Elab) (ch : Choice)
     (c : FastConfig) (p : ProcId) (rest : List ProcId)
     (t : Lhs2) (e : Expr2) (ws : List Win) (v : LVec) (a' : Array Val)

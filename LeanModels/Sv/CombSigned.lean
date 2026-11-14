@@ -41,12 +41,20 @@ namespace CombView
 
 def TSite.mapProc (g : PProcess → PProcess) (st : TSite) : TSite := { st with proc := g st.proc }
 
-def TInner.mapProcs (g : PProcess → PProcess) (l : TInner) : TInner :=
-  { l with body := l.body.map (TSite.mapProc g) }
-
+mutual
 def TItem.mapProcs (g : PProcess → PProcess) : TItem → TItem
   | .site st => .site (st.mapProc g)
-  | .loop l => .loop (l.mapProcs g)
+  | .loop h rc body => .loop h rc (TItem.mapProcsL g body)
+  | .cond c gd thn els => .cond c gd (TItem.mapProcsL g thn) (TItem.mapProcsL g els)
+
+def TItem.mapProcsL (g : PProcess → PProcess) : List TItem → List TItem
+  | [] => []
+  | it :: rest => it.mapProcs g :: TItem.mapProcsL g rest
+end
+
+theorem TItem.mapProcsL_eq (g : PProcess → PProcess) : ∀ l : List TItem, TItem.mapProcsL g l = l.map (TItem.mapProcs g)
+  | [] => rfl
+  | it :: rest => by rw [TItem.mapProcsL, TItem.mapProcsL_eq g rest, List.map_cons]
 
 def TFam.mapProcs (g : PProcess → PProcess) (f : TFam) : TFam :=
   { f with body := f.body.map (TItem.mapProcs g) }
@@ -56,15 +64,113 @@ def Summary.mapProcs (g : PProcess → PProcess) (s : Summary) : Summary :=
 
 def LSite.mapProc (g : PProcess → PProcess) (ls : LSite) : LSite := { ls with site := ls.site.mapProc g }
 
+mutual
+theorem TItem.lsAt_mapProcs (g : PProcess → PProcess) : ∀ (outer : List Hdr) (cur : Hdr) (blk : String) (it : TItem),
+    (it.mapProcs g).lsAt outer cur blk = (it.lsAt outer cur blk).map (LSite.mapProc g)
+  | _, _, _, .site _ => rfl
+  | outer, cur, _, .loop h _ body => by
+      simp only [TItem.mapProcs, TItem.lsAt]
+      exact TItem.lsAtL_mapProcs g (outer ++ [cur]) h h.name body
+  | outer, cur, blk, .cond _ gd thn els => by
+      simp only [TItem.mapProcs, TItem.lsAt, List.map_append]
+      rw [TItem.lsAtL_mapProcs g outer _ blk thn, TItem.lsAtL_mapProcs g outer _ blk els]
+
+theorem TItem.lsAtL_mapProcs (g : PProcess → PProcess) : ∀ (outer : List Hdr) (cur : Hdr) (blk : String)
+    (its : List TItem),
+    TItem.lsAtL outer cur blk (TItem.mapProcsL g its) = (TItem.lsAtL outer cur blk its).map (LSite.mapProc g)
+  | _, _, _, [] => rfl
+  | outer, cur, blk, it :: rest => by
+      simp only [TItem.mapProcsL, TItem.lsAtL, List.map_append]
+      rw [TItem.lsAt_mapProcs g outer cur blk it, TItem.lsAtL_mapProcs g outer cur blk rest]
+end
+
+mutual
+theorem TItem.stepsAt_mapProcs (g : PProcess → PProcess) : ∀ (outer : List Hdr) (cur : Hdr) (it : TItem),
+    (it.mapProcs g).stepsAt outer cur = it.stepsAt outer cur
+  | _, _, .site _ => rfl
+  | outer, cur, .loop h _ body => by
+      simp only [TItem.mapProcs, TItem.stepsAt]
+      rw [TItem.stepsAtL_mapProcs g (outer ++ [cur]) h body]
+  | outer, cur, .cond _ gd thn els => by
+      simp only [TItem.mapProcs, TItem.stepsAt]
+      rw [TItem.stepsAtL_mapProcs g outer _ thn, TItem.stepsAtL_mapProcs g outer _ els]
+
+theorem TItem.stepsAtL_mapProcs (g : PProcess → PProcess) : ∀ (outer : List Hdr) (cur : Hdr) (its : List TItem),
+    TItem.stepsAtL outer cur (TItem.mapProcsL g its) = TItem.stepsAtL outer cur its
+  | _, _, [] => rfl
+  | outer, cur, it :: rest => by
+      simp only [TItem.mapProcsL, TItem.stepsAtL]
+      rw [TItem.stepsAt_mapProcs g outer cur it, TItem.stepsAtL_mapProcs g outer cur rest]
+end
+
+mutual
+theorem TItem.condsAt_mapProcs (g : PProcess → PProcess) : ∀ (outer : List Hdr) (cur : Hdr) (it : TItem),
+    (it.mapProcs g).condsAt outer cur = it.condsAt outer cur
+  | _, _, .site _ => rfl
+  | outer, cur, .loop h _ body => by
+      simp only [TItem.mapProcs, TItem.condsAt]
+      rw [TItem.condsAtL_mapProcs g (outer ++ [cur]) h body]
+  | outer, cur, .cond _ gd thn els => by
+      simp only [TItem.mapProcs, TItem.condsAt]
+      rw [TItem.condsAtL_mapProcs g outer _ thn, TItem.condsAtL_mapProcs g outer _ els]
+
+theorem TItem.condsAtL_mapProcs (g : PProcess → PProcess) : ∀ (outer : List Hdr) (cur : Hdr) (its : List TItem),
+    TItem.condsAtL outer cur (TItem.mapProcsL g its) = TItem.condsAtL outer cur its
+  | _, _, [] => rfl
+  | outer, cur, it :: rest => by
+      simp only [TItem.mapProcsL, TItem.condsAtL]
+      rw [TItem.condsAt_mapProcs g outer cur it, TItem.condsAtL_mapProcs g outer cur rest]
+end
+
+mutual
+theorem TItem.enumAt_mapProcs {β : Type} (g : PProcess → PProcess) (b : LSite → (String → Int) → IEnv → β) :
+    ∀ (outer : List Hdr) (cur : Hdr) (blk : String) (σ : String → Int) (E : IEnv) (it : TItem),
+      (it.mapProcs g).enumAt b outer cur blk σ E = it.enumAt (fun ls σ' E' => b (ls.mapProc g) σ' E') outer cur blk σ E
+  | _, _, _, _, _, .site _ => rfl
+  | outer, cur, _, σ, E, .loop h _ body => by
+      simp only [TItem.mapProcs, TItem.enumAt]
+      apply flatMap_congr'
+      intro j _
+      exact TItem.enumAtL_mapProcs g b _ _ _ _ _ body
+  | outer, cur, blk, σ, E, .cond _ gd thn els => by
+      simp only [TItem.mapProcs, TItem.enumAt]
+      split
+      · exact TItem.enumAtL_mapProcs g b _ _ _ _ _ thn
+      · exact TItem.enumAtL_mapProcs g b _ _ _ _ _ els
+
+theorem TItem.enumAtL_mapProcs {β : Type} (g : PProcess → PProcess) (b : LSite → (String → Int) → IEnv → β) :
+    ∀ (outer : List Hdr) (cur : Hdr) (blk : String) (σ : String → Int) (E : IEnv) (its : List TItem),
+      TItem.enumAtL b outer cur blk σ E (TItem.mapProcsL g its) =
+        TItem.enumAtL (fun ls σ' E' => b (ls.mapProc g) σ' E') outer cur blk σ E its
+  | _, _, _, _, _, [] => rfl
+  | outer, cur, blk, σ, E, it :: rest => by
+      simp only [TItem.mapProcsL, TItem.enumAtL]
+      rw [TItem.enumAt_mapProcs g b outer cur blk σ E it, TItem.enumAtL_mapProcs g b outer cur blk σ E rest]
+end
+
+mutual
+theorem TItem.wf_mapProcs (g : PProcess → PProcess) : ∀ (it : TItem), (it.mapProcs g).Wf → it.Wf
+  | .site _, _ => trivial
+  | .loop _ _ body, h => by
+      simp only [TItem.mapProcs, TItem.Wf] at h ⊢
+      exact ⟨h.1, TItem.wfL_mapProcs g body h.2⟩
+  | .cond _ _ thn els, h => by
+      simp only [TItem.mapProcs, TItem.Wf] at h ⊢
+      exact ⟨h.1, TItem.wfL_mapProcs g thn h.2.1, TItem.wfL_mapProcs g els h.2.2⟩
+
+theorem TItem.wfL_mapProcs (g : PProcess → PProcess) : ∀ (its : List TItem), TItem.WfL (TItem.mapProcsL g its) →
+    TItem.WfL its
+  | [], _ => trivial
+  | it :: rest, h => by
+      simp only [TItem.mapProcsL, TItem.WfL] at h ⊢
+      exact ⟨TItem.wf_mapProcs g it h.1, TItem.wfL_mapProcs g rest h.2⟩
+end
+
 theorem TFam.lsites_mapProcs (g : PProcess → PProcess) (f : TFam) :
     (f.mapProcs g).lsites = f.lsites.map (LSite.mapProc g) := by
   unfold TFam.lsites TFam.mapProcs
-  simp only [List.flatMap_map, List.map_flatMap]
-  congr 1
-  funext it
-  cases it with
-  | site st => rfl
-  | loop l => simp [TFam.itemLs, TItem.mapProcs, TInner.mapProcs, LSite.mapProc, Function.comp_def]
+  rw [← TItem.mapProcsL_eq]
+  exact TItem.lsAtL_mapProcs g _ _ _ f.body
 
 theorem Summary.lsites_mapProcs (g : PProcess → PProcess) (s : Summary) :
     (s.mapProcs g).lsites = s.lsites.map (LSite.mapProc g) := by
@@ -72,17 +178,28 @@ theorem Summary.lsites_mapProcs (g : PProcess → PProcess) (s : Summary) :
   simp only [List.map_append, List.map_map, List.flatMap_map, List.map_flatMap, TFam.lsites_mapProcs]
   rfl
 
-theorem Summary.hdrPaths_mapProcs (g : PProcess → PProcess) (s : Summary) :
-    (s.mapProcs g).hdrPaths = s.hdrPaths := by
-  unfold Summary.hdrPaths Summary.mapProcs
+theorem Summary.hdrSteps_mapProcs (g : PProcess → PProcess) (s : Summary) :
+    (s.mapProcs g).hdrSteps = s.hdrSteps := by
+  unfold Summary.hdrSteps Summary.mapProcs
   simp only [List.flatMap_map]
   congr 1
   funext f
-  simp only [TFam.mapProcs, List.filterMap_map]
+  simp only [TFam.mapProcs]
+  rw [← TItem.mapProcsL_eq, TItem.stepsAtL_mapProcs]
+
+theorem Summary.condSteps_mapProcs (g : PProcess → PProcess) (s : Summary) :
+    (s.mapProcs g).condSteps = s.condSteps := by
+  unfold Summary.condSteps Summary.mapProcs
+  simp only [List.flatMap_map]
   congr 1
-  congr 1
-  funext it
-  cases it <;> rfl
+  funext f
+  simp only [TFam.mapProcs]
+  rw [← TItem.mapProcsL_eq, TItem.condsAtL_mapProcs]
+
+theorem Summary.hdrPaths_mapProcs (g : PProcess → PProcess) (s : Summary) :
+    (s.mapProcs g).hdrPaths = s.hdrPaths := by
+  unfold Summary.hdrPaths
+  rw [Summary.hdrSteps_mapProcs]
 
 theorem Summary.enum_mapProcs {β : Type} (g : PProcess → PProcess) (s : Summary)
     (b : LSite → (String → Int) → IEnv → β) (σ : String → Int) (E : IEnv) :
@@ -93,33 +210,27 @@ theorem Summary.enum_mapProcs {β : Type} (g : PProcess → PProcess) (s : Summa
   congr 1
   funext f
   unfold TFam.enum TFam.mapProcs
-  simp only [List.flatMap_map]
-  congr 1
-  funext i
-  congr 1
-  funext it
-  cases it with
-  | site st => rfl
-  | loop l => simp [TFam.itemEnum, TItem.mapProcs, TInner.mapProcs, LSite.mapProc, List.map_map, Function.comp_def]
+  apply flatMap_congr'
+  intro i _
+  simp only
+  rw [← TItem.mapProcsL_eq]
+  exact TItem.enumAtL_mapProcs g b _ _ _ _ _ f.body
 
 theorem TFam.wf_mapProcs (g : PProcess → PProcess) (f : TFam) (h : (f.mapProcs g).Wf) : f.Wf := by
   revert h
   unfold TFam.Wf TFam.mapProcs
   simp only [List.forall_mem_map]
   intro h
-  refine ⟨h.1, fun it hit => ?_⟩
-  have := h.2 it hit
-  cases it with
-  | site st => trivial
-  | loop l => exact this
+  exact ⟨h.1, fun it hit => TItem.wf_mapProcs g it (h.2 it hit)⟩
 
 theorem Summary.structOk_of_mapProcs {g : PProcess → PProcess} {s : Summary}
     (h : (s.mapProcs g).StructOk) : s.StructOk := by
-  obtain ⟨h1, h2, h3, h4, h5, h6, h7, h8⟩ := h
+  obtain ⟨h1, h2, h3, h4, h5, h6, h7, h8, h9⟩ := h
   rw [Summary.lsites_mapProcs] at h2 h3 h4 h7 h8
   rw [Summary.hdrPaths_mapProcs] at h5
+  rw [Summary.condSteps_mapProcs] at h9
   simp only [List.forall_mem_map] at h2 h3 h4 h7
-  refine ⟨h1, h2, h3, h4, h5, h6, h7, ?_⟩
+  refine ⟨h1, h2, h3, h4, h5, h6, h7, ?_, h9⟩
   rw [List.pairwise_map] at h8
   exact h8
 
@@ -127,7 +238,7 @@ theorem Summary.autoObl_of_mapProcs {g : PProcess → PProcess} {s : Summary} {�
     (h : (s.mapProcs g).AutoObl σ args) : s.AutoObl σ args := by
   obtain ⟨h1, h2, h3⟩ := h
   rw [Summary.lsites_mapProcs] at h1 h2
-  rw [Summary.hdrPaths_mapProcs] at h3
+  rw [Summary.hdrSteps_mapProcs, Summary.condSteps_mapProcs] at h3
   simp only [List.forall_mem_map] at h1 h2
   exact ⟨h1, h2, h3⟩
 
@@ -194,11 +305,30 @@ theorem procsOf?_unsignL : ∀ {l : List GenItem} {ps : List PProcess},
   | .inst _ :: _, _, h => by simp [GenItem.unsignL, GenItem.unsign, procsOf?] at h
   | .decl _ :: _, _, h => by simp [GenItem.unsignL, GenItem.unsign, procsOf?] at h
 
-theorem itemOfG_unsign {ds : List DeclT} {tag : String} {pos : Nat} {it : GenItem} {x : TItem}
-    (h : itemOfG siteOf? ds tag pos it.unsign = .ok x) :
-    ∃ x', itemOfG siteOfU? ds tag pos it = .ok x' ∧ x'.mapProcs PProcess.unsign = x := by
-  cases it with
-  | process p =>
+mutual
+theorem _root_.LeanModels.Sv.GenItem.slots_unsign : ∀ it : GenItem, it.unsign.slots = it.slots
+  | .process _ => rfl
+  | .decl _ => rfl
+  | .genFor .. => rfl
+  | .genIf _ thn els => by
+      simp only [GenItem.unsign, GenItem.slots]
+      rw [GenItem.slotsL_unsignL thn, GenItem.slotsL_unsignL els]
+  | .unsupported .. => rfl
+  | .inst _ => rfl
+
+theorem _root_.LeanModels.Sv.GenItem.slotsL_unsignL : ∀ l : List GenItem, GenItem.slotsL (GenItem.unsignL l) = GenItem.slotsL l
+  | [] => rfl
+  | it :: rest => by
+      simp only [GenItem.unsignL, GenItem.slotsL]
+      rw [GenItem.slots_unsign it, GenItem.slotsL_unsignL rest]
+end
+
+mutual
+theorem itemOfG_unsign {ds : List DeclT} :
+    ∀ {tag : String} {pos : Nat} {it : GenItem} {x : TItem},
+      itemOfG siteOf? ds tag pos it.unsign = .ok x →
+      ∃ x', itemOfG siteOfU? ds tag pos it = .ok x' ∧ x'.mapProcs PProcess.unsign = x
+  | tag, pos, .process p, x, h => by
       simp only [GenItem.unsign, itemOfG] at h
       rcases hs : siteOf? ds pos p.unsign with e | st
       · simp [hs] at h
@@ -206,46 +336,60 @@ theorem itemOfG_unsign {ds : List DeclT} {tag : String} {pos : Nat} {it : GenIte
         subst h
         obtain ⟨hu, hm⟩ := siteOfU?_of hs
         exact ⟨.site { st with proc := p }, by simp [itemOfG, hu], by simp [TItem.mapProcs, hm]⟩
-  | genFor label g initE bound step rc body =>
+  | tag, pos, .genFor label g initE bound step rc body, x, h => by
       simp only [GenItem.unsign, itemOfG] at h
       rcases hh : hdrOf? label g initE bound step with e | h0
       · simp [hh] at h
       · simp only [hh] at h
-        rcases hp : procsOf? (GenItem.unsignL body) with _ | ps
-        · simp [hp] at h
-        · simp only [hp] at h
-          obtain ⟨ps0, hp0, rfl⟩ := procsOf?_unsignL hp
-          rcases hsx : sitesOfG siteOf? ds h0.name 0 (ps0.map PProcess.unsign) with e | sts
-          · simp [hsx] at h
-          · simp only [hsx, Except.ok.injEq] at h
+        rcases hi : itemsOfG siteOf? ds h0.name 0 (GenItem.unsignL body) with e | its
+        · simp [hi] at h
+        · simp only [hi, Except.ok.injEq] at h
+          subst h
+          obtain ⟨its', h1, h2⟩ := itemsOfG_unsign hi
+          exact ⟨.loop h0 rc its', by simp [itemOfG, hh, h1],
+            by simp [TItem.mapProcs, TItem.mapProcsL_eq, h2]⟩
+  | tag, pos, .genIf c thn els, x, h => by
+      simp only [GenItem.unsign, itemOfG] at h
+      rcases hg : guardOf? c with _ | gd
+      · simp [hg] at h
+      · simp only [hg] at h
+        rcases ht : itemsOfG siteOf? ds tag pos (GenItem.unsignL thn) with e | ts
+        · simp [ht] at h
+        · simp only [ht] at h
+          rw [GenItem.slotsL_unsignL] at h
+          rcases he : itemsOfG siteOf? ds tag (pos + GenItem.slotsL thn) (GenItem.unsignL els) with e | es
+          · simp [he] at h
+          · simp only [he, Except.ok.injEq] at h
             subst h
-            obtain ⟨sts', h1, h2⟩ := sitesOfG_unsign hsx
-            exact ⟨.loop ⟨h0, rc, sts'⟩, by simp [itemOfG, hh, hp0, h1],
-              by simp [TItem.mapProcs, TInner.mapProcs, h2]⟩
-  | genIf c t e => simp [GenItem.unsign, itemOfG] at h
-  | unsupported k t => simp [GenItem.unsign, itemOfG] at h
-  | inst i => simp [GenItem.unsign, itemOfG] at h
-  | decl d => simp [GenItem.unsign, itemOfG] at h
+            obtain ⟨ts', h1, h2⟩ := itemsOfG_unsign ht
+            obtain ⟨es', k1, k2⟩ := itemsOfG_unsign he
+            exact ⟨.cond c gd ts' es', by simp [itemOfG, hg, h1, k1],
+              by simp [TItem.mapProcs, TItem.mapProcsL_eq, h2, k2]⟩
+  | _, _, .unsupported k t, x, h => by simp [GenItem.unsign, itemOfG] at h
+  | _, _, .inst i, x, h => by simp [GenItem.unsign, itemOfG] at h
+  | _, _, .decl d, x, h => by simp [GenItem.unsign, itemOfG] at h
 
-theorem itemsOfG_unsign {ds : List DeclT} {tag : String} :
-    ∀ {its : List GenItem} {pos : Nat} {xs : List TItem},
+theorem itemsOfG_unsign {ds : List DeclT} :
+    ∀ {tag : String} {pos : Nat} {its : List GenItem} {xs : List TItem},
       itemsOfG siteOf? ds tag pos (GenItem.unsignL its) = .ok xs →
       ∃ xs', itemsOfG siteOfU? ds tag pos its = .ok xs' ∧ xs'.map (TItem.mapProcs PProcess.unsign) = xs
-  | [], pos, xs, h => by
+  | tag, pos, [], xs, h => by
       simp only [GenItem.unsignL, itemsOfG, Except.ok.injEq] at h
       subst h
       exact ⟨[], rfl, rfl⟩
-  | it :: rest, pos, xs, h => by
+  | tag, pos, it :: rest, xs, h => by
       simp only [GenItem.unsignL, itemsOfG] at h
       rcases hx : itemOfG siteOf? ds tag pos it.unsign with e | x
       · simp [hx] at h
-      · rcases hr : itemsOfG siteOf? ds tag (pos + 1) (GenItem.unsignL rest) with e | xs1
+      · rcases hr : itemsOfG siteOf? ds tag (pos + it.unsign.slots) (GenItem.unsignL rest) with e | xs1
         · simp [hx, hr] at h
         · simp only [hx, hr, Except.ok.injEq] at h
           subst h
           obtain ⟨x', h1, h2⟩ := itemOfG_unsign hx
+          rw [GenItem.slots_unsign] at hr
           obtain ⟨xs', k1, k2⟩ := itemsOfG_unsign hr
           exact ⟨x' :: xs', by simp [itemsOfG, h1, k1], by simp [h2, k2]⟩
+end
 
 theorem famOfG_unsign {ds : List DeclT} {it : GenItem} {f : TFam}
     (h : famOfG siteOf? ds it.unsign = .ok f) :
@@ -339,35 +483,15 @@ theorem Summary.enum_congr {β : Type} (s : Summary) (b₁ b₂ : LSite → (Str
     (σ : String → Int) (E : IEnv)
     (h : ∀ ls ∈ s.lsites, ∀ σ' E', ReachE ls.hdrs σ E σ' E' → b₁ ls σ' E' = b₂ ls σ' E') :
     s.enum b₁ σ E = s.enum b₂ σ E := by
-  unfold Summary.enum
-  congr 1
-  · apply List.map_congr_left
-    intro st hst
-    exact h _ (by simp [Summary.lsites, hst]) σ E ⟨rfl, rfl⟩
-  · apply flatMap_congr_mem
-    intro f hf
-    unfold TFam.enum
-    apply flatMap_congr_mem
-    intro i hi
-    have hri : f.hdr.Rng σ i := Hdr.mem_range.mp hi
-    apply flatMap_congr_mem
-    intro it hit
-    cases it with
-    | site st =>
-        simp only [TFam.itemEnum, List.cons.injEq, and_true]
-        refine h _ ?_ _ _ ⟨i, hri, rfl, rfl⟩
-        simp only [Summary.lsites, List.mem_append, List.mem_flatMap]
-        exact Or.inr ⟨f, hf, by simp [TFam.lsites, TFam.itemLs]; exact ⟨_, hit, by simp [TFam.itemLs]⟩⟩
-    | loop l =>
-        simp only [TFam.itemEnum]
-        apply flatMap_congr_mem
-        intro j hj
-        have hrj := Hdr.mem_range.mp hj
+  have e1 := Summary.enum_map s (fun ls σ' E' => (ls, σ', E')) (fun t => b₁ t.1 t.2.1 t.2.2) σ E
+  have e2 := Summary.enum_map s (fun ls σ' E' => (ls, σ', E')) (fun t => b₂ t.1 t.2.1 t.2.2) σ E
+  calc s.enum b₁ σ E = (s.enum (fun ls σ' E' => (ls, σ', E')) σ E).map (fun t => b₁ t.1 t.2.1 t.2.2) := e1.symm
+    _ = (s.enum (fun ls σ' E' => (ls, σ', E')) σ E).map (fun t => b₂ t.1 t.2.1 t.2.2) := by
         apply List.map_congr_left
-        intro st hst
-        refine h _ ?_ _ _ ⟨i, hri, j, hrj, rfl, rfl⟩
-        simp only [Summary.lsites, List.mem_append, List.mem_flatMap]
-        exact Or.inr ⟨f, hf, by simp [TFam.lsites]; exact ⟨_, hit, by simp [TFam.itemLs, hst]⟩⟩
+        intro t ht
+        obtain ⟨ls, hls, σ', E', hr, rfl⟩ := (mem_enum_E s _ σ E).mp ht
+        exact h ls hls σ' E' hr
+    _ = s.enum b₂ σ E := e2
 
 end CombView
 

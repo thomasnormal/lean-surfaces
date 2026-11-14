@@ -45,132 +45,143 @@ theorem key_eq_of_id_eq {a b : LSite} {σ1 σ2 : String → Int} (h : a.id σ1 =
     a.key = b.key := by
   rw [← idKey_id a σ1, ← idKey_id b σ2, h]
 
-theorem itemEnum_mem {β : Type} {b : LSite → (String → Int) → IEnv → β} {σ : String → Int}
-    {E : IEnv} {f : TFam} {i : Int} {it : TItem} {x : β} (h : x ∈ f.itemEnum b σ E i it) :
-    ∃ ls ∈ f.itemLs it, ∃ σ' E', x = b ls σ' E' := by
-  cases it with
-  | site st =>
-      simp only [TFam.itemEnum, List.mem_singleton] at h
-      exact ⟨_, by simp [TFam.itemLs], _, _, h⟩
-  | loop l =>
-      simp only [TFam.itemEnum, List.mem_flatMap, List.mem_map] at h
-      obtain ⟨j, hj, st, hst, rfl⟩ := h
-      exact ⟨_, by simp only [TFam.itemLs, List.mem_map]; exact ⟨st, hst, rfl⟩, _, _, rfl⟩
-
 theorem famEnum_mem {β : Type} {b : LSite → (String → Int) → IEnv → β} {σ : String → Int}
     {E : IEnv} {f : TFam} {x : β} (h : x ∈ TFam.enum b σ E f) :
     ∃ ls ∈ f.lsites, ∃ σ' E', x = b ls σ' E' := by
-  simp only [TFam.enum, List.mem_flatMap] at h
-  obtain ⟨i, hi, it, hit, hx⟩ := h
-  obtain ⟨ls, hls, σ', E', rfl⟩ := itemEnum_mem hx
-  exact ⟨ls, by simp only [TFam.lsites, List.mem_flatMap]; exact ⟨it, hit, hls⟩, σ', E', rfl⟩
+  obtain ⟨ls, hls, σ', E', -, rfl⟩ := (TFam.mem_enum b σ E f).mp h
+  exact ⟨ls, hls, σ', E', rfl⟩
 
-theorem site_id_form (f : TFam) (st : TSite) (σ : String → Int) (i : Int) :
-    (LSite.mk [f.hdr] f.hdr.name st).id (bindσ f.hdr.g i σ) = SiteId.fam f.hdr.name st.pos [i] := by
-  simp [LSite.id]
+/-- An identity of an item's closed form in the body of `cur` (under `outer`): the values of the genvars of
+`outer ++ [cur]` first, when the genvars along every located site are distinct (the structural check's path
+condition). -/
+theorem TItem.enumAt_id_form {outer : List Hdr} {cur : Hdr} {blk : String} {σ : String → Int} {E : IEnv} {it : TItem}
+    (hnd : ∀ ls ∈ it.lsAt outer cur blk, (ls.hdrs.map (·.g)).Nodup) {x : SiteId}
+    (hx : x ∈ it.enumAt (fun ls σ' _ => ls.id σ') outer cur blk σ E) :
+    ∃ b p r, x = SiteId.fam b p ((outer ++ [cur]).map (fun h => σ h.g) ++ r) := by
+  obtain ⟨ls, hls, gs, inner, σ', E', he, -, hr, rfl⟩ := (TItem.mem_enumAt _ outer cur blk σ E it).mp hx
+  have hn := hnd ls hls
+  have hpre : (outer ++ [cur]).map (·.g) ++ inner.map (·.g) = ls.hdrs.map (·.g) := by rw [he]; simp
+  rw [← hpre] at hn
+  have hpar : ∀ n ∈ (outer ++ [cur]).map (·.g), σ' n = σ n :=
+    Reach_params (ReachE_Reach hr) (fun h hh hm => (List.nodup_append.mp hn).2.2 _ hm _
+      (List.mem_map.mpr ⟨h, hh, rfl⟩) rfl)
+  refine ⟨ls.blk, ls.site.pos, inner.map fun h => σ' h.g, ?_⟩
+  unfold LSite.id
+  rw [he]
+  have hm : (outer ++ cur.guards gs :: inner).map (fun h => σ' h.g) =
+      (outer ++ [cur]).map (fun h => σ h.g) ++ inner.map (fun h => σ' h.g) := by
+    have : (outer ++ cur.guards gs :: inner).map (fun h => σ' h.g) =
+        (outer ++ [cur]).map (fun h => σ' h.g) ++ inner.map (fun h => σ' h.g) := by simp
+    rw [this]
+    congr 1
+    apply List.map_congr_left
+    intro h hh
+    exact hpar _ (List.mem_map.mpr ⟨h, hh, rfl⟩)
+  cases outer with
+  | nil => simp only [List.nil_append] at hm ⊢; rw [hm]
+  | cons h0 outer' => simp only [List.cons_append] at hm ⊢; rw [hm]
 
-theorem loop_id_form {f : TFam} {l : TInner} (hg : f.hdr.g ≠ l.hdr.g) (st : TSite)
-    (σ : String → Int) (i j : Int) :
-    (LSite.mk [f.hdr, l.hdr] l.hdr.name st).id (bindσ l.hdr.g j (bindσ f.hdr.g i σ)) =
-      SiteId.fam l.hdr.name st.pos [i, j] := by
-  simp [LSite.id, bindσ_ne hg]
+/-- Across two indices `j < j'` of a loop `hd` under the loops `pre`, the identities of its body differ. -/
+theorem loop_ids_ne {pre : List Hdr} {hd : Hdr} {σ : String → Int} {E : IEnv} {body : List TItem}
+    (hnd : ∀ ls ∈ TItem.lsAtL pre hd hd.name body, (ls.hdrs.map (·.g)).Nodup) {j j' : Int}
+    (hjj : j < j') {x y : SiteId}
+    (hx : x ∈ TItem.enumAtL (fun ls σ' _ => ls.id σ') pre hd hd.name (bindσ hd.g j σ) (E.bindVal hd.g j) body)
+    (hy : y ∈ TItem.enumAtL (fun ls σ' _ => ls.id σ') pre hd hd.name (bindσ hd.g j' σ) (E.bindVal hd.g j') body) :
+    x ≠ y := by
+  intro hxy
+  obtain ⟨it1, hit1, hx1⟩ := TItem.mem_enumAtL_item hx
+  obtain ⟨it2, hit2, hy2⟩ := TItem.mem_enumAtL_item hy
+  obtain ⟨b1, p1, r1, rfl⟩ := TItem.enumAt_id_form (fun ls hls => hnd ls (TItem.mem_lsAtL_of hit1 hls)) hx1
+  obtain ⟨b2, p2, r2, rfl⟩ := TItem.enumAt_id_form (fun ls hls => hnd ls (TItem.mem_lsAtL_of hit2 hls)) hy2
+  -- the loop's genvar is not one of the genvars around it: read off the located site of `x`
+  obtain ⟨ls, hls, gs, inner, -, -, he, -⟩ := (TItem.mem_enumAt _ _ _ _ _ _ it1).mp hx1
+  have hn := hnd ls (TItem.mem_lsAtL_of hit1 hls)
+  have hpre : pre.map (·.g) ++ (hd.g :: inner.map (·.g)) = ls.hdrs.map (·.g) := by rw [he]; simp
+  rw [← hpre] at hn
+  have hgpre : hd.g ∉ pre.map (·.g) := fun hm =>
+    (List.nodup_append.mp hn).2.2 _ hm _ (List.mem_cons_self ..) rfl
+  have hp : ∀ k : Int, pre.map (fun h => bindσ hd.g k σ h.g) = pre.map (fun h => σ h.g) := by
+    intro k
+    apply List.map_congr_left
+    intro h hh
+    exact bindσ_ne (fun e => hgpre (List.mem_map.mpr ⟨h, hh, e⟩)) k σ
+  have hj : ∀ k : Int, (pre ++ [hd]).map (fun h => bindσ hd.g k σ h.g) = pre.map (fun h => σ h.g) ++ [k] := by
+    intro k
+    rw [List.map_append, hp k]
+    simp
+  rw [hj j, hj j'] at hxy
+  simp only [SiteId.fam.injEq] at hxy
+  obtain ⟨-, -, hxy⟩ := hxy
+  rw [List.append_assoc, List.append_assoc] at hxy
+  have h2 := List.append_cancel_left hxy
+  simp only [List.singleton_append, List.cons.injEq] at h2
+  omega
 
-/-- Every identifier an item contributes at iteration `i` starts with `i`. -/
-theorem itemEnum_head {σ : String → Int} {E : IEnv} {f : TFam} {i : Int} {it : TItem}
-    (hg : ∀ l, it = .loop l → f.hdr.g ≠ l.hdr.g) {x : SiteId}
-    (h : x ∈ f.itemEnum (fun ls σ' _ => ls.id σ') σ E i it) :
-    ∃ b p r, x = SiteId.fam b p (i :: r) := by
-  cases it with
-  | site st =>
-      simp only [TFam.itemEnum, List.mem_singleton] at h
-      subst h
-      exact ⟨f.hdr.name, st.pos, [], site_id_form f st σ i⟩
-  | loop l =>
-      simp only [TFam.itemEnum, List.mem_flatMap, List.mem_map] at h
-      obtain ⟨j, hj, st, hst, rfl⟩ := h
-      have hne := hg l rfl
-      exact ⟨l.hdr.name, st.pos, [j], loop_id_form hne st σ i j⟩
+mutual
+/-- **The identities of an item's closed form are pairwise distinct**, when its located sites have pairwise distinct
+keys and distinct genvars along them: different items differ by key, different indices of a loop differ at the loop's
+position of the index vector, a condition lists one arm. -/
+theorem TItem.enumAt_ids_pairwise : ∀ (outer : List Hdr) (cur : Hdr) (blk : String) (σ : String → Int) (E : IEnv)
+    (it : TItem), (it.lsAt outer cur blk).Pairwise (fun a b => a.key ≠ b.key) →
+    (∀ ls ∈ it.lsAt outer cur blk, (ls.hdrs.map (·.g)).Nodup) →
+    (it.enumAt (fun ls σ' _ => ls.id σ') outer cur blk σ E).Pairwise (· ≠ ·)
+  | _, _, _, _, _, .site _, _, _ => by simp [TItem.enumAt]
+  | outer, cur, blk, σ, E, .loop hd _ body, hk, hnd => by
+      simp only [TItem.lsAt] at hk hnd
+      simp only [TItem.enumAt]
+      rw [List.pairwise_flatMap]
+      refine ⟨fun j _ => TItem.enumAtL_ids_pairwise _ _ _ _ _ body hk hnd, ?_⟩
+      unfold Hdr.range
+      apply List.Pairwise.filter
+      apply pairwise_intRange
+      intro j j' _ hjj _ x hx y hy
+      exact loop_ids_ne hnd hjj hx hy
+  | outer, cur, blk, σ, E, .cond _ g thn els, hk, hnd => by
+      simp only [TItem.lsAt, List.pairwise_append, List.mem_append] at hk hnd
+      simp only [TItem.enumAt]
+      split
+      · exact TItem.enumAtL_ids_pairwise _ _ _ _ _ thn hk.1 (fun ls hls => hnd ls (Or.inl hls))
+      · exact TItem.enumAtL_ids_pairwise _ _ _ _ _ els hk.2.1 (fun ls hls => hnd ls (Or.inr hls))
 
-theorem itemEnum_loop_form {σ : String → Int} {E : IEnv} {f : TFam} {i : Int} {l : TInner}
-    (hg : f.hdr.g ≠ l.hdr.g) {x : SiteId}
-    (h : x ∈ f.itemEnum (fun ls σ' _ => ls.id σ') σ E i (.loop l)) :
-    ∃ j ∈ l.hdr.range (bindσ f.hdr.g i σ), ∃ st ∈ l.body,
-      x = SiteId.fam l.hdr.name st.pos [i, j] := by
-  simp only [TFam.itemEnum, List.mem_flatMap, List.mem_map] at h
-  obtain ⟨j, hj, st, hst, rfl⟩ := h
-  exact ⟨j, hj, st, hst, loop_id_form hg st σ i j⟩
+theorem TItem.enumAtL_ids_pairwise : ∀ (outer : List Hdr) (cur : Hdr) (blk : String) (σ : String → Int) (E : IEnv)
+    (its : List TItem), (TItem.lsAtL outer cur blk its).Pairwise (fun a b => a.key ≠ b.key) →
+    (∀ ls ∈ TItem.lsAtL outer cur blk its, (ls.hdrs.map (·.g)).Nodup) →
+    (TItem.enumAtL (fun ls σ' _ => ls.id σ') outer cur blk σ E its).Pairwise (· ≠ ·)
+  | _, _, _, _, _, [], _, _ => by simp [TItem.enumAtL]
+  | outer, cur, blk, σ, E, it :: rest, hk, hnd => by
+      simp only [TItem.lsAtL, List.pairwise_append, List.mem_append] at hk hnd
+      obtain ⟨hk1, hk2, hk12⟩ := hk
+      simp only [TItem.enumAtL]
+      rw [List.pairwise_append]
+      refine ⟨TItem.enumAt_ids_pairwise outer cur blk σ E it hk1 (fun ls hls => hnd ls (Or.inl hls)),
+        TItem.enumAtL_ids_pairwise outer cur blk σ E rest hk2 (fun ls hls => hnd ls (Or.inr hls)), ?_⟩
+      intro x hx y hy hxy
+      obtain ⟨ls1, hl1, -, -, σ1, E1, -, -, -, rfl⟩ := (TItem.mem_enumAt _ outer cur blk σ E it).mp hx
+      obtain ⟨ls2, hl2, -, -, σ2, E2, -, -, -, rfl⟩ := (TItem.mem_enumAtL _ outer cur blk σ E rest).mp hy
+      exact hk12 ls1 hl1 ls2 hl2 (key_eq_of_id_eq hxy)
+end
 
 /-- **The identifiers of one top-level loop are pairwise distinct.** -/
 theorem fam_ids_pairwise {σ : String → Int} {E : IEnv} {f : TFam}
     (hk : f.lsites.Pairwise (fun a b => a.key ≠ b.key))
-    (hg : ∀ l, TItem.loop l ∈ f.body → f.hdr.g ≠ l.hdr.g) :
+    (hnd : ∀ ls ∈ f.lsites, (ls.hdrs.map (·.g)).Nodup) :
     (TFam.enum (fun ls σ' _ => ls.id σ') σ E f).Pairwise (· ≠ ·) := by
   unfold TFam.enum
+  unfold TFam.lsites at hk hnd
   rw [List.pairwise_flatMap]
-  refine ⟨fun i hi => ?_, ?_⟩
-  · -- within one iteration
-    rw [List.pairwise_flatMap]
-    unfold TFam.lsites at hk
-    rw [List.pairwise_flatMap] at hk
-    obtain ⟨hk1, hk2⟩ := hk
-    refine ⟨fun it hit => ?_, ?_⟩
-    · cases it with
-      | site st => simp [TFam.itemEnum]
-      | loop l =>
-          simp only [TFam.itemEnum]
-          rw [List.pairwise_flatMap]
-          have hk1' := hk1 (TItem.loop l) hit
-          simp only [TFam.itemLs] at hk1'
-          rw [List.pairwise_map] at hk1'
-          refine ⟨fun j hj => ?_, ?_⟩
-          · rw [List.pairwise_map]
-            exact hk1'.imp (fun hab hid => hab (key_eq_of_id_eq hid))
-          · apply pairwise_intRange
-            intro j j' hj hjj hj' x hx y hy
-            simp only [List.mem_map] at hx hy
-            obtain ⟨st, hst, rfl⟩ := hx
-            obtain ⟨st', hst', rfl⟩ := hy
-            have hne := hg l hit
-            show (LSite.mk [f.hdr, l.hdr] l.hdr.name st).id _ ≠ (LSite.mk [f.hdr, l.hdr] l.hdr.name st').id _
-            rw [loop_id_form hne, loop_id_form hne]
-            simp only [ne_eq, SiteId.fam.injEq, List.cons.injEq, and_true, not_and]
-            intro _ _ hjj'
-            omega
-    · refine hk2.imp (fun {a b} hab x hx y hy hxy => ?_)
-      obtain ⟨ls1, hl1, σ1, E1, rfl⟩ := itemEnum_mem hx
-      obtain ⟨ls2, hl2, σ2, E2, rfl⟩ := itemEnum_mem hy
-      exact hab ls1 hl1 ls2 hl2 (key_eq_of_id_eq hxy)
-  · -- across iterations
-    unfold Hdr.range
-    apply pairwise_intRange
-    intro i k hi hik hk x hx y hy hxy
-    simp only [List.mem_flatMap] at hx hy
-    obtain ⟨it, hit, hx⟩ := hx
-    obtain ⟨it', hit', hy⟩ := hy
-    obtain ⟨b, p, r, rfl⟩ := itemEnum_head (fun l hl => hg l (hl ▸ hit)) hx
-    obtain ⟨b', p', r', rfl⟩ := itemEnum_head (fun l hl => hg l (hl ▸ hit')) hy
-    simp only [SiteId.fam.injEq, List.cons.injEq] at hxy
-    omega
-
+  refine ⟨fun i _ => TItem.enumAtL_ids_pairwise _ _ _ _ _ f.body hk hnd, ?_⟩
+  unfold Hdr.range
+  apply List.Pairwise.filter
+  apply pairwise_intRange
+  intro i i' _ hii _ x hx y hy
+  exact loop_ids_ne (pre := []) hnd hii hx hy
 
 /-! ## Identities are distinct -/
-
-theorem hdr_g_ne {s : Summary} (hok : s.StructOk) {f : TFam} (hf : f ∈ s.fams) {l : TInner}
-    (hl : TItem.loop l ∈ f.body) : f.hdr.g ≠ l.hdr.g := by
-  have hp2 : [f.hdr, l.hdr] ∈ s.hdrPaths := by
-    unfold Summary.hdrPaths
-    simp only [List.mem_flatMap, List.mem_cons, List.mem_filterMap]
-    exact ⟨f, hf, Or.inr ⟨TItem.loop l, hl, rfl⟩⟩
-  obtain ⟨hnd, -⟩ := path_facts hok hp2
-  intro heq
-  have h1 := (List.nodup_cons.mp hnd).1
-  apply h1
-  simp [heq]
 
 /-- **Distinct positions of the closed-form list have distinct identities.** -/
 theorem ids_pairwise {s : Summary} {σ : String → Int} {E : IEnv} (hok : s.StructOk) :
     (s.insts σ E).Pairwise (fun a b => a.id ≠ b.id) := by
-  have hkeys := hok.2.2.2.2.2.2.2
+  have hkeys := hok.2.2.2.2.2.2.2.1
   rw [← List.pairwise_map (f := SiteInst.id) (R := fun a b => a ≠ b)]
   unfold Summary.insts
   rw [Summary.enum_map]
@@ -188,7 +199,9 @@ theorem ids_pairwise {s : Summary} {σ : String → Int} {E : IEnv} (hok : s.Str
   · rw [List.pairwise_flatMap]
     rw [List.pairwise_flatMap] at hkB
     obtain ⟨hkB1, hkB2⟩ := hkB
-    refine ⟨fun f hf => fam_ids_pairwise (hkB1 f hf) (fun l hl => hdr_g_ne hok hf hl), ?_⟩
+    refine ⟨fun f hf => fam_ids_pairwise (hkB1 f hf) (fun ls hls => lsite_nodup hok (by
+      unfold Summary.lsites
+      exact List.mem_append_right _ (List.mem_flatMap.mpr ⟨f, hf, hls⟩))), ?_⟩
     refine hkB2.imp (fun {f1 f2} h12 x hx y hy hxy => ?_)
     obtain ⟨ls1, hl1, σ1, E1, rfl⟩ := famEnum_mem hx
     obtain ⟨ls2, hl2, σ2, E2, rfl⟩ := famEnum_mem hy
@@ -420,14 +433,7 @@ theorem SiteCtx.win_facts {s : Summary} {σ : String → Int} {elems : List (Str
 
 theorem reach_par {s : Summary} (hok : s.StructOk) {ls : LSite} (hls : ls ∈ s.lsites)
     {σ σ' : String → Int} (hr : Reach ls.hdrs σ σ') : ∀ n ∈ s.params, σ' n = σ n := by
-  rcases lsite_hdrs hls with h0 | hp
-  · rw [h0] at hr
-    have : σ' = σ := hr
-    subst this
-    intro n _; rfl
-  · apply Reach_params hr
-    intro h hh
-    exact notin_of_nodup (path_facts hok hp).1 (List.mem_map.mpr ⟨h, hh, rfl⟩)
+  exact Reach_params hr (lsite_g_notin hok hls)
 
 /-- **Every instance is a located site at a reachable valuation, with the in-range geometry of
 its target.** -/

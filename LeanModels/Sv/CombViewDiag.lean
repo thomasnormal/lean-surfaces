@@ -187,6 +187,27 @@ def LSite.label (ls : LSite) (rn : String → String) : String :=
   if ls.hdrs.isEmpty then s!"plain#{ls.site.pos}"
   else s!"{ls.blk}#{ls.site.pos}[{", ".intercalate (ls.hdrs.map fun h => rn h.g)}]"
 
+def GCmp.show : GCmp → String
+  | .lt => "<" | .le => "<=" | .gt => ">" | .ge => ">=" | .eq => "==" | .ne => "!="
+
+def Guard.show (g : Guard) : String := s!"{g.a.show} {g.op.show} {g.b.show}"
+
+mutual
+/-- The `sv_structure?` lines of an item of a loop body under the loops `pre`, in the block `blk` (indent `ind`). -/
+def showItem (ind : String) (pre : List Hdr) (blk : String) : TItem → String
+  | .site st => s!"{ind}{st.show s!"{blk}#{st.pos}[{", ".intercalate (pre.map (·.g))}]"}\n"
+  | .loop h _ body =>
+      s!"{ind}inner family `{h.name}`: for {h.g} in [{h.c0}, {h.bound.show}):\n" ++
+        showItems (ind ++ "  ") (pre ++ [h]) h.name body
+  | .cond _ g thn els =>
+      s!"{ind}if {g.show}:\n" ++ showItems (ind ++ "  ") pre blk thn ++
+        s!"{ind}else:\n" ++ showItems (ind ++ "  ") pre blk els
+
+def showItems (ind : String) (pre : List Hdr) (blk : String) : List TItem → String
+  | [] => ""
+  | it :: rest => showItem ind pre blk it ++ showItems ind pre blk rest
+end
+
 /-- The `sv_structure?` text. -/
 def Summary.describe (s : Summary) : String := Id.run do
   let mut out := s!"sv_structure: parameters {s.pnames}\n"
@@ -204,14 +225,7 @@ def Summary.describe (s : Summary) : String := Id.run do
     out := out ++ "families: none\n"
   for f in s.fams do
     out := out ++ s!"family `{f.hdr.name}`: for {f.hdr.g} in [{f.hdr.c0}, {f.hdr.bound.show}):\n"
-    for it in f.body do
-      match it with
-      | .site st =>
-          out := out ++ s!"  {st.show s!"{f.hdr.name}#{st.pos}[{f.hdr.g}]"}\n"
-      | .loop l =>
-          out := out ++ s!"  inner family `{l.hdr.name}`: for {l.hdr.g} in [{l.hdr.c0}, {l.hdr.bound.show}):\n"
-          for st in l.body do
-            out := out ++ s!"    {st.show s!"{l.hdr.name}#{st.pos}[{f.hdr.g}, {l.hdr.g}]"}\n"
+    out := out ++ showItems "  " [f.hdr] f.hdr.name f.body
   out := out ++ "rank relation a certificate must satisfy (writer < reader whenever the read window\n"
   out := out ++ "overlaps the written window; ranks are functions of the site identity):\n"
   for a in s.lsites do
@@ -250,10 +264,17 @@ def Summary.structProblems (s : Summary) : List String := Id.run do
       ps := ps ++ [s!"loop variables {p.map (·.g)} are not distinct from each other and from the parameters {s.params}"]
     for h in p do
       for n in h.bound.names do
-        unless s.params.contains n do
-          ps := ps ++ [s!"loop `{h.name}`: the bound mentions `{n}`, which is not a parameter"]
+        unless s.params.contains n || ((p.map (·.g)).contains n && n != h.g) do
+          ps := ps ++ [s!"loop `{h.name}`: the bound mentions `{n}`, which is neither a parameter nor the genvar of an enclosing loop"]
       if h.c0 < 0 then
         ps := ps ++ [s!"loop `{h.name}`: the loop starts at a negative value {h.c0}"]
+  for c in s.condSteps do
+    for n in c.2.1.gvLeaves do
+      unless (c.1.map (·.g)).contains n do
+        ps := ps ++ [s!"generate condition `{c.2.2.show}`: it reads `{n}`, which is not the genvar of an enclosing loop"]
+    for n in c.2.1.pLeaves do
+      unless s.params.contains n do
+        ps := ps ++ [s!"generate condition `{c.2.2.show}`: it reads `{n}`, which is not a parameter"]
   let keys := s.lsites.map LSite.key
   for i in [0:keys.length] do
     for j in [i+1:keys.length] do

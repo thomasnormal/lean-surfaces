@@ -1066,17 +1066,22 @@ theorem unsign_of_rhsRds {ds : List DeclT} {v : PExpr} {rs : List Acc} (h : rhsR
 
 /-! ## Derived definitions on the summary -/
 
-/-- Structural well-formedness of a summary: decidable closed data, discharged by `decide`. -/
+/-- Structural well-formedness of a summary: decidable closed data, discharged by `decide`. A loop bound may name the
+parameters and the genvars of the loops around the loop (`j < i + 1` in a loop over `i`): on a header path, a header's
+bound names a parameter or the genvar of another header of the path. That is the enclosing loops' genvars, since every
+prefix of a path is itself a path (`hdrPaths`): the clause of the path that ENDS at the header excludes the deeper
+ones. A generate condition reads the genvars of the loops around it and the parameters (the last conjunct). -/
 def Summary.StructOk (s : Summary) : Prop :=
   s.declNames.Nodup ∧
   (∀ ls ∈ s.lsites, ∀ n ∈ ls.site.names, n ∈ s.declNames) ∧
   (∀ ls ∈ s.lsites, ∀ a ∈ ls.site.tgt :: ls.site.more, a.name ∉ s.inputNames) ∧
   (∀ ls ∈ s.lsites, ∀ n ∈ ls.site.affNames, n ∈ ls.hdrs.map (·.g) ++ s.params) ∧
   (∀ p ∈ s.hdrPaths, (p.map (·.g) ++ s.params).Nodup ∧
-    ∀ h ∈ p, (∀ n ∈ h.bound.names, n ∈ s.params) ∧ 0 ≤ h.c0) ∧
+    ∀ h ∈ p, (∀ n ∈ h.bound.names, n ∈ s.params ∨ (n ∈ p.map (·.g) ∧ n ≠ h.g)) ∧ 0 ≤ h.c0) ∧
   (∀ dt ∈ s.decls, ∀ n ∈ dt.affNames, n ∈ s.params) ∧
   (∀ ls ∈ s.lsites, ∀ a ∈ ls.site.tgt :: (ls.site.more ++ ls.site.rds), s.accOk a = true) ∧
-  s.lsites.Pairwise (fun a b => a.key ≠ b.key)
+  s.lsites.Pairwise (fun a b => a.key ≠ b.key) ∧
+  (∀ c ∈ s.condSteps, (∀ n ∈ c.2.1.gvLeaves, n ∈ c.1.map (·.g)) ∧ ∀ n ∈ c.2.1.pLeaves, n ∈ s.params)
 
 instance (s : Summary) : Decidable s.StructOk := by
   unfold Summary.StructOk; infer_instance
@@ -1115,11 +1120,17 @@ def InWin (σd σs : String → Int) (st : TSite) : Prop :=
 /-- The facts the tactic closes by `omega`: reads in range, dimensions nonnegative, loop bounds
 within the generate fuel. The fuel is `(Σ|args| + 2)² + 64` (`PDesign.surfaceFuel`), so any loop
 count affine in the parameters with coefficient sum at most 4 is within it: the bound used here is
-the linear `4 · Σ|args| + 60` (a loop over `2*N` columns is admitted; svGolf `mul` tree design). -/
+the linear `4 · Σ|args| + 60` (a loop over `2*N` columns is admitted; svGolf `mul` tree design). A loop's count is
+owed at every valuation of the loops around it (`hdrSteps`): an inner bound may mention an outer genvar. The operands of
+a generate condition are evaluated at the signed 32-bit type: each subterm's value is owed in that range wherever the
+condition is evaluated (`condSteps`, `guard_eval`). -/
 def AutoObl (σ : String → Int) (args : List Int) : Prop :=
   (∀ ls ∈ s.lsites, Loops.all ls.hdrs σ fun σ' => ∀ r ∈ ls.site.rds, s.InR σ σ' r) ∧
   (∀ ls ∈ s.lsites, ∀ a ∈ ls.site.tgt :: (ls.site.more ++ ls.site.rds), s.DimNum σ a) ∧
-  (∀ p ∈ s.hdrPaths, ∀ h ∈ p, (h.bound.eval σ - h.c0).toNat ≤ 4 * (args.map Int.natAbs).sum + 60)
+  ((∀ q ∈ s.hdrSteps, Loops.all q.1 σ fun σ' =>
+    (q.2.bound.eval σ' - q.2.c0).toNat ≤ 4 * (args.map Int.natAbs).sum + 60) ∧
+   (∀ c ∈ s.condSteps, Loops.all c.1 σ fun σ' =>
+    ∀ a ∈ c.2.2.rngs, -2147483648 ≤ a.eval σ' ∧ a.eval σ' < 2147483648))
 
 /-- A FURTHER target access of a site (`TSite.more`) lies inside its declared signal: `InWin` for one access. -/
 def InWinAcc (σd σs : String → Int) (a : Acc) : Prop :=

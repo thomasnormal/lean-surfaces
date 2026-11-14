@@ -17,8 +17,10 @@ the `Gen2.lean` handles.
 
 A flat top whose processes are continuous assigns (`assign x = e`, `assign x[idx] = e`,
 `assign x[i][j] = e`, `assign x[i] = e` over a 2-D packed array (a whole row), `assign x[hi:lo] = e`),
-plus ANY NUMBER of `generate for` loops `for (g = c0; g < bound; g++)` whose bodies hold such assigns
-and, one level down, further `generate for` loops of such assigns (two levels deep, mixed bodies).
+plus ANY NUMBER of `generate for` loops `for (g = c0; g < bound; g++)` whose bodies hold such assigns,
+further `generate for` loops and conditional generate constructs `if (c) … else …`, nested to any depth
+(`TItem`). A loop bound is affine in the parameters and the genvars of the loops around it; a condition is a
+guard (`guardOf?`: a signed comparison, `==` or `!=`, of two affine forms of the parameters and those genvars).
 
 * declarations: scalars, 1-D and 2-D packed arrays with affine bounds, unsigned or signed (4-state; a 2-state
   declaration is refused);
@@ -1973,48 +1975,187 @@ def sitesOfG (so : List DeclT → Nat → PProcess → Except String TSite) (ds 
 def sitesOf? (ds : List DeclT) (tag : String) : Nat → List PProcess → Except String (List TSite) :=
   sitesOfG siteOf? ds tag
 
+/-! ## Generate conditions
+
+The condition of a conditional generate construct inside a generate loop (IEEE 1800-2023 §27.5: a constant expression,
+here of the parameters and the enclosing genvars) is read as a signed comparison of two affine forms (`Guard`). A site
+under it sits under the guard (`Hdr.gs` of its innermost loop's header in the site's `LSite.hdrs`, with the branch:
+`true` for the `then` arm), so every obligation about the site is owed only where its arm is the one instantiated. -/
+
+/-- The comparison of a generate condition. -/
+inductive GCmp where
+  | lt | le | gt | ge | eq | ne
+deriving Repr, BEq, DecidableEq, Inhabited
+
+/-- `a op b`, as a proposition `omega` reads. -/
+def GCmp.holds : GCmp → Int → Int → Prop
+  | .lt, a, b => a < b
+  | .le, a, b => a ≤ b
+  | .gt, a, b => b < a
+  | .ge, a, b => b ≤ a
+  | .eq, a, b => a = b
+  | .ne, a, b => a ≠ b
+
+instance (c : GCmp) (a b : Int) : Decidable (c.holds a b) := by
+  cases c <;> unfold GCmp.holds <;> infer_instance
+
+/-- A generate condition: `a op b`, the affine forms of the two operands, and `rngs`, the affine forms of every subterm
+of the operands (leaves and intermediate results), each of which the instantiation computes at the signed 32-bit type
+(`guard_eval`). -/
+structure Guard where
+  op : GCmp
+  a : Aff
+  b : Aff
+  rngs : List Aff
+deriving Repr, Inhabited
+
+def Guard.holds (g : Guard) (σ : String → Int) : Prop := g.op.holds (g.a.eval σ) (g.b.eval σ)
+
+instance (g : Guard) (σ : String → Int) : Decidable (g.holds σ) := by
+  unfold Guard.holds; infer_instance
+
+/-- The guards a site sits under hold: each guard with the arm taken (`true`: its condition holds). -/
+def Guard.All : List (Guard × Bool) → (String → Int) → Prop
+  | [], _ => True
+  | (g, true) :: rest, σ => g.holds σ ∧ Guard.All rest σ
+  | (g, false) :: rest, σ => ¬ g.holds σ ∧ Guard.All rest σ
+
+instance Guard.decAll : (gs : List (Guard × Bool)) → (σ : String → Int) → Decidable (Guard.All gs σ)
+  | [], _ => isTrue trivial
+  | (g, true) :: rest, σ => @instDecidableAnd _ _ inferInstance (Guard.decAll rest σ)
+  | (g, false) :: rest, σ => @instDecidableAnd _ _ inferInstance (Guard.decAll rest σ)
+
+/-- An operand of a generate condition, read as an affine form together with the affine forms of all its subterms (its
+leaves and each intermediate result): an integer literal, a genvar or a parameter, `+`, `-`, and `*` with a constant
+side. The instantiation evaluates the operand at the signed 32-bit type (`evalGenGuard`, `evalAt`), so its value is the
+affine one exactly where every subterm's is a 32-bit value (`guard_eval`). -/
+def opdAffs? : PExpr → Option (Aff × List Aff)
+  | .int v => some (Aff.const v, [Aff.const v])
+  | .genvarRef n => some (Aff.var n, [Aff.var n])
+  | .paramRef n none => some (Aff.var n, [Aff.var n])
+  | .binary op l r =>
+      match opdAffs? l, opdAffs? r with
+      | some (a, ra), some (b, rb) =>
+          match op with
+          | .m0 .add => some (a.add b, ra ++ rb ++ [a.add b])
+          | .m0 .sub => some (a.sub b, ra ++ rb ++ [a.sub b])
+          | .m0 .mul | .mul =>
+              match affMul a b with
+              | some c => some (c, ra ++ rb ++ [c])
+              | none => none
+          | _ => none
+      | _, _ => none
+  | _ => none
+
+/-- The comparison of a generate condition: the signed orders `s< s<= s> s>=` and `==`, `!=` (the envelope's spellings
+for `int` operands). -/
+def gcmpOf? : SymBinOp → Option GCmp
+  | .slt => some .lt
+  | .sle => some .le
+  | .sgt => some .gt
+  | .sge => some .ge
+  | .m0 .eq => some .eq
+  | .m0 .ne => some .ne
+  | _ => none
+
+/-- A generate condition as a `Guard`: a comparison (`gcmpOf?`) of two affine operands (`opdAffs?`). -/
+def guardOf? : PExpr → Option Guard
+  | .binary op l r =>
+      match gcmpOf? op, opdAffs? l, opdAffs? r with
+      | some c, some (a, ra), some (b, rb) => some ⟨c, a, b, ra ++ rb⟩
+      | _, _, _ => none
+  | _ => none
+
+/-- The genvars an affine operand reads (`evalAt` reads a genvar from the environment's `vals`). -/
+def _root_.LeanModels.Sv.PExpr.gvLeaves : PExpr → List String
+  | .genvarRef n => [n]
+  | .binary _ l r => l.gvLeaves ++ r.gvLeaves
+  | _ => []
+
+/-- The parameters an affine operand reads. -/
+def _root_.LeanModels.Sv.PExpr.pLeaves : PExpr → List String
+  | .paramRef n none => [n]
+  | .binary _ l r => l.pLeaves ++ r.pLeaves
+  | _ => []
+
+theorem Guard.all_append : ∀ (a b : List (Guard × Bool)) (σ : String → Int),
+    Guard.All (a ++ b) σ ↔ Guard.All a σ ∧ Guard.All b σ
+  | [], _, _ => by simp [Guard.All]
+  | (g, true) :: rest, b, σ => by simp [Guard.All, Guard.all_append rest b σ, and_assoc]
+  | (g, false) :: rest, b, σ => by simp [Guard.All, Guard.all_append rest b σ, and_assoc]
+
 /-! ## Generate loops -/
 
-/-- A generate-loop header `for (g = c0; g < bound; g++)` with its block label. -/
+/-- A generate-loop header `for (g = c0; g < bound; g++)` with its block label, and the guards (`gs`) of the
+conditional generate arms a located site sits in directly under this loop (empty on the generate tree's own headers,
+`Hdr.Wf`). -/
 structure Hdr where
   lbl : Option String
   g : String
   c0 : Int
   bound : Aff
   bndE : PExpr
+  gs : List (Guard × Bool) := []
 deriving Repr, Inhabited
 
 def Hdr.name (h : Hdr) : String := h.lbl.getD "genblk"
 
-/-- The loop index ranges over `[c0, bound)`. -/
-def Hdr.Rng (h : Hdr) (σ : String → Int) (i : Int) : Prop := h.c0 ≤ i ∧ i < h.bound.eval σ
+/-- The loop index ranges over `[c0, bound)`, where the guards hold at the index. -/
+def Hdr.Rng (h : Hdr) (σ : String → Int) (i : Int) : Prop :=
+  h.c0 ≤ i ∧ i < h.bound.eval σ ∧ Guard.All h.gs (bindσ h.g i σ)
 
 def Hdr.range (h : Hdr) (σ : String → Int) : List Int :=
-  intRange h.c0 (h.bound.eval σ - h.c0).toNat
+  (intRange h.c0 (h.bound.eval σ - h.c0).toNat).filter fun i => decide (Guard.All h.gs (bindσ h.g i σ))
 
 theorem Hdr.mem_range {h : Hdr} {σ : String → Int} {i : Int} : i ∈ h.range σ ↔ h.Rng σ i := by
-  simp only [Hdr.range, Hdr.Rng, mem_intRange]
-  omega
+  simp only [Hdr.range, Hdr.Rng, List.mem_filter, mem_intRange, decide_eq_true_eq]
+  constructor
+  · rintro ⟨h1, h2⟩; exact ⟨by omega, by omega, h2⟩
+  · rintro ⟨h1, h2, h3⟩; exact ⟨by omega, h3⟩
+
+/-- A header under further guards. -/
+def Hdr.guards (h : Hdr) (gs : List (Guard × Bool)) : Hdr := { h with gs := h.gs ++ gs }
+
+theorem Hdr.guards_nil (h : Hdr) : h.guards [] = h := by
+  simp [Hdr.guards]
+
+theorem Hdr.guards_guards (h : Hdr) (a b : List (Guard × Bool)) : (h.guards a).guards b = h.guards (a ++ b) := by
+  simp [Hdr.guards, List.append_assoc]
+
+theorem Hdr.guards_inj {h : Hdr} {a b : List (Guard × Bool)} (e : h.guards a = h.guards b) : a = b := by
+  simp only [Hdr.guards, Hdr.mk.injEq, true_and] at e
+  exact List.append_cancel_left e
+
+@[simp] theorem Hdr.guards_g (h : Hdr) (gs : List (Guard × Bool)) : (h.guards gs).g = h.g := rfl
+
+theorem Hdr.rng_guards {h : Hdr} {gs : List (Guard × Bool)} {σ : String → Int} {i : Int} :
+    (h.guards gs).Rng σ i ↔ h.Rng σ i ∧ Guard.All gs (bindσ h.g i σ) := by
+  simp only [Hdr.Rng, Hdr.guards, Guard.all_append]
+  constructor
+  · rintro ⟨h1, h2, h3, h4⟩; exact ⟨⟨h1, h2, h3⟩, h4⟩
+  · rintro ⟨⟨h1, h2, h3⟩, h4⟩; exact ⟨h1, h2, h3, h4⟩
 
 /-- The header's envelope form. -/
 def Hdr.gen (h : Hdr) (rc : Option Nat) (body : List GenItem) : GenItem :=
   .genFor h.lbl h.g (.int h.c0) (.binary .slt (.genvarRef h.g) h.bndE)
     (.unary .inc (.genvarRef h.g)) rc body
 
-/-- The header's recognized bound is the envelope's. -/
-def Hdr.Wf (h : Hdr) : Prop := affOf? h.bndE = some h.bound
+/-- The header's recognized bound is the envelope's, and it carries no guard (a header of the generate tree). -/
+def Hdr.Wf (h : Hdr) : Prop := affOf? h.bndE = some h.bound ∧ h.gs = []
 
-/-- An inner loop: sites only. -/
-structure TInner where
-  hdr : Hdr
-  rc : Option Nat
-  body : List TSite
-deriving Repr, Inhabited
+theorem Hdr.range_of_wf {h : Hdr} (hw : h.Wf) (σ : String → Int) :
+    h.range σ = intRange h.c0 (h.bound.eval σ - h.c0).toNat := by
+  unfold Hdr.range
+  rw [hw.2]
+  exact List.filter_eq_self.mpr fun _ _ => decide_eq_true trivial
 
-/-- An item of an outer loop's body. -/
+/-- An item of a generate loop's body: a site, a generate loop over items, or a conditional generate construct whose
+condition the summary reads as a guard (`guardOf?`). Loops and conditions nest to any depth; a top-level loop is a
+`TFam` (`TFam.item` views it as an item). -/
 inductive TItem where
   | site (st : TSite)
-  | loop (l : TInner)
+  | loop (hdr : Hdr) (rc : Option Nat) (body : List TItem)
+  | cond (c : PExpr) (g : Guard) (thn els : List TItem)
 deriving Repr, Inhabited
 
 /-- A top-level generate loop. -/
@@ -2024,17 +2165,64 @@ structure TFam where
   body : List TItem
 deriving Repr, Inhabited
 
+/-- A top-level loop as a loop item. -/
+def TFam.item (f : TFam) : TItem := .loop f.hdr f.rc f.body
+
+mutual
 def TItem.toGen : TItem → GenItem
   | .site st => .process st.proc
-  | .loop l => l.hdr.gen l.rc (l.body.map fun st => GenItem.process st.proc)
+  | .loop h rc body => h.gen rc (TItem.toGenL body)
+  | .cond c _ thn els => .genIf c (TItem.toGenL thn) (TItem.toGenL els)
+
+def TItem.toGenL : List TItem → List GenItem
+  | [] => []
+  | it :: rest => it.toGen :: TItem.toGenL rest
+end
+
+theorem TItem.toGenL_eq : ∀ l : List TItem, TItem.toGenL l = l.map TItem.toGen
+  | [] => rfl
+  | it :: rest => by rw [TItem.toGenL, TItem.toGenL_eq rest, List.map_cons]
+
+theorem TItem.toGen_loop (h : Hdr) (rc : Option Nat) (body : List TItem) :
+    (TItem.loop h rc body).toGen = h.gen rc (body.map TItem.toGen) := by
+  rw [TItem.toGen, TItem.toGenL_eq]
+
+theorem TItem.toGen_cond (c : PExpr) (g : Guard) (thn els : List TItem) :
+    (TItem.cond c g thn els).toGen = .genIf c (thn.map TItem.toGen) (els.map TItem.toGen) := by
+  rw [TItem.toGen, TItem.toGenL_eq, TItem.toGenL_eq]
 
 def TFam.toGen (f : TFam) : GenItem := f.hdr.gen f.rc (f.body.map TItem.toGen)
 
+theorem TFam.toGen_item (f : TFam) : f.item.toGen = f.toGen := TItem.toGen_loop ..
+
+mutual
+/-- Every loop header inside the item has its recognized bound and no guard (`Hdr.Wf`), every condition its recognized
+guard. -/
 def TItem.Wf : TItem → Prop
   | .site _ => True
-  | .loop l => l.hdr.Wf
+  | .loop h _ body => h.Wf ∧ TItem.WfL body
+  | .cond c g thn els => guardOf? c = some g ∧ TItem.WfL thn ∧ TItem.WfL els
+
+def TItem.WfL : List TItem → Prop
+  | [] => True
+  | it :: rest => it.Wf ∧ TItem.WfL rest
+end
+
+theorem TItem.wfL_iff : ∀ l : List TItem, TItem.WfL l ↔ ∀ it ∈ l, it.Wf
+  | [] => by simp [TItem.WfL]
+  | it :: rest => by simp [TItem.WfL, TItem.wfL_iff rest]
+
+theorem TItem.wf_loop {h : Hdr} {rc : Option Nat} {body : List TItem} :
+    (TItem.loop h rc body).Wf ↔ h.Wf ∧ ∀ it ∈ body, it.Wf := by
+  rw [TItem.Wf, TItem.wfL_iff]
+
+theorem TItem.wf_cond {c : PExpr} {g : Guard} {thn els : List TItem} :
+    (TItem.cond c g thn els).Wf ↔ guardOf? c = some g ∧ (∀ it ∈ thn, it.Wf) ∧ ∀ it ∈ els, it.Wf := by
+  rw [TItem.Wf, TItem.wfL_iff, TItem.wfL_iff]
 
 def TFam.Wf (f : TFam) : Prop := f.hdr.Wf ∧ ∀ it ∈ f.body, it.Wf
+
+theorem TFam.wf_item {f : TFam} : f.item.Wf ↔ f.Wf := TItem.wf_loop
 
 def procsOf? : List GenItem → Option (List PProcess)
   | [] => some []
@@ -2065,8 +2253,8 @@ def hdrOf? (label : Option String) (g : String) (initE bound step : PExpr) : Exc
   | .int c0, .binary .slt (.genvarRef g') bnd, .unary .inc (.genvarRef g'') =>
       if g' = g ∧ g'' = g then
         match affOf? bnd with
-        | none => .error "generate bound is not affine in the parameters"
-        | some b => .ok ⟨label, g, c0, b, bnd⟩
+        | none => .error "generate bound is not affine in the parameters and the enclosing genvars"
+        | some b => .ok ⟨label, g, c0, b, bnd, []⟩
       else .error "generate loop header mentions a second loop variable"
   | _, _, _ => .error "generate-for header outside `for (g = <int>; g < <affine>; g++)`"
 
@@ -2086,11 +2274,37 @@ theorem hdrOf?_spec {label : Option String} {g : String} {initE bound step : PEx
       · simp [hb] at hh
       · simp only [hb, Except.ok.injEq] at hh
         subst hh
-        exact ⟨rfl, rfl, hb, rfl, rfl, rfl⟩
+        exact ⟨rfl, rfl, ⟨hb, rfl⟩, rfl, rfl, rfl⟩
     · simp [hgg] at hh
   · simp at hh
 
-/-- An item of an outer loop's body at position `pos` (generic in the process recognizer `so`). -/
+mutual
+/-- The positions an item takes in its block: one, but a conditional generate construct takes those of its arms' items
+(its arms have no block of their own in the envelope: their sites are numbered in the enclosing loop's block, so the
+sites of the two arms keep distinct identities). -/
+def _root_.LeanModels.Sv.GenItem.slots : GenItem → Nat
+  | .process _ => 1
+  | .decl _ => 1
+  | .genFor .. => 1
+  | .genIf _ thn els => GenItem.slotsL thn + GenItem.slotsL els
+  | .unsupported .. => 1
+  | .inst _ => 1
+
+def _root_.LeanModels.Sv.GenItem.slotsL : List GenItem → Nat
+  | [] => 0
+  | it :: rest => it.slots + GenItem.slotsL rest
+end
+
+/-- The refusal of a generate condition outside the guard fragment. -/
+def condRefusal : String :=
+  "conditional generate inside a generate loop: the condition is outside the v1 fragment (a signed comparison " ++
+  "`s< s<= s> s>=`, or `==`, `!=`, of two affine forms in the parameters and the enclosing genvars: integer literals, " ++
+  "`+`, `-`, `*` by a constant)"
+
+mutual
+/-- An item of a generate loop's body at position `pos` (generic in the process recognizer `so`): a site, a loop whose
+body is read item by item (`itemsOfG`), or a conditional generate construct whose condition is a guard, to any depth.
+`tag` is the label of the enclosing block. -/
 def itemOfG (so : List DeclT → Nat → PProcess → Except String TSite) (ds : List DeclT) (tag : String) (pos : Nat) : GenItem → Except String TItem
   | .process p =>
       match so ds pos p with
@@ -2100,30 +2314,37 @@ def itemOfG (so : List DeclT → Nat → PProcess → Except String TSite) (ds :
       match hdrOf? label g initE bound step with
       | .error e => .error e
       | .ok h =>
-          match procsOf? body with
-          | none => .error "an inner generate loop holds a nested generate, a conditional generate or an instance (the v1 fragment nests generate loops two deep)"
-          | some ps =>
-              match sitesOfG so ds h.name 0 ps with
+          match itemsOfG so ds h.name 0 body with
+          | .error e => .error e
+          | .ok its => .ok (.loop h rc its)
+  | .genIf c thn els =>
+      match guardOf? c with
+      | none => .error condRefusal
+      | some g =>
+          match itemsOfG so ds tag pos thn with
+          | .error e => .error e
+          | .ok ts =>
+              match itemsOfG so ds tag (pos + GenItem.slotsL thn) els with
               | .error e => .error e
-              | .ok sts => .ok (.loop ⟨h, rc, sts⟩)
-  | .genIf .. =>
-      .error "conditional generate inside a generate loop: GuardEval obligation (the selected arm depends on reached genvar values)"
+              | .ok es => .ok (.cond c g ts es)
   | .decl d => .error s!"declaration `{d.name}` inside a generate loop (outside the v1 fragment)"
   | .inst _ => .error "module instance inside a generate loop (outside the v1 fragment)"
   | .unsupported k _ => .error s!"unsupported generate item `{k}`"
 
-def itemOf? (ds : List DeclT) (tag : String) (pos : Nat) : GenItem → Except String TItem :=
-  itemOfG siteOf? ds tag pos
-
+/-- The items of a generate loop's body, positions from `pos` on (`GenItem.slots` each). -/
 def itemsOfG (so : List DeclT → Nat → PProcess → Except String TSite) (ds : List DeclT) (tag : String) : Nat → List GenItem → Except String (List TItem)
   | _, [] => .ok []
   | pos, it :: rest =>
       match itemOfG so ds tag pos it with
       | .error e => .error e
       | .ok x =>
-          match itemsOfG so ds tag (pos + 1) rest with
+          match itemsOfG so ds tag (pos + it.slots) rest with
           | .error e => .error e
           | .ok xs => .ok (x :: xs)
+end
+
+def itemOf? (ds : List DeclT) (tag : String) (pos : Nat) : GenItem → Except String TItem :=
+  itemOfG siteOf? ds tag pos
 
 def itemsOf? (ds : List DeclT) (tag : String) : Nat → List GenItem → Except String (List TItem) :=
   itemsOfG siteOf? ds tag
@@ -2538,13 +2759,52 @@ def LSite.id (ls : LSite) (σ : String → Int) : SiteId :=
 def LSite.key (ls : LSite) : String × Nat × Nat :=
   ((if ls.hdrs.isEmpty then "plain" else ls.blk), ls.site.pos, ls.hdrs.length)
 
-/-- The located sites of one item of an outer loop's body. -/
-def TFam.itemLs (f : TFam) : TItem → List LSite
-  | .site st => [⟨[f.hdr], f.hdr.name, st⟩]
-  | .loop l => l.body.map fun st => ⟨[f.hdr, l.hdr], l.hdr.name, st⟩
+mutual
+/-- The located sites of an item in the body of the loop `cur`, under the loops `outer` around `cur` (outermost first),
+in the block labelled `blk`: a site sits under `outer ++ [cur]`, the sites of a conditional generate arm under `cur`
+with the arm's guard (`Hdr.guards`), the sites of a loop under its header. -/
+def TItem.lsAt (outer : List Hdr) (cur : Hdr) (blk : String) : TItem → List LSite
+  | .site st => [⟨outer ++ [cur], blk, st⟩]
+  | .loop h _ body => TItem.lsAtL (outer ++ [cur]) h h.name body
+  | .cond _ g thn els =>
+      TItem.lsAtL outer (cur.guards [(g, true)]) blk thn ++ TItem.lsAtL outer (cur.guards [(g, false)]) blk els
+
+def TItem.lsAtL (outer : List Hdr) (cur : Hdr) (blk : String) : List TItem → List LSite
+  | [] => []
+  | it :: rest => TItem.lsAt outer cur blk it ++ TItem.lsAtL outer cur blk rest
+end
 
 /-- The located sites of a top-level loop. -/
-def TFam.lsites (f : TFam) : List LSite := f.body.flatMap f.itemLs
+def TFam.lsites (f : TFam) : List LSite := TItem.lsAtL [] f.hdr f.hdr.name f.body
+
+mutual
+/-- The loop headers inside an item in the body of `cur` (under `outer`), each with the headers of the loops around it
+(the guards of the arms it sits in included). -/
+def TItem.stepsAt (outer : List Hdr) (cur : Hdr) : TItem → List (List Hdr × Hdr)
+  | .site _ => []
+  | .loop h _ body => (outer ++ [cur], h) :: TItem.stepsAtL (outer ++ [cur]) h body
+  | .cond _ g thn els =>
+      TItem.stepsAtL outer (cur.guards [(g, true)]) thn ++ TItem.stepsAtL outer (cur.guards [(g, false)]) els
+
+def TItem.stepsAtL (outer : List Hdr) (cur : Hdr) : List TItem → List (List Hdr × Hdr)
+  | [] => []
+  | it :: rest => TItem.stepsAt outer cur it ++ TItem.stepsAtL outer cur rest
+end
+
+mutual
+/-- The conditional generate constructs inside an item in the body of `cur` (under `outer`), each with the headers of
+the loops around it (the guards of the arms it sits in included), its condition and its guard. -/
+def TItem.condsAt (outer : List Hdr) (cur : Hdr) : TItem → List (List Hdr × PExpr × Guard)
+  | .site _ => []
+  | .loop h _ body => TItem.condsAtL (outer ++ [cur]) h body
+  | .cond c g thn els =>
+      (outer ++ [cur], c, g) ::
+        (TItem.condsAtL outer (cur.guards [(g, true)]) thn ++ TItem.condsAtL outer (cur.guards [(g, false)]) els)
+
+def TItem.condsAtL (outer : List Hdr) (cur : Hdr) : List TItem → List (List Hdr × PExpr × Guard)
+  | [] => []
+  | it :: rest => TItem.condsAt outer cur it ++ TItem.condsAtL outer cur rest
+end
 
 namespace Summary
 
@@ -2623,14 +2883,20 @@ condition into the value where the hypotheses do not settle it (`closeParamEnv`'
 evaluated exactly as before. -/
 def hasCond : Bool := s.lps.any fun (_, c) => c.hasCond
 
-/-- The loop-header paths of the generate tree: each top-level loop alone, and each inner loop
-under its outer loop (outermost first). -/
-def hdrPaths : List (List Hdr) :=
-  s.fams.flatMap fun f =>
-    [f.hdr] :: f.body.filterMap fun it =>
-      match it with
-      | .site _ => none
-      | .loop l => some [f.hdr, l.hdr]
+/-- The loop headers of the generate tree, each with the headers of the loops around it (outermost first): the
+generate fuel is owed for a loop at every valuation of the loops around it, since an inner bound may mention an
+outer genvar (`for (j = 0; j < i + 1; j++)` in a loop over `i`). -/
+def hdrSteps : List (List Hdr × Hdr) :=
+  s.fams.flatMap fun f => ([], f.hdr) :: TItem.stepsAtL [] f.hdr f.body
+
+/-- The conditional generate constructs of the generate tree, each with the headers of the loops around it: its guard's
+names are checked (`StructOk`), and its operands' values owed in the 32-bit range (`AutoObl`), at every valuation of
+the loops around it where it is instantiated. -/
+def condSteps : List (List Hdr × PExpr × Guard) :=
+  s.fams.flatMap fun f => TItem.condsAtL [] f.hdr f.body
+
+/-- The loop-header paths of the generate tree: each loop under the loops around it (outermost first). -/
+def hdrPaths : List (List Hdr) := s.hdrSteps.map fun q => q.1 ++ [q.2]
 
 end Summary
 
@@ -2691,21 +2957,33 @@ theorem Reach_ReachE : ∀ {hs : List Hdr} {σ : String → Int} {σ' : String �
       obtain ⟨E', hE⟩ := Reach_ReachE (E.bindVal h.g i) hr
       exact ⟨E', i, hi, hE⟩
 
-/-- **The closed-form list**: each located site, instantiated at every valuation of its loops, in
-`instantiate2`'s order (module-level processes, then each generate loop: for each outer index, the
-body's items in order, an inner loop contributing its sites for each inner index). The builder
-`b` receives the located site, the valuation and the environment. -/
-def TFam.itemEnum {β : Type} (b : LSite → (String → Int) → IEnv → β) (σ : String → Int) (E : IEnv)
-    (f : TFam) (i : Int) : TItem → List β
-  | .site st => [b ⟨[f.hdr], f.hdr.name, st⟩ (bindσ f.hdr.g i σ) (E.bindVal f.hdr.g i)]
-  | .loop l => (l.hdr.range (bindσ f.hdr.g i σ)).flatMap fun j =>
-      l.body.map fun st =>
-        b ⟨[f.hdr, l.hdr], l.hdr.name, st⟩ (bindσ l.hdr.g j (bindσ f.hdr.g i σ))
-          ((E.bindVal f.hdr.g i).bindVal l.hdr.g j)
+mutual
+/-- **The closed-form list** of an item in the body of the loop `cur` (under `outer`, block `blk`), at the valuation
+`σ` and environment `E` reached through them: a site once, a loop its body's list at every index of its range, a
+conditional generate construct the list of the arm its guard selects at `σ` (`instantiate2`'s order). The builder `b`
+receives the located site, the valuation and the environment. -/
+def TItem.enumAt {β : Type} (b : LSite → (String → Int) → IEnv → β) (outer : List Hdr) (cur : Hdr) (blk : String)
+    (σ : String → Int) (E : IEnv) : TItem → List β
+  | .site st => [b ⟨outer ++ [cur], blk, st⟩ σ E]
+  | .loop h _ body => (h.range σ).flatMap fun j =>
+      TItem.enumAtL b (outer ++ [cur]) h h.name (bindσ h.g j σ) (E.bindVal h.g j) body
+  | .cond _ g thn els =>
+      if g.holds σ then TItem.enumAtL b outer (cur.guards [(g, true)]) blk σ E thn
+      else TItem.enumAtL b outer (cur.guards [(g, false)]) blk σ E els
 
+def TItem.enumAtL {β : Type} (b : LSite → (String → Int) → IEnv → β) (outer : List Hdr) (cur : Hdr) (blk : String)
+    (σ : String → Int) (E : IEnv) : List TItem → List β
+  | [] => []
+  | it :: rest => TItem.enumAt b outer cur blk σ E it ++ TItem.enumAtL b outer cur blk σ E rest
+end
+
+/-- **The closed-form list** of a top-level loop: for each index, its body's items in order (`instantiate2`'s
+order: module-level processes, then each generate loop, an inner loop contributing its sites for each inner
+index, a conditional generate construct those of the arm it selects, to any depth). -/
 def TFam.enum {β : Type} (b : LSite → (String → Int) → IEnv → β) (σ : String → Int) (E : IEnv)
     (f : TFam) : List β :=
-  (f.hdr.range σ).flatMap fun i => f.body.flatMap fun it => f.itemEnum b σ E i it
+  (f.hdr.range σ).flatMap fun i =>
+    TItem.enumAtL b [] f.hdr f.hdr.name (bindσ f.hdr.g i σ) (E.bindVal f.hdr.g i) f.body
 
 def Summary.enum {β : Type} (s : Summary) (b : LSite → (String → Int) → IEnv → β)
     (σ : String → Int) (E : IEnv) : List β :=
@@ -2720,12 +2998,31 @@ def Summary.pairs (s : Summary) (σ : String → Int) (E : IEnv) (elems : List (
     List (SiteInst × Process2) :=
   s.enum (fun ls σ' E' => (ls.inst σ' (s.dw σ), instProcess2 E' elems ls.site.proc)) σ E
 
-theorem TFam.itemEnum_map {β γ : Type} (b : LSite → (String → Int) → IEnv → β) (g : β → γ)
-    (σ : String → Int) (E : IEnv) (f : TFam) (i : Int) (it : TItem) :
-    (f.itemEnum b σ E i it).map g = f.itemEnum (fun ls σ' E' => g (b ls σ' E')) σ E i it := by
-  cases it with
-  | site st => simp [TFam.itemEnum]
-  | loop l => simp [TFam.itemEnum, List.map_flatMap, List.map_map, Function.comp_def]
+mutual
+theorem TItem.enumAt_map {β γ : Type} (b : LSite → (String → Int) → IEnv → β) (g : β → γ) :
+    ∀ (outer : List Hdr) (cur : Hdr) (blk : String) (σ : String → Int) (E : IEnv) (it : TItem),
+      (TItem.enumAt b outer cur blk σ E it).map g = TItem.enumAt (fun ls σ' E' => g (b ls σ' E')) outer cur blk σ E it
+  | _, _, _, _, _, .site _ => by simp [TItem.enumAt]
+  | outer, cur, _, σ, E, .loop h _ body => by
+      simp only [TItem.enumAt, List.map_flatMap]
+      apply flatMap_congr'
+      intro j _
+      exact TItem.enumAtL_map b g _ _ _ _ _ body
+  | outer, cur, blk, σ, E, .cond _ gd thn els => by
+      simp only [TItem.enumAt]
+      split
+      · exact TItem.enumAtL_map b g _ _ _ _ _ thn
+      · exact TItem.enumAtL_map b g _ _ _ _ _ els
+
+theorem TItem.enumAtL_map {β γ : Type} (b : LSite → (String → Int) → IEnv → β) (g : β → γ) :
+    ∀ (outer : List Hdr) (cur : Hdr) (blk : String) (σ : String → Int) (E : IEnv) (its : List TItem),
+      (TItem.enumAtL b outer cur blk σ E its).map g =
+        TItem.enumAtL (fun ls σ' E' => g (b ls σ' E')) outer cur blk σ E its
+  | _, _, _, _, _, [] => rfl
+  | outer, cur, blk, σ, E, it :: rest => by
+      simp only [TItem.enumAtL, List.map_append]
+      rw [TItem.enumAt_map b g outer cur blk σ E it, TItem.enumAtL_map b g outer cur blk σ E rest]
+end
 
 theorem TFam.enum_map {β γ : Type} (b : LSite → (String → Int) → IEnv → β) (g : β → γ)
     (σ : String → Int) (E : IEnv) (f : TFam) :
@@ -2734,9 +3031,7 @@ theorem TFam.enum_map {β γ : Type} (b : LSite → (String → Int) → IEnv �
   simp only [List.map_flatMap]
   apply flatMap_congr'
   intro i _
-  apply flatMap_congr'
-  intro it _
-  exact TFam.itemEnum_map b g σ E f i it
+  exact TItem.enumAtL_map b g _ _ _ _ _ f.body
 
 theorem Summary.enum_map {β γ : Type} (s : Summary) (b : LSite → (String → Int) → IEnv → β)
     (g : β → γ) (σ : String → Int) (E : IEnv) :

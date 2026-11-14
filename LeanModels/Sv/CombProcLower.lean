@@ -486,7 +486,7 @@ theorem pairs_descL {s : Summary} {args : List Int} {σ : String → Int} {envD 
 
 theorem fams_expand2P {s : Summary} {σ : String → Int} {env : IEnv} {elems : List (String × Nat)}
     {F : Nat} (hag : Agrees σ env s.params) (hok : s.StructOk) (hspec : s.SpecOkP)
-    (hfuel : ∀ p ∈ s.hdrPaths, ∀ h ∈ p, (h.bound.eval σ - h.c0).toNat < F) :
+    (hfuel : s.FuelOk σ F) :
     ∀ (fs : List TFam), (∀ f ∈ fs, f ∈ s.fams) →
       expandList2 env elems F (fs.map TFam.toGen) =
         .ok (fs.flatMap fun f => TFam.enum (procB elems) σ env f) :=

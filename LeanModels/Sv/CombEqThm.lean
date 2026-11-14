@@ -33,33 +33,34 @@ open CombView
 
 /-! ## Loop quantifiers over `Nat` -/
 
-/-- `P` holds at every valuation of the loops (outermost first), the indices being naturals. -/
+/-- `P` holds at every valuation of the loops (outermost first), the indices being naturals, where the guards of the
+conditional generate arms (`Hdr.gs`) hold. -/
 def LoopsN : List Hdr → (String → Int) → ((String → Int) → Prop) → Prop
   | [], σ, P => P σ
   | h :: hs, σ, P =>
-      ∀ i : Nat, h.c0 ≤ (i : Int) → (i : Int) < h.bound.eval σ →
+      ∀ i : Nat, h.c0 ≤ (i : Int) → (i : Int) < h.bound.eval σ → Guard.All h.gs (bindσ h.g (i : Int) σ) →
         LoopsN hs (bindσ h.g (i : Int) σ) P
 
 /-- `P` holds at SOME valuation of the loops. -/
 def LoopsE : List Hdr → (String → Int) → ((String → Int) → Prop) → Prop
   | [], σ, P => P σ
   | h :: hs, σ, P =>
-      ∃ i : Nat, h.c0 ≤ (i : Int) ∧ (i : Int) < h.bound.eval σ ∧
+      ∃ i : Nat, h.c0 ≤ (i : Int) ∧ (i : Int) < h.bound.eval σ ∧ Guard.All h.gs (bindσ h.g (i : Int) σ) ∧
         LoopsE hs (bindσ h.g (i : Int) σ) P
 
 theorem LoopsN_of_reach : ∀ (hs : List Hdr) (σ : String → Int) (P : (String → Int) → Prop),
     (∀ σ', Reach hs σ σ' → P σ') → LoopsN hs σ P
   | [], σ, P, H => H σ rfl
   | h :: hs, σ, P, H => by
-      intro i h1 h2
-      exact LoopsN_of_reach hs _ P (fun σ' hr => H σ' ⟨(i : Int), And.intro h1 h2, hr⟩)
+      intro i h1 h2 hg
+      exact LoopsN_of_reach hs _ P (fun σ' hr => H σ' ⟨(i : Int), ⟨h1, h2, hg⟩, hr⟩)
 
 theorem reach_of_LoopsE : ∀ (hs : List Hdr) (σ : String → Int) (P : (String → Int) → Prop),
     LoopsE hs σ P → ∃ σ', Reach hs σ σ' ∧ P σ'
   | [], σ, P, H => ⟨σ, rfl, H⟩
-  | h :: hs, σ, P, ⟨i, h1, h2, H⟩ => by
+  | h :: hs, σ, P, ⟨i, h1, h2, hg, H⟩ => by
       obtain ⟨σ', hr, hp⟩ := reach_of_LoopsE hs _ P H
-      exact ⟨σ', ⟨(i : Int), And.intro h1 h2, hr⟩, hp⟩
+      exact ⟨σ', ⟨(i : Int), ⟨h1, h2, hg⟩, hr⟩, hp⟩
 
 /-! ## Skeleton facts -/
 
@@ -244,9 +245,7 @@ theorem sound_pairs {d : PDesign} {s : Summary} (hs : d.summary = .ok s) {args :
   have C := ctx_of_env hsd hdim hag hdecl
   obtain ⟨hproc, hsites0⟩ := sitesOf?_spec hsts
   have hsites := lsites_spec hsites0 hspec
-  have hfuel : ∀ p ∈ s.hdrPaths, ∀ h ∈ p,
-      (h.bound.eval σ - h.c0).toNat < PDesign.surfaceFuel args :=
-    fun p hp h hh => surfaceFuel_gt args _ (hauto.2.2 p hp h hh)
+  have hfuel := Summary.fuelOk_of_auto hauto
   have h4 : expandList2 (env.withDecls (s.decls.map (DeclT.toDecl σ)))
       (s.decls.map fun dt => (dt.name, dt.elemW σ)) (PDesign.surfaceFuel args) d.generates =
       .ok (s.fams.flatMap fun f => TFam.enum
@@ -295,14 +294,7 @@ theorem site_ok {s : Summary} {σ : String → Int} {envD : IEnv} {elems : List 
   obtain ⟨hnodup, hnames, hinput, haff, hpaths, hdecl, hacc, hkeys⟩ := hok'
   obtain ⟨hauto1, hauto2, hauto3⟩ := hauto
   have hpar : ∀ n ∈ s.params, σ' n = σ n := by
-    rcases lsite_hdrs hls with h0 | hp
-    · rw [h0] at hr
-      have : σ' = σ := hr.1
-      subst this
-      intro n _; rfl
-    · apply Reach_params (ReachE_Reach hr)
-      intro h hh
-      exact notin_of_nodup (hpaths _ hp).1 (List.mem_map.mpr ⟨h, hh, rfl⟩)
+    exact Reach_params (ReachE_Reach hr) (lsite_g_notin ⟨hnodup, hnames, hinput, haff, hpaths, hdecl, hacc, hkeys⟩ hls)
   have C' := Ctx.reachE C hr (ns' := ls.hdrs.map (·.g) ++ s.params) (fun n hn => hn)
   have hin' := (Loops.all_iff _ _ _).mp (hin.1 ls hls) σ' (ReachE_Reach hr)
   have hauto' := (Loops.all_iff _ _ _).mp (hauto1 ls hls) σ' (ReachE_Reach hr)

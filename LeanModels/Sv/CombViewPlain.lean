@@ -85,14 +85,21 @@ theorem autoObl_of_plain (s : Summary) (σ : String → Int) (args : List Int)
     (hp : ∀ a ∈ s.lsites, a.hdrs.isEmpty = true ∧ a.site.more.isEmpty = true)
     (h : (∀ ls ∈ s.lsites, ∀ r ∈ ls.site.rds, s.InR σ σ r) ∧
       (∀ ls ∈ s.lsites, ∀ a ∈ ls.site.tgt :: ls.site.rds, s.DimNum σ a) ∧
-      (∀ p ∈ s.hdrPaths, ∀ h ∈ p, (h.bound.eval σ - h.c0).toNat ≤ 4 * (args.map Int.natAbs).sum + 60)) :
+      (∀ q ∈ s.hdrSteps, q.1.isEmpty = true ∧
+        (q.2.bound.eval σ - q.2.c0).toNat ≤ 4 * (args.map Int.natAbs).sum + 60) ∧
+      s.condSteps.isEmpty = true) :
     s.AutoObl σ args := by
-  obtain ⟨h1, h2, h3⟩ := h
-  refine ⟨fun ls hls => ?_, fun ls hls a ha => ?_, h3⟩
+  obtain ⟨h1, h2, h3, h4⟩ := h
+  refine ⟨fun ls hls => ?_, fun ls hls a ha => ?_, fun q hq => ?_, fun c hc => ?_⟩
   · simp only [List.isEmpty_iff.mp (hp _ hls).1, Loops.all]
     exact h1 ls hls
   · rw [List.isEmpty_iff.mp (hp ls hls).2, List.nil_append] at ha
     exact h2 ls hls a ha
+  · obtain ⟨he, hk⟩ := h3 q hq
+    rw [List.isEmpty_iff.mp he]
+    exact hk
+  · rw [List.isEmpty_iff.mp h4] at hc
+    exact absurd hc (List.not_mem_nil)
 
 /-- `InRangeObl` for a flat netlist (every site plain): the closed form. Its premise `hp` also says that no site
 replicates (WP-B2 gate 4c: the third conjunct of `InRangeObl` is then vacuous); a flat netlist WITH a replication fails

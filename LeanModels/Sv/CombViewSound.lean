@@ -1,4 +1,5 @@
 import LeanModels.Sv.CombViewThm
+import LeanModels.Sv.CombGenGuard
 
 /-!
 # `sv_structure`, stage 3: the soundness theorem against `instantiate2`
@@ -46,17 +47,36 @@ theorem sitesOfG_spec (so : List DeclT → Nat → PProcess → Except String TS
             · exact ⟨pos, p, hs⟩
             · exact h2 st' hm
 
-/-- The sites an item holds. -/
+mutual
+/-- The sites an item holds (at any depth). -/
 def TItem.stList : TItem → List TSite
   | .site st => [st]
-  | .loop l => l.body
+  | .loop _ _ body => TItem.stListL body
+  | .cond _ _ thn els => TItem.stListL thn ++ TItem.stListL els
 
+def TItem.stListL : List TItem → List TSite
+  | [] => []
+  | it :: rest => it.stList ++ TItem.stListL rest
+end
+
+theorem TItem.mem_stListL {st : TSite} : ∀ {l : List TItem}, st ∈ TItem.stListL l ↔ ∃ it ∈ l, st ∈ it.stList
+  | [] => by simp [TItem.stListL]
+  | it :: rest => by simp [TItem.stListL, TItem.mem_stListL (l := rest)]
+
+theorem TItem.mem_stList_loop {st : TSite} {h : Hdr} {rc : Option Nat} {body : List TItem} :
+    st ∈ (TItem.loop h rc body).stList ↔ ∃ it ∈ body, st ∈ it.stList := by
+  rw [TItem.stList, TItem.mem_stListL]
+
+theorem TItem.mem_stList_cond {st : TSite} {c : PExpr} {g : Guard} {thn els : List TItem} :
+    st ∈ (TItem.cond c g thn els).stList ↔ (∃ it ∈ thn, st ∈ it.stList) ∨ ∃ it ∈ els, st ∈ it.stList := by
+  rw [TItem.stList, List.mem_append, TItem.mem_stListL, TItem.mem_stListL]
+
+mutual
 theorem itemOfG_spec (so : List DeclT → Nat → PProcess → Except String TSite)
-    (hso : ∀ ds pos p st, so ds pos p = .ok st → st.proc = p) {ds : List DeclT} {tag : String} {pos : Nat} {it : GenItem} {x : TItem}
-    (h : itemOfG so ds tag pos it = .ok x) :
-    x.toGen = it ∧ x.Wf ∧ ∀ st ∈ x.stList, ∃ pos' p, so ds pos' p = .ok st := by
-  cases it with
-  | process p =>
+    (hso : ∀ ds pos p st, so ds pos p = .ok st → st.proc = p) {ds : List DeclT} :
+    ∀ {tag : String} {pos : Nat} {it : GenItem} {x : TItem}, itemOfG so ds tag pos it = .ok x →
+      x.toGen = it ∧ x.Wf ∧ ∀ st ∈ x.stList, ∃ pos' p, so ds pos' p = .ok st
+  | tag, pos, .process p, x, h => by
       simp only [itemOfG] at h
       rcases hs : so ds pos p with e | st
       · simp [hs] at h
@@ -68,42 +88,57 @@ theorem itemOfG_spec (so : List DeclT → Nat → PProcess → Except String TSi
           simp only [TItem.stList, List.mem_singleton] at hst'
           subst hst'
           exact ⟨pos, p, hs⟩
-  | genFor label g initE bound step rc body =>
+  | tag, pos, .genFor label g initE bound step rc body, x, h => by
       simp only [itemOfG] at h
       rcases hh : hdrOf? label g initE bound step with e | h0
       · simp [hh] at h
-      · rcases hp : procsOf? body with _ | ps
-        · simp [hh, hp] at h
-        · rcases hsx : sitesOfG so ds h0.name 0 ps with e | sts
-          · simp [hh, hp, hsx] at h
-          · simp only [hh, hp, hsx, Except.ok.injEq] at h
+      · rcases hit : itemsOfG so ds h0.name 0 body with e | its
+        · simp [hh, hit] at h
+        · simp only [hh, hit, Except.ok.injEq] at h
+          subst h
+          obtain ⟨hl, hg, hwf, hi, hb, hst⟩ := hdrOf?_spec hh
+          obtain ⟨k1, k2⟩ := itemsOfG_spec so hso hit
+          refine ⟨?_, TItem.wf_loop.mpr ⟨hwf, fun y hy => (k2 y hy).1⟩, fun st hst' => ?_⟩
+          · rw [TItem.toGen_loop]
+            simp only [Hdr.gen]
+            rw [← hi, ← hb, ← hst, hl, hg, k1]
+          · obtain ⟨y, hy, hsty⟩ := TItem.mem_stList_loop.mp hst'
+            exact (k2 y hy).2 st hsty
+  | tag, pos, .genIf c thn els, x, h => by
+      simp only [itemOfG] at h
+      rcases hg : guardOf? c with _ | g
+      · simp [hg] at h
+      · rcases ht : itemsOfG so ds tag pos thn with e | ts
+        · simp [hg, ht] at h
+        · rcases he : itemsOfG so ds tag (pos + GenItem.slotsL thn) els with e | es
+          · simp [hg, ht, he] at h
+          · simp only [hg, ht, he, Except.ok.injEq] at h
             subst h
-            obtain ⟨hl, hg, hwf, hi, hb, hst⟩ := hdrOf?_spec hh
-            obtain ⟨hmap, hsites⟩ := sitesOfG_spec so hso hsx
-            refine ⟨?_, hwf, hsites⟩
-            have hbody : (sts.map fun st => GenItem.process st.proc) = body := by
-              rw [procsOf?_eq hp, ← hmap, List.map_map]; rfl
-            simp only [TItem.toGen, Hdr.gen]
-            rw [← hi, ← hb, ← hst, hl, hg, hbody]
-  | genIf c t e => simp [itemOfG] at h
-  | inst i => simp [itemOfG] at h
-  | decl d => simp [itemOfG] at h
-  | unsupported k t => simp [itemOfG] at h
+            obtain ⟨k1, k2⟩ := itemsOfG_spec so hso ht
+            obtain ⟨l1, l2⟩ := itemsOfG_spec so hso he
+            refine ⟨by rw [TItem.toGen_cond, k1, l1],
+              TItem.wf_cond.mpr ⟨hg, fun y hy => (k2 y hy).1, fun y hy => (l2 y hy).1⟩, fun st hst => ?_⟩
+            rcases TItem.mem_stList_cond.mp hst with ⟨y, hy, hs⟩ | ⟨y, hy, hs⟩
+            · exact (k2 y hy).2 st hs
+            · exact (l2 y hy).2 st hs
+  | _, _, .inst i, x, h => by simp [itemOfG] at h
+  | _, _, .decl d, x, h => by simp [itemOfG] at h
+  | _, _, .unsupported k t, x, h => by simp [itemOfG] at h
 
 theorem itemsOfG_spec (so : List DeclT → Nat → PProcess → Except String TSite)
-    (hso : ∀ ds pos p st, so ds pos p = .ok st → st.proc = p) {ds : List DeclT} {tag : String} :
-    ∀ {pos : Nat} {items : List GenItem} {its : List TItem}, itemsOfG so ds tag pos items = .ok its →
+    (hso : ∀ ds pos p st, so ds pos p = .ok st → st.proc = p) {ds : List DeclT} :
+    ∀ {tag : String} {pos : Nat} {items : List GenItem} {its : List TItem}, itemsOfG so ds tag pos items = .ok its →
       its.map TItem.toGen = items ∧ ∀ x ∈ its, x.Wf ∧
         ∀ st ∈ x.stList, ∃ pos' p, so ds pos' p = .ok st
-  | pos, [], its, h => by
+  | tag, pos, [], its, h => by
       simp only [itemsOfG, Except.ok.injEq] at h
       subst h
       simp
-  | pos, it :: rest, its, h => by
+  | tag, pos, it :: rest, its, h => by
       simp only [itemsOfG] at h
       rcases hx : itemOfG so ds tag pos it with e | x
       · simp [hx] at h
-      · rcases hr : itemsOfG so ds tag (pos + 1) rest with e | xs
+      · rcases hr : itemsOfG so ds tag (pos + it.slots) rest with e | xs
         · simp [hx, hr] at h
         · simp only [hx, hr, Except.ok.injEq] at h
           subst h
@@ -114,6 +149,7 @@ theorem itemsOfG_spec (so : List DeclT → Nat → PProcess → Except String TS
           rcases List.mem_cons.mp hy with rfl | hm
           · exact ⟨h2, h3⟩
           · exact k2 y hm
+end
 
 theorem famOfG_spec (so : List DeclT → Nat → PProcess → Except String TSite)
     (hso : ∀ ds pos p st, so ds pos p = .ok st → st.proc = p) {ds : List DeclT} {it : GenItem} {f : TFam} (h : famOfG so ds it = .ok f) :
@@ -565,47 +601,263 @@ theorem ctx_of_env {s : Summary} {d : PDesign} (hsd : declsOf? d.decls = .ok s.d
 
 /-! ## Membership in the closed-form list -/
 
+/-! ### The generate tree, item by item
+
+An item in the body of the loop `cur`, under the loops `outer` around `cur`, lists its located sites (`TItem.lsAt`), its
+loop headers (`TItem.stepsAt`), its conditions (`TItem.condsAt`) and its closed form (`TItem.enumAt`). A located site
+of the item sits under `outer`, then `cur` with the guards of the arms it is in (`Hdr.guards`), then the item's loops
+around it (`TItem.lsAt_shape`). The lemmas below relate the four, by recursion over the tree (any depth). -/
+
+theorem TItem.mem_lsAtL_of {outer : List Hdr} {cur : Hdr} {blk : String} {its : List TItem} {it : TItem}
+    {ls : LSite} (hit : it ∈ its) (hls : ls ∈ it.lsAt outer cur blk) : ls ∈ TItem.lsAtL outer cur blk its := by
+  induction its with
+  | nil => simp at hit
+  | cons y ys ih =>
+      simp only [TItem.lsAtL, List.mem_append]
+      rcases List.mem_cons.mp hit with rfl | h
+      · exact Or.inl hls
+      · exact Or.inr (ih h)
+
+theorem TItem.mem_enumAtL_item {β : Type} {b : LSite → (String → Int) → IEnv → β} {outer : List Hdr}
+    {cur : Hdr} {blk : String} {σ : String → Int} {E : IEnv} {its : List TItem} {x : β}
+    (hx : x ∈ TItem.enumAtL b outer cur blk σ E its) : ∃ it ∈ its, x ∈ it.enumAt b outer cur blk σ E := by
+  induction its with
+  | nil => simp [TItem.enumAtL] at hx
+  | cons y ys ih =>
+      simp only [TItem.enumAtL, List.mem_append] at hx
+      rcases hx with h | h
+      · exact ⟨y, List.mem_cons_self .., h⟩
+      · obtain ⟨it, hit, h'⟩ := ih h
+        exact ⟨it, List.mem_cons_of_mem _ hit, h'⟩
+
+mutual
+/-- **The shape of a located site**: under `outer`, then `cur` with further guards, then the item's loops. -/
+theorem TItem.lsAt_shape : ∀ (outer : List Hdr) (cur : Hdr) (blk : String) (it : TItem) (ls : LSite),
+    ls ∈ it.lsAt outer cur blk → ∃ gs inner, ls.hdrs = outer ++ (cur.guards gs :: inner)
+  | outer, cur, blk, .site st, ls, h => by
+      simp only [TItem.lsAt, List.mem_singleton] at h
+      subst h
+      exact ⟨[], [], by simp [Hdr.guards_nil]⟩
+  | outer, cur, _, .loop hd _ body, ls, h => by
+      simp only [TItem.lsAt] at h
+      obtain ⟨gs, inner, e⟩ := TItem.lsAtL_shape (outer ++ [cur]) hd hd.name body ls h
+      exact ⟨[], hd.guards gs :: inner, by rw [e, Hdr.guards_nil]; simp⟩
+  | outer, cur, blk, .cond _ g thn els, ls, h => by
+      simp only [TItem.lsAt, List.mem_append] at h
+      rcases h with h | h
+      · obtain ⟨gs, inner, e⟩ := TItem.lsAtL_shape outer (cur.guards [(g, true)]) blk thn ls h
+        exact ⟨(g, true) :: gs, inner, by rw [e, Hdr.guards_guards]; rfl⟩
+      · obtain ⟨gs, inner, e⟩ := TItem.lsAtL_shape outer (cur.guards [(g, false)]) blk els ls h
+        exact ⟨(g, false) :: gs, inner, by rw [e, Hdr.guards_guards]; rfl⟩
+
+theorem TItem.lsAtL_shape : ∀ (outer : List Hdr) (cur : Hdr) (blk : String) (its : List TItem) (ls : LSite),
+    ls ∈ TItem.lsAtL outer cur blk its → ∃ gs inner, ls.hdrs = outer ++ (cur.guards gs :: inner)
+  | _, _, _, [], ls, h => by simp [TItem.lsAtL] at h
+  | outer, cur, blk, it :: rest, ls, h => by
+      simp only [TItem.lsAtL, List.mem_append] at h
+      rcases h with h | h
+      · exact TItem.lsAt_shape outer cur blk it ls h
+      · exact TItem.lsAtL_shape outer cur blk rest ls h
+end
+
+mutual
+/-- The genvars along a located site of an item: those of `outer ++ [cur]`, or those along one of the item's loops. -/
+theorem TItem.lsAt_gvs : ∀ (outer : List Hdr) (cur : Hdr) (blk : String) (it : TItem) (ls : LSite),
+    ls ∈ it.lsAt outer cur blk → ls.hdrs.map (·.g) = (outer ++ [cur]).map (·.g) ∨
+      ∃ q ∈ it.stepsAt outer cur, ls.hdrs.map (·.g) = (q.1 ++ [q.2]).map (·.g)
+  | outer, cur, blk, .site st, ls, h => by
+      simp only [TItem.lsAt, List.mem_singleton] at h
+      subst h
+      exact Or.inl rfl
+  | outer, cur, _, .loop hd _ body, ls, h => by
+      simp only [TItem.lsAt] at h
+      right
+      rcases TItem.lsAtL_gvs (outer ++ [cur]) hd hd.name body ls h with e | ⟨q, hq, e⟩
+      · exact ⟨(outer ++ [cur], hd), by simp [TItem.stepsAt], e⟩
+      · exact ⟨q, by simp only [TItem.stepsAt, List.mem_cons]; exact Or.inr hq, e⟩
+  | outer, cur, blk, .cond _ g thn els, ls, h => by
+      simp only [TItem.lsAt, List.mem_append] at h
+      rcases h with h | h
+      · rcases TItem.lsAtL_gvs outer (cur.guards [(g, true)]) blk thn ls h with e | ⟨q, hq, e⟩
+        · exact Or.inl (by rw [e]; simp)
+        · exact Or.inr ⟨q, by simp only [TItem.stepsAt, List.mem_append]; exact Or.inl hq, e⟩
+      · rcases TItem.lsAtL_gvs outer (cur.guards [(g, false)]) blk els ls h with e | ⟨q, hq, e⟩
+        · exact Or.inl (by rw [e]; simp)
+        · exact Or.inr ⟨q, by simp only [TItem.stepsAt, List.mem_append]; exact Or.inr hq, e⟩
+
+theorem TItem.lsAtL_gvs : ∀ (outer : List Hdr) (cur : Hdr) (blk : String) (its : List TItem) (ls : LSite),
+    ls ∈ TItem.lsAtL outer cur blk its → ls.hdrs.map (·.g) = (outer ++ [cur]).map (·.g) ∨
+      ∃ q ∈ TItem.stepsAtL outer cur its, ls.hdrs.map (·.g) = (q.1 ++ [q.2]).map (·.g)
+  | _, _, _, [], ls, h => by simp [TItem.lsAtL] at h
+  | outer, cur, blk, it :: rest, ls, h => by
+      simp only [TItem.lsAtL, List.mem_append] at h
+      rcases h with h | h
+      · rcases TItem.lsAt_gvs outer cur blk it ls h with e | ⟨q, hq, e⟩
+        · exact Or.inl e
+        · exact Or.inr ⟨q, by simp only [TItem.stepsAtL, List.mem_append]; exact Or.inl hq, e⟩
+      · rcases TItem.lsAtL_gvs outer cur blk rest ls h with e | ⟨q, hq, e⟩
+        · exact Or.inl e
+        · exact Or.inr ⟨q, by simp only [TItem.stepsAtL, List.mem_append]; exact Or.inr hq, e⟩
+end
+
+mutual
+/-- The site of a located site of an item is one of the item's sites. -/
+theorem TItem.lsAt_site : ∀ (outer : List Hdr) (cur : Hdr) (blk : String) (it : TItem) (ls : LSite),
+    ls ∈ it.lsAt outer cur blk → ls.site ∈ it.stList
+  | outer, cur, blk, .site st, ls, h => by
+      simp only [TItem.lsAt, List.mem_singleton] at h
+      subst h
+      simp [TItem.stList]
+  | outer, cur, _, .loop hd _ body, ls, h => by
+      simp only [TItem.lsAt] at h
+      rw [TItem.mem_stList_loop]
+      exact TItem.lsAtL_site (outer ++ [cur]) hd hd.name body ls h
+  | outer, cur, blk, .cond _ g thn els, ls, h => by
+      simp only [TItem.lsAt, List.mem_append] at h
+      rw [TItem.mem_stList_cond]
+      rcases h with h | h
+      · exact Or.inl (TItem.lsAtL_site outer _ blk thn ls h)
+      · exact Or.inr (TItem.lsAtL_site outer _ blk els ls h)
+
+theorem TItem.lsAtL_site : ∀ (outer : List Hdr) (cur : Hdr) (blk : String) (its : List TItem) (ls : LSite),
+    ls ∈ TItem.lsAtL outer cur blk its → ∃ it ∈ its, ls.site ∈ it.stList
+  | _, _, _, [], ls, h => by simp [TItem.lsAtL] at h
+  | outer, cur, blk, it :: rest, ls, h => by
+      simp only [TItem.lsAtL, List.mem_append] at h
+      rcases h with h | h
+      · exact ⟨it, List.mem_cons_self .., TItem.lsAt_site outer cur blk it ls h⟩
+      · obtain ⟨y, hy, hs⟩ := TItem.lsAtL_site outer cur blk rest ls h
+        exact ⟨y, List.mem_cons_of_mem _ hy, hs⟩
+end
+
+/-- Two shapes of one located site agree (`TItem.lsAt_shape` is unique). -/
+theorem shape_inj {outer : List Hdr} {cur : Hdr} {gs gs' : List (Guard × Bool)} {inner inner' : List Hdr}
+    (e : outer ++ (cur.guards gs :: inner) = outer ++ (cur.guards gs' :: inner')) : gs = gs' ∧ inner = inner' := by
+  have e' := List.append_cancel_left e
+  simp only [List.cons.injEq] at e'
+  exact ⟨Hdr.guards_inj e'.1, e'.2⟩
+
+mutual
+/-- **Membership in an item's closed form**: an entry is the builder at a located site of the item, at a valuation
+reached through the item's loops around the site, where the guards of the arms the site is in hold. -/
+theorem TItem.mem_enumAt {β : Type} (b : LSite → (String → Int) → IEnv → β) {x : β} :
+    ∀ (outer : List Hdr) (cur : Hdr) (blk : String) (σ : String → Int) (E : IEnv) (it : TItem),
+      x ∈ it.enumAt b outer cur blk σ E ↔
+        ∃ ls ∈ it.lsAt outer cur blk, ∃ gs inner σ' E', ls.hdrs = outer ++ (cur.guards gs :: inner) ∧
+          Guard.All gs σ ∧ ReachE inner σ E σ' E' ∧ x = b ls σ' E'
+  | outer, cur, blk, σ, E, .site st => by
+      simp only [TItem.enumAt, TItem.lsAt, List.mem_singleton]
+      constructor
+      · rintro rfl
+        exact ⟨_, rfl, [], [], σ, E, by simp [Hdr.guards_nil], trivial, ⟨rfl, rfl⟩, rfl⟩
+      · rintro ⟨ls, rfl, gs, inner, σ', E', he, -, hr, rfl⟩
+        have e0 : outer ++ [cur] = outer ++ (cur.guards [] :: []) := by rw [Hdr.guards_nil]
+        obtain ⟨-, rfl⟩ := shape_inj (e0.symm.trans he)
+        obtain ⟨rfl, rfl⟩ := hr
+        rfl
+  | outer, cur, blk, σ, E, .loop hd _ body => by
+      simp only [TItem.enumAt, TItem.lsAt, List.mem_flatMap]
+      constructor
+      · rintro ⟨j, hj, hx⟩
+        obtain ⟨ls, hls, gs, inner, σ', E', he, hg, hr, rfl⟩ :=
+          (TItem.mem_enumAtL b (outer ++ [cur]) hd hd.name (bindσ hd.g j σ) (E.bindVal hd.g j) body).mp hx
+        refine ⟨ls, hls, [], hd.guards gs :: inner, σ', E', by rw [he, Hdr.guards_nil]; simp, trivial,
+          ⟨j, Hdr.rng_guards.mpr ⟨Hdr.mem_range.mp hj, hg⟩, hr⟩, rfl⟩
+      · rintro ⟨ls, hls, gs, inner, σ', E', he, -, hr, rfl⟩
+        obtain ⟨gs0, inner0, he0⟩ := TItem.lsAtL_shape (outer ++ [cur]) hd hd.name body ls hls
+        have e1 : (outer ++ [cur]) ++ (hd.guards gs0 :: inner0) =
+            outer ++ (cur.guards [] :: hd.guards gs0 :: inner0) := by rw [Hdr.guards_nil]; simp
+        obtain ⟨-, rfl⟩ := shape_inj (he.symm.trans (he0.trans e1))
+        obtain ⟨j, hj, hr'⟩ := hr
+        obtain ⟨hj1, hj2⟩ := Hdr.rng_guards.mp hj
+        exact ⟨j, Hdr.mem_range.mpr hj1,
+          (TItem.mem_enumAtL b (outer ++ [cur]) hd hd.name (bindσ hd.g j σ) (E.bindVal hd.g j) body).mpr
+            ⟨ls, hls, gs0, inner0, σ', E', he0, hj2, hr', rfl⟩⟩
+  | outer, cur, blk, σ, E, .cond _ g thn els => by
+      simp only [TItem.enumAt, TItem.lsAt, List.mem_append]
+      constructor
+      · intro hx
+        split at hx
+        · rename_i hgd
+          obtain ⟨ls, hls, gs, inner, σ', E', he, hg, hr, rfl⟩ :=
+            (TItem.mem_enumAtL b outer (cur.guards [(g, true)]) blk σ E thn).mp hx
+          exact ⟨ls, Or.inl hls, (g, true) :: gs, inner, σ', E', by rw [he, Hdr.guards_guards]; rfl,
+            ⟨hgd, hg⟩, hr, rfl⟩
+        · rename_i hgd
+          obtain ⟨ls, hls, gs, inner, σ', E', he, hg, hr, rfl⟩ :=
+            (TItem.mem_enumAtL b outer (cur.guards [(g, false)]) blk σ E els).mp hx
+          exact ⟨ls, Or.inr hls, (g, false) :: gs, inner, σ', E', by rw [he, Hdr.guards_guards]; rfl,
+            ⟨hgd, hg⟩, hr, rfl⟩
+      · rintro ⟨ls, hls | hls, gs, inner, σ', E', he, hg, hr, rfl⟩
+        · obtain ⟨gs0, inner0, he0⟩ := TItem.lsAtL_shape outer (cur.guards [(g, true)]) blk thn ls hls
+          rw [Hdr.guards_guards] at he0
+          obtain ⟨rfl, rfl⟩ := shape_inj (he.symm.trans he0)
+          obtain ⟨hgd, hg0⟩ := hg
+          rw [if_pos hgd]
+          exact (TItem.mem_enumAtL b outer (cur.guards [(g, true)]) blk σ E thn).mpr
+            ⟨ls, hls, gs0, inner, σ', E', by rw [he, Hdr.guards_guards], hg0, hr, rfl⟩
+        · obtain ⟨gs0, inner0, he0⟩ := TItem.lsAtL_shape outer (cur.guards [(g, false)]) blk els ls hls
+          rw [Hdr.guards_guards] at he0
+          obtain ⟨rfl, rfl⟩ := shape_inj (he.symm.trans he0)
+          obtain ⟨hgd, hg0⟩ := hg
+          rw [if_neg hgd]
+          exact (TItem.mem_enumAtL b outer (cur.guards [(g, false)]) blk σ E els).mpr
+            ⟨ls, hls, gs0, inner, σ', E', by rw [he, Hdr.guards_guards], hg0, hr, rfl⟩
+
+theorem TItem.mem_enumAtL {β : Type} (b : LSite → (String → Int) → IEnv → β) {x : β} :
+    ∀ (outer : List Hdr) (cur : Hdr) (blk : String) (σ : String → Int) (E : IEnv) (its : List TItem),
+      x ∈ TItem.enumAtL b outer cur blk σ E its ↔
+        ∃ ls ∈ TItem.lsAtL outer cur blk its, ∃ gs inner σ' E', ls.hdrs = outer ++ (cur.guards gs :: inner) ∧
+          Guard.All gs σ ∧ ReachE inner σ E σ' E' ∧ x = b ls σ' E'
+  | _, _, _, _, _, [] => by simp [TItem.enumAtL, TItem.lsAtL]
+  | outer, cur, blk, σ, E, it :: rest => by
+      simp only [TItem.enumAtL, TItem.lsAtL, List.mem_append]
+      rw [TItem.mem_enumAt b outer cur blk σ E it, TItem.mem_enumAtL b outer cur blk σ E rest]
+      constructor
+      · rintro (⟨ls, hls, rest'⟩ | ⟨ls, hls, rest'⟩)
+        · exact ⟨ls, Or.inl hls, rest'⟩
+        · exact ⟨ls, Or.inr hls, rest'⟩
+      · rintro ⟨ls, hls | hls, rest'⟩
+        · exact Or.inl ⟨ls, hls, rest'⟩
+        · exact Or.inr ⟨ls, hls, rest'⟩
+end
+
+theorem TFam.mem_enum {β : Type} (b : LSite → (String → Int) → IEnv → β) (σ : String → Int) (E : IEnv)
+    (f : TFam) {x : β} :
+    x ∈ TFam.enum b σ E f ↔ ∃ ls ∈ f.lsites, ∃ σ' E', ReachE ls.hdrs σ E σ' E' ∧ x = b ls σ' E' := by
+  unfold TFam.enum TFam.lsites
+  simp only [List.mem_flatMap]
+  constructor
+  · rintro ⟨i, hi, hx⟩
+    obtain ⟨ls, hls, gs, inner, σ', E', he, hg, hr, rfl⟩ :=
+      (TItem.mem_enumAtL b [] f.hdr f.hdr.name (bindσ f.hdr.g i σ) (E.bindVal f.hdr.g i) f.body).mp hx
+    refine ⟨ls, hls, σ', E', ?_, rfl⟩
+    rw [he, List.nil_append]
+    exact ⟨i, Hdr.rng_guards.mpr ⟨Hdr.mem_range.mp hi, hg⟩, hr⟩
+  · rintro ⟨ls, hls, σ', E', hr, rfl⟩
+    obtain ⟨gs, inner, he⟩ := TItem.lsAtL_shape [] f.hdr f.hdr.name f.body ls hls
+    rw [he, List.nil_append] at hr
+    obtain ⟨i, hi, hr'⟩ := hr
+    obtain ⟨hi1, hi2⟩ := Hdr.rng_guards.mp hi
+    exact ⟨i, Hdr.mem_range.mpr hi1,
+      (TItem.mem_enumAtL b [] f.hdr f.hdr.name (bindσ f.hdr.g i σ) (E.bindVal f.hdr.g i) f.body).mpr
+        ⟨ls, hls, gs, inner, σ', E', he, hi2, hr', rfl⟩⟩
+
 theorem mem_enum_E {β : Type} (s : Summary) (b : LSite → (String → Int) → IEnv → β)
     (σ : String → Int) (E : IEnv) {x : β} :
     x ∈ s.enum b σ E ↔
       ∃ ls ∈ s.lsites, ∃ σ' E', ReachE ls.hdrs σ E σ' E' ∧ x = b ls σ' E' := by
   unfold Summary.enum Summary.lsites
-  simp only [List.mem_append, List.mem_map, List.mem_flatMap, TFam.enum, TFam.lsites, TFam.itemLs, TFam.itemEnum]
+  simp only [List.mem_append, List.mem_map, List.mem_flatMap, TFam.mem_enum]
   constructor
-  · rintro (⟨st, hst, rfl⟩ | ⟨f, hf, i, hi, it, hit, hx⟩)
+  · rintro (⟨st, hst, rfl⟩ | ⟨f, hf, ls, hls, σ', E', hr, rfl⟩)
     · exact ⟨⟨[], "plain", st⟩, Or.inl ⟨st, hst, rfl⟩, σ, E, ⟨rfl, rfl⟩, rfl⟩
-    · cases it with
-      | site st =>
-          simp only [List.mem_singleton] at hx
-          exact ⟨⟨[f.hdr], f.hdr.name, st⟩,
-            Or.inr ⟨f, hf, TItem.site st, hit, by simp⟩, bindσ f.hdr.g i σ, E.bindVal f.hdr.g i,
-            ⟨i, Hdr.mem_range.mp hi, rfl, rfl⟩, hx⟩
-      | loop l =>
-          simp only [List.mem_flatMap, List.mem_map] at hx
-          obtain ⟨j, hj, st, hst, rfl⟩ := hx
-          exact ⟨⟨[f.hdr, l.hdr], l.hdr.name, st⟩,
-            Or.inr ⟨f, hf, TItem.loop l, hit, by simp [hst]⟩, _, _,
-            ⟨i, Hdr.mem_range.mp hi, j, Hdr.mem_range.mp hj, rfl, rfl⟩, rfl⟩
-  · rintro ⟨ls, hls, σ', E', hr, rfl⟩
-    rcases hls with ⟨st, hst, rfl⟩ | ⟨f, hf, it, hit, hl⟩
+    · exact ⟨ls, Or.inr ⟨f, hf, hls⟩, σ', E', hr, rfl⟩
+  · rintro ⟨ls, (⟨st, hst, rfl⟩ | ⟨f, hf, hls⟩), σ', E', hr, rfl⟩
     · obtain ⟨h1, h2⟩ := hr
       subst h1 h2
       exact Or.inl ⟨st, hst, rfl⟩
-    · cases it with
-      | site st =>
-          simp only [List.mem_singleton] at hl
-          subst hl
-          obtain ⟨i, hi, h1, h2⟩ := hr
-          subst h1 h2
-          exact Or.inr ⟨f, hf, i, Hdr.mem_range.mpr hi, TItem.site st, hit, by simp⟩
-      | loop l =>
-          simp only [List.mem_map] at hl
-          obtain ⟨st, hst, rfl⟩ := hl
-          obtain ⟨i, hi, j, hj, h1, h2⟩ := hr
-          subst h1 h2
-          exact Or.inr ⟨f, hf, i, Hdr.mem_range.mpr hi, TItem.loop l, hit, by
-            simp only [List.mem_flatMap, List.mem_map]
-            exact ⟨j, Hdr.mem_range.mpr hj, st, hst, rfl⟩⟩
+    · exact Or.inr ⟨f, hf, ls, hls, σ', E', hr, rfl⟩
 
 theorem mem_insts {s : Summary} {σ : String → Int} {E : IEnv} {a : SiteInst} :
     a ∈ s.insts σ E ↔ ∃ ls ∈ s.lsites, ∃ σ', Reach ls.hdrs σ σ' ∧ a = ls.inst σ' (s.dw σ) := by
@@ -638,24 +890,35 @@ theorem notin_of_nodup {l1 l2 : List String} (h : (l1 ++ l2).Nodup) {x : String}
   have h2 := (List.nodup_append.mp h).2.2
   exact h2 x hx x hx2 rfl
 
+/-- The genvars along a located site: none for a plain site, else those of one of the generate tree's header paths. -/
 theorem lsite_hdrs {s : Summary} {ls : LSite} (h : ls ∈ s.lsites) :
-    ls.hdrs = [] ∨ ls.hdrs ∈ s.hdrPaths := by
+    ls.hdrs = [] ∨ ∃ p ∈ s.hdrPaths, ls.hdrs.map (·.g) = p.map (·.g) := by
   unfold Summary.lsites at h
   simp only [List.mem_append, List.mem_map, List.mem_flatMap, TFam.lsites] at h
-  rcases h with ⟨st, hst, rfl⟩ | ⟨f, hf, it, hit, hl⟩
+  rcases h with ⟨st, hst, rfl⟩ | ⟨f, hf, hl⟩
   · exact Or.inl rfl
   · right
-    unfold Summary.hdrPaths
-    simp only [List.mem_flatMap, List.mem_cons, List.mem_filterMap]
-    cases it with
-    | site st =>
-        simp only [TFam.itemLs, List.mem_singleton] at hl
-        subst hl
-        exact ⟨f, hf, Or.inl rfl⟩
-    | loop l =>
-        simp only [TFam.itemLs, List.mem_map] at hl
-        obtain ⟨st, hst, rfl⟩ := hl
-        exact ⟨f, hf, Or.inr ⟨TItem.loop l, hit, rfl⟩⟩
+    unfold Summary.hdrPaths Summary.hdrSteps
+    simp only [List.mem_map, List.mem_flatMap, List.mem_cons]
+    rcases TItem.lsAtL_gvs [] f.hdr f.hdr.name f.body ls hl with e | ⟨q, hq, e⟩
+    · exact ⟨_, ⟨([], f.hdr), ⟨f, hf, Or.inl rfl⟩, rfl⟩, e⟩
+    · exact ⟨_, ⟨q, ⟨f, hf, Or.inr hq⟩, rfl⟩, e⟩
+
+/-- Along a located site the genvars are distinct from the parameters (the structural check's path condition). -/
+theorem lsite_g_notin {s : Summary} (hok : s.StructOk) {ls : LSite} (hls : ls ∈ s.lsites) :
+    ∀ h ∈ ls.hdrs, h.g ∉ s.params := by
+  intro h hh
+  rcases lsite_hdrs hls with e | ⟨p, hp, e⟩
+  · rw [e] at hh; simp at hh
+  · have hm : h.g ∈ p.map (·.g) := by rw [← e]; exact List.mem_map.mpr ⟨h, hh, rfl⟩
+    exact notin_of_nodup (hok.2.2.2.2.1 p hp).1 hm
+
+/-- Along a located site the genvars are distinct (the structural check's path condition). -/
+theorem lsite_nodup {s : Summary} (hok : s.StructOk) {ls : LSite} (hls : ls ∈ s.lsites) :
+    (ls.hdrs.map (·.g)).Nodup := by
+  rcases lsite_hdrs hls with e | ⟨p, hp, e⟩
+  · rw [e]; exact List.nodup_nil
+  · rw [e]; exact (List.nodup_append.mp (hok.2.2.2.2.1 p hp).1).1
 
 theorem lsitesG_spec (so : List DeclT → Nat → PProcess → Except String TSite) {s : Summary}
     (hsta : ∀ st ∈ s.statics, ∃ pos p, so s.decls pos p = .ok st) (hspec : s.SpecOkG so) :
@@ -663,17 +926,10 @@ theorem lsitesG_spec (so : List DeclT → Nat → PProcess → Except String TSi
   intro ls h
   unfold Summary.lsites at h
   simp only [List.mem_append, List.mem_map, List.mem_flatMap, TFam.lsites] at h
-  rcases h with ⟨st, hst, rfl⟩ | ⟨f, hf, it, hit, hl⟩
+  rcases h with ⟨st, hst, rfl⟩ | ⟨f, hf, hl⟩
   · exact hsta st hst
-  · cases it with
-    | site st =>
-        simp only [TFam.itemLs, List.mem_singleton] at hl
-        subst hl
-        exact (hspec f hf).2 (TItem.site st) hit st (by simp [TItem.stList])
-    | loop l =>
-        simp only [TFam.itemLs, List.mem_map] at hl
-        obtain ⟨st, hst, rfl⟩ := hl
-        exact (hspec f hf).2 (TItem.loop l) hit st (by simpa [TItem.stList] using hst)
+  · obtain ⟨it, hit, hst⟩ := TItem.lsAtL_site [] f.hdr f.hdr.name f.body ls hl
+    exact (hspec f hf).2 it hit ls.site hst
 
 theorem lsites_spec {s : Summary}
     (hsta : ∀ st ∈ s.statics, ∃ pos p, siteOf? s.decls pos p = .ok st) (hspec : s.SpecOk) :
@@ -732,14 +988,7 @@ theorem siteCtx_of_reach {s : Summary} {args : List Int} {σ : String → Int} {
     intro n hn
     exact mem_declNames_of_find (by simpa [Summary.DW] using hn)
   have hpar : ∀ n ∈ s.params, σ' n = σ n := by
-    rcases lsite_hdrs hls with h0 | hp
-    · rw [h0] at hr
-      have : σ' = σ := hr.1
-      subst this
-      intro n _; rfl
-    · apply Reach_params (ReachE_Reach hr)
-      intro h hh
-      exact notin_of_nodup (hpaths _ hp).1 (List.mem_map.mpr ⟨h, hh, rfl⟩)
+    exact Reach_params (ReachE_Reach hr) (lsite_g_notin ⟨hnodup, hnames, hinput, haff, hpaths, hdecl, hacc, hkeys⟩ hls)
   have C' := Ctx.reachE C hr (ns' := ls.hdrs.map (·.g) ++ s.params) (fun n hn => hn)
   have hin' := (Loops.all_iff _ _ _).mp (hin.1 ls hls) σ' (ReachE_Reach hr)
   have hauto' := (Loops.all_iff _ _ _).mp (hauto1 ls hls) σ' (ReachE_Reach hr)
@@ -834,42 +1083,205 @@ theorem Hdr.expand2 {env : IEnv} {elems : List (String × Nat)} {F : Nat} {σ : 
     have hb' : (n == h.g) = false := beq_eq_false_iff_ne.2 hng
     exact (IEnv.intVal?_bindVal_ne i hng).trans (hag n hnp)
   have hei : ∀ i : Int, h.bndE.isInt (env.bindVal h.g i) = true :=
-    fun i => (affOf?_sound h.bndE h.bound hwf (hbag i)).1
+    fun i => (affOf?_sound h.bndE h.bound hwf.1 (hbag i)).1
   have he : ∀ i : Int, evalInt (env.bindVal h.g i) h.bndE = .ok (h.bound.eval σ) :=
-    fun i => (affOf?_sound h.bndE h.bound hwf (hbag i)).2
+    fun i => (affOf?_sound h.bndE h.bound hwf.1 (hbag i)).2
+  rw [Hdr.range_of_wf hwf]
   exact GenItem.expand2_genFor_ascending_flatMap (evalInt_int h.c0) hei he hF
-    (fun v hv1 hv2 => hf v ⟨hv1, hv2⟩)
+    (fun v hv1 hv2 => hf v ⟨hv1, hv2, by rw [hwf.2]; trivial⟩)
 
-/-- The processes of one body item of an outer loop, at the outer iteration's valuation and
-environment. -/
-def itemProcs (elems : List (String × Nat)) (σ1 : String → Int) (E1 : IEnv) : TItem → List Process2
-  | .site st => [instProcess2 E1 elems st.proc]
-  | .loop l => (l.hdr.range σ1).flatMap fun j =>
-      l.body.map fun st => instProcess2 (E1.bindVal l.hdr.g j) elems st.proc
+/-- The genvars `gvs` have their values in the environment's `vals` (where `evalAt` reads a genvar). -/
+def AgreesV (σ : String → Int) (E : IEnv) (gvs : List String) : Prop := ∀ n ∈ gvs, E.vals.lookup n = some (σ n)
 
-theorem items_expand2 {elems : List (String × Nat)} {F : Nat} {σ1 : String → Int} {E1 : IEnv}
-    {ns1 : List String} (hag : Agrees σ1 E1 ns1) :
-    ∀ (its : List TItem),
-      (∀ l, TItem.loop l ∈ its → l.hdr.Wf ∧ (∀ n ∈ l.hdr.bound.names, n ∈ ns1 ∧ n ≠ l.hdr.g) ∧
-        (l.hdr.bound.eval σ1 - l.hdr.c0).toNat < F) →
-      expandList2 E1 elems F (its.map TItem.toGen) = .ok (its.flatMap (itemProcs elems σ1 E1))
-  | [], _ => by simp
-  | it :: rest, hl => by
-      have hrest := items_expand2 (elems := elems) hag rest (fun l hm => hl l (List.mem_cons_of_mem _ hm))
-      have hit : it.toGen.expand2 E1 elems F = .ok (itemProcs elems σ1 E1 it) := by
-        cases it with
-        | site st => simp [TItem.toGen, itemProcs]
-        | loop l =>
-            obtain ⟨hwf, hbn, hF⟩ := hl l (List.mem_cons_self ..)
-            have := Hdr.expand2 hag hwf hbn hF l.rc (l.body.map fun st => GenItem.process st.proc)
-              (f := fun j => l.body.map fun st => instProcess2 (E1.bindVal l.hdr.g j) elems st.proc)
-              (fun v _ => by
-                have h := expandList2_processes (env := E1.bindVal l.hdr.g v) (elems := elems)
-                  (F := F) (l.body.map TSite.proc)
-                simpa [List.map_map, Function.comp_def] using h)
-            simpa [TItem.toGen, itemProcs] using this
-      rw [List.map_cons, expandList2_cons_ok hit hrest, List.flatMap_cons]
+theorem AgreesV.bindVal {σ : String → Int} {E : IEnv} {gvs : List String} (h : AgreesV σ E gvs) (g : String)
+    (i : Int) : AgreesV (bindσ g i σ) (E.bindVal g i) (g :: gvs) := by
+  intro n hn
+  by_cases hng : n = g
+  · subst hng; simp
+  · rw [vals_lookup_bindVal_ne i hng, bindσ_ne hng]
+    exact h n (by simpa [hng] using hn)
 
+mutual
+/-- The side conditions of the expansion of an item at the valuation `σ`, the genvars `gvs` bound in `vals` and the
+names `ns` agreed on: every loop inside it has its recognized bound (`Hdr.Wf`), a bound naming agreed names other than
+its own genvar, and a count within the fuel `F`; every condition its recognized guard, operands reading bound genvars
+and agreed parameters with 32-bit values, and the side conditions of the arm it selects; at every valuation of the loops
+around them. -/
+def TItem.ExpOk (F : Nat) : List String → List String → (String → Int) → TItem → Prop
+  | _, _, _, .site _ => True
+  | gvs, ns, σ, .loop h _ body => h.Wf ∧ (∀ n ∈ h.bound.names, n ∈ ns ∧ n ≠ h.g) ∧
+      (h.bound.eval σ - h.c0).toNat < F ∧
+      ∀ j, h.Rng σ j → TItem.ExpOkL F (h.g :: gvs) (h.g :: ns) (bindσ h.g j σ) body
+  | gvs, ns, σ, .cond c g thn els => guardOf? c = some g ∧ (∀ n ∈ c.gvLeaves, n ∈ gvs) ∧
+      (∀ n ∈ c.pLeaves, n ∈ ns) ∧ (∀ a ∈ g.rngs, -2147483648 ≤ a.eval σ ∧ a.eval σ < 2147483648) ∧
+      (g.holds σ → TItem.ExpOkL F gvs ns σ thn) ∧ (¬ g.holds σ → TItem.ExpOkL F gvs ns σ els)
+
+def TItem.ExpOkL (F : Nat) : List String → List String → (String → Int) → List TItem → Prop
+  | _, _, _, [] => True
+  | gvs, ns, σ, it :: rest => TItem.ExpOk F gvs ns σ it ∧ TItem.ExpOkL F gvs ns σ rest
+end
+
+mutual
+/-- **An item expands to its closed form** (`GenItem.expand2` of the envelope's item IS `TItem.enumAt`), at any depth:
+a loop by `Hdr.expand2`, its body under each index's binding; a condition by `guard_eval`, the arm it selects. -/
+theorem TItem.expand2_eq {elems : List (String × Nat)} {F : Nat} :
+    ∀ (gvs ns : List String) (σ : String → Int) (E : IEnv) (outer : List Hdr) (cur : Hdr) (blk : String)
+      (it : TItem), AgreesV σ E gvs → Agrees σ E ns → it.ExpOk F gvs ns σ →
+      it.toGen.expand2 E elems F = .ok (it.enumAt (procB elems) outer cur blk σ E)
+  | _, _, _, _, _, _, _, .site st, _, _, _ => by simp [TItem.toGen, TItem.enumAt, procB]
+  | gvs, ns, σ, E, outer, cur, blk, .loop hd rc body, hav, hag, hok => by
+      simp only [TItem.ExpOk] at hok
+      obtain ⟨hwf, hbn, hF, hb⟩ := hok
+      rw [TItem.toGen_loop]
+      simp only [TItem.enumAt]
+      exact Hdr.expand2 hag hwf hbn hF rc (body.map TItem.toGen)
+        (fun v hv => TItem.expandL_eq (hd.g :: gvs) (hd.g :: ns) (bindσ hd.g v σ) (E.bindVal hd.g v)
+          (outer ++ [cur]) hd hd.name body (hav.bindVal hd.g v) (hag.bindVal hd.g v) (hb v hv))
+  | gvs, ns, σ, E, outer, cur, blk, .cond c g thn els, hav, hag, hok => by
+      simp only [TItem.ExpOk] at hok
+      obtain ⟨hg, hgv, hpv, hr, ht, he⟩ := hok
+      have hc := guard_eval (E := E) (σ := σ) hg (fun n hn => hav n (hgv n hn)) (fun n hn => hag n (hpv n hn)) hr
+      rw [TItem.toGen_cond]
+      simp only [TItem.enumAt]
+      by_cases hh : g.holds σ
+      · rw [if_pos hh] at hc ⊢
+        rw [GenItem.expand2_genIf_of_ne hc (by decide)]
+        exact TItem.expandL_eq gvs ns σ E outer _ blk thn hav hag (ht hh)
+      · rw [if_neg hh] at hc ⊢
+        rw [GenItem.expand2_genIf_of_eq hc]
+        exact TItem.expandL_eq gvs ns σ E outer _ blk els hav hag (he hh)
+
+theorem TItem.expandL_eq {elems : List (String × Nat)} {F : Nat} :
+    ∀ (gvs ns : List String) (σ : String → Int) (E : IEnv) (outer : List Hdr) (cur : Hdr) (blk : String)
+      (its : List TItem), AgreesV σ E gvs → Agrees σ E ns → TItem.ExpOkL F gvs ns σ its →
+      expandList2 E elems F (its.map TItem.toGen) = .ok (TItem.enumAtL (procB elems) outer cur blk σ E its)
+  | _, _, _, _, _, _, _, [], _, _, _ => by simp [TItem.enumAtL]
+  | gvs, ns, σ, E, outer, cur, blk, it :: rest, hav, hag, hok => by
+      simp only [TItem.ExpOkL] at hok
+      obtain ⟨h1, h2⟩ := hok
+      rw [List.map_cons, expandList2_cons_ok (TItem.expand2_eq gvs ns σ E outer cur blk it hav hag h1)
+        (TItem.expandL_eq gvs ns σ E outer cur blk rest hav hag h2)]
+      rfl
+end
+
+/-- A reach through the loops `pre`, then one more index. -/
+theorem Reach_snoc : ∀ {pre : List Hdr} {σ0 σ1 : String → Int} {h : Hdr} {j : Int},
+    Reach pre σ0 σ1 → h.Rng σ1 j → Reach (pre ++ [h]) σ0 (bindσ h.g j σ1)
+  | [], σ0, σ1, h, j, hr, hj => by
+      have e : σ1 = σ0 := hr
+      subst e
+      exact ⟨j, hj, rfl⟩
+  | _ :: pre, _, _, _, _, ⟨i, hi, hr⟩, hj => ⟨i, hi, Reach_snoc hr hj⟩
+
+/-- A reach through the loops `outer ++ [cur]` to a valuation where further guards hold reaches it through `cur` under
+those guards. -/
+theorem Reach_guards : ∀ {outer : List Hdr} {cur : Hdr} {σ0 σ1 : String → Int} {gs : List (Guard × Bool)},
+    Reach (outer ++ [cur]) σ0 σ1 → Guard.All gs σ1 → Reach (outer ++ [cur.guards gs]) σ0 σ1
+  | [], cur, σ0, σ1, gs, ⟨i, hi, hr⟩, hg => by
+      have e : σ1 = bindσ cur.g i σ0 := hr
+      subst e
+      exact ⟨i, Hdr.rng_guards.mpr ⟨hi, hg⟩, rfl⟩
+  | _ :: outer, _, _, _, _, ⟨i, hi, hr⟩, hg => ⟨i, hi, Reach_guards hr hg⟩
+
+/-- The per-loop facts the expansion of an item needs: for a loop header `q.2` under the loops `q.1`, its genvar
+distinct from the genvars around it and from the constants `ps`, a bound naming the constants and the genvars around it,
+and its count within the fuel at every valuation of the loops around it. -/
+def StepFacts (ps : List String) (σ0 : String → Int) (F : Nat) (q : List Hdr × Hdr) : Prop :=
+  ((q.1 ++ [q.2]).map (·.g) ++ ps).Nodup ∧
+    (∀ n ∈ q.2.bound.names, n ∈ ps ∨ (n ∈ (q.1 ++ [q.2]).map (·.g) ∧ n ≠ q.2.g)) ∧
+    Loops.all q.1 σ0 (fun σ' => (q.2.bound.eval σ' - q.2.c0).toNat < F)
+
+/-- The per-condition facts the expansion needs: for a condition under the loops `c.1`, its operands reading the
+genvars of those loops and the constants `ps`, their subterms' values 32-bit at every valuation of the loops around it. -/
+def CondFacts (ps : List String) (σ0 : String → Int) (c : List Hdr × PExpr × Guard) : Prop :=
+  (∀ n ∈ c.2.1.gvLeaves, n ∈ c.1.map (·.g)) ∧ (∀ n ∈ c.2.1.pLeaves, n ∈ ps) ∧
+    Loops.all c.1 σ0 (fun σ' => ∀ a ∈ c.2.2.rngs, -2147483648 ≤ a.eval σ' ∧ a.eval σ' < 2147483648)
+
+mutual
+/-- The expansion side conditions of an item in the body of `cur` (under `outer`), from the facts about its loop
+headers (`StepFacts`) and its conditions (`CondFacts`). -/
+theorem TItem.expOk_of {ps : List String} {σ0 : String → Int} {F : Nat} :
+    ∀ (outer : List Hdr) (cur : Hdr) (σ1 : String → Int) (gvs ns : List String) (it : TItem),
+      Reach (outer ++ [cur]) σ0 σ1 → (∀ n ∈ (outer ++ [cur]).map (·.g), n ∈ gvs) →
+      (∀ n, n ∈ (outer ++ [cur]).map (·.g) ++ ps → n ∈ ns) → it.Wf →
+      (∀ q ∈ it.stepsAt outer cur, StepFacts ps σ0 F q) → (∀ c ∈ it.condsAt outer cur, CondFacts ps σ0 c) →
+      it.ExpOk F gvs ns σ1
+  | _, _, _, _, _, .site _, _, _, _, _, _, _ => by simp [TItem.ExpOk]
+  | outer, cur, σ1, gvs, ns, .loop hd rc body, hr, hgv, hns, hwf, hst, hcd => by
+      rw [TItem.wf_loop] at hwf
+      have hq : StepFacts ps σ0 F (outer ++ [cur], hd) := hst _ (by simp [TItem.stepsAt])
+      obtain ⟨hnd, hbn, hfu⟩ := hq
+      have hgps : hd.g ∉ ps := notin_of_nodup hnd (by simp)
+      have hgpre : hd.g ∉ (outer ++ [cur]).map (·.g) := by
+        intro hm
+        have h2 := (List.nodup_append.mp hnd).1
+        rw [List.map_append (l₁ := outer ++ [cur])] at h2
+        exact (List.nodup_append.mp h2).2.2 hd.g hm hd.g (by simp) rfl
+      simp only [TItem.ExpOk]
+      refine ⟨hwf.1, fun n hn => ?_, (Loops.all_iff _ _ _).mp hfu σ1 hr, fun j hj => ?_⟩
+      · rcases hbn n hn with h | ⟨h1, h2⟩
+        · exact ⟨hns n (List.mem_append_right _ h), fun e => hgps (e ▸ h)⟩
+        · refine ⟨hns n (List.mem_append_left _ ?_), h2⟩
+          rw [List.map_append (l₁ := outer ++ [cur]), List.mem_append] at h1
+          rcases h1 with h1 | h1
+          · exact h1
+          · simp only [List.map_cons, List.map_nil, List.mem_singleton] at h1
+            exact absurd h1 h2
+      · refine TItem.expOkL_of (outer ++ [cur]) hd (bindσ hd.g j σ1) (hd.g :: gvs) (hd.g :: ns) body
+          (Reach_snoc hr hj) (fun n hn => ?_) (fun n hn => ?_) hwf.2
+          (fun q hq => hst q (by simp only [TItem.stepsAt, List.mem_cons]; exact Or.inr hq))
+          (fun c hc => hcd c (by simpa [TItem.condsAt] using hc))
+        · rw [List.map_append, List.mem_append] at hn
+          rcases hn with hn | hn
+          · exact List.mem_cons_of_mem _ (hgv n hn)
+          · simp only [List.map_cons, List.map_nil, List.mem_singleton] at hn
+            rw [hn]; exact List.mem_cons_self ..
+        · rw [List.map_append, List.append_assoc, List.mem_append] at hn
+          rcases hn with hn | hn
+          · exact List.mem_cons_of_mem _ (hns n (List.mem_append_left _ hn))
+          · simp only [List.map_cons, List.map_nil, List.singleton_append, List.mem_cons] at hn
+            rcases hn with hn | hn
+            · rw [hn]; exact List.mem_cons_self ..
+            · exact List.mem_cons_of_mem _ (hns n (List.mem_append_right _ hn))
+  | outer, cur, σ1, gvs, ns, .cond c g thn els, hr, hgv, hns, hwf, hst, hcd => by
+      rw [TItem.wf_cond] at hwf
+      obtain ⟨hgw, hwt, hwe⟩ := hwf
+      have hc : CondFacts ps σ0 (outer ++ [cur], c, g) := hcd _ (by simp [TItem.condsAt])
+      obtain ⟨hcg, hcp, hcr⟩ := hc
+      have hgmap : ∀ gs : List (Guard × Bool), (outer ++ [cur.guards gs]).map (·.g) = (outer ++ [cur]).map (·.g) :=
+        fun gs => by simp
+      simp only [TItem.ExpOk]
+      refine ⟨hgw, fun n hn => hgv n (hcg n hn), fun n hn => hns n (List.mem_append_right _ (hcp n hn)),
+        (Loops.all_iff _ _ _).mp hcr σ1 hr, fun hh => ?_, fun hh => ?_⟩
+      · refine TItem.expOkL_of outer (cur.guards [(g, true)]) σ1 gvs ns thn
+          (Reach_guards hr ⟨hh, trivial⟩) (fun n hn => hgv n (by rwa [hgmap] at hn))
+          (fun n hn => hns n (by rwa [hgmap] at hn)) hwt
+          (fun q hq => hst q (by simp only [TItem.stepsAt, List.mem_append]; exact Or.inl hq))
+          (fun c' hc' => hcd c' (by
+            simp only [TItem.condsAt, List.mem_cons, List.mem_append]; exact Or.inr (Or.inl hc')))
+      · refine TItem.expOkL_of outer (cur.guards [(g, false)]) σ1 gvs ns els
+          (Reach_guards hr ⟨hh, trivial⟩) (fun n hn => hgv n (by rwa [hgmap] at hn))
+          (fun n hn => hns n (by rwa [hgmap] at hn)) hwe
+          (fun q hq => hst q (by simp only [TItem.stepsAt, List.mem_append]; exact Or.inr hq))
+          (fun c' hc' => hcd c' (by
+            simp only [TItem.condsAt, List.mem_cons, List.mem_append]; exact Or.inr (Or.inr hc')))
+
+theorem TItem.expOkL_of {ps : List String} {σ0 : String → Int} {F : Nat} :
+    ∀ (outer : List Hdr) (cur : Hdr) (σ1 : String → Int) (gvs ns : List String) (its : List TItem),
+      Reach (outer ++ [cur]) σ0 σ1 → (∀ n ∈ (outer ++ [cur]).map (·.g), n ∈ gvs) →
+      (∀ n, n ∈ (outer ++ [cur]).map (·.g) ++ ps → n ∈ ns) → (∀ it ∈ its, it.Wf) →
+      (∀ q ∈ TItem.stepsAtL outer cur its, StepFacts ps σ0 F q) →
+      (∀ c ∈ TItem.condsAtL outer cur its, CondFacts ps σ0 c) → TItem.ExpOkL F gvs ns σ1 its
+  | _, _, _, _, _, [], _, _, _, _, _, _ => by simp [TItem.ExpOkL]
+  | outer, cur, σ1, gvs, ns, it :: rest, hr, hgv, hns, hwf, hst, hcd => by
+      simp only [TItem.ExpOkL]
+      exact ⟨TItem.expOk_of outer cur σ1 gvs ns it hr hgv hns (hwf it (List.mem_cons_self ..))
+          (fun q hq => hst q (by simp only [TItem.stepsAtL, List.mem_append]; exact Or.inl hq))
+          (fun c hc => hcd c (by simp only [TItem.condsAtL, List.mem_append]; exact Or.inl hc)),
+        TItem.expOkL_of outer cur σ1 gvs ns rest hr hgv hns (fun y hy => hwf y (List.mem_cons_of_mem _ hy))
+          (fun q hq => hst q (by simp only [TItem.stepsAtL, List.mem_append]; exact Or.inr hq))
+          (fun c hc => hcd c (by simp only [TItem.condsAtL, List.mem_append]; exact Or.inr hc))⟩
+end
 
 /-- Binding a genvar that is not a parameter does not change a parameter-only bound. -/
 theorem bound_eval_bind {ps : List String} {h : Hdr} {g : String} {σ : String → Int} {i : Int}
@@ -879,41 +1291,77 @@ theorem bound_eval_bind {ps : List String} {h : Hdr} {g : String} {σ : String �
 
 /-- The path facts of the structural check, for a loop header path. -/
 theorem path_facts {s : Summary} (hok : s.StructOk) {p : List Hdr} (hp : p ∈ s.hdrPaths) :
-    (p.map (·.g) ++ s.params).Nodup ∧ ∀ h ∈ p, (∀ n ∈ h.bound.names, n ∈ s.params) ∧ 0 ≤ h.c0 :=
+    (p.map (·.g) ++ s.params).Nodup ∧
+      ∀ h ∈ p, (∀ n ∈ h.bound.names, n ∈ s.params ∨ (n ∈ p.map (·.g) ∧ n ≠ h.g)) ∧ 0 ≤ h.c0 :=
   hok.2.2.2.2.1 p hp
 
-/-- **A top-level generate loop expands to the closed form `TFam.enum`.** -/
+/-- `Loops.all` is monotone in its predicate. -/
+theorem Loops.all_imp : ∀ (hs : List Hdr) (σ : String → Int) {P Q : (String → Int) → Prop},
+    (∀ σ', P σ' → Q σ') → Loops.all hs σ P → Loops.all hs σ Q
+  | [], σ, _, _, himp, hp => himp σ hp
+  | _ :: hs, _, _, _, himp, hp => fun i hi => Loops.all_imp hs _ himp (hp i hi)
+
+/-- **The generate fuel** `F` exceeds the count of every loop, at every valuation of the loops around it; and the
+operands of every condition have 32-bit values wherever it is evaluated (the third conjunct of `AutoObl`). -/
+def Summary.FuelOk (s : Summary) (σ : String → Int) (F : Nat) : Prop :=
+  (∀ q ∈ s.hdrSteps, Loops.all q.1 σ fun σ' => (q.2.bound.eval σ' - q.2.c0).toNat < F) ∧
+  (∀ c ∈ s.condSteps, Loops.all c.1 σ fun σ' =>
+    ∀ a ∈ c.2.2.rngs, -2147483648 ≤ a.eval σ' ∧ a.eval σ' < 2147483648)
+
+/-- The fuel of the instantiation (`PDesign.surfaceFuel`) is enough, by the third conjunct of `AutoObl`. -/
+theorem Summary.fuelOk_of_auto {s : Summary} {σ : String → Int} {args : List Int} (h : s.AutoObl σ args) :
+    s.FuelOk σ (PDesign.surfaceFuel args) :=
+  ⟨fun q hq => Loops.all_imp q.1 σ (fun _ h' => surfaceFuel_gt args _ h') (h.2.2.1 q hq), h.2.2.2⟩
+
+/-- **A top-level generate loop expands to the closed form `TFam.enum`**, at any depth of nesting, with conditional
+generate constructs. An inner loop's bound may name the genvars of the loops around it: it is read under their binding,
+and its fuel is owed at every valuation of them (`FuelOk`). -/
 theorem fam_expand2 {s : Summary} {σ : String → Int} {env : IEnv} {elems : List (String × Nat)}
-    {F : Nat} (hag : Agrees σ env s.params) (hok : s.StructOk)
-    (hfuel : ∀ p ∈ s.hdrPaths, ∀ h ∈ p, (h.bound.eval σ - h.c0).toNat < F)
+    {F : Nat} (hag : Agrees σ env s.params) (hok : s.StructOk) (hfuel : s.FuelOk σ F)
     {f : TFam} (hf : f ∈ s.fams) (hwf : f.Wf) :
     f.toGen.expand2 env elems F = .ok (TFam.enum (procB elems) σ env f) := by
   have hp1 : [f.hdr] ∈ s.hdrPaths := by
-    unfold Summary.hdrPaths
+    unfold Summary.hdrPaths Summary.hdrSteps
+    simp only [List.mem_map, List.mem_flatMap, List.mem_cons]
+    exact ⟨([], f.hdr), ⟨f, hf, Or.inl rfl⟩, rfl⟩
+  have hs1 : (([] : List Hdr), f.hdr) ∈ s.hdrSteps := by
+    unfold Summary.hdrSteps
     simp only [List.mem_flatMap, List.mem_cons]
     exact ⟨f, hf, Or.inl rfl⟩
   obtain ⟨hnd1, hb1⟩ := path_facts hok hp1
   have hg1 : f.hdr.g ∉ s.params := notin_of_nodup hnd1 (by simp)
+  have hbp : ∀ n ∈ f.hdr.bound.names, n ∈ s.params := by
+    intro n hn
+    rcases (hb1 f.hdr (List.mem_singleton_self _)).1 n hn with h | ⟨h1, h2⟩
+    · exact h
+    · simp only [List.map_cons, List.map_nil, List.mem_singleton] at h1
+      exact absurd h1 h2
   have hbn : ∀ n ∈ f.hdr.bound.names, n ∈ s.params ∧ n ≠ f.hdr.g :=
-    fun n hn => ⟨(hb1 f.hdr (List.mem_singleton_self _)).1 n hn,
-      fun heq => hg1 (by rw [← heq]; exact (hb1 f.hdr (List.mem_singleton_self _)).1 n hn)⟩
-  have := Hdr.expand2 hag hwf.1 hbn (hfuel [f.hdr] hp1 f.hdr (List.mem_singleton_self _))
-    f.rc (f.body.map TItem.toGen)
-    (f := fun i => f.body.flatMap (itemProcs elems (bindσ f.hdr.g i σ) (env.bindVal f.hdr.g i)))
-    (fun v _ => by
-      apply items_expand2 (ns1 := f.hdr.g :: s.params) (hag.bindVal f.hdr.g v)
-      intro l hl
-      have hp2 : [f.hdr, l.hdr] ∈ s.hdrPaths := by
-        unfold Summary.hdrPaths
-        simp only [List.mem_flatMap, List.mem_cons, List.mem_filterMap]
-        exact ⟨f, hf, Or.inr ⟨TItem.loop l, hl, rfl⟩⟩
-      obtain ⟨hnd2, hb2⟩ := path_facts hok hp2
-      have hg2 : l.hdr.g ∉ s.params := notin_of_nodup hnd2 (by simp)
-      have hbl := (hb2 l.hdr (by simp)).1
-      refine ⟨hwf.2 (TItem.loop l) hl, fun n hn => ⟨List.mem_cons_of_mem _ (hbl n hn),
-        fun heq => hg2 (by rw [← heq]; exact hbl n hn)⟩, ?_⟩
-      rw [bound_eval_bind hbl hg1]
-      exact hfuel [f.hdr, l.hdr] hp2 l.hdr (by simp))
+    fun n hn => ⟨hbp n hn, fun heq => hg1 (by rw [← heq]; exact hbp n hn)⟩
+  have hsteps : ∀ q ∈ TItem.stepsAtL [] f.hdr f.body, StepFacts s.params σ F q := by
+    intro q hq
+    have hq' : q ∈ s.hdrSteps := by
+      unfold Summary.hdrSteps
+      simp only [List.mem_flatMap, List.mem_cons]
+      exact ⟨f, hf, Or.inr hq⟩
+    have hp : q.1 ++ [q.2] ∈ s.hdrPaths := List.mem_map.mpr ⟨q, hq', rfl⟩
+    obtain ⟨hnd, hb⟩ := path_facts hok hp
+    exact ⟨hnd, (hb q.2 (by simp)).1, hfuel.1 q hq'⟩
+  have hconds : ∀ c ∈ TItem.condsAtL [] f.hdr f.body, CondFacts s.params σ c := by
+    intro c hc
+    have hc' : c ∈ s.condSteps := by
+      unfold Summary.condSteps
+      simp only [List.mem_flatMap]
+      exact ⟨f, hf, hc⟩
+    obtain ⟨h1, h2⟩ := hok.2.2.2.2.2.2.2.2 c hc'
+    exact ⟨h1, h2, hfuel.2 c hc'⟩
+  have := Hdr.expand2 hag hwf.1 hbn (hfuel.1 _ hs1) f.rc (f.body.map TItem.toGen)
+    (f := fun i => TItem.enumAtL (procB elems) [] f.hdr f.hdr.name (bindσ f.hdr.g i σ) (env.bindVal f.hdr.g i)
+      f.body)
+    (fun v hv => TItem.expandL_eq [f.hdr.g] (f.hdr.g :: s.params) (bindσ f.hdr.g v σ) (env.bindVal f.hdr.g v)
+      [] f.hdr f.hdr.name f.body (fun n hn => by simp at hn; subst hn; simp) (hag.bindVal f.hdr.g v)
+      (TItem.expOkL_of [] f.hdr (bindσ f.hdr.g v σ) [f.hdr.g] (f.hdr.g :: s.params) f.body
+        ⟨v, hv, rfl⟩ (fun n hn => by simpa using hn) (fun n hn => by simpa using hn) hwf.2 hsteps hconds))
   exact this
 
 
@@ -921,7 +1369,7 @@ theorem fam_expand2 {s : Summary} {σ : String → Int} {env : IEnv} {elems : Li
 expansion reads): the core of `fams_expand2` (over `SpecOk`) and `fams_expand2P` (over `SpecOkP`). -/
 theorem fams_expand2W {s : Summary} {σ : String → Int} {env : IEnv} {elems : List (String × Nat)}
     {F : Nat} (hag : Agrees σ env s.params) (hok : s.StructOk) (hwf : ∀ f ∈ s.fams, f.Wf)
-    (hfuel : ∀ p ∈ s.hdrPaths, ∀ h ∈ p, (h.bound.eval σ - h.c0).toNat < F) :
+    (hfuel : s.FuelOk σ F) :
     ∀ (fs : List TFam), (∀ f ∈ fs, f ∈ s.fams) →
       expandList2 env elems F (fs.map TFam.toGen) =
         .ok (fs.flatMap fun f => TFam.enum (procB elems) σ env f)
@@ -934,7 +1382,7 @@ theorem fams_expand2W {s : Summary} {σ : String → Int} {env : IEnv} {elems : 
 
 theorem fams_expand2 {s : Summary} {σ : String → Int} {env : IEnv} {elems : List (String × Nat)}
     {F : Nat} (hag : Agrees σ env s.params) (hok : s.StructOk) (hspec : s.SpecOk)
-    (hfuel : ∀ p ∈ s.hdrPaths, ∀ h ∈ p, (h.bound.eval σ - h.c0).toNat < F) :
+    (hfuel : s.FuelOk σ F) :
     ∀ (fs : List TFam), (∀ f ∈ fs, f ∈ s.fams) →
       expandList2 env elems F (fs.map TFam.toGen) =
         .ok (fs.flatMap fun f => TFam.enum (procB elems) σ env f) :=
@@ -973,11 +1421,8 @@ theorem sound_prefix {d : PDesign} {s : Summary} {args : List Int} {σ : String 
   have h2 := buildDecls_summary (σ := σ) d.decls s.decls hsd env hagd
   have h3 := buildElems_summary (σ := σ) d.decls s.decls hsd env hagd
   have hdim := paramEnv2_dims h1
-  obtain ⟨-, -, hauto3⟩ := hauto
   refine ⟨ctx_of_env hsd hdim hag hdecl, ?_⟩
-  have hfuel : ∀ p ∈ s.hdrPaths, ∀ h ∈ p,
-      (h.bound.eval σ - h.c0).toNat < PDesign.surfaceFuel args :=
-    fun p hp h hh => surfaceFuel_gt args _ (hauto3 p hp h hh)
+  have hfuel := Summary.fuelOk_of_auto hauto
   have h4 : expandList2 (env.withDecls (s.decls.map (DeclT.toDecl σ)))
       (s.decls.map fun dt => (dt.name, dt.elemW σ)) (PDesign.surfaceFuel args) d.generates =
       .ok (s.fams.flatMap fun f => TFam.enum

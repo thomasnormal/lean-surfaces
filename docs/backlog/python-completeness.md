@@ -16782,3 +16782,17 @@ eighteen successive assignments `i = 0; j = 1; k = 2; l = 3; m = 4; n = 5; o = 6
 | Remaining debt | arbitrary locals and recursive positive-fuel calls |
 
 DECIDED: eighteen assignment steps now compose through continue flow; arbitrary assignment and recursive body adequacy remain open.
+
+## 2026-11-14-pyfoundation-261 — nineteen-assignment state bridge
+
+`Monadic.finishCallM_assign_nineteen_existing_locals_body_ok` checks nineteen successive assignments through `aa = 18`, preserving the updated frame through normal completion and call-depth restoration.
+
+| Measurement | Result |
+|---|---|
+| Target | `lake build LeanModels.Python.Monadic.Eval` passed; 11/11 jobs |
+| Theorem | `Monadic.finishCallM_assign_nineteen_existing_locals_body_ok` |
+| Domain | nineteen consecutive assignments to existing locals |
+| Semantic change | theorem-only nineteen-assignment state composition |
+| Remaining debt | arbitrary locals and recursive positive-fuel calls |
+
+DECIDED: nineteen assignment steps now compose through the body walker; arbitrary assignment and recursive body adequacy remain open.

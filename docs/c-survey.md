@@ -2,10 +2,10 @@
 
 Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manifest.
 
-- verdicts: 1123/2214 MATCH (passed 1123, failed 0, oracle 0)
+- verdicts: 1124/2214 MATCH (passed 1124, failed 0, oracle 0)
 - manifest SHA-256: `bca94718b04e8394cdce992866637166f530978790bd1013cea4a00ae25ef764`
-- measured commit: `b43df876a08d01780149f6f325ef24d722729cbd`
-- measured at: `2026-11-14T12:55:53Z`
+- measured commit: `d644b08bf660a7a9be864f30576dd86b1bba77d6`
+- measured at: `2026-11-14T13:29:13Z`
 
 ## Verdict counts
 
@@ -13,10 +13,10 @@ Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manife
 | --- | ---: |
 | `not-parsed` | 294 |
 | `oracle-tests-compiler` | 1 |
-| `passed` | 1123 |
+| `passed` | 1124 |
 | `refused-libc` | 38 |
 | `refused-ub` | 107 |
-| `refused-unsupported` | 585 |
+| `refused-unsupported` | 584 |
 | `timeout` | 66 |
 
 ## Counts by corpus
@@ -30,10 +30,10 @@ Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manife
 | `c-testsuite/single-exec` | `timeout` | 2 |
 | `gcc.c-torture/execute` | `not-parsed` | 267 |
 | `gcc.c-torture/execute` | `oracle-tests-compiler` | 1 |
-| `gcc.c-torture/execute` | `passed` | 945 |
+| `gcc.c-torture/execute` | `passed` | 946 |
 | `gcc.c-torture/execute` | `refused-libc` | 34 |
 | `gcc.c-torture/execute` | `refused-ub` | 98 |
-| `gcc.c-torture/execute` | `refused-unsupported` | 509 |
+| `gcc.c-torture/execute` | `refused-unsupported` | 508 |
 | `gcc.c-torture/execute` | `timeout` | 64 |
 | `gcc.c23-run` | `not-parsed` | 27 |
 | `gcc.c23-run` | `passed` | 3 |
@@ -441,7 +441,6 @@ The run's first refusal, normalized by construct; `sole` counts rows whose first
 | `unsupported:no layout for declared type 'double (*)()'` | 1 | 1 | 930608-1.c |
 | `unsupported:no layout for declared type 'double (*)(float)'` | 1 | 1 | func-ptr-1.c |
 | `unsupported:no layout for declared type 'double[n]'` | 1 | 1 | 920929-1.c |
-| `unsupported:no layout for declared type 'enum e'` | 1 | 1 | enum-3.c |
 | `unsupported:no layout for declared type 'enum fred'` | 1 | 1 | 00170.c |
 | `unsupported:no layout for declared type 'gfc_array_i4'` | 1 | 1 | 20090113-1.c |
 | `unsupported:no layout for declared type 'hexdouble'` | 1 | 1 | ieee/unsafe-fp-assoc-1.c |

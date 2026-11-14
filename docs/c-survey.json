@@ -10,10 +10,10 @@
   "gcc.c-torture/execute": {
    "not-parsed": 267,
    "oracle-tests-compiler": 1,
-   "passed": 945,
+   "passed": 946,
    "refused-libc": 34,
    "refused-ub": 98,
-   "refused-unsupported": 509,
+   "refused-unsupported": 508,
    "timeout": 64
   },
   "gcc.c23-run": {
@@ -28,10 +28,10 @@
  "counts": {
   "not-parsed": 294,
   "oracle-tests-compiler": 1,
-  "passed": 1123,
+  "passed": 1124,
   "refused-libc": 38,
   "refused-ub": 107,
-  "refused-unsupported": 585,
+  "refused-unsupported": 584,
   "timeout": 66
  },
  "dynamic_wall_ranking": [
@@ -1957,14 +1957,6 @@
   },
   {
    "files": [
-    "enum-3.c"
-   ],
-   "present": 1,
-   "sole": 1,
-   "wall": "unsupported:no layout for declared type 'enum e'"
-  },
-  {
-   "files": [
     "00170.c"
    ],
    "present": 1,
@@ -3157,8 +3149,8 @@
   }
  ],
  "manifest_hash": "bca94718b04e8394cdce992866637166f530978790bd1013cea4a00ae25ef764",
- "measured_at_utc": "2026-11-14T12:55:53Z",
- "measured_commit": "b43df876a08d01780149f6f325ef24d722729cbd",
+ "measured_at_utc": "2026-11-14T13:29:13Z",
+ "measured_commit": "d644b08bf660a7a9be864f30576dd86b1bba77d6",
  "pin": {
   "corpora": [
    "C1",
@@ -17403,13 +17395,13 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "no layout for declared type 'enum e'",
-   "dynamic_wall": "unsupported:no layout for declared type 'enum e'",
+   "detail": "",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "enum-3.c",
    "sha256": "73c48057760099f9611aa96bc370392de2efb08ecded081dbe14bc7dd5e49e98",
    "static_walls": [],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",

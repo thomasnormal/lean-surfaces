@@ -10,10 +10,10 @@
   "gcc.c-torture/execute": {
    "not-parsed": 267,
    "oracle-tests-compiler": 1,
-   "passed": 923,
+   "passed": 924,
    "refused-libc": 35,
    "refused-ub": 98,
-   "refused-unsupported": 530,
+   "refused-unsupported": 529,
    "timeout": 64
   },
   "gcc.c23-run": {
@@ -28,10 +28,10 @@
  "counts": {
   "not-parsed": 294,
   "oracle-tests-compiler": 1,
-  "passed": 1098,
+  "passed": 1099,
   "refused-libc": 39,
   "refused-ub": 107,
-  "refused-unsupported": 609,
+  "refused-unsupported": 608,
   "timeout": 66
  },
  "dynamic_wall_ranking": [
@@ -796,7 +796,6 @@
     "00051.c",
     "00143.c",
     "00182.c",
-    "20080719-1.c",
     "20111208-1.c",
     "medce-1.c",
     "pr114965.c",
@@ -805,8 +804,8 @@
     "pr91632.c",
     "switch-1.c"
    ],
-   "present": 11,
-   "sole": 11,
+   "present": 10,
+   "sole": 10,
    "wall": "unsupported:case label nested in a control statement"
   },
   {
@@ -3224,7 +3223,7 @@
   }
  ],
  "manifest_hash": "bca94718b04e8394cdce992866637166f530978790bd1013cea4a00ae25ef764",
- "measured_at_utc": "2026-11-14T00:13:56Z",
+ "measured_at_utc": "2026-11-14T00:18:07Z",
  "measured_commit": "6e7b41b64",
  "pin": {
   "corpora": [
@@ -10540,8 +10539,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "case label nested in a control statement",
-   "dynamic_wall": "unsupported:case label nested in a control statement",
+   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "20080719-1.c",
    "sha256": "8729d02876bba7cb4a080c80c915a531d97f295723f92d5df3365d02ebe5da50",
@@ -10549,7 +10548,7 @@
     "libc-call: __builtin_abort",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",

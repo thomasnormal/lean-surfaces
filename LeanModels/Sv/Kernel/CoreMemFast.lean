@@ -146,4 +146,17 @@ theorem CoreMemDesign.fastSettleAssignAt_single_ident_toState
     width v x hwidth hresolve hpath hbound hv' ha
   exact ⟨hstate, rfl⟩
 
+theorem CoreMemDesign.fastSettleAssignAt_skip_cons_refines
+    (E : CoreMemDesign) (env : IEnv) (elems : List (String × Nat))
+    (s : CoreMemFastState) (view : SvState) (index : Nat)
+    (rest : List CoreMemProc) (s' : CoreMemFastState) (view' : SvState)
+    (e : CoreMemEdge)
+    (hfast : E.fastSettleAssignAt env elems s view index (.edge e :: rest) =
+      .ok (s', view'))
+    (htail : E.settleAssignAt env elems s.toState view (index + 1) rest =
+      .ok (s'.toState, view')) :
+    E.settleAssignAt env elems s.toState view index (.edge e :: rest) =
+      .ok (s'.toState, view') := by
+  simpa [CoreMemDesign.fastSettleAssignAt, CoreMemDesign.settleAssignAt] using htail
+
 end LeanModels.Sv.Kernel

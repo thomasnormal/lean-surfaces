@@ -16979,3 +16979,19 @@ composition ending in `continue`, at the `toRun` and world/call-depth boundaries
 | Remaining debt | none among the assignment-list flow variants; fixed-count bridges remain closed |
 
 DECIDED: continue-flow composition is now stated once for arbitrary assignment-list length; no fixed-count theorem was added.
+
+
+## 2026-11-14-pyfoundation-273 — generic finishCallM transport (blocked)
+
+The attempted theorem `Monadic.toRun_finishCallM` is blocked at the substrate's
+`tryCatch`/`StateT` reduction. After case-splitting the raw action result, the
+success and exception branches retain the `tryCatch` continuation match rather
+than reducing definitionally; the timeout/refusal branches similarly retain the
+outer `toRun` match. Existing `toRun_tryCatch_ok` and `toRun_tryCatch_exn` close
+known successful/exception projections, but there is no single theorem yet that
+normalizes all four result classes under an arbitrary action. No semantic claim
+was weakened and no fixed-count theorem was added.
+
+DECIDED: the generic call-restoration transport is a substrate blocker; next item
+is to factor a four-result `toRun_tryCatch` normalization lemma before retrying
+this theorem.

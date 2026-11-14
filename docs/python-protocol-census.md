@@ -598,3 +598,6 @@ return composition at the established `toRun` boundary.
 `Monadic.execOpenList_assignments_break_run` and `Monadic.finishCallM_assignments_break_run` cover arbitrary assignment-list break flow at both interpreter boundaries.
 
 `Monadic.execOpenList_assignments_continue_run` and `Monadic.finishCallM_assignments_continue_run` cover arbitrary assignment-list continue flow at both interpreter boundaries.
+
+
+The generic `finishCallM` transport is parked pending a four-result `toRun_tryCatch` normalization lemma; assignment-list flow coverage remains complete.

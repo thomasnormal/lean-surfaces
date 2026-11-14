@@ -251,6 +251,46 @@ theorem CoreMemDesign.fastSettleAssignAt_two_array_refines
   · simpa [ha_to] using hv₂
   · simpa [ha_to, hb_to] using hb
 
+theorem CoreMemDesign.fastSettleAssignAt_scalar_array_refines
+    (E : CoreMemDesign) (s a₁ a₂ : CoreMemFastState) (view : SvState)
+    (index : Nat) (name₁ name₂ : String) (value₁ value₂ indexExpr₂ : PExpr)
+    (width₁ : Nat) (v₁ v₂ : LVec) (x₁ : VarId) (md₂ : CoreMemDecl)
+    (hwidth₁ : E.scalarWidth? name₁ = some width₁)
+    (hresolve₁ : E.scalar.resolve name₁ = some x₁)
+    (hpath₁ : x₁.path = [])
+    (hbound₁ : x₁.decl < s.scalar.cells.size)
+    (hmem₂ : E.memDecl? name₂ = some md₂)
+    (hv₁ : E.evalScalarAssignAtView E.env E.elems s.toState view
+      (some width₁) index value₁ = .ok v₁)
+    (hv₂ : E.evalExpr E.env E.elems a₁.toState
+      (some md₂.shape.elemWidth) value₂ = .ok v₂)
+    (h₁ : E.fastScalarAssignAt s view index name₁ value₁ = .ok a₁)
+    (h₂ : E.fastSettleAssignAt E.env E.elems a₁
+      (SvState.set view name₁ v₁) (index + 1)
+      [.assign (.arrayElem name₂ [indexExpr₂]) value₂] =
+      .ok (a₂, SvState.set view name₁ v₁)) :
+    E.settleAssignAt E.env E.elems s.toState view index
+      [.assign (.ident name₁) value₁,
+       .assign (.arrayElem name₂ [indexExpr₂]) value₂] =
+      .ok (a₂.toState, SvState.set view name₁ v₁) := by
+  have hs₁ := E.fastScalarAssignAt_toState s a₁ view index name₁ value₁
+    width₁ v₁ x₁ hwidth₁ hresolve₁ hpath₁ hbound₁ hv₁ h₁
+  have hv₂' := hv₂
+  rw [hs₁] at hv₂'
+  simp [CoreMemDesign.fastSettleAssignAt, hmem₂, hv₂'] at h₂
+  rcases h₂ with ⟨b, hb, hb₂⟩
+  rcases hb₂ with ⟨c, hbc, hc₂⟩
+  have hbv : b = v₂ := Res.ok.inj (hb.symm.trans hv₂)
+  have hc_to : c = a₂.toState := by
+    calc
+      c = (CoreMemFastState.ofState E c).toState := by
+        simp [CoreMemFastState.ofState_toState]
+      _ = a₂.toState := congrArg CoreMemFastState.toState hc₂
+  have hbc' := hbc
+  rw [hs₁, hbv, hc_to] at hbc'
+  simp [CoreMemDesign.settleAssignAt, hwidth₁, hmem₂, hv₁, hv₂', hs₁]
+  exact hbc'
+
 theorem CoreMemDesign.settleAssignAt_two_ident_fast_refines
     (E : CoreMemDesign) (s a₁ a₂ : CoreMemFastState) (view : SvState)
     (index : Nat) (name₁ name₂ : String) (value₁ value₂ : PExpr)

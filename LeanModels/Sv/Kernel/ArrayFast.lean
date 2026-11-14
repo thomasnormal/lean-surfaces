@@ -224,6 +224,25 @@ theorem step_assign_eq (E : Elab) (ch : Choice) (c : FastConfig)
   rw [hchoose]
   simp [hact]
 
+theorem fastStep_assign_refines_step (E : Elab) (ch : Choice) (c : FastConfig)
+    (p : ProcId) (rest : List ProcId) (t : Lhs2) (e : Expr2)
+    (a' : Array Val) (s' : Store)
+    (hchoose : ch.choose c.k c.active = p :: rest)
+    (hp : E.procs[p]? = some (.assign t e))
+    (hfast : fastActivateAssign E c t e = .ok a')
+    (hact : activate E p c.store = .ok (.ok (), s'))
+    (hstore : arrayStore a' c.fallback = s') :
+    ∃ fc, fastStep E ch c = .ok (some fc) ∧
+      step E ch c.toConfig = .next fc.toConfig := by
+  let fc := FastConfig.mk a' c.fallback
+    (rest ++ (E.triggered (E.view c.store) (E.view s')).filter
+      (fun q => decide (q ∉ rest))) (c.k + 1)
+  refine ⟨fc, ?_, ?_⟩
+  · have h := fastStep_assign_eq E ch c p rest t e a' hchoose hp hfast
+    simpa [fc, hstore, FastConfig.store] using h
+  · have h := step_assign_eq E ch c p rest s' hchoose hact
+    simpa [fc, FastConfig.toConfig, FastConfig.store, hstore] using h
+
 theorem fastStep_fallback_eq (E : Elab) (ch : Choice) (c : FastConfig)
     (p : ProcId) (rest : List ProcId)
     (hchoose : ch.choose c.k c.active = p :: rest)

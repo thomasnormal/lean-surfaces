@@ -3831,6 +3831,37 @@ theorem execOpenList_assignments_next (K : Kont) (m : Module) :
       exact ih st hTailShape hTailEach
 
 
+/-- State-threading form of the assignment-list induction.  Assignment
+statements update locals (and may update the heap), so the one-statement
+obligation returns the next frame state existentially rather than pretending
+that the input frame is unchanged. -/
+theorem execOpenList_assignments_threaded (K : Kont) (m : Module) :
+    ∀ (ss : List Stmt) (st : FrameState),
+      (∀ s ∈ ss, ∃ targets value sp, s = .assign targets value sp) →
+      (∀ s ∈ ss, ∀ st', ∃ st'',
+        execOpen K m s st' = .ok (.ok RFlow.next, st'')) →
+      ∃ st', execOpenList K m ss st = .ok (.ok RFlow.next, st') := by
+  intro ss
+  induction ss with
+  | nil =>
+      intro st hShape hEach
+      exact ⟨st, rfl⟩
+  | cons s ss ih =>
+      intro st hShape hEach
+      have hhead := hEach s (by simp) st
+      rcases hhead with ⟨st₁, hs⟩
+      simp only [execOpenList]
+      rw [SemMWith.run_bind]
+      rw [hs]
+      have hTailShape : ∀ s' ∈ ss, ∃ targets value sp, s' = .assign targets value sp := by
+        intro s' hs'
+        exact hShape s' (by simp [hs'])
+      have hTailEach : ∀ s' ∈ ss, ∀ st', ∃ st'',
+          execOpen K m s' st' = .ok (.ok RFlow.next, st'') := by
+        intro s' hs' st'
+        exact hEach s' (by simp [hs']) st'
+      exact ih st₁ hTailShape hTailEach
+
 theorem finishCallM_assignments_body_ok (K : Kont) (m : Module)
     (locals : REnv) (ss : List Stmt) (w : World) (depth : Nat)
     (hShape : ∀ s ∈ ss, ∃ targets value sp, s = .assign targets value sp)
@@ -9246,6 +9277,7 @@ theorem leaveCallM_modify_exn {α : Type} (w : World) (e : PyErr)
 #print axioms finishCallM_assign_eighteen_existing_locals_body_ok
 #print axioms finishCallM_assign_nineteen_existing_locals_body_ok
 #print axioms finishCallM_assignments_body_ok
+#print axioms execOpenList_assignments_threaded
 #print axioms finishCallM_assign_nineteen_existing_locals_ret_body_ok
 #print axioms finishCallM_assign_eighteen_existing_locals_continue_body_ok
 #print axioms finishCallM_assign_eighteen_existing_locals_break_body_ok

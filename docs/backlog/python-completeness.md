@@ -16813,20 +16813,22 @@ DECIDED: nineteen assignment steps now compose through value return; arbitrary a
 
 ## 2026-11-14-pyfoundation-263 — arbitrary assignment-list bridge
 
-The fixed-count bridge series is replaced by the induction theorem
-`Monadic.execOpenList_assignments_next`, which proves sequencing for every finite
-list of assignment statements from a pointwise one-statement `next` bridge. Its
-`finishCallM_assignments_body_ok` wrapper carries the result through call-depth
-restoration. The theorem is independent of assignment-list length; existing
+The fixed-count bridge series is replaced by the induction theorems
+`Monadic.execOpenList_assignments_next` and
+`Monadic.execOpenList_assignments_threaded`, which prove sequencing for every
+finite list of assignment statements from pointwise one-statement bridges. The
+`finishCallM_assignments_body_ok` wrapper carries the fixed-state result through
+call-depth restoration; the threaded theorem preserves the updated frame needed
+for assignment-derived flow variants. The theorem is independent of assignment-list length; existing
 concrete count theorems remain compatibility examples and no new count is added.
 
 | Measurement | Result |
 |---|---|
 | Target | `lake build LeanModels.Python.Monadic.Eval` passed; 11/11 jobs |
-| Theorem | `Monadic.execOpenList_assignments_next`; `Monadic.finishCallM_assignments_body_ok` |
-| Domain | any finite list whose elements are assignment statements, with a pointwise open-executor bridge |
+| Theorem | `Monadic.execOpenList_assignments_next`; `Monadic.execOpenList_assignments_threaded`; `Monadic.finishCallM_assignments_body_ok` |
+| Domain | any finite list whose elements are assignment statements, with pointwise open-executor bridges and existential state threading |
 | Semantic change | theorem-only induction over arbitrary assignment-list length |
 | Remaining debt | deriving each fixed-count example from the generic theorem and recursive positive-fuel calls |
 
-DECIDED: the assignment sequencing result is now stated once for every finite
-list length; fixed-count additions stop here.
+DECIDED: assignment sequencing and frame-state threading are now stated once
+for every finite list length; fixed-count additions stop here.

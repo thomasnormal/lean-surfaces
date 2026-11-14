@@ -596,6 +596,7 @@ mutual
 /-- Generate items without a module instance anywhere. -/
 def GenItem.instFree : GenItem → Bool
   | .inst _ => false
+  | .decl _ => true
   | .genIf _ t e => GenItem.listInstFree t && GenItem.listInstFree e
   | .genFor _ _ _ _ _ _ body => GenItem.listInstFree body
   | .process _ | .unsupported .. => true
@@ -614,6 +615,8 @@ hoisted declarations alongside the processes. -/
 def GenItem.expandH (cb : ChildInst) (env : IEnv) (elems : List (String × Nat))
     (F : Nat) : GenItem → Res (List Decl × List Process2)
   | .process p => .ok ([], [instProcess2 env elems p])
+  | .decl d => .ok ([], [.unsupported "GenerateDecl:UnpackedDecl"
+      s!"generate-local declaration '{d.name}' outside the hierarchy scalar route"])
   | .unsupported k t => .ok ([], [.unsupported k t])
   | .inst i => instExpandH cb env elems i
   | .genIf cond thenB elseB =>

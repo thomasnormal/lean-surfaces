@@ -752,47 +752,6 @@ def parsePInst (j : Json) : Except String PInst := do
     let conns ← (← (← getField j "ports").getArr?).toList.mapM parsePConn
     return { name, module, path, params, conns }
 
-/-! ## Generate items -/
-
-/-- Parse a generate-region member. Process shapes become `GenItem.process`;
-nested `GenerateFor`/`GenerateIf` stay structural; generate-local
-declarations (`Var`/`Net` inside a generate body — per-instance scoping,
-outside this slice) become loud unsupported items. -/
-partial def parseGenItem (j : Json) : Except String GenItem := do
-  let kind ← getKind j
-  withCtx kind do
-    match kind with
-    | "GenerateFor" =>
-        let label := getOptStr j "label"
-        let genvar ← getStrField j "genvar"
-        let init ← parsePExpr (← getField j "init")
-        let bound ← parsePExpr (← getField j "bound")
-        let step ← parsePExpr (← getField j "step")
-        let rc? := getOptNat j "resolved_count"
-        let body ← (← (← getField j "body").getArr?).toList.mapM parseGenItem
-        return .genFor label genvar init bound step rc? body
-    | "GenerateIf" =>
-        let cond ← parsePExpr (← getField j "cond")
-        let thenB ← (← (← getField j "then").getArr?).toList.mapM parseGenItem
-        let elseB ← match getOptField j "else" with
-          | none => pure []
-          | some je => (← je.getArr?).toList.mapM parseGenItem
-        return .genIf cond thenB elseB
-    | "AlwaysPosedge" | "AlwaysComb" | "Assign" | "Initial" =>
-        return .process (← parsePProcess j)
-    | "Instance" => return .inst (← parsePInst j)
-    | "Var" | "Net" | "UnpackedDecl" | "LocalParam" | "ParameterDecl" =>
-        -- Generate-local declarations — including a `localparam` in a
-        -- generate block (per-instance constant scoping) and an unpacked
-        -- storage declaration — are outside this slice: a loud item, never
-        -- a whole-envelope parse failure.
-        return .unsupported s!"GenerateDecl:{kind}"
-          s!"generate-local declaration '{(getOptStr j "name").getD "?"}'"
-    | "Unsupported" =>
-        let (svKind, text) ← parseUnsupportedFields j
-        return .unsupported svKind text
-    | other => throw s!"unknown generate member kind {other.quote}"
-
 /-! ## Module and envelope -/
 
 /-- Parse a `Port`/`Var`/`Net` declaration (symbolic `width` type object). -/
@@ -850,6 +809,52 @@ def parsePDecl (j : Json) : Except String PDecl := do
           let dir? := getOptStr j "dir"
           return { name := name, type := ty, unpackedDims := unpacked, isSigned := isSigned, twoState := twoState, isInput := dir? == some "in", isOutput := dir? == some "out", isNet := kind == "Net", init := init, flatBase := flatBase, flatIndex := flatIndex }
       | other => throw s!"unknown declaration kind {other.quote}"
+
+/-! ## Generate items -/
+
+/-- Parse a generate-region member. Process shapes become `GenItem.process`;
+nested `GenerateFor`/`GenerateIf` stay structural; generate-local
+declarations (`Var`/`Net` inside a generate body — per-instance scoping,
+outside this slice) become loud unsupported items. -/
+partial def parseGenItem (j : Json) : Except String GenItem := do
+  let kind ← getKind j
+  withCtx kind do
+    match kind with
+    | "GenerateFor" =>
+        let label := getOptStr j "label"
+        let genvar ← getStrField j "genvar"
+        let init ← parsePExpr (← getField j "init")
+        let bound ← parsePExpr (← getField j "bound")
+        let step ← parsePExpr (← getField j "step")
+        let rc? := getOptNat j "resolved_count"
+        let body ← (← (← getField j "body").getArr?).toList.mapM parseGenItem
+        return .genFor label genvar init bound step rc? body
+    | "GenerateIf" =>
+        let cond ← parsePExpr (← getField j "cond")
+        let thenB ← (← (← getField j "then").getArr?).toList.mapM parseGenItem
+        let elseB ← match getOptField j "else" with
+          | none => pure []
+          | some je => (← je.getArr?).toList.mapM parseGenItem
+        return .genIf cond thenB elseB
+    | "AlwaysPosedge" | "AlwaysComb" | "Assign" | "Initial" =>
+        return .process (← parsePProcess j)
+    | "Instance" => return .inst (← parsePInst j)
+    | "UnpackedDecl" =>
+        -- An unpacked declaration is a source-shaped storage node.  Keep it
+        -- in the generate tree so the canonical E memory route can collect it
+        -- only when its generate branch is active; do not recover a
+        -- declaration from an error string later.
+        return .decl (← parsePDecl j)
+    | "Var" | "Net" | "LocalParam" | "ParameterDecl" =>
+        -- Other generate-local declarations still require their own lexical
+        -- constant/name scope and remain loud until that scope is modelled.
+        return .unsupported s!"GenerateDecl:{kind}"
+          s!"generate-local declaration '{(getOptStr j "name").getD "?"}'"
+    | "Unsupported" =>
+        let (svKind, text) ← parseUnsupportedFields j
+        return .unsupported svKind text
+    | other => throw s!"unknown generate member kind {other.quote}"
+
 
 /-- The optional `signed` field of a `ParameterDecl`/`LocalParam` (the
 declared type's signedness when it departs from the envelope default —
@@ -1778,12 +1783,13 @@ private def unsupMemberText : String := r#"{
     "expr": {"kind": "Int", "span": null, "value": 1, "resolved_width": 32}, "resolved": 1}"#
     >>= parseGenItem).toOption
         == some (.unsupported "GenerateDecl:LocalParam" "generate-local declaration 'LL'")
-#guard (Json.parse r#"{"kind": "UnpackedDecl", "span": null, "name": "mem",
+#guard match (Json.parse r#"{"kind": "UnpackedDecl", "span": null, "name": "mem",
     "width": {"kind": "PackedType", "packed": [], "resolved": 1},
     "unpacked": [{"msb": {"kind": "Int", "value": 1},
                    "lsb": {"kind": "Int", "value": 0}}]}"#
-    >>= parseGenItem).toOption
-        == some (.unsupported "GenerateDecl:UnpackedDecl" "generate-local declaration 'mem'")
+    >>= parseGenItem).toOption with
+  | some (.decl d) => d.name == "mem" && d.unpackedDims.length == 1
+  | _ => false
 -- A signed literal's parser metadata is a context conversion; explicit
 -- `$signed` remains the separate `Cast` node.
 #guard (Json.parse r#"{"kind": "Literal", "span": null, "width": 4, "bits": "1111", "signed": true}"#

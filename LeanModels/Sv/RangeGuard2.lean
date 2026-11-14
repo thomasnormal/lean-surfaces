@@ -184,6 +184,7 @@ mutual
 /-- … of a generate item (every branch and loop body, instantiated or
 not: reachability is decided on the instantiated design). -/
 def GenItem.legacySelNames : GenItem → List String
+  | .decl _ => []
   | .process p => p.legacySelNames
   | .genFor _ _ _ _ _ _ body => GenItem.legacySelNamesList body
   | .genIf _ t e => GenItem.legacySelNamesList t ++ GenItem.legacySelNamesList e
@@ -342,6 +343,7 @@ lowered `ArraySel` refusals are not. A condition or loop header that does not
 evaluate leaves the design loud in its own right (`generate if: …`); both
 arms, or the body, are walked then (conservative, as before the repair). -/
 def GenItem.liveBitIdxs (env : IEnv) (F : Nat) : GenItem → List (IEnv × PExpr)
+  | .decl _ => []
   | .process p => p.bitIdxs.map fun i => (env, i)
   | .unsupported .. => []
   | .inst i => (i.conns.flatMap PConn.bitIdxs).map fun e => (env, e)

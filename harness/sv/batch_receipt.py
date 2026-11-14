@@ -78,6 +78,10 @@ FIXTURES: tuple[Fixture, ...] = (
     Fixture("generated_array_index.sv", "generated_array_index",
             (Port("x", 8),), (Port("y", 8),),
             retain_proc_rewrites=True),
+    Fixture("generate_if_unpacked_array.sv", "generate_if_unpacked_array",
+            (Port("x", 8),), (Port("y", 8),),
+            (Point("N1", (1,)), Point("N2", (2,))),
+            retain_proc_rewrites=True),
     Fixture("for_loop.sv", "for_loop",
             (Port("clk", 1, clock=True), Port("d", 8)), (Port("q", 8),),
             retain_loops=True, retain_proc_rewrites=True),
@@ -217,6 +221,7 @@ def testbench(fixture: Fixture, point: Point, rows: list[dict[str, int | str]]) 
             "localparam_shift": ("E",),
             "memory_edge_loop": ("W", "N"),
             "parameterized_unpacked_storage": ("N",),
+            "generate_if_unpacked_array": ("N",),
         }[fixture.top]
         params = "#(" + ", ".join(f".{n}({v})" for n, v in zip(names, point.args)) + ")"
     declarations = []

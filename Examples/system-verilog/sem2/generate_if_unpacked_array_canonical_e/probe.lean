@@ -14,6 +14,12 @@ def kinds : CoreMemProc → String
   | .unsupported k _ => k
 
 #guard match generateIfUnpackedArray.e 2 with
-  | .ok d => d.memories.size == 0 && d.processes.toList.map kinds ==
-      ["GenerateDecl:UnpackedDecl", "assign", "assign"]
+  | .ok d => d.memories.size == 1 && d.processes.toList.map kinds ==
+      ["assign", "assign"]
+  | _ => false
+#guard match generateIfUnpackedArray.e 1 with
+  | .ok d => d.memories.size == 1 && d.processes.size == 2
+  | _ => false
+#guard match generateIfUnpackedArray.e 0 with
+  | .ok d => d.memories.size == 0 && d.processes.isEmpty
   | _ => false

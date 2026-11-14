@@ -577,6 +577,11 @@ branch; else-if chains are an `elseB` containing one `genIf`).
 instance (F3) — at module level or inside a generate body. -/
 inductive GenItem where
   | process (p : PProcess)
+  /-- A declaration retained in its generate scope.  Its source-shaped type
+  and unpacked dimensions are elaborated at the active generate instance;
+  the canonical memory route collects it alongside the enclosing module
+  declarations (IEEE 1800-2023 §27. generate blocks). -/
+  | decl (d : PDecl)
   | genFor (label : Option String) (genvar : String) (init bound step : PExpr)
       (resolvedCount? : Option Nat) (body : List GenItem)
   | genIf (cond : PExpr) (thenB elseB : List GenItem)
@@ -2982,6 +2987,8 @@ declarations are outside this slice (they need per-instance scoping) —
 they arrive as loud unsupported items from the parser. -/
 def GenItem.expand (env : IEnv) (iterFuel : Nat) : GenItem → Res (List Process)
   | .process p => .ok [instProcess env p]
+  | .decl d => .ok [.unsupported "GenerateDecl:UnpackedDecl"
+      s!"generate-local declaration '{d.name}' outside the flat process tier"]
   | .unsupported k t => .ok [.unsupported k t]
   | .inst i => .ok [.unsupported "Instance"
       s!"module instance '{i.name}' of '{i.module}' outside the M0 tier"]

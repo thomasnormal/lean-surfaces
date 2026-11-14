@@ -311,6 +311,22 @@ def coreMemSubstLhs (vals : List (String × Int)) : PLhs → PLhs
       (coreMemSubstExpr vals a) (coreMemSubstExpr vals b)
   | l => l
 
+def coreMemSubstDim (vals : List (String × Int)) (d : PDim) : PDim :=
+  { msb := coreMemSubstExpr vals d.msb, lsb := coreMemSubstExpr vals d.lsb }
+
+def coreMemSubstType (vals : List (String × Int)) : PType → PType
+  | .packed dims resolved => .packed (dims.map (coreMemSubstDim vals)) resolved
+  | .typeRef n pkg resolved => .typeRef n pkg resolved
+  | .unrecoverable resolved => .unrecoverable resolved
+
+def coreMemSubstDecl (vals : List (String × Int)) (d : PDecl) : PDecl :=
+  { name := d.name, type := coreMemSubstType vals d.type,
+    unpackedDims := d.unpackedDims.map (coreMemSubstDim vals),
+    isSigned := d.isSigned, twoState := d.twoState, isInput := d.isInput,
+    isOutput := d.isOutput, isNet := d.isNet,
+    init := d.init.map (coreMemSubstExpr vals), flatBase := d.flatBase,
+    flatIndex := d.flatIndex }
+
 mutual
 def coreMemSubstStmt (vals : List (String × Int)) : PStmt → PStmt
   | .blockingAssign n e => .blockingAssign n (coreMemSubstExpr vals e)
@@ -365,10 +381,64 @@ def coreMemBindVals (env : IEnv) (vals : List (String × Int)) : IEnv :=
   -- reverse list preserves the head-first shadowing used by `lookup`.
   vals.reverse.foldl (fun e (n, v) => e.bindVal n v) env
 
+/-! Active generated declarations are collected from the same source-shaped
+walk as generated processes.  A declaration is copied once for each active
+generate instance, with genvar references substituted in its dimensions;
+inactive branches are never visited.  This is the declaration half of IEEE
+1800-2023 §§27.4/27.5 and deliberately does not lower a declaration to cells.
+-/
+
+mutual
+def coreMemGeneratedDeclsItem (env : IEnv) (iterFuel : Nat)
+    (vals : List (String × Int)) : GenItem → Res (List PDecl)
+  | .process _ | .unsupported _ _ | .inst _ => .ok []
+  | .decl d => .ok [coreMemSubstDecl vals d]
+  | .genIf cond thenB elseB =>
+      match evalGenGuard (coreMemBindVals env vals) cond with
+      | .error e => .unsupported s!"generate if: {e}"
+      | .ok v => if v != 0 then coreMemGeneratedDeclsList env iterFuel vals thenB
+                 else coreMemGeneratedDeclsList env iterFuel vals elseB
+  | .genFor _label g initE bound step _rc body =>
+      let env' := coreMemBindVals env vals
+      match evalInt env' initE, stepDelta g step with
+      | .ok i0, .ok δ => do
+          let vs ← genvarSeq env' g bound δ iterFuel i0
+          coreMemGeneratedDeclsIters env iterFuel vals g vs body
+      | .error e, _ => .unsupported s!"generate for: {e}"
+      | _, .error e => .unsupported s!"generate for: {e}"
+  termination_by it => (sizeOf it, 0)
+  decreasing_by all_goals (simp_wf; omega)
+
+def coreMemGeneratedDeclsList (env : IEnv) (iterFuel : Nat)
+    (vals : List (String × Int)) : List GenItem → Res (List PDecl)
+  | [] => .ok []
+  | it :: rest => do
+      let ds ← coreMemGeneratedDeclsItem env iterFuel vals it
+      let tail ← coreMemGeneratedDeclsList env iterFuel vals rest
+      .ok (ds ++ tail)
+  termination_by xs => (sizeOf xs, 0)
+  decreasing_by all_goals (simp_wf; omega)
+
+def coreMemGeneratedDeclsIters (env : IEnv) (iterFuel : Nat)
+    (vals : List (String × Int)) (g : String) : List Int → List GenItem → Res (List PDecl)
+  | [], _ => .ok []
+  | v :: vs, body => do
+      let ds ← coreMemGeneratedDeclsList env iterFuel ((g, v) :: vals) body
+      let tail ← coreMemGeneratedDeclsIters env iterFuel vals g vs body
+      .ok (ds ++ tail)
+  termination_by vs body => (sizeOf body, vs.length + 1)
+  decreasing_by all_goals (simp_wf; omega)
+end
+
+def coreMemDeclNamesUnique (decls : List PDecl) : Bool :=
+  let names := decls.map (fun d => d.name)
+  names.eraseDups.length == names.length
+
 mutual
 def coreMemExpandItem (env : IEnv) (iterFuel : Nat) (vals : List (String × Int)) :
     GenItem → Res (List PProcess)
   | .process p => .ok [coreMemSubstProcess vals p]
+  | .decl _ => .ok []
   | .unsupported k t => .ok [.unsupported k t]
   | .inst i => .ok [.unsupported "Instance"
       s!"module instance '{i.name}' of '{i.module}' outside the canonical E memory route"]
@@ -425,18 +495,23 @@ def PDesign.instantiateCoreMemFrom (envI : IEnv) (d : PDesign) (args : List Int)
     let env2 := { env2 with pwidths := pws }
     let env2 := { env2 with dims := dimTable env2 d.decls }
     let env2 := { env2 with functions := d.functions }
-    let generated ← coreMemExpandList env2 iterFuel [] d.generates
-    match coreMemFirstUnsupportedOther d generated d.others with
+    let generatedDecls ← coreMemGeneratedDeclsList env2 iterFuel [] d.generates
+    let sourceDecls := d.decls ++ generatedDecls ++ coreMemMetadataDecls d.netMetadata
+    if !coreMemDeclNamesUnique sourceDecls then
+      .unsupported "UnpackedDecl:generate-scope: active generate declarations contain duplicate names"
+    else
+      let env2 := { env2 with dims := dimTable env2 (d.decls ++ generatedDecls) }
+      let generated ← coreMemExpandList env2 iterFuel [] d.generates
+      match coreMemFirstUnsupportedOther d generated d.others with
     | some (kind, text) =>
       .unsupported s!"E memory route does not yet admit module member '{kind}' ({text})"
     | none =>
-      let sourceDecls := d.decls ++ coreMemMetadataDecls d.netMetadata
-      let decls0 ← buildScalarDecls1 env2 d.decls
+      let decls0 ← buildScalarDecls1 env2 (d.decls ++ generatedDecls)
       let decls := decls0 ++ coreMemNetDecls d generated
       let elems ← buildElems env2 sourceDecls
       let envP := { env2 with widths := decls.map (fun dc => (dc.name, dc.width)) }
-      let memories ← buildMemDecls1 envP d.decls 0
-      if memories.isEmpty && d.decls.any (fun pd => !pd.unpackedDims.isEmpty) then
+      let memories ← buildMemDecls1 envP (d.decls ++ generatedDecls) 0
+      if memories.isEmpty && (d.decls ++ generatedDecls).any (fun pd => !pd.unpackedDims.isEmpty) then
         .unsupported "UnpackedDecl:memory: no one-rank unpacked declaration was admitted"
       else
         let scalar : Elab :=

@@ -73,7 +73,7 @@ private def hProcess (pfx : String) (clockMap : List (String × String)) : PProc
 private def hItems : List GenItem → Option PInst
   | [] => none
   | .inst i :: _ => some i
-  | .process _ :: rest | .unsupported .. :: rest => hItems rest
+  | .process _ :: rest | .decl _ :: rest | .unsupported .. :: rest => hItems rest
   | _ :: rest => hItems rest
 termination_by structural xs => xs
 
@@ -98,7 +98,7 @@ private partial def generatedInstances (env : IEnv) (fuel : Nat) :
   | .inst i :: rest => do
       let tail ← generatedInstances env fuel rest
       .ok ((i, env) :: tail)
-  | .process _ :: rest => generatedInstances env fuel rest
+  | .process _ :: rest | .decl _ :: rest => generatedInstances env fuel rest
   | .unsupported k t :: _ => .unsupported s!"{k}: {t}"
   | .genIf cond yes no :: rest => do
       let chosen := if (evalInt env cond).toOption.getD 0 != 0 then yes else no

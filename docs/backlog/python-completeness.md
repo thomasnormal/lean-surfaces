@@ -16947,3 +16947,19 @@ They reuse the generic value-return theorem at both interpreter boundaries.
 | Remaining debt | generic break and continue wrappers |
 
 DECIDED: bare-return composition is now stated once for arbitrary assignment-list length; no fixed-count theorem was added.
+
+## 2026-11-14-pyfoundation-271 — generic assignment-list break flow
+
+`Monadic.execOpenList_assignments_break_run` and
+`Monadic.finishCallM_assignments_break_run` prove arbitrary assignment-prefix
+composition ending in `break`, at the `toRun` and world/call-depth boundaries.
+
+| Measurement | Result |
+|---|---|
+| Target | `lake build LeanModels.Python.Monadic.Eval` passed; 11/11 jobs |
+| Theorem | `Monadic.execOpenList_assignments_break_run`; `Monadic.finishCallM_assignments_break_run` |
+| Domain | arbitrary assignment list followed by break |
+| Semantic change | theorem-only generic break composition |
+| Remaining debt | generic continue wrapper |
+
+DECIDED: break-flow composition is now stated once for arbitrary assignment-list length; no fixed-count theorem was added.

@@ -21,9 +21,8 @@ set_option autoImplicit false
 
 /-! ## Flat-cell snapshots -/
 
-def arrayCells (s : Store) : Nat → Array Val
-  | 0 => #[]
-  | n + 1 => (arrayCells s n).push (s { decl := n })
+def arrayCells (s : Store) (n : Nat) : Array Val :=
+  Array.ofFn (fun i : Fin n => s { decl := i.1 })
 
 def arrayStore (a : Array Val) (fallback : Store) (x : VarId) : Val :=
   match x.path with
@@ -31,25 +30,14 @@ def arrayStore (a : Array Val) (fallback : Store) (x : VarId) : Val :=
   | _ :: _ => fallback x
 
 theorem arrayCells_size (s : Store) :
-    ∀ n, (arrayCells s n).size = n
-  | 0 => rfl
-  | n + 1 => by simp [arrayCells, arrayCells_size s n]
+    ∀ n, (arrayCells s n).size = n := by
+  intro n
+  simp [arrayCells]
 
 theorem arrayCells_get (s : Store) :
     ∀ (n i : Nat), i < n → (arrayCells s n)[i]? = some (s { decl := i })
-  | 0, _, hi => by omega
-  | n + 1, i, hi => by
-      rw [arrayCells]
-      by_cases h : i = n
-      · subst i
-        have hs : (arrayCells s n).size = n := arrayCells_size s n
-        calc
-          ((arrayCells s n).push (s { decl := n }))[n]? =
-              ((arrayCells s n).push (s { decl := n }))[(arrayCells s n).size]? := by rw [hs]
-          _ = some (s { decl := n }) := Array.getElem?_push_size
-      · have hi' : i < n := by omega
-        rw [Array.getElem?_push]
-        simpa [arrayCells_size s n, h] using arrayCells_get s n i hi'
+  | n, i, hi => by
+      simp [arrayCells, hi]
 
 theorem arrayStore_cells (s : Store) (n : Nat) :
     arrayStore (arrayCells s n) s = s := by

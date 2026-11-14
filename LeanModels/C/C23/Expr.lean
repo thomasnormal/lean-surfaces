@@ -1414,6 +1414,28 @@ def evalExpr (ctx : Ctx) : Expr → EvalM CVal
           | _ =>
               storeAt p (ctx.layout.normalizeTy l.ty) nv
           pure nv
+      | .float32 a, .float32 b => do
+          let nv ← float32Binop (compoundBase op) a b
+          match l with
+          | .member base field arrow fieldTy _ =>
+              if ctx.layout.fieldBits base.ty field |>.isSome then
+                refuseUnsupported "floating compound assignment to a bit-field"
+              else
+                storeAt p (ctx.layout.normalizeTy l.ty) nv
+          | _ =>
+              storeAt p (ctx.layout.normalizeTy l.ty) nv
+          pure nv
+      | .float64 a, .float64 b => do
+          let nv ← float64Binop (compoundBase op) a b
+          match l with
+          | .member base field arrow fieldTy _ =>
+              if ctx.layout.fieldBits base.ty field |>.isSome then
+                refuseUnsupported "floating compound assignment to a bit-field"
+              else
+                storeAt p (ctx.layout.normalizeTy l.ty) nv
+          | _ =>
+              storeAt p (ctx.layout.normalizeTy l.ty) nv
+          pure nv
       | _, _ => do
           let lhsT ← intTyOf (ctx.layout.normalizeTy computeLHSType)
           let resultT ← intTyOf (ctx.layout.normalizeTy computeResultType)

@@ -17026,3 +17026,18 @@ execution out of timeout/refusal paths.
 | Remaining debt | generic `finishCallM` transport still needs a combined four-result theorem |
 
 DECIDED: timeout/refusal `tryCatch` projections are now explicit; success and exception equations were already present.
+
+## 2026-11-14-pyfoundation-276 — combined tryCatch transport (blocked)
+
+After the timeout/refusal equations landed, the attempted combined
+`Monadic.toRun_tryCatch_transport` theorem still does not close. In the
+`x s = .ok (.error e, s')` branch, the handler result must be threaded through
+`ExceptT.tryCatch` and `StateT.bind`; case-splitting all handler result classes
+leaves the same continuation match under `toRun`. The existing success and
+exception equations do not provide a general congruence for this branch. The
+failed theorem was removed; no semantics were weakened and no fixed-count
+theorem was added.
+
+DECIDED: combined transport remains blocked by the handler continuation match
+under `StateT.bind`; the timeout/refusal projection equations are the strongest
+landed substrate result so far.

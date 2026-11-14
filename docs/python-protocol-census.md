@@ -600,6 +600,6 @@ return composition at the established `toRun` boundary.
 `Monadic.execOpenList_assignments_continue_run` and `Monadic.finishCallM_assignments_continue_run` cover arbitrary assignment-list continue flow at both interpreter boundaries.
 
 
-The generic `finishCallM` transport and the attempted four-result `toRun_tryCatch` normalization lemma are parked at the substrate: unfolding `ExceptT.tryCatch` leaves a `StateT.bind` match that does not reduce under arbitrary timeout, refusal, exception, and success cases. Assignment-list flow coverage remains complete.
+The generic `finishCallM` transport, the four-result normalization attempt, and the combined handler transport remain parked at the substrate: unfolding `ExceptT.tryCatch` leaves a `StateT.bind` continuation match that does not reduce under arbitrary handler results. Assignment-list flow coverage remains complete.
 
 `Monadic.toRun_tryCatch_timeout` and `Monadic.toRun_tryCatch_unsupported` close the timeout/refusal projections of the shared `tryCatch` substrate.

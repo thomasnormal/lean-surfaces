@@ -2057,6 +2057,7 @@ theorem procsOf?_eq : ∀ {l : List GenItem} {ps : List PProcess}, procsOf? l = 
   | .genIf .. :: _, _, h => by simp [procsOf?] at h
   | .unsupported .. :: _, _, h => by simp [procsOf?] at h
   | .inst _ :: _, _, h => by simp [procsOf?] at h
+  | .decl _ :: _, _, h => by simp [procsOf?] at h
 
 def hdrOf? (label : Option String) (g : String) (initE bound step : PExpr) : Except String Hdr :=
   match initE, bound, step with
@@ -2106,6 +2107,7 @@ def itemOfG (so : List DeclT → Nat → PProcess → Except String TSite) (ds :
               | .ok sts => .ok (.loop ⟨h, rc, sts⟩)
   | .genIf .. =>
       .error "conditional generate inside a generate loop: GuardEval obligation (the selected arm depends on reached genvar values)"
+  | .decl d => .error s!"declaration `{d.name}` inside a generate loop (outside the v1 fragment)"
   | .inst _ => .error "module instance inside a generate loop (outside the v1 fragment)"
   | .unsupported k _ => .error s!"unsupported generate item `{k}`"
 
@@ -2134,6 +2136,7 @@ def famOfG (so : List DeclT → Nat → PProcess → Except String TSite) (ds : 
           | .error e => .error e
           | .ok its => .ok ⟨h, rc, its⟩
   | .genIf .. => .error "conditional generate (outside the v1 fragment)"
+  | .decl d => .error s!"declaration `{d.name}` in a generate block (outside the v1 fragment)"
   | .inst _ => .error "module instance (outside the v1 fragment)"
   | .process _ => .error "process item in the generate list"
   | .unsupported k _ => .error s!"unsupported generate item `{k}`"

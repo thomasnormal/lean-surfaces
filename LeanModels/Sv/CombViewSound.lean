@@ -87,6 +87,7 @@ theorem itemOfG_spec (so : List DeclT → Nat → PProcess → Except String TSi
             rw [← hi, ← hb, ← hst, hl, hg, hbody]
   | genIf c t e => simp [itemOfG] at h
   | inst i => simp [itemOfG] at h
+  | decl d => simp [itemOfG] at h
   | unsupported k t => simp [itemOfG] at h
 
 theorem itemsOfG_spec (so : List DeclT → Nat → PProcess → Except String TSite)
@@ -134,6 +135,7 @@ theorem famOfG_spec (so : List DeclT → Nat → PProcess → Except String TSit
   | process p => simp [famOfG] at h
   | genIf c t e => simp [famOfG] at h
   | inst i => simp [famOfG] at h
+  | decl d => simp [famOfG] at h
   | unsupported k t => simp [famOfG] at h
 
 /-- The generate tree of a recognized design: every loop is the envelope's, with recognized

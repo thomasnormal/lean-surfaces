@@ -192,6 +192,7 @@ theorem procsOf?_unsignL : ∀ {l : List GenItem} {ps : List PProcess},
   | .genIf .. :: _, _, h => by simp [GenItem.unsignL, GenItem.unsign, procsOf?] at h
   | .unsupported .. :: _, _, h => by simp [GenItem.unsignL, GenItem.unsign, procsOf?] at h
   | .inst _ :: _, _, h => by simp [GenItem.unsignL, GenItem.unsign, procsOf?] at h
+  | .decl _ :: _, _, h => by simp [GenItem.unsignL, GenItem.unsign, procsOf?] at h
 
 theorem itemOfG_unsign {ds : List DeclT} {tag : String} {pos : Nat} {it : GenItem} {x : TItem}
     (h : itemOfG siteOf? ds tag pos it.unsign = .ok x) :
@@ -224,6 +225,7 @@ theorem itemOfG_unsign {ds : List DeclT} {tag : String} {pos : Nat} {it : GenIte
   | genIf c t e => simp [GenItem.unsign, itemOfG] at h
   | unsupported k t => simp [GenItem.unsign, itemOfG] at h
   | inst i => simp [GenItem.unsign, itemOfG] at h
+  | decl d => simp [GenItem.unsign, itemOfG] at h
 
 theorem itemsOfG_unsign {ds : List DeclT} {tag : String} :
     ∀ {its : List GenItem} {pos : Nat} {xs : List TItem},
@@ -264,6 +266,7 @@ theorem famOfG_unsign {ds : List DeclT} {it : GenItem} {f : TFam}
   | genIf c t e => simp [GenItem.unsign, famOfG] at h
   | unsupported k t => simp [GenItem.unsign, famOfG] at h
   | inst i => simp [GenItem.unsign, famOfG] at h
+  | decl d => simp [GenItem.unsign, famOfG] at h
 
 theorem famsOfG_unsign {ds : List DeclT} :
     ∀ {gens : List GenItem} {fs : List TFam},

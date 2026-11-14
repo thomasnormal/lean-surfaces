@@ -854,6 +854,7 @@ def itemRefusal : GenItem → String
         "an instance sits inside a generate `if`: v1 of the hierarchy summary reads module-level instances only"
       else "the module has a generate `if` besides its instances: v1 of the hierarchy summary reads a parent whose generate items are all module-level instances"
   | .process _ => "the module has a generate-level process besides its instances (v1 of the hierarchy summary)"
+  | .decl d => s!"the module has a declaration `{d.name}` in a generate block besides its instances (v1 of the hierarchy summary)"
   | .unsupported k t => s!"{t} ({k})"
   | .inst i => s!"instance `{i.name}` has a generate path (v1 of the hierarchy summary reads module-level instances only)"
 

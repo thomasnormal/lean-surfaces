@@ -167,6 +167,9 @@ theorem genQ_expand {elems : List (String × Nat)} {F : Nat} : ∀ (it : GenItem
   | .inst i, _, ps, _, he => by
       rw [GenItem.expand2] at he; cases he
       intro q hq; rw [List.mem_singleton] at hq; subst hq; rfl
+  | .decl _, _, ps, _, he => by
+      rw [GenItem.expand2] at he; cases he
+      intro q hq; rw [List.mem_singleton] at hq; subst hq; rfl
   | .genIf c t e, env, ps, h, he => by
       simp only [genQ, Bool.and_eq_true] at h
       rw [GenItem.expand2] at he

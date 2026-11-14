@@ -130,6 +130,22 @@ def native_run(clang, source, opt, sanitizer, timeout):
                 "stderr": r.stderr}
 
 
+def classify_sanitizer_mismatch(model, san):
+    """Classify a sanitizer-only disagreement without inventing a value.
+
+    A model refusal is already the correct result for a source whose native
+    run trips undefined behaviour: the sanitizer is evidence for the refusal,
+    not a model/native disagreement.  Cleanup diagnostics such as
+    LeakSanitizer remain ORACLE because they do not establish language UB.
+    """
+    if model.get("verdict") == "REFUSE":
+        return "REFUSE"
+    stderr = san.get("stderr", "")
+    if "LeakSanitizer" in stderr and "AddressSanitizer: heap-use-after" not in stderr:
+        return "ORACLE"
+    return "DIVERGE"
+
+
 def compare(clang, source, model, timeout):
     o0 = native_run(clang, source, "-O0", False, timeout)
     o2 = native_run(clang, source, "-O2", False, timeout)
@@ -139,22 +155,9 @@ def compare(clang, source, model, timeout):
     if o0["stdout"] != o2["stdout"] or o0["returncode"] != o2["returncode"]:
         return "NONDET", {"o0": o0, "o2": o2, "sanitizer": san}
     if san["returncode"] != o0["returncode"] or san["stdout"] != o0["stdout"]:
-        # ASan's parameter-overlap diagnostics are the pinned UB oracle for
-        # library calls such as strcpy. A matching loud refusal is REFUSE,
-        # even though the sanitizer process exits nonzero.
-        if (model.get("verdict") == "REFUSE" and
-                "param-overlap" in san.get("stderr", "")):
-            return "REFUSE", {"o0": o0, "o2": o2, "sanitizer": san,
-                               "model": model}
-        # LeakSanitizer reports the GCC torture file's intentionally
-        # unfreed va_list allocations after the program has produced the
-        # same defined output. This is not a language UB finding and cannot
-        # be compared with the model's value; keep the row as ORACLE rather
-        # than manufacturing a DIVERGE from the sanitizer's cleanup policy.
-        if "LeakSanitizer" in san.get("stderr", "") and \
-                "AddressSanitizer: heap-use-after" not in san.get("stderr", ""):
-            return "ORACLE", {"o0": o0, "o2": o2, "sanitizer": san}
-        return "DIVERGE", {"o0": o0, "o2": o2, "sanitizer": san}
+        verdict = classify_sanitizer_mismatch(model, san)
+        return verdict, {"o0": o0, "o2": o2, "sanitizer": san,
+                         "model": model}
     if model["verdict"] != "MODEL":
         return model["verdict"], {"native": o0, "sanitizer": san, "model": model}
     try:
@@ -180,6 +183,16 @@ def main(argv=None):
     opts = ap.parse_args(argv)
     if opts.self_test:
         with tempfile.TemporaryDirectory(prefix="leanc-selftest-") as d:
+            if classify_sanitizer_mismatch({"verdict": "REFUSE"},
+                                           {"returncode": 1,
+                                            "stderr": "runtime error: UB"}) != "REFUSE":
+                print("leanc --self-test: sanitizer UB refusal was misclassified", file=sys.stderr)
+                return 1
+            if classify_sanitizer_mismatch({"verdict": "MODEL"},
+                                           {"returncode": 1,
+                                            "stderr": "LeakSanitizer: detected memory leaks"}) != "ORACLE":
+                print("leanc --self-test: leak cleanup was misclassified", file=sys.stderr)
+                return 1
             source = Path(d) / "ok.c"
             source.write_text("int main(void) { return 0; }\n")
             clang, why = pinned_clang()

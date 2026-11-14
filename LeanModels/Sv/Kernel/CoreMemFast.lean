@@ -55,6 +55,25 @@ def CoreMemDesign.fastScalarAssignAt (E : CoreMemDesign) (s : CoreMemFastState)
   let v ← E.evalScalarAssignAtView E.env E.elems s.toState view (some width) index value
   E.fastScalarWrite s name v
 
+def CoreMemDesign.fastSettleAssignAt (E : CoreMemDesign)
+    (env : IEnv) (elems : List (String × Nat)) (s : CoreMemFastState)
+    (view : SvState) (index : Nat) : List CoreMemProc →
+    Res (CoreMemFastState × SvState)
+  | [] => .ok (s, view)
+  | .assign (.ident name) value :: rest => do
+      let s' ← E.fastScalarAssignAt s view index name value
+      let v ← E.evalScalarAssignAtView env elems s.toState view
+        (E.scalarWidth? name |>.map some |>.getD none) index value
+      E.fastSettleAssignAt env elems s' (SvState.set view name v) (index + 1) rest
+  | .assign (.arrayElem name [indexExpr]) value :: rest => do
+      let st := s.toState
+      let md ← E.memDecl? name |>.map Res.ok |>.getD
+        (.unsupported s!"10.3: continuous memory target '{name}' is undeclared")
+      let v ← E.evalExpr env elems st (some md.shape.elemWidth) value
+      let st' ← E.writeMemoryAssign env elems st (.arrayElem name [indexExpr]) md v
+      E.fastSettleAssignAt env elems (CoreMemFastState.ofState E st') view (index + 1) rest
+  | _ :: rest => E.fastSettleAssignAt env elems s view (index + 1) rest
+
 theorem CoreMemDesign.fastScalarWrite_toState
     (E : CoreMemDesign) (s s' : CoreMemFastState) (name : String) (v : LVec)
     (x : VarId)
@@ -102,5 +121,29 @@ theorem CoreMemDesign.fastScalarAssignAt_toState
   have hav : a = v := (Res.ok.inj ha).symm
   subst a
   exact E.fastScalarWrite_toState s s' name v x hresolve hpath hbound hwrite
+
+theorem CoreMemDesign.fastSettleAssignAt_single_ident_toState
+    (E : CoreMemDesign) (env : IEnv) (elems : List (String × Nat))
+    (s s' : CoreMemFastState) (view view' : SvState) (index : Nat)
+    (name : String) (value : PExpr) (width : Nat) (v : LVec) (x : VarId)
+    (hwidth : E.scalarWidth? name = some width)
+    (hresolve : E.scalar.resolve name = some x)
+    (hpath : x.path = []) (hbound : x.decl < s.scalar.cells.size)
+    (henv : env = E.env) (helems : elems = E.elems)
+    (hv : E.evalScalarAssignAtView env elems s.toState view
+      (some width) index value = .ok v)
+    (h : E.fastSettleAssignAt env elems s view index
+      [.assign (.ident name) value] = .ok (s', view')) :
+    s'.toState = { s.toState with
+      scalar := E.scalar.setName s.toState.scalar name v } ∧
+      view' = SvState.set view name v := by
+  simp [CoreMemDesign.fastSettleAssignAt, hwidth, hv] at h
+  obtain ⟨a, ha, hs⟩ := h
+  rcases hs with ⟨rfl, rfl⟩
+  have hv' : E.evalScalarAssignAtView E.env E.elems s.toState view
+      (some width) index value = .ok v := by simpa [henv, helems] using hv
+  have hstate := E.fastScalarAssignAt_toState s a view index name value
+    width v x hwidth hresolve hpath hbound hv' ha
+  exact ⟨hstate, rfl⟩
 
 end LeanModels.Sv.Kernel

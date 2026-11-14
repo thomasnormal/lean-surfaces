@@ -17144,3 +17144,19 @@ and restores call depth while preserving the Python error.
 | Remaining debt | inWorld timeout/refusal slices and recursive `callInM` integration |
 
 DECIDED: ordinary call-body exception flow now has an explicit frame/world transport theorem; arbitrary body transport remains open.
+
+## 2026-11-14-pyfoundation-283 — inWorld call-body timeout/refusal transport
+
+`Monadic.finishCallM_inWorld_of_timeout` and
+`Monadic.finishCallM_inWorld_of_unsupported` complete the explicit timeout and
+classified-refusal frame/world transport for known body actions.
+
+| Measurement | Result |
+|---|---|
+| Target | `lake build LeanModels.Python.Monadic.Eval` passed; 11/11 jobs |
+| Theorem | `Monadic.finishCallM_inWorld_of_timeout`; `Monadic.finishCallM_inWorld_of_unsupported` |
+| Domain | known timeout or refusal `SemF` body result under `inWorld` |
+| Semantic change | theorem-only call-body timeout/refusal transport |
+| Remaining debt | recursive `callInM` integration and arbitrary body transport |
+
+DECIDED: all four explicit result classes now have inWorld call-body transport theorems; arbitrary body transport remains open.

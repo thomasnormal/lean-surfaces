@@ -4346,6 +4346,26 @@ theorem finishCallM_inWorld_of_exn {α : Type} (depth : Nat)
     rw [h]
   exact finishCallM_of_exn depth (inWorld locals action) w st'.world e hi
 
+theorem finishCallM_inWorld_of_timeout {α : Type} (depth : Nat)
+    (locals : REnv) (action : SemF α) (w : World)
+    (h : action ⟨w, locals⟩ = .error .timeout) :
+    toRun (finishCallM depth (inWorld locals action)) w = .timeout := by
+  have hi : (inWorld locals action) w = .error .timeout := by
+    unfold inWorld zoomOut
+    rw [h]
+  exact finishCallM_of_timeout depth (inWorld locals action) w hi
+
+theorem finishCallM_inWorld_of_unsupported {α : Type} (depth : Nat)
+    (locals : REnv) (action : SemF α) (w : World)
+    (cause : RefusalCause Unit) (msg : String) (snapshot : Option Unit)
+    (h : action ⟨w, locals⟩ = .error (.unsupported cause msg snapshot)) :
+    toRun (finishCallM depth (inWorld locals action)) w = .unsupported msg := by
+  have hi : (inWorld locals action) w =
+      .error (.unsupported cause msg snapshot) := by
+    unfold inWorld zoomOut
+    rw [h]
+  exact finishCallM_of_unsupported depth (inWorld locals action) w cause msg snapshot hi
+
 theorem finishCallM_pure_ok {α : Type} (depth : Nat) (w : World) (v : α) :
     toRun (finishCallM depth (pure v : SemW α)) w =
       .ok { w with callDepth := depth } v := by
@@ -9739,6 +9759,8 @@ theorem leaveCallM_modify_exn {α : Type} (w : World) (e : PyErr)
 #print axioms finishCallM_of_unsupported
 #print axioms finishCallM_inWorld_of_ok
 #print axioms finishCallM_inWorld_of_exn
+#print axioms finishCallM_inWorld_of_timeout
+#print axioms finishCallM_inWorld_of_unsupported
 #print axioms finishCallM_assignments_ret_run
 #print axioms finishCallM_assignments_pass_run
 #print axioms execOpenList_assignments_break_run

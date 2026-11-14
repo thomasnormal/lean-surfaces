@@ -274,6 +274,32 @@ def initObject : Nat → Ctx → Ptr → CType → Expr → ExecM Unit
           -- a STRUCTURE: members in declaration order, then p10 on the rest
           | some ms => initMembers fuel ctx p ty ms inits
           | none => refuseUnsupported s!"cannot initialize aggregate '{ty}'"
+    -- §6.7.11p14 — a character array initialized by a string literal gets
+    -- the literal's parser-native bytes, including its terminating null.
+    -- This copies into the destination array; it does not store the
+    -- literal pointer's tagged representation bytes.
+    | .strLit value decoded _ _ =>
+        let bytes? := match decoded with
+          | some bs => some ((bs.map (fun b => CByte.conc (UInt8.ofNat b))) ++
+              [CByte.conc 0])
+          | none => plainStringBytes value
+        match ctx.layout.elem ty, bytes? with
+        | some (et, n), some bytes =>
+            match intTyOf? (ctx.layout.normalizeTy et) with
+            | some t =>
+                if t == IntTy.char_ || t == IntTy.uchar then
+                  let copied := bytes.take n
+                  let padded := copied ++ List.replicate (n - copied.length) (CByte.conc 0)
+                  liftEval (writeMem (fun m => m.storeBytes p padded))
+                else do
+                  let v ← evalE ctx (.strLit value decoded ty default)
+                  liftEval (storeAt p (ctx.layout.normalizeTy ty) v)
+            | none => do
+                let v ← evalE ctx (.strLit value decoded ty default)
+                liftEval (storeAt p (ctx.layout.normalizeTy ty) v)
+        | _, _ => do
+            let v ← evalE ctx (.strLit value decoded ty default)
+            liftEval (storeAt p (ctx.layout.normalizeTy ty) v)
     -- §6.7.11p11 — a scalar initializer is a single expression.
     | _ => do
         let v ← evalE ctx e

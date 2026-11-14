@@ -1,5 +1,6 @@
 import LeanModels.Sv.Ingest2
 import LeanModels.Sv.Kernel.CoreMemExec
+import LeanModels.Sv.Kernel.ArrayFast
 namespace Examples.«system-verilog».sem2.assign_target_e
 open LeanModels.Sv
 open LeanModels.Sv.Kernel
@@ -18,6 +19,18 @@ def eightRows : Res (List CoreMemState) := do
   runCoreMemRows d d.initial [[], [], [], [], [], [], [], []]
 
 #guard match eightRows with
+  | .ok rows => rows.length == 8
+  | _ => false
+
+/-! The scalar projection is also executable by the direct flat-array
+instrument.  This is a bounded performance receipt, not a replacement for the
+canonical `CoreMemDesign` route: the latter remains authoritative for memory
+designs. -/
+def fastEightRows : Res (List FastConfig) := do
+  let d ← assignTargetE.e
+  fastRun d.scalar σ_src 1000 [[], [], [], [], [], [], [], []]
+
+#guard match fastEightRows with
   | .ok rows => rows.length == 8
   | _ => false
 end Examples.«system-verilog».sem2.assign_target_e

@@ -6,10 +6,10 @@
   "not-ingested": 0,
   "not-parsed": 30,
   "oracle-tests-compiler": 1,
-  "passed": 175,
+  "passed": 177,
   "refused-libc": 0,
   "refused-ub": 15,
-  "refused-unsupported": 75,
+  "refused-unsupported": 73,
   "runner-error": 0,
   "timeout": 4
  },
@@ -59,7 +59,6 @@
   "refused-ub: LeanModels.C.C23.UB.shiftOverflow 4660 28 { signed := true, bits := 32 }": 1,
   "refused-ub: LeanModels.C.C23.UB.signedOverflow \"-\" { signed := true, bits := 32 } 2147483648": 3,
   "refused-unsupported: break, continue or goto escaped a function body": 2,
-  "refused-unsupported: case label nested in a control statement": 1,
   "refused-unsupported: extern object 'aa' has no definition in the translation unit": 1,
   "refused-unsupported: floating literal lacks parser-native bits": 14,
   "refused-unsupported: indirect call through a non-FunctionDecl reference": 1,
@@ -105,15 +104,14 @@
   "refused-unsupported: unbound declaration 'id487' (name 'MyPte')": 1,
   "refused-unsupported: unknown enum declaration 'id41' (name 'N')": 1,
   "refused-unsupported: unsequenced side effects in binary operands": 1,
-  "refused-unsupported: unsequenced side effects in compound assignment": 1,
   "timeout": 4
  },
- "measured_at_utc": "2026-11-13T22:11:42Z",
- "measured_commit": "02f3d34dec0ab80d789329029b64f49b9e6e1166",
+ "measured_at_utc": "2026-11-14T02:50:35Z",
+ "measured_commit": "9a269af11f5cc8072ff54d0b27d749ed4b35b960",
  "note": "Written by harness/c_torture_score.py --emit, from a `lake exe c-torture-run` log.  The pin is docs/c-torture-pin.json.  This file is the tier's \u00a79.0 number as a second artifact: correcting the instrument corrects the next run, and the published figure is corrected where it was published.",
  "oracle_tests_compiler_tests": [
   "20021127-1.c"
  ],
- "scored": 175,
+ "scored": 177,
  "total": 300
 }

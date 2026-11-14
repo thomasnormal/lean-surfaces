@@ -726,7 +726,7 @@ def CoreMemDesign.evalExprLocals (E : CoreMemDesign) (env : IEnv) (elems : List 
       match E.memDecl? name with
       | some md =>
           let idx ← E.evalIndexLocals env elems st locals index
-          match st.memory.readIndexId md.shape.id false idx with
+          match st.memory.readIndexId md.shape.id index.signedCast idx with
           | some v => .ok v
           | none => .unsupported s!"ArraySel: memory identity for '{name}' is not present"
       | none => E.evalScalarLocals env elems st ctx locals e
@@ -867,7 +867,7 @@ def CoreMemDesign.issueTarget (E : CoreMemDesign) (env : IEnv) (elems : List (St
           | .timeout => .timeout
           | .unsupported m => .unsupported m
           | .ok iv =>
-              match st.memory.issueNba md.shape.id false iv value with
+              match st.memory.issueNba md.shape.id index.signedCast iv value with
               | .missing => .unsupported s!"11.5.1: memory identity for '{name}' is not present"
               | .noOp => .ok ([], [])
               | .queued u => .ok ([], [u])
@@ -917,11 +917,16 @@ mutual
 def CoreMemDesign.writeInitialCell (E : CoreMemDesign) (env : IEnv)
     (elems : List (String × Nat)) (st : CoreMemState)
     (target : PLhs) (name : String) (md : CoreMemDecl) (value : LVec) : Res CoreMemState :=
-  match LeanModels.Sv.MemState.writeTarget env md.source target value st.memory with
-  | Except.ok (some memory) => .ok { scalar := st.scalar, memory := memory }
-  | Except.ok none => .unsupported
+  match target with
+  | .arrayElem _ [index] =>
+      do
+        let idx ← E.evalIndex env elems st index
+        match st.memory.writeIndexId md.shape.id index.signedCast idx value with
+        | some memory => .ok { scalar := st.scalar, memory := memory }
+        | none => .unsupported s!"11.5.1: memory identity for '{name}' is not present"
+  | .arrayElem _ _ => .unsupported
       s!"11.5.1: memory initial target '{name}' is not one-rank"
-  | Except.error msg => .unsupported msg
+  | _ => .unsupported "11.5.1: packed or concatenated initial target is outside this E slice"
 
 def CoreMemDesign.execInitialStmt (E : CoreMemDesign) (env : IEnv)
     (elems : List (String × Nat)) (st : CoreMemState) : PStmt → Res CoreMemState

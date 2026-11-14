@@ -70,10 +70,20 @@ theorem arrayStore_set_flat_frame (a : Array Val) (fallback : Store)
                 (xs := a) (i := xd) (j := yd) (a := v)
               rw [Array.getElem?_eq_getElem hy] at hs
               simp [hy, hxy] at hs ⊢
-              exact hs
             · simp [hy]
         | cons yh yt => rfl
       | cons xh xt => simp_all
+
+theorem arrayStore_set_flat_store (a : Array Val) (fallback : Store)
+    (x : VarId) (v : Val) (hp : x.path = []) (hb : x.decl < a.size) :
+    arrayStore (a.setIfInBounds x.decl v) fallback =
+      Store.set (arrayStore a fallback) x v := by
+  funext y
+  by_cases hxy : y = x
+  · subst y
+    simp [Store.set, arrayStore_set_flat a fallback x v hp hb]
+  · rw [arrayStore_set_flat_frame a fallback x y v hp hb hxy]
+    simp [Store.set, hxy]
 
 def fastWriteWins (E : Elab) (fallback : Store) (a : Array Val)
     (value : LVec) : List (Win × Nat) → Res (Array Val)
@@ -88,6 +98,7 @@ def fastWriteWins (E : Elab) (fallback : Store) (a : Array Val)
               let old := a.getD x.decl (fallback x)
               fastWriteWins E fallback
                 (a.setIfInBounds x.decl (old.write lo (value.extract off width))) value rest
+
 
 def fastActivateAssign (E : Elab) (c : FastConfig) (t : Lhs2) (e : Expr2) : Res (Array Val) := do
   let some ws := t.windows? E.toDesign2

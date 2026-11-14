@@ -17009,3 +17009,20 @@ fixed-count theorem was added.
 DECIDED: the four-result normalization remains blocked by the substrate's
 `StateT.bind` reduction shape; the exact blocker is now recorded separately from
 the generic `finishCallM` transport.
+
+## 2026-11-14-pyfoundation-275 — explicit tryCatch timeout/refusal equations
+
+`Monadic.toRun_tryCatch_timeout` and `Monadic.toRun_tryCatch_unsupported` add
+the two missing non-state result equations at the substrate boundary. They use
+the established `ExceptT.tryCatch`/`StateT.bind` proof shape and keep handler
+execution out of timeout/refusal paths.
+
+| Measurement | Result |
+|---|---|
+| Target | `lake build LeanModels.Python.Monadic.Eval` passed; 11/11 jobs |
+| Theorem | `Monadic.toRun_tryCatch_timeout`; `Monadic.toRun_tryCatch_unsupported` |
+| Domain | timeout and classified refusal results from an arbitrary protected action |
+| Semantic change | theorem-only substrate normalization equations |
+| Remaining debt | generic `finishCallM` transport still needs a combined four-result theorem |
+
+DECIDED: timeout/refusal `tryCatch` projections are now explicit; success and exception equations were already present.

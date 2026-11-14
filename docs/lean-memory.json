@@ -17,6 +17,15 @@
     "seconds": 167.818,
     "warning": false
   },
+  "LeanModels/Python/Monadic/Substrate.lean": {
+    "exit_code": 0,
+    "module": "LeanModels/Python/Monadic/Substrate.lean",
+    "over_budget": false,
+    "peak_bytes": 165158912,
+    "peak_gib": 0.154,
+    "seconds": 14.265,
+    "warning": false
+  },
   "LeanModels/Python/PayloadBlind.lean": {
     "exit_code": 0,
     "module": "LeanModels/Python/PayloadBlind.lean",

@@ -318,6 +318,29 @@ theorem toRun_tryCatch_exn {σ α : Type} (x : PyM σ α) (handler : PyErr → P
   simp only [hx, Except.ok, Except.bind, StateT.bind, Bind.bind]
   rw [hh]
 
+theorem toRun_tryCatch_timeout {σ α : Type} (x : PyM σ α)
+    (handler : PyErr → PyM σ α) (s : σ)
+    (h : x s = .error .timeout) :
+    toRun (tryCatch x handler) s = .timeout := by
+  change toRun (ExceptT.tryCatch x handler) s = _
+  unfold ExceptT.tryCatch
+  simp only [ExceptT.mk, StateT.bind, Except.bind, ExceptT.bindCont, Bind.bind]
+  unfold toRun
+  simp only [StateT.bind]
+  simp only [h, Except.error, Except.bind, Bind.bind]
+
+theorem toRun_tryCatch_unsupported {σ α : Type} (x : PyM σ α)
+    (handler : PyErr → PyM σ α) (s : σ)
+    (cause : RefusalCause Unit) (msg : String) (snapshot : Option Unit)
+    (h : x s = .error (.unsupported cause msg snapshot)) :
+    toRun (tryCatch x handler) s = .unsupported msg := by
+  change toRun (ExceptT.tryCatch x handler) s = _
+  unfold ExceptT.tryCatch
+  simp only [ExceptT.mk, StateT.bind, Except.bind, ExceptT.bindCont, Bind.bind]
+  unfold toRun
+  simp only [StateT.bind]
+  simp only [h, Except.error, Except.bind, Bind.bind]
+
 /-- **`Functor.map` IS NOT UNFOLDED HERE, and that is the proof shape rather
 than a preference.** Unfolding it drops below `bind_apply`'s reach and the goal
 stops being about this stack at all; going through `map_eq_pure_bind` keeps the

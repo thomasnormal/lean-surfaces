@@ -601,3 +601,5 @@ return composition at the established `toRun` boundary.
 
 
 The generic `finishCallM` transport and the attempted four-result `toRun_tryCatch` normalization lemma are parked at the substrate: unfolding `ExceptT.tryCatch` leaves a `StateT.bind` match that does not reduce under arbitrary timeout, refusal, exception, and success cases. Assignment-list flow coverage remains complete.
+
+`Monadic.toRun_tryCatch_timeout` and `Monadic.toRun_tryCatch_unsupported` close the timeout/refusal projections of the shared `tryCatch` substrate.

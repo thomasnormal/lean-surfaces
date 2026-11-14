@@ -578,3 +578,6 @@ eighteen-update bridge through abrupt `break` flow.
 `finishCallM_assignments_body_ok` wrapper, provide induction theorems for
 arbitrary finite assignment lists and explicit frame-state threading;
 fixed-count assignment bridges are no longer the work item.
+
+The generic value-return wrapper is parked pending a raw `execOpenList` append/
+return composition lemma; the fixed-count matrix remains closed.

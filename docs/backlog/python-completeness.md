@@ -16832,3 +16832,17 @@ concrete count theorems remain compatibility examples and no new count is added.
 
 DECIDED: assignment sequencing and frame-state threading are now stated once
 for every finite list length; fixed-count additions stop here.
+
+## 2026-11-14-pyfoundation-264 — generic assignment-list value return (blocked)
+
+The attempted generic value-return wrapper is blocked at the raw `SemF` boundary.
+`execOpenList` is a mutual recursive monadic definition: its equation does not
+rewrite under the raw `ExceptT`/`StateT` application, while `toRun` exposes the
+bind shape only after projection. The existing `twinAgrees_execOpenList_of_each`
+theorem works because it reasons through `toRun`; the assignment state-threading
+theorem is raw-state and cannot be applied directly to the wrapper's
+`inWorld` result. No statement was weakened and no fixed-count theorem was added.
+
+DECIDED: blocker is the missing raw `execOpenList` append/return composition lemma;
+next item is to prove that substrate lemma (or recast the wrapper through the
+existing `toRun` sequencing theorem) before adding any flow-specific bridge.

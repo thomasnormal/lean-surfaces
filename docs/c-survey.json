@@ -10,10 +10,10 @@
   "gcc.c-torture/execute": {
    "not-parsed": 267,
    "oracle-tests-compiler": 1,
-   "passed": 924,
+   "passed": 927,
    "refused-libc": 35,
    "refused-ub": 98,
-   "refused-unsupported": 529,
+   "refused-unsupported": 526,
    "timeout": 64
   },
   "gcc.c23-run": {
@@ -28,10 +28,10 @@
  "counts": {
   "not-parsed": 294,
   "oracle-tests-compiler": 1,
-  "passed": 1099,
+  "passed": 1102,
   "refused-libc": 39,
   "refused-ub": 107,
-  "refused-unsupported": 608,
+  "refused-unsupported": 605,
   "timeout": 66
  },
  "dynamic_wall_ranking": [
@@ -793,23 +793,6 @@
   },
   {
    "files": [
-    "00051.c",
-    "00143.c",
-    "00182.c",
-    "20111208-1.c",
-    "medce-1.c",
-    "pr114965.c",
-    "pr120677.c",
-    "pr44575.c",
-    "pr91632.c",
-    "switch-1.c"
-   ],
-   "present": 10,
-   "sole": 10,
-   "wall": "unsupported:case label nested in a control statement"
-  },
-  {
-   "files": [
     "pr105613.c",
     "pr110817-1.c",
     "pr110817-2.c",
@@ -867,6 +850,20 @@
    "present": 7,
    "sole": 7,
    "wall": "unsupported:StmtExpr"
+  },
+  {
+   "files": [
+    "00051.c",
+    "00143.c",
+    "00182.c",
+    "20111208-1.c",
+    "medce-1.c",
+    "pr44575.c",
+    "switch-1.c"
+   ],
+   "present": 7,
+   "sole": 7,
+   "wall": "unsupported:case label nested in a control statement"
   },
   {
    "files": [
@@ -3223,8 +3220,8 @@
   }
  ],
  "manifest_hash": "bca94718b04e8394cdce992866637166f530978790bd1013cea4a00ae25ef764",
- "measured_at_utc": "2026-11-14T00:18:07Z",
- "measured_commit": "6e7b41b64",
+ "measured_at_utc": "2026-11-14T00:25:36Z",
+ "measured_commit": "7946660ba",
  "pin": {
   "corpora": [
    "C1",
@@ -21228,8 +21225,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "case label nested in a control statement",
-   "dynamic_wall": "unsupported:case label nested in a control statement",
+   "detail": "",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "pr114965.c",
    "sha256": "e1713aa47404a0f7d0ad498dd32da1e03b5cc3f21a81af38a31e591f5bd4bcfb",
@@ -21238,7 +21235,7 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -21418,15 +21415,15 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "case label nested in a control statement",
-   "dynamic_wall": "unsupported:case label nested in a control statement",
+   "detail": "",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "pr120677.c",
    "sha256": "aad231e615d9f32a22ce72ebaa06bfabcc21c9b7a694ea9a6e56998c715b0750",
    "static_walls": [
     "libc-call: __builtin_abort"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -27621,15 +27618,15 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "case label nested in a control statement",
-   "dynamic_wall": "unsupported:case label nested in a control statement",
+   "detail": "",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "pr91632.c",
    "sha256": "1e52951fee9532c2eda4feffd091dd9e907c5f9bcac060b1e4e680155469cf9d",
    "static_walls": [
     "libc-call: __builtin_abort"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",

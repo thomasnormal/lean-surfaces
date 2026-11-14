@@ -2,10 +2,10 @@
 
 Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manifest.
 
-- verdicts: 1099/2214 MATCH (passed 1099, failed 0, oracle 0)
+- verdicts: 1102/2214 MATCH (passed 1102, failed 0, oracle 0)
 - manifest SHA-256: `bca94718b04e8394cdce992866637166f530978790bd1013cea4a00ae25ef764`
-- measured commit: `6e7b41b64`
-- measured at: `2026-11-14T00:18:07Z`
+- measured commit: `7946660ba`
+- measured at: `2026-11-14T00:25:36Z`
 
 ## Verdict counts
 
@@ -13,10 +13,10 @@ Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manife
 | --- | ---: |
 | `not-parsed` | 294 |
 | `oracle-tests-compiler` | 1 |
-| `passed` | 1099 |
+| `passed` | 1102 |
 | `refused-libc` | 39 |
 | `refused-ub` | 107 |
-| `refused-unsupported` | 608 |
+| `refused-unsupported` | 605 |
 | `timeout` | 66 |
 
 ## Counts by corpus
@@ -30,10 +30,10 @@ Generated from the pinned `C1-C3 (gcc torture, c-testsuite, gcc c23-run)` manife
 | `c-testsuite/single-exec` | `timeout` | 2 |
 | `gcc.c-torture/execute` | `not-parsed` | 267 |
 | `gcc.c-torture/execute` | `oracle-tests-compiler` | 1 |
-| `gcc.c-torture/execute` | `passed` | 924 |
+| `gcc.c-torture/execute` | `passed` | 927 |
 | `gcc.c-torture/execute` | `refused-libc` | 35 |
 | `gcc.c-torture/execute` | `refused-ub` | 98 |
-| `gcc.c-torture/execute` | `refused-unsupported` | 529 |
+| `gcc.c-torture/execute` | `refused-unsupported` | 526 |
 | `gcc.c-torture/execute` | `timeout` | 64 |
 | `gcc.c23-run` | `not-parsed` | 27 |
 | `gcc.c23-run` | `passed` | 3 |
@@ -311,11 +311,11 @@ The run's first refusal, normalized by construct; `sole` counts rows whose first
 | `unsequenced-effects` | 12 | 12 | 20001228-1.c, 20021120-1.c, 20050218-1.c, 20051021-1.c, 920501-6.c |
 | `unsupported:integer-to-pointer conversion is not an unchanged uintptr_t/intptr_t round-trip` | 12 | 12 | 00214.c, 20000622-1.c, 20010329-1.c, 20021010-2.c, 20041112-1.c |
 | `unsupported:pointer-to-integer conversion outside uintptr_t/intptr_t` | 12 | 12 | 20011121-1.c, 20060420-1.c, 941014-1.c, 980526-2.c, alloca-1.c |
-| `unsupported:case label nested in a control statement` | 10 | 10 | 00051.c, 00143.c, 00182.c, 20111208-1.c, medce-1.c |
 | `unsupported:no layout for declared type 'V'` | 9 | 9 | pr105613.c, pr110817-1.c, pr110817-2.c, pr110817-3.c, pr71626-1.c |
 | `unsupported:AddrLabelExpr` | 8 | 8 | 20040302-1.c, 20071210-1.c, 920302-1.c, 920501-4.c, 920501-5.c |
 | `unsupported:long double floating literal` | 8 | 8 | 20030914-1.c, 20080502-1.c, gcc/testsuite/gcc.dg/c23-float-1.c, ieee/20010226-1.c, ieee/pr36332.c |
 | `unsupported:StmtExpr` | 7 | 7 | 20000703-1.c, 20000917-1.c, 20020206-1.c, 20020320-1.c, 930406-1.c |
+| `unsupported:case label nested in a control statement` | 7 | 7 | 00051.c, 00143.c, 00182.c, 20111208-1.c, medce-1.c |
 | `libc-call: malloc` | 6 | 6 | 20020406-1.c, 960521-1.c, pr41395-1.c, pr41395-2.c, pr41463.c |
 | `unsupported:DesignatedInitUpdateExpr` | 6 | 6 | gcc/testsuite/gcc.dg/c23-empty-init-5.c, gcc/testsuite/gcc.dg/c23-empty-init-warn-1.c, gcc/testsuite/gcc.dg/c23-empty-init-warn-17.c, gcc/testsuite/gcc.dg/c23-empty-init-warn-2.c, gcc/testsuite/gcc.dg/c23-empty-init-warn-4.c |
 | `unsupported:break, continue or goto escaped a function body` | 6 | 6 | 00010.c, 00199.c, 20030909-1.c, 20040704-1.c, pr119291.c |

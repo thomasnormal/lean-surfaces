@@ -85,6 +85,21 @@ theorem arrayStore_set_flat_store (a : Array Val) (fallback : Store)
   · rw [arrayStore_set_flat_frame a fallback x y v hp hb hxy]
     simp [Store.set, hxy]
 
+theorem fastWriteWin_ok_of_flat (E : Elab) (fallback : Store) (a : Array Val)
+    (name : String) (x : VarId) (lo : Nat) (part : LVec)
+    (hx : E.resolve name = some x) (hp : x.path = []) (hb : x.decl < a.size) :
+    arrayStore (a.setIfInBounds x.decl
+      ((a.getD x.decl (fallback x)).write lo part)) fallback =
+      E.writeWin (arrayStore a fallback) name lo part := by
+  rw [show E.writeWin (arrayStore a fallback) name lo part =
+      Store.set (arrayStore a fallback) x
+        ((arrayStore a fallback x).write lo part) by
+    unfold Elab.writeWin
+    rw [hx]]
+  rw [arrayStore_set_flat_store a fallback x
+    ((a.getD x.decl (fallback x)).write lo part) hp hb]
+  simp [arrayStore, Array.getD, hp, hb]
+
 def fastWriteWins (E : Elab) (fallback : Store) (a : Array Val)
     (value : LVec) : List (Win × Nat) → Res (Array Val)
   | [] => .ok a

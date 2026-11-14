@@ -10,10 +10,10 @@
   "gcc.c-torture/execute": {
    "not-parsed": 267,
    "oracle-tests-compiler": 1,
-   "passed": 941,
+   "passed": 943,
    "refused-libc": 34,
    "refused-ub": 98,
-   "refused-unsupported": 513,
+   "refused-unsupported": 511,
    "timeout": 64
   },
   "gcc.c23-run": {
@@ -28,10 +28,10 @@
  "counts": {
   "not-parsed": 294,
   "oracle-tests-compiler": 1,
-  "passed": 1116,
+  "passed": 1118,
   "refused-libc": 38,
   "refused-ub": 107,
-  "refused-unsupported": 592,
+  "refused-unsupported": 590,
   "timeout": 66
  },
  "dynamic_wall_ranking": [
@@ -728,25 +728,6 @@
   },
   {
    "files": [
-    "20001228-1.c",
-    "20021120-1.c",
-    "20050218-1.c",
-    "20051021-1.c",
-    "920501-6.c",
-    "920726-1.c",
-    "930930-2.c",
-    "builtin-bitops-1.c",
-    "pr17377.c",
-    "pr58943.c",
-    "va-arg-10.c",
-    "va-arg-9.c"
-   ],
-   "present": 12,
-   "sole": 12,
-   "wall": "unsequenced-effects"
-  },
-  {
-   "files": [
     "00214.c",
     "20000622-1.c",
     "20010329-1.c",
@@ -782,6 +763,23 @@
    "present": 12,
    "sole": 12,
    "wall": "unsupported:pointer-to-integer conversion outside uintptr_t/intptr_t"
+  },
+  {
+   "files": [
+    "20001228-1.c",
+    "20051021-1.c",
+    "920501-6.c",
+    "920726-1.c",
+    "930930-2.c",
+    "builtin-bitops-1.c",
+    "pr17377.c",
+    "pr58943.c",
+    "va-arg-10.c",
+    "va-arg-9.c"
+   ],
+   "present": 10,
+   "sole": 10,
+   "wall": "unsequenced-effects"
   },
   {
    "files": [
@@ -3192,8 +3190,8 @@
   }
  ],
  "manifest_hash": "bca94718b04e8394cdce992866637166f530978790bd1013cea4a00ae25ef764",
- "measured_at_utc": "2026-11-14T02:00:57Z",
- "measured_commit": "59bc445ec",
+ "measured_at_utc": "2026-11-14T02:28:14Z",
+ "measured_commit": "9f6a7b394",
  "pin": {
   "corpora": [
    "C1",
@@ -8157,8 +8155,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "unsequenced side effects in compound assignment",
-   "dynamic_wall": "unsequenced-effects",
+   "detail": "",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "20021120-1.c",
    "sha256": "fd35d6e5ec5fcb01655f03844bed5aa884c774699e3f5f28081a35201aa2a612",
@@ -8166,7 +8164,7 @@
     "cast:IntegralToFloating",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -9624,8 +9622,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "unsequenced side effects in compound assignment",
-   "dynamic_wall": "unsequenced-effects",
+   "detail": "",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "20050218-1.c",
    "sha256": "58cee76083f39fa4acffe227c321e93f5fed969a9bbd5acafdc1676d461c13af",
@@ -9635,7 +9633,7 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",
@@ -11388,7 +11386,7 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "0",
+   "detail": "",
    "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "20230802-1.c",
@@ -14582,7 +14580,7 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
+   "detail": "",
    "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "991202-3.c",
@@ -15087,7 +15085,7 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "0",
+   "detail": "",
    "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "bswap-1.c",
@@ -17269,7 +17267,7 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
+   "detail": "",
    "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "cvt-1.c",
@@ -17356,7 +17354,7 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "exit(0) \u2014 the oracle's success channel, not a libc model",
+   "detail": "",
    "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "divconst-2.c",

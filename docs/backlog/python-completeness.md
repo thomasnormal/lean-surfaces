@@ -16912,3 +16912,21 @@ resulting world and restoring call depth.
 | Remaining debt | generic expression, bare-return, break and continue wrappers |
 
 DECIDED: generic pass composition now crosses the frame/world and call-depth boundary; no fixed-count theorem was added.
+
+## 2026-11-14-pyfoundation-269 — generic assignment-list expression composition
+
+`Monadic.execOpenList_assignments_expr_run` and
+`Monadic.finishCallM_assignments_expr_run` specialize the generic normal-flow
+composition to a final expression statement, including the `inWorld` and
+call-depth wrapper. They reuse the same sequencing theorem as `pass` because
+both are `.next` flows after their pointwise statement bridges.
+
+| Measurement | Result |
+|---|---|
+| Target | `lake build LeanModels.Python.Monadic.Eval` passed; 11/11 jobs |
+| Theorem | `Monadic.execOpenList_assignments_expr_run`; `Monadic.finishCallM_assignments_expr_run` |
+| Domain | arbitrary assignment list followed by an expression statement |
+| Semantic change | theorem-only generic expression-flow composition |
+| Remaining debt | generic bare-return, break and continue wrappers |
+
+DECIDED: expression-flow composition is now stated once for arbitrary assignment-list length; no fixed-count theorem was added.

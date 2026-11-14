@@ -544,6 +544,16 @@ def execStmt : Nat → Ctx → Stmt → ExecM Flow
     -- else-less arm is the common path and is written first.
     | .ifS c t none _ => do
         if (← evalCond ctx c) then execStmt fuel ctx t else pure .normal
+    | .ifS c t (some (.compound body bsp)) _ => do
+        if (← evalCond ctx c) then
+          let f ← execStmt fuel ctx t
+          match f with
+          | .goto l =>
+              match findLabel l body with
+              | some tail => execBlock fuel ctx tail
+              | none => pure f
+          | other => pure other
+        else execStmt fuel ctx (.compound body bsp)
     | .ifS c t (some e) _ => do
         if (← evalCond ctx c) then execStmt fuel ctx t else execStmt fuel ctx e
     -- §6.8.7.4 — `return`, with a value at 98 of 103 sites.

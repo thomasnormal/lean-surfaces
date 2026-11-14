@@ -168,7 +168,7 @@ rung rather than a v0 hole.
 | --- | ---: | --- |
 | `IntegerLiteral` | 779 | `value`: str (decimal, exact), `type` |
 | `CharacterLiteral` | 95 | `value`: int, `type` |
-| `StringLiteral` | 126 | `value`: str, `type` |
+| `StringLiteral` | 126 | `value`: str, `type`; optional parser-native `decoded_bytes`: [nat…] containing the payload and one terminating zero character at Clang's reported character width |
 | `FloatingLiteral` | 15 | `value`: str (exact decimal spelling), `type`; optional parser-native `float_bits_hex`: str and `float_bit_width`: nat when the pinned floating probe is enabled |
 | `DeclRefExpr` | 2444 | `decl_id`, `name`, `decl_kind`, `type`; `decl_id` is clang's `referencedDecl.id` and is the identity used for resolution |
 | `MemberExpr` | 410 | `base`: expr, `member`: str, `arrow`: bool, `type` |

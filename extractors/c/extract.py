@@ -695,8 +695,13 @@ class Extractor:
             if offset not in self.string_bytes:
                 die("string byte probe did not observe StringLiteral at offset %r" % offset)
             record = self.string_bytes[offset].pop(0)
-            if record.get("kind_name") == "ordinary" and record.get("char_byte_width") == 1:
-                out["decoded_bytes"] = record.get("bytes")
+            # The envelope stores the complete parser-decoded object bytes:
+            # Clang's payload followed by one zero character at the frontend
+            # byte width. This keeps ordinary and wide literals on one path;
+            # no source spelling or host Unicode conversion is performed.
+            width = record.get("char_byte_width")
+            if record.get("kind_name") in ("ordinary", "wide") and type(width) is int and width > 0:
+                out["decoded_bytes"] = (record.get("bytes") or []) + [0] * width
         return out
 
     def e_FloatingLiteral(self, n):

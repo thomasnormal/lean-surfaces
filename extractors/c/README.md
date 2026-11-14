@@ -4,8 +4,11 @@
 dump retains a string literal's source spelling; the plugin records the same
 parser node's decoded `StringLiteral::getBytes()` sequence, together with the
 source offset and character width.  The C extractor can join these records by
-offset without decoding source text.  The plugin is an observation tool, not
-a second C parser or an admitted semantic layer.
+offset without decoding source text.  For ordinary and wide literals the
+envelope carries the payload followed by one zero character at that parser
+reported width, so the semantic layer receives complete object bytes. The
+plugin is an observation tool, not a second C parser or an admitted semantic
+layer.
 
 `floating_bits_probe.cpp` is the corresponding parser-native observation for
 `FloatingLiteral` nodes.  It records Clang's rounded APFloat bit pattern,

@@ -280,9 +280,8 @@ def initObject : Nat → Ctx → Ptr → CType → Expr → ExecM Unit
     -- literal pointer's tagged representation bytes.
     | .strLit value decoded _ _ =>
         let bytes? := match decoded with
-          | some bs => some ((bs.map (fun b => CByte.conc (UInt8.ofNat b))) ++
-              [CByte.conc 0])
-          | none => plainStringBytes value
+          | some bs => some (bs.map (fun b => CByte.conc (UInt8.ofNat b)))
+          | none => (plainStringBytes value).map (fun bs => bs ++ [CByte.conc 0])
         match ctx.layout.elem ty, bytes? with
         | some (et, n), some bytes =>
             match intTyOf? (ctx.layout.normalizeTy et) with
@@ -291,12 +290,24 @@ def initObject : Nat → Ctx → Ptr → CType → Expr → ExecM Unit
                   let copied := bytes.take n
                   let padded := copied ++ List.replicate (n - copied.length) (CByte.conc 0)
                   liftEval (writeMem (fun m => m.storeBytes p padded))
-                else do
-                  let v ← evalE ctx (.strLit value decoded ty default)
-                  liftEval (storeAt p (ctx.layout.normalizeTy ty) v)
-            | none => do
-                let v ← evalE ctx (.strLit value decoded ty default)
-                liftEval (storeAt p (ctx.layout.normalizeTy ty) v)
+                else
+                  match ctx.layout.size (ctx.layout.normalizeTy et) with
+                  | some esz =>
+                      if esz > 0 && bytes.length % esz == 0 then
+                        let copied := bytes.take (n * esz)
+                        let padded := copied ++ List.replicate (n * esz - copied.length) (CByte.conc 0)
+                        liftEval (writeMem (fun m => m.storeBytes p padded))
+                      else refuseUnsupported "wide string literal has incomplete element bytes"
+                  | none => refuseUnsupported "wide string literal lacks element layout"
+            | none =>
+                match ctx.layout.size (ctx.layout.normalizeTy et) with
+                | some esz =>
+                    if esz > 0 && bytes.length % esz == 0 then
+                      let copied := bytes.take (n * esz)
+                      let padded := copied ++ List.replicate (n * esz - copied.length) (CByte.conc 0)
+                      liftEval (writeMem (fun m => m.storeBytes p padded))
+                    else refuseUnsupported "wide string literal has incomplete element bytes"
+                | none => refuseUnsupported "wide string literal lacks element layout"
         | _, _ => do
             let v ← evalE ctx (.strLit value decoded ty default)
             liftEval (storeAt p (ctx.layout.normalizeTy ty) v)

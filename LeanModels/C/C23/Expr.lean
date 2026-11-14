@@ -1112,10 +1112,9 @@ def evalLValue (ctx : Ctx) : Expr → EvalM Ptr
   | .paren sub _ _ => evalLValue ctx sub
   | .strLit value decoded _ _ => do
       let bs ← match decoded with
-        | some bytes => pure ((bytes.map (fun b => CByte.conc (UInt8.ofNat b))) ++
-            [CByte.conc 0])
+        | some bytes => pure (bytes.map (fun b => CByte.conc (UInt8.ofNat b)))
         | none => match plainStringBytes value with
-          | some bs => pure bs
+          | some bs => pure (bs ++ [CByte.conc 0])
           | none => refuseUnsupported "string literal with escape or non-ASCII spelling"
       let m ← get
       let (m', o) := m.alloc .static_ bs.length (some "char[]")
@@ -1527,10 +1526,9 @@ def evalExpr (ctx : Ctx) : Expr → EvalM CVal
       | none => refuseUnsupported s!"character literal spelling '{v}'"
   | .strLit value decoded _ _ => do
       let bs ← match decoded with
-        | some bytes => pure ((bytes.map (fun b => CByte.conc (UInt8.ofNat b))) ++
-            [CByte.conc 0])
+        | some bytes => pure (bytes.map (fun b => CByte.conc (UInt8.ofNat b)))
         | none => match plainStringBytes value with
-          | some bs => pure bs
+          | some bs => pure (bs ++ [CByte.conc 0])
           | none => refuseUnsupported "string literal with escape or non-ASCII spelling"
       let m ← get
       let (m', o) := m.alloc .static_ bs.length (some "char[]")

@@ -735,6 +735,18 @@ def pointeeOf (ty : CType) : Option CType :=
   if ty.endsWith "*" then some (ty.dropEnd 1).toString.trimAsciiEnd.toString
   else none
 
+/-- C23 §6.3.2.3p7 / §6.5.15p6: pointers to compatible integer types
+may carry the same object provenance. Compatibility is read from the
+frontend-resolved pointee spellings through the profile's integer table; no
+type spelling is parsed here. -/
+def compatiblePointerTypes (ctx : Ctx) (a b : CType) : Bool :=
+  match pointeeOf (ctx.layout.normalizeTy a), pointeeOf (ctx.layout.normalizeTy b) with
+  | some ta, some tb =>
+      match intTyOf? (ctx.layout.normalizeTy ta), intTyOf? (ctx.layout.normalizeTy tb) with
+      | some ia, some ib => ia == ib
+      | _, _ => false
+  | _, _ => false
+
 /-- Load whatever an lvalue of this type holds — an integer or a pointer.
 §6.3.2.1p2, the lvalue conversion: **1837 sites, the load-bearing
 implicit of the whole corpus.** -/
@@ -1228,7 +1240,8 @@ def evalExpr (ctx : Ctx) : Expr → EvalM CVal
           t == "void *" || t == "const void *" ||
           t == "char *" || t == "const char *" ||
           t == "unsigned char *" || t == "const unsigned char *"
-        if isVoidOrCharPtr ty || isVoidOrCharPtr sub.ty then
+        if isVoidOrCharPtr ty || isVoidOrCharPtr sub.ty ||
+            compatiblePointerTypes ctx ty sub.ty then
           evalExpr ctx sub
         else
           refuseUnsupported "pointer bit-cast across incompatible effective types"

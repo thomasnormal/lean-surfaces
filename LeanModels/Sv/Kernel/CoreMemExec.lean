@@ -73,6 +73,12 @@ structure CoreMemDesign where
   the parameter-width elaborator once per time-zero settle pass.
   -/
   compiledAssigns : Array (Option Expr2) := #[]
+  /--
+  Instantiated pure raw-sensitivity expressions, aligned with `processes`.
+  Memory and function-call reads stay absent so their source-shaped evaluator
+  remains the authority for stateful reads.
+  -/
+  compiledCombReads : Array (Option (List Expr2)) := #[]
 deriving Inhabited
 
 /-! A structural admission predicate for the canonical memory family.  This is
@@ -558,20 +564,6 @@ def PDesign.instantiateCoreMemFrom (envI : IEnv) (d : PDesign) (args : List Int)
             memories := memories.toArray, processes := processes.toArray }
         .ok { result with compiledAssigns := result.compileAssigns }
 
-def PDesign.instantiateCoreMem (d : PDesign) (args : List Int)
-    (iterFuel : Nat := 4096) : Res CoreMemDesign :=
-  PDesign.instantiateCoreMemFrom { int32 := true } d args iterFuel
-
-/-! The ordinary E entry.  Parameterized unpacked declarations are canonical
-E storage, so callers must not silently fall back to the scalar `EDesign2`
-view.  The old scalar-only elaboration remains available explicitly as
-`instantiateE2Scalar`; this name is the user-facing route for both fixed and
-parameter-sized one-rank memories (IEEE 1800-2023 §7.4.2). -/
-
-def PDesign.instantiateE2 (d : PDesign) (args : List Int) (iterFuel : Nat := 4096) :
-    Res CoreMemDesign :=
-  PDesign.instantiateCoreMem d args iterFuel
-
 /-! ## Expressions -/
 
 mutual
@@ -694,6 +686,37 @@ def coreMemCaseReadExprs : List (List PExpr × PStmt) → List PExpr
         coreMemCaseReadExprs rest
 
 end
+
+/-! The ordinary E entry is defined after the source-shaped sensitivity
+walkers so its derived cache is built once at instantiation, never in a cycle.
+The source nodes remain in `CoreMemProc`; this is an evaluator cache only. -/
+
+def CoreMemDesign.compileCombReads (E : CoreMemDesign) :
+    Array (Option (List Expr2)) :=
+  E.processes.map fun p =>
+    match p with
+    | .comb body =>
+        let reads := coreMemStmtReadExprs body
+        if reads.all (fun e => !LeanModels.Sv.PExpr.hasMemoryRead e &&
+            !LeanModels.Sv.PExpr.hasFunctionCall e) then
+          some (reads.map (instExpr2 E.env E.elems none))
+        else none
+    | _ => none
+
+def PDesign.instantiateCoreMem (d : PDesign) (args : List Int)
+    (iterFuel : Nat := 4096) : Res CoreMemDesign := do
+  let result ← PDesign.instantiateCoreMemFrom { int32 := true } d args iterFuel
+  .ok { result with compiledCombReads := result.compileCombReads }
+
+/-! The ordinary E entry.  Parameterized unpacked declarations are canonical
+E storage, so callers must not silently fall back to the scalar `EDesign2`
+view.  The old scalar-only elaboration remains available explicitly as
+`instantiateE2Scalar`; this name is the user-facing route for both fixed and
+parameter-sized one-rank memories (IEEE 1800-2023 §7.4.2). -/
+
+def PDesign.instantiateE2 (d : PDesign) (args : List Int) (iterFuel : Nat := 4096) :
+    Res CoreMemDesign :=
+  PDesign.instantiateCoreMem d args iterFuel
 
 def evalMemUnary (op : SymUnaryOp) (v : LVec) : Res LVec :=
   match op with
@@ -1080,6 +1103,20 @@ def CoreMemDesign.readChanged (E : CoreMemDesign) (before after : CoreMemState)
       let now ← E.evalExpr E.env E.elems after none expr
       if old == now then E.readChanged before after rest else .ok true
 
+def CoreMemDesign.readChangedPure (before after : SvState) : List Expr2 → Res Bool
+  | [] => .ok false
+  | expr :: rest => do
+      let old ← evalPure2 before expr
+      let now ← evalPure2 after expr
+      if old == now then CoreMemDesign.readChangedPure before after rest else .ok true
+
+def CoreMemDesign.readChangedAt (E : CoreMemDesign)
+    (before after : CoreMemState) (beforeView afterView : SvState)
+    (index : Nat) (reads : List PExpr) : Res Bool :=
+  match E.compiledCombReads[index]? with
+  | some (some compiled) => CoreMemDesign.readChangedPure beforeView afterView compiled
+  | _ => E.readChanged before after reads
+
 mutual
 
 def CoreMemDesign.execImplicitStmtFuel (E : CoreMemDesign) (env : IEnv)
@@ -1294,22 +1331,30 @@ def CoreMemDesign.runCombInitial (E : CoreMemDesign) (current : CoreMemState) :
   let (after, _) ← E.runCombInitialWithView current (E.scalar.view current.scalar) procs
   .ok after
 
-def CoreMemDesign.runComb (E : CoreMemDesign) (before current : CoreMemState) :
-    List CoreMemProc → Res CoreMemState
+def CoreMemDesign.runCombAt (E : CoreMemDesign) (before : CoreMemState)
+    (beforeView : SvState) (current : CoreMemState) (currentView : SvState)
+    (index : Nat) : List CoreMemProc → Res CoreMemState
   | [] => .ok current
   | .comb body :: rest => do
       let reads := coreMemStmtReadExprs body
-      let ready ← E.readChanged before current reads
+      let ready ← E.readChangedAt before current beforeView currentView index reads
       if !ready then
-        E.runComb before current rest
+        E.runCombAt before beforeView current currentView (index + 1) rest
       else
-        let after ← E.execCombStmt E.env E.elems current body
-        E.runComb before after rest
-  | .assign _ _ :: rest => E.runComb before current rest
-  | .edge _ :: rest => E.runComb before current rest
-  | .initial _ :: rest => E.runComb before current rest
-  | .implicit _ :: rest => E.runComb before current rest
+        let (after, afterView) ←
+          E.execCombStmtAtView E.env E.elems current currentView body
+        let after := E.compactScalar after afterView
+        E.runCombAt before beforeView after afterView (index + 1) rest
+  | .assign _ _ :: rest => E.runCombAt before beforeView current currentView (index + 1) rest
+  | .edge _ :: rest => E.runCombAt before beforeView current currentView (index + 1) rest
+  | .initial _ :: rest => E.runCombAt before beforeView current currentView (index + 1) rest
+  | .implicit _ :: rest => E.runCombAt before beforeView current currentView (index + 1) rest
   | .unsupported kind text :: _ => .unsupported s!"{kind}: {text}"
+
+def CoreMemDesign.runComb (E : CoreMemDesign) (before current : CoreMemState) :
+    List CoreMemProc → Res CoreMemState := fun procs =>
+  E.runCombAt before (E.scalar.view before.scalar) current
+    (E.scalar.view current.scalar) 0 procs
 
 /- A blocking edge write updates the retained state immediately.  The same
 one-rank source-shaped memory target used by the initializer and combinational

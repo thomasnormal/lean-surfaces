@@ -115,6 +115,48 @@ def fastWriteWins (E : Elab) (fallback : Store) (a : Array Val)
                 (a.setIfInBounds x.decl (old.write lo (value.extract off width))) value rest
 
 
+theorem fastWriteWins_ok_of_flat (E : Elab) (fallback : Store) (a : Array Val)
+    (value : LVec) : ∀ (xs : List (Win × Nat)) (a' : Array Val),
+    fastWriteWins E fallback a value xs = .ok a' →
+    (∀ wn off, (wn, off) ∈ xs →
+      ∃ x, E.resolve wn.1 = some x ∧ x.path = [] ∧ x.decl < a.size) →
+    arrayStore a' fallback = E.writeWins (arrayStore a fallback) value xs := by
+  intro xs
+  induction xs generalizing a with
+  | nil =>
+      intro a' h _
+      simp only [fastWriteWins, Res.ok.injEq] at h
+      cases h
+      rfl
+  | cons head rest ih =>
+      intro a' h hflat
+      obtain ⟨x, hx, hp, hb⟩ := hflat head.1 head.2 (by simp)
+      cases x with
+      | mk path decl =>
+        cases path with
+        | nil =>
+          simp only [fastWriteWins] at h
+          rw [hx] at h
+          let old := a.getD decl (fallback {path := [], decl})
+          let a1 := a.setIfInBounds decl
+            (old.write head.1.2.1 (value.extract head.2 head.1.2.2))
+          have htail : fastWriteWins E fallback a1 value rest = .ok a' := by
+            simpa [a1, old] using h
+          have hflat' : ∀ wn off, (wn, off) ∈ rest →
+              ∃ y, E.resolve wn.1 = some y ∧ y.path = [] ∧ y.decl < a1.size := by
+            intro wn off hm
+            obtain ⟨y, hy, hpy, hby⟩ := hflat wn off (by simp [hm])
+            exact ⟨y, hy, hpy, by simpa [a1, hb] using hby⟩
+          have ih' := ih a1 a' htail hflat'
+          rw [ih']
+          rw [arrayStore_set_flat_store a fallback {path := [], decl}
+            ((a.getD decl (fallback {path := [], decl})).write
+              head.1.2.1 (value.extract head.2 head.1.2.2)) hp hb]
+          simp only [Elab.writeWins]
+          simp [Elab.writeWin, hx, hb, old, a1, arrayStore, Array.getD]
+        | cons hd tl => simp_all
+
+
 def fastActivateAssign (E : Elab) (c : FastConfig) (t : Lhs2) (e : Expr2) : Res (Array Val) := do
   let some ws := t.windows? E.toDesign2
     | .unsupported "10.3.2: continuous assignment target has no static window"

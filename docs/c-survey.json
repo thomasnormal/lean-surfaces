@@ -10,10 +10,10 @@
   "gcc.c-torture/execute": {
    "not-parsed": 267,
    "oracle-tests-compiler": 1,
-   "passed": 944,
+   "passed": 945,
    "refused-libc": 34,
    "refused-ub": 98,
-   "refused-unsupported": 510,
+   "refused-unsupported": 509,
    "timeout": 64
   },
   "gcc.c23-run": {
@@ -28,10 +28,10 @@
  "counts": {
   "not-parsed": 294,
   "oracle-tests-compiler": 1,
-  "passed": 1122,
+  "passed": 1123,
   "refused-libc": 38,
   "refused-ub": 107,
-  "refused-unsupported": 586,
+  "refused-unsupported": 585,
   "timeout": 66
  },
  "dynamic_wall_ranking": [
@@ -987,17 +987,6 @@
   },
   {
    "files": [
-    "20010325-1.c",
-    "printf-1.c",
-    "wchar_t-1.c",
-    "widechar-3.c"
-   ],
-   "present": 4,
-   "sole": 4,
-   "wall": "unsupported:string literal with escape or non-ASCII spelling"
-  },
-  {
-   "files": [
     "printf-chk-1.c",
     "vprintf-1.c",
     "vprintf-chk-1.c"
@@ -1105,6 +1094,16 @@
    "present": 3,
    "sole": 3,
    "wall": "unsupported:sprintf"
+  },
+  {
+   "files": [
+    "20010325-1.c",
+    "printf-1.c",
+    "widechar-3.c"
+   ],
+   "present": 3,
+   "sole": 3,
+   "wall": "unsupported:string literal with escape or non-ASCII spelling"
   },
   {
    "files": [
@@ -3158,8 +3157,8 @@
   }
  ],
  "manifest_hash": "bca94718b04e8394cdce992866637166f530978790bd1013cea4a00ae25ef764",
- "measured_at_utc": "2026-11-14T11:29:57Z",
- "measured_commit": "d4105bb16e424b2a7900ec5b0bf85f8d5405d0fd",
+ "measured_at_utc": "2026-11-14T12:55:53Z",
+ "measured_commit": "b43df876a08d01780149f6f325ef24d722729cbd",
  "pin": {
   "corpora": [
    "C1",
@@ -29584,8 +29583,8 @@
   },
   {
    "corpus": "gcc.c-torture/execute",
-   "detail": "string literal with escape or non-ASCII spelling",
-   "dynamic_wall": "unsupported:string literal with escape or non-ASCII spelling",
+   "detail": "",
+   "dynamic_wall": null,
    "manifest_status": "parsed",
    "name": "wchar_t-1.c",
    "sha256": "a7f170a402ed9a12a8e4214009f94facfb14ca96325a7c3b3a90b566afe7fa01",
@@ -29593,7 +29592,7 @@
     "string-literal",
     "type-layout"
    ],
-   "verdict": "refused-unsupported"
+   "verdict": "passed"
   },
   {
    "corpus": "gcc.c-torture/execute",

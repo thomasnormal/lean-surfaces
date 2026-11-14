@@ -17160,3 +17160,16 @@ classified-refusal frame/world transport for known body actions.
 | Remaining debt | recursive `callInM` integration and arbitrary body transport |
 
 DECIDED: all four explicit result classes now have inWorld call-body transport theorems; arbitrary body transport remains open.
+
+
+## 2026-11-14-pyfoundation-284 — direct callInM top-body integration (blocked)
+
+The attempted `Monadic.callInM_top_body_ret_ok` theorem reduced the ordinary
+top-depth branch to the expected body result, but the outer `get`/`StateT.bind`
+match did not rewrite from the explicit `getThe World` premise. The body
+transport theorem is proved and reusable; direct call-plan integration remains
+blocked at the monadic state getter reduction. No semantics were weakened and
+no fixed-count theorem was added.
+
+DECIDED: direct `callInM` integration is a separate state-wrapper blocker; next
+item is to factor a `toRun` getter/setter normalization lemma before retrying.

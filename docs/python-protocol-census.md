@@ -620,3 +620,5 @@ still open.
 `Monadic.finishCallM_inWorld_of_exn` applies explicit exception restoration to a known frame action result at the `callInM` body boundary.
 
 `Monadic.finishCallM_inWorld_of_timeout` and `Monadic.finishCallM_inWorld_of_unsupported` complete explicit timeout/refusal transport at the `callInM` frame/world boundary.
+
+The direct top-depth `callInM` integration is parked at the outer `get`/`StateT.bind` reduction; explicit body transport remains available.

@@ -76,7 +76,7 @@ EXPRS = {"IntegerLiteral", "CharacterLiteral", "StringLiteral", "FloatingLiteral
          "DeclRefExpr", "MemberExpr", "ArraySubscriptExpr", "CallExpr",
          "BinaryOperator", "CompoundAssignOperator", "UnaryOperator",
          "ConditionalOperator", "ParenExpr", "ImplicitCastExpr", "CStyleCastExpr",
-         "InitListExpr", "ImplicitValueInitExpr", "CompoundLiteralExpr", "UnaryExprOrTypeTraitExpr",
+         "InitListExpr", "DesignatedInitUpdateExpr", "ImplicitValueInitExpr", "CompoundLiteralExpr", "UnaryExprOrTypeTraitExpr",
          "ConstantExpr", "VAArgExpr"}
 TYPES = {"BuiltinType", "PointerType", "RecordType", "TypedefType",
          "ElaboratedType", "ParenType", "FunctionProtoType"}
@@ -806,6 +806,12 @@ class Extractor:
         return {"inits": self.seq(kids(n)),
                 "array_filler": None if filler is None else self.seq(filler),
                 "field": field,
+                "type": qual(n)}
+
+    def e_DesignatedInitUpdateExpr(self, n):
+        c = nonempty(n)
+        return {"base": self.node(c[0] if c else None),
+                "update": self.node(c[1] if len(c) > 1 else None),
                 "type": qual(n)}
 
     def e_ImplicitValueInitExpr(self, n):

@@ -1633,6 +1633,7 @@ def evalExpr (ctx : Ctx) : Expr → EvalM CVal
       checkVaType ctx ty v
   | .initList .. => refuseUnsupported "initializer list (inch 4)"
   | .arrayInitList .. => refuseUnsupported "initializer list in value position"
+  | .designatedUpdate .. => refuseUnsupported "designated initializer update in value position"
   | .implicitValueInit .. => refuseUnsupported "implicit value initialization in value position"
   | .unsupported k _ _ => refuseUnsupported s!"out of tier: {k}"
   termination_by e => 2 * e.size + 1
@@ -1891,6 +1892,7 @@ def Expr.nodeIsPure : Expr → Bool
   | .vaArg .. => false
   -- §6.7.11 — aggregate initialization writes through the layout.
   | .initList .. | .arrayInitList .. | .implicitValueInit .. | .compoundLit .. => false
+  | .designatedUpdate .. => false
   | .strLit .. => false
   -- Out of tier: unknown, therefore not pure.
   | .unsupported .. => false
@@ -2472,6 +2474,7 @@ private theorem memInvariant_core (ctx : Ctx) : ∀ (n : Nat) (e : Expr), e.size
       | compoundAssign _ _ _ _ _ _ _ => simp [Expr.nodeIsPure] at hnode
       | initList _ _ _ _ => simp [Expr.nodeIsPure] at hnode
       | arrayInitList _ _ _ _ _ => simp [Expr.nodeIsPure] at hnode
+      | designatedUpdate _ _ _ _ => simp [Expr.nodeIsPure] at hnode
       | implicitValueInit _ _ => simp [Expr.nodeIsPure] at hnode
       | compoundLit _ _ _ => simp [Expr.nodeIsPure] at hnode
       | unsupported _ _ _ => simp [Expr.nodeIsPure] at hnode

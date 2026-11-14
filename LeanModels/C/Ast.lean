@@ -180,6 +180,9 @@ inductive Expr where
   /-- Clang's `InitListExpr` retains both `inner` and `array_filler` fields. -/
   | arrayInitList (inits filler : List Expr) (unionField : Option String)
       (ty : CType) (span : CSpan)
+  /-- C23 designated-update initialization: initialize the base object, then
+      apply the parser's update list to the same object. -/
+  | designatedUpdate (base update : Expr) (ty : CType) (span : CSpan)
   | implicitValueInit (ty : CType) (span : CSpan)
   | compoundLit (init : Expr) (ty : CType) (span : CSpan)
   /-- `sizeof`/`alignof`, over a type or over an expression. -/
@@ -338,7 +341,7 @@ def Expr.ty : Expr → CType
   | .unop _ _ _ t _ | .cond _ _ _ t _ | .paren _ t _ => t
   | .implicitCast _ _ t _ | .cast _ _ t _ => t
   | .initList _ _ t _ | .compoundLit _ t _ | .implicitValueInit t _ => t
-  | .arrayInitList _ _ _ t _ => t
+  | .arrayInitList _ _ _ t _ | .designatedUpdate _ _ t _ => t
   | .typeTrait _ _ _ t _ | .constExpr _ _ t _ | .vaArg _ t _ => t
   | .unsupported .. => ""
 
@@ -364,6 +367,7 @@ def Expr.kindName : Expr → String
   | .cast .. => "CStyleCastExpr"
   | .initList .. => "InitListExpr"
   | .arrayInitList .. => "InitListExpr"
+  | .designatedUpdate .. => "DesignatedInitUpdateExpr"
   | .implicitValueInit .. => "ImplicitValueInitExpr"
   | .compoundLit .. => "CompoundLiteralExpr"
   | .typeTrait .. => "UnaryExprOrTypeTraitExpr"
@@ -386,6 +390,7 @@ def Expr.subexprs : Expr → List Expr
   | e@(.cast _ s _ _) => e :: s.subexprs
   | e@(.initList xs _ _ _) => e :: xs.flatMap Expr.subexprs
   | e@(.arrayInitList xs filler _ _ _) => e :: (xs.flatMap Expr.subexprs ++ filler.flatMap Expr.subexprs)
+  | e@(.designatedUpdate base update _ _) => e :: (base.subexprs ++ update.subexprs)
   | e@(.compoundLit i _ _) => e :: i.subexprs
   | e@(.typeTrait _ _ (some s) _ _) => e :: s.subexprs
   | e@(.constExpr _ (some s) _ _) => e :: s.subexprs

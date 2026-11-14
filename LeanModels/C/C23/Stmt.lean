@@ -250,6 +250,9 @@ def initObject : Nat → Ctx → Ptr → CType → Expr → ExecM Unit
         initObject fuel ctx p ty (match e with | .constExpr _ (some sub) _ _ => sub | _ => e)
     | .constExpr _ (some (.arrayInitList _ _ _ _ _)) _ _ =>
         initObject fuel ctx p ty (match e with | .constExpr _ (some sub) _ _ => sub | _ => e)
+    | .designatedUpdate base update _ _ => do
+        initObject fuel ctx p ty base
+        initObject fuel ctx p ty update
     | .arrayInitList inits filler field _ _ =>
         -- Clang's array_filler is [default filler, positional entries...].
         -- Only its implicit-zero default is in tier; retain and refuse other
@@ -264,6 +267,7 @@ def initObject : Nat → Ctx → Ptr → CType → Expr → ExecM Unit
         let initTy := ctx.layout.normalizeTy ty
         if (initTy.startsWith "union ") then
           match ctx.layout.members initTy, inits with
+          | some _, [] => zeroInit fuel ctx p initTy
           | some ms, e :: _ =>
               let target := field.getD ((ms.head?.map (·.1)).getD "")
               match ctx.layout.fieldOff initTy target with

@@ -256,6 +256,8 @@ partial def parseExpr (j : Json) : Except String Expr := do
         | .null => return .initList inits field (← ty) span
         | .arr filler => return .arrayInitList inits (← filler.toList.mapM parseExpr) field (← ty) span
         | _ => throw "field 'array_filler' is not an array or null"
+    | "DesignatedInitUpdateExpr" =>
+        return .designatedUpdate (← sub "base") (← sub "update") (← ty) span
     | "ImplicitValueInitExpr" => return .implicitValueInit (← ty) span
     | "CompoundLiteralExpr" => return .compoundLit (← sub "init") (← ty) span
     | "UnaryExprOrTypeTraitExpr" =>

@@ -17077,3 +17077,20 @@ exception equation, they expose every handler result class without an arbitrary
 | Remaining debt | combining projections into recursive call/body transport |
 
 DECIDED: all explicit handler result classes now have projection equations; the generic transport theorem remains a separate composition task.
+
+## 2026-11-14-pyfoundation-279 — call-specific finishCallM transport
+
+`Monadic.finishCallM_of_ok` and `Monadic.finishCallM_of_exn` provide reusable
+call-boundary transport when the protected action's raw result is explicitly
+known. They restore the requested depth for success and retained-world Python
+exceptions without asserting the blocked arbitrary-action congruence.
+
+| Measurement | Result |
+|---|---|
+| Target | `lake build LeanModels.Python.Monadic.Eval` passed; 11/11 jobs |
+| Theorem | `Monadic.finishCallM_of_ok`; `Monadic.finishCallM_of_exn` |
+| Domain | explicit successful or Python-exception protected-action result |
+| Semantic change | theorem-only call-specific restoration transport |
+| Remaining debt | explicit timeout/refusal call wrappers and recursive call/body composition |
+
+DECIDED: success and exception call transport are now reusable under explicit result premises; arbitrary handler congruence remains open.

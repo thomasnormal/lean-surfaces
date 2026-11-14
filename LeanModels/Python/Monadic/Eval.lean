@@ -2653,10 +2653,10 @@ def finishCallM {α : Type} (depth : Nat) (action : SemW α) : SemW α :=
   tryCatch
     (do
       let value ← action
-      modify fun w => { w with callDepth := depth }
+      modify fun w : World => { w with callDepth := depth }
       pure value)
     (fun e => do
-      modify fun w => { w with callDepth := depth }
+      modify fun w : World => { w with callDepth := depth }
       raisePy e)
 
 def finishTopCallM {α : Type} (action : SemW α) : SemW α :=
@@ -4253,6 +4253,49 @@ theorem twinAgrees_execOpenList_nil_world (K : Kont) (m : Module)
     toRun (inWorld locals (execOpenList K m [])) w = .ok w .next := by
   rw [inWorld_toRun, twinAgrees_execOpenList_nil]
   rfl
+
+theorem finishCallM_of_ok {α : Type} (depth : Nat) (action : SemW α)
+    (w w' : World) (v : α)
+    (h : action w = .ok (.ok v, w')) :
+    toRun (finishCallM depth action) w =
+      .ok { w' with callDepth := depth } v := by
+  unfold finishCallM
+  apply toRun_tryCatch_ok
+  have hraw : (do
+      let value ← action
+      modify fun w : World => { w with callDepth := depth }
+      pure value) w =
+      .ok (.ok v, { w' with callDepth := depth }) := by
+    rw [bind_apply, h]
+    rfl
+  exact hraw
+
+theorem finishCallM_of_exn {α : Type} (depth : Nat) (action : SemW α)
+    (w w' : World) (e : PyErr)
+    (h : action w = .ok (.error e, w')) :
+    toRun (finishCallM depth action) w =
+      .exn { w' with callDepth := depth } e := by
+  unfold finishCallM
+  have hbody : (do
+      let value ← action
+      modify fun w : World => { w with callDepth := depth }
+      pure value) w =
+      .ok (.error e, w') := by
+    rw [bind_apply, h]
+  have hh : ((do
+      modify fun w : World => { w with callDepth := depth }
+      raisePy e : SemW α) w') =
+      .ok (.error e, { w' with callDepth := depth }) := by rfl
+  apply toRun_tryCatch_exn
+    (x := (do
+      let value ← action
+      modify fun w : World => { w with callDepth := depth }
+      pure value))
+    (handler := fun e => do
+      modify fun w : World => { w with callDepth := depth }
+      raisePy e) (s := w) (s' := w')
+    (s'' := { w' with callDepth := depth }) (e := e) (e' := e)
+    hbody hh
 
 theorem finishCallM_pure_ok {α : Type} (depth : Nat) (w : World) (v : α) :
     toRun (finishCallM depth (pure v : SemW α)) w =
@@ -9641,6 +9684,8 @@ theorem leaveCallM_modify_exn {α : Type} (w : World) (e : PyErr)
 #print axioms finishCallM_assign_eighteen_existing_locals_body_ok
 #print axioms finishCallM_assign_nineteen_existing_locals_body_ok
 #print axioms finishCallM_assignments_body_ok
+#print axioms finishCallM_of_ok
+#print axioms finishCallM_of_exn
 #print axioms finishCallM_assignments_ret_run
 #print axioms finishCallM_assignments_pass_run
 #print axioms execOpenList_assignments_break_run

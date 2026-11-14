@@ -610,3 +610,5 @@ composition is complete, while generic `StateT.bind` handler normalization is
 still open.
 
 `toRun_tryCatch_handler_ok`, `toRun_tryCatch_handler_timeout`, and `toRun_tryCatch_handler_unsupported` close the explicit handler-result projections for protected Python exceptions.
+
+`Monadic.finishCallM_of_ok` and `Monadic.finishCallM_of_exn` provide explicit-result call-boundary transport for successful and exceptional protected actions.

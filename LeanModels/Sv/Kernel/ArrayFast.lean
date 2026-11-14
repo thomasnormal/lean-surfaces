@@ -194,6 +194,25 @@ def fastStep (E : Elab) (ch : Choice) (c : FastConfig) : Res (Option FastConfig)
           | .slotClosed _ => return none
           | .refused r => .unsupported r.observable.2
 
+theorem fastStep_fallback_eq (E : Elab) (ch : Choice) (c : FastConfig)
+    (p : ProcId) (rest : List ProcId)
+    (hchoose : ch.choose c.k c.active = p :: rest)
+    (hassign : ∀ t e, E.procs[p]? ≠ some (.assign t e)) :
+    fastStep E ch c =
+      match step E ch c.toConfig with
+      | .next c' => .ok (some (FastConfig.ofConfig E c'))
+      | .slotClosed _ => .ok none
+      | .refused r => .unsupported r.observable.2 := by
+  unfold fastStep
+  rw [hchoose]
+  cases hp : E.procs[p]? with
+  | none => simp [hp, step]
+  | some proc =>
+      cases proc with
+      | assign t e => exact (hassign t e hp).elim
+      | comb body => simp [hp, step]
+      | implicit body => simp [hp, step]
+
 def fastExec (E : Elab) (ch : Choice) : Nat → FastConfig → Res FastConfig
   | 0, _ => .timeout
   | n + 1, c =>
